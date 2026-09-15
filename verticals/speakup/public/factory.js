@@ -57,13 +57,17 @@
     $('recstatus').textContent = meeting ? t('tapToRec') : '';
     $('recstatus').style.display = meeting ? '' : 'none';
     $('agentLine').style.display = meeting ? 'none' : '';
+    // An editor window shows the work and the input, nothing else. Recording tools
+    // (library, import, memory search, the recording detail) belong to Meeting mode.
+    ['memCard', 'libCard', 'importCard', 'mainEmpty', 'detail'].forEach(function (id) {
+      var el = $(id); if (el) el.style.display = meeting ? (id === 'detail' ? (current ? 'block' : 'none') : '') : 'none';
+    });
+    if (!meeting) F.showActivity(true);
     renderModeLabels();
   }
   function renderModeLabels() {
     var names = { command: L('Comando', 'Command'), meeting: L('Reunión', 'Meeting'), note: L('Nota', 'Note'), architect: L('Arquitecto', 'Architect') };
     document.querySelectorAll('#modes .mode').forEach(function (b) { b.textContent = names[b.getAttribute('data-mode')]; });
-    $('activityTitle').textContent = L('Actividad', 'Activity');
-    $('activityHide').textContent = L('Ocultar', 'Hide');
     $('diffBtn').textContent = L('Ver cambios', 'View changes');
   }
 
@@ -417,6 +421,8 @@
         if (atBottom) term.scrollTop = term.scrollHeight;
       }
       renderSteps(d.status);
+      $('jobPill').textContent = d.status;
+      $('jobPill').className = 'pill ' + pillFor(d.status);
       $('diffBtn').style.display = d.pr_number ? '' : 'none';
       if (!d.terminal && document.visibilityState === 'visible') F.eventTimer = setTimeout(function () { pollEvents(jobId); }, 2500);
     } catch (e) { /* the page handles 401 */ }
@@ -455,16 +461,17 @@
       sel.innerHTML = (d.projects || []).filter(function (p) { return p.enabled; }).map(function (p) { return '<option value="' + esc(p.key) + '">' + esc(p.name) + '</option>'; }).join('');
       if (keep && d.projects.some(function (p) { return p.key === keep; })) sel.value = keep;
       F.project = sel.value || null;
-      if (!d.operator) { $('jobsCard').style.display = 'none'; return; }
-      $('jobsCard').style.display = '';
+      if (!d.operator) return;
       $('readiness').innerHTML = d.readiness && !d.readiness.ready
         ? '<div class="banner"><strong>' + L('La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:') + '</strong><br>' + d.readiness.blockers.map(function (b) { return esc(b.fix); }).join('<br>') + '</div>' : '';
-      $('jobList').innerHTML = (d.jobs || []).length ? d.jobs.map(function (j) {
-        return '<div class="jobitem" onclick="Factory.openJob(' + j.id + ')"><div class="row" style="justify-content:space-between"><strong>#' + j.id + ' ' + esc(j.project_name || '') + '</strong><span class="pill ' + pillFor(j.status) + '">' + esc(j.status) + '</span></div>' +
-          '<div class="muted" style="margin-top:4px">' + esc(j.title || '') + ' · ' + new Date(j.updated_at).toLocaleString() + '</div></div>';
-      }).join('') : '<div class="empty">' + L('Sin tareas todavía.', 'No tasks yet.') + '</div>';
-      var active = (d.jobs || []).filter(function (j) { return !j.terminal; })[0];
-      if (active && !F.openJobId) F.openJob(active.id);
+      var jobs = d.jobs || [];
+      var active = jobs.filter(function (j) { return !j.terminal; })[0];
+      var pick = $('jobPick');
+      pick.innerHTML = jobs.length ? jobs.map(function (j) {
+        return '<option value="' + j.id + '">#' + j.id + ' ' + esc(j.project_name || '') + ' · ' + esc(j.title || '').slice(0, 40) + '</option>';
+      }).join('') : '<option value="">' + L('Sin tareas todavía', 'No tasks yet') + '</option>';
+      if (F.openJobId) pick.value = String(F.openJobId);
+      if (!F.openJobId && active) F.openJob(active.id);
     } catch (e) { /* signed out or offline: the page handles 401 */ }
   }
   F.refresh = refreshOverview;
@@ -478,6 +485,7 @@
   F.openJob = async function (id, follow) {
     if (F.openJobId !== id) { F.lastEventId = 0; $('term').innerHTML = ''; $('diffBox').innerHTML = ''; }
     F.openJobId = id;
+    if ($('jobPick').value !== String(id)) $('jobPick').value = String(id);
     clearTimeout(F.pollTimer);
     F.showActivity(true);
     pollEvents(id);
@@ -551,8 +559,8 @@
     $('cmdText').addEventListener('input', function () { grow(); saveDraft(); });
     // Cmd/Ctrl+Enter sends from a keyboard; plain Enter stays a new line on a phone.
     $('cmdText').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); F.send(); } });
-    $('activityHide').addEventListener('click', function () { F.showActivity(false); });
     $('diffBtn').addEventListener('click', F.viewDiff);
+    $('jobPick').addEventListener('change', function () { if (this.value) F.openJob(parseInt(this.value, 10)); });
     $('memGo').addEventListener('click', memSearch);
     $('memQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') memSearch(); });
     // An unsent instruction survives a refresh of this tab.

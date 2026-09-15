@@ -140,6 +140,7 @@
   .cstat{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   body.composing{padding-bottom:230px}
   /* activity terminal */
+  .card.sticky{position:sticky;top:calc(56px + env(safe-area-inset-top));z-index:25}
   .term{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.5;background:#080d16;
     border:1px solid var(--line);border-radius:12px;padding:10px;max-height:44vh;overflow:auto;white-space:pre-wrap;word-break:break-word}
   .term .ln{display:block;padding:1px 0}
@@ -198,12 +199,13 @@
   </section>
 
   <!-- ACTIVITY: what the factory is doing right now, at the top of the screen -->
-  <section class="card" id="activityCard" style="display:none;text-align:left">
-    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
-      <h2 style="margin:0" id="activityTitle">Actividad</h2>
-      <div class="row"><button class="btn sec sm" id="diffBtn" style="display:none">Ver cambios</button>
-      <button class="btn sec sm" id="activityHide">Ocultar</button></div>
+  <section class="card sticky" id="activityCard" style="display:none;text-align:left">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px">
+      <select id="jobPick" aria-label="Tarea" style="flex:1;min-width:0"></select>
+      <span class="pill run" id="jobPill"></span>
+      <button class="btn sec sm" id="diffBtn" style="display:none">Ver cambios</button>
     </div>
+    <div id="readiness"></div>
     <div class="steps" id="steps"></div>
     <div class="term" id="term"></div>
     <div id="diffBox"></div>
@@ -230,9 +232,8 @@
   </div>
 
   <!-- AI FACTORY: tasks, task detail, memory search -->
-  <section class="card" id="jobsCard" style="display:none"><h2>Tareas</h2><div id="readiness"></div><div id="jobList"></div></section>
   <section id="jobDetail"></section>
-  <section class="card"><h2>Memoria</h2>
+  <section class="card" id="memCard"><h2>Memoria</h2>
     <div class="row"><input id="memQ" placeholder="Ej: reunión con Greg, SMS de citas, JobMD" style="flex:1"><button class="btn sm" id="memGo">Buscar</button></div>
     <div id="memResults"></div>
   </section>
@@ -242,13 +243,13 @@
   <section id="detail" style="display:none"></section>
 
   <!-- 3) LIBRARY -->
-  <section class="card libcard">
+  <section class="card libcard" id="libCard">
     <h2 data-i="library">Biblioteca</h2>
     <div class="reclist" id="reclist"><div class="empty" data-i="loading">Cargando…</div></div>
   </section>
 
   <!-- 4) IMPORT — secondary, collapsed at the bottom -->
-  <details class="card importbox">
+  <details class="card importbox" id="importCard">
     <summary style="cursor:pointer;list-style:none"><h2 style="display:inline" data-i="importT">Importar</h2></summary>
     <div style="margin-top:14px">
       <label class="muted" data-i="uploadFile">Subir archivo de audio/video</label>
@@ -275,7 +276,7 @@
   </div>
 </div>
 
-<script src="/speakup/factory.js?v=3"></script>
+<script src="/speakup/factory.js?v=4"></script>
 <script>
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const I18N = {
