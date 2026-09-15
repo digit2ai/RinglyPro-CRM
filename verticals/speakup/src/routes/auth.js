@@ -15,6 +15,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { User } = require('../models');
+const security = require('../factory/security');
 
 const SECRET = process.env.SPEAKUP_JWT_SECRET || process.env.JWT_SECRET || 'speakup-2026-secret';
 const COOKIE = 'speakup_token';
@@ -24,7 +25,7 @@ function setAuthCookie(res, token) {
   res.cookie(COOKIE, token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'lax', // same-origin app + installed PWA; Lax blocks cross-site POSTs from carrying the session
     maxAge: MAX_AGE,
     path: '/speakup'
   });
@@ -34,7 +35,7 @@ function sign(user) {
   return jwt.sign(
     { id: user.id, tenant_id: user.tenant_id || user.id, email: user.email, name: user.name, role: user.role, lang: user.lang },
     SECRET,
-    { expiresIn: '30d' }
+    { expiresIn: '30d', audience: 'speakup' }
   );
 }
 
@@ -43,6 +44,10 @@ router.post('/login', async (req, res) => {
     const email = String(req.body.email || '').toLowerCase().trim();
     const password = String(req.body.password || '');
     if (!email || !password) return res.status(400).json({ error: 'Correo y contraseña requeridos' });
+    if (!security.rateLimit('login', security.ipHash(req) + '|' + email, 10, 15 * 60 * 1000) ||
+        !security.rateLimit('login-email', email, 25, 15 * 60 * 1000)) {
+      return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos.' });
+    }
 
     const user = await User.findOne({ where: { email } });
     if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });

@@ -37,12 +37,18 @@ function getCookie(req, name) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 const PUBLIC_EXACT = ['/login', '/health', '/favicon.svg', '/manifest.webmanifest', '/sw.js'];
+// Machine routes for the GitHub workflow. They authenticate themselves with an
+// HMAC over SPEAKUP_FACTORY_SECRET and never accept a session cookie as proof.
+const MACHINE = (p) => p === '/api/v1/factory/callback' || /^\/api\/v1\/factory\/brief\/\d+$/.test(p);
 const PUBLIC_ASSET = /\.(png|svg|webmanifest|css|js|woff2?|ico)$/i;
 router.use((req, res, next) => {
   const token = getCookie(req, 'speakup_token');
-  if (token) { try { req.user = jwt.verify(token, AUTH_SECRET); } catch (e) { /* invalid */ } }
+  // audience 'speakup': other verticals sign with the same JWT_SECRET fallback, and their
+  // tokens must not open SpeakUp (or the AI Factory) in a tenant of their choosing.
+  if (token) { try { req.user = jwt.verify(token, AUTH_SECRET, { audience: 'speakup' }); } catch (e) { /* invalid */ } }
   const p = req.path;
-  if (PUBLIC_EXACT.includes(p) || PUBLIC_ASSET.test(p) || p.startsWith('/api/v1/auth')) return next();
+  if (MACHINE(p)) { req.user = null; return next(); }
+  if (PUBLIC_EXACT.includes(p) || (PUBLIC_ASSET.test(p) && !p.startsWith('/api/')) || p.startsWith('/api/v1/auth')) return next();
   if (req.user) return next();
   if (p.startsWith('/api/')) return res.status(401).json({ error: 'No autorizado' });
   return res.redirect('/speakup/login');
@@ -55,6 +61,7 @@ router.get('/login', (req, res) => res.sendFile(path.join(publicDir, 'login.html
 router.use('/api/v1/auth', require('./routes/auth'));
 router.use('/health', require('./routes/health'));
 router.use('/api/v1/recordings', require('./routes/recordings'));
+router.use('/api/v1/factory', require('./routes/factory')); // AI Factory: voice -> architect -> GitHub PR
 router.use('/api/v1', require('./routes/ai')); // /translate, /rewrite, /:id/summarize
 
 // ── Static app (no build step — self-contained HTML) ─────────────────────────────
@@ -75,12 +82,30 @@ router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
       await sequelize.query('ALTER TABLE su_transcripts ADD COLUMN IF NOT EXISTS is_simulated BOOLEAN DEFAULT false');
       await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS error TEXT');
       await sequelize.query('ALTER TABLE su_documents ADD COLUMN IF NOT EXISTS prompt TEXT');
+      // AI Factory session fields on recordings (sessions)
+      await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS mode VARCHAR(20)');
+      await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS project_key VARCHAR(60)');
+      await sequelize.query("ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS participants JSONB DEFAULT '[]'");
+      await sequelize.query('CREATE INDEX IF NOT EXISTS su_recordings_tenant_created_idx ON su_recordings(tenant_id, created_at)');
+      await sequelize.query('CREATE INDEX IF NOT EXISTS su_recordings_tenant_project_idx ON su_recordings(tenant_id, project_key)');
+      // AI Factory job snapshot + verification fields
+      for (const ddl of ['workflow_file VARCHAR(120)', "test_commands JSONB DEFAULT '[]'", "path_scope JSONB DEFAULT '[]'",
+        "changed_files JSONB DEFAULT '[]'", 'suite_modified BOOLEAN', 'brief_token_used_at TIMESTAMPTZ']) {
+        await sequelize.query('ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS ' + ddl);
+      }
     } catch (mErr) {
       console.error('  SPEAKUP column ensure error:', mErr.message);
     }
-    try {
+    // SIT sets SPEAKUP_SEED_USERS=off: the local .env can point at the production
+    // database, and seeding force-syncs the owner's password.
+    if (process.env.SPEAKUP_SEED_USERS !== 'off') try {
       const u = await seedUsers();
       console.log(`  SPEAKUP team accounts ensured (${u.total}, ${u.created} new)`);
+      const { User } = require('./models');
+      const factorySecurity = require('./factory/security');
+      for (const admin of await User.findAll({ where: { role: 'admin' } })) {
+        if (factorySecurity.isFactoryOperator(admin)) await require('./factory/projects').ensureDefaults(admin.tenant_id || admin.id);
+      }
     } catch (uErr) {
       console.error('  SPEAKUP user seed error:', uErr.message);
     }
@@ -92,6 +117,8 @@ router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
         console.error('  SPEAKUP demo seed error:', sErr.message);
       }
     }
+    const started = require('./factory/jobs').startWatchdog();
+    console.log('  SPEAKUP AI Factory watchdog ' + (started ? 'running' : 'off (not production)'));
   } catch (err) {
     console.error('  SPEAKUP DB sync error:', err.message);
   }

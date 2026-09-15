@@ -1,0 +1,274 @@
+# SpeakUp AI Factory — builds ONE approved plan and pushes it to a review branch.
+#
+# Started only by SpeakUp (workflow_dispatch through the GitHub API, after the owner
+# approved the plan with the private phrase). Never runs on push, PR or comment events.
+#
+# FOUR JOBS ON FOUR VMs, BECAUSE THE CODE CLAUDE WRITES IS UNTRUSTED.
+# A job that runs Claude or the tests can do anything its VM allows (sudo, git hooks,
+# rewriting later steps' scripts), so no such job holds a credential worth stealing:
+#
+#   prepare  trusted    factory secret    fetch the brief, report CODING, mint two narrow tokens
+#   build    UNTRUSTED  ANTHROPIC key     Claude Code + fix rounds; output = a patch (data)
+#   verify   UNTRUSTED  no secrets        clean VM, apply patch, run the approved tests
+#   push     trusted    secret + token    apply patch as data, refuse protected paths / leaks /
+#                                         credentials, commit with hooks off, push speakup/job-<id>
+#
+# It never pushes the default branch, never touches .github/, never merges, never deploys.
+#
+# THIS REPOSITORY IS PUBLIC, SO THESE LOGS ARE PUBLIC. No step prints the brief, the
+# plan, a requirement, a transcript or test output. No artifact is uploaded.
+#
+# Repository secrets: ANTHROPIC_API_KEY, SPEAKUP_FACTORY_SECRET.
+# Optional repository variable: SPEAKUP_BASE_URL (default https://aiagent.ringlypro.com/speakup).
+
+name: SpeakUp AI Factory
+run-name: SpeakUp job ${{ inputs.job_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: SpeakUp job id
+        required: true
+      branch:
+        description: Review branch (speakup/job-<id>)
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: speakup-job-${{ inputs.job_id }}
+  cancel-in-progress: false
+
+env:
+  JOB_ID: ${{ inputs.job_id }}
+  BRANCH: ${{ inputs.branch }}
+  SPEAKUP_BASE_URL: ${{ vars.SPEAKUP_BASE_URL || 'https://aiagent.ringlypro.com/speakup' }}
+  PUPPETEER_SKIP_DOWNLOAD: '1'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      WORK: ${{ runner.temp }}/speakup
+    outputs:
+      plan_hash: ${{ steps.p.outputs.plan_hash }}
+      base_branch: ${{ steps.p.outputs.base_branch }}
+      test_commands: ${{ steps.p.outputs.test_commands }}
+      sensitive: ${{ steps.p.outputs.sensitive }}
+      brief_token: ${{ steps.p.outputs.brief_token }}
+      progress_token: ${{ steps.p.outputs.progress_token }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          [[ "$JOB_ID" =~ ^[0-9]{1,9}$ ]] || { echo "invalid job id"; exit 1; }
+          [[ "$BRANCH" == "speakup/job-$JOB_ID" ]] || { echo "branch must be speakup/job-<job id>"; exit 1; }
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/speakup
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Fetch the approved brief and mint the build tokens
+        id: p
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+        run: node .github/speakup/prepare.js
+      - name: Report CODING
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+          PLAN_HASH: ${{ steps.p.outputs.plan_hash }}
+        run: node .github/speakup/callback.js status CODING
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+    env:
+      WORK: ${{ runner.temp }}/speakup
+      BIN: ${{ runner.temp }}/speakup-bin
+      PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
+      PROGRESS_TOKEN: ${{ needs.prepare.outputs.progress_token }}
+    outputs:
+      patch: ${{ steps.patch.outputs.patch }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Copy the factory scripts before Claude touches the tree
+        run: mkdir -p "$BIN" && cp .github/speakup/*.js "$BIN/"
+      - name: Fetch the brief (single-use token)
+        env:
+          BRIEF_TOKEN: ${{ needs.prepare.outputs.brief_token }}
+        run: node "$BIN/fetch-brief.js"
+      - name: Install dependencies and Claude Code
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund > "$WORK/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
+          npm install -g --ignore-scripts @anthropic-ai/claude-code@2.1.272 > "$WORK/claude-install.log" 2>&1
+      - name: Claude builds the approved plan
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node "$BIN/claude.js" build
+      - name: Report TESTING
+        run: node "$BIN/progress.js" status TESTING
+      - name: Run tests (feedback for Claude)
+        id: t1
+        env:
+          TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
+        run: node "$BIN/run-tests.js"
+      - name: Fix round 1
+        if: steps.t1.outputs.failed != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node "$BIN/progress.js" status FIXING
+          node "$BIN/claude.js" fix 1
+          node "$BIN/progress.js" status TESTING
+      - name: Re-run tests (round 1)
+        id: t2
+        if: steps.t1.outputs.failed != '0'
+        env:
+          TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
+        run: node "$BIN/run-tests.js"
+      - name: Fix round 2
+        if: steps.t1.outputs.failed != '0' && steps.t2.outputs.failed != '0'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node "$BIN/progress.js" status FIXING
+          node "$BIN/claude.js" fix 2
+          node "$BIN/progress.js" status TESTING
+      - name: Package the change as a patch
+        id: patch
+        run: node "$BIN/make-patch.js"
+      - name: Report build failure
+        if: failure() || cancelled()
+        run: node "$BIN/progress.js" failed
+
+  verify:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      WORK: ${{ runner.temp }}/speakup
+      BIN: ${{ runner.temp }}/speakup-bin
+    outputs:
+      tests: ${{ steps.tests.outputs.tests }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Copy the factory scripts from the base branch
+        run: mkdir -p "$BIN" && cp .github/speakup/*.js "$BIN/"
+      - name: Apply the patch on a clean VM
+        env:
+          PATCH_B64: ${{ needs.build.outputs.patch }}
+        run: node "$BIN/apply-patch.js"
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund > "$WORK/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
+      - name: Run the approved tests
+        id: tests
+        env:
+          TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
+        run: node "$BIN/run-tests.js"
+
+  push:
+    needs: [prepare, build, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      WORK: ${{ runner.temp }}/speakup
+      PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Report PUSHING
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+        run: node .github/speakup/callback.js status PUSHING
+      - name: Apply the patch as data
+        id: apply
+        env:
+          PATCH_B64: ${{ needs.build.outputs.patch }}
+        run: node .github/speakup/apply-patch.js
+      - name: Refuse leaks and credentials
+        id: guard
+        env:
+          SENSITIVE: ${{ needs.prepare.outputs.sensitive }}
+          TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
+        run: node .github/speakup/guard.js
+      - name: Commit and push the review branch (hooks disabled)
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ needs.prepare.outputs.base_branch }}
+        run: |
+          set -euo pipefail
+          [[ "$BRANCH" == speakup/job-* && "$BRANCH" != "$BASE_BRANCH" ]] || { echo "Refusing to push $BRANCH" > "$WORK/error.txt"; exit 1; }
+          G="git -c core.hooksPath=/dev/null -c user.name=SpeakUp-AI-Factory -c user.email=speakup-factory@users.noreply.github.com"
+          $G switch -c "$BRANCH"
+          $G commit -q -m "SpeakUp AI Factory job $JOB_ID" -m "Approved plan and sources are private in SpeakUp: $SPEAKUP_BASE_URL/?job=$JOB_ID"
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          $G -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH" push -q "https://github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+          echo "sha=$($G rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Report pushed (SpeakUp opens the PR)
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+          COMMIT_SHA: ${{ steps.push.outputs.sha }}
+          FILES_CHANGED: ${{ steps.apply.outputs.files_changed }}
+          CHANGED_FILES: ${{ steps.apply.outputs.changed_files }}
+          SUITE_MODIFIED: ${{ steps.guard.outputs.suite_modified }}
+          TESTS_JSON: ${{ needs.verify.outputs.tests }}
+        run: node .github/speakup/callback.js pushed
+
+  report-failure:
+    needs: [prepare, build, verify, push]
+    if: failure() || cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      WORK: ${{ runner.temp }}/speakup
+      PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
+      FAIL_MESSAGE: >-
+        Workflow stopped. prepare=${{ needs.prepare.result }}, build=${{ needs.build.result }},
+        verify=${{ needs.verify.result }}, push=${{ needs.push.result }}.
+        A protected path, meeting content in the diff, a credential or a patch that does not apply stops the push job; see the run.
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/speakup
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Report FAILED
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+        run: node .github/speakup/callback.js failed
