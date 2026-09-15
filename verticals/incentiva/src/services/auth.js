@@ -65,7 +65,7 @@ async function ensureAccounts(tenantId) {
       }
     }
     agent = await upsertAccount(tenantId, {
-      email: process.env.INCENTIVA_AGENT_EMAIL, name: process.env.INCENTIVA_AGENT_NAME || 'Ole',
+      email: process.env.INCENTIVA_AGENT_EMAIL, name: process.env.INCENTIVA_AGENT_NAME || 'Licensed agent',
       password: process.env.INCENTIVA_AGENT_PASSWORD, role: 'agent', license_no: process.env.INCENTIVA_AGENT_LICENSE || null,
       title: process.env.INCENTIVA_AGENT_TITLE || 'Real estate sales associate', brokerage_id: brokerageId, phone: process.env.INCENTIVA_AGENT_PHONE || null
     });

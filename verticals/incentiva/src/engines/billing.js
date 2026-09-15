@@ -7,7 +7,7 @@
  * TRANSACTION. A fee tied to a signed agreement, a registration or a closing is
  * a referral fee that only a licensed Florida brokerage may receive. There is
  * no code path here for those events, the database CHECK refuses them, and the
- * SIT fails the build if one appears. Ole, as a co-owner, pays the same rate as
+ * SIT fails the build if one appears. The agent partner, as a co-owner, pays the same rate as
  * any agent (arm's length).
  */
 

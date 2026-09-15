@@ -3,7 +3,7 @@
 /**
  * BuyersLine database connection.
  *
- * INCENTIVA_DATABASE_URL first: the venture is a DIGIT2AI x Ole partnership and
+ * INCENTIVA_DATABASE_URL first: the venture is a DIGIT2AI and agent partnership and
  * its data should be separable onto its own Postgres instance without a code
  * change. Until that instance exists it falls back to the CRM database, where
  * every table carries the nca_ prefix.

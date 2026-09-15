@@ -2753,7 +2753,7 @@ app.get('/debug/speakup-error', (req, res) => {
 });
 
 // =====================================================
-// BUYERSLINE — new-construction buyer platform, DIGIT2AI x Ole (served at /buyersline/)
+// BUYERSLINE — new-construction buyer platform, DIGIT2AI and agent partner (served at /buyersline/)
 // Code lives in verticals/incentiva (working name); tables nca_, env INCENTIVA_*.
 // Buying power + verified builder incentives compared in payment terms; agent
 // console at /buyersline/admin. Not a brokerage, not a lender, nothing auto-sends.

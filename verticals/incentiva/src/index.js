@@ -6,8 +6,8 @@
  * A consumer front door: buyers see their buying power, every active new-home
  * community near their target area, and each builder's incentives verified by
  * a licensed agent, compared in monthly-payment terms. The platform connects
- * them, at no cost, to a licensed sales associate (Ole) who pays the platform
- * per consult held. A DIGIT2AI x Ole partnership; BuyersLine is a technology
+ * them, at no cost, to a licensed sales associate who pays the platform
+ * per consult held. A DIGIT2AI and agent partnership; BuyersLine is a technology
  * company, not a brokerage and not a lender.
  *
  * Invariants (see CLAUDE.md "BuyersLine"):
