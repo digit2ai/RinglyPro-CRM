@@ -435,6 +435,7 @@
   const TITLES = {
     today: 'Today', verify: 'Verify', reports: 'Reports', compliance: 'Compliance', buyers: 'Buyers',
     registry: 'Registry', incentives: 'Incentives', billing: 'Billing', settings: 'Settings', more: 'More', kb: 'Knowledge base',
+    users: 'Users', system: 'System', architecture: 'Architecture',
   };
   const TAB_GROUP = { today: 'today', verify: 'verify', buyers: 'buyers', registry: 'registry' };
 
@@ -508,7 +509,8 @@
     setBadge('reports', num(t.reports_pending));
     setBadge('compliance', num(t.compliance_holds));
     setBadge('leads', num(t.new_leads));
-    setBadge('more', num(t.reports_pending) + num(t.compliance_holds));
+    setBadge('users', num(t.pending_logins));
+    setBadge('more', num(t.reports_pending) + num(t.compliance_holds) + num(t.pending_logins));
   }
   function refreshBadges() { api('GET', '/agent/today').then(updateBadges).catch(() => {}); }
 
@@ -1503,7 +1505,12 @@
       ['#/kb', 'Knowledge base', 'Internal research and policy notes, links and documents', ''],
       ['#/billing', 'Billing', 'Plan, consult events, invoice preview', ''],
       ['#/settings', 'Settings', 'Market assumptions, theme, account', ''],
-    ];
+    ].concat(isAdmin() ? [
+      ['#/users', 'Users', 'Console accounts, preview logins and experts', 'users'],
+      ['#/system', 'System', 'Connections, research runs and daily jobs', ''],
+      ['#/architecture', 'Architecture', 'The ecosystem map and every AI agent', ''],
+      [BASE + '/architecture/sme', 'Expert questionnaire', 'Opens in a new tab', ''],
+    ] : []);
     const html = `${pageHead('More')}
       <ul class="morelist">${items.map(([href, label, desc, badge]) => `<li><a href="${href}"><span>${esc(label)}<span class="desc">${esc(desc)}</span></span>${badge ? `<span class="badge" data-badge="${badge}" hidden></span>` : ''}</a></li>`).join('')}
         <li><button type="button" data-act="signout">Sign out<span class="desc"></span></button></li>
@@ -1727,9 +1734,110 @@
     if (anchor && anchor.nextSibling) rail.insertBefore(a, anchor.nextSibling); else rail.appendChild(a);
   }
 
+
+  /* ------------------------------------------------------------------ */
+  /* Admin: Users, System, Architecture                                  */
+  /* ------------------------------------------------------------------ */
+
+  function isAdmin() { return !!(state.me && state.me.role === 'admin'); }
+  function showAdminNav() {
+    $$('[data-admin-only]').forEach((el) => { el.hidden = !isAdmin(); });
+    const label = $('#consoleLabel'); if (label && isAdmin()) label.textContent = 'Admin dashboard';
+  }
+  function adminGuard(title) {
+    return isAdmin() ? null : pageHead(title) + emptyHTML('Admins only.', 'Ask the account owner if you need this screen.');
+  }
+
+  async function viewUsers() {
+    const g = adminGuard('Users'); if (g) return g;
+    const d = await api('GET', '/agent/admin/users');
+    const pending = d.preview.filter((u) => u.status === 'pending').length;
+    const statusChip = (s) => chip(String(s).toUpperCase(), s === 'approved' || s === 'active' ? 'ok' : s === 'pending' ? 'warn' : 'neutral');
+    const consoleRows = d.console.map((u) => `<tr>
+        <td data-label="Name"><strong>${esc(u.name)}</strong>${u.is_me ? ' ' + chip('YOU', 'neutral') : ''}<div class="small muted">${esc(u.email)}</div></td>
+        <td data-label="Role">${esc(u.role === 'admin' ? 'Admin' : 'Agent')}${u.license_no ? `<div class="small muted">License ${esc(u.license_no)}</div>` : ''}</td>
+        <td data-label="Status">${u.active ? chip('ACTIVE', 'ok') : chip('INACTIVE', 'neutral')}${u.managed_on_render ? `<div class="small muted">Set on Render</div>` : ''}</td>
+        <td data-label="">${u.managed_on_render || u.is_me ? '' : `<div class="formbar" style="margin:0">
+          <button type="button" class="btn btn-ghost btn-sm" data-act="consoleUserActive" data-uid="${esc(u.id)}" data-active="${u.active ? '0' : '1'}">${u.active ? 'Deactivate' : 'Activate'}</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-act="consoleUserReset" data-uid="${esc(u.id)}">Reset password</button></div>`}</td>
+      </tr>`).join('');
+    const previewRows = d.preview.map((u) => `<tr>
+        <td data-label="Email"><strong>${esc(u.email)}</strong></td>
+        <td data-label="Status">${statusChip(u.status)}${u.decided_by ? `<div class="small muted">by ${esc(u.decided_by)}</div>` : ''}</td>
+        <td data-label="Created">${timeTag(u.created_at)}</td>
+        <td data-label="Last sign-in">${u.last_login_at ? timeTag(u.last_login_at, true) : DASH}</td>
+        <td data-label=""><div class="formbar" style="margin:0">
+          ${u.status !== 'approved' ? `<button type="button" class="btn btn-primary btn-sm" data-act="previewDecide" data-uid="${esc(u.id)}" data-decision="approve">Approve</button>` : ''}
+          ${u.status === 'pending' ? `<button type="button" class="btn btn-ghost btn-sm" data-act="previewDecide" data-uid="${esc(u.id)}" data-decision="reject">Reject</button>` : ''}
+          ${u.status === 'approved' ? `<button type="button" class="btn btn-ghost btn-sm" data-act="previewDecide" data-uid="${esc(u.id)}" data-decision="disable">Disable</button>` : ''}
+        </div></td>
+      </tr>`).join('');
+    const expertRows = d.experts.map((u) => `<tr>
+        <td data-label="Name"><strong>${esc(u.name)}</strong><div class="small muted">${esc(u.email)}</div></td>
+        <td data-label="Role">${esc(u.role === 'admin' ? 'Admin' : 'Expert')}</td>
+        <td data-label="Status">${statusChip(u.status)}</td>
+        <td data-label="Answered" class="num">${esc(u.answered)}</td>
+        <td data-label="Last sign-in">${u.last_login_at ? timeTag(u.last_login_at, true) : DASH}</td>
+      </tr>`).join('');
+    return `${pageHead('Users', 'Everyone who can reach BuyersLine before launch')}
+      <section class="card" style="margin-bottom:18px"><div class="qhead"><h2>Private preview logins</h2>${pending ? chip(pending + ' WAITING', 'warn') : ''}</div>
+        <p class="small muted">People create these on the sign-in page. A login works only after an admin approves it; the person gets an email when it is approved.</p>
+        ${previewRows ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Email</th><th>Status</th><th>Created</th><th>Last sign-in</th><th></th></tr></thead><tbody>${previewRows}</tbody></table></div>` : emptyHTML('No preview logins yet.', 'They appear here when someone uses Create a login.')}
+      </section>
+      <section class="card" style="margin-bottom:18px"><h2>Console accounts</h2>
+        <p class="small muted">Who can sign in to this dashboard. Accounts set on Render (the owner and the licensed agent) are changed there.</p>
+        <div class="tablewrap"><table class="rtable"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${consoleRows}</tbody></table></div>
+        <details style="margin-top:12px"><summary><strong>Add a console account</strong></summary>
+          <form data-form="addConsoleUser" novalidate style="margin-top:12px"><div class="userform">
+            <label class="field"><span>Name</span><input name="name" required autocomplete="off"></label>
+            <label class="field"><span>Email</span><input name="email" type="email" required autocomplete="off"></label>
+            <label class="field"><span>Role</span><select name="role"><option value="agent">Agent</option><option value="admin">Admin</option></select></label>
+            <label class="field"><span>License number (agents)</span><input name="license_no" autocomplete="off"></label>
+          </div><div class="formbar"><button type="submit" class="btn btn-primary">Create account</button></div>
+          <p class="small muted">A temporary password is shown once. Share it privately.</p></form>
+        </details>
+      </section>
+      <section class="card"><div class="qhead"><h2>Expert questionnaire</h2><a class="btn btn-ghost btn-sm" href="${esc(BASE + '/architecture/sme')}" target="_blank" rel="noopener">Open</a></div>
+        <p class="small muted">Subject matter experts answering the knowledge questionnaire. Anyone signed in here opens it with no second password.</p>
+        ${expertRows ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Name</th><th>Role</th><th>Status</th><th class="num">Answered</th><th>Last sign-in</th></tr></thead><tbody>${expertRows}</tbody></table></div>` : emptyHTML('No experts yet.', 'Open the questionnaire to create the first account.')}
+      </section>`;
+  }
+
+  async function viewSystem() {
+    const g = adminGuard('System'); if (g) return g;
+    const d = await api('GET', '/agent/admin/system');
+    const c = d.counts || {};
+    const runs = (d.runs || []).map((r) => `<tr>
+        <td data-label="Area">${esc(r.area_label || r.zip || '')}</td>
+        <td data-label="Started">${timeTag(r.ran_at, true)}</td>
+        <td data-label="Result">${r.status === 'done' && !r.notice && !r.fallback_run_id ? chip('FRESH', 'ok') : r.status === 'running' ? chip('RUNNING', 'warn') : chip(String(r.notice || r.status).replace(/^research_/, '').replace(/_/g, ' ').toUpperCase(), 'neutral')}</td>
+        <td data-label="Trigger">${esc(r.trigger || 'buyer')}</td>
+        <td data-label="Searches" class="num">${esc(r.searches || 0)}</td>
+        <td data-label="Error">${textCell(r.error)}</td>
+      </tr>`).join('');
+    const jobs = (d.jobs || []).map((j) => `<li><span><span class="sysname">${esc(j.run_date ? String(j.run_date).slice(0, 10) : '')}</span><br><span class="sysdetail">${esc(((j.detail && j.detail.areas) || []).map((a) => a.zip + ': ' + a.result).join(', ') || (j.finished_at ? 'No areas to refresh' : 'Running'))}</span></span></li>`).join('');
+    return `${pageHead('System', 'What is connected and what the agents did')}
+      <div class="qgrid" style="margin-bottom:18px">
+        <section class="card qcard"><div class="qhead"><h2>Reports created</h2><span class="big">${num(c.searches)}</span></div><p>${num(c.searches_7d)} in the last 7 days.</p></section>
+        <section class="card qcard"><div class="qhead"><h2>Leads</h2><span class="big">${num(c.leads)}</span></div><p>${num(c.leads_7d)} in the last 7 days.</p></section>
+        <section class="card qcard"><div class="qhead"><h2>Research runs this month</h2><span class="big">${num(d.research_runs_this_month)}</span></div><p>Monthly cap ${num(d.research_cap)}.</p></section>
+        <section class="card qcard"><div class="qhead"><h2>Logins waiting</h2><span class="big">${num(c.pending_logins)}</span></div><p><a href="#/users">Review in Users</a></p></section>
+      </div>
+      <section class="card" style="margin-bottom:18px"><h2>Connections</h2><ul class="syslist">${(d.checks || []).map((x) => `<li><span><span class="sysname">${esc(x.label)}</span><br><span class="sysdetail">${esc(x.detail)}</span></span>${x.ok ? chip('OK', 'ok') : chip('NEEDS ATTENTION', 'crit')}</li>`).join('')}</ul></section>
+      <section class="card" style="margin-bottom:18px"><h2>Recent promotion research</h2>${runs ? `<div class="tablewrap"><table class="rtable"><thead><tr><th>Area</th><th>Started</th><th>Result</th><th>Trigger</th><th class="num">Searches</th><th>Error</th></tr></thead><tbody>${runs}</tbody></table></div>` : emptyHTML('No research yet.', 'Runs appear when a buyer creates a report.')}</section>
+      <section class="card"><h2>Morning refresh</h2>${jobs ? `<ul class="syslist">${jobs}</ul>` : emptyHTML('Not run yet.', 'It runs between 6 and 10 a.m. Eastern for the areas buyers searched.')}</section>`;
+  }
+
+  async function viewArchitecture() {
+    const g = adminGuard('Architecture'); if (g) return g;
+    return `${pageHead('Architecture', 'The ecosystem map, the AI agents and the guardrails', `<a class="btn btn-ghost btn-sm" href="${esc(BASE + '/architecture')}" target="_blank" rel="noopener">Open full screen</a>`)}
+      <iframe class="archframe" src="${esc(BASE + '/architecture')}" title="BuyersLine architecture"></iframe>`;
+  }
+
   const VIEWS = {
     today: viewToday, leads: viewLeads, verify: viewVerify, reports: viewReports, compliance: viewCompliance, buyers: viewBuyers,
     registry: viewRegistry, incentives: viewIncentives, billing: viewBilling, settings: viewSettings, more: viewMore, kb: viewKb,
+    users: viewUsers, system: viewSystem, architecture: viewArchitecture,
   };
 
   /* ------------------------------------------------------------------ */
@@ -1738,6 +1846,28 @@
 
   const actions = {
     retry: () => refresh(),
+    previewDecide: async (el) => {
+      const d = el.dataset.decision;
+      if (d !== 'approve') {
+        const ok = await confirmDialog({ title: d === 'reject' ? 'Reject this login?' : 'Disable this login?', body: 'The person will not be able to sign in.', confirmLabel: d === 'reject' ? 'Reject' : 'Disable', danger: true });
+        if (!ok) return;
+      }
+      try { await api('POST', `/agent/admin/users/preview/${encodeURIComponent(el.dataset.uid)}`, { decision: d }); toast(d === 'approve' ? 'Login approved. The person was emailed.' : 'Login updated.'); refresh(); refreshBadges(); }
+      catch (e) { if (e.status !== 401) toast(`Update failed: ${e.message}`, 'crit'); }
+    },
+    consoleUserActive: async (el) => {
+      const on = el.dataset.active === '1';
+      if (!on) { const ok = await confirmDialog({ title: 'Deactivate this account?', body: 'They are signed out and cannot sign in until you activate the account again.', confirmLabel: 'Deactivate', danger: true }); if (!ok) return; }
+      try { await api('PATCH', `/agent/admin/users/console/${encodeURIComponent(el.dataset.uid)}`, { active: on }); toast(on ? 'Account activated.' : 'Account deactivated.'); refresh(); }
+      catch (e) { if (e.status !== 401) toast(`Update failed: ${e.message}`, 'crit'); }
+    },
+    consoleUserReset: async (el) => {
+      const ok = await confirmDialog({ title: 'Reset this password?', body: 'The current password stops working. A temporary password is shown once.', confirmLabel: 'Reset password', danger: true });
+      if (!ok) return;
+      try { const r = await api('PATCH', `/agent/admin/users/console/${encodeURIComponent(el.dataset.uid)}`, { reset_password: true }); window.prompt('Temporary password (shown once). Share it privately:', r.temporary_password); }
+      catch (e) { if (e.status !== 401) toast(`Reset failed: ${e.message}`, 'crit'); }
+    },
+
 
     deleteLeadNote: async (el) => {
       const ok = await confirmDialog({ title: 'Delete this note?', body: 'The note is removed for everyone. This cannot be undone.', confirmLabel: 'Delete note', danger: true });
@@ -1910,6 +2040,14 @@
   /* ------------------------------------------------------------------ */
 
   const forms = {
+    addConsoleUser: async (form) => {
+      const f = (n) => (form.elements.namedItem(n) || {}).value || '';
+      try {
+        const r = await api('POST', '/agent/admin/users/console', { name: f('name').trim(), email: f('email').trim(), role: f('role'), license_no: f('license_no').trim() || null });
+        window.prompt('Account created. Temporary password (shown once). Share it privately:', r.temporary_password);
+        refresh();
+      } catch (e) { if (e.status !== 401) setStatus(form, `Could not create the account: ${e.message}`, 'crit'); }
+    },
     addLeadNote: async (form) => {
       const body = form.elements.namedItem('body').value.trim();
       if (!body) { setStatus(form, 'Write the note first.', 'crit'); return; }
@@ -2300,6 +2438,7 @@
     if (!me || !me.user) { location.href = BASE + '/admin/login'; return; }
     state.me = me.user;
     injectKbNav();
+    showAdminNav();
     renderWho();
     if (!location.hash || location.hash === '#' || location.hash === '#/') history.replaceState(null, '', '#/today');
     await render();

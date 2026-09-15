@@ -75,7 +75,8 @@ module.exports = function agentRoutes() {
       WHERE i.tenant_id = :tt AND v.verification_status = 'verified' AND (v.close_by BETWEEN now()::date AND now()::date + 21 OR v.expires_on BETWEEN now()::date AND now()::date + 21)`, { tt });
     const newLeads = await db.one(`SELECT COUNT(*)::int AS n FROM nca_leads l WHERE l.tenant_id = :tt AND l.status = 'new'${req.user.role === 'admin' ? '' : ' AND l.assigned_agent_id = :uid'}`, { tt, uid });
     const meetings = await db.one(`SELECT COUNT(*)::int AS n FROM nca_lead_meetings m WHERE m.tenant_id = :tt AND m.status = 'booked' AND m.starts_at BETWEEN now() AND now() + interval '7 days'${req.user.role === 'admin' ? '' : ' AND m.agent_id = :uid'}`, { tt, uid });
-    res.json({ new_leads: newLeads.n, meetings_next_7_days: meetings.n, verification: vc, reports_pending: rep.n, compliance_holds: holds.n, gate_stops: gates.n, consult_requests: consults.n, deadlines: deadlines.n, billable_consults_month: billable.n });
+    const pendingLogins = req.user.role === 'admin' ? (await db.one(`SELECT COUNT(*)::int AS n FROM nca_site_users WHERE tenant_id = :tt AND status = 'pending'`, { tt })).n : 0;
+    res.json({ new_leads: newLeads.n, meetings_next_7_days: meetings.n, verification: vc, reports_pending: rep.n, compliance_holds: holds.n, gate_stops: gates.n, consult_requests: consults.n, deadlines: deadlines.n, billable_consults_month: billable.n, pending_logins: pendingLogins });
   }));
 
   // ── Verification ──────────────────────────────────────────────────────────
@@ -739,6 +740,112 @@ module.exports = function agentRoutes() {
     await kb.touchKb(req.user.tenant_id, cur.id, req.user.id);
     await audit(req.user.tenant_id, actor(req), 'kb.file_upload', 'kb_entry', cur.id, { file_id: meta.id, filename: meta.filename, size_bytes: meta.size_bytes, sha256: meta.sha256 });
     res.status(201).json({ file: meta });
+  }));
+
+  // ── Admin: users and system (owner request 2026-09-15: one dashboard to manage the project) ──
+  // Three kinds of account live here: console accounts (nca_users), private-preview logins (nca_site_users,
+  // approved here or on /gate/accounts) and expert questionnaire accounts (nca_sme_users). Admins only.
+  const crypto = require('crypto');
+  const bcrypt = require('bcryptjs');
+  const archgate = require('../services/archgate');
+  const envEmails = () => [process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com', process.env.INCENTIVA_AGENT_EMAIL].filter(Boolean).map((e) => String(e).trim().toLowerCase());
+  const tempPassword = () => crypto.randomBytes(12).toString('base64url');
+
+  r.get('/admin/users', wrap(async (req, res) => {
+    adminOnly(req);
+    const tt = req.user.tenant_id;
+    const env = envEmails();
+    const consoleUsers = (await db.q(`SELECT id, email, name, role, title, license_no, phone, active, created_at FROM nca_users WHERE tenant_id = :tt ORDER BY active DESC, role, name`, { tt }))
+      .map((u) => Object.assign(u, { managed_on_render: env.includes(String(u.email).toLowerCase()), is_me: u.id === req.user.id }));
+    const preview = await db.q(`SELECT id, email, status, decided_by, decided_at, last_login_at, created_at FROM nca_site_users WHERE tenant_id = :tt ORDER BY (status = 'pending') DESC, created_at DESC LIMIT 500`, { tt });
+    const experts = await db.q(`SELECT u.id, u.name, u.email, u.role, u.status, u.last_login_at,
+      (SELECT COUNT(*)::int FROM nca_sme_answers a WHERE a.user_id = u.id AND a.status = 'submitted') AS answered
+      FROM nca_sme_users u WHERE u.tenant_id = :tt ORDER BY u.role, u.name`, { tt });
+    res.json({ console: consoleUsers, preview, experts, preview_owner_page: '/gate/accounts' });
+  }));
+
+  r.post('/admin/users/console', wrap(async (req, res) => {
+    adminOnly(req);
+    const tt = req.user.tenant_id, b = req.body || {};
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+    const name = clampStr(b.name, 160);
+    const role = b.role === 'admin' ? 'admin' : 'agent';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new HttpError(400, 'Enter a valid email address');
+    if (!name) throw new HttpError(400, 'Enter a name');
+    if (await db.one('SELECT id FROM nca_users WHERE tenant_id = :tt AND email = :e', { tt, e: email })) throw new HttpError(409, 'An account with that email already exists');
+    const pw = tempPassword();
+    const rows = await db.exec(`INSERT INTO nca_users (tenant_id, email, name, password_hash, role, license_no, title, phone) VALUES (:tt, :e, :n, :h, :r, :l, :ti, :ph) RETURNING id`, {
+      tt, e: email, n: name, h: await bcrypt.hash(pw, 10), r: role, l: role === 'agent' ? clampStr(b.license_no, 60) : null, ti: clampStr(b.title, 160), ph: clampStr(b.phone, 40)
+    });
+    await audit(tt, { type: 'agent', id: req.user.id }, 'console.user_created', 'user', rows[0].id, { role });
+    res.json({ ok: true, id: rows[0].id, temporary_password: pw });
+  }));
+
+  r.patch('/admin/users/console/:id', wrap(async (req, res) => {
+    adminOnly(req);
+    const tt = req.user.tenant_id, id = Number(req.params.id) || 0, b = req.body || {};
+    const u = await db.one('SELECT id, email FROM nca_users WHERE id = :id AND tenant_id = :tt', { id, tt });
+    if (!u) throw new HttpError(404, 'Account not found');
+    const managed = envEmails().includes(String(u.email).toLowerCase());
+    const out = { ok: true };
+    if (b.active !== undefined) {
+      if (id === req.user.id) throw new HttpError(400, 'You cannot deactivate your own account');
+      if (managed) throw new HttpError(400, 'This account is set on Render and is re-enabled on every deploy. Change it there.');
+      await db.exec('UPDATE nca_users SET active = :a WHERE id = :id AND tenant_id = :tt', { a: b.active === true, id, tt });
+    }
+    if (b.reset_password === true) {
+      if (managed) throw new HttpError(400, 'This password is set on Render. Change it there.');
+      out.temporary_password = tempPassword();
+      await db.exec('UPDATE nca_users SET password_hash = :h WHERE id = :id AND tenant_id = :tt', { h: await bcrypt.hash(out.temporary_password, 10), id, tt });
+    }
+    if (b.license_no !== undefined && !managed) await db.exec('UPDATE nca_users SET license_no = :l WHERE id = :id AND tenant_id = :tt', { l: clampStr(b.license_no, 60), id, tt });
+    await audit(tt, { type: 'agent', id: req.user.id }, 'console.user_updated', 'user', id, { active: b.active, reset_password: b.reset_password === true });
+    res.json(out);
+  }));
+
+  // The console owner acts as the checker for preview logins, same as /gate/accounts. A login never approves itself:
+  // approving needs an admin console session, which a preview login does not have.
+  r.post('/admin/users/preview/:id', wrap(async (req, res) => {
+    adminOnly(req);
+    const tt = req.user.tenant_id;
+    const row = await archgate.decide(tt, req.params.id, (req.body || {}).decision, req.user.email);
+    if (!row) throw new HttpError(400, 'Choose approve, reject or disable');
+    await audit(tt, { type: 'agent', id: req.user.id }, 'gate.login_' + row.status, 'site_user', row.id, { via: 'console' });
+    if (row.status === 'approved') notify.later(notify.siteLoginApproved, tt, row);
+    res.json({ ok: true, status: row.status });
+  }));
+
+  r.get('/admin/system', wrap(async (req, res) => {
+    adminOnly(req);
+    const tt = req.user.tenant_id;
+    const research = require('../services/research');
+    const rentcast = require('../services/rentcast');
+    const month = new Date().toISOString().slice(0, 7);
+    const usage = await db.q('SELECT provider, requests FROM nca_api_usage WHERE tenant_id = :tt AND month = :m', { tt, m: month });
+    const runs = await db.q(`SELECT id, zip, area_label, status, source, notice, trigger, searches, left(error, 160) AS error, ran_at, finished_at, fallback_run_id
+      FROM nca_research_runs WHERE tenant_id = :tt ORDER BY ran_at DESC LIMIT 15`, { tt });
+    const jobs = await db.q(`SELECT job, run_date, started_at, finished_at, detail FROM nca_job_runs WHERE tenant_id = :tt ORDER BY run_date DESC LIMIT 7`, { tt });
+    const counts = await db.one(`SELECT (SELECT COUNT(*)::int FROM nca_searches WHERE tenant_id = :tt) AS searches,
+      (SELECT COUNT(*)::int FROM nca_searches WHERE tenant_id = :tt AND created_at > now() - interval '7 days') AS searches_7d,
+      (SELECT COUNT(*)::int FROM nca_leads WHERE tenant_id = :tt) AS leads,
+      (SELECT COUNT(*)::int FROM nca_leads WHERE tenant_id = :tt AND created_at > now() - interval '7 days') AS leads_7d,
+      (SELECT COUNT(*)::int FROM nca_site_users WHERE tenant_id = :tt AND status = 'pending') AS pending_logins`, { tt });
+    const u = (p) => { const x = usage.find((y) => y.provider === p); return x ? x.requests : 0; };
+    res.json({
+      month,
+      checks: [
+        { key: 'research_model', label: 'Promotion research model', ok: !!process.env.ANTHROPIC_API_KEY && research.modelStatus().available,
+          detail: !process.env.ANTHROPIC_API_KEY ? 'No Anthropic key set' : research.modelStatus().available ? 'Reachable' : `Paused after an error (${research.modelStatus().reason}) until ${research.modelStatus().until}` },
+        { key: 'research_daily', label: 'Morning research refresh', ok: process.env.INCENTIVA_RESEARCH_DAILY !== 'off', detail: process.env.INCENTIVA_RESEARCH_DAILY === 'off' ? 'Turned off' : '6-10 a.m. Eastern, once a day' },
+        { key: 'email', label: 'Email (SendGrid)', ok: notify.configured(), detail: notify.configured() ? 'Connected' : 'SENDGRID_API_KEY not set' },
+        { key: 'sms', label: 'Text messages (Twilio)', ok: !!(process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID || process.env.INCENTIVA_SMS_FROM), detail: process.env.INCENTIVA_SMS_MESSAGING_SERVICE_SID || process.env.INCENTIVA_SMS_FROM ? 'Sender set' : 'No SMS sender set' },
+        { key: 'listings', label: 'Home listings (RentCast)', ok: rentcast.configured(), detail: rentcast.configured() ? `${u('rentcast')} of ${rentcast.monthlyCap()} requests this month` : 'RENTCAST_API_KEY not set' },
+        { key: 'site_gate', label: 'Private preview sign-in', ok: true, detail: archgate.siteGateOn() ? 'On: the site is private and Google cannot index it' : 'Off: the site is public' },
+        { key: 'agents', label: 'Follow-up, hand-off and scheduler agents', ok: require('../services/agents').enabled(), detail: require('../services/agents').enabled() ? 'Running' : 'Off' }
+      ],
+      research_runs_this_month: u('research'), research_cap: Number(process.env.INCENTIVA_RESEARCH_MONTHLY_CAP || 150),
+      counts, runs, jobs
+    });
   }));
 
   return r;

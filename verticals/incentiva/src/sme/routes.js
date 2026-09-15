@@ -48,7 +48,12 @@ module.exports = function smeRouter(tenantId) {
   r.use(async (req, res, next) => {
     try {
       if (/^\/magic\//.test(req.path) || await auth.sessionFrom(tenantId, req)) return next();
-      const who = await archgate.identify(req, tenantId);
+      let who = await archgate.identify(req, tenantId);
+      if (!who) {
+        // A console user opens the questionnaire from the admin dashboard: admins as SME admins, agents as experts.
+        const cu = await require('../services/auth').userFromRequest(req, tenantId);
+        if (cu) who = { kind: cu.role === 'admin' ? 'owner' : 'account', email: cu.email };
+      }
       if (!who) return next();
       const u = await auth.ensureGateUser(tenantId, who);
       if (!u) return next();

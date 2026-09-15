@@ -124,4 +124,16 @@ function requireAgent(tenantId) {
   };
 }
 
-module.exports = { PUBLISHED_PASSWORDS, configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };
+/** The active console user behind this request's session cookie, or null. */
+async function userFromRequest(req, tenantId) {
+  if (!configured()) return null;
+  const tok = readCookie(req);
+  if (!tok) return null;
+  try {
+    const claims = jwt.verify(tok, secret());
+    if (claims.tid !== tenantId) return null;
+    return await db.one('SELECT * FROM nca_users WHERE id = :id AND tenant_id = :t AND active = true', { id: claims.uid, t: tenantId });
+  } catch (e) { return null; }
+}
+
+module.exports = { userFromRequest, PUBLISHED_PASSWORDS, configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };

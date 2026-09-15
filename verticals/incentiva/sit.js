@@ -635,6 +635,42 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         const r = await call('POST', '/api/v1/agent/demo/seed', {}, 'owner');
         eq(r.status, 200); eq(r.data.created.communities, 3);
       });
+      await t('admin dashboard: Users and System are admins only; an admin adds an account that can sign in, approves a preview login, and opens Architecture', async () => {
+        eq((await call('GET', '/api/v1/agent/admin/users', null, 'agent')).status, 403);
+        eq((await call('GET', '/api/v1/agent/admin/system', null, 'agent')).status, 403);
+        eq((await call('GET', '/api/v1/agent/admin/users')).status, 401);
+        const u = await call('GET', '/api/v1/agent/admin/users', null, 'owner');
+        eq(u.status, 200); assert(Array.isArray(u.data.console) && Array.isArray(u.data.preview) && Array.isArray(u.data.experts), 'users payload');
+        assert(!/password_hash/.test(JSON.stringify(u.data)), 'a password hash left the server');
+        const me = u.data.console.find((x) => x.is_me);
+        assert(me && me.managed_on_render, 'the Render owner account must be marked');
+        eq((await call('PATCH', '/api/v1/agent/admin/users/console/' + me.id, { active: false }, 'owner')).status, 400, 'an admin deactivated their own account');
+        const made = await call('POST', '/api/v1/agent/admin/users/console', { name: 'SIT Helper', email: 'sit-helper@example.test', role: 'agent' }, 'owner');
+        eq(made.status, 200); assert(made.data.temporary_password && made.data.temporary_password.length >= 12, 'temporary password');
+        eq((await call('POST', '/api/v1/agent/admin/users/console', { name: 'Dup', email: 'sit-helper@example.test', role: 'agent' }, 'owner')).status, 409);
+        eq((await call('POST', '/api/v1/auth/login', { email: 'sit-helper@example.test', password: made.data.temporary_password }, 'helper')).status, 200, 'the new account cannot sign in');
+        eq((await call('GET', '/api/v1/agent/admin/users', null, 'helper')).status, 403, 'a new agent reached admin screens');
+        eq((await call('PATCH', '/api/v1/agent/admin/users/console/' + made.data.id, { active: false }, 'owner')).status, 200);
+        eq((await call('GET', '/api/v1/agent/today', null, 'helper')).status, 401, 'a deactivated account kept its session');
+        const pend = await db.exec(`INSERT INTO nca_site_users (tenant_id, email, password_hash) VALUES (:t, 'sit-console-approve@example.test', '$2a$12$x') RETURNING id`, { t: SIT_TENANT });
+        eq((await call('POST', '/api/v1/agent/admin/users/preview/' + pend[0].id, { decision: 'approve' }, 'agent')).status, 403);
+        const ap = await call('POST', '/api/v1/agent/admin/users/preview/' + pend[0].id, { decision: 'approve' }, 'owner');
+        eq(ap.status, 200); eq(ap.data.status, 'approved');
+        eq((await call('POST', '/api/v1/agent/admin/users/preview/' + pend[0].id, { decision: 'nuke' }, 'owner')).status, 400);
+        const sys = await call('GET', '/api/v1/agent/admin/system', null, 'owner');
+        eq(sys.status, 200); assert(sys.data.checks.some((c) => c.key === 'research_model') && sys.data.counts, 'system payload');
+        const saveU = process.env.INCENTIVA_ARCHITECTURE_USER, saveP = process.env.INCENTIVA_ARCHITECTURE_PASSWORD;
+        process.env.INCENTIVA_ARCHITECTURE_USER = 'arch-owner@example.test'; process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-architecture-password-2026';
+        try {
+          eq((await fetch(BASE + '/architecture')).status, 401);
+          eq((await fetch(BASE + '/architecture', { headers: { Cookie: jar.owner } })).status, 200, 'a console session cannot open Architecture');
+        } finally {
+          if (saveU === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = saveU;
+          if (saveP === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = saveP;
+        }
+        const adminHtml = read(path.join(ROOT, 'public', 'admin.html'));
+        assert(/href="#\/users"[^>]*data-admin-only/.test(adminHtml) && /href="#\/architecture"[^>]*data-admin-only/.test(adminHtml) && /href="#\/system"[^>]*data-admin-only/.test(adminHtml), 'left pane admin links');
+      });
       await t('health reports the console configured and no transports', async () => {
         const r = await call('GET', '/health'); eq(r.data.agent_console, 'configured'); eq(r.data.model_configured, false); assert(/none/.test(r.data.transports));
       });
@@ -1487,6 +1523,12 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           const me = await fetch(BASE + '/architecture/sme/api/me', { headers: { Cookie: userCookie } });
           eq(me.status, 200, 'SME tool asked for a second password'); eq((await me.json()).user.role, 'sme');
           eq((await (await fetch(BASE + '/architecture/sme/api/me', { headers: { Cookie: owner } })).json()).user.role, 'admin');
+          const sso = await fetch(BASE + '/admin/login', { redirect: 'manual', headers: { Cookie: owner } });
+          eq(sso.status, 303, 'the gate owner was not taken into the admin dashboard'); eq(sso.headers.get('location'), '/buyersline/admin/');
+          assert(/^incentiva_token=/.test(sso.headers.get('set-cookie') || ''), 'no console session for the gate owner');
+          const noSso = await fetch(BASE + '/admin/login', { redirect: 'manual', headers: { Cookie: userCookie } });
+          eq(noSso.status, 200, 'an approved preview login was signed in to the console');
+          assert(!/incentiva_token=/.test(noSso.headers.get('set-cookie') || ''), 'a preview login received a console session');
           const m1 = mail.length;
           eq((await form('/gate/forgot', { email: 'nobody@example.test' })).status, 200);
           eq((await form('/gate/forgot', { email: 'sit-preview@example.test' })).status, 200);
@@ -1513,12 +1555,13 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
           for (const tb of ['nca_sme_sessions_log', 'nca_sme_auth_sessions', 'nca_sme_users']) await db.exec(`DELETE FROM ${tb} WHERE tenant_id = :t`, { t: SIT_TENANT });
         }
       });
-      await t('the landing page carries the ecosystem map section (shared component, EN/ES) and an Architecture menu link', async () => {
+      await t('the landing page carries the ecosystem map section (shared component, EN/ES) and a Log in link to the admin dashboard, not an Architecture link', async () => {
         const html = await (await fetch(BASE + '/')).text();
         assert(html.indexOf('<section id="about"') < html.indexOf('<section id="ecosystem"') && html.indexOf('<section id="ecosystem"') < html.indexOf('orb-section'), 'ecosystem section must sit right before Questions? Ask out loud.');
         assert(/<section id="ecosystem"[\s\S]*?data-ecomap/.test(html) && /ecosystem-map\.js/.test(html) && /ecosystem-map\.css/.test(html), 'ecosystem section');
-        assert(/<nav class="site-nav"[\s\S]*?href="\/buyersline\/architecture" data-i18n="nav_arch"[\s\S]*?<\/nav>/.test(html), 'Architecture link not in the menu');
-        assert(/nav_arch: 'Arquitectura'/.test(html) && /eco_title: 'Un cerebro\. Siete agentes\.'/.test(html) && /EcosystemMap\.setLang\(lang\)/.test(html), 'Spanish or language switch missing');
+        const nav = (html.match(/<nav class="site-nav"[\s\S]*?<\/nav>/) || [''])[0];
+        assert(/href="\/buyersline\/admin\/login"[^>]*data-i18n="nav_login"/.test(nav) && !/architecture/i.test(nav), 'menu must carry Log in and no Architecture link');
+        assert(/nav_login: 'Iniciar sesión'/.test(html) && /eco_title: 'Un cerebro\. Siete agentes\.'/.test(html) && /EcosystemMap\.setLang\(lang\)/.test(html), 'Spanish or language switch missing');
         const js = read(path.join(ROOT, 'public', 'ecosystem-map.js'));
         assert(/es: \{/.test(js) && (js.match(/researcher:/g) || []).length >= 4, 'map missing Spanish labels');
         const css = read(path.join(ROOT, 'public', 'ecosystem-map.css'));

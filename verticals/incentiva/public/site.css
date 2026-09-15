@@ -1135,3 +1135,7 @@ main > section.eco, .eco {
 .rv-share .mch-chip { text-decoration: none; }
 @media (max-width: 560px) { .rv-home { flex-direction: column; } .rv-home-side { align-items: flex-start; text-align: left; } }
 @media print { .rv { border-top: 0; } .rv-contact .rv-form, .rv-share, .rv-calc { display: none !important; } }
+
+/* Landing "Log in" link to the admin dashboard (owner request 2026-09-15) */
+.site-nav a.nav-login { border: 1.5px solid var(--ink); border-radius: 999px; padding-inline: 16px; }
+.site-nav a.nav-login:hover { background: var(--ink); color: var(--ground); }

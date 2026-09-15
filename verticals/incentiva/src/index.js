@@ -222,7 +222,26 @@ function createApp(opts = {}) {
   router.get('/', shell('index.html'));
   router.get('/r/:token', shell('report.html'));
   router.get(['/search', '/buscar'], shell('search.html'));
-  router.get(['/login', '/admin/login'], shell('login.html'));
+  // The owner already signed in at the private-preview gate goes straight into the console as the owner account.
+  // Preview logins never do: the console holds buyer contact details.
+  const loginShell = shell('login.html');
+  router.get(['/login', '/admin/login'], async (req, res) => {
+    try {
+      if (auth.configured() && !(await auth.userFromRequest(req, tenantId))) {
+        const who = await archgate.identify(req, tenantId);
+        if (who && who.kind === 'owner') {
+          await auth.ensureAccounts(tenantId);
+          const owner = await db.one(`SELECT * FROM nca_users WHERE tenant_id = :t AND email = :e AND role = 'admin' AND active = true`, { t: tenantId, e: String(process.env.INCENTIVA_OWNER_EMAIL || 'mstagg@digit2ai.com').trim().toLowerCase() });
+          if (owner) {
+            auth.setCookie(res, auth.sign(owner), auth.TTL_SECONDS);
+            await audit(tenantId, { type: 'agent', id: owner.id }, 'auth.login_gate_owner', 'user', owner.id, {});
+            return res.redirect(303, req.baseUrl + '/admin/');
+          }
+        }
+      } else if (auth.configured()) return res.redirect(303, req.baseUrl + '/admin/');
+    } catch (e) { console.error('[incentiva] console gate sign-in', e.message); }
+    loginShell(req, res);
+  });
   router.get(['/admin', '/admin/'], shell('admin.html'));
   router.get('/meet/:token', shell('meet.html'));
   router.get('/unsubscribe/:token', shell('unsubscribe.html'));
@@ -231,7 +250,8 @@ function createApp(opts = {}) {
   router.get('/architecture', async (req, res) => {
     gateHeaders(res);
     if (!archgate.configured()) return res.status(503).type('html').send(archgate.closedPage(req.baseUrl));
-    if (!(await archgate.identify(req, tenantId).catch(() => null))) return res.status(401).type('html').send(archgate.loginPage(req.baseUrl, null, req.originalUrl));
+    const allowed = (await archgate.identify(req, tenantId).catch(() => null)) || (await auth.userFromRequest(req, tenantId));
+    if (!allowed) return res.status(401).type('html').send(archgate.loginPage(req.baseUrl, null, req.originalUrl));
     try { res.type('html').send(fs.readFileSync(archView, 'utf8').split('{{BASE}}').join(req.baseUrl)); }
     catch (e) { res.status(500).send('Page unavailable'); }
   });

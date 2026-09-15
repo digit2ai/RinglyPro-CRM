@@ -90,6 +90,12 @@ code,.mono{font-family:var(--f-mono);font-size:.92em}
 .rail a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
 .rail a[aria-current="page"] svg{color:var(--accent)}
 .rail .sep{height:1px;background:var(--rule);margin:10px 8px}
+.rail .rail-h{margin:4px 12px 2px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.archframe{width:100%;height:calc(100vh - var(--top-h) - 120px);min-height:520px;border:1px solid var(--rule);border-radius:12px;background:#0E0C1F}
+.syslist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.syslist li{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+.syslist .sysname{font-weight:700}.syslist .sysdetail{color:var(--muted);font-size:14px}
+.userform{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));align-items:end}
 .badge{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font:500 12px/22px var(--f-mono);text-align:center}
 main{padding:22px 28px 56px;max-width:1120px;width:100%;outline:none}
 .tabbar{display:none}
@@ -328,7 +334,7 @@ dialog p{white-space:pre-line;color:var(--ink);margin-bottom:18px}
   <header class="topbar">
     <a class="brand" href="#/today" aria-label="BuyersLine agent console, Today">
       <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="14" fill="#26213F"/><path d="M20 13 H44 A9 9 0 0 1 53 22 V35 A9 9 0 0 1 44 44 H29 L18 52 L20 44 A9 9 0 0 1 11 35 V22 A9 9 0 0 1 20 13 Z" fill="#FFFFFF"/><path d="M21 32 L32 22.5 L43 32" fill="none" stroke="#26213F" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="36.8" r="3.4" fill="#FC4C02"/></svg>
-      <span><span class="wordmark">Buyers<span class="wm-accent">Line</span></span> <small class="hide-sm">Agent console</small></span>
+      <span><span class="wordmark">Buyers<span class="wm-accent">Line</span></span> <small class="hide-sm" id="consoleLabel">Agent console</small></span>
     </a>
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <div class="who" id="who" aria-live="polite"></div>
@@ -349,6 +355,13 @@ dialog p{white-space:pre-line;color:var(--ink);margin-bottom:18px}
     <a href="#/incentives" data-nav="incentives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Incentives</a>
     <a href="#/billing" data-nav="billing"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="M3.5 10h17M7 14.5h3"/></svg>Billing</a>
     <a href="#/settings" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 7h9M18 7h1M5 17h1M10 17h9"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Settings</a>
+    <div class="sep" data-admin-only hidden></div>
+    <p class="rail-h" data-admin-only hidden>Admin</p>
+    <a href="#/users" data-nav="users" data-admin-only hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.6 3.2-5.5 6-5.5s5.2 1.9 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.6c2.4.2 4.2 1.9 5 5.4"/></svg>Users<span class="badge" data-badge="users" hidden></span></a>
+    <a href="#/system" data-nav="system" data-admin-only hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>System</a>
+    <a href="#/architecture" data-nav="architecture" data-admin-only hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="M6.6 7.1l3.3 3.3M17.4 7.1l-3.3 3.3M6.6 16.9l3.3-3.3M17.4 16.9l-3.3-3.3"/></svg>Architecture</a>
+    <a href="{{BASE}}/architecture/sme" target="_blank" rel="noopener" data-admin-only hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h14v12H9l-4 4z"/><path d="M9 9h6M9 12h4"/></svg>Expert questionnaire</a>
+    <a href="{{BASE}}/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>View the website</a>
   </nav>
 
   <main id="main" tabindex="-1">
