@@ -17,7 +17,7 @@
  *  - Bump SHELL_VERSION when a shell file changes.
  */
 
-const SHELL_VERSION = 'bl-shell-23';
+const SHELL_VERSION = 'bl-shell-24';
 
 function base(req) { return (req.baseUrl || '').replace(/\/+$/, ''); }
 

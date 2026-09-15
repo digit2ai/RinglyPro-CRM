@@ -270,10 +270,6 @@
           </ul>
         </div>
       </div>
-      <div class="callout" id="agentBlock" style="margin-top:28px" hidden>
-        <h4 data-i18n="agent_block_title">Your licensed agent</h4>
-        <p id="agentLine"></p>
-      </div>
     </div>
   </section>
 
@@ -518,9 +514,6 @@
       not_2_p: 'Payment figures are estimates. They are not loan offers, pre-qualifications or approvals.',
       not_3_t: "Not a builder's sales office",
       not_3_p: "We don't sell homes for any builder. Your agent represents you, the buyer.",
-      agent_block_title: 'Your licensed agent',
-      agent_line: '{name}{title}. License {license}. {brokerage}, brokerage license {blicense}.',
-      agent_none: 'A licensed Florida real estate sales associate will be assigned to you.',
       orb_title: 'Questions? Ask out loud.',
       orb_p: 'The assistant answers only from what this page says, and you can also type.',
       orb_label: 'Ask BuyersLine',
@@ -732,9 +725,6 @@
       not_2_p: 'Las cifras de pago son estimaciones. No son ofertas de préstamo, precalificaciones ni aprobaciones.',
       not_3_t: 'No somos la oficina de ventas de un constructor',
       not_3_p: 'No vendemos viviendas para ningún constructor. Su agente lo representa a usted, el comprador.',
-      agent_block_title: 'Su agente con licencia',
-      agent_line: '{name}{title}. Licencia {license}. {brokerage}, licencia de correduría {blicense}.',
-      agent_none: 'Se le asignará un asociado de ventas de bienes raíces con licencia en Florida.',
       orb_title: '¿Preguntas? Hágalas en voz alta.',
       orb_p: 'El asistente responde solo con lo que dice esta página, y también puede escribirle.',
       orb_label: 'Pregúntale a BuyersLine',
@@ -882,7 +872,6 @@
     orb.setAttribute('data-lang', lang);
     orb.setAttribute('data-label', t('orb_label'));
     renderRefRate();
-    renderAgent();
     if (lastEstimate) renderEstimate(lastEstimate);
   }
 
@@ -930,7 +919,6 @@
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config.market && config.market.name) || t('market_default') });
     renderDisclosures();
     renderRefRate();
-    renderAgent();
   }
 
   function renderDisclosures() {
@@ -963,25 +951,6 @@
     var rate = new Intl.NumberFormat(locale(), { maximumFractionDigits: 3 }).format(Number(rr.rate));
     el.textContent = t('est_ref_rate', { rate: rate, date: fmtDate(rr.as_of) || rr.as_of || '', source: rr.source || '' });
     el.hidden = false;
-  }
-
-  function renderAgent() {
-    var block = $('agentBlock');
-    if (!config) { block.hidden = true; return; }
-    var a = config.agent;
-    var line = $('agentLine');
-    if (a && a.name) {
-      line.textContent = t('agent_line', {
-        name: a.name,
-        title: a.title ? ', ' + a.title : '',
-        license: a.license_no || '',
-        brokerage: a.brokerage_name || '',
-        blicense: a.brokerage_license_no || ''
-      });
-    } else {
-      line.textContent = t('agent_none');
-    }
-    block.hidden = false;
   }
 
   // ---------- estimator ----------
