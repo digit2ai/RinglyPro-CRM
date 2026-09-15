@@ -1079,3 +1079,18 @@ div.mch-deal { cursor: default; }
 .meet-stars { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .meet-stars button { min-width: 48px; min-height: 44px; }
 .meet-stars button[aria-pressed="true"] { background: var(--ink, #26213F); color: #fff; }
+
+/* Ecosystem map section (#ecosystem): the same dark signal world as the architecture page, in both themes.
+   The selector is main > section.eco because main > section:nth-of-type(even) paints the band color. */
+main > section.eco, .eco {
+  position: relative; color: #ECEAF6; padding-block: clamp(56px, 8vw, 96px);
+  background:
+    radial-gradient(900px 600px at 50% 18%, rgba(252, 76, 2, .12), transparent 70%),
+    radial-gradient(700px 520px at 85% 60%, rgba(92, 200, 230, .07), transparent 70%),
+    #0E0C1F;
+}
+.eco-head { max-width: 760px; margin: 0 auto; text-align: center; }
+.eco .eyebrow { color: #FF7A3D; font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .16em; }
+.eco h2 { color: #ECEAF6; font-weight: 900; text-wrap: balance; margin: 10px 0 12px; }
+.eco h2 em { display: block; font-style: normal; color: #FC4C02; }
+.eco-sub { color: #A6A3BD; margin: 0 auto; max-width: 62ch; }

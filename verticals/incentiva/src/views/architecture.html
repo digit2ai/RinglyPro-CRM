@@ -7,9 +7,11 @@
 <meta name="description" content="How BuyersLine works: one brain (Ana), six AI agents and one licensed Florida sales associate, with every price, payment and score computed by deterministic rules.">
 <meta name="theme-color" content="#0E0C1F">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="{{BASE}}/ecosystem-map.css">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Mulish:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -60,84 +62,7 @@ a{color:var(--cy)}
 .detail{text-align:left}
 .hero .lede{color:var(--mut);max-width:62ch;margin:16px auto 0;font-size:clamp(15px,1.6vw,18px)}
 
-/* diagram */
-.diagram{margin-top:28px}
-.stage{position:relative;width:100%;max-width:1200px;margin-inline:auto;aspect-ratio:1200/760;container-type:inline-size}
-.stage svg.bg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.ring{fill:none;stroke:rgba(166,163,189,.13);stroke-width:1}
-.ring.dash{stroke-dasharray:2 7;animation:spin 60s linear infinite}
-.ring.dash.rev{animation-direction:reverse;animation-duration:90s}
-@keyframes spin{to{stroke-dashoffset:-400}}
-.link{stroke:rgba(92,200,230,.34);stroke-width:1.4;stroke-dasharray:5 7;animation:flow 2.4s linear infinite;transition:stroke .3s}
-.link.human{stroke:rgba(252,76,2,.32)}
-.link.on{stroke:var(--or);stroke-width:2;stroke-dasharray:6 5;animation-duration:.9s}
-@keyframes flow{to{stroke-dashoffset:-48}}
-.core-glow{animation:breathe 3.2s ease-in-out infinite;transform-origin:600px 380px}
-@keyframes breathe{50%{opacity:.55;transform:scale(1.06)}}
-
-.node{
-  position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);
-  width:15.2%;font-size:clamp(8.5px,.92cqw,12px);
-  padding:1.35em .85em .95em;border-radius:1em;text-align:center;cursor:pointer;
-  color:var(--ink);font-family:var(--sans);
-  background:linear-gradient(180deg,rgba(32,28,66,.94),rgba(18,16,40,.94));
-  border:1px solid rgba(92,200,230,.30);
-  box-shadow:0 .6em 1.8em rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05);
-  transition:border-color .3s,box-shadow .3s,transform .3s;
-}
-.node:hover{border-color:rgba(92,200,230,.7)}
-.node .pin{position:absolute;top:-.62em;left:50%;width:1em;height:1em;margin-left:-.5em;border-radius:50%;background:var(--gr);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(127,211,154,.8)}
-.node .pin.setup{background:linear-gradient(90deg,var(--gr) 50%,var(--am) 50%);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(242,184,75,.7)}
-.node .bar{display:flex;justify-content:center;gap:.3em;margin-bottom:.55em}
-.node .bar i{width:.32em;height:.32em;border-radius:50%;background:rgba(166,163,189,.35)}
-.node .bar i:first-child{width:1.6em;border-radius:.2em}
-.nlabel{display:block;font:700 1em/1.25 var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--cy)}
-.nsub{display:block;margin-top:.4em;font-size:1.05em;line-height:1.3;color:var(--mut)}
-.node.human{border-color:rgba(252,76,2,.55);border-style:solid;background:linear-gradient(180deg,rgba(52,26,30,.9),rgba(24,16,34,.94))}
-.node.human .nlabel{color:var(--or-soft)}
-.node.human .pin{background:var(--or);box-shadow:0 0 0 .28em var(--bg),0 0 .9em rgba(252,76,2,.8)}
-.node.human .tagh{display:inline-block;margin-bottom:.5em;font:700 .8em/1 var(--mono);letter-spacing:.14em;color:var(--or-soft);border:1px solid rgba(252,76,2,.45);border-radius:99px;padding:.3em .6em}
-.node.on{border-color:var(--cy);box-shadow:0 0 0 1px rgba(92,200,230,.5),0 0 2.2em rgba(92,200,230,.35),0 .6em 1.8em rgba(0,0,0,.35)}
-.node.human.on{border-color:var(--or);box-shadow:0 0 0 1px rgba(252,76,2,.6),0 0 2.2em rgba(252,76,2,.4)}
-.node[aria-pressed="true"]::before,.brain[aria-pressed="true"]::before{content:"";position:absolute;inset:-7px;border-radius:calc(1.2em + 7px);border:1px solid rgba(236,234,246,.38);pointer-events:none}
-.node::after,.brain::after{content:"";position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--or);opacity:0;pointer-events:none}
-.node.ping::after,.brain.ping::after{animation:ping .7s ease-out}
-@keyframes ping{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.14)}}
-
-.brain{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:27%;
-  font-size:clamp(8.5px,.98cqw,12.5px);text-align:left;cursor:pointer;color:var(--ink);font-family:var(--sans);
-  padding:1.3em 1.3em 1.1em;border-radius:1.2em;
-  background:linear-gradient(180deg,#221B3F,#15122D);
-  border:1px solid rgba(252,76,2,.6);
-  box-shadow:0 0 0 1px rgba(252,76,2,.15),0 0 3.5em rgba(252,76,2,.28),0 1.2em 3em rgba(0,0,0,.5);
-}
-.brain .bhead{display:flex;justify-content:space-between;align-items:center;gap:.6em}
-.brain .btitle{font:700 .92em/1 var(--mono);letter-spacing:.16em;color:var(--or-soft)}
-.brain .live{font:700 .8em/1 var(--mono);letter-spacing:.12em;color:var(--gr);display:inline-flex;align-items:center;gap:.45em}
-.brain .live::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--gr);box-shadow:0 0 .7em var(--gr);animation:blink 2s ease-in-out infinite}
-@keyframes blink{50%{opacity:.35}}
-.brain .bname{display:block;font:900 3.3em/1 var(--sans);letter-spacing:.04em;margin:.28em 0 .2em;color:#fff;text-shadow:0 0 .5em rgba(252,76,2,.55)}
-.brain .bnote{display:block;color:var(--mut);font-size:.98em;margin-bottom:.8em}
-.brow{display:block;border-top:1px solid var(--line2);padding:.7em 0 .6em}
-.brow .rl{display:block;font:700 .82em/1.2 var(--mono);letter-spacing:.13em;color:var(--cy)}
-.brow .rt{display:block;color:var(--ink);font-size:1em;margin-top:.25em;line-height:1.35}
-.brow.orch .rl{color:var(--or-soft)}
-.dots{display:flex;gap:.45em;margin-top:.55em}
-.dots i{flex:1;height:.4em;border-radius:.2em;background:rgba(166,163,189,.2);transition:background .3s,box-shadow .3s}
-.dots i.done{background:rgba(252,76,2,.45)}
-.dots i.now{background:var(--or);box-shadow:0 0 .7em var(--or)}
-.now-label{display:block;font:600 .9em/1.3 var(--mono);letter-spacing:.08em;margin-top:.55em;color:var(--ink);min-height:1.3em}
-.now-label b{color:var(--or-soft);font-weight:700}
-
-.dfoot{margin-top:18px;text-align:center;font:600 12px/1.5 var(--mono);letter-spacing:.2em;color:var(--mut)}
-.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 22px;margin-top:12px;font:500 11.5px/1.4 var(--mono);letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
-.legend span{display:inline-flex;align-items:center;gap:8px}
-.legend i{display:inline-block;width:18px;height:0;border-top:2px dashed var(--cy)}
-.legend i.or{border-top-style:solid;border-color:var(--or)}
-.legend i.dot{width:10px;height:10px;border:0;border-radius:50%;background:var(--gr)}
-.legend i.dot.am{background:var(--am)}
-.legend i.hum{width:14px;height:10px;border:1.5px solid var(--or);border-radius:3px}
+.signout{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--cy);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 
 /* detail panel */
 .detail{margin:26px auto 0;max-width:1200px;border:1px solid var(--line2);border-radius:18px;background:linear-gradient(180deg,rgba(28,24,58,.85),rgba(17,15,36,.85));padding:clamp(18px,3vw,30px);scroll-margin-top:16px}
@@ -241,19 +166,6 @@ footer.foot{margin-top:clamp(64px,9vw,110px);border-top:1px solid var(--line);pa
 footer.foot .wrap{display:flex;justify-content:space-between;gap:12px 24px;flex-wrap:wrap}
 footer.foot .mono{font-size:11px;letter-spacing:.16em}
 
-/* stacked diagram on narrow screens */
-@media (max-width:960px){
-  .stage{aspect-ratio:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 12px;container-type:normal;padding-top:6px}
-  .stage svg.bg{display:none}
-  .node,.brain{position:relative;left:auto;top:auto;transform:none;width:auto;font-size:12px}
-  .node{order:2}
-  .node[data-node="buyer"]{order:0;grid-column:1/-1}
-  .brain{order:1;grid-column:1/-1;font-size:13px}
-  .node[data-node="licensed"]{order:3;grid-column:1/-1}
-  .node .nsub{font-size:13px}
-}
-@media (max-width:380px){.stage{grid-template-columns:1fr}}
-
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
@@ -262,11 +174,11 @@ footer.foot .mono{font-size:11px;letter-spacing:.16em}
 <body>
 
 <header class="wrap top">
-  <a class="brand" href="./" aria-label="BuyersLine home">
+  <a class="brand" href="{{BASE}}/" aria-label="BuyersLine home">
     <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#26213F" stroke="#FC4C02" stroke-opacity=".6"/><path d="M14 18h36a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H30l-9 8v-8h-7a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z" fill="#fff"/><path d="M22 34l10-8 10 8" fill="none" stroke="#26213F" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="35" r="3" fill="#FC4C02"/></svg>
     <b>BuyersLine</b><span>Architecture</span>
   </a>
-  <span class="top-tag">DIGIT2AI + Ole · Tampa Bay</span>
+  <span class="top-tag">DIGIT2AI + Ole · Tampa Bay · <form method="post" action="{{BASE}}/architecture/logout" style="display:inline"><button type="submit" class="signout">Sign out</button></form></span>
 </header>
 
 <main>
@@ -275,118 +187,7 @@ footer.foot .mono{font-size:11px;letter-spacing:.16em}
     <h1>One brain. Seven agents. <em>One licensed human.</em></h1>
     <p class="lede">BuyersLine is a free platform that helps people buy new-construction homes in Tampa Bay. It is a technology platform, not a brokerage and not a lender. This page shows what runs underneath it.</p>
 
-    <div class="diagram" role="group" aria-label="BuyersLine brain and agents diagram">
-      <div class="stage" id="stage">
-        <svg class="bg" viewBox="0 0 1200 760" aria-hidden="true" focusable="false">
-          <defs>
-            <radialGradient id="gcore" cx="50%" cy="50%" r="50%">
-              <stop offset="0" stop-color="#FC4C02" stop-opacity=".38"/>
-              <stop offset="1" stop-color="#FC4C02" stop-opacity="0"/>
-            </radialGradient>
-            <filter id="glow" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          </defs>
-          <g id="stars"></g>
-          <ellipse class="ring" cx="600" cy="380" rx="590" ry="372"/>
-          <ellipse class="ring dash rev" cx="600" cy="380" rx="500" ry="290"/>
-          <ellipse class="ring" cx="600" cy="380" rx="380" ry="220"/>
-          <ellipse class="ring dash" cx="600" cy="380" rx="260" ry="160"/>
-          <circle class="core-glow" cx="600" cy="380" r="250" fill="url(#gcore)"/>
-          <g id="links">
-            <line class="link human" data-link="buyer" x1="600" y1="380" x2="100" y2="380"/>
-            <line class="link" data-link="researcher" x1="600" y1="380" x2="246" y2="175"/>
-            <line class="link" data-link="reader" x1="600" y1="380" x2="600" y2="90"/>
-            <line class="link" data-link="writer" x1="600" y1="380" x2="954" y2="175"/>
-            <line class="link human" data-link="licensed" x1="600" y1="380" x2="1100" y2="380"/>
-            <line class="link" data-link="handoff" x1="600" y1="380" x2="954" y2="585"/>
-            <line class="link" data-link="scheduler" x1="600" y1="380" x2="600" y2="670"/>
-            <line class="link" data-link="rachel" x1="600" y1="380" x2="246" y2="585"/>
-          </g>
-          <g id="pulse" opacity="0">
-            <circle r="9" fill="#FC4C02" opacity=".18"/>
-            <circle class="trail2" r="3" fill="#FF7A3D" opacity=".35"/>
-            <circle class="trail1" r="4" fill="#FF7A3D" opacity=".6"/>
-            <circle class="head" r="5.5" fill="#FFB48F" filter="url(#glow)"/>
-          </g>
-        </svg>
-
-        <button class="node human" type="button" data-node="buyer" data-name="Buyer" data-x="100" data-y="380" style="--x:8.333%;--y:50%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="tagh">HUMAN</span>
-          <span class="nlabel">Buyer</span>
-          <span class="nsub">web chat · voice</span>
-        </button>
-
-        <button class="node" type="button" data-node="researcher" data-name="Promotions Researcher" data-x="246" data-y="175" style="--x:20.5%;--y:23.03%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Promotions Researcher</span>
-          <span class="nsub">web search · builders</span>
-        </button>
-
-        <button class="node" type="button" data-node="reader" data-name="Incentive Reader" data-x="600" data-y="90" style="--x:50%;--y:11.84%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Incentive Reader</span>
-          <span class="nsub">builder pages · emails</span>
-        </button>
-
-        <button class="node" type="button" data-node="writer" data-name="Report Writer" data-x="954" data-y="175" style="--x:79.5%;--y:23.03%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Report Writer</span>
-          <span class="nsub">EN/ES · plain language</span>
-        </button>
-
-        <button class="node human" type="button" data-node="licensed" data-name="Licensed Agent" data-x="1100" data-y="380" style="--x:91.667%;--y:50%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="tagh">HUMAN IN THE LOOP</span>
-          <span class="nlabel">Licensed Agent</span>
-          <span class="nsub">verify · approve · meet</span>
-        </button>
-
-        <button class="node" type="button" data-node="handoff" data-name="Hand-off" data-x="954" data-y="585" style="--x:79.5%;--y:76.97%" aria-pressed="false">
-          <span class="pin setup" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Hand-off</span>
-          <span class="nsub">readiness · agent brief</span>
-        </button>
-
-        <button class="node" type="button" data-node="scheduler" data-name="Scheduler" data-x="600" data-y="670" style="--x:50%;--y:88.16%" aria-pressed="false">
-          <span class="pin" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Scheduler</span>
-          <span class="nsub">booking · reminders · feedback</span>
-        </button>
-
-        <button class="node" type="button" data-node="rachel" data-name="Rachel Follow-up" data-x="246" data-y="585" style="--x:20.5%;--y:76.97%" aria-pressed="false">
-          <span class="pin setup" aria-hidden="true"></span>
-          <span class="bar" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="nlabel">Rachel Follow-up</span>
-          <span class="nsub">email · SMS · 90 days</span>
-        </button>
-
-        <button class="brain" type="button" data-node="ana" data-name="Ana" aria-pressed="true" aria-label="BuyersLine brain: Ana. Show details">
-          <span class="bhead"><span class="btitle">BUYERSLINE BRAIN</span><span class="live">LIVE</span></span>
-          <span class="bname">ANA</span>
-          <span class="bnote">The buyer's only conversational contact</span>
-          <span class="brow"><span class="rl">CORE · LIVE CONTEXT</span><span class="rt">Reads the page state every turn</span></span>
-          <span class="brow"><span class="rl">CORE · PAGE ACTIONS</span><span class="rt">Fill · choose · estimate · scroll · create report</span></span>
-          <span class="brow orch"><span class="rl">ORCHESTRATOR · 7 AGENTS · 1 HUMAN</span>
-            <span class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-            <span class="now-label" id="nowLabel" aria-hidden="true"><b>NOW</b> · ONE BRAIN, EVERY AGENT</span>
-          </span>
-        </button>
-      </div>
-
-      <p class="dfoot">7 AI AGENTS · 1 LICENSED HUMAN · RULES DECIDE EVERY NUMBER</p>
-      <div class="legend" aria-hidden="true">
-        <span><i></i>Data link</span>
-        <span><i class="or"></i>Active signal</span>
-        <span><i class="hum"></i>Human</span>
-        <span><i class="dot"></i>Live</span>
-        <span><i class="dot am"></i>Needs setup</span>
-      </div>
-    </div>
+    <div class="diagram" data-ecomap data-caption="0" data-lang="en"></div>
 
     <section class="detail" id="detail" aria-live="polite" aria-labelledby="detailLabel">
       <div class="detail-top">
@@ -740,114 +541,32 @@ footer.foot .mono{font-size:11px;letter-spacing:.16em}
   </div>
 </footer>
 
+<script src="{{BASE}}/ecosystem-map.js"></script>
 <script>
 (function(){
   "use strict";
-  var NS = "http://www.w3.org/2000/svg";
-  var stage = document.getElementById("stage");
   var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* stars: seeded so the sky is the same every load */
-  var seed = 20260914;
-  function rnd(){ seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
-  var sg = document.getElementById("stars");
-  for (var s = 0; s < 90; s++) {
-    var c = document.createElementNS(NS, "circle");
-    c.setAttribute("cx", (rnd() * 1200).toFixed(1));
-    c.setAttribute("cy", (rnd() * 760).toFixed(1));
-    c.setAttribute("r", (0.4 + rnd() * 1.1).toFixed(2));
-    c.setAttribute("fill", "#ECEAF6");
-    c.setAttribute("opacity", (0.08 + rnd() * 0.35).toFixed(2));
-    sg.appendChild(c);
-  }
-
-  /* detail panel */
-  var nodes = Array.prototype.slice.call(stage.querySelectorAll("[data-node]"));
-  var byId = {};
-  nodes.forEach(function(n){ byId[n.getAttribute("data-node")] = n; });
   var body = document.getElementById("detailBody");
   var panel = document.getElementById("detail");
-
+  /* The diagram (ecosystem-map.js) is shared with the landing page; here a node opens its roster card. */
   function select(id, fromUser){
     var src;
     if (id === "buyer" || id === "licensed") {
       src = document.getElementById("tpl-" + id).content.cloneNode(true);
     } else {
-      src = document.getElementById("agent-" + id).cloneNode(true);
+      var card = document.getElementById("agent-" + id);
+      if (!card) return;
+      src = card.cloneNode(true);
       src.removeAttribute("id");
     }
     body.replaceChildren(src);
-    nodes.forEach(function(n){ n.setAttribute("aria-pressed", n.getAttribute("data-node") === id ? "true" : "false"); });
     if (fromUser) {
       var r = panel.getBoundingClientRect();
-      if (r.top > window.innerHeight - 120 || r.bottom < 0) {
-        panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-      }
+      if (r.top > window.innerHeight - 120 || r.bottom < 0) panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     }
   }
-  nodes.forEach(function(n){
-    n.addEventListener("click", function(){ select(n.getAttribute("data-node"), true); });
-  });
+  if (window.EcosystemMap) window.EcosystemMap.onSelect(function(id){ select(id, true); });
   select("ana", false);
-
-  /* signal loop */
-  var SEQ = ["buyer", "researcher", "reader", "writer", "handoff", "licensed", "scheduler", "rachel"];
-  var STEP = 1600, TRAVEL = 900, C = [600, 380];
-  var links = {};
-  Array.prototype.forEach.call(stage.querySelectorAll("[data-link]"), function(l){ links[l.getAttribute("data-link")] = l; });
-  var dots = Array.prototype.slice.call(document.querySelectorAll("#dots i"));
-  var nowLabel = document.getElementById("nowLabel");
-  var pulse = document.getElementById("pulse");
-  var head = pulse.querySelector(".head"), t1 = pulse.querySelector(".trail1"), t2 = pulse.querySelector(".trail2"), halo = pulse.firstElementChild;
-  var brain = byId.ana;
-
-  if (reduce) {
-    nowLabel.innerHTML = "<b>ALL</b> · ONE BRAIN, EVERY AGENT";
-    return;
-  }
-
-  function setStep(i){
-    var id = SEQ[i];
-    SEQ.forEach(function(k){ byId[k].classList.remove("on"); links[k].classList.remove("on"); });
-    byId[id].classList.add("on");
-    links[id].classList.add("on");
-    dots.forEach(function(d, j){ d.className = j < i ? "done" : (j === i ? "now" : ""); });
-    var name = byId[id].getAttribute("data-name").toUpperCase();
-    nowLabel.innerHTML = id === "buyer" ? "<b>NOW</b> · BUYER TO ANA" : "<b>NOW</b> · " + name;
-  }
-  function ping(el){ el.classList.remove("ping"); void el.offsetWidth; el.classList.add("ping"); }
-  function ease(p){ return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
-  function put(el, from, to, p){
-    p = Math.max(0, Math.min(1, p));
-    el.setAttribute("cx", (from[0] + (to[0] - from[0]) * p).toFixed(1));
-    el.setAttribute("cy", (from[1] + (to[1] - from[1]) * p).toFixed(1));
-  }
-
-  var cur = -1, hit = false, t0 = null, onScreen = true;
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function(e){ onScreen = e[0].isIntersecting; }).observe(stage);
-  }
-
-  function frame(now){
-    if (t0 === null) t0 = now;
-    if (onScreen) {
-      var t = Math.max(0, now - t0) % (STEP * SEQ.length);
-      var i = Math.floor(t / STEP), local = t - i * STEP, id = SEQ[i];
-      if (i !== cur) { cur = i; hit = false; setStep(i); }
-      var n = byId[id], to = [+n.getAttribute("data-x"), +n.getAttribute("data-y")];
-      var from = C;
-      if (id === "buyer") { from = to; to = C; }
-      var p = local / TRAVEL;
-      put(head, from, to, ease(p));
-      put(halo, from, to, ease(p));
-      put(t1, from, to, ease(p - 0.07));
-      put(t2, from, to, ease(p - 0.14));
-      pulse.setAttribute("opacity", p < 1 ? "1" : Math.max(0, 1 - (local - TRAVEL) / 250).toFixed(2));
-      if (p >= 1 && !hit) { hit = true; ping(id === "buyer" ? brain : n); }
-    }
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
 })();
 </script>
 </body>

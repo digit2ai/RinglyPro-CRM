@@ -12,8 +12,9 @@
 <link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Mulish:wght@400;500;600;700;800;900&display=swap">
 <link rel="stylesheet" href="{{BASE}}/site.css">
+<link rel="stylesheet" href="{{BASE}}/ecosystem-map.css">
 <script src="{{BASE}}/theme.js" defer></script>
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
@@ -25,6 +26,7 @@
 <script src="{{BASE}}/install.js" defer></script>
 <script src="{{BASE}}/search-widget.js" defer></script>
 <script src="{{BASE}}/flow.js" defer></script>
+<script src="{{BASE}}/ecosystem-map.js" defer></script>
 <script src="{{BASE}}/intake-chat.js" defer></script>
 </head>
 <body>
@@ -43,6 +45,7 @@
       <a href="#estimate" data-i18n="nav_power">Buying power</a>
       <a href="#about" data-i18n="nav_about">What we are</a>
       <a href="#intake" data-i18n="nav_report">Get my report</a>
+      <a href="{{BASE}}/architecture" data-i18n="nav_arch">Architecture</a>
     </nav>
     <div class="header-tools">
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode" title="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
@@ -180,6 +183,18 @@
     </div>
   </section>
 
+  <!-- Ecosystem: one brain, seven agents (public/ecosystem-map.js, shared with /architecture) -->
+  <section id="ecosystem" class="eco" aria-labelledby="ecoTitle">
+    <div class="wrap">
+      <div class="eco-head">
+        <p class="eyebrow" data-i18n="eco_eyebrow">System map · new-construction homes</p>
+        <h2 id="ecoTitle"><span data-i18n="eco_title">One brain. Seven agents.</span> <em data-i18n="eco_title_em">One licensed human.</em></h2>
+        <p class="eco-sub" data-i18n="eco_sub">Ana guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.</p>
+      </div>
+      <div data-ecomap></div>
+    </div>
+  </section>
+
   <!-- Home search (shared widget: public/search-widget.js). HIDDEN for now (owner, 2026-09-14): remove the hidden attribute and restore the nav link to bring it back. -->
   <section id="homes" class="home-search" aria-labelledby="homesTitle" hidden>
     <div class="wrap">
@@ -305,6 +320,9 @@
       skip: 'Skip to content',
       demo_banner: 'Sample data for demonstration',
       nav_label: 'Primary',
+      nav_arch: 'Architecture',
+      eco_eyebrow: 'System map · new-construction homes', eco_title: 'One brain. Seven agents.', eco_title_em: 'One licensed human.',
+      eco_sub: 'Ana guides you and coordinates six AI agents. A licensed agent verifies promotions and meets you, and fixed rules calculate every price and payment.',
       nav_how: 'How it works',
       nav_search: 'Search homes',
       homes_eyebrow: 'Homes for sale',
@@ -516,6 +534,9 @@
       skip: 'Saltar al contenido',
       demo_banner: 'Datos de muestra para demostración',
       nav_label: 'Principal',
+      nav_arch: 'Arquitectura',
+      eco_eyebrow: 'Mapa del sistema · casas nuevas', eco_title: 'Un cerebro. Siete agentes.', eco_title_em: 'Un humano con licencia.',
+      eco_sub: 'Ana lo guía y coordina seis agentes de IA. Un agente con licencia verifica las promociones y se reúne con usted, y reglas fijas calculan cada precio y pago.',
       nav_how: 'Cómo funciona',
       nav_search: 'Buscar casas',
       homes_eyebrow: 'Casas en venta',
@@ -855,6 +876,7 @@
       b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
     });
     renderExample();
+    if (window.EcosystemMap) window.EcosystemMap.setLang(lang);
     $('heroEyebrow').textContent = t('hero_eyebrow', { market: (config && config.market && config.market.name) || t('market_default') });
     var orb = $('voiceOrb');
     orb.setAttribute('data-lang', lang);

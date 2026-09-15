@@ -124,4 +124,4 @@ function requireAgent(tenantId) {
   };
 }
 
-module.exports = { configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };
+module.exports = { PUBLISHED_PASSWORDS, configured, weakPassword, ensureAccounts, login, sign, setCookie, readCookie, requireAgent, publicUser, COOKIE, TTL_SECONDS, upsertAccount };

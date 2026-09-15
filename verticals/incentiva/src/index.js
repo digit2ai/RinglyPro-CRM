@@ -65,6 +65,7 @@ function createApp(opts = {}) {
       listings: require('./services/rentcast').configured() ? 'rentcast_connected' : 'not_connected',
       report_review: process.env.INCENTIVA_REPORT_REVIEW === 'auto' ? 'auto_when_compliance_passes' : 'agent_approval_required',
       agents: require('./services/agents').status(),
+      architecture_page: require('./services/archgate').configured() ? (require('./services/archgate').weak() ? 'configured_weak_password' : 'configured') : 'closed',
       transports: require('./services/notify').configured() ? 'email only (SendGrid): report-ready to buyers who consented, approval alerts to the reviewer' : 'none (nothing auto-sends)'
     });
   });
@@ -83,7 +84,27 @@ function createApp(opts = {}) {
   router.get(['/admin', '/admin/'], shell('admin.html'));
   router.get('/meet/:token', shell('meet.html'));
   router.get('/unsubscribe/:token', shell('unsubscribe.html'));
-  router.get('/architecture', shell('architecture.html'));
+  // Architecture page: signed-in only. The file lives in src/views, never in the public static folder.
+  const archgate = require('./services/archgate');
+  const archView = path.join(__dirname, 'views', 'architecture.html');
+  function archHeaders(res) { res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Robots-Tag', 'noindex, nofollow'); res.setHeader('Content-Type', 'text/html; charset=utf-8'); }
+  router.get('/architecture', (req, res) => {
+    archHeaders(res);
+    if (!archgate.configured()) return res.status(503).send(archgate.closedPage(req.baseUrl));
+    if (!archgate.valid(req)) return res.status(401).send(archgate.loginPage(req.baseUrl));
+    try { res.send(fs.readFileSync(archView, 'utf8').split('{{BASE}}').join(req.baseUrl)); }
+    catch (e) { res.status(500).send('Page unavailable'); }
+  });
+  router.post('/architecture/login', express.urlencoded({ extended: false, limit: '4kb' }), (req, res) => {
+    archHeaders(res);
+    if (!archgate.configured()) return res.status(503).send(archgate.closedPage(req.baseUrl));
+    if (!rateLimit('arch:' + ipHash(req), 10, 15 * 60e3)) return res.status(429).send(archgate.loginPage(req.baseUrl, 'Too many attempts. Wait 15 minutes.'));
+    const b = req.body || {};
+    if (!archgate.check(b.user, b.password)) return res.status(401).send(archgate.loginPage(req.baseUrl, 'User ID or password is incorrect.'));
+    archgate.setCookie(req, res, archgate.sign(Date.now() + archgate.TTL_MS), archgate.TTL_MS);
+    res.redirect(303, req.baseUrl + '/architecture');
+  });
+  router.post('/architecture/logout', (req, res) => { archgate.setCookie(req, res, '', 0); res.redirect(303, req.baseUrl + '/architecture'); });
   router.get(['/index.html', '/report.html', '/login.html', '/admin.html', '/search.html', '/offline.html', '/meet.html', '/unsubscribe.html', '/architecture.html'], (req, res) => res.redirect(301, req.baseUrl + '/'));
 
   router.use('/api/v1/public', require('./routes/public')({ tenantId, allowModel: opts.allowModel, allowGeocode: opts.allowGeocode }));

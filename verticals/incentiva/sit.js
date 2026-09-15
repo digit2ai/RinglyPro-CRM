@@ -1200,6 +1200,54 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
         assert(html.includes("ex_fictional: 'Fictional values for illustration only.'"), 'fictional fallback kept');
         assert(!/rx_checked:[^\n]*[Vv]erified/.test(html), 'real offer is not labelled agent-verified');
       });
+      await t('architecture page: closed without credentials, sign-in required, wrong password refused, session works, logout ends it, file not public', async () => {
+        const saveU = process.env.INCENTIVA_ARCHITECTURE_USER, saveP = process.env.INCENTIVA_ARCHITECTURE_PASSWORD;
+        try {
+          delete process.env.INCENTIVA_ARCHITECTURE_USER; delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD;
+          let r = await fetch(BASE + '/architecture'); eq(r.status, 503); assert(!/Promotions Researcher|agent-roster|data-ecomap/.test(await r.text()), 'closed page leaks content');
+          process.env.INCENTIVA_ARCHITECTURE_USER = 'Arch-Owner@example.test'; process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-architecture-password-2026';
+          r = await fetch(BASE + '/architecture'); eq(r.status, 401);
+          const login = await r.text();
+          assert(/name="password"/.test(login) && !/Promotions Researcher|data-ecomap/.test(login), 'login page missing or leaks content');
+          eq(r.headers.get('cache-control'), 'no-store'); assert(/noindex/.test(r.headers.get('x-robots-tag')), 'indexable');
+          const post = (u, pw) => fetch(BASE + '/architecture/login', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'user=' + encodeURIComponent(u) + '&password=' + encodeURIComponent(pw) });
+          eq((await post('arch-owner@example.test', 'wrong-password')).status, 401);
+          eq((await post('someone@example.test', 'sit-architecture-password-2026')).status, 401);
+          eq((await post('arch-owner@example.test', 'SIT-ARCHITECTURE-PASSWORD-2026')).status, 401, 'password compare must be case-sensitive');
+          const ok = await post('ARCH-OWNER@example.test', 'sit-architecture-password-2026');
+          eq(ok.status, 303);
+          const cookie = (ok.headers.get('set-cookie') || '').split(';')[0];
+          assert(/^bl_arch=/.test(cookie) && /HttpOnly/i.test(ok.headers.get('set-cookie')) && /Path=\/buyersline\/architecture/.test(ok.headers.get('set-cookie')), 'cookie flags');
+          const page = await fetch(BASE + '/architecture', { headers: { Cookie: cookie } });
+          eq(page.status, 200);
+          const html = await page.text();
+          assert(/data-ecomap/.test(html) && /ecosystem-map\.js/.test(html) && /id="agent-rachel"/.test(html) && !html.includes('{{BASE}}'), 'architecture page content');
+          eq((await fetch(BASE + '/architecture', { headers: { Cookie: 'bl_arch=9999999999999.forged' } })).status, 401, 'forged cookie accepted');
+          process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'a-new-password-rotated-2026';
+          eq((await fetch(BASE + '/architecture', { headers: { Cookie: cookie } })).status, 401, 'changing the password must end old sessions');
+          process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'sit-architecture-password-2026';
+          const out = await fetch(BASE + '/architecture/logout', { method: 'POST', redirect: 'manual', headers: { Cookie: cookie } });
+          assert(/Max-Age=0/.test(out.headers.get('set-cookie') || ''), 'logout does not clear the cookie');
+          assert(!fs.existsSync(path.join(__dirname, 'public', 'architecture.html')), 'architecture page must not live in the public folder');
+          const direct = await fetch(BASE + '/architecture.html', { redirect: 'manual' });
+          assert(direct.status === 301 || direct.status === 404, 'static file reachable: ' + direct.status);
+          process.env.INCENTIVA_ARCHITECTURE_PASSWORD = 'Palindrome@7';
+          eq((await call('GET', '/health')).data.architecture_page, 'configured_weak_password');
+        } finally {
+          if (saveU === undefined) delete process.env.INCENTIVA_ARCHITECTURE_USER; else process.env.INCENTIVA_ARCHITECTURE_USER = saveU;
+          if (saveP === undefined) delete process.env.INCENTIVA_ARCHITECTURE_PASSWORD; else process.env.INCENTIVA_ARCHITECTURE_PASSWORD = saveP;
+        }
+      });
+      await t('the landing page carries the ecosystem map section (shared component, EN/ES) and an Architecture menu link', async () => {
+        const html = await (await fetch(BASE + '/')).text();
+        assert(/<section id="ecosystem"[\s\S]*?data-ecomap/.test(html) && /ecosystem-map\.js/.test(html) && /ecosystem-map\.css/.test(html), 'ecosystem section');
+        assert(/<nav class="site-nav"[\s\S]*?href="\/buyersline\/architecture" data-i18n="nav_arch"[\s\S]*?<\/nav>/.test(html), 'Architecture link not in the menu');
+        assert(/nav_arch: 'Arquitectura'/.test(html) && /eco_title: 'Un cerebro\. Siete agentes\.'/.test(html) && /EcosystemMap\.setLang\(lang\)/.test(html), 'Spanish or language switch missing');
+        const js = read(path.join(ROOT, 'public', 'ecosystem-map.js'));
+        assert(/es: \{/.test(js) && (js.match(/researcher:/g) || []).length >= 4, 'map missing Spanish labels');
+        const css = read(path.join(ROOT, 'public', 'ecosystem-map.css'));
+        assert(!/^\s*\.(node|brain|link|ring|dots|legend|chip)\b/m.test(css), 'unprefixed class in the shared map stylesheet');
+      });
       await t('HTML shells are served with the mount substituted', async () => {
         const r = await fetch(BASE + '/'); const html = await r.text();
         assert(!html.includes('{{BASE}}'), 'token leaked'); assert(html.includes('/buyersline/site.css'), 'base substituted');
