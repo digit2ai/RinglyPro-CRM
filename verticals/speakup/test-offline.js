@@ -360,6 +360,12 @@ test('workflow tokens + merge scope', () => {
   ok(!security.phraseWeak(), 'a four-word phrase is accepted');
 });
 
+test('console header', () => {
+  const html = fs.readFileSync(path.join(__dirname, 'public/app.html'), 'utf8');
+  ok(/<span class="name">SpeakUp<\/span>\s*<span class="tag">TEST<\/span>/.test(html), 'the TEST tag sits next to the SpeakUp name in the console header');
+  ok(/header \.tag\{/.test(html), 'the TEST tag carries its own style so it reads as a tag, not as part of the name');
+});
+
 setTimeout(() => {
   console.log(`\n==== ${pass} passed, ${fail} failed ====`);
   process.exit(fail ? 1 : 0);
