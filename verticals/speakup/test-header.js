@@ -26,8 +26,23 @@ const server = http.createServer((req, res) => {
   if (p === 'meetings') p = 'meetings.html';
   if (p === '') p = 'app.html';
   const f = path.join(DIR, p);
-  // The screens call the API on boot; answer so the page settles instead of hanging.
-  if (req.url.indexOf('/api/') >= 0) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ operator: true, jobs: [], recordings: [], readiness: { ready: true, blockers: [] } })); }
+  // The screens call the API on boot; answer so the page settles instead of hanging. A
+  // finished job with a status line and a server-authored line is what the language test
+  // needs on screen.
+  if (req.url.indexOf('/api/') >= 0) {
+    const job = { id: 1, status: 'DEPLOYED', terminal: true, title: 'A change', project_name: 'SpeakUp', plan_hash: null, plan_md: null, revisions: [] };
+    let body = { operator: true, jobs: [job], recordings: [], readiness: { ready: true, blockers: [] } };
+    if (req.url.indexOf('/events') >= 0) {
+      body = { status: 'DEPLOYED', terminal: true, pr_number: null, pr_url: null, events: [
+        { id: 1, kind: 'status', text: 'TESTING' },
+        { id: 2, kind: 'status', text: 'DEPLOYED' },
+        { id: 3, kind: 'pr', text: 'Merged into main. Render is deploying.', detail: { i18n: 'merged', branch: 'main' } },
+        { id: 4, kind: 'say', text: 'Prose from the model that nobody should translate.' }
+      ] };
+    } else if (/\/factory\/jobs\/\d+(\?|$)/.test(req.url)) body = { job };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(body));
+  }
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end('no'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'text/plain' });
   res.end(fs.readFileSync(f));
@@ -110,6 +125,45 @@ server.listen(0, async () => {
         }
         await page.close();
       }
+    }
+    // ── ONE LANGUAGE ON THE WHOLE SCREEN ───────────────────────────────────────
+    // The reported bug: the header said English while the pane still listed "Probando /
+    // Subiendo la rama / Desplegado", because a line kept the language it was written in.
+    {
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1280, height: 900 });
+      await page.goto(base, { waitUntil: 'networkidle0' });
+      await new Promise(r => setTimeout(r, 600));
+      const read = () => page.evaluate(() => ({
+        pane: document.getElementById('out').textContent,
+        bar: document.getElementById('bar').textContent,
+        lang: document.documentElement.lang,
+        btn: document.getElementById('langBtn').textContent.trim()
+      }));
+
+      let v = await read();
+      ok(v.lang === 'es', 'starts in Spanish');
+      ok(/Desplegado/.test(v.pane) && /Probando/.test(v.pane), 'Spanish: the statuses are Spanish');
+      ok(/Fusionado en main/.test(v.pane), 'Spanish: the server line is Spanish');
+      ok(/Despliegue/.test(v.bar), 'Spanish: the step bar is Spanish');
+
+      await page.click('#langBtn');
+      await new Promise(r => setTimeout(r, 400));
+      v = await read();
+      ok(v.lang === 'en', 'toggles to English');
+      ok(/Deployed/.test(v.pane) && /Running tests/.test(v.pane), 'English: the statuses turned English');
+      ok(!/Desplegado|Probando|Subiendo/.test(v.pane), 'English: NOTHING Spanish is left in the pane');
+      ok(/Merged into main/.test(v.pane) && !/Fusionado/.test(v.pane), 'English: the server line turned English too');
+      ok(/Deploy/.test(v.bar) && !/Despliegue/.test(v.bar), 'English: the step bar turned English');
+      // Prose from a model is shown as it arrived; inventing a translation is worse.
+      ok(/Prose from the model/.test(v.pane), 'English: untranslatable prose is left alone');
+
+      await page.click('#langBtn');
+      await new Promise(r => setTimeout(r, 400));
+      v = await read();
+      ok(/Desplegado/.test(v.pane) && !/Deployed/.test(v.pane), 'back to Spanish: nothing English is left');
+      ok(/Despliegue/.test(v.bar), 'back to Spanish: the step bar followed');
+      await page.close();
     }
   } catch (e) {
     fail++; console.log('ERROR ' + e.message);

@@ -25,12 +25,15 @@ function rel(p) {
 // One Claude stream event -> zero or more activity lines.
 function summarize(ev) {
   if (!ev || typeof ev !== 'object') return [];
-  if (ev.type === 'system' && ev.subtype === 'init') return [{ kind: 'info', text: 'Claude Code started' + (ev.model ? ' (' + ev.model + ')' : '') }];
+  if (ev.type === 'system' && ev.subtype === 'init') return [{ kind: 'info', text: 'Claude Code started' + (ev.model ? ' (' + ev.model + ')' : ''),
+    detail: { i18n: 'claude_started', model: ev.model ? ' (' + ev.model + ')' : '' } }];
   if (ev.type === 'result') {
+    const cost = ev.total_cost_usd != null ? ' (cost $' + Number(ev.total_cost_usd).toFixed(2) + ')' : '';
     return [{ kind: ev.is_error ? 'error' : 'done',
       text: (ev.is_error ? 'Claude stopped: ' + clip(ev.subtype || 'error', 120) : 'Claude finished') +
-        (ev.num_turns != null ? ' after ' + ev.num_turns + ' turns' : '') +
-        (ev.total_cost_usd != null ? ' (cost $' + Number(ev.total_cost_usd).toFixed(2) + ')' : '') }];
+        (ev.num_turns != null ? ' after ' + ev.num_turns + ' turns' : '') + cost,
+      // The pieces travel separately so the console can join them in either language.
+      detail: { i18n: ev.is_error ? 'claude_stopped' : 'claude_done', why: clip(ev.subtype || 'error', 120), turns: ev.num_turns, cost } }];
   }
   const out = [];
   const content = ev.message && Array.isArray(ev.message.content) ? ev.message.content : [];

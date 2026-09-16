@@ -505,6 +505,36 @@ test('two screens and nothing else', () => {
   ok(/window\.SpeakUpRecorder/.test(eng), 'it exposes the documented API');
 });
 
+test('one language on the whole screen', () => {
+  const con = read('verticals/speakup/public/console.js');
+  // A line is a KEY plus arguments, never a finished string, or it keeps the language it
+  // was written in: an English console listed "Probando / Subiendo la rama / Desplegado".
+  ok(/var shown = \[\]/.test(con) && /function paint\(\)/.test(con), 'the pane keeps its raw lines and can repaint them');
+  ok(/paint\(\);\s*\n\s*renderBar\(lastJob\);/.test(con), 'switching language repaints the pane AND redraws the step bar');
+  ok(/if \(planJob && planShown\) showPlan\(planShown\)/.test(con), 'and a plan on screen gets its instructions back in the new language');
+  // No client-authored line may be pushed as pre-translated text.
+  const authored = con.match(/write\(\[\{ kind: '[a-z]+', text: L\(/g) || [];
+  ok(!authored.length, 'no console line is written as an already-translated string (' + authored.length + ' found)');
+
+  // THE SERVER AND THE RUNNER MUST KEEP SENDING THE KEY. The browser test supplies the key
+  // itself, so only this can catch it being dropped at the source.
+  const jobsSrc = stripComments(read('verticals/speakup/src/factory/jobs.js'));
+  [["i18n: 'merged'", 'the auto-merge line'], ["i18n: 'suite_modified'", 'the suite-was-edited line'], ["i18n: 'merge_failed'", 'the merge-failure line']]
+    .forEach(function (p) { ok(jobsSrc.includes(p[0]), p[1] + ' carries a translation key'); });
+  const stream = stripComments(fs.readFileSync(path.join(ROOT, '.github/speakup/stream-events.js'), 'utf8'));
+  ok(/i18n: 'claude_started'/.test(stream) && /i18n: ev\.is_error \? 'claude_stopped' : 'claude_done'/.test(stream),
+    'the runner labels its start and finish lines');
+  ok(/turns: ev\.num_turns/.test(stream), 'it sends the turn count as a number, so the joining words can be translated');
+  const prog = stripComments(fs.readFileSync(path.join(ROOT, '.github/speakup/progress.js'), 'utf8'));
+  ok(/i18n: 'tests'/.test(prog) && /i18n: 'tests_unmeasured'/.test(prog), 'the runner labels its test line');
+
+  // Every key either side sends must exist in the console, or the line silently falls back
+  // to whatever language the sender happened to use.
+  const known = (con.match(/^\s{4}(\w+): \[/gm) || []).map(function (m) { return m.trim().split(':')[0]; });
+  ["merged", "suite_modified", "merge_failed", "claude_started", "claude_done", "claude_stopped", "tests", "tests_unmeasured"]
+    .forEach(function (k) { ok(known.indexOf(k) >= 0, 'the console can translate "' + k + '"'); });
+});
+
 test('the header controls are one node, not two copies', () => {
   const css = read('verticals/speakup/public/theme.css');
   const js = read('verticals/speakup/public/header-menu.js');

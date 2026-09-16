@@ -207,19 +207,19 @@ async function autoMerge(job) {
   if (!projects.allows(project, 'merge')) return job;
   if (!job.tests || !job.tests.measured || job.tests.failed !== 0) return job;
   if (job.suite_modified !== false) {
-    await addEvents(job, [{ kind: 'info', text: 'Left for you to review: this change edited a test suite the factory runs, so its green result cannot vouch for itself.' }]);
+    await addEvents(job, [{ kind: 'info', text: 'Left for you to review: this change edited a test suite the factory runs, so its green result cannot vouch for itself.', detail: { i18n: 'suite_modified' } }]);
     return job;
   }
   try {
     const res = await github.mergePR(job.repo, job.pr_number, job.commit_sha, `SpeakUp AI Factory job #${job.id}`);
-    await addEvents(job, [{ kind: 'pr', text: 'Merged into ' + job.base_branch + '. Render is deploying.' }]);
+    await addEvents(job, [{ kind: 'pr', text: 'Merged into ' + job.base_branch + '. Render is deploying.', detail: { i18n: 'merged', branch: job.base_branch } }]);
     await audit.record({ tenant_id: job.tenant_id, actor: 'system', action: 'job.auto_merged', entity: 'job', entity_id: job.id, detail: { pr: job.pr_number, sha: res.sha } });
     return await transition(job, 'DEPLOYING', { detail: { merged_via: 'auto' }, fields: { merge_sha: res.sha, deploy_status: 'merged; waiting for Render' } }) || job;
   } catch (e) {
     const hint = e.status === 403
       ? ' The GitHub token needs Contents: Read and write to merge; give it that on the token page, or merge this PR yourself.'
       : '';
-    await addEvents(job, [{ kind: 'error', text: 'Could not merge automatically: ' + e.message + hint }]);
+    await addEvents(job, [{ kind: 'error', text: 'Could not merge automatically: ' + e.message + hint, detail: { i18n: 'merge_failed', message: e.message + hint } }]);
     await audit.record({ tenant_id: job.tenant_id, actor: 'system', action: 'job.auto_merge_failed', entity: 'job', entity_id: job.id, detail: { error: e.message } });
     return job;
   }

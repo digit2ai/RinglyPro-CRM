@@ -19,6 +19,8 @@
   var DISMISSED = 'speakup_console_dismissed';
   var jobId = null, jobTerminal = false, lastEvent = 0, timer = null, capturing = false, recog = null, tickTimer = null, startTs = 0;
   var shots = []; // pasted screenshots waiting to go with the next instruction
+  var shown = [];  // every line in the pane, raw — repainted when the language changes
+  var lastJob = null; // what the step bar is showing, so it can be redrawn in the other language
 
   // A FINISHED JOB IS DISMISSED FOR GOOD, A RUNNING ONE ALWAYS COMES BACK. On boot the
   // console re-attaches to the newest job, which is right while it is running (close the
@@ -62,29 +64,87 @@
   function diffLines(txt, c) {
     return String(txt || '').split('\n').slice(0, 60).map(function (l) { return '<span class="dl ' + c + '">' + esc(l) + '</span>'; }).join('');
   }
+  /* NOTHING IN THE PANE IS STORED AS FINISHED TEXT.
+   *
+   * Switching language used to relabel the header and leave the pane as it was, so an
+   * English console listed "Probando / Subiendo la rama / Desplegado" — every line kept the
+   * language it happened to be written in. So a line is a KEY plus arguments, the pane keeps
+   * the raw events, and changing language repaints all of it from them.
+   *
+   * MSG: lines the console itself authors. SRV: lines the server or the GitHub runner
+   * authors, which travel with `detail.i18n` naming the phrase. Anything with no key — a
+   * model's prose, a file path, an error from an API — is shown exactly as it arrived,
+   * because inventing a translation for it would be worse than leaving it.
+   */
+  var MSG = {
+    idle: ['Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. Se crea una rama y un PR; main y producción no se tocan.',
+      'Type below what you want changed in digit2ai/RinglyPro-CRM. A branch and a PR are created; main and production are not touched.'],
+    filesChanged: ['{n} archivos cambiados', '{n} files changed'],
+    readyForReview: ['Listo para revisión: {url}', 'Ready for review: {url}'],
+    approved: ['Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.'],
+    planCorrected: ['Plan corregido. Léelo otra vez.', 'Plan corrected. Read it again.'],
+    fromMeeting: ['Prompt traído de la reunión. Revísalo y envíalo.', 'Prompt brought from the meeting. Review it and send it.'],
+    youSaid: ['{text}', '{text}'],
+    youSaidShots: ['{text}  [{n} captura(s)]', '{text}  [{n} screenshot(s)]'],
+    notOperator: ['Esta cuenta no puede usar la fábrica.', 'This account cannot use the factory.'],
+    blocked: ['La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:']
+  };
+  var SRV = {
+    merged: ['Fusionado en {branch}. Render está desplegando.', 'Merged into {branch}. Render is deploying.'],
+    suite_modified: ['Queda para que lo revises: este cambio editó una suite de pruebas que la fábrica ejecuta, así que su resultado en verde no puede avalarse a sí mismo.',
+      'Left for you to review: this change edited a test suite the factory runs, so its green result cannot vouch for itself.'],
+    merge_failed: ['No se pudo fusionar automáticamente: {message}', 'Could not merge automatically: {message}'],
+    claude_started: ['Claude Code arrancó{model}', 'Claude Code started{model}'],
+    claude_done: ['Claude terminó{turns}{cost}', 'Claude finished{turns}{cost}'],
+    claude_stopped: ['Claude se detuvo: {why}{turns}{cost}', 'Claude stopped: {why}{turns}{cost}'],
+    turns: [' tras {n} turnos', ' after {n} turns'],
+    tests: ['{passed} aprobadas, {failed} fallidas — {summary}', '{passed} passed, {failed} failed — {summary}'],
+    tests_unmeasured: ['No se pudieron medir las pruebas', 'Tests could not be measured']
+  };
+  function fill(s, args) {
+    return String(s).replace(/\{(\w+)\}/g, function (_, k) { return args && args[k] != null ? String(args[k]) : ''; });
+  }
+  function phrase(e) {
+    if (e.t && MSG[e.t]) return fill(L(MSG[e.t][0], MSG[e.t][1]), e.args);
+    var d = e.detail || {};
+    if (d.i18n && SRV[d.i18n]) {
+      var args = d;
+      // The runner sends the pieces; the joining words are ours, so they follow the language.
+      if (d.turns != null) args = Object.assign({}, d, { turns: fill(L(SRV.turns[0], SRV.turns[1]), { n: d.turns }) });
+      return fill(L(SRV[d.i18n][0], SRV[d.i18n][1]), args);
+    }
+    if (e.kind === 'status' && STATUS_TEXT[e.text]) return L(STATUS_TEXT[e.text][0], STATUS_TEXT[e.text][1]);
+    return e.text;
+  }
+
   function line(e) {
-    var body = e.kind === 'say' || e.kind === 'you' ? '<span class="say">' + esc(e.text) + '</span>'
-      : (['read', 'edit', 'write'].indexOf(e.kind) >= 0 ? '<span class="path">' + esc(e.text) + '</span>' : esc(e.text));
+    var txt = phrase(e);
+    if (e.kind === 'banner') return '<div class="banner"><strong>' + esc(txt) + '</strong>' + (e.args && e.args.html ? '<br>' + e.args.html : '') + '</div>';
+    var body = e.kind === 'say' || e.kind === 'you' ? '<span class="say">' + esc(txt) + '</span>'
+      : (['read', 'edit', 'write'].indexOf(e.kind) >= 0 ? '<span class="path">' + esc(txt) + '</span>' : esc(txt));
     var extra = '';
     var d = e.detail || {};
     if (d.old || d.new) extra = '<details><summary>' + L('ver cambio', 'see change') + '</summary>' + diffLines(d.old, 'del') + diffLines(d.new, 'add') + '</details>';
     return '<span class="ln"><span class="' + cls(e.kind) + '">' + (KIND[e.kind] || 'INFO') + '</span> ' + body + '</span>' + extra;
   }
+  // WAITING_APPROVAL is shown, and it is the point: the plan is on screen and the machine is
+  // waiting for the owner. It used to be filtered out because the console approved as it
+  // dispatched, so the line described a pause that never happened.
   function write(events) {
-    // WAITING_APPROVAL is shown again, and it is the point: the plan is on screen and the
-    // machine is waiting for the owner. It used to be filtered out because the console
-    // approved as it dispatched, so the line described a pause that never happened.
-    events = events.map(function (e) {
-        if (e.kind !== 'status' || !STATUS_TEXT[e.text]) return e;
-        return { kind: 'status', text: L(STATUS_TEXT[e.text][0], STATUS_TEXT[e.text][1]), detail: e.detail };
-      });
-    if (!events.length) return;
+    var list = (events || []).filter(Boolean);
+    if (!list.length) return;
+    for (var i = 0; i < list.length; i++) shown.push(list[i]);
     var out = $('out');
     var atBottom = out.scrollTop + out.clientHeight >= out.scrollHeight - 40;
-    out.insertAdjacentHTML('beforeend', events.map(line).join(''));
+    out.insertAdjacentHTML('beforeend', list.map(line).join(''));
     if (atBottom) out.scrollTop = out.scrollHeight;
   }
-  function banner(html) { $('out').insertAdjacentHTML('afterbegin', '<div class="banner">' + html + '</div>'); }
+  function paint() {
+    var out = $('out');
+    out.innerHTML = shown.map(line).join('');
+    out.scrollTop = out.scrollHeight;
+  }
+  function banner(t, args) { shown.unshift({ kind: 'banner', t: t, args: args || {} }); paint(); }
 
   var STEPS = [
     { es: 'Plan', en: 'Plan', at: ['ANALYZING', 'PLANNING'] },
@@ -94,6 +154,7 @@
     { es: 'Despliegue', en: 'Deploy', at: ['DEPLOYING', 'DEPLOYED'] }
   ];
   function renderBar(job) {
+    lastJob = job;
     var idx = -1;
     STEPS.forEach(function (s, i) { if (job && s.at.indexOf(job.status) >= 0) idx = i; });
     var failed = job && (job.status === 'FAILED' || job.status === 'CANCELLED');
@@ -115,8 +176,7 @@
   }
 
   function idleHint() {
-    write([{ kind: 'info', text: L('Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. Se crea una rama y un PR; main y producción no se tocan.',
-      'Type below what you want changed in digit2ai/RinglyPro-CRM. A branch and a PR are created; main and production are not touched.') }]);
+    write([{ kind: 'info', t: 'idle' }]);
   }
 
   // Clearing empties the pane only. It never cancels: a running job keeps running on
@@ -126,6 +186,7 @@
     if (jobId && jobTerminal) dismiss(jobId);
     jobId = null; jobTerminal = false; lastEvent = 0;
     hidePlan();
+    shown = [];
     $('out').innerHTML = '';
     renderBar(null);
     idleHint();
@@ -134,7 +195,7 @@
   async function showDiff() {
     try {
       var d = await api('/factory/jobs/' + jobId + '/diff');
-      write([{ kind: 'pr', text: d.files.length + L(' archivos cambiados', ' files changed') }]);
+      write([{ kind: 'pr', t: 'filesChanged', args: { n: d.files.length } }]);
       $('out').insertAdjacentHTML('beforeend', d.files.map(function (f) {
         return '<details open><summary><span class="path">' + esc(f.filename) + '</span> +' + f.additions + ' -' + f.deletions + '</summary>' +
           String(f.patch || '').split('\n').map(function (l) {
@@ -154,7 +215,7 @@
 
   // ── following a job ────────────────────────────────────────────────────────
   async function follow(id, fresh) {
-    if (id !== jobId) { jobId = id; lastEvent = 0; if (fresh) $('out').innerHTML = ''; }
+    if (id !== jobId) { jobId = id; lastEvent = 0; if (fresh) { shown = []; $('out').innerHTML = ''; } }
     clearTimeout(timer);
     try {
       var d = await api('/factory/jobs/' + id + '/events?after=' + lastEvent);
@@ -176,7 +237,7 @@
       else if (d.terminal) {
         var j = (await api('/factory/jobs/' + id)).job;
         if (j.status === 'FAILED' && j.error) write([{ kind: 'error', text: j.error }]);
-        if (j.pr_url) write([{ kind: 'pr', text: L('Listo para revisión: ', 'Ready for review: ') + j.pr_url }]);
+        if (j.pr_url) write([{ kind: 'pr', t: 'readyForReview', args: { url: j.pr_url } }]);
         renderBar(j);
       }
     } catch (e) { /* the page redirects on 401 */ }
@@ -226,7 +287,7 @@
     if (!text) { status(L('Escribe o dicta una instrucción', 'Type or dictate an instruction')); return; }
     if (capturing) stopCapture();
     $('send').disabled = true;
-    write([{ kind: 'you', text: text + (shots.length ? '  [' + shots.length + ' ' + L('captura(s)', 'screenshot(s)') + ']' : '') }]);
+    write([{ kind: 'you', t: shots.length ? 'youSaidShots' : 'youSaid', args: { text: text, n: shots.length } }]);
     // WHILE A PLAN IS ON SCREEN THE BOX MEANS SOMETHING ELSE. "approved" runs it; anything
     // else is a correction to that plan. A new instruction cannot be started underneath a
     // plan waiting to be read — that is how the old build-without-reading behaviour crept in.
@@ -257,12 +318,12 @@
   // Only these. "ok", "yes" and "go" are deliberately NOT here: the word that puts code on
   // the path to production should be one the owner cannot type by reflex.
   var APPROVED = /^\s*(approved|aprobado|aprobada)\s*[.!]?\s*$/i;
-  var planJob = null, planHash = null;
+  var planJob = null, planHash = null, planShown = null;
 
-  function hidePlan() { planJob = null; planHash = null; $('plan').style.display = 'none'; $('plan').innerHTML = ''; setPlaceholder(); }
+  function hidePlan() { planJob = null; planHash = null; planShown = null; $('plan').style.display = 'none'; $('plan').innerHTML = ''; setPlaceholder(); }
 
   function showPlan(job) {
-    planJob = job.id; planHash = job.plan_hash;
+    planJob = job.id; planHash = job.plan_hash; planShown = job;
     var revs = (job.revisions || []).map(function (r) { return '<div class="rev">' + esc(r.text) + '</div>'; }).join('');
     $('plan').innerHTML =
       '<div class="planhd"><h2>' + esc(job.title || L('Plan', 'Plan')) + '</h2>' +
@@ -285,7 +346,7 @@
     try {
       var d = await api('/factory/jobs/' + id + '/approve', { method: 'POST', body: JSON.stringify({ plan_hash: planHash, lang: lang }) });
       hidePlan();
-      write([{ kind: 'done', text: L('Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.') }]);
+      write([{ kind: 'done', t: 'approved' }]);
       status('');
       follow(d.job.id);
     } catch (e) {
@@ -304,7 +365,7 @@
       var d = await api('/factory/jobs/' + id + '/revise', { method: 'POST', body: JSON.stringify({ text: text, lang: lang }) });
       showPlan(d.job);
       status('');
-      write([{ kind: 'info', text: L('Plan corregido. Léelo otra vez.', 'Plan corrected. Read it again.') }]);
+      write([{ kind: 'info', t: 'planCorrected' }]);
     } catch (e) {
       status('');
       write([{ kind: 'error', text: e.message }]);
@@ -329,7 +390,7 @@
     if (!p || !p.text) return false;
     $('cmd').value = String(p.text).slice(0, 50000);
     saveDraft();
-    write([{ kind: 'info', text: L('Prompt traído de la reunión. Revísalo y envíalo.', 'Prompt brought from the meeting. Review it and send it.') }]);
+    write([{ kind: 'info', t: 'fromMeeting' }]);
     return true;
   }
 
@@ -386,6 +447,12 @@
     $('outBtn').textContent = L('Salir', 'Sign out');
     $('tabMeet').textContent = L('Reuniones', 'Meetings');
     $('tabFac').textContent = L('Fábrica', 'Factory');
+    // THE WHOLE SCREEN FOLLOWS, NOT JUST THE HEADER. The pane repaints from the raw events,
+    // the step bar redraws from the job it last showed, and a plan on screen gets its
+    // instructions back in the new language.
+    paint();
+    renderBar(lastJob);
+    if (planJob && planShown) showPlan(planShown);
   }
 
   (async function () {
@@ -412,10 +479,9 @@
 
     try {
       var ov = await api('/factory/overview?lang=' + lang);
-      if (!ov.operator) { banner(L('Esta cuenta no puede usar la fábrica.', 'This account cannot use the factory.')); return; }
+      if (!ov.operator) { banner('notOperator'); return; }
       if (ov.readiness && !ov.readiness.ready) {
-        banner('<strong>' + L('La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:') + '</strong><br>' +
-          ov.readiness.blockers.map(function (b) { return esc(b.fix); }).join('<br>'));
+        banner('blocked', { html: ov.readiness.blockers.map(function (b) { return esc(b.fix); }).join('<br>') });
       }
       var running = (ov.jobs || []).filter(function (j) { return !j.terminal; })[0];
       var last = (ov.jobs || [])[0];

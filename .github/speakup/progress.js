@@ -20,7 +20,8 @@ const { base, jobId, readText, readJSON } = require('./lib');
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-speakup-progress': String(process.env.PROGRESS_TOKEN || ''), 'User-Agent': 'SpeakUp-Factory-Action' },
       body: JSON.stringify({ job_id: jobId(), plan_hash: process.env.PLAN_HASH || null,
-        events: [{ kind: 'test', text: t.measured ? `${t.passed} passed, ${t.failed} failed — ${String(t.summary || '').slice(0, 300)}` : 'Tests could not be measured' }] })
+        events: [{ kind: 'test', text: t.measured ? `${t.passed} passed, ${t.failed} failed — ${String(t.summary || '').slice(0, 300)}` : 'Tests could not be measured',
+          detail: t.measured ? { i18n: 'tests', passed: t.passed, failed: t.failed, summary: String(t.summary || '').slice(0, 300) } : { i18n: 'tests_unmeasured' } }] })
     });
     console.log('progress tests: HTTP ' + res.status);
     return;
