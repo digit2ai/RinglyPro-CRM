@@ -1113,7 +1113,7 @@ The progress token can only report TESTING, FIXING or a failure for its own job;
 
 **Owner setup to open the execution door** (until then SpeakUp captures, analyzes and prepares, and shows the list of what is missing):
 1. Render: `SPEAKUP_JWT_SECRET` (random, its own value), `SPEAKUP_TEAM_PASSWORD` (private, 12+), `SPEAKUP_EXEC_PHRASE` (4+ words), `SPEAKUP_FACTORY_SECRET` (random 32+ chars), `SPEAKUP_GITHUB_TOKEN` (fine-grained PAT on digit2ai/RinglyPro-CRM: Actions RW, Pull requests RW, Contents R — Contents RW only if merging from the phone).
-2. GitHub repository secrets: `ANTHROPIC_API_KEY`, `SPEAKUP_FACTORY_SECRET` (same value as Render).
+2. GitHub repository secrets: `SPEAKUP_FACTORY_SECRET` (same value as Render) and ONE Claude credential: `CLAUDE_CODE_OAUTH_TOKEN` (subscription, `claude setup-token`) or `ANTHROPIC_API_KEY` (API balance).
 3. Recommended: a ruleset on `main` restricting updates with bypass for repository admins, so a workflow token can never update main even if the workflow were changed.
 
 **Environment Variables:**
@@ -1130,7 +1130,7 @@ The progress token can only report TESTING, FIXING or a failure for its own job;
 - `SPEAKUP_FACTORY_MAX_EVENTS` (4000) — activity lines kept per job.
 - `SPEAKUP_FACTORY_POLLER` (`on` forces the watchdog outside production, `off` stops it) · `SPEAKUP_FACTORY_PREPARE_TIMEOUT_MIN` (20) · `_DISPATCH_TIMEOUT_MIN` (15) · `_PROGRESS_TIMEOUT_MIN` (75) · `_DEPLOY_TIMEOUT_MIN` (60).
 - `SPEAKUP_SEED_USERS` (`off` skips seeding the owner account; SIT only). `SPEAKUP_REPO_ROOT` — override the scanned checkout.
-- GitHub Actions: secrets `ANTHROPIC_API_KEY`, `SPEAKUP_FACTORY_SECRET`; variable `SPEAKUP_BASE_URL` (default `https://aiagent.ringlypro.com/speakup`).
+- GitHub Actions: secrets `SPEAKUP_FACTORY_SECRET` and either `CLAUDE_CODE_OAUTH_TOKEN` (subscription) or `ANTHROPIC_API_KEY` (API credit); variable `SPEAKUP_BASE_URL` (default `https://aiagent.ringlypro.com/speakup`).
 
 ## AI Radar — capture AI discoveries from the phone share sheet (folder: airadar)
 

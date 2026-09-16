@@ -45,10 +45,23 @@ function prompt(brief) {
   if (!brief) throw new Error('brief.json missing');
   const env = {
     PATH: process.env.PATH, HOME: process.env.HOME, LANG: process.env.LANG || 'C.UTF-8', CI: 'true', TERM: 'dumb',
-    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY, WORK, NODE_OPTIONS: '--max-old-space-size=4096',
+    WORK, NODE_OPTIONS: '--max-old-space-size=4096',
     PUPPETEER_SKIP_DOWNLOAD: '1', SPEAKUP_FACTORY_POLLER: 'off', INCENTIVA_AGENTS: 'off'
   };
-  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY secret is not set in GitHub Actions');
+  // CLAUDE_CODE_OAUTH_TOKEN = the Claude subscription, the same account VS Code uses.
+  // ANTHROPIC_API_KEY = the pay-as-you-go API balance. Either is enough; the
+  // subscription is preferred when both are present, so a run costs no API credit.
+  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+    env.CLAUDE_CODE_OAUTH_TOKEN = process.env.CLAUDE_CODE_OAUTH_TOKEN;
+    console.log('signing in with the Claude subscription token');
+  } else if (process.env.ANTHROPIC_API_KEY) {
+    env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+    console.log('signing in with the Anthropic API key');
+  } else {
+    fs.writeFileSync(path.join(WORK, 'error.txt'),
+      'Claude has no way to sign in on GitHub: add the repository secret CLAUDE_CODE_OAUTH_TOKEN (your Claude subscription, run "claude setup-token" on your Mac) or ANTHROPIC_API_KEY with credit.');
+    throw new Error('no Claude credential in GitHub Actions');
+  }
   // The configured model may not be available to this key: fall back rather than
   // reporting a failure the owner cannot act on.
   const models = [brief.model, 'claude-sonnet-5', 'claude-haiku-4-5-20251001'].filter((m, i, a) => m && a.indexOf(m) === i);
@@ -101,7 +114,9 @@ function prompt(brief) {
   if (billing) {
     await poster.done();
     fs.writeFileSync(path.join(WORK, 'error.txt'),
-      'The Anthropic account has no credit left, so Claude stopped before writing anything. Add credit at console.anthropic.com (Billing) and send the instruction again.');
+      (process.env.CLAUDE_CODE_OAUTH_TOKEN
+        ? 'Your Claude subscription refused the run (limit reached or the token expired). Run "claude setup-token" on your Mac and update the GitHub secret CLAUDE_CODE_OAUTH_TOKEN.'
+        : 'The Anthropic API account has no credit left, so Claude stopped before writing anything. Either add credit at console.anthropic.com (Billing), or use your Claude subscription: run "claude setup-token" on your Mac and add the result as the GitHub secret CLAUDE_CODE_OAUTH_TOKEN.'));
     console.log('stopped: the Anthropic account has no credit');
     process.exit(1);
   }

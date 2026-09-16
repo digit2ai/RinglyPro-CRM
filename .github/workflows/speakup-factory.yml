@@ -21,7 +21,9 @@
 # Scripts keep private files in $RUNNER_TEMP/speakup (the runner context is not allowed
 # in job-level env, so it is never set there).
 #
-# Repository secrets: ANTHROPIC_API_KEY, SPEAKUP_FACTORY_SECRET.
+# Repository secrets: SPEAKUP_FACTORY_SECRET, plus ONE Claude credential —
+#   CLAUDE_CODE_OAUTH_TOKEN (your Claude subscription, `claude setup-token`), or
+#   ANTHROPIC_API_KEY (the API account, needs credit).
 # Optional repository variable: SPEAKUP_BASE_URL (default https://aiagent.ringlypro.com/speakup).
 
 name: SpeakUp AI Factory
@@ -132,8 +134,11 @@ jobs:
             exit 1
           fi
           claude --version || { echo "Claude Code installed but would not start on the runner." > "$RUNNER_TEMP/speakup/error.txt"; exit 1; }
+      # Either credential works: CLAUDE_CODE_OAUTH_TOKEN is your Claude subscription
+      # (what VS Code uses, no API balance spent), ANTHROPIC_API_KEY is the API account.
       - name: Claude builds the approved plan
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: node "$RUNNER_TEMP/speakup-bin/claude.js" build
       - name: Report TESTING
@@ -148,6 +153,7 @@ jobs:
       - name: Fix round 1
         if: steps.t1.outputs.failed != '0'
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node "$RUNNER_TEMP/speakup-bin/progress.js" status FIXING
@@ -164,6 +170,7 @@ jobs:
       - name: Fix round 2
         if: steps.t1.outputs.failed != '0' && steps.t2.outputs.failed != '0'
         env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           node "$RUNNER_TEMP/speakup-bin/progress.js" status FIXING

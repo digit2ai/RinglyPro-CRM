@@ -239,6 +239,7 @@ test('structure', () => {
   jobsText.split(/\n(?=  [a-z-]+:\n)/).forEach(b => { const m = b.match(/^  ([a-z-]+):\n/); if (m) jobBlocks[m[1]] = b; });
   ok(['prepare', 'build', 'verify', 'push', 'report-failure'].every(j => jobBlocks[j]), 'workflow has prepare/build/verify/push/report-failure jobs');
   ok(!/SPEAKUP_FACTORY_SECRET|github\.token|GH_TOKEN|contents: write/.test(jobBlocks.build), 'the job that runs Claude holds no factory secret, no GitHub token, no write permission');
+  ok(/CLAUDE_CODE_OAUTH_TOKEN/.test(jobBlocks.build) && /ANTHROPIC_API_KEY/.test(jobBlocks.build), 'the build job accepts either Claude credential: the subscription token or the API key');
   ok(!/secrets\.|github\.token|contents: write/.test(jobBlocks.verify), 'the job that runs the tests holds no secret at all');
   ok(!/claude|run-tests|npm (ci|install)|npx|npm test/.test(jobBlocks.push) && !/claude|run-tests|npm /.test(jobBlocks.prepare), 'jobs holding the secret or push token run no model, test or npm code');
   ok(/contents: write/.test(jobBlocks.push) && (wf.match(/contents: write/g) || []).length === 1, 'only the push job can write');
