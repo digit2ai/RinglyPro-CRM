@@ -235,6 +235,22 @@
     svg.appendChild(p);
     return svg;
   }
+  /* The send control is an arrow in a dark circle, so the only text it has is its aria-label. */
+  function sendSvg() {
+    var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    var p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', 'M12 19V6M6 12l6-6 6 6');
+    p.setAttribute('fill', 'none');
+    p.setAttribute('stroke', 'currentColor');
+    p.setAttribute('stroke-width', '2.2');
+    p.setAttribute('stroke-linecap', 'round');
+    p.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(p);
+    return svg;
+  }
   function bubble(who, text, small) { return h('div', { class: 'mch-b mch-b-' + who + (small ? ' mch-b-small' : '') }, text); }
   function answerRow(id, text) {
     return h('div', { class: 'mch-a' }, h('div', { class: 'mch-b mch-b-u' }, text),
@@ -289,7 +305,7 @@
     var form = h('form', { class: 'mch-composer', novalidate: true, onsubmit: function (e) { e.preventDefault(); submitText(id, input.value); } },
       cfg.prefix ? h('span', { class: 'mch-prefix', 'aria-hidden': 'true', text: cfg.prefix }) : null,
       input,
-      h('button', { type: 'submit', class: 'btn btn-primary mch-send', disabled: ui.busy }, ui.busy ? T('checking') : T('send')));
+      h('button', { type: 'submit', class: 'btn btn-primary mch-send', disabled: ui.busy, title: ui.busy ? T('checking') : T('send'), 'aria-label': ui.busy ? T('checking') : T('send') }, sendSvg()));
     var box = h('div', null, form);
     if (ui.error) box.appendChild(h('p', { class: 'mch-err', id: 'mch_err', role: 'alert', text: ui.error }));
     if (id !== 'area') box.appendChild(skipBtn(id));
