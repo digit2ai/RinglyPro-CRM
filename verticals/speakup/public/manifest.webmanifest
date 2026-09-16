@@ -7,7 +7,7 @@
   "scope": "/speakup/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0e18",
+  "background_color": "#000000",
   "theme_color": "#5a3fe0",
   "icons": [
     { "src": "/speakup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
