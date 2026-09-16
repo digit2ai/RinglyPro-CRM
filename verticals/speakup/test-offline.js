@@ -293,9 +293,20 @@ test('a question is answered, an instruction is built', async () => {
    'explain the four jobs in the workflow', '¿cómo funciona el auto merge?', 'que hace la fabrica'].forEach(function (q) {
     ok(intents.isQuestion(q), 'a question is a question: ' + q);
   });
+  // A change verb in the PAST reports on work already done. These asked about a finished
+  // job, carried a change verb, and so opened a build job that had nothing to edit.
+  ['why was nothing changed in the last run?', 'why was no code changed?', 'what did you change?',
+   'why were the files deleted?', 'has anything been deployed?', 'what did the last job update?',
+   'why was nothing added to the branch?'].forEach(function (q) {
+    ok(intents.isQuestion(q), 'a past-tense report is a question, not a job: ' + q);
+  });
   // The trap: an instruction phrased politely. These must still build.
   ['can you add a TEST tag to the header?', 'could you fix the login page?', '¿puedes cambiar el título?',
-   'what if you removed the banner?', '/ringlypro-architect why is this slow?', 'make the header smaller'].forEach(function (i) {
+   'what if you removed the banner?', '/ringlypro-architect why is this slow?', 'make the header smaller',
+   // The past-tense strip must not swallow a live instruction: an infinitive is not a past
+   // form, and an imperative after a past clause is still an imperative.
+   'can the header be changed?', 'should the banner be removed?',
+   'I did not add the tag, please add it'].forEach(function (i) {
     ok(!intents.isQuestion(i), 'an instruction is not a question, however it is phrased: ' + i);
   });
   const asked = await intents.classify('how does the merge gate decide to stop?', 'architect');
@@ -304,6 +315,10 @@ test('a question is answered, an instruction is built', async () => {
   ok(built.intent === 'PREPARE_IMPLEMENTATION', 'Architect mode still builds an instruction');
   const polite = await intents.classify('can you add a TEST tag to the header?', 'architect');
   ok(polite.intent === 'PREPARE_IMPLEMENTATION', 'a politely phrased instruction still builds');
+  const past = await intents.classify('why was no code changed?', 'architect');
+  ok(past.intent === 'ASK' && !past.architectRequest, 'asking about a finished job opens no job');
+  const stillBuilds = await intents.classify('can the header be changed?', 'architect');
+  ok(stillBuilds.intent === 'PREPARE_IMPLEMENTATION', 'an infinitive is not a past report and still builds');
   // A long question is still a question; a pasted slash prompt never is.
   const longQ = 'How does the factory decide that a change is safe to merge on its own, and what exactly ' +
     'stops it when the change touched one of the test suites that the same run then reports as passing?';
