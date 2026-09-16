@@ -420,13 +420,13 @@ function isPastedPrompt(text) {
 // AN INSTRUCTION PHRASED POLITELY IS STILL AN INSTRUCTION. "Can you add a tag?" ends in a
 // question mark and must still build; "how does the merge gate work?" must not. So a change
 // verb anywhere disqualifies a question, and a pasted "/command" is never one.
-const CHANGE_VERB = new RegExp('\\b(?:' +
+const CHANGE_VERB_WORDS =
   '(?:add|change|remove|delete|drop|fix|create|build|make|update|rename|move|implement|refactor|deploy|write|install|replace|rewrite|revert|disable|enable|hide|show|swap)(?:s|d|ed|ing)?' +
   '|made|wrote|built|put' +
   '|agrega|agregar|anade|anadir|añade|añadir|cambia|cambiar|quita|quitar|elimina|eliminar|borra|borrar|arregla|arreglar|corrige|corregir' +
   '|crea|crear|construye|construir|haz|hacer|actualiza|actualizar|renombra|renombrar|mueve|mover|implementa|implementar' +
-  '|refactoriza|instala|instalar|reemplaza|reemplazar|pon|poner|escribe|escribir|oculta|ocultar|muestra|mostrar' +
-  ')\\b');
+  '|refactoriza|instala|instalar|reemplaza|reemplazar|pon|poner|escribe|escribir|oculta|ocultar|muestra|mostrar';
+const CHANGE_VERB = new RegExp('\\b(?:' + CHANGE_VERB_WORDS + ')\\b');
 // A question may be answered by a READ-ONLY intent, never by an action. Without this list
 // "how does the merge gate work?" matched the APPROVE_MERGE rule and came back as a
 // confirmation card for putting code into production.
@@ -436,11 +436,21 @@ const QUESTION_WORD = /^(what|whats|why|how|who|when|where|which|is|are|was|were
 // question, "change the header" is not. A determiner in front makes it a noun, so those
 // are removed before the verb test rather than losing the words from the list entirely.
 const NOUNED = /\b(?:the|a|an|this|that|these|those|each|every|any|one|its|our|my|your|last|latest|next|no|el|la|los|las|un|una|este|esta|ese|esa|cada|mi|tu|su|ultimo|último)\s+(?:change|build|update|move|deploy|install|fix|drop|show|make|write|replace|revert|rewrite|cambio|despliegue|compilacion)\b/g;
+// A CHANGE VERB IN THE PAST IS A REPORT ON WORK ALREADY DONE, NOT AN INSTRUCTION.
+// "why was no code changed?" and "what did you change?" ask about a finished job, but they
+// carry a change verb, so they failed the test above and opened a build job — which then
+// had nothing to edit and died on "no file changes". Only auxiliaries that can ONLY refer
+// to the past qualify, and only the English verbs have past forms in the list above: "can
+// the header be changed?" keeps its infinitive "be" and still builds, which is the
+// polite-instruction rule. An imperative later in the same sentence still survives the
+// strip ("I did not add the tag, please add it" keeps its second "add") and still builds.
+const PAST_AUX = "(?:was|were|wasn'?t|weren'?t|did|didn'?t|had|been)";
+const PAST_REPORT = new RegExp('\\b' + PAST_AUX + '\\b(?:\\s+\\S+){0,3}?\\s+(?:' + CHANGE_VERB_WORDS + ')\\b', 'g');
 function isQuestion(text) {
   const s = String(text || '').trim();
   if (!s || /^\s*\//.test(s)) return false;
   const lowered = s.toLowerCase();
-  if (CHANGE_VERB.test(lowered.replace(NOUNED, ' '))) return false;
+  if (CHANGE_VERB.test(lowered.replace(NOUNED, ' ').replace(PAST_REPORT, ' '))) return false;
   return /\?\s*$/.test(s) || QUESTION_WORD.test(lowered);
 }
 
