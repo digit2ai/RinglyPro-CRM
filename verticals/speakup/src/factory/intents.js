@@ -59,6 +59,14 @@ async function resolveContext(ctx) {
   return { res };
 }
 
+// Does the text point at a recorded conversation rather than at the system? A selector
+// ("meeting 184", "my latest", a participant, a date range) or the word itself.
+const MEETING_WORD = /\b(meeting|meetings|call|calls|conversation|conversations|recording|reuni[oó]n|reuniones|llamada|llamadas|conversaci[oó]n|grabaci[oó]n)\b/i;
+function refersToConversation(ctx) {
+  const sel = context.parseSelector(ctx.text);
+  return !!(sel.ids.length || sel.latest || sel.range || sel.person || (ctx.recording_ids || []).length || MEETING_WORD.test(ctx.text));
+}
+
 async function intelForMany(ctx, recs) {
   const texts = await context.loadTexts(ctx.tenant_id, recs.map(r => r.id));
   const out = [];
@@ -92,7 +100,16 @@ const handlers = {
   },
 
   async SUMMARIZE(ctx) {
-    const r = await resolveContext(ctx); if (r.stop) return r.stop;
+    const r = await resolveContext(ctx);
+    if (r.stop) {
+      // "Summarize how the merge gate works" is a question about the system, not about a
+      // meeting, and used to dead-end on "No conversation matched"; answer it from the code
+      // instead. But when the owner NAMES a conversation ("yesterday's meeting with Greg")
+      // and none is found, say so — answering from the code there would quietly substitute
+      // a different subject for the one that was asked about.
+      if (!refersToConversation(ctx)) return handlers.ASK(ctx);
+      return r.stop;
+    }
     const texts = await context.loadTexts(ctx.tenant_id, r.res.recordings.slice(0, 3).map(x => x.id));
     const parts = [];
     for (const t of texts) {
@@ -420,9 +437,11 @@ function isPastedPrompt(text) {
 // AN INSTRUCTION PHRASED POLITELY IS STILL AN INSTRUCTION. "Can you add a tag?" ends in a
 // question mark and must still build; "how does the merge gate work?" must not. So a change
 // verb anywhere disqualifies a question, and a pasted "/command" is never one.
+// BASE FORMS ONLY, deliberately. A command is given in the base form ("add a tag"); the
+// -ed/-ing forms describe a state or a hypothesis ("is it deployed", "why is it failing"),
+// and matching those turned "is it deployed" into a request to build something.
 const CHANGE_VERB_WORDS =
-  '(?:add|change|remove|delete|drop|fix|create|build|make|update|rename|move|implement|refactor|deploy|write|install|replace|rewrite|revert|disable|enable|hide|show|swap)(?:s|d|ed|ing)?' +
-  '|made|wrote|built|put' +
+  'add|change|remove|delete|drop|fix|create|build|make|update|rename|move|implement|refactor|deploy|write|install|replace|rewrite|revert|disable|enable|hide|swap|put' +
   '|agrega|agregar|anade|anadir|añade|añadir|cambia|cambiar|quita|quitar|elimina|eliminar|borra|borrar|arregla|arreglar|corrige|corregir' +
   '|crea|crear|construye|construir|haz|hacer|actualiza|actualizar|renombra|renombrar|mueve|mover|implementa|implementar' +
   '|refactoriza|instala|instalar|reemplaza|reemplazar|pon|poner|escribe|escribir|oculta|ocultar|muestra|mostrar';
@@ -446,21 +465,60 @@ const NOUNED = /\b(?:the|a|an|this|that|these|those|each|every|any|one|its|our|m
 // strip ("I did not add the tag, please add it" keeps its second "add") and still builds.
 const PAST_AUX = "(?:was|were|wasn'?t|weren'?t|did|didn'?t|had|been)";
 const PAST_REPORT = new RegExp('\\b' + PAST_AUX + '\\b(?:\\s+\\S+){0,3}?\\s+(?:' + CHANGE_VERB_WORDS + ')\\b', 'g');
+// Both strips, always together: a noun use ("the change") and a report on finished work
+// ("what did you change?") are the two ways a command word appears without commanding.
+const strip = (lowered) => lowered.replace(NOUNED, ' ').replace(PAST_REPORT, ' ');
+// "Tell me about X" and "give me a summary of X" carry no question mark and start with no
+// question word, so they fell through to the action rules: "give me a summary of the auto
+// merge" matched the APPROVE_MERGE rule and came back as a confirmation card for putting
+// code into production. "Give me" is only informational in front of an information noun —
+// "give me a Clear button" is an instruction.
+const INFO_CUE = /^(?:tell me|show me|update me|explain|describe|summari[sz]e|walk me through|cu[eé]ntame|expl[ií]came|res[uú]meme|resumen de)\b/;
+const INFO_ASK = /^(?:give me|dame|pasame|p[aá]same)\s+(?:a |an |the |un |una |el |la )?(?:summary|overview|rundown|breakdown|recap|resumen|panorama|descripci[oó]n)\b/;
+// The order of these three checks is the whole rule, and each one was a bug before it:
+// an information cue wins outright ("update me on the status" is not a request to update
+// anything), then a command verb makes it an instruction however politely it is phrased,
+// and only then do a question mark or an opening question word decide.
+// A modal in front of a passive IS a request: "can the header be changed?" asks for the
+// change. Without this the base-form rule read it as a state question, because the only
+// verb in it is a past participle — the same shape as "is it deployed", which is not.
+const PASSIVE_REQUEST = new RegExp('\\b(?:can|could|should|would|shall|puede|podr[ií]a|deber[ií]a)\\b[^?]*\\bbe\\s+\\w+(?:ed|d|n)\\b');
 function isQuestion(text) {
   const s = String(text || '').trim();
   if (!s || /^\s*\//.test(s)) return false;
   const lowered = s.toLowerCase();
-  if (CHANGE_VERB.test(lowered.replace(NOUNED, ' ').replace(PAST_REPORT, ' '))) return false;
+  if (INFO_CUE.test(lowered) || INFO_ASK.test(lowered)) return true;
+  if (PASSIVE_REQUEST.test(lowered)) return false;
+  if (CHANGE_VERB.test(strip(lowered))) return false;
   return /\?\s*$/.test(s) || QUESTION_WORD.test(lowered);
+}
+
+// A change verb the owner is telling the factory to perform. Deliberately NOT the same as
+// "not a question": "merge the PR" and "cancel the job" carry no change verb and must keep
+// reaching their own intents.
+function isInstruction(text) {
+  const s = String(text || '').trim();
+  if (!s || isQuestion(s)) return false;
+  return CHANGE_VERB.test(strip(s.toLowerCase())) || PASSIVE_REQUEST.test(s.toLowerCase());
+}
+
+// Among the read-only intents only. classifyRules returns the FIRST rule that matches in
+// registry order, which for "summary of the auto merge" is APPROVE_MERGE; asking only the
+// allowed ones finds SUMMARIZE instead of discarding the match.
+function classifyRulesAmong(text, allowed) {
+  const n = stripWake(security.normalizeSpoken(text));
+  for (const it of INTENTS) if (allowed.includes(it.name) && it.match(n)) return it.name;
+  return null;
 }
 
 async function classify(text, mode) {
   if (mode === 'note') return { intent: 'CAPTURE_NOTE', by: 'mode' };
   const question = mode === 'architect' && isQuestion(text);
-  if (question) {
-    const r = classifyRules(text);
-    return { intent: QUESTION_INTENTS.includes(r) ? r : 'ASK', by: 'rules' };
-  }
+  if (question) return { intent: classifyRulesAmong(text, QUESTION_INTENTS) || 'ASK', by: 'rules' };
+  // An instruction that merely MENTIONS a command word is still an instruction. "Add a
+  // summary line to the header" matched the SUMMARIZE rule and went looking for a meeting
+  // to summarise instead of building anything.
+  if (mode === 'architect' && isInstruction(text)) return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
   if (mode === 'architect' && isPastedPrompt(text)) return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
   const rule = classifyRules(text);
   if (rule) return { intent: rule, by: 'rules' };
@@ -551,4 +609,4 @@ async function run(input) {
     card, client_action: result.client_action || null };
 }
 
-module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isWakeOnly, firstLine };
+module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isInstruction, isWakeOnly, firstLine };

@@ -290,7 +290,14 @@ test('pasted prompts are instructions, not commands', () => {
 
 test('a question is answered, an instruction is built', async () => {
   ['how does the merge gate work?', 'What is the private phrase for?', 'why did the last job fail',
-   'explain the four jobs in the workflow', '¿cómo funciona el auto merge?', 'que hace la fabrica'].forEach(function (q) {
+   'explain the four jobs in the workflow', '¿cómo funciona el auto merge?', 'que hace la fabrica',
+   // An information cue wins outright: "update me" is not a request to update anything,
+   // and "give me" is informational only in front of an information noun.
+   'tell me about the merge gate', 'update me on the status', 'give me a summary of the auto merge',
+   'cuéntame sobre el auto merge', 'resúmeme el flujo',
+   // -ed / -ing forms describe a state or a hypothesis, never a command. Matching them
+   // turned "is it deployed" into a request to build something.
+   'is it deployed', 'why is the build failing', 'what if you removed the banner?'].forEach(function (q) {
     ok(intents.isQuestion(q), 'a question is a question: ' + q);
   });
   // A change verb in the PAST reports on work already done. These asked about a finished
@@ -302,13 +309,41 @@ test('a question is answered, an instruction is built', async () => {
   });
   // The trap: an instruction phrased politely. These must still build.
   ['can you add a TEST tag to the header?', 'could you fix the login page?', '¿puedes cambiar el título?',
-   'what if you removed the banner?', '/ringlypro-architect why is this slow?', 'make the header smaller',
+   'make the header smaller',
    // The past-tense strip must not swallow a live instruction: an infinitive is not a past
-   // form, and an imperative after a past clause is still an imperative.
+   // form, and an imperative after a past clause is still an imperative. A modal in front
+   // of a passive IS a request, unlike the same participle in a state question.
    'can the header be changed?', 'should the banner be removed?',
-   'I did not add the tag, please add it'].forEach(function (i) {
+   'I did not add the tag, please add it',
+   // ...and one that merely MENTIONS a command word. This matched the SUMMARIZE rule and
+   // went looking for a meeting to summarise instead of building anything.
+   'add a summary line to the header'].forEach(function (i) {
     ok(!intents.isQuestion(i), 'an instruction is not a question, however it is phrased: ' + i);
+    ok(intents.isInstruction(i), 'a command verb makes it an instruction: ' + i);
   });
+  // No command verb, so isInstruction is false — these still build, by the other paths
+  // (a pasted /command, and Architect mode's default). What matters is where they land.
+  ['/ringlypro-architect why is this slow?', 'give me a Clear button in the header'].forEach(async function (i) {
+    ok(!intents.isQuestion(i), 'not read as a question: ' + i);
+  });
+  // A question must never reach an action, whatever words it happens to contain.
+  ok(!intents.isInstruction('merge the PR') && !intents.isInstruction('cancel the job'),
+    'merge and cancel carry no change verb, so they still reach their own intents');
+  // The whole point, asserted end to end: an information request never reaches an action,
+  // and an instruction never gets answered instead of built.
+  const table = [
+    ['tell me about the merge gate', 'ASK'], ['update me on the status', 'CHECK_EXECUTION'],
+    ['is it deployed', 'CHECK_DEPLOYMENT'], ['why is the build failing', 'ASK'],
+    ['give me a summary of the auto merge', 'SUMMARIZE'], ['summarize the factory workflow', 'SUMMARIZE'],
+    ['add a summary line to the header', 'PREPARE_IMPLEMENTATION'],
+    ['give me a Clear button in the header', 'PREPARE_IMPLEMENTATION'],
+    ['/ringlypro-architect why is this slow?', 'PREPARE_IMPLEMENTATION'],
+    ['merge the PR', 'APPROVE_MERGE'], ['cancel the job', 'CANCEL_EXECUTION']
+  ];
+  for (const [text, want] of table) {
+    const got = (await intents.classify(text, 'architect')).intent;
+    ok(got === want, 'routes to ' + want + ' (got ' + got + '): ' + text);
+  }
   const asked = await intents.classify('how does the merge gate decide to stop?', 'architect');
   ok(asked.intent === 'ASK' && !asked.architectRequest, 'Architect mode answers a question instead of opening a job');
   const built = await intents.classify('add a TEST tag to the header', 'architect');
