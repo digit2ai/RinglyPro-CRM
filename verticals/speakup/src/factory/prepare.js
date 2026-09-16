@@ -227,10 +227,10 @@ async function runPrepare(jobId, opts = {}) {
   }
 }
 
-async function createPrepareJob({ tenant_id, user, project, recordingIds, commandId, lang, autoRun, req }) {
+async function createPrepareJob({ tenant_id, user, project, recordingIds, commandId, lang, autoRun, attachments, req }) {
   const job = await Job.create({ tenant_id, user_id: user.id, command_id: commandId || null, project_key: project.key,
     repo: project.repo, base_branch: project.default_branch, title: project.name + ' change', status: 'ANALYZING',
-    source_recording_ids: recordingIds, auto_run: !!autoRun });
+    source_recording_ids: recordingIds, auto_run: !!autoRun, attachments: attachments || [] });
   await audit.record({ tenant_id, user_id: user.id, actor: user.email, action: 'job.created', entity: 'job', entity_id: job.id,
     to_status: 'ANALYZING', detail: { project: project.key, sources: recordingIds, command_id: commandId || null }, req });
   setImmediate(() => { runPrepare(job.id, { lang, user }).catch(e => console.error('SpeakUp prepare crash', e.message)); });

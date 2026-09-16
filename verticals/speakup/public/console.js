@@ -17,6 +17,7 @@
   var DRAFT = 'speakup_console_draft';
 
   var jobId = null, lastEvent = 0, timer = null, capturing = false, recog = null, tickTimer = null, startTs = 0;
+  var shots = []; // pasted screenshots waiting to go with the next instruction
 
   // ── helpers ────────────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
@@ -140,18 +141,59 @@
     } catch (e) { /* the page redirects on 401 */ }
   }
 
+  // ── pasted screenshots ─────────────────────────────────────────────────────
+  function renderShots() {
+    $('shots').innerHTML = shots.map(function (s, i) {
+      return '<div class="shot"><img src="' + s.url + '" alt="' + esc(s.name) + '"><button data-i="' + i + '" aria-label="Quitar">×</button></div>';
+    }).join('');
+    Array.prototype.forEach.call($('shots').querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { var i = +b.getAttribute('data-i'); URL.revokeObjectURL(shots[i].url); shots.splice(i, 1); renderShots(); });
+    });
+  }
+  async function addImage(file) {
+    if (shots.length >= 6) { status(L('Máximo 6 capturas', 'Six screenshots at most')); return; }
+    if (file.size > 6 * 1024 * 1024) { status(L('La imagen pasa de 6 MB', 'That image is over 6 MB')); return; }
+    status(L('Subiendo captura…', 'Uploading screenshot…'));
+    try {
+      var b64 = await new Promise(function (res, rej) {
+        var r = new FileReader();
+        r.onload = function () { res(String(r.result).split(',')[1] || ''); };
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+      var up = await api('/factory/uploads', { method: 'POST', body: JSON.stringify({ name: file.name || 'screenshot.png', mime: file.type, data_base64: b64 }) });
+      shots.push({ id: up.id, name: up.name, url: URL.createObjectURL(file) });
+      renderShots();
+      status(L('Captura adjunta', 'Screenshot attached'));
+    } catch (e) { status(e.message); }
+  }
+  function filesFrom(ev) {
+    var out = [];
+    var items = (ev.clipboardData || ev.dataTransfer || {}).items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file') { var f = items[i].getAsFile(); if (f && /^image\//.test(f.type)) out.push(f); }
+    }
+    var files = (ev.dataTransfer && ev.dataTransfer.files) || [];
+    for (var j = 0; j < files.length; j++) if (/^image\//.test(files[j].type) && out.indexOf(files[j]) < 0) out.push(files[j]);
+    return out;
+  }
+
   // ── sending ────────────────────────────────────────────────────────────────
   async function send() {
     var text = $('cmd').value.trim();
+    if (!text && shots.length) text = L('Mira la captura adjunta y haz el cambio que muestra.', 'Look at the attached screenshot and make the change it shows.');
     if (!text) { status(L('Escribe o dicta una instrucción', 'Type or dictate an instruction')); return; }
     if (capturing) stopCapture();
     $('send').disabled = true;
     status(L('Enviando…', 'Sending…'));
-    write([{ kind: 'you', text: text }]);
+    write([{ kind: 'you', text: text + (shots.length ? '  [' + shots.length + ' ' + L('captura(s)', 'screenshot(s)') + ']' : '') }]);
     try {
       var d = await api('/factory/command', { method: 'POST', body: JSON.stringify({
-        text: text, mode: 'architect', lang: lang, project_key: 'ringlypro', auto_run: true, engine: SR ? 'webspeech' : 'typed' }) });
+        text: text, mode: 'architect', lang: lang, project_key: 'ringlypro', auto_run: true, engine: SR ? 'webspeech' : 'typed',
+        upload_ids: shots.map(function (s) { return s.id; }) }) });
       $('cmd').value = '';
+      shots.forEach(function (s) { URL.revokeObjectURL(s.url); });
+      shots = []; renderShots();
       try { sessionStorage.removeItem(DRAFT); } catch (e) {}
       status('');
       if (d.reply) write([{ kind: d.intent === 'WAKE' ? 'ready' : 'info', text: d.reply }]);
@@ -205,7 +247,7 @@
     try { localStorage.setItem('speakup_lang', l); } catch (e) {}
     document.documentElement.lang = l;
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
-    $('cmd').placeholder = L('Escribe o dicta la instrucción para RinglyPro Architect…', 'Type or dictate the instruction for RinglyPro Architect…');
+    $('cmd').placeholder = L('Escribe, pega una captura o dicta la instrucción…', 'Type, paste a screenshot, or dictate the instruction…');
     $('outBtn').textContent = L('Salir', 'Sign out');
   }
 
@@ -217,6 +259,16 @@
     $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });
     $('send').addEventListener('click', send);
     $('cmd').addEventListener('input', saveDraft);
+    $('cmd').addEventListener('paste', function (e) {
+      var imgs = filesFrom(e);
+      if (imgs.length) { e.preventDefault(); imgs.forEach(addImage); }
+    });
+    ['dragover', 'drop'].forEach(function (evt) {
+      document.addEventListener(evt, function (e) {
+        e.preventDefault();
+        if (evt === 'drop') filesFrom(e).forEach(addImage);
+      });
+    });
     $('cmd').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); } });
     try { var dr = sessionStorage.getItem(DRAFT); if (dr) $('cmd').value = dr; } catch (e) {}
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && jobId) follow(jobId); });

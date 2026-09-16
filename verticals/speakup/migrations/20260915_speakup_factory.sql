@@ -149,3 +149,19 @@ CREATE INDEX IF NOT EXISTS su_job_events_tenant_idx ON su_job_events(tenant_id);
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS auto_run BOOLEAN DEFAULT FALSE;
 -- The console works on the whole repository, not just src/.
 UPDATE su_projects SET path_scope = '[]'::jsonb WHERE key = 'ringlypro' AND path_scope = '["src"]'::jsonb;
+
+-- Screenshots pasted into the console (Render's disk is ephemeral).
+CREATE TABLE IF NOT EXISTS su_uploads (
+  id         SERIAL PRIMARY KEY,
+  tenant_id  INTEGER NOT NULL,
+  user_id    INTEGER,
+  job_id     INTEGER,
+  name       VARCHAR(120),
+  mime       VARCHAR(60),
+  size       INTEGER,
+  bytes      BYTEA,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS su_uploads_tenant_idx ON su_uploads(tenant_id);
+CREATE INDEX IF NOT EXISTS su_uploads_job_idx ON su_uploads(job_id);
+ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]';

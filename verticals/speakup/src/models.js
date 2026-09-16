@@ -245,6 +245,7 @@ const Job = sequelize.define('SpeakJob', {
   suite_modified: { type: DataTypes.BOOLEAN },
   brief_token_used_at: { type: DataTypes.DATE },
   auto_run: { type: DataTypes.BOOLEAN, defaultValue: false }, // console job: dispatch as soon as the plan is ready
+  attachments: { type: DataTypes.JSONB, defaultValue: [] },  // pasted screenshots the agent may look at
   approved_by: { type: DataTypes.STRING(200) },
   approved_at: { type: DataTypes.DATE },
   branch: { type: DataTypes.STRING(120) },
@@ -286,6 +287,25 @@ const JobEvent = sequelize.define('SpeakJobEvent', {
   indexes: [{ name: 'su_job_events_job_idx', fields: ['job_id', 'id'] }, { name: 'su_job_events_tenant_idx', fields: ['tenant_id'] }]
 });
 
+// ─── su_uploads ───────────────────────────────────────────────────────────────
+// A screenshot pasted into the console. Kept in the database (Render's disk is
+// ephemeral), never written into the repository, and handed to the build job as a
+// file in the runner's temp directory so Claude can look at it.
+const Upload = sequelize.define('SpeakUpload', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  user_id: { type: DataTypes.INTEGER },
+  job_id: { type: DataTypes.INTEGER },
+  name: { type: DataTypes.STRING(120) },
+  mime: { type: DataTypes.STRING(60) },
+  size: { type: DataTypes.INTEGER },
+  bytes: { type: DataTypes.BLOB },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'su_uploads', timestamps: false,
+  indexes: [{ name: 'su_uploads_tenant_idx', fields: ['tenant_id'] }, { name: 'su_uploads_job_idx', fields: ['job_id'] }]
+});
+
 // ─── su_audit ─────────────────────────────────────────────────────────────────
 // Append-only trail. No route updates or deletes a row.
 const Audit = sequelize.define('SpeakAudit', {
@@ -320,4 +340,4 @@ Recording.hasMany(Document, { foreignKey: 'recording_id' });
 Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
-  Project, MeetingIntel, Command, Job, JobEvent, Audit };
+  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit };

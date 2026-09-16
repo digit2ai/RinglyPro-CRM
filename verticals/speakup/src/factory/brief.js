@@ -45,6 +45,7 @@ function buildBrief(job, project, extra) {
     '- THIS REPOSITORY IS PUBLIC. Never write meeting quotes, names of people, client names or any text from this brief other than code into files, comments, fixtures or test names.',
     '- Do not modify .github/, any .env file, lockfiles, or files outside the path scope unless a plan step names them.',
     '- Never add secrets, tokens, passwords or API keys.',
+    ...((job.attachments || []).length ? ['- The owner pasted ' + job.attachments.length + ' screenshot(s). Their paths are listed at the end of this brief: READ them before you change anything, and treat what they show as the current state of the screen.'] : []),
     '- If something is ambiguous, implement the safest minimal version and record the open question in the summary.',
     `- When you finish, write a short plain-English summary (what changed, which tests you ran and their result, what is not done) to $WORK/summary.md. WORK is the directory ${'$'}WORK in your environment, outside the repository.`
   ].join('\n');
@@ -59,6 +60,9 @@ function buildBrief(job, project, extra) {
     path_scope: scope,
     plan_files: [...new Set(((plan.steps) || []).flatMap(s => (s.files || []).map(f => f.path)))],
     test_commands: tests,
+    // Screenshots the owner pasted. The build job downloads them next to the prompt and
+    // Claude is told to look at them; they are never written into the repository.
+    attachments: (job.attachments || []).map(a => ({ id: a.id, name: a.name, mime: a.mime, size: a.size })),
     // Used ONLY by the job that pushes, to refuse a diff that copies meeting content into
     // the public repository. That job hashes these and never prints them.
     sensitive: {

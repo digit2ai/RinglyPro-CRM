@@ -13,7 +13,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { Job, JobEvent, Recording, Transcript, MeetingIntel, Command, Document, User } = require('../models');
+const { Job, JobEvent, Recording, Transcript, MeetingIntel, Command, Document, Upload, User } = require('../models');
 const security = require('../factory/security');
 const jobs = require('../factory/jobs');
 const projects = require('../factory/projects');
@@ -80,6 +80,19 @@ router.get('/brief/:jobId', wrap(async (req, res) => {
   res.set('Cache-Control', 'no-store').json(buildBrief(job, project, { participants }));
 }));
 
+// A pasted screenshot, fetched by the build job with its progress token. Images only,
+// served with a fixed content type and as an attachment, never inline HTML.
+const IMAGE_MIME = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
+router.get('/attachment/:id', wrap(async (req, res) => {
+  const id = parseInt(req.params.id, 10) || 0;
+  const up = await Upload.findByPk(id);
+  if (!up || !up.job_id) return res.status(404).json({ error: 'not found' });
+  if (!security.verifyWorkflowToken('progress', up.job_id, req.headers['x-speakup-progress'])) return res.status(401).json({ error: 'unauthorized' });
+  res.set('Content-Type', IMAGE_MIME[up.mime] ? up.mime : 'application/octet-stream')
+    .set('Content-Disposition', 'attachment; filename="' + String(up.name || 'image').replace(/[^A-Za-z0-9._-]/g, '_') + '"')
+    .set('X-Content-Type-Options', 'nosniff').set('Cache-Control', 'no-store').send(up.bytes);
+}));
+
 router.post('/callback', wrap(async (req, res) => {
   const out = await jobs.applyCallback(req.body || {}, req.headers['x-speakup-sig'], req.headers['x-speakup-progress'] || null);
   if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
@@ -127,12 +140,30 @@ router.get('/overview', wrap(async (req, res) => {
   });
 }));
 
+// ── Pasted screenshots ────────────────────────────────────────────────────────
+const MAX_UPLOAD = 6 * 1024 * 1024;
+router.post('/uploads', mutation, operator, wrap(async (req, res) => {
+  const b = req.body || {};
+  const mime = String(b.mime || '');
+  if (!IMAGE_MIME[mime]) return res.status(400).json({ error: 'Only PNG, JPEG, WebP or GIF images' });
+  if (!security.rateLimit('upload', String(req.user.id), 40, 15 * 60 * 1000)) return res.status(429).json({ error: 'Too many uploads. Wait a few minutes.' });
+  let bytes;
+  try { bytes = Buffer.from(String(b.data_base64 || ''), 'base64'); } catch (e) { bytes = null; }
+  if (!bytes || !bytes.length) return res.status(400).json({ error: 'Empty image' });
+  if (bytes.length > MAX_UPLOAD) return res.status(413).json({ error: 'Image over 6 MB' });
+  const name = (String(b.name || 'screenshot').replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 80) || 'screenshot') + (/\.[a-z0-9]+$/i.test(String(b.name || '')) ? '' : '.' + IMAGE_MIME[mime]);
+  const up = await Upload.create({ tenant_id: tenantOf(req), user_id: req.user.id, name, mime, size: bytes.length, bytes });
+  await audit.record({ tenant_id: tenantOf(req), user_id: req.user.id, actor: req.user.email, action: 'upload.created', entity: 'upload', entity_id: up.id, detail: { name, size: bytes.length }, req });
+  res.json({ id: up.id, name: up.name, size: up.size, mime: up.mime });
+}));
+
 // ── Command interpreter ───────────────────────────────────────────────────────
 router.post('/command', mutation, wrap(async (req, res) => {
   if (!security.rateLimit('command', String(req.user.id), 60, 10 * 60 * 1000)) return res.status(429).json({ error: 'Too many commands. Wait a few minutes.' });
   const b = req.body || {};
   const out = await intents.run({ tenant_id: tenantOf(req), user: req.user, text: b.text, mode: b.mode, lang: b.lang,
-    recording_ids: Array.isArray(b.recording_ids) ? b.recording_ids.slice(0, 10) : [], project_key: b.project_key, engine: b.engine, auto_run: b.auto_run, req });
+    recording_ids: Array.isArray(b.recording_ids) ? b.recording_ids.slice(0, 10) : [], project_key: b.project_key, engine: b.engine, auto_run: b.auto_run,
+    upload_ids: Array.isArray(b.upload_ids) ? b.upload_ids.slice(0, 6) : [], req });
   if (out.status !== 200) return res.status(out.status).json(out);
   res.json(out);
 }));

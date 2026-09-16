@@ -434,7 +434,12 @@ async function checkJob(job, now) {
     }
     if (!run) return fail(job, job.status === 'QUEUED' ? 'The GitHub workflow never started.' : 'The GitHub run could not be found.');
     if (run.status !== 'completed') return job;
-    return fail(job, `The GitHub run ended (${run.conclusion}) without reporting back.`, { fields: { run_url: run.html_url } });
+    // QUEUED means not one callback arrived: the run could not talk to SpeakUp at all,
+    // which is what a missing or mistyped GitHub secret looks like from here.
+    const hint = job.status === 'QUEUED'
+      ? ' The run never reported back at all, which usually means the GitHub Actions secret SPEAKUP_FACTORY_SECRET is missing or does not match the value on Render.'
+      : '';
+    return fail(job, `The GitHub run ended (${run.conclusion}) without reporting back.` + hint, { fields: { run_url: run.html_url } });
   }
   if (job.status === 'PR_CREATED' && age > 10 * MIN) {
     if (job.tests && job.tests.measured && job.tests.failed === 0) return transition(job, 'READY_FOR_REVIEW', { detail: { recovered: true } });

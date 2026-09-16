@@ -49,7 +49,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use('/speakup', require('./src/index'));
 
 const models = require('./src/models');
-const { User, Recording, Transcript, Summary, Document, MeetingIntel, Command, Job, JobEvent, Audit, Project, sequelize } = models;
+const { User, Recording, Transcript, Summary, Document, MeetingIntel, Command, Job, JobEvent, Upload, Audit, Project, sequelize } = models;
 const github = require('./src/factory/github');
 const jobs = require('./src/factory/jobs');
 const llm = require('./src/factory/llm');
@@ -422,6 +422,25 @@ const server = app.listen(0, async () => {
     delete process.env.SPEAKUP_AUTO_RUN;
     ok((await call(M, 'POST', '/factory/command', { text: 'x'.repeat(200), mode: 'architect', auto_run: true })).status === 403, 'a non-operator cannot use the console path');
 
+    // ── Pasted screenshots reach the agent, and only through the job ─────────
+    const badUp = await call(A, 'POST', '/factory/uploads', { name: 'x.txt', mime: 'text/plain', data_base64: 'aGk=' });
+    ok(badUp.status === 400, 'only images can be pasted');
+    const up = await call(A, 'POST', '/factory/uploads', { name: 'screen.png', mime: 'image/png', data_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' });
+    ok(up.status === 200 && up.d.id && up.d.size > 0, 'a pasted screenshot is stored');
+    ok((await call(M, 'POST', '/factory/uploads', { name: 'a.png', mime: 'image/png', data_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' })).status === 403, 'a non-operator cannot upload');
+    ok((await fetch(base + '/api/v1/factory/attachment/' + up.d.id)).status === 404, 'an unattached screenshot cannot be fetched by the runner');
+    const shotCmd = await call(A, 'POST', '/factory/command', { text: 'Fix the spacing shown in the screenshot on the console header. ' + 'Detail. '.repeat(25),
+      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true, upload_ids: [up.d.id] });
+    const js = await waitJob(shotCmd.d.card.job_id, ['QUEUED', 'CODING', 'FAILED'], 40000);
+    ok(js.status === 'QUEUED' && (js.attachments || []).length === 1, 'the screenshot travels with the job');
+    const shotTok = security.workflowToken('progress', js.id, Math.floor(Date.now() / 1000) + 600);
+    const att = await fetch(base + '/api/v1/factory/attachment/' + up.d.id, { headers: { 'x-speakup-progress': shotTok } });
+    ok(att.status === 200 && att.headers.get('content-type') === 'image/png' && /attachment/.test(att.headers.get('content-disposition') || ''), 'the build job can fetch it, as a download, with its own token');
+    ok((await fetch(base + '/api/v1/factory/attachment/' + up.d.id, { headers: { 'x-speakup-progress': 'nope' } })).status === 401, 'a bad token cannot fetch it');
+    const shotTs = Math.floor(Date.now() / 1000);
+    const shotBrief = await (await fetch(`${base}/api/v1/factory/brief/${js.id}`, { headers: { 'x-speakup-ts': String(shotTs), 'x-speakup-sig': security.hmac(SECRET, `brief.${js.id}.${shotTs}`) } })).json();
+    ok(shotBrief.attachments.length === 1 && /READ them/.test(shotBrief.prompt), 'the brief names the screenshot and tells the agent to read it');
+
     // ── Live activity from the build job ─────────────────────────────────────
     const jobProgTok = security.workflowToken('progress', jp.id, Math.floor(Date.now() / 1000) + 600);
     const postLog = (events, tok, planHash) => fetch(base + '/api/v1/factory/progress-log', { method: 'POST',
@@ -488,7 +507,7 @@ const server = app.listen(0, async () => {
       for (const M2 of [Transcript, Summary, Document]) await M2.destroy({ where: { recording_id: recIds.length ? recIds : [0] } });
       await sequelize.query('DELETE FROM su_translations WHERE recording_id IN (:ids)', { replacements: { ids: recIds.length ? recIds : [0] } });
       await sequelize.query('DELETE FROM su_edits WHERE recording_id IN (:ids)', { replacements: { ids: recIds.length ? recIds : [0] } });
-      for (const M2 of [MeetingIntel, Command, JobEvent, Job, Audit, Project, Recording]) await M2.destroy({ where: { tenant_id: tenants } });
+      for (const M2 of [MeetingIntel, Command, JobEvent, Job, Audit, Project, Recording, Upload]) await M2.destroy({ where: { tenant_id: tenants } });
       await sequelize.query('DELETE FROM su_usage WHERE tenant_id IN (:t)', { replacements: { t: tenants } });
       await User.destroy({ where: { id: tenants } });
       const left = await Job.count({ where: { tenant_id: tenants } }) + await Recording.count({ where: { tenant_id: tenants } }) + await User.count({ where: { id: tenants } });
