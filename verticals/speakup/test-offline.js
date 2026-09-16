@@ -516,6 +516,88 @@ test('two screens and nothing else', () => {
   ok(/window\.SpeakUpRecorder/.test(eng), 'it exposes the documented API');
 });
 
+test('the plan is written for the person deciding', () => {
+  const repo = require('./src/factory/repo');
+  const prep = require('./src/factory/prepare');
+
+  // THE CANDIDATE FILES WERE THE ROOT CAUSE. Scoring by "how many of these words does the
+  // file contain" put CLAUDE.md first for every request, because a 30,000-word document
+  // contains every word — and an unrelated vertical second.
+  const terms = repo.terms(['I need a different font for the SpeakUp title only']);
+  const files = repo.candidateFiles([], terms, 8).files.map(f => f.path);
+  ok(files.length > 0, 'the search still finds candidates');
+  ok(files[0] !== 'CLAUDE.md', 'CLAUDE.md is no longer the top answer to every question');
+  ok(!files.includes('verticals/jobmd/src/index.js'), 'an unrelated vertical is no longer proposed');
+  const inSpeakup = files.filter(p => /(^|\/)speakup(\/|$)/.test(p)).length;
+  ok(inSpeakup >= Math.ceil(files.length / 2), 'most candidates are inside the vertical the request names (' + inSpeakup + '/' + files.length + ')');
+
+  // The plain sections are what the owner reads, and a file name must never appear in them.
+  const spec = { requirements: [{ id: 'R1', kind: 'requirement', text: 'The title uses a different typeface', quote: 'q', approved_by_human: true }],
+    decisions: [], acceptance_criteria: [], open_questions: [], technical_considerations: [],
+    held_back: { ideas: 0, suggestions: 0, discussion: 0, unverified: 0 }, sources: [{ recording_id: 1, title: 't', created_at: new Date() }], instruction: 'the title font' };
+  const project = { key: 'ringlypro', name: 'RinglyPro', repo: 'o/r', default_branch: 'main', path_scope: [], test_commands: [], workflow_file: 'w.yml', deployment: 'Render' };
+  const cands = repo.candidateFiles([], terms, 5);
+  const leaky = prep.verifyPlan({
+    what_changes: ['The wordmark is set in a different typeface', 'Edit verticals/speakup/public/theme.css'],
+    what_stays: ['Nothing else moves'], how_you_know: ['The wordmark looks different'],
+    decisions: [{ choice: 'Used a typeface already on the device', why: 'it works offline', tradeoff: 'looks slightly different per device' },
+                { choice: 'Changed theme.css', why: 'that is where it lives', tradeoff: null }],
+    watch_out: [], scope_plain: 'Only the SpeakUp screens.', steps: []
+  }, spec, project, cands);
+  ok(leaky.what_changes.length === 1 && !/theme\.css/.test(leaky.what_changes.join(' ')),
+    'a sentence naming a file is dropped from what the owner reads');
+  ok(leaky.decisions.length === 1 && !/theme\.css/.test(JSON.stringify(leaky.decisions)), 'and from the decisions');
+  ok(leaky.scope_plain === 'Only the SpeakUp screens.', 'scope is kept as one plain sentence');
+
+  // WITHOUT A MODEL THE PLAN SAYS SO. It must not dress a keyword guess up as a considered plan.
+  const heur = prep.verifyPlan(prep.heuristicPlan(spec, project, cands), spec, project, cands);
+  heur.is_simulated = true; heur.composed_by = 'heuristic';
+  ok(heur.what_changes.length >= 1, 'the keyless plan still says what changes, in the owner words');
+  ok(/without a model/i.test(heur.watch_out.join(' ')), 'and admits it did not reason about the code');
+  const md = prep.renderMarkdown({ id: 1 }, project, spec, heur);
+  const owner = md.split('## Technical detail')[0];
+  ok(/## What changes/.test(owner) && /## How you will know/.test(owner), 'the owner half leads the document');
+  ok(!/\.js\b|\.css\b|candidate/i.test(owner), 'no file name reaches the owner half');
+  ok(/## Technical detail/.test(md) && /Candidate files/.test(md), 'the technical half still exists, below, for the fold');
+  ok(md.indexOf('## What changes') < md.indexOf('## Technical detail'), 'owner first, machine second');
+
+  // The diff is what stops a review becoming a re-read.
+  const a = { what_changes: ['one', 'two'], steps: [{ n: 1, title: 's1', files: [] }], scope_plain: 'x' };
+  const b = { what_changes: ['one', 'three'], steps: [], scope_plain: 'y' };
+  const d = prep.planDiff(a, b);
+  ok(d.added.some(x => /three/.test(x)) && d.removed.some(x => /two/.test(x)), 'the diff names what was added and removed');
+  ok(d.removed.some(x => /step: s1/.test(x)) && d.changed.some(x => /scope/.test(x)), 'it covers steps and scope too');
+});
+
+test('asking never changes the plan', () => {
+  const routes = stripComments(read('verticals/speakup/src/routes/factory.js'));
+  const prep = stripComments(read('verticals/speakup/src/factory/prepare.js'));
+  ok(/router\.post\('\/jobs\/:id\/ask', mutation, operator/.test(routes), 'ask is operator-only and same-origin');
+  ok(/plan_changed: before !== after/.test(routes), 'the route reports whether the plan moved, rather than asserting it did not');
+  const ask = prep.slice(prep.indexOf('async function ask('), prep.indexOf('async function drop('));
+  ok(ask.length > 200 && !/Job\.update|transition\(|planHash\(/.test(ask), 'ask writes nothing and mints no hash');
+  ok(/llm\.configured\(\)/.test(ask) && /ANTHROPIC_API_KEY/.test(ask), 'with no model it says why it cannot answer instead of guessing');
+  // Dropping a step is a tap, not a regeneration — and it is still pinned to the plan shown.
+  const drop = prep.slice(prep.indexOf('async function drop('), prep.indexOf('function planDiff') > 0 ? prep.length : prep.length);
+  ok(/plan_hash: job\.plan_hash/.test(drop), 'drop is pinned to the plan the owner was reading');
+  ok(/uncovered_requirements/.test(drop), 'and reports a requirement left with no step covering it');
+  ok(!/llm\.callJSON/.test(drop.slice(0, drop.indexOf('async function revise('))), 'dropping a step costs no model call');
+  // A CONTROL THAT DOES NOTHING IS WORSE THAN NO CONTROL. The fold offers a remove on
+  // candidate files as well as step files; a path in neither must be refused out loud
+  // rather than redrawing an unchanged plan under the finger.
+  ok(/candidate_files/.test(drop) && /not in this plan/.test(drop), 'removing a candidate file works, and an unknown path is refused');
+  ok(/There is no step/.test(drop), 'and so is a step number that is not there');
+
+  // The console must route a question to ask, never to revise.
+  const con = read('verticals/speakup/public/console.js');
+  ok(/\/ask'/.test(con) && /plan\/drop'/.test(con), 'the console calls both new endpoints');
+  // Bound the slice at the NEXT function, or it reads into approvePlan and reports on that.
+  const askStart = con.indexOf('async function askPlan(');
+  const askFn = con.slice(askStart, con.indexOf('async function ', askStart + 10));
+  ok(askStart > 0 && askFn.length > 100 && askFn.length < 2000, 'askPlan was located and bounded');
+  ok(!/planShown\s*=|planHash\s*=|planDiff\s*=|showPlan\(|hidePlan\(/.test(askFn), 'asking leaves the plan card untouched');
+});
+
 test('one language on the whole screen', () => {
   const con = read('verticals/speakup/public/console.js');
   // A line is a KEY plus arguments, never a finished string, or it keeps the language it

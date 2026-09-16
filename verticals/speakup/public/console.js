@@ -87,7 +87,32 @@
     youSaid: ['{text}', '{text}'],
     youSaidShots: ['{text}  [{n} captura(s)]', '{text}  [{n} screenshot(s)]'],
     notOperator: ['Esta cuenta no puede usar la fábrica.', 'This account cannot use the factory.'],
-    blocked: ['La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:']
+    blocked: ['La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:'],
+    // ── the plan, written for the person deciding ──
+    planWhatChanges: ['Qué cambia', 'What changes'],
+    planWhatStays: ['Qué no cambia', 'What does not change'],
+    planHowYouKnow: ['Cómo sabrás que funcionó', 'How you will know it worked'],
+    planDecisions: ['Decisiones que tomé por ti', 'Decisions I made for you'],
+    planWhy: ['porque', 'because'],
+    planTradeoff: ['A cambio', 'Trade-off'],
+    planWatchOut: ['Ten esto en cuenta', 'Watch out for'],
+    planScope: ['Alcance', 'Scope'],
+    planTechnical: ['Detalle técnico', 'Technical detail'],
+    planStepsTitle: ['Pasos', 'Steps'],
+    planCandidates: ['Archivos candidatos', 'Candidate files'],
+    planDrop: ['Quitar', 'Remove'],
+    planDropStep: ['Quitar el paso {n}', 'Remove step {n}'],
+    planDropFile: ['Quitar el archivo {path}', 'Remove the file {path}'],
+    planDropping: ['Quitando…', 'Removing…'],
+    planUpdated: ['Plan actualizado.', 'Plan updated.'],
+    planAsking: ['Buscando la respuesta…', 'Looking up the answer…'],
+    planUnchanged: ['Era una pregunta: el plan no cambió.', 'That was a question: the plan did not change.'],
+    planDiffTitle: ['Esto hicieron tus palabras', 'What your words did'],
+    diffAdded: ['Añadido', 'Added'],
+    diffRemoved: ['Quitado', 'Removed'],
+    diffChanged: ['Cambiado', 'Changed'],
+    planNoModel: ['Este plan se armó SIN modelo: es una suposición por palabras clave, no un análisis. Léelo con más cuidado.',
+      'This plan was assembled WITHOUT a model: it is a keyword guess, not an analysis. Read it more carefully.']
   };
   var SRV = {
     merged: ['Fusionado en {branch}. Render está desplegando.', 'Merged into {branch}. Render is deploying.'],
@@ -104,6 +129,9 @@
   function fill(s, args) {
     return String(s).replace(/\{(\w+)\}/g, function (_, k) { return args && args[k] != null ? String(args[k]) : ''; });
   }
+  // The same dictionary serves the pane and the plan card: a label the plan draws is a key,
+  // so switching language redraws it from the raw job rather than leaving it behind.
+  function m(k, args) { return MSG[k] ? fill(L(MSG[k][0], MSG[k][1]), args) : ''; }
   function phrase(e) {
     if (e.t && MSG[e.t]) return fill(L(MSG[e.t][0], MSG[e.t][1]), e.args);
     var d = e.detail || {};
@@ -227,6 +255,7 @@
       if (d.status === 'WAITING_APPROVAL') {
         if (planJob !== id) {
           var full = (await api('/factory/jobs/' + id + '?lang=' + lang)).job;
+          planDiff = null;
           showPlan(full);
           renderBar(full);
         }
@@ -288,12 +317,14 @@
     if (capturing) stopCapture();
     $('send').disabled = true;
     write([{ kind: 'you', t: shots.length ? 'youSaidShots' : 'youSaid', args: { text: text, n: shots.length } }]);
-    // WHILE A PLAN IS ON SCREEN THE BOX MEANS SOMETHING ELSE. "approved" runs it; anything
-    // else is a correction to that plan. A new instruction cannot be started underneath a
-    // plan waiting to be read — that is how the old build-without-reading behaviour crept in.
+    // WHILE A PLAN IS ON SCREEN THE BOX IS A CONVERSATION ABOUT IT. "approved" runs it; a
+    // question is answered and leaves the plan exactly as it is; anything else is a
+    // correction. A new instruction cannot be started underneath a plan waiting to be read —
+    // that is how the old build-without-reading behaviour crept in.
     if (planJob) {
       $('cmd').value = ''; clearDraft();
       if (APPROVED.test(text.trim())) return approvePlan();
+      if (isQuestion(text)) return askPlan(text);
       return revisePlan(text);
     }
     status(L('Enviando…', 'Sending…'));
@@ -318,26 +349,177 @@
   // Only these. "ok", "yes" and "go" are deliberately NOT here: the word that puts code on
   // the path to production should be one the owner cannot type by reflex.
   var APPROVED = /^\s*(approved|aprobado|aprobada)\s*[.!]?\s*$/i;
-  var planJob = null, planHash = null, planShown = null;
+  var planJob = null, planHash = null, planShown = null, planDiff = null;
 
-  function hidePlan() { planJob = null; planHash = null; planShown = null; $('plan').style.display = 'none'; $('plan').innerHTML = ''; setPlaceholder(); }
+  /* A QUESTION MUST NEVER CHANGE THE PLAN.
+   *
+   * "why are you touching the routes?" used to be routed as a correction, so the plan was
+   * rebuilt around a sentence that asked for nothing to change — and the owner lost the plan
+   * they were half way through reading. ONE function decides it, and `ask` is the only call
+   * it can lead to: a question mark at the end, an opening `¿`, or an opening question word.
+   *
+   * The accent-less Spanish forms (que, como, cual, donde) are deliberately NOT in the word
+   * list: "que no toque las rutas" is an instruction, not a question. They still reach `ask`
+   * when the sentence carries a `?` or a `¿`.
+   */
+  var QUESTION_WORD = /^\s*(what|what's|whats|why|how|how's|which|where|when|who|whose|does|did|do you|can|could|is|are|will|would|should|qué|por qué|porqué|cómo|cuál|cuáles|dónde|cuándo|quién|puedes|puede|podrías|podrias)\b/i;
+  function isQuestion(text) {
+    var t = String(text || '').trim();
+    if (!t) return false;
+    if (/[?？]\s*$/.test(t)) return true;
+    if (/^¿/.test(t)) return true;
+    return QUESTION_WORD.test(t);
+  }
+
+  function hidePlan() { planJob = null; planHash = null; planShown = null; planDiff = null; $('plan').style.display = 'none'; $('plan').innerHTML = ''; setPlaceholder(); }
+
+  // ── the plan, rendered for the person deciding ─────────────────────────────
+  // Sections in the order a decision is actually made, each omitted entirely when the server
+  // sent nothing for it. File names are not here: they are behind the fold below.
+  function bullets(items) {
+    return '<ul class="plist">' + items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  }
+  function section(key, items) {
+    var list = (items || []).filter(function (x) { return x != null && String(x).trim() !== ''; });
+    if (!list.length) return '';
+    return '<div class="psec"><h3>' + esc(m(key)) + '</h3>' + bullets(list) + '</div>';
+  }
+  function decisionSection(list) {
+    var rows = (list || []).filter(Boolean).map(function (d) {
+      if (typeof d === 'string') return '<li>' + esc(d) + '</li>';
+      var li = '<li><span class="pchoice">' + esc(d.choice || '') + '</span>';
+      if (d.why) li += ' <span class="tiny">— ' + esc(m('planWhy')) + ' ' + esc(d.why) + '</span>';
+      if (d.tradeoff) li += '<div class="tiny">' + esc(m('planTradeoff')) + ': ' + esc(d.tradeoff) + '</div>';
+      return li + '</li>';
+    });
+    if (!rows.length) return '';
+    return '<div class="psec"><h3>' + esc(m('planDecisions')) + '</h3><ul class="plist">' + rows.join('') + '</ul></div>';
+  }
+  // Removing a step or a file is a direct tap: no model, the server answers with the new plan.
+  function dropBtn(step, path) {
+    var isStep = step != null;
+    return '<button type="button" class="drop"' +
+      (isStep ? ' data-step="' + esc(step) + '"' : ' data-path="' + esc(path) + '"') +
+      ' title="' + esc(m('planDrop')) + '"' +
+      ' aria-label="' + esc(isStep ? m('planDropStep', { n: step }) : m('planDropFile', { path: path })) + '">&times;</button>';
+  }
+  function fileRow(f) {
+    var p = typeof f === 'string' ? f : String((f && f.path) || '');
+    if (!p) return '';
+    var note = f && typeof f === 'object' ? (f.change || (f.matched && f.matched.length ? f.matched.join(', ') : '')) : '';
+    return '<li class="pfile"><code>' + esc(p) + '</code>' +
+      (note ? '<span class="tiny">' + esc(note) + '</span>' : '') + dropBtn(null, p) + '</li>';
+  }
+  function stepRow(s, i) {
+    if (!s) return '';
+    var n = s.n != null ? s.n : (i + 1);
+    var files = (s.files || []).map(fileRow).join('');
+    return '<li class="pstep"><div class="pstephd"><span class="n">' + esc(n) + '</span>' +
+      '<strong>' + esc(s.title || '') + '</strong>' + dropBtn(n, null) + '</div>' +
+      (s.detail ? '<p class="tiny pdetail">' + esc(s.detail) + '</p>' : '') +
+      (files ? '<ul class="pfiles">' + files + '</ul>' : '') + '</li>';
+  }
+  // COLLAPSED BY DEFAULT AND CLEARLY LABELLED: the owner cares about the behaviour above,
+  // and opens this only when they want to argue with a file.
+  function techFold(plan, open) {
+    var steps = (plan.steps || []).filter(Boolean);
+    var cands = (plan.candidate_files || []).filter(Boolean);
+    if (!steps.length && !cands.length) return '';
+    var html = '<details class="tech"' + (open ? ' open' : '') + '><summary>' + esc(m('planTechnical')) + '</summary>';
+    if (steps.length) html += '<div class="psec"><h3>' + esc(m('planStepsTitle')) + '</h3><ul class="psteps">' + steps.map(stepRow).join('') + '</ul></div>';
+    if (cands.length) html += '<div class="psec"><h3>' + esc(m('planCandidates')) + '</h3><ul class="pfiles">' + cands.map(fileRow).join('') + '</ul></div>';
+    return html + '</details>';
+  }
+  function planBody(plan, open) {
+    var html = section('planWhatChanges', plan.what_changes) +
+      section('planWhatStays', plan.what_stays) +
+      section('planHowYouKnow', plan.how_you_know) +
+      decisionSection(plan.decisions) +
+      section('planWatchOut', plan.watch_out);
+    if (plan.scope_plain) html += '<p class="pscope">' + esc(m('planScope')) + ': ' + esc(plan.scope_plain) + '</p>';
+    return html + techFold(plan, open);
+  }
+  // WHAT YOUR WORDS DID. Shown above the plan after a revision or a drop, so a change is not
+  // something the owner has to find by re-reading forty lines.
+  function diffBlock(d) {
+    if (!d) return '';
+    var rows = [['added', 'diffAdded'], ['removed', 'diffRemoved'], ['changed', 'diffChanged']].map(function (p) {
+      var items = (d[p[0]] || []).filter(Boolean).map(function (x) { return typeof x === 'string' ? x : JSON.stringify(x); });
+      if (!items.length) return '';
+      return '<div class="drow"><span class="dtag ' + p[0] + '">' + esc(m(p[1])) + '</span>' + bullets(items) + '</div>';
+    }).join('');
+    if (!rows) return '';
+    return '<div class="pdiff"><h3>' + esc(m('planDiffTitle')) + '</h3>' + rows + '</div>';
+  }
 
   function showPlan(job) {
+    // The fold is collapsed for a NEW plan and only for a new plan: removing a step from
+    // inside it rebuilds the card, and snapping shut under the finger that just tapped is
+    // how a list of five files takes five taps of re-opening to prune.
+    var prev = $('plan').querySelector('details.tech');
+    var keepOpen = planJob === job.id && !!(prev && prev.open);
     planJob = job.id; planHash = job.plan_hash; planShown = job;
+    var plan = job.plan && typeof job.plan === 'object' ? job.plan : null;
     var revs = (job.revisions || []).map(function (r) { return '<div class="rev">' + esc(r.text) + '</div>'; }).join('');
+    var composed = (plan && plan.composed_by) || job.plan_composed_by || '';
+    // A PLAN ASSEMBLED WITHOUT A MODEL SAYS SO, IN FULL VIEW. It is a keyword guess, and
+    // hiding that behind the same card as a reasoned plan is the lie this notice prevents.
+    var simulated = !!(plan && (plan.is_simulated || plan.composed_by === 'heuristic')) || composed === 'heuristic';
+    var body = plan ? planBody(plan, keepOpen) : '';
+    if (!body) body = '<pre>' + esc(job.plan_md || '') + '</pre>';
     $('plan').innerHTML =
-      '<div class="planhd"><h2>' + esc(job.title || L('Plan', 'Plan')) + '</h2>' +
-      '<span class="tiny">' + esc(job.project_name || job.project_key || '') + (job.plan_composed_by ? ' · ' + esc(job.plan_composed_by) : '') + '</span></div>' +
+      '<div class="planhd"><h2>' + esc(job.title || (plan && plan.title) || L('Plan', 'Plan')) + '</h2>' +
+      '<span class="tiny">' + esc(job.project_name || job.project_key || '') + (composed ? ' · ' + esc(composed) : '') + '</span></div>' +
+      (simulated ? '<div class="notice">' + esc(m('planNoModel')) + '</div>' : '') +
       // SAY WHAT APPROVING ACTUALLY DOES. "Run it" was true of the branch and false of the
       // rest: with auto-merge on, a green run merges itself into main and Render deploys.
       // This word is the last human step before the live site, and the card has to say so.
-      '<p class="tiny">' + L('Lee el plan. Escribe una corrección para rehacerlo, o escribe <strong>aprobado</strong>: se ejecuta, y si las pruebas pasan se fusiona en main y se despliega en producción sin otra confirmación.',
-        'Read the plan. Type a correction to rebuild it, or type <strong>approved</strong>: it runs, and if the tests pass it merges itself into main and deploys to production with no further confirmation.') + '</p>' +
+      '<p class="tiny">' + L('Lee el plan. Escribe una corrección para rehacerlo, pregunta lo que quieras (una pregunta no cambia el plan), o escribe <strong>aprobado</strong>: se ejecuta, y si las pruebas pasan se fusiona en main y se despliega en producción sin otra confirmación.',
+        'Read the plan. Type a correction to rebuild it, ask anything you like (a question never changes the plan), or type <strong>approved</strong>: it runs, and if the tests pass it merges itself into main and deploys to production with no further confirmation.') + '</p>' +
       (revs ? '<div>' + L('<span class="tiny">Tus correcciones</span>', '<span class="tiny">Your corrections</span>') + revs + '</div>' : '') +
-      '<pre>' + esc(job.plan_md || '') + '</pre>';
+      diffBlock(planDiff) + body;
     $('plan').style.display = 'block';
     $('plan').scrollTop = 0;
     setPlaceholder();
+  }
+
+  // One delegated listener: the card is rebuilt on every change, the container is not.
+  async function onPlanClick(ev) {
+    var t = ev.target;
+    var b = t && t.closest ? t.closest('button.drop') : null;
+    if (!b || !planJob) return;
+    ev.preventDefault();
+    var id = planJob;
+    var body = b.hasAttribute('data-step')
+      ? { step: parseInt(b.getAttribute('data-step'), 10), lang: lang }
+      : { path: b.getAttribute('data-path'), lang: lang };
+    status(m('planDropping'));
+    try {
+      var d = await api('/factory/jobs/' + id + '/plan/drop', { method: 'POST', body: JSON.stringify(body) });
+      planDiff = d.diff || null;
+      showPlan(d.job);
+      status('');
+      write([{ kind: 'info', t: 'planUpdated' }]);
+    } catch (e) {
+      status('');
+      write([{ kind: 'error', text: e.message }]);
+    }
+  }
+
+  // ASKING NEVER TOUCHES THE PLAN. Nothing in here writes planShown, planHash or the card:
+  // the answer is a line in the pane, and the plan on screen is the one still waiting.
+  async function askPlan(text) {
+    var id = planJob;
+    status(m('planAsking'));
+    try {
+      var d = await api('/factory/jobs/' + id + '/ask', { method: 'POST', body: JSON.stringify({ text: text, lang: lang }) });
+      status('');
+      if (d.reply) write([{ kind: 'answer', text: d.reply }]);
+      write([{ kind: 'info', t: 'planUnchanged' }]);
+    } catch (e) {
+      status('');
+      write([{ kind: 'error', text: e.message }]);
+    } finally { $('send').disabled = false; }
   }
 
   async function approvePlan() {
@@ -354,7 +536,7 @@
       write([{ kind: 'error', text: e.message }]);
       // The plan moved under them (a revision landed): show the current one rather than
       // leaving an approval pointing at a plan that no longer exists.
-      if (e.data && e.data.job) showPlan(e.data.job);
+      if (e.data && e.data.job) { planDiff = null; showPlan(e.data.job); }
     } finally { $('send').disabled = false; }
   }
 
@@ -363,6 +545,7 @@
     status(L('Rehaciendo el plan…', 'Rebuilding the plan…'));
     try {
       var d = await api('/factory/jobs/' + id + '/revise', { method: 'POST', body: JSON.stringify({ text: text, lang: lang }) });
+      planDiff = d.diff || null;
       showPlan(d.job);
       status('');
       write([{ kind: 'info', t: 'planCorrected' }]);
@@ -374,6 +557,7 @@
       // a SECOND correction against a plan that no longer existed.
       try {
         var cur = (await api('/factory/jobs/' + id + '?lang=' + lang)).job;
+        planDiff = null;
         if (cur.status === 'WAITING_APPROVAL') showPlan(cur); else { hidePlan(); follow(id); }
       } catch (e2) { /* the page redirects on 401 */ }
     } finally { $('send').disabled = false; }
@@ -433,7 +617,7 @@
   function clearDraft() { try { sessionStorage.removeItem(DRAFT); } catch (e) {} }
   function setPlaceholder() {
     $('cmd').placeholder = planJob
-      ? L('Corrige el plan, o escribe: aprobado', 'Correct the plan, or type: approved')
+      ? L('Corrige el plan, pregunta algo, o escribe: aprobado', 'Correct the plan, ask a question, or type: approved')
       : L('Escribe, pega una captura o dicta la instrucción…', 'Type, paste a screenshot, or dictate the instruction…');
   }
 
@@ -461,6 +645,8 @@
     $('outBtn').addEventListener('click', async function () { await fetch('/speakup/api/v1/auth/logout', { method: 'POST' }); location.href = '/speakup/login'; });
     $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });
     $('send').addEventListener('click', send);
+    // Delegated: the plan card is rebuilt on every change, this container is not.
+    $('plan').addEventListener('click', onPlanClick);
     $('cmd').addEventListener('input', saveDraft);
     $('cmd').addEventListener('paste', function (e) {
       var imgs = filesFrom(e);

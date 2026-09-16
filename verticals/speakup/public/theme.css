@@ -103,6 +103,40 @@ a{color:var(--accent-dark)}
   border-radius:9px;padding:6px 10px;cursor:pointer;font-family:inherit;min-height:34px;display:inline-flex;align-items:center}
 .lnk:hover{background:var(--raised)}
 
+/* ── the plan card: what the build DOES, with the file names folded away ────── */
+.psec{margin:12px 0 0}
+.psec h3{font-family:var(--sans);font-size:13.5px;font-weight:600;letter-spacing:0;color:var(--text);margin:0 0 4px}
+.plist{margin:0;padding-left:18px}
+.plist li{margin:3px 0;overflow-wrap:anywhere}
+.pchoice{font-weight:600}
+.pscope{margin:12px 0 0;font-size:13px;color:var(--muted)}
+/* what your words did — shown above the plan after a revision or a removal */
+.pdiff{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:10px 0 0}
+.pdiff h3{font-size:13px;margin:0 0 6px}
+.pdiff .plist{font-size:13px;margin:0}
+.drow{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
+.dtag{flex:0 0 auto;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong);
+  background:var(--surface);color:var(--muted)}
+.dtag.added{border-color:#bcdcc9;background:#eef7f1;color:var(--ok)}
+.dtag.removed{border-color:#eec4b9;background:#fdeee9;color:var(--err)}
+/* the technical detail: collapsed until someone wants to argue with a file */
+details.tech{margin:14px 0 0;border-top:1px solid var(--line);padding-top:4px}
+details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-height:44px;display:flex;align-items:center}
+.psteps{list-style:none;margin:6px 0 0;padding:0}
+.pstep{border:1px solid var(--line);border-radius:10px;background:var(--raised);padding:4px 6px 6px;margin:8px 0}
+.pstephd{display:flex;align-items:center;gap:8px;min-height:44px}
+.pstephd .n{flex:0 0 auto;font-size:11.5px;color:var(--faint);min-width:14px}
+.pstephd strong{flex:1 1 auto;min-width:0;font-size:14px;overflow-wrap:anywhere}
+.pdetail{margin:0 4px 4px 22px}
+.pfiles{list-style:none;margin:0;padding:0}
+.pfile{display:flex;align-items:center;gap:8px;min-height:44px;padding-left:22px;border-top:1px solid var(--line)}
+.pfile code{flex:1 1 auto;min-width:0;font-family:var(--mono);font-size:12px;overflow-wrap:anywhere;word-break:break-all}
+.pfile .tiny{flex:0 1 auto;min-width:0;max-width:40%;text-align:right;overflow-wrap:anywhere}
+.psec>.pfiles>.pfile{padding-left:0}
+.drop{flex:0 0 44px;width:44px;height:44px;padding:0;border:0;border-radius:10px;background:transparent;
+  color:var(--muted);font-size:19px;line-height:1;cursor:pointer}
+.drop:hover{background:var(--surface);color:var(--err)}
+
 /* ── screenshots ────────────────────────────────────────────────────────────── */
 .shots{display:flex;gap:7px;flex-wrap:wrap;padding:9px 9px 0}
 .shot{position:relative;width:52px;height:52px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--raised)}

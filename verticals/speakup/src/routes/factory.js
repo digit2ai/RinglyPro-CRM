@@ -245,7 +245,27 @@ router.post('/jobs/:id/revise', mutation, operator, wrap(async (req, res) => {
   const job = await ownJob(req, res); if (!job) return;
   const out = await prepare.revise(job.id, req.body.text, { lang: lang(req), user: req.user });
   if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
-  res.json({ ok: true, job: await jobView(out.job, lang(req)) });
+  res.json({ ok: true, job: await jobView(out.job, lang(req)), diff: out.diff || null });
+}));
+
+// A QUESTION ABOUT THE PLAN. Answers; changes nothing, mints no new hash. Half of reviewing
+// is asking why, and until this existed the box could only command.
+router.post('/jobs/:id/ask', mutation, operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  const before = job.plan_hash;
+  const out = await prepare.ask(job.id, req.body.text, { lang: lang(req), user: req.user });
+  if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
+  const after = (await Job.findByPk(job.id)).plan_hash;
+  res.json({ ok: true, reply: out.reply, plan_changed: before !== after });
+}));
+
+// Remove a step, or one file from a step. No model: the commonest correction is "not that
+// file" and it should cost a tap, not a regeneration of everything already read.
+router.post('/jobs/:id/plan/drop', mutation, operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  const out = await prepare.drop(job.id, { step: req.body.step, path: req.body.path }, { user: req.user });
+  if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
+  res.json({ ok: true, job: await jobView(out.job, lang(req)), diff: out.diff || null });
 }));
 
 router.post('/jobs/:id/merge', mutation, operator, wrap(async (req, res) => {
