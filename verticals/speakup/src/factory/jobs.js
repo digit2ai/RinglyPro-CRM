@@ -183,6 +183,35 @@ async function approveAndDispatch({ job, user, passphrase, confirmToken, planHas
 // typed the instruction into their own signed-in console seconds earlier and the
 // result is still only a branch and a PR. SPEAKUP_AUTO_RUN=off restores the tap.
 function autoRunEnabled() { return String(process.env.SPEAKUP_AUTO_RUN || 'on').toLowerCase() !== 'off'; }
+// Voice or typing straight to the live site: a console job whose tests passed merges
+// itself, and Render deploys main as it always has. SPEAKUP_AUTO_MERGE=off stops it.
+// The ONE case it still leaves for a person: a change that edited a test suite the
+// factory runs, because then the green result cannot vouch for itself.
+function autoMergeEnabled() { return String(process.env.SPEAKUP_AUTO_MERGE || 'on').toLowerCase() !== 'off'; }
+
+async function autoMerge(job) {
+  if (!autoMergeEnabled() || !job.auto_run || !job.pr_number) return job;
+  const project = await projects.get(job.tenant_id, job.project_key);
+  if (!projects.allows(project, 'merge')) return job;
+  if (!job.tests || !job.tests.measured || job.tests.failed !== 0) return job;
+  if (job.suite_modified !== false) {
+    await addEvents(job, [{ kind: 'info', text: 'Left for you to review: this change edited a test suite the factory runs, so its green result cannot vouch for itself.' }]);
+    return job;
+  }
+  try {
+    const res = await github.mergePR(job.repo, job.pr_number, job.commit_sha, `SpeakUp AI Factory job #${job.id}`);
+    await addEvents(job, [{ kind: 'pr', text: 'Merged into ' + job.base_branch + '. Render is deploying.' }]);
+    await audit.record({ tenant_id: job.tenant_id, actor: 'system', action: 'job.auto_merged', entity: 'job', entity_id: job.id, detail: { pr: job.pr_number, sha: res.sha } });
+    return await transition(job, 'DEPLOYING', { detail: { merged_via: 'auto' }, fields: { merge_sha: res.sha, deploy_status: 'merged; waiting for Render' } }) || job;
+  } catch (e) {
+    const hint = e.status === 403
+      ? ' The GitHub token needs Contents: Read and write to merge; give it that on the token page, or merge this PR yourself.'
+      : '';
+    await addEvents(job, [{ kind: 'error', text: 'Could not merge automatically: ' + e.message + hint }]);
+    await audit.record({ tenant_id: job.tenant_id, actor: 'system', action: 'job.auto_merge_failed', entity: 'job', entity_id: job.id, detail: { error: e.message } });
+    return job;
+  }
+}
 
 async function autoDispatch(job, user) {
   if (!autoRunEnabled()) return null;
@@ -380,7 +409,8 @@ async function openPullRequest(job, { commit_sha, files_changed, tests, run_url,
     fields: { commit_sha, files_changed, tests, run_url, changed_files, suite_modified, pr_number: pr.number, pr_url: pr.html_url, pr_draft: !!pr.draft } });
   if (!created) return { ok: false, status: 409, error: 'job moved while opening the PR' };
   if (testsOk) {
-    return { ok: true, job: await transition(created, 'READY_FOR_REVIEW', { actor: 'system', detail: { tests } }) || created };
+    const ready = await transition(created, 'READY_FOR_REVIEW', { actor: 'system', detail: { tests } }) || created;
+    return { ok: true, job: await autoMerge(ready) };
   }
   const why = tests.measured ? `Tests still failing after the fix rounds (${tests.failed} failed). Draft PR #${pr.number} kept for review.`
     : `Tests could not be measured. Draft PR #${pr.number} kept for review.`;
@@ -497,6 +527,6 @@ async function latestFor(tenant_id, filter) {
 
 module.exports = {
   STATUSES, TERMINAL, NEXT, CALLBACK_STATUSES, CALLBACK_FIELDS, PROGRESS_TOKEN_STATUSES, EVENT_KINDS, changeScope, addEvents, BASE_URL, branchFor, canMove, transition, fail,
-  describe, readiness, approveAndDispatch, autoDispatch, autoRunEnabled, cancel, merge, canonical, applyCallback, verifyBriefRequest,
+  describe, readiness, approveAndDispatch, autoDispatch, autoRunEnabled, autoMerge, autoMergeEnabled, cancel, merge, canonical, applyCallback, verifyBriefRequest,
   checkJob, tick, startWatchdog, latestFor, prBody, Op
 };
