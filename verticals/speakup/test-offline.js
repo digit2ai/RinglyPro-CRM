@@ -288,6 +288,36 @@ test('pasted prompts are instructions, not commands', () => {
   });
 });
 
+test('a question is answered, an instruction is built', async () => {
+  ['how does the merge gate work?', 'What is the private phrase for?', 'why did the last job fail',
+   'explain the four jobs in the workflow', '¿cómo funciona el auto merge?', 'que hace la fabrica'].forEach(function (q) {
+    ok(intents.isQuestion(q), 'a question is a question: ' + q);
+  });
+  // The trap: an instruction phrased politely. These must still build.
+  ['can you add a TEST tag to the header?', 'could you fix the login page?', '¿puedes cambiar el título?',
+   'what if you removed the banner?', '/ringlypro-architect why is this slow?', 'make the header smaller'].forEach(function (i) {
+    ok(!intents.isQuestion(i), 'an instruction is not a question, however it is phrased: ' + i);
+  });
+  const asked = await intents.classify('how does the merge gate decide to stop?', 'architect');
+  ok(asked.intent === 'ASK' && !asked.architectRequest, 'Architect mode answers a question instead of opening a job');
+  const built = await intents.classify('add a TEST tag to the header', 'architect');
+  ok(built.intent === 'PREPARE_IMPLEMENTATION', 'Architect mode still builds an instruction');
+  const polite = await intents.classify('can you add a TEST tag to the header?', 'architect');
+  ok(polite.intent === 'PREPARE_IMPLEMENTATION', 'a politely phrased instruction still builds');
+  // A long question is still a question; a pasted slash prompt never is.
+  const longQ = 'How does the factory decide that a change is safe to merge on its own, and what exactly ' +
+    'stops it when the change touched one of the test suites that the same run then reports as passing?';
+  ok(intents.isPastedPrompt(longQ), 'the long question is over the pasted-prompt length');
+  ok((await intents.classify(longQ, 'architect')).intent === 'ASK', 'length alone does not turn a question into a job');
+  const ask = intents.INTENTS.find(function (i) { return i.name === 'ASK'; });
+  ok(ask && ask.operator === true && ask.modelSafe === false, 'ASK is operator-only and never chosen by the model');
+  ok(intents.classifyRules('how does the merge gate work') !== 'ASK', 'ASK is routed on the raw text, never by a rule');
+  const src = stripComments(fs.readFileSync(path.join(ROOT, 'verticals/speakup/src/factory/intents.js'), 'utf8'));
+  const body = src.slice(src.indexOf('async ASK(ctx)'), src.indexOf('async PREPARE_IMPLEMENTATION'));
+  ok(body.length > 100 && !/Job\.create|approveAndDispatch|autoDispatch|saveNote|Document\.create/.test(body),
+    'the answer handler opens no job and writes no document');
+});
+
 test('patch and guard scripts', () => {
   const { execFileSync, spawnSync } = require('child_process');
   const os = require('os');

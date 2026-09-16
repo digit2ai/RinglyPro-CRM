@@ -40,7 +40,7 @@
     FAILED: ['Falló', 'Failed'], CANCELLED: ['Cancelado', 'Cancelled']
   };
   var KIND = { read: 'READ', edit: 'EDIT', write: 'WRITE', run: 'RUN', search: 'FIND', say: 'CLAUDE', test: 'TEST',
-    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'PR', todo: 'PLAN', tool: 'TOOL', you: 'YOU', ready: 'READY' };
+    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'PR', todo: 'PLAN', tool: 'TOOL', you: 'YOU', ready: 'READY', answer: 'ANSWER' };
   function cls(kind) {
     if (kind === 'error') return 'k err';
     if (kind === 'done' || kind === 'status' || kind === 'pr') return 'k ok';
@@ -196,7 +196,7 @@
       shots = []; renderShots();
       try { sessionStorage.removeItem(DRAFT); } catch (e) {}
       status('');
-      if (d.reply) write([{ kind: d.intent === 'WAKE' ? 'ready' : 'info', text: d.reply }]);
+      if (d.reply) write([{ kind: d.intent === 'WAKE' ? 'ready' : (d.intent === 'ASK' ? 'answer' : 'info'), text: d.reply }]);
       if (d.card && d.card.job_id) follow(d.card.job_id);
     } catch (e) {
       status('');
