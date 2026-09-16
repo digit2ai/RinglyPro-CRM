@@ -628,6 +628,39 @@ test('one language on the whole screen', () => {
     .forEach(function (k) { ok(known.indexOf(k) >= 0, 'the console can translate "' + k + '"'); });
 });
 
+test('the icon is generated from one source and survives being small', () => {
+  const master = read('verticals/speakup/public/icon-master.svg');
+  const fav = read('verticals/speakup/public/favicon.svg');
+  const gen = read('verticals/speakup/scripts/make-icons.js');
+
+  // The old mark was a purple gradient microphone on a near-black plate: the wrong palette
+  // for the paper theme, and a microphone describes half an app whose other half builds code.
+  [master, fav].forEach(function (svg) {
+    ok(!/5a3fe0|8b7bff|0d1320|linearGradient|url\(#/.test(svg), 'no leftover purple or gradient in the mark');
+    ok(!/opacity/.test(svg), 'no opacity: a faded stroke is the first thing to vanish at 32px');
+    ok(/#d97757/.test(svg) && /#faf9f5/.test(svg), 'it wears the clay and paper of the current theme');
+  });
+  // FULL BLEED for the app icon, ROUNDED only for the browser tab: iOS rounds
+  // apple-touch-icon itself and a pre-rounded source gets double-rounded.
+  ok(!/<rect width="512" height="512" rx=/.test(master), 'the app icon is full-bleed, not pre-rounded');
+  ok(/rx="108"/.test(fav), 'the tab variant is the rounded one');
+
+  ['apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'favicon-32.png'].forEach(function (f) {
+    const p = path.join(__dirname, 'public', f);
+    ok(fs.existsSync(p) && fs.statSync(p).size > 200, f + ' exists and is a real image');
+  });
+
+  // EVERY SIZE COMES FROM ONE FILE. Hand-editing a 32px icon is how a mark drifts.
+  ok(/--check/.test(gen) && /maskable safe box/.test(gen), 'the generator can verify itself and guards the maskable safe zone');
+  ok(/icon-master\.svg/.test(gen) && /favicon\.svg/.test(gen) && /apple-touch-icon\.png/.test(gen), 'it writes every asset');
+  // The safe-zone guard is not decoration: it caught a ray that Android would have clipped.
+  const rays = (gen.match(/const RAYS = \[\[([\d, ]+)\], \[([\d, ]+)\]\]/) || []);
+  ok(rays.length === 3, 'the rays are declared where the guard can check them');
+  rays.slice(1).forEach(function (r) {
+    r.split(',').map(Number).forEach(function (v) { ok(v >= 51 && v <= 460, 'a ray stays inside the maskable box (' + v + ')'); });
+  });
+});
+
 test('the header controls are one node, not two copies', () => {
   const css = read('verticals/speakup/public/theme.css');
   const js = read('verticals/speakup/public/header-menu.js');
