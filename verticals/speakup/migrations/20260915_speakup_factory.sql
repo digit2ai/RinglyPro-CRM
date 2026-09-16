@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS su_jobs (
   status               VARCHAR(30) DEFAULT 'QUEUED',
   source_recording_ids JSONB DEFAULT '[]',
   spec                 JSONB DEFAULT '{}',
+  revisions            JSONB DEFAULT '[]',
   plan                 JSONB DEFAULT '{}',
   plan_md              TEXT,
   plan_hash            VARCHAR(64),
@@ -126,6 +127,7 @@ CREATE INDEX IF NOT EXISTS su_audit_entity_idx ON su_audit(entity, entity_id);
 
 -- Security review 2026-09-15: registry snapshot at PREPARE, verification results.
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS workflow_file VARCHAR(120);
+ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS revisions JSONB DEFAULT '[]';
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS test_commands JSONB DEFAULT '[]';
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS path_scope JSONB DEFAULT '[]';
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS changed_files JSONB DEFAULT '[]';

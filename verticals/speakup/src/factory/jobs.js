@@ -31,7 +31,10 @@ const TERMINAL = ['DEPLOYED', 'FAILED', 'CANCELLED'];
 const NEXT = {
   ANALYZING: ['PLANNING', 'FAILED', 'CANCELLED'],
   PLANNING: ['WAITING_APPROVAL', 'FAILED', 'CANCELLED'],
-  WAITING_APPROVAL: ['QUEUED', 'FAILED', 'CANCELLED'],
+  // WAITING_APPROVAL -> PLANNING is the revise loop: the owner corrects the plan and it is
+  // rebuilt in place. It is the ONLY way back, and it always mints a new plan hash, so an
+  // approval shown against the old plan can never dispatch the new one.
+  WAITING_APPROVAL: ['QUEUED', 'PLANNING', 'FAILED', 'CANCELLED'],
   QUEUED: ['CODING', 'FAILED', 'CANCELLED'],
   CODING: ['TESTING', 'FIXING', 'PUSHING', 'FAILED', 'CANCELLED'],
   TESTING: ['FIXING', 'PUSHING', 'FAILED', 'CANCELLED'],
@@ -69,11 +72,17 @@ const BASE_URL = (process.env.SPEAKUP_PUBLIC_URL || 'https://aiagent.ringlypro.c
 function canMove(from, to) { return (NEXT[from] || []).includes(to); }
 function branchFor(jobId) { return 'speakup/job-' + jobId; }
 
-async function transition(job, to, { actor, user_id, detail, fields, req } = {}) {
+async function transition(job, to, { actor, user_id, detail, fields, req, expectPlanHash } = {}) {
   const from = job.status;
   if (!canMove(from, to)) return null;
   const values = Object.assign({}, fields || {}, { status: to, updated_at: new Date() });
-  const [count, rows] = await Job.update(values, { where: { id: job.id, status: from }, returning: true });
+  // COMPARE-AND-SWAP ON THE PLAN, NOT JUST THE STATUS. Approving read the hash off a row
+  // fetched moments earlier, and a revision landing in that window satisfied the status
+  // predicate again — so GitHub could receive a plan the owner never read, under an
+  // approval typed against the one they did. The database decides, not a stale read.
+  const where = { id: job.id, status: from };
+  if (expectPlanHash) where.plan_hash = expectPlanHash;
+  const [count, rows] = await Job.update(values, { where, returning: true });
   if (!count) return null;
   await audit.record({ tenant_id: job.tenant_id, user_id, actor: actor || 'system', action: 'job.transition',
     entity: 'job', entity_id: job.id, from_status: from, to_status: to, detail: detail || {}, req });
@@ -182,7 +191,10 @@ async function approveAndDispatch({ job, user, passphrase, confirmToken, planHas
 // WAITING_APPROVAL -> QUEUED — with the phrase step dropped, because the owner
 // typed the instruction into their own signed-in console seconds earlier and the
 // result is still only a branch and a PR. SPEAKUP_AUTO_RUN=off restores the tap.
-function autoRunEnabled() { return String(process.env.SPEAKUP_AUTO_RUN || 'on').toLowerCase() !== 'off'; }
+// DEFAULT OFF. An instruction now stops at the plan and waits for the owner to read it and
+// type "approved" — that review step is the point of the console, and it was what the
+// always-on version removed. SPEAKUP_AUTO_RUN=on restores dispatch-without-reading.
+function autoRunEnabled() { return String(process.env.SPEAKUP_AUTO_RUN || 'off').toLowerCase() === 'on'; }
 // Voice or typing straight to the live site: a console job whose tests passed merges
 // itself, and Render deploys main as it always has. SPEAKUP_AUTO_MERGE=off stops it.
 // The ONE case it still leaves for a person: a change that edited a test suite the
@@ -213,21 +225,48 @@ async function autoMerge(job) {
   }
 }
 
-async function autoDispatch(job, user) {
-  if (!autoRunEnabled()) return null;
+/**
+ * THE OWNER READ THE PLAN AND TYPED "APPROVED".
+ *
+ * Deliberately not the phrase door: the phrase exists so an overheard word cannot reach
+ * production, and this is the owner typing into their own signed-in console against a plan
+ * on screen. What it does keep is the PLAN HASH — approval is bound to the exact plan that
+ * was displayed, so a revision that landed between reading and typing cannot be approved by
+ * accident. The atomic WAITING_APPROVAL -> QUEUED update is what makes it single-use.
+ */
+async function approve({ job, user, planHash, req }) {
+  if (!security.isFactoryOperator(user)) return { ok: false, status: 403, error: 'Not allowed' };
+  if (job.status !== 'WAITING_APPROVAL') return { ok: false, status: 409, error: 'This task is not waiting for approval (' + job.status + ').' };
+  if (!job.plan_hash || String(planHash || '') !== String(job.plan_hash)) {
+    return { ok: false, status: 409, error: 'The plan changed since it was shown. Read it again and approve the new one.' };
+  }
+  const queued = await autoDispatch(job, user, { via: 'console_approved', force: true, req, expectPlanHash: job.plan_hash });
+  if (!queued) {
+    const fresh = await Job.findByPk(job.id);
+    return { ok: false, status: 409, error: (fresh && fresh.error) || 'Could not start the run.' };
+  }
+  return { ok: true, job: queued };
+}
+
+async function autoDispatch(job, user, opts = {}) {
+  if (!opts.force && !autoRunEnabled()) return null;
   if (!security.isFactoryOperator(user)) return null;
   const r = readiness();
   if (!r.ready) { await fail(job, 'The AI Factory is not fully configured: ' + r.blockers.map(b => b.code).join(', ')); return null; }
   const project = await projects.get(job.tenant_id, job.project_key);
   if (!projects.allows(project, 'execute')) { await fail(job, 'Execution is not allowed for this project in the registry.'); return null; }
   const branch = branchFor(job.id);
-  const queued = await transition(job, 'QUEUED', { actor: user.email, user_id: user.id,
-    detail: { via: 'console_auto_run', plan_hash: job.plan_hash, branch },
-    fields: { approved_by: user.email, approved_at: new Date(), branch } });
+  // auto_run means "carry this through to deployment without another tap", which is exactly
+  // what typing "approved" asks for. autoMerge() keys on it, so without setting it here an
+  // approved job would open its PR and then sit there forever (caught by the SIT).
+  const queued = await transition(job, 'QUEUED', { actor: user.email, user_id: user.id, req: opts.req,
+    expectPlanHash: opts.expectPlanHash || null,
+    detail: { via: opts.via || 'console_auto_run', plan_hash: job.plan_hash, branch },
+    fields: { approved_by: user.email, approved_at: new Date(), branch, auto_run: true } });
   if (!queued) return null;
   try {
     await github.dispatchWorkflow(job.repo, job.workflow_file || project.workflow_file, job.base_branch, { job_id: String(job.id), branch });
-    await audit.record({ tenant_id: job.tenant_id, user_id: user.id, actor: user.email, action: 'job.auto_dispatched', entity: 'job', entity_id: job.id,
+    await audit.record({ tenant_id: job.tenant_id, user_id: user.id, actor: user.email, action: (opts.via === 'console_approved' ? 'job.approved' : 'job.auto_dispatched'), entity: 'job', entity_id: job.id,
       detail: { repo: job.repo, branch } });
     return queued;
   } catch (e) {
@@ -527,6 +566,6 @@ async function latestFor(tenant_id, filter) {
 
 module.exports = {
   STATUSES, TERMINAL, NEXT, CALLBACK_STATUSES, CALLBACK_FIELDS, PROGRESS_TOKEN_STATUSES, EVENT_KINDS, changeScope, addEvents, BASE_URL, branchFor, canMove, transition, fail,
-  describe, readiness, approveAndDispatch, autoDispatch, autoRunEnabled, autoMerge, autoMergeEnabled, cancel, merge, canonical, applyCallback, verifyBriefRequest,
+  describe, readiness, approveAndDispatch, approve, autoDispatch, autoRunEnabled, autoMerge, autoMergeEnabled, cancel, merge, canonical, applyCallback, verifyBriefRequest,
   checkJob, tick, startWatchdog, latestFor, prBody, Op
 };

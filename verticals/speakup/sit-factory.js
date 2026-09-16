@@ -327,10 +327,20 @@ const server = app.listen(0, async () => {
     delete process.env.RENDER_GIT_COMMIT;
 
     // ── Voice to live: a console job merges itself when the tests pass ───────
+    // THE REAL CONSOLE PATH NOW: instruction -> plan -> the owner reads it -> "approved".
+    // It used to ride auto_run straight past the plan, which is the step the rebuild added.
     async function consoleJobThrough(title, opts) {
       security.resetRateLimits();
       const c = await call(A, 'POST', '/factory/command', { text: title + '. ' + 'Detail line for the instruction. '.repeat(20),
-        mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true });
+        mode: 'architect', lang: 'en', project_key: 'speakup' });
+      const waiting = await waitJob(c.d.card.job_id, ['WAITING_APPROVAL', 'FAILED'], 40000);
+      ok(waiting.status === 'WAITING_APPROVAL', 'an instruction stops at the plan instead of running: ' + title);
+      ok(!!waiting.plan_hash && !!waiting.plan_md, 'the plan the owner has to read actually exists');
+      const wrong = await call(A, 'POST', '/factory/jobs/' + waiting.id + '/approve', { plan_hash: 'f'.repeat(64) });
+      ok(wrong.status === 409, 'approval against a plan hash that was never shown is refused');
+      ok((await Job.findByPk(waiting.id)).status === 'WAITING_APPROVAL', 'and the job did not move');
+      const okd = await call(A, 'POST', '/factory/jobs/' + waiting.id + '/approve', { plan_hash: waiting.plan_hash });
+      ok(okd.status === 200, 'the plan that was shown is approved');
       const j = await waitJob(c.d.card.job_id, ['QUEUED', 'CODING', 'FAILED'], 40000);
       for (const st of ['CODING', 'TESTING', 'PUSHING']) await callback({ job_id: String(j.id), plan_hash: j.plan_hash, status: st });
       gh.headSha = opts.sha;
@@ -430,22 +440,38 @@ const server = app.listen(0, async () => {
     ok(pbrief.prompt.includes('Add a Beta tag next to the SpeakUp title') && pbrief.prompt.includes('WORD FOR WORD'), 'Claude receives the pasted prompt verbatim');
     ok(!pbrief.sensitive.phrases.some(p => /Beta tag/.test(p)), 'the owner instruction is not treated as meeting content the push guard would refuse');
 
-    // ── The console runs without a second tap (SPEAKUP_AUTO_RUN) ─────────────
+    // ── The console stops at the plan, and only "approved" moves it ─────────
     const before = dispatches().length;
     const autoCmd = await call(A, 'POST', '/factory/command', { text: 'Rename the Send label on the SpeakUp console to Run. ' + 'Keep everything else as it is. '.repeat(8),
-      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true });
+      mode: 'architect', lang: 'en', project_key: 'speakup' });
     ok(autoCmd.status === 200 && autoCmd.d.card.job_id, 'console command accepted');
-    let ja2 = await waitJob(autoCmd.d.card.job_id, ['QUEUED', 'CODING', 'FAILED'], 40000);
-    ok(ja2.status === 'QUEUED' && dispatches().length === before + 1, 'the console dispatched the plan itself, with no phrase typed');
-    ok(ja2.approved_by === OP_A && ja2.auto_run === true, 'the run is still recorded as approved by the operator');
-    ok(await Audit.findOne({ where: { tenant_id: opA.id, entity: 'job', entity_id: ja2.id, action: 'job.auto_dispatched' } }), 'auto dispatch is audited');
-    process.env.SPEAKUP_AUTO_RUN = 'off';
-    const manualCmd = await call(A, 'POST', '/factory/command', { text: 'Another console instruction that should wait for approval. ' + 'Details. '.repeat(20),
-      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true });
-    const jm = await waitJob(manualCmd.d.card.job_id, ['WAITING_APPROVAL', 'QUEUED', 'FAILED']);
-    ok(jm.status === 'WAITING_APPROVAL' && dispatches().length === before + 1, 'SPEAKUP_AUTO_RUN=off restores the approval step');
-    delete process.env.SPEAKUP_AUTO_RUN;
-    ok((await call(M, 'POST', '/factory/command', { text: 'x'.repeat(200), mode: 'architect', auto_run: true })).status === 403, 'a non-operator cannot use the console path');
+    let ja2 = await waitJob(autoCmd.d.card.job_id, ['WAITING_APPROVAL', 'QUEUED', 'FAILED'], 40000);
+    ok(ja2.status === 'WAITING_APPROVAL' && dispatches().length === before, 'an instruction reaches a plan and dispatches NOTHING');
+
+    // A correction rebuilds the plan in place and mints a new hash, so an approval typed
+    // against the plan the owner rejected can never dispatch.
+    const hash1 = ja2.plan_hash;
+    const rev = await call(A, 'POST', '/factory/jobs/' + ja2.id + '/revise', { text: 'Leave the routes alone; only touch the label.', lang: 'en' });
+    ok(rev.status === 200, 'the plan can be corrected');
+    const ja3 = await Job.findByPk(ja2.id);
+    ok(ja3.status === 'WAITING_APPROVAL' && ja3.plan_hash !== hash1, 'a revision mints a new plan hash');
+    ok((ja3.revisions || []).length === 1, 'the correction is recorded on the job');
+    ok(dispatches().length === before, 'revising dispatched nothing');
+    const stale = await call(A, 'POST', '/factory/jobs/' + ja2.id + '/approve', { plan_hash: hash1 });
+    ok(stale.status === 409 && (await Job.findByPk(ja2.id)).status === 'WAITING_APPROVAL', 'approving the plan that was replaced is refused');
+
+    const good = await call(A, 'POST', '/factory/jobs/' + ja2.id + '/approve', { plan_hash: ja3.plan_hash });
+    ok(good.status === 200, 'the current plan is approved');
+    ja2 = await Job.findByPk(ja2.id);
+    ok(ja2.status === 'QUEUED' && dispatches().length === before + 1, 'approving dispatches exactly once');
+    ok(ja2.approved_by === OP_A && ja2.auto_run === true, 'the run is recorded as approved by the operator, and carries through to deployment');
+    ok(await Audit.findOne({ where: { tenant_id: opA.id, entity: 'job', entity_id: ja2.id, action: 'job.approved' } }), 'the approval is audited');
+    const twice = await call(A, 'POST', '/factory/jobs/' + ja2.id + '/approve', { plan_hash: ja3.plan_hash });
+    ok(twice.status === 409 && dispatches().length === before + 1, 'a replayed approval cannot dispatch a second run');
+    ok((await call(A, 'POST', '/factory/jobs/' + ja2.id + '/revise', { text: 'too late' })).status === 409, 'a running job can no longer be revised');
+
+    ok((await call(M, 'POST', '/factory/command', { text: 'x'.repeat(200), mode: 'architect' })).status === 403, 'a non-operator cannot use the console path');
+    ok((await call(M, 'POST', '/factory/jobs/' + ja2.id + '/approve', { plan_hash: ja3.plan_hash })).status === 403, 'a non-operator cannot approve');
 
     // ── Pasted screenshots reach the agent, and only through the job ─────────
     const badUp = await call(A, 'POST', '/factory/uploads', { name: 'x.txt', mime: 'text/plain', data_base64: 'aGk=' });
@@ -455,9 +481,11 @@ const server = app.listen(0, async () => {
     ok((await call(M, 'POST', '/factory/uploads', { name: 'a.png', mime: 'image/png', data_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' })).status === 403, 'a non-operator cannot upload');
     ok((await fetch(base + '/api/v1/factory/attachment/' + up.d.id)).status === 404, 'an unattached screenshot cannot be fetched by the runner');
     const shotCmd = await call(A, 'POST', '/factory/command', { text: 'Fix the spacing shown in the screenshot on the console header. ' + 'Detail. '.repeat(25),
-      mode: 'architect', lang: 'en', project_key: 'speakup', auto_run: true, upload_ids: [up.d.id] });
-    const js = await waitJob(shotCmd.d.card.job_id, ['QUEUED', 'CODING', 'FAILED'], 40000);
-    ok(js.status === 'QUEUED' && (js.attachments || []).length === 1, 'the screenshot travels with the job');
+      mode: 'architect', lang: 'en', project_key: 'speakup', upload_ids: [up.d.id] });
+    const jsw = await waitJob(shotCmd.d.card.job_id, ['WAITING_APPROVAL', 'FAILED'], 40000);
+    await call(A, 'POST', '/factory/jobs/' + jsw.id + '/approve', { plan_hash: jsw.plan_hash });
+    const js = await Job.findByPk(jsw.id);
+    ok(js.status === 'QUEUED' && (js.attachments || []).length === 1, 'the screenshot travels with the job through the approval');
     const shotTok = security.workflowToken('progress', js.id, Math.floor(Date.now() / 1000) + 600);
     const att = await fetch(base + '/api/v1/factory/attachment/' + up.d.id, { headers: { 'x-speakup-progress': shotTok } });
     ok(att.status === 200 && att.headers.get('content-type') === 'image/png' && /attachment/.test(att.headers.get('content-disposition') || ''), 'the build job can fetch it, as a download, with its own token');
@@ -516,10 +544,14 @@ const server = app.listen(0, async () => {
     ok(routed.d.project_key === 'sit-new', 'spoken alias routes to the new project with no code change');
     ok((await call(M, 'POST', '/factory/projects', { key: 'sit-m', name: 'M', repo: 'o/r' })).status === 403, 'non-operator cannot edit the registry');
 
-    // ── Existing SpeakUp still works ──────────────────────────────────────────
+    // ── What survived the cut to two screens ─────────────────────────────────
     const lib = await call(A, 'GET', '/recordings');
-    ok(lib.status === 200 && lib.d.recordings.some(r => r.id === meetId && r.mode === 'meeting' && r.project_key === 'ringlypro'), 'library lists sessions with mode and project');
-    ok((await call(A, 'POST', `/recordings/${meetId}/summarize`)).d.summary, 'existing summarize still works');
+    ok(lib.status === 200 && lib.d.recordings.some(r => r.id === meetId && r.mode === 'meeting' && r.project_key === 'ringlypro'), 'the meetings list still carries mode and project');
+    // Summarising is now a READ-ONLY command, not a route on the recording: the editing
+    // endpoints went with the library screen.
+    ok((await call(A, 'POST', `/recordings/${meetId}/summarize`)).status === 404, 'the old summarize endpoint is gone');
+    const sum = await cmd(A, 'resume la reunión con Greg');
+    ok(sum.status === 200 && sum.d.intent === 'SUMMARIZE' && !sum.d.card.job_id, 'summarising answers read-only and opens no job');
   } catch (e) {
     fail++; console.log('ERROR ' + e.stack);
   }

@@ -48,30 +48,16 @@ const server = app.listen(0, async () => {
     ok((await fetch(base + '/api/v1/recordings', { headers: H }).then(j)).recordings.some(r => r.id === rid && r.has_transcript), 'library shows transcript');
     ok((await fetch(base + '/api/v1/recordings/' + rid, { headers: H }).then(j)).transcript.text.includes('reporte'), 'detail transcript');
 
-    ok((await fetch(base + '/api/v1/recordings/' + rid + '/summarize', { method: 'POST', headers: H }).then(j)).summary, 'summarize');
-    ok((await fetch(base + '/api/v1/translate', { method: 'POST', headers: H, body: JSON.stringify({ recording_id: rid, target_lang: 'English' }) }).then(j)).translation.text, 'translate');
-    ok((await fetch(base + '/api/v1/rewrite', { method: 'POST', headers: H, body: JSON.stringify({ recording_id: rid, tone: 'bullets' }) }).then(j)).edit.output_text, 'rewrite');
-
-    for (const type of ['minutes', 'next_steps', 'presentation', 'project_plan']) {
-      const g = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
-        body: JSON.stringify({ type, lang: 'es' }) }).then(j);
-      ok(g.success && g.document.content && g.document.kind === type, 'generate ' + type);
+    // THE EDITING TOOLS ARE GONE (2026-09-16). Translate, rewrite, summarize, generate and
+    // export were removed with the library screen; SpeakUp is the meeting notes taker and
+    // the factory. Their endpoints must be absent, not merely unused — a route left behind
+    // is a surface nobody maintains.
+    for (const [method, path] of [['POST', '/api/v1/recordings/' + rid + '/summarize'], ['POST', '/api/v1/translate'],
+      ['POST', '/api/v1/rewrite'], ['POST', '/api/v1/recordings/' + rid + '/generate'],
+      ['GET', '/api/v1/recordings/' + rid + '/export?format=md'], ['POST', '/api/v1/recordings/import']]) {
+      const r = await fetch(base + path, { method, headers: H, body: method === 'POST' ? JSON.stringify({ recording_id: rid }) : undefined });
+      ok(r.status === 404 || r.status === 405, 'removed endpoint is gone: ' + method + ' ' + path.split('?')[0]);
     }
-    // language follows the UI selection, not the transcript (heuristic + real path)
-    const gEs = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H, body: JSON.stringify({ type: 'minutes', lang: 'es' }) }).then(j);
-    const gEn = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H, body: JSON.stringify({ type: 'minutes', lang: 'en' }) }).then(j);
-    ok(/Resumen|Acciones|Acta/i.test(gEs.document.content) && !/^#\s*Meeting Minutes/im.test(gEs.document.content), 'ES selection -> Spanish document');
-    ok(/Summary|Action items|Minutes/i.test(gEn.document.content), 'EN selection -> English document');
-    const gc = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
-      body: JSON.stringify({ type: 'custom', lang: 'es', instruction: 'Escribe un correo breve al equipo con los acuerdos.' }) }).then(j);
-    ok(gc.success && gc.document.kind === 'custom' && gc.document.prompt, 'generate custom (free-write)');
-    const gcBad = await fetch(base + '/api/v1/recordings/' + rid + '/generate', { method: 'POST', headers: H,
-      body: JSON.stringify({ type: 'custom', lang: 'es' }) });
-    ok(gcBad.status === 400, 'custom without instruction rejected (400)');
-    ok((await fetch(base + '/api/v1/recordings/' + rid, { headers: H }).then(j)).documents.length >= 5, 'detail returns documents');
-
-    const ex = await fetch(base + '/api/v1/recordings/' + rid + '/export?format=md', { headers: H });
-    ok(ex.ok && (await ex.text()).includes('# SIT'), 'export md');
 
     // ── autosave + crash-recovery lifecycle ──
     const live = await fetch(base + '/api/v1/recordings', { method: 'POST', headers: H, body: JSON.stringify({ title: 'Live', source: 'call', lang: 'es', status: 'recording' }) }).then(j);

@@ -21,6 +21,7 @@ const intents = require('../factory/intents');
 const intel = require('../factory/intel');
 const audit = require('../factory/audit');
 const context = require('../factory/context');
+const prepare = require('../factory/prepare');
 const { buildBrief } = require('../factory/brief');
 const github = require('../factory/github');
 const llm = require('../factory/llm');
@@ -50,6 +51,7 @@ async function jobView(job, lng) {
     pr_draft: job.pr_draft, run_url: job.run_url, files_changed: job.files_changed, tests: job.tests, deploy_status: job.deploy_status,
     changed_files: job.changed_files || [], suite_modified: job.suite_modified, outside_plan: jobs.changeScope(job).outside,
     error: job.error, plan_hash: job.plan_hash, plan_md: job.plan_md, plan: job.plan, spec: job.spec, plan_composed_by: job.plan_composed_by,
+    revisions: (job.revisions || []).map(r => ({ text: r.text, at: r.at })),
     approved_by: job.approved_by, approved_at: job.approved_at, created_at: job.created_at, updated_at: job.updated_at,
     terminal: jobs.TERMINAL.includes(job.status),
     sources: sources.map(s => ({ id: s.id, title: s.title, created_at: s.created_at, mode: s.mode })),
@@ -228,6 +230,24 @@ router.post('/jobs/:id/execute', mutation, operator, wrap(async (req, res) => {
   res.json({ ok: true, job: await jobView(out.job, lang(req)) });
 }));
 
+// THE PLAN THE OWNER READ IS THE PLAN THAT RUNS. No phrase here — this is the owner typing
+// "approved" into their own signed-in console against a plan on screen — but the plan hash
+// is mandatory, so a revision that landed while they were reading cannot be approved blind.
+router.post('/jobs/:id/approve', mutation, operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  const out = await jobs.approve({ job, user: req.user, planHash: req.body.plan_hash, req });
+  if (!out.ok) return res.status(out.status || 400).json({ error: out.error, job: await jobView(await Job.findByPk(job.id), lang(req)) });
+  res.json({ ok: true, job: await jobView(out.job, lang(req)) });
+}));
+
+// Correct the plan and get a new one. Writes no code and never dispatches.
+router.post('/jobs/:id/revise', mutation, operator, wrap(async (req, res) => {
+  const job = await ownJob(req, res); if (!job) return;
+  const out = await prepare.revise(job.id, req.body.text, { lang: lang(req), user: req.user });
+  if (!out.ok) return res.status(out.status || 400).json({ error: out.error });
+  res.json({ ok: true, job: await jobView(out.job, lang(req)) });
+}));
+
 router.post('/jobs/:id/merge', mutation, operator, wrap(async (req, res) => {
   const job = await ownJob(req, res); if (!job) return;
   const out = await jobs.merge({ job, user: req.user, passphrase: req.body.passphrase, confirmToken: req.body.confirm_token, planHash: req.body.plan_hash, req });
@@ -293,6 +313,38 @@ router.patch('/recordings/:id/intel/items/:itemId', mutation, wrap(async (req, r
   await audit.record({ tenant_id: rec.tenant_id, user_id: req.user.id, actor: req.user.email, action: 'intel.classified_by_human', entity: 'intel', entity_id: row.id,
     detail: { recording_id: rec.id, item: req.params.itemId, classification: req.body.classification }, req });
   res.json({ intel: data });
+}));
+
+/**
+ * THE BRIDGE: ticked items become a prompt, and nothing else does.
+ *
+ * TICKING IS THE APPROVAL, and the box is what the owner sees. A row reaches this prompt
+ * only if it sits in an approved bucket — either because the owner ticked it (the existing
+ * human promotion, PATCH .../items/:itemId -> APPROVED_REQUIREMENT) or because someone said
+ * an explicit approval cue out loud in the meeting and the verifier let it stand. BOTH
+ * render pre-ticked on the checklist and both can be unticked, so what travels is always
+ * what the owner left ticked — but note the second case is not a click they made. A quote
+ * that is not in the transcript never became an item at all, by either route.
+ *
+ * It returns TEXT. It opens no job and dispatches nothing — the prompt lands in the Factory
+ * box as editable text, where the owner can fix it before sending.
+ */
+router.post('/recordings/:id/prompt', mutation, operator, wrap(async (req, res) => {
+  const rec = await ownRecording(req, res); if (!rec) return;
+  const row = await MeetingIntel.findOne({ where: { tenant_id: rec.tenant_id, recording_id: rec.id }, order: [['id', 'DESC']] });
+  if (!row) return res.status(409).json({ error: 'This meeting has not been read yet.' });
+  const spec = prepare.collectSpec([{ recording: rec, data: row.data }]);
+  if (!spec.requirements.length) {
+    const hb = spec.held_back;
+    return res.status(409).json({ error: 'Nothing is ticked yet. Tick the items you want built.', held_back: hb });
+  }
+  const list = await projects.list(tenantOf(req));
+  const project = list.find(p => p.key === (rec.project_key || process.env.SPEAKUP_DEFAULT_PROJECT || 'ringlypro')) || list[0] || null;
+  const prompt = intents.devPrompt(spec, project);
+  await audit.record({ tenant_id: rec.tenant_id, user_id: req.user.id, actor: req.user.email, action: 'meeting.prompt_built', entity: 'recording', entity_id: rec.id,
+    detail: { requirements: spec.requirements.length, held_back: spec.held_back }, req });
+  res.json({ prompt, recording_id: rec.id, project_key: project ? project.key : null,
+    requirements: spec.requirements.map(r => ({ id: r.id, kind: r.kind, text: r.text })), held_back: spec.held_back });
 }));
 
 router.get('/search', wrap(async (req, res) => {

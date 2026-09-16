@@ -231,6 +231,8 @@ const Job = sequelize.define('SpeakJob', {
   status: { type: DataTypes.STRING(30), defaultValue: 'QUEUED' },
   source_recording_ids: { type: DataTypes.JSONB, defaultValue: [] },
   spec: { type: DataTypes.JSONB, defaultValue: {} },
+  // Every correction the owner typed against a shown plan, oldest first. In the plan hash.
+  revisions: { type: DataTypes.JSONB, defaultValue: [] },
   plan: { type: DataTypes.JSONB, defaultValue: {} },
   plan_md: { type: DataTypes.TEXT },
   plan_hash: { type: DataTypes.STRING(64) },

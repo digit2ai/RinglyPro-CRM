@@ -221,11 +221,11 @@ test('structure', () => {
   ok(Object.entries(src).filter(([f, s]) => f !== 'github.js' && /dispatchWorkflow\(/.test(s)).map(([f]) => f).join() === 'jobs.js', 'only jobs.js dispatches the workflow');
   ok(Object.entries(src).filter(([f, s]) => f !== 'jobs.js' && /approveAndDispatch\(/.test(s)).length === 0, 'nothing outside jobs.js calls approveAndDispatch');
   ok(!/writeFile|appendFile|createWriteStream|unlink|rmSync|mkdir/.test(src['repo.js']), 'repo.js cannot write to the repository');
-  const others = ['src/routes/recordings.js', 'src/routes/ai.js', 'src/services/stt.js', 'src/services/ai-editor.js'].map(p => fs.readFileSync(path.join(__dirname, p), 'utf8'));
+  const others = ['src/routes/recordings.js', 'src/services/stt.js', 'src/services/ai-editor.js'].map(p => fs.readFileSync(path.join(__dirname, p), 'utf8'));
   ok(others.every(s => !/factory\//.test(s)), 'recording, transcription and editing code never reach the factory (a meeting cannot trigger execution)');
   const routes = stripComments(fs.readFileSync(path.join(__dirname, 'src/routes/factory.js'), 'utf8'));
   ok((routes.match(/approveAndDispatch\(/g) || []).length === 1 && /\/jobs\/:id\/execute', mutation, operator/.test(routes), 'one execute route, behind the same-origin and operator guards');
-  const ui = ['public/factory.js', 'public/console.js', 'public/app.html', 'public/recorder.html'].map(function (p) { return fs.readFileSync(path.join(__dirname, p), 'utf8'); }).join(' ');
+  const ui = ['public/console.js', 'public/app.html', 'public/meetings.js', 'public/meetings.html'].map(function (p) { return fs.readFileSync(path.join(__dirname, p), 'utf8'); }).join(' ');
   ok(!/SPEAKUP_EXEC_PHRASE|SPEAKUP_GITHUB_TOKEN|SPEAKUP_FACTORY_SECRET|ANTHROPIC_API_KEY/.test(ui), 'no secret name or value in browser code');
   const wf = read('.github/workflows/speakup-factory.yml');
   const onBlock = wf.slice(wf.indexOf('\non:\n'), wf.indexOf('\npermissions:'));
@@ -387,19 +387,143 @@ test('the console can be cleared, and the shell versions agree', () => {
   ok(/if \(jobId && jobTerminal\) dismiss\(jobId\)/.test(con), 'only a terminal job is remembered as dismissed');
 });
 
-test('the console screen is black', () => {
-  const html = read('verticals/speakup/public/app.html');
+test('the plan is read before anything runs', () => {
+  const con = read('verticals/speakup/public/console.js');
+  const jobsSrc = stripComments(read('verticals/speakup/src/factory/jobs.js'));
+  const prepSrc = stripComments(read('verticals/speakup/src/factory/prepare.js'));
+  const routes = stripComments(read('verticals/speakup/src/routes/factory.js'));
+
+  // AUTO-RUN IS OFF BY DEFAULT. An instruction now stops at the plan; the old default sent
+  // it straight to GitHub, which is exactly the review step this rebuild restores.
+  ok(/SPEAKUP_AUTO_RUN \|\| 'off'\)\.toLowerCase\(\) === 'on'/.test(jobsSrc), 'auto-run is off unless explicitly turned on');
+  ok(!/auto_run: true/.test(con), 'the console no longer asks for auto-run');
+
+  // ONLY "approved" DISPATCHES. Not ok, not yes, not go.
+  // The regex is LIFTED OUT OF THE SOURCE and exercised. Re-declaring it here would test a
+  // copy, so loosening the real one would go unnoticed — which is what happened first.
+  const src = (con.match(/var APPROVED = (\/[^\n]+\/i);/) || [])[1];
+  ok(src, 'the approval word is defined where the test can find it');
+  const APPROVED = eval(src); // eslint-disable-line no-eval
+  ['ok', 'yes', 'sí', 'si', 'go', 'dale', 'run it', 'approve it later', 'not approved'].forEach(function (w) {
+    ok(!APPROVED.test(w), '"' + w + '" does not dispatch');
+  });
+  ['approved', 'Approved.', ' aprobado ', 'APROBADA'].forEach(function (w) {
+    ok(APPROVED.test(w), '"' + w.trim() + '" dispatches');
+  });
+  ok(/if \(APPROVED\.test\(text\.trim\(\)\)\) return approvePlan\(\);/.test(con) && /return revisePlan\(text\)/.test(con),
+    'with a plan on screen the box approves or corrects, and cannot start a second job underneath it');
+
+  // APPROVAL IS BOUND TO THE PLAN THAT WAS SHOWN.
+  ok(/String\(planHash \|\| ''\) !== String\(job\.plan_hash\)/.test(jobsSrc), 'approve refuses a stale plan hash');
+  ok(/job\.status !== 'WAITING_APPROVAL'/.test(jobsSrc), 'approve only acts on a job that is waiting');
+  ok(/corrections: \(corrections \|\| \[\]\)\.map\(c => c\.text\)/.test(prepSrc), 'the corrections are inside the plan hash, so a revision always mints a new one');
+  ok(/WAITING_APPROVAL: \['QUEUED', 'PLANNING'/.test(jobsSrc), 'the revise loop is a declared transition, not an ad-hoc write');
+
+  // THE REVISE LOOP WRITES NO CODE AND DISPATCHES NOTHING.
+  const revise = prepSrc.slice(prepSrc.indexOf('async function revise('), prepSrc.indexOf('async function runPrepare('));
+  ok(revise.length > 200 && !/dispatchWorkflow|autoDispatch|approve\(/.test(revise), 'revising never starts a run');
+  ok(/router\.post\('\/jobs\/:id\/approve', mutation, operator/.test(routes) && /router\.post\('\/jobs\/:id\/revise', mutation, operator/.test(routes),
+    'both new routes are operator-only and same-origin');
+});
+
+test('what a security review found, and what now holds it', () => {
+  const jobsSrc = stripComments(read('verticals/speakup/src/factory/jobs.js'));
+  const prepSrc = stripComments(read('verticals/speakup/src/factory/prepare.js'));
+  const con = read('verticals/speakup/public/console.js');
+
+  // COMPARE-AND-SWAP, NOT READ-THEN-WRITE. approve() read the hash off a row fetched moments
+  // earlier; a revision landing in that window satisfied the status predicate again, so
+  // GitHub could receive a plan the owner never read.
+  ok(/if \(expectPlanHash\) where\.plan_hash = expectPlanHash;/.test(jobsSrc), 'the plan hash can be part of the atomic update');
+  ok(/expectPlanHash: job\.plan_hash/.test(jobsSrc), 'approve pins the update to the hash it checked');
+  ok(/expectPlanHash: job\.plan_hash, detail: \{ revision/.test(prepSrc), 'a revision also pins its own starting plan');
+
+  // THE REGISTRY SNAPSHOT IS REFRESHED ON A REVISION. The new hash attests the live project
+  // row, so a stale snapshot made the approved hash and what actually runs disagree.
+  const revise = prepSrc.slice(prepSrc.indexOf('async function revise('), prepSrc.indexOf('async function runPrepare('));
+  ['repo: project.repo', 'base_branch: project.default_branch', 'workflow_file: project.workflow_file',
+   'test_commands: project.test_commands', 'path_scope: project.path_scope'].forEach(function (f) {
+    ok(revise.includes(f), 'revise refreshes ' + f.split(':')[0] + ' in the snapshot');
+  });
+
+  // A TRANSIENT MODEL ERROR MUST NOT DESTROY A PLAN THE OWNER READ. FAILED is terminal and
+  // callJSON does not retry a credit or rate-limit error.
+  ok(!/jobs\.fail\(job, 'Revision failed/.test(revise), 'a failed revision no longer terminally fails the job');
+  ok(/const back = await jobs\.transition\(job, 'WAITING_APPROVAL'.*fields: before/s.test(revise), 'it puts the previous plan back');
+  ok(/const before = \{ plan: job\.plan/.test(revise), 'the previous plan is captured before the rebuild starts');
+
+  // The corrections are re-sent in every later prompt, so the list cannot grow forever.
+  ok(/MAX_REVISIONS/.test(prepSrc) && /slice\(-\(MAX_REVISIONS - 1\)\)/.test(revise), 'only the last few corrections travel');
+
+  // THE CARD SAYS WHAT APPROVING ACTUALLY DOES. With auto-merge on, "run it" was true of the
+  // branch and false of the rest: a green run merges itself and deploys.
+  ok(/merges itself into main and deploys to production/.test(con) && /se fusiona en main y se despliega/.test(con),
+    'the plan card states that approving reaches production, in both languages');
+
+  // A dead request must not leave a stale plan on screen collecting corrections.
+  const revFn = con.slice(con.indexOf('async function revisePlan('), con.indexOf('function takeIncomingPrompt('));
+  ok(/\/factory\/jobs\/' \+ id \+ '\?lang='/.test(revFn), 'a failed revision re-syncs from the server');
+
+  // The review claimed ai-editor.js was dead. It is not: summarising still uses it.
+  ok(/require\('\.\.\/services\/ai-editor'\)/.test(read('verticals/speakup/src/factory/intents.js')), 'the summariser is still wired');
+});
+
+test('the meeting bridge carries only what was ticked', () => {
+  const routes = stripComments(read('verticals/speakup/src/routes/factory.js'));
+  const bridge = routes.slice(routes.indexOf("router.post('/recordings/:id/prompt'"), routes.indexOf("router.get('/search'"));
+  ok(bridge.length > 200, 'the bridge endpoint exists');
+  // TICKING IS THE APPROVAL: the prompt is built from collectSpec, which only sees items a
+  // human promoted into an approved bucket. An unticked idea has no path into it.
+  ok(/collectSpec/.test(bridge), 'the prompt is built from the approved spec, not from the raw transcript');
+  ok(/spec\.requirements\.length/.test(bridge) && /Nothing is ticked yet/.test(bridge), 'nothing ticked is refused, and says so');
+  // IT RETURNS TEXT. No job, no dispatch — the prompt lands in the box editable.
+  ok(!/createPrepareJob|dispatchWorkflow|autoDispatch/.test(bridge), 'the bridge opens no job and dispatches nothing');
+  const con = read('verticals/speakup/public/console.js');
+  ok(/speakup_incoming_prompt/.test(con), 'the console picks the prompt up from the agreed key');
+  ok(/sessionStorage\.removeItem\('speakup_incoming_prompt'\)/.test(con), 'and clears it, so a refresh cannot resurrect it');
+  const mjs = read('verticals/speakup/public/meetings.js');
+  ok(/speakup_incoming_prompt/.test(mjs), 'the meetings screen hands it over on the same key');
+  ok(!/factory\/command/.test(mjs.slice(mjs.indexOf('speakup_incoming_prompt'), mjs.indexOf('speakup_incoming_prompt') + 400)),
+    'handing over does not also send it');
+});
+
+test('two screens and nothing else', () => {
+  const idx = stripComments(read('verticals/speakup/src/index.js'));
+  ok(/router\.get\('\/meetings'/.test(idx), 'the meetings screen is routed');
+  ok(!/require\('\.\/routes\/ai'\)/.test(idx), 'the translate/rewrite router is gone');
+  ok(/router\.get\('\/recorder', \(req, res\) => res\.redirect/.test(idx), 'the old screen redirects rather than 404ing a bookmark');
+  ['public/recorder.html', 'public/factory.js', 'src/routes/ai.js'].forEach(function (f) {
+    ok(!fs.existsSync(path.join(__dirname, f)), f + ' was removed');
+  });
+  const recs = stripComments(read('verticals/speakup/src/routes/recordings.js'));
+  ["'/import'", "'/:id/summarize'", "'/:id/generate'", "'/:id/export'"].forEach(function (r) {
+    ok(!recs.includes('router.post(' + r) && !recs.includes('router.get(' + r), 'the removed feature ' + r + ' has no endpoint left');
+  });
+  // The recording engine itself was NOT rewritten, only relocated.
+  const eng = read('verticals/speakup/public/record-engine.js');
+  ok(/MediaRecorder/.test(eng) && /getDisplayMedia/.test(eng) && /whisper/i.test(eng), 'the engine kept its mixing and on-device transcription');
+  ok(/window\.SpeakUpRecorder/.test(eng), 'it exposes the documented API');
+});
+
+test('both screens wear the same paper theme', () => {
+  const css = read('verticals/speakup/public/theme.css');
   const manifest = JSON.parse(read('verticals/speakup/public/manifest.webmanifest'));
-  const black = /^#(000|000000)$/i;
-  // The page background comes from --bg, and the footer and header inherit it, so one token
-  // decides the whole screen. A near-black navy here is the thing this asserts against.
-  const bg = (html.match(/--bg:\s*(#[0-9a-f]{3,8})/i) || [])[1];
-  ok(bg && black.test(bg), 'the app shell paints the screen black');
-  ok(/background:var\(--bg\)/.test(html), 'the body background still reads the token');
-  // The browser chrome and the installed launch screen must not flash a different colour.
-  const theme = (html.match(/name="theme-color"\s+content="(#[0-9a-f]{3,8})"/i) || [])[1];
-  ok(theme && black.test(theme), 'the theme colour matches the black screen');
-  ok(black.test(manifest.background_color), 'the installed launch screen is black too');
+  const paper = (css.match(/--paper:\s*(#[0-9a-f]{3,8})/i) || [])[1];
+  ok(paper && /^#faf9f5$/i.test(paper), 'the ground is the warm off-white, not black');
+  ok(/--accent:\s*#d97757/i.test(css), 'the accent is the clay orange');
+  // THE WORK PANE STAYS DARK. Diff and status colours are unreadable on cream, so the
+  // code panel keeps its own ink tokens and is deliberately not theme-swapped.
+  ok(/--ink-bg:\s*#1d1c1a/i.test(css) && /\.ink\{/.test(css), 'the code and diff pane is still dark');
+  ok(/--serif:/.test(css) && /--mono:/.test(css), 'a serif for headings and a mono for code are declared');
+  // ONE stylesheet, both screens. A second palette is how two screens drift apart.
+  ['app.html', 'meetings.html'].forEach(function (f) {
+    const html = read('verticals/speakup/public/' + f);
+    ok(/theme\.css/.test(html), f + ' loads the shared stylesheet');
+    ok(!/--bg:\s*#0a0e18/.test(html), f + ' carries no leftover dark palette');
+  });
+  const theme = (read('verticals/speakup/public/app.html').match(/name="theme-color"\s+content="(#[0-9a-f]{3,8})"/i) || [])[1];
+  ok(theme && /^#faf9f5$/i.test(theme), 'the browser chrome matches the paper');
+  ok(/^#f(af9f5|ff)$/i.test(manifest.background_color || ''), 'the installed launch screen matches too');
 });
 
 test('patch and guard scripts', () => {
@@ -476,7 +600,7 @@ test('workflow tokens + merge scope', () => {
 
 test('console header', () => {
   const html = fs.readFileSync(path.join(__dirname, 'public/app.html'), 'utf8');
-  ok(/<span class="name">SpeakUp<\/span>/.test(html), 'the console header carries the SpeakUp name');
+  ok(/<span class="brand">SpeakUp<\/span>/.test(html), 'the console header carries the SpeakUp name');
   ok(!/<span class="tag">/.test(html), 'no tag badge sits next to the SpeakUp name');
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });

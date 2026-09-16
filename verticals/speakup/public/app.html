@@ -1,100 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>SpeakUp — RinglyPro Architect</title>
+<title>SpeakUp — AI Factory</title>
 <link rel="icon" href="/speakup/favicon.svg">
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
-<meta name="theme-color" content="#000000">
+<link rel="stylesheet" href="/speakup/theme.css?v=1">
+<meta name="theme-color" content="#faf9f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
-  /* One window: the work on top, the instruction box at the bottom. Nothing else. */
-  /* The screen is black. --pane stays a shade above it so the work pane still lifts off the page. */
-  :root{--bg:#000000;--pane:#080d16;--card:#131b2b;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;
-    --acc:#7b6bff;--acc2:#5a3fe0;--ok:#3fc06a;--warn:#f2b34b;--err:#ff8f8f;--path:#8fd0ff}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    display:flex;flex-direction:column;overflow:hidden}
-  header{display:flex;align-items:center;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 12px 6px;border-bottom:1px solid var(--line);flex:0 0 auto}
-  header img{width:22px;height:22px}
-  header .name{font-size:15px;font-weight:700;letter-spacing:-.2px}
-  header .mut{font-size:12px;color:var(--mut);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .hbtn{background:#1b2536;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:0 10px;height:34px;font-size:12px;cursor:pointer}
-  /* TOP: the work (80%) */
-  main{flex:1 1 80%;min-height:0;display:flex;flex-direction:column;padding:8px 10px 0}
-  .bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;flex:0 0 auto}
-  .step{font-size:10.5px;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
-  .step.on{border-color:var(--acc2);background:var(--acc2);color:#fff}
-  .step.done{border-color:#1f5a33;color:var(--ok)}
-  .step.fail{border-color:#5a2a3a;color:var(--err)}
-  .bar .right{margin-left:auto;display:flex;gap:6px}
-  .lnk{font-size:12px;color:var(--acc);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:3px 8px}
-  #out{flex:1 1 auto;min-height:0;overflow:auto;background:var(--pane);border:1px solid var(--line);border-radius:12px;padding:10px;
-    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-  .ln{display:block;padding:1px 0}
-  .k{display:inline-block;min-width:56px;color:var(--acc);font-weight:700}
-  .k.err{color:var(--err)}.k.ok{color:var(--ok)}.k.warn{color:var(--warn)}.k.you{color:#fff}
-  .path{color:var(--path)}
-  .say{color:var(--txt)}
-  details{margin:2px 0 4px 56px}
-  summary{cursor:pointer;color:var(--mut)}
-  .dl{display:block}.dl.add{color:#8ef0a8}.dl.del{color:#ff9fb0}.dl.hdr{color:var(--mut)}
-  .banner{background:#2a2012;border:1px solid #4a3a1a;color:#f5d59a;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:8px;font-family:-apple-system,sans-serif}
-  /* BOTTOM: the instruction box (20%) */
-  footer{flex:0 0 auto;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--bg)}
-  .box{background:#0c1320;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  textarea{width:100%;border:0;background:transparent;color:var(--txt);resize:none;padding:10px 12px 4px;
-    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;line-height:1.45;height:11vh;min-height:58px;max-height:30vh}
-  textarea:focus{outline:none}
-  .row{display:flex;align-items:center;gap:8px;padding:2px 8px 6px}
-  .ico{width:44px;height:44px;flex:0 0 44px;border-radius:11px;border:1px solid var(--line);background:#1b2536;color:var(--txt);
-    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-  .ico.rec{background:#4a1622;border-color:#7a2a3a;color:#ff9fb0;animation:pulse 1.2s ease-in-out infinite}
-  .ico.send{margin-left:auto;background:linear-gradient(90deg,var(--acc),var(--acc2));border:0;color:#fff}
-  .ico:disabled{opacity:.5}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,90,106,.5)}70%{box-shadow:0 0 0 12px rgba(255,90,106,0)}100%{box-shadow:0 0 0 0 rgba(255,90,106,0)}}
-  .shots{display:flex;gap:6px;flex-wrap:wrap;padding:8px 8px 0}
-  .shot{position:relative;width:52px;height:52px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#0a0f1a}
-  .shot img{width:100%;height:100%;object-fit:cover;display:block}
-  .shot button{position:absolute;top:0;right:0;width:20px;height:20px;border:0;border-radius:0 0 0 8px;background:rgba(10,14,24,.85);color:#fff;font-size:13px;line-height:18px;cursor:pointer;padding:0}
-  .stat{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* One window: the work on top, the instruction box at the bottom. */
+  body{display:flex;flex-direction:column;overflow:hidden}
+  main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:11px 14px 0}
+  #out{flex:1 1 auto;min-height:0}
+  footer{flex:0 0 auto;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:var(--paper)}
+  #cmd{height:11vh;min-height:58px;max-height:30vh}
+  /* The plan the owner reads before typing "approved" — paper, not terminal. */
+  #plan{flex:0 0 auto;max-height:44vh;overflow:auto;margin-bottom:9px;display:none}
+  #plan .planhd{display:flex;align-items:center;gap:9px;margin-bottom:7px;flex-wrap:wrap}
+  #plan .planhd h2{margin:0}
+  #plan pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+  #plan .rev{background:var(--raised);border-left:3px solid var(--accent);padding:7px 10px;margin:7px 0;border-radius:0 8px 8px 0;font-size:13.5px}
+  @media(max-width:560px){ main{padding-left:12px;padding-right:12px} footer{padding-left:12px;padding-right:12px} }
 </style>
 </head>
 <body>
-<header>
+<header class="top">
   <img src="/speakup/favicon.svg" alt="">
-  <span class="name">SpeakUp</span>
-  <span class="mut" id="ctx">RinglyPro Architect · digit2ai/RinglyPro-CRM</span>
-  <button class="hbtn" id="langBtn">ES</button>
-  <button class="hbtn" id="recBtn" title="Recorder">REC</button>
-  <button class="hbtn" id="outBtn">Salir</button>
+  <span class="brand">SpeakUp</span>
+  <nav class="tabs">
+    <a class="tab" href="/speakup/meetings" id="tabMeet">Reuniones</a>
+    <a class="tab on" href="/speakup/" id="tabFac">Fábrica</a>
+  </nav>
+  <span class="where" id="ctx">digit2ai/RinglyPro-CRM</span>
+  <button class="lnk" id="langBtn">EN</button>
+  <button class="lnk" id="outBtn">Salir</button>
 </header>
 
 <main>
   <div class="bar" id="bar"></div>
-  <div id="out"></div>
+  <section class="card" id="plan" aria-live="polite"></section>
+  <div id="out" class="ink"></div>
 </main>
 
 <footer>
   <div class="box">
     <div id="shots" class="shots"></div>
     <textarea id="cmd" spellcheck="false" placeholder="Escribe, pega una captura o dicta la instrucción…"></textarea>
-    <div class="row">
-      <button class="ico" id="mic" aria-label="Dictar" title="Dictar">
+    <div class="boxrow">
+      <button class="icon" id="mic" aria-label="Dictar" title="Dictar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
       </button>
       <span class="stat" id="stat"></span>
-      <button class="ico send" id="send" aria-label="Enviar" title="Enviar">
+      <button class="icon send" id="send" aria-label="Enviar" title="Enviar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
       </button>
     </div>
   </div>
 </footer>
 
-<script src="/speakup/console.js?v=4"></script>
+<script src="/speakup/console.js?v=5"></script>
 </body>
 </html>

@@ -42,6 +42,7 @@
   // ── the top pane ───────────────────────────────────────────────────────────
   var STATUS_TEXT = {
     ANALYZING: ['Leyendo la instrucción', 'Reading the instruction'], PLANNING: ['Planificando', 'Planning'],
+    WAITING_APPROVAL: ['Plan listo: léelo abajo', 'Plan ready: read it below'],
     QUEUED: ['Arrancando en GitHub', 'Starting on GitHub'], CODING: ['Escribiendo código', 'Writing code'],
     TESTING: ['Probando', 'Running tests'], FIXING: ['Corrigiendo', 'Fixing'], PUSHING: ['Subiendo la rama', 'Pushing the branch'],
     PR_CREATED: ['Abriendo el PR', 'Opening the pull request'], READY_FOR_REVIEW: ['Listo para revisión', 'Ready for review'],
@@ -70,10 +71,10 @@
     return '<span class="ln"><span class="' + cls(e.kind) + '">' + (KIND[e.kind] || 'INFO') + '</span> ' + body + '</span>' + extra;
   }
   function write(events) {
-    // WAITING_APPROVAL is an internal step of the machine: the console approves as it
-    // dispatches, so showing it only made the pane look like it was waiting for the owner.
-    events = events.filter(function (e) { return !(e.kind === 'status' && e.text === 'WAITING_APPROVAL'); })
-      .map(function (e) {
+    // WAITING_APPROVAL is shown again, and it is the point: the plan is on screen and the
+    // machine is waiting for the owner. It used to be filtered out because the console
+    // approved as it dispatched, so the line described a pause that never happened.
+    events = events.map(function (e) {
         if (e.kind !== 'status' || !STATUS_TEXT[e.text]) return e;
         return { kind: 'status', text: L(STATUS_TEXT[e.text][0], STATUS_TEXT[e.text][1]), detail: e.detail };
       });
@@ -124,6 +125,7 @@
     clearTimeout(timer);
     if (jobId && jobTerminal) dismiss(jobId);
     jobId = null; jobTerminal = false; lastEvent = 0;
+    hidePlan();
     $('out').innerHTML = '';
     renderBar(null);
     idleHint();
@@ -159,6 +161,17 @@
       if (d.events.length) { lastEvent = d.events[d.events.length - 1].id; write(d.events); }
       renderBar({ status: d.status, terminal: d.terminal, pr_number: d.pr_number, pr_url: d.pr_url });
       jobTerminal = !!d.terminal;
+      // The plan is ready: stop polling and hand the box over to the owner. Fetched once,
+      // on the transition, so a plan on screen is never silently swapped underneath them.
+      if (d.status === 'WAITING_APPROVAL') {
+        if (planJob !== id) {
+          var full = (await api('/factory/jobs/' + id + '?lang=' + lang)).job;
+          showPlan(full);
+          renderBar(full);
+        }
+        return;
+      }
+      if (planJob === id) hidePlan();
       if (!d.terminal && document.visibilityState === 'visible') timer = setTimeout(function () { follow(id); }, 2500);
       else if (d.terminal) {
         var j = (await api('/factory/jobs/' + id)).job;
@@ -213,11 +226,19 @@
     if (!text) { status(L('Escribe o dicta una instrucción', 'Type or dictate an instruction')); return; }
     if (capturing) stopCapture();
     $('send').disabled = true;
-    status(L('Enviando…', 'Sending…'));
     write([{ kind: 'you', text: text + (shots.length ? '  [' + shots.length + ' ' + L('captura(s)', 'screenshot(s)') + ']' : '') }]);
+    // WHILE A PLAN IS ON SCREEN THE BOX MEANS SOMETHING ELSE. "approved" runs it; anything
+    // else is a correction to that plan. A new instruction cannot be started underneath a
+    // plan waiting to be read — that is how the old build-without-reading behaviour crept in.
+    if (planJob) {
+      $('cmd').value = ''; clearDraft();
+      if (APPROVED.test(text.trim())) return approvePlan();
+      return revisePlan(text);
+    }
+    status(L('Enviando…', 'Sending…'));
     try {
       var d = await api('/factory/command', { method: 'POST', body: JSON.stringify({
-        text: text, mode: 'architect', lang: lang, project_key: 'ringlypro', auto_run: true, engine: SR ? 'webspeech' : 'typed',
+        text: text, mode: 'architect', lang: lang, project_key: 'ringlypro', engine: SR ? 'webspeech' : 'typed',
         upload_ids: shots.map(function (s) { return s.id; }) }) });
       $('cmd').value = '';
       shots.forEach(function (s) { URL.revokeObjectURL(s.url); });
@@ -230,6 +251,86 @@
       status('');
       write([{ kind: 'error', text: e.message }]);
     } finally { $('send').disabled = false; }
+  }
+
+  // ── the plan, and the one word that runs it ────────────────────────────────
+  // Only these. "ok", "yes" and "go" are deliberately NOT here: the word that puts code on
+  // the path to production should be one the owner cannot type by reflex.
+  var APPROVED = /^\s*(approved|aprobado|aprobada)\s*[.!]?\s*$/i;
+  var planJob = null, planHash = null;
+
+  function hidePlan() { planJob = null; planHash = null; $('plan').style.display = 'none'; $('plan').innerHTML = ''; setPlaceholder(); }
+
+  function showPlan(job) {
+    planJob = job.id; planHash = job.plan_hash;
+    var revs = (job.revisions || []).map(function (r) { return '<div class="rev">' + esc(r.text) + '</div>'; }).join('');
+    $('plan').innerHTML =
+      '<div class="planhd"><h2>' + esc(job.title || L('Plan', 'Plan')) + '</h2>' +
+      '<span class="tiny">' + esc(job.project_name || job.project_key || '') + (job.plan_composed_by ? ' · ' + esc(job.plan_composed_by) : '') + '</span></div>' +
+      // SAY WHAT APPROVING ACTUALLY DOES. "Run it" was true of the branch and false of the
+      // rest: with auto-merge on, a green run merges itself into main and Render deploys.
+      // This word is the last human step before the live site, and the card has to say so.
+      '<p class="tiny">' + L('Lee el plan. Escribe una corrección para rehacerlo, o escribe <strong>aprobado</strong>: se ejecuta, y si las pruebas pasan se fusiona en main y se despliega en producción sin otra confirmación.',
+        'Read the plan. Type a correction to rebuild it, or type <strong>approved</strong>: it runs, and if the tests pass it merges itself into main and deploys to production with no further confirmation.') + '</p>' +
+      (revs ? '<div>' + L('<span class="tiny">Tus correcciones</span>', '<span class="tiny">Your corrections</span>') + revs + '</div>' : '') +
+      '<pre>' + esc(job.plan_md || '') + '</pre>';
+    $('plan').style.display = 'block';
+    $('plan').scrollTop = 0;
+    setPlaceholder();
+  }
+
+  async function approvePlan() {
+    var id = planJob;
+    status(L('Arrancando…', 'Starting…'));
+    try {
+      var d = await api('/factory/jobs/' + id + '/approve', { method: 'POST', body: JSON.stringify({ plan_hash: planHash, lang: lang }) });
+      hidePlan();
+      write([{ kind: 'done', text: L('Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.') }]);
+      status('');
+      follow(d.job.id);
+    } catch (e) {
+      status('');
+      write([{ kind: 'error', text: e.message }]);
+      // The plan moved under them (a revision landed): show the current one rather than
+      // leaving an approval pointing at a plan that no longer exists.
+      if (e.data && e.data.job) showPlan(e.data.job);
+    } finally { $('send').disabled = false; }
+  }
+
+  async function revisePlan(text) {
+    var id = planJob;
+    status(L('Rehaciendo el plan…', 'Rebuilding the plan…'));
+    try {
+      var d = await api('/factory/jobs/' + id + '/revise', { method: 'POST', body: JSON.stringify({ text: text, lang: lang }) });
+      showPlan(d.job);
+      status('');
+      write([{ kind: 'info', text: L('Plan corregido. Léelo otra vez.', 'Plan corrected. Read it again.') }]);
+    } catch (e) {
+      status('');
+      write([{ kind: 'error', text: e.message }]);
+      // RE-SYNC, ALWAYS. The request can die at the proxy (~100 s) while the server finishes
+      // and moves on. Leaving the old plan on screen meant the next thing typed was routed as
+      // a SECOND correction against a plan that no longer existed.
+      try {
+        var cur = (await api('/factory/jobs/' + id + '?lang=' + lang)).job;
+        if (cur.status === 'WAITING_APPROVAL') showPlan(cur); else { hidePlan(); follow(id); }
+      } catch (e2) { /* the page redirects on 401 */ }
+    } finally { $('send').disabled = false; }
+  }
+
+  // A prompt handed over by the Meetings screen. It arrives as TEXT in the box — editable,
+  // never auto-sent — and the key is cleared so a refresh does not resurrect it.
+  function takeIncomingPrompt() {
+    var raw = null;
+    try { raw = sessionStorage.getItem('speakup_incoming_prompt'); sessionStorage.removeItem('speakup_incoming_prompt'); } catch (e) { return false; }
+    if (!raw) return false;
+    var p = null;
+    try { p = JSON.parse(raw); } catch (e) { return false; }
+    if (!p || !p.text) return false;
+    $('cmd').value = String(p.text).slice(0, 50000);
+    saveDraft();
+    write([{ kind: 'info', text: L('Prompt traído de la reunión. Revísalo y envíalo.', 'Prompt brought from the meeting. Review it and send it.') }]);
+    return true;
   }
 
   // ── dictation ──────────────────────────────────────────────────────────────
@@ -268,6 +369,12 @@
     recog = null;
   }
   function saveDraft() { try { sessionStorage.setItem(DRAFT, $('cmd').value); } catch (e) {} }
+  function clearDraft() { try { sessionStorage.removeItem(DRAFT); } catch (e) {} }
+  function setPlaceholder() {
+    $('cmd').placeholder = planJob
+      ? L('Corrige el plan, o escribe: aprobado', 'Correct the plan, or type: approved')
+      : L('Escribe, pega una captura o dicta la instrucción…', 'Type, paste a screenshot, or dictate the instruction…');
+  }
 
   // ── boot ───────────────────────────────────────────────────────────────────
   function setLang(l) {
@@ -275,15 +382,16 @@
     try { localStorage.setItem('speakup_lang', l); } catch (e) {}
     document.documentElement.lang = l;
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
-    $('cmd').placeholder = L('Escribe, pega una captura o dicta la instrucción…', 'Type, paste a screenshot, or dictate the instruction…');
+    setPlaceholder();
     $('outBtn').textContent = L('Salir', 'Sign out');
+    $('tabMeet').textContent = L('Reuniones', 'Meetings');
+    $('tabFac').textContent = L('Fábrica', 'Factory');
   }
 
   (async function () {
     setLang(lang);
     $('langBtn').addEventListener('click', function () { setLang(lang === 'en' ? 'es' : 'en'); });
     $('outBtn').addEventListener('click', async function () { await fetch('/speakup/api/v1/auth/logout', { method: 'POST' }); location.href = '/speakup/login'; });
-    $('recBtn').addEventListener('click', function () { location.href = '/speakup/recorder'; });
     $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });
     $('send').addEventListener('click', send);
     $('cmd').addEventListener('input', saveDraft);
@@ -298,7 +406,7 @@
       });
     });
     $('cmd').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); } });
-    try { var dr = sessionStorage.getItem(DRAFT); if (dr) $('cmd').value = dr; } catch (e) {}
+    if (!takeIncomingPrompt()) { try { var dr = sessionStorage.getItem(DRAFT); if (dr) $('cmd').value = dr; } catch (e) {} }
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && jobId) follow(jobId); });
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(function () {});
 

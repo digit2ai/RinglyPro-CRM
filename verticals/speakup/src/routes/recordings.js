@@ -21,7 +21,6 @@ const fs = require('fs');
 const router = express.Router();
 const { Recording, Transcript, Summary, Translation, Edit, Document, Usage } = require('../models');
 const stt = require('../services/stt');
-const ai = require('../services/ai-editor');
 
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
 try { fs.mkdirSync(UPLOAD_DIR, { recursive: true }); } catch (e) { /* ignore */ }
@@ -133,44 +132,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// ── Import (file field OR a URL) ──────────────────────────────────────────────
-router.post('/import', upload.single('file'), async (req, res) => {
-  try {
-    const url = String(req.body.url || '').trim();
-    if (!req.file && !url) return res.status(400).json({ error: 'Archivo o URL requerido' });
-
-    if (req.file) {
-      const rec = await Recording.create({
-        tenant_id: tenantOf(req), user_id: userOf(req),
-        title: String(req.body.title || req.file.originalname || 'Importado').slice(0, 200),
-        source: 'import', status: 'processing',
-        file_path: req.file.path, mime: req.file.mimetype
-      });
-      await logUsage(req, 'import', 1);
-      setImmediate(() => runTranscriptionJob(rec.id, { filePath: req.file.path, mimetype: req.file.mimetype }));
-      return res.json({ success: true, recording: rec });
-    }
-
-    // URL import: we only accept the link; fetching/extracting media is a future
-    // self-hosted step. Record it honestly as pending rather than faking a result.
-    const rec = await Recording.create({
-      tenant_id: tenantOf(req), user_id: userOf(req),
-      title: String(req.body.title || url).slice(0, 200),
-      source: 'import', status: 'processing', file_path: url, mime: 'url'
-    });
-    await Transcript.create({
-      tenant_id: tenantOf(req), recording_id: rec.id,
-      text: `[Importación por URL registrada: ${url}. La extracción de audio desde enlaces se procesa con nuestro propio motor; configura el descargador para completarla.]`,
-      engine: 'stub', is_simulated: true
-    });
-    rec.status = 'done'; rec.engine = 'stub'; await rec.save();
-    await logUsage(req, 'import', 1);
-    res.json({ success: true, recording: rec });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
 // ── Library ──────────────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
@@ -227,57 +188,6 @@ router.post('/:id/transcribe', async (req, res) => {
     setImmediate(() => runTranscriptionJob(rec.id, { filePath: rec.file_path, mimetype: rec.mime, lang: rec.lang }));
     res.json({ success: true, recording: rec, message: 'Transcripción en proceso' });
   } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ── Summarize this recording's transcript (Claude, heuristic fallback) ─────────
-router.post('/:id/summarize', async (req, res) => {
-  try {
-    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
-    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
-    const trans = await Transcript.findOne({ where: { recording_id: rec.id } });
-    const text = trans ? trans.text : '';
-    if (!text || !text.trim()) return res.status(400).json({ error: 'La grabación no tiene transcripción' });
-
-    const result = await ai.summarize(text, rec.lang || 'es');
-    const summary = await Summary.create({
-      tenant_id: tenantOf(req), recording_id: rec.id,
-      summary: result.summary, bullets: result.bullets, action_items: result.action_items,
-      model: ai.activeModel()
-    });
-    await logUsage(req, 'summarize');
-    res.json({ success: true, summary });
-  } catch (e) {
-    console.error('SpeakUp summarize error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ── Generate a deliverable from this recording (minutes/details/next_steps/
-//    presentation/project_plan) — Voice-Memos-style "what to do with it" ────────
-router.post('/:id/generate', async (req, res) => {
-  try {
-    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
-    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
-    const type = String(req.body.type || 'minutes');
-    if (!ai.DOC_TYPES.includes(type)) return res.status(400).json({ error: 'Tipo no válido' });
-    const instruction = String(req.body.instruction || '').trim();
-    if (type === 'custom' && !instruction) return res.status(400).json({ error: 'Escribe una instrucción' });
-    const trans = await Transcript.findOne({ where: { recording_id: rec.id } });
-    const text = trans ? trans.text : '';
-    if (!text || !text.trim()) return res.status(400).json({ error: 'La grabación no tiene transcripción' });
-
-    const result = await ai.generateDocument(text, type, req.body.lang || rec.lang || 'es', instruction);
-    const doc = await Document.create({
-      tenant_id: tenantOf(req), recording_id: rec.id,
-      kind: type, title: result.title, prompt: type === 'custom' ? instruction : null,
-      content: result.content, model: ai.activeModel()
-    });
-    await logUsage(req, 'generate');
-    res.json({ success: true, document: doc });
-  } catch (e) {
-    console.error('SpeakUp generate error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -355,42 +265,5 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ── Export (txt | md) ─────────────────────────────────────────────────────────
-router.get('/:id/export', async (req, res) => {
-  try {
-    const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
-    if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
-    const t = await Transcript.findOne({ where: { recording_id: rec.id } });
-    const summaries = await Summary.findAll({ where: { recording_id: rec.id }, order: [['id', 'DESC']], limit: 1 });
-    const s = summaries[0];
-    const format = (req.query.format || 'txt').toLowerCase();
-    const date = new Date(rec.created_at).toISOString().slice(0, 10);
-    const slug = String(rec.title || 'speakup').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
-
-    let body;
-    if (format === 'md') {
-      body = `# ${rec.title}\n\n_${date} · SpeakUp_\n\n`;
-      if (s && s.summary) {
-        body += `## Resumen\n\n${s.summary}\n\n`;
-        if (s.bullets && s.bullets.length) body += `## Puntos clave\n\n${s.bullets.map(b => `- ${b}`).join('\n')}\n\n`;
-        if (s.action_items && s.action_items.length) body += `## Acciones\n\n${s.action_items.map(a => `- [ ] ${a}`).join('\n')}\n\n`;
-      }
-      body += `## Transcripción\n\n${t ? t.text : '(sin transcripción)'}\n`;
-    } else {
-      body = `${rec.title}\n${date} · SpeakUp\n\n`;
-      if (s && s.summary) {
-        body += `RESUMEN\n${s.summary}\n\n`;
-        if (s.bullets && s.bullets.length) body += `PUNTOS CLAVE\n${s.bullets.map(b => `- ${b}`).join('\n')}\n\n`;
-        if (s.action_items && s.action_items.length) body += `ACCIONES\n${s.action_items.map(a => `- ${a}`).join('\n')}\n\n`;
-      }
-      body += `TRANSCRIPCIÓN\n${t ? t.text : '(sin transcripción)'}\n`;
-    }
-    res.setHeader('Content-Type', format === 'md' ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="speakup-${slug}-${date}.${format === 'md' ? 'md' : 'txt'}"`);
-    res.send(body);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 module.exports = router;

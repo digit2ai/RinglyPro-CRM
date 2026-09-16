@@ -1,0 +1,117 @@
+/* SpeakUp — one stylesheet for both screens.
+ *
+ * Warm paper, not a terminal. The ONE exception is the work pane: code, diffs and live
+ * status are unreadable on cream, so that panel stays dark, the way an editor panel sits
+ * inside a light application. Its colours are the `--ink-*` tokens below and they are
+ * deliberately NOT theme-swapped.
+ */
+:root{
+  --paper:#faf9f5; --surface:#ffffff; --raised:#f5f4ee; --line:#e5e3dc; --line-strong:#d6d3c8;
+  --text:#1f1e1d; --muted:#6f6e69; --faint:#8b8a83;
+  --accent:#d97757; --accent-ink:#ffffff; --accent-dark:#bf5f42; --accent-wash:#fdf1ec;
+  --ok:#2f7d55; --warn:#a8690a; --err:#b4462f;
+  /* the dark work pane */
+  --ink-bg:#1d1c1a; --ink-line:#34322e; --ink-text:#ededea; --ink-muted:#a5a29b;
+  --ink-accent:#e0886a; --ink-ok:#6cc08b; --ink-warn:#e3b341; --ink-err:#f08a70; --ink-path:#8ec7f0;
+  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  --serif:ui-serif,Georgia,Cambria,"Times New Roman",serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --radius:12px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── header ─────────────────────────────────────────────────────────────────── */
+.top{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 16px 9px;
+  border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
+.top img{width:22px;height:22px;border-radius:5px}
+.brand{font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.2px}
+.where{font-size:13px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:2px;background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:2px}
+.tab{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:8px;border:0;background:transparent;
+  color:var(--muted);font:inherit;font-size:13px;cursor:pointer;text-decoration:none}
+.tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+/* ── buttons ────────────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 15px;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--text);
+  border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+.btn:hover{background:var(--raised)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
+.btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.quiet:hover{background:var(--raised);color:var(--text)}
+.btn.small{min-height:34px;padding:0 11px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.rec{background:#fdecec;border-color:#f0c4bb;color:#a33a26;animation:beat 1.3s ease-in-out infinite}
+@keyframes beat{0%{box-shadow:0 0 0 0 rgba(191,95,66,.35)}70%{box-shadow:0 0 0 12px rgba(191,95,66,0)}100%{box-shadow:0 0 0 0 rgba(191,95,66,0)}}
+
+/* ── cards, notices ─────────────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
+.notice{background:var(--accent-wash);border:1px solid #f0cdbe;color:#8a4029;border-radius:10px;
+  padding:11px 13px;font-size:14px;line-height:1.5}
+.muted{color:var(--muted)}
+.tiny{font-size:12.5px;color:var(--faint)}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.2px;margin:0 0 8px}
+h1{font-size:23px}h2{font-size:18px}h3{font-size:16px}
+a{color:var(--accent-dark)}
+
+/* ── the dark work pane (code, diffs, live status) ──────────────────────────── */
+.ink{background:var(--ink-bg);border:1px solid var(--ink-line);border-radius:var(--radius);color:var(--ink-text);
+  font-family:var(--mono);font-size:12.5px;line-height:1.6;overflow:auto;padding:12px 13px;
+  white-space:pre-wrap;word-break:break-word}
+.ink .ln{display:block;padding:1px 0}
+.ink .k{display:inline-block;min-width:58px;color:var(--ink-accent);font-weight:600}
+.ink .k.ok{color:var(--ink-ok)}.ink .k.warn{color:var(--ink-warn)}.ink .k.err{color:var(--ink-err)}
+.ink .k.you{color:#fff}
+.ink .path{color:var(--ink-path)}
+.ink .say{color:var(--ink-text)}
+.ink details{margin:2px 0 4px 58px}
+.ink summary{cursor:pointer;color:var(--ink-muted)}
+.ink .dl{display:block}
+.ink .dl.add{color:#8fe0a8}.ink .dl.del{color:#f5a3a3}.ink .dl.hdr{color:var(--ink-muted)}
+.ink .banner{background:#3a2f1c;border:1px solid #5a4a26;color:#f0d9a8;border-radius:10px;
+  padding:10px 12px;font-family:var(--sans);font-size:13.5px;line-height:1.5;margin-bottom:9px;white-space:normal}
+
+/* ── the instruction box ────────────────────────────────────────────────────── */
+.box{background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+.box textarea{width:100%;border:0;background:transparent;color:var(--text);resize:none;padding:12px 14px 4px;
+  font-family:var(--sans);font-size:16px;line-height:1.55}
+.box textarea:focus{outline:none}
+.boxrow{display:flex;align-items:center;gap:9px;padding:3px 9px 9px}
+.icon{width:44px;height:44px;flex:0 0 44px;border-radius:11px;border:1px solid var(--line-strong);background:var(--surface);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.icon:hover{background:var(--raised);color:var(--text)}
+.icon.send{margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.icon.send:hover{background:var(--accent-dark)}
+.icon.rec{background:#fdecec;border-color:#f0c4bb;color:#a33a26;animation:beat 1.3s ease-in-out infinite}
+.icon:disabled{opacity:.45;cursor:default}
+.stat{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── step bar ───────────────────────────────────────────────────────────────── */
+.bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px;flex:0 0 auto}
+.step{font-size:11.5px;padding:4px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--surface)}
+.step.on{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.step.done{border-color:#bcdcc9;background:#eef7f1;color:var(--ok)}
+.step.fail{border-color:#eec4b9;background:#fdeee9;color:var(--err)}
+.bar .right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.lnk{font-size:13px;color:var(--accent-dark);text-decoration:none;border:1px solid var(--line-strong);background:var(--surface);
+  border-radius:9px;padding:6px 10px;cursor:pointer;font-family:inherit;min-height:34px;display:inline-flex;align-items:center}
+.lnk:hover{background:var(--raised)}
+
+/* ── screenshots ────────────────────────────────────────────────────────────── */
+.shots{display:flex;gap:7px;flex-wrap:wrap;padding:9px 9px 0}
+.shot{position:relative;width:52px;height:52px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--raised)}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot button{position:absolute;top:0;right:0;width:20px;height:20px;border:0;border-radius:0 0 0 8px;
+  background:rgba(31,30,29,.72);color:#fff;font-size:13px;line-height:18px;cursor:pointer;padding:0}
+
+@media(max-width:560px){
+  .top{padding-left:12px;padding-right:12px;gap:8px}
+  .brand{font-size:16px}
+  .where{display:none}
+}

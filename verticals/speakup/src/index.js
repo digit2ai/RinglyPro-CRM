@@ -63,14 +63,16 @@ router.use('/api/v1/auth', require('./routes/auth'));
 router.use('/health', require('./routes/health'));
 router.use('/api/v1/recordings', require('./routes/recordings'));
 router.use('/api/v1/factory', require('./routes/factory')); // AI Factory: voice -> architect -> GitHub PR
-router.use('/api/v1', require('./routes/ai')); // /translate, /rewrite, /:id/summarize
 
 // ── Static app (no build step — self-contained HTML) ─────────────────────────────
 router.use(express.static(publicDir));
 
+// TWO SCREENS, AND NOTHING ELSE. The Factory is the default; the Meeting Notes Taker is
+// the other. /recorder (library, import, translate, rewrite, notes) is gone, and so is the
+// /api/v1 ai router that only served the removed editing tools.
 router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
-// The original recording screen (meetings, notes, library, import) lives on here.
-router.get('/recorder', (req, res) => res.sendFile(path.join(publicDir, 'recorder.html')));
+router.get('/meetings', (req, res) => res.sendFile(path.join(publicDir, 'meetings.html')));
+router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
 
 // ── Init: sync tables + ensure columns + seed team (non-blocking) ────────────────
 (async function initialize() {
@@ -85,6 +87,7 @@ router.get('/recorder', (req, res) => res.sendFile(path.join(publicDir, 'recorde
       await sequelize.query('ALTER TABLE su_transcripts ADD COLUMN IF NOT EXISTS is_simulated BOOLEAN DEFAULT false');
       await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS error TEXT');
       await sequelize.query('ALTER TABLE su_documents ADD COLUMN IF NOT EXISTS prompt TEXT');
+      await sequelize.query("ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS revisions JSONB DEFAULT '[]'");
       // AI Factory session fields on recordings (sessions)
       await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS mode VARCHAR(20)');
       await sequelize.query('ALTER TABLE su_recordings ADD COLUMN IF NOT EXISTS project_key VARCHAR(60)');

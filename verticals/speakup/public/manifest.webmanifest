@@ -1,21 +1,20 @@
 {
   "id": "/speakup/",
-  "name": "SpeakUp — RinglyPro Architect",
+  "name": "SpeakUp — AI Factory",
   "short_name": "SpeakUp",
-  "description": "Habla, revisa, aprueba y consulta el estado. Voz a notas, reuniones y cambios de ingeniería con aprobación.",
+  "description": "Dos pantallas: toma notas de la reunión y construye. Habla, revisa el plan, aprueba.",
   "start_url": "/speakup/?source=pwa",
   "scope": "/speakup/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#000000",
-  "theme_color": "#5a3fe0",
+  "orientation": "any",
+  "background_color": "#faf9f5",
+  "theme_color": "#faf9f5",
   "icons": [
     { "src": "/speakup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/speakup/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Comando", "url": "/speakup/?mode=command", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Reunión", "url": "/speakup/?mode=meeting", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Nota", "url": "/speakup/?mode=note", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Fábrica", "url": "/speakup/", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Reuniones", "url": "/speakup/meetings", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] }
   ]
 }
