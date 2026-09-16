@@ -189,6 +189,12 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+    # The NARROW progress token, never the factory secret: this VM applies untrusted patch
+    # data and runs the tests, so it must not hold anything that could push or sign. The
+    # token can only report a failure for its own job, which is all a reason needs.
+    env:
+      PLAN_HASH: ${{ needs.prepare.outputs.plan_hash }}
+      PROGRESS_TOKEN: ${{ needs.prepare.outputs.progress_token }}
     outputs:
       tests: ${{ steps.tests.outputs.tests }}
     steps:
@@ -212,6 +218,13 @@ jobs:
         env:
           TEST_COMMANDS: ${{ needs.prepare.outputs.test_commands }}
         run: node "$RUNNER_TEMP/speakup-bin/run-tests.js"
+      # WITHOUT THIS THE REASON DIED ON THIS MACHINE. verify was the one job with no
+      # reporter, so a patch that would not apply surfaced on the phone as the shared
+      # message about the PUSH job — which had not even run. The reason is written to
+      # error.txt here; only this step can send it.
+      - name: Report verify failure
+        if: failure() || cancelled()
+        run: node "$RUNNER_TEMP/speakup-bin/progress.js" failed
 
   push:
     needs: [prepare, build, verify]

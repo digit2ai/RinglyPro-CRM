@@ -241,6 +241,17 @@ test('structure', () => {
   ok(!/SPEAKUP_FACTORY_SECRET|github\.token|GH_TOKEN|contents: write/.test(jobBlocks.build), 'the job that runs Claude holds no factory secret, no GitHub token, no write permission');
   ok(/CLAUDE_CODE_OAUTH_TOKEN/.test(jobBlocks.build) && /ANTHROPIC_API_KEY/.test(jobBlocks.build), 'the build job accepts either Claude credential: the subscription token or the API key');
   ok(!/secrets\.|github\.token|contents: write/.test(jobBlocks.verify), 'the job that runs the tests holds no secret at all');
+  // EVERY JOB THAT CAN FAIL MUST BE ABLE TO SAY WHY. verify had no reporter, so a patch
+  // that would not apply reached the phone as the shared message about the PUSH job — which
+  // had not run. The reason is written on the failing VM and dies there without this.
+  ['prepare', 'build', 'verify', 'push'].forEach(function (j) {
+    ok(/if: failure\(\)/.test(jobBlocks[j]), 'the ' + j + ' job reports its own failure');
+  });
+  // ...and the untrusted ones report with the NARROW progress token, never the secret.
+  ['build', 'verify'].forEach(function (j) {
+    ok(/PROGRESS_TOKEN: \$\{\{ needs\.prepare\.outputs\.progress_token \}\}/.test(jobBlocks[j]) && /progress\.js" failed/.test(jobBlocks[j]),
+      'the ' + j + ' job reports with the narrow progress token');
+  });
   ok(!/claude|run-tests|npm (ci|install)|npx|npm test/.test(jobBlocks.push) && !/claude|run-tests|npm /.test(jobBlocks.prepare), 'jobs holding the secret or push token run no model, test or npm code');
   ok(/contents: write/.test(jobBlocks.push) && (wf.match(/contents: write/g) || []).length === 1, 'only the push job can write');
   ok((wf.match(/persist-credentials: false/g) || []).length === 5, 'every checkout leaves no git credentials');
