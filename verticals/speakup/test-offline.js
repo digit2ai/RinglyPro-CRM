@@ -598,6 +598,32 @@ test('asking never changes the plan', () => {
   ok(!/planShown\s*=|planHash\s*=|planDiff\s*=|showPlan\(|hidePlan\(/.test(askFn), 'asking leaves the plan card untouched');
 });
 
+test('the screen speaks plain words, not GitHub vocabulary', () => {
+  const con = read('verticals/speakup/public/console.js');
+  // Only the strings the OWNER READS. The machine states keep their real names in the
+  // database and on the wire — renaming those would be a different and much worse change.
+  const dicts = con.slice(con.indexOf('var STATUS_TEXT = {'), con.indexOf('var SRV = {'));
+  const labels = [];
+  const re = /\[\s*'((?:[^'\\]|\\.)*)'\s*,\s*'((?:[^'\\]|\\.)*)'\s*\]/g;
+  let m;
+  while ((m = re.exec(dicts))) { labels.push(m[1], m[2]); }
+  ok(labels.length > 20, 'the visible labels were found (' + labels.length + ')');
+  // "PR" and "branch" are what GitHub calls things, not what they are.
+  [/\bPR\b/, /\bpull request\b/i, /\brama\b/, /\bbranch\b/i].forEach(function (bad) {
+    const hit = labels.filter(function (s) { return bad.test(s); });
+    ok(!hit.length, 'no label says ' + bad + ' (' + hit.join(' | ') + ')');
+  });
+  ok(/es: 'Revisión', en: 'Review'/.test(con), 'the fourth step reads Review, not PR');
+  ok(/'Saving the change'/.test(con) && /'Proposing the change'/.test(con), 'the pane says what happened, not how');
+  // The link still opens a page GitHub calls a pull request, so the real word survives
+  // where it is true — in the tooltip — rather than being scrubbed everywhere.
+  ok(/title="' \+\s*\n?\s*L\('Pull request en GitHub', 'Pull request on GitHub'\)/.test(con) || /Pull request on GitHub/.test(con),
+    'the link keeps the real word in its tooltip');
+  ok(/L\('Cambio #', 'Change #'\)/.test(con), 'and reads plainly on the chip');
+  // "Cambio #5" beside a button labelled "Cambios" was two different things one letter apart.
+  ok(!/L\('Cambios', 'Changes'\)/.test(con), 'the diff button no longer collides with the change link');
+});
+
 test('one language on the whole screen', () => {
   const con = read('verticals/speakup/public/console.js');
   // A line is a KEY plus arguments, never a finished string, or it keeps the language it

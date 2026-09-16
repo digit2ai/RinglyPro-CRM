@@ -1,9 +1,11 @@
 /* SpeakUp console — one window for RinglyPro Architect.
  *
- * Top pane: the work (statuses, then every file Claude reads, edits, runs and tests,
- * and the pull request when it is ready). Bottom pane: type or dictate the instruction.
- * No modes, no project picker, no approval tap: the instruction goes to the RinglyPro
- * CRM repository and the result is always a branch and a PR, never main.
+ * Top pane: the work (statuses, then every file Claude reads, edits, runs and tests, then
+ * the change itself when it is ready). Bottom pane: type, dictate, or answer the plan.
+ *
+ * THE SCREEN SPEAKS PLAIN WORDS. The step bar said "PR" and the pane said "Pushing the
+ * branch" — GitHub vocabulary in a place the owner reads to decide something. The machine
+ * states keep their real names in the database and on the wire; only the labels changed.
  *
  * Holds no secret. Dictation is the browser's own recogniser; the phrase, the GitHub
  * token and the model keys live on the server.
@@ -46,13 +48,13 @@
     ANALYZING: ['Leyendo la instrucción', 'Reading the instruction'], PLANNING: ['Planificando', 'Planning'],
     WAITING_APPROVAL: ['Plan listo: léelo abajo', 'Plan ready: read it below'],
     QUEUED: ['Arrancando en GitHub', 'Starting on GitHub'], CODING: ['Escribiendo código', 'Writing code'],
-    TESTING: ['Probando', 'Running tests'], FIXING: ['Corrigiendo', 'Fixing'], PUSHING: ['Subiendo la rama', 'Pushing the branch'],
-    PR_CREATED: ['Abriendo el PR', 'Opening the pull request'], READY_FOR_REVIEW: ['Listo para revisión', 'Ready for review'],
+    TESTING: ['Probando', 'Running tests'], FIXING: ['Corrigiendo', 'Fixing'], PUSHING: ['Guardando el cambio', 'Saving the change'],
+    PR_CREATED: ['Proponiendo el cambio', 'Proposing the change'], READY_FOR_REVIEW: ['Listo para revisar', 'Ready for you to look at'],
     DEPLOYING: ['Desplegando', 'Deploying'], DEPLOYED: ['Desplegado', 'Deployed'],
     FAILED: ['Falló', 'Failed'], CANCELLED: ['Cancelado', 'Cancelled']
   };
   var KIND = { read: 'READ', edit: 'EDIT', write: 'WRITE', run: 'RUN', search: 'FIND', say: 'CLAUDE', test: 'TEST',
-    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'PR', todo: 'PLAN', tool: 'TOOL', you: 'YOU', ready: 'READY', answer: 'ANSWER' };
+    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'CHANGE', todo: 'PLAN', tool: 'TOOL', you: 'YOU', ready: 'READY', answer: 'ANSWER' };
   function cls(kind) {
     if (kind === 'error') return 'k err';
     if (kind === 'done' || kind === 'status' || kind === 'pr') return 'k ok';
@@ -77,10 +79,10 @@
    * because inventing a translation for it would be worse than leaving it.
    */
   var MSG = {
-    idle: ['Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. Se crea una rama y un PR; main y producción no se tocan.',
-      'Type below what you want changed in digit2ai/RinglyPro-CRM. A branch and a PR are created; main and production are not touched.'],
+    idle: ['Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. El cambio se guarda aparte para que lo revises; nada llega al sitio en vivo hasta que escribas aprobado.',
+      'Type below what you want changed in digit2ai/RinglyPro-CRM. The change is kept separately for you to look at; nothing reaches the live site until you type approved.'],
     filesChanged: ['{n} archivos cambiados', '{n} files changed'],
-    readyForReview: ['Listo para revisión: {url}', 'Ready for review: {url}'],
+    readyForReview: ['El cambio está aquí para que lo mires: {url}', 'The change is here for you to look at: {url}'],
     approved: ['Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.'],
     planCorrected: ['Plan corregido. Léelo otra vez.', 'Plan corrected. Read it again.'],
     fromMeeting: ['Prompt traído de la reunión. Revísalo y envíalo.', 'Prompt brought from the meeting. Review it and send it.'],
@@ -178,7 +180,7 @@
     { es: 'Plan', en: 'Plan', at: ['ANALYZING', 'PLANNING'] },
     { es: 'Código', en: 'Code', at: ['WAITING_APPROVAL', 'QUEUED', 'CODING'] },
     { es: 'Pruebas', en: 'Tests', at: ['TESTING', 'FIXING'] },
-    { es: 'PR', en: 'PR', at: ['PUSHING', 'PR_CREATED', 'READY_FOR_REVIEW'] },
+    { es: 'Revisión', en: 'Review', at: ['PUSHING', 'PR_CREATED', 'READY_FOR_REVIEW'] },
     { es: 'Despliegue', en: 'Deploy', at: ['DEPLOYING', 'DEPLOYED'] }
   ];
   function renderBar(job) {
@@ -192,8 +194,12 @@
     }).join('');
     if (failed) html += '<span class="step fail">' + esc(job.status) + '</span>';
     html += '<span class="right">';
-    if (job && job.pr_url) html += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener">PR #' + job.pr_number + '</a>' +
-      '<button class="lnk" id="diffBtn">' + L('Cambios', 'Changes') + '</button>';
+    // The link opens a page GitHub calls a pull request, so the real word stays in the
+    // tooltip while the chip itself reads in plain language. And the button beside it says
+    // what it shows — "Cambio #5" next to "Cambios" was two different things, one letter apart.
+    if (job && job.pr_url) html += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener" title="' +
+      L('Pull request en GitHub', 'Pull request on GitHub') + '">' + L('Cambio #', 'Change #') + job.pr_number + '</a>' +
+      '<button class="lnk" id="diffBtn">' + L('Ver archivos', 'See the files') + '</button>';
     if (job && !job.terminal) html += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
     html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
     html += '</span>';
