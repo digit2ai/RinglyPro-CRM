@@ -11,7 +11,10 @@ const { WORK, base, jobId, writeJSON, fail } = require('./lib');
   const res = await fetch(`${base()}/api/v1/factory/brief/${id}`, {
     headers: { 'x-speakup-brief-token': String(process.env.BRIEF_TOKEN || ''), 'User-Agent': 'SpeakUp-Factory-Action' }
   });
-  if (!res.ok) fail(`Could not fetch the brief with the build token (HTTP ${res.status}).`);
+  if (!res.ok) {
+    const body = (await res.text().catch(() => '')).replace(/[^\x20-\x7E]/g, ' ').slice(0, 200);
+    fail(`Could not fetch the brief with the build token: HTTP ${res.status} ${body}`);
+  }
   const brief = await res.json();
   if (String(brief.job_id) !== id || brief.plan_hash !== process.env.PLAN_HASH) fail('The brief does not match the approved plan.');
   writeJSON('brief.json', brief);

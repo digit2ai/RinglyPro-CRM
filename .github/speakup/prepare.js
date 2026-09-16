@@ -19,7 +19,11 @@ const { base, jobId, secret, hmac, sha16, writeJSON, setOutput, words, shingles,
   const res = await fetch(`${base()}/api/v1/factory/brief/${id}`, {
     headers: { 'x-speakup-ts': String(ts), 'x-speakup-sig': hmac(secret(), `brief.${id}.${ts}`), 'User-Agent': 'SpeakUp-Factory-Action' }
   });
-  if (!res.ok) fail(`Could not fetch the approved brief (HTTP ${res.status}).`);
+  if (!res.ok) {
+    const body = (await res.text().catch(() => '')).replace(/[^\x20-\x7E]/g, ' ').slice(0, 200);
+    fail(`Could not fetch the approved brief: HTTP ${res.status} ${body}` +
+      (res.status === 401 ? ' (the GitHub secret SPEAKUP_FACTORY_SECRET does not match the value on Render)' : ''));
+  }
   const brief = await res.json();
   if (String(brief.job_id) !== id) fail('The brief is for a different job.');
   if (brief.branch !== process.env.BRANCH) fail('The brief branch does not match the dispatched branch.');

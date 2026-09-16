@@ -46,7 +46,8 @@ const FIELDS = ['ts', 'job_id', 'event', 'status', 'plan_hash', 'commit_sha', 'f
     headers: { 'Content-Type': 'application/json', 'x-speakup-sig': hmac(secret(), canonical), 'User-Agent': 'SpeakUp-Factory-Action' },
     body: JSON.stringify(payload)
   });
-  console.log(`callback ${event}${payload.status ? ' ' + payload.status : ''}: HTTP ${res.status}`);
+  console.log(`callback ${event}${payload.status ? ' ' + payload.status : ''}: HTTP ${res.status}` +
+    (res.status === 401 ? ' (the GitHub secret SPEAKUP_FACTORY_SECRET does not match Render)' : ''));
   if (!res.ok && event !== 'failed') process.exit(1);
 })().catch(e => {
   console.error('callback error: ' + e.message);

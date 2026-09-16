@@ -85,6 +85,12 @@ jobs:
           SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
           PLAN_HASH: ${{ steps.p.outputs.plan_hash }}
         run: node .github/speakup/callback.js status CODING
+      - name: Report why prepare failed
+        if: failure()
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+          PLAN_HASH: ${{ steps.p.outputs.plan_hash }}
+        run: node .github/speakup/callback.js failed
 
   build:
     needs: prepare
@@ -235,6 +241,11 @@ jobs:
           AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
           $G -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH" push -q "https://github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
           echo "sha=$($G rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Report why the push failed
+        if: failure()
+        env:
+          SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
+        run: node .github/speakup/callback.js failed
       - name: Report pushed (SpeakUp opens the PR)
         env:
           SPEAKUP_FACTORY_SECRET: ${{ secrets.SPEAKUP_FACTORY_SECRET }}
