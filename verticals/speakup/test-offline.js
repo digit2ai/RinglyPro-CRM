@@ -505,6 +505,31 @@ test('two screens and nothing else', () => {
   ok(/window\.SpeakUpRecorder/.test(eng), 'it exposes the documented API');
 });
 
+test('the header controls are one node, not two copies', () => {
+  const css = read('verticals/speakup/public/theme.css');
+  const js = read('verticals/speakup/public/header-menu.js');
+  ok(/\.burger\{[^}]*display:none/.test(css) && /@media\(max-width:700px\)\{\s*\.burger\{display:block\}/.test(css.replace(/\n\s*/g, '')),
+    'the burger appears only below the breakpoint');
+  ok(/\.hdrmenu:not\(\.open\)\{display:none\}/.test(css), 'the panel is hidden until it is opened');
+  ok(/\.burger\[aria-expanded="true"\]/.test(css), 'the open state draws itself as an X');
+  ['app.html', 'meetings.html'].forEach(function (f) {
+    const html = read('verticals/speakup/public/' + f);
+    // ONE set of controls. A drawer built from duplicate markup is how the two eventually
+    // offer different things; here the same node is a row on a desktop and a panel on a phone.
+    ok((html.match(/id="langBtn"/g) || []).length === 1 && (html.match(/id="outBtn"/g) || []).length === 1,
+      f + ' has exactly one language toggle and one sign out');
+    ok(/<div class="hdrmenu" id="hdrMenu">[\s\S]*id="ctx"[\s\S]*id="langBtn"[\s\S]*id="outBtn"[\s\S]*<\/div>/.test(html),
+      f + ' keeps all three inside the one menu node');
+    ok(/id="burger"[^>]*aria-expanded="false"[^>]*aria-controls="hdrMenu"/.test(html), f + ' wires the burger to the menu for a screen reader');
+    ok(/header-menu\.js/.test(html), f + ' loads the shared behaviour rather than its own copy');
+  });
+  // Behaviour lives in one file for the same reason the markup does.
+  ['Escape', 'resize', 'aria-expanded'].forEach(function (k) { ok(js.includes(k), 'the shared script handles ' + k); });
+  ok(/window\.innerWidth > 700/.test(js), 'growing past the breakpoint closes it, so no X is stranded on a desktop');
+  const sw = read('verticals/speakup/public/sw.js');
+  ok(/header-menu\.js\?v=\d+/.test(sw), 'the worker caches the shared script');
+});
+
 test('both screens wear the same paper theme', () => {
   const css = read('verticals/speakup/public/theme.css');
   const manifest = JSON.parse(read('verticals/speakup/public/manifest.webmanifest'));

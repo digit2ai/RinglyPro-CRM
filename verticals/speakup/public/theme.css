@@ -110,8 +110,37 @@ a{color:var(--accent-dark)}
 .shot button{position:absolute;top:0;right:0;width:20px;height:20px;border:0;border-radius:0 0 0 8px;
   background:rgba(31,30,29,.72);color:#fff;font-size:13px;line-height:18px;cursor:pointer;padding:0}
 
+/* ── header menu: a row on a desktop, a drawer on a phone ───────────────────── */
+/* The panel is positioned against the bar, so the bar owns the stacking context. */
+.top{position:relative}
+.hdrmenu{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;justify-content:flex-end}
+.burger{display:none;width:44px;height:44px;flex:0 0 44px;padding:0;position:relative;cursor:pointer;
+  border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;color:var(--text)}
+.burger span{position:absolute;left:12px;right:12px;height:2px;background:currentColor;border-radius:2px;
+  transition:transform .16s ease,opacity .16s ease}
+.burger span:nth-child(1){top:15px}
+.burger span:nth-child(2){top:21px}
+.burger span:nth-child(3){top:27px}
+/* The open state draws itself as an X, so the control that closes it is obvious. */
+.burger[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+@media(max-width:700px){
+  .burger{display:block}
+  .hdrmenu{position:absolute;top:100%;right:8px;left:auto;min-width:220px;max-width:calc(100vw - 16px);z-index:90;
+    flex-direction:column;align-items:stretch;gap:2px;margin-top:6px;padding:6px;
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
+    box-shadow:0 12px 32px rgba(31,30,29,.16)}
+  .hdrmenu:not(.open){display:none}
+  /* The repo label is information, not a control: it reads as a heading in the panel. */
+  .hdrmenu .where{display:block;padding:8px 10px 6px;font-size:12.5px;color:var(--faint);white-space:normal;
+    border-bottom:1px solid var(--line);margin-bottom:2px}
+  .hdrmenu .lnk{min-height:48px;justify-content:flex-start;border:0;background:transparent;font-size:15px;padding:0 10px}
+  .hdrmenu .lnk:hover{background:var(--raised)}
+}
+
 @media(max-width:560px){
   .top{padding-left:12px;padding-right:12px;gap:8px}
   .brand{font-size:16px}
-  .where{display:none}
 }

@@ -1,0 +1,121 @@
+/* SpeakUp — the header menu, driven in a real browser.
+ *
+ * A CSS rule that parses is not a menu that opens. This clicks the burger on BOTH screens at
+ * two phone widths and a desktop width, and checks what a finger would meet: the panel opens,
+ * stays on screen, paints above the page, has 44px targets, closes on Escape, on an outside
+ * tap, on choosing something, and when the window grows past the breakpoint.
+ *
+ *   node verticals/speakup/test-header.js
+ *
+ * SKIPS LOUDLY without puppeteer rather than reporting a pass it did not earn.
+ */
+let puppeteer;
+try { puppeteer = require('puppeteer'); } catch (e) {
+  console.log('SKIPPED: puppeteer is not installed, so the header menu was NOT verified in a browser.');
+  process.exit(0);
+}
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const DIR = path.join(__dirname, 'public');
+const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/json' };
+
+const server = http.createServer((req, res) => {
+  let p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
+  if (p === 'meetings') p = 'meetings.html';
+  if (p === '') p = 'app.html';
+  const f = path.join(DIR, p);
+  // The screens call the API on boot; answer so the page settles instead of hanging.
+  if (req.url.indexOf('/api/') >= 0) { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(JSON.stringify({ operator: true, jobs: [], recordings: [], readiness: { ready: true, blockers: [] } })); }
+  if (!fs.existsSync(f)) { res.writeHead(404); return res.end('no'); }
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'text/plain' });
+  res.end(fs.readFileSync(f));
+});
+
+let pass = 0, fail = 0;
+const ok = (c, m) => { if (c) { pass++; console.log('PASS ' + m); } else { fail++; console.log('FAIL ' + m); } };
+
+server.listen(0, async () => {
+  const base = 'http://127.0.0.1:' + server.address().port + '/speakup/';
+  const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+  try {
+    for (const [name, url] of [['factory', base], ['meetings', base + 'meetings']]) {
+      for (const [label, w, h] of [['phone 390', 390, 844], ['phone 360', 360, 780], ['desktop 1280', 1280, 900]]) {
+        const page = await browser.newPage();
+        await page.setViewport({ width: w, height: h });
+        await page.goto(url, { waitUntil: 'networkidle0' });
+        const phone = w <= 700;
+
+        const shown = (sel) => page.$eval(sel, el => {
+          const s = getComputedStyle(el), r = el.getBoundingClientRect();
+          return { display: s.display, w: r.width, h: r.height, top: r.top, right: r.right, vis: r.width > 0 && r.height > 0 };
+        });
+
+        const burger = await shown('#burger');
+        ok(phone ? burger.vis : !burger.vis, `${name} ${label}: burger ${phone ? 'is shown' : 'is hidden'}`);
+        if (phone) ok(burger.w >= 44 && burger.h >= 44, `${name} ${label}: burger is a 44px target (${Math.round(burger.w)}x${Math.round(burger.h)})`);
+
+        const menuClosed = await shown('#hdrMenu');
+        ok(phone ? !menuClosed.vis : menuClosed.vis, `${name} ${label}: the controls are ${phone ? 'tucked away' : 'in the bar'}`);
+
+        // No horizontal overflow, closed or open.
+        const overflow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        ok(!(await overflow()), `${name} ${label}: no horizontal overflow`);
+
+        if (phone) {
+          await page.click('#burger');
+          await new Promise(r => setTimeout(r, 250));
+          const open = await shown('#hdrMenu');
+          ok(open.vis, `${name} ${label}: tapping the burger opens the menu`);
+          ok(open.right <= w, `${name} ${label}: the panel stays on screen (right ${Math.round(open.right)} <= ${w})`);
+          ok(await page.$eval('#burger', el => el.getAttribute('aria-expanded') === 'true'), `${name} ${label}: aria-expanded reports open`);
+          ok(!(await overflow()), `${name} ${label}: no overflow with the menu open`);
+
+          const targets = await page.$$eval('#hdrMenu .lnk', els => els.map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim(), h: r.height, w: r.width }; }));
+          ok(targets.length === 2, `${name} ${label}: both controls are in the menu`);
+          ok(targets.every(t => t.h >= 44), `${name} ${label}: every control is a 44px target (${targets.map(t => Math.round(t.h)).join(',')})`);
+
+          // The panel must sit over the page, not push it around.
+          const covered = await page.evaluate(() => {
+            const m = document.getElementById('hdrMenu').getBoundingClientRect();
+            const el = document.elementFromPoint(m.left + m.width / 2, m.top + 10);
+            return !!(el && document.getElementById('hdrMenu').contains(el));
+          });
+          ok(covered, `${name} ${label}: the panel paints above the page`);
+
+          await page.keyboard.press('Escape');
+          await new Promise(r => setTimeout(r, 250));
+          ok(!(await shown('#hdrMenu')).vis, `${name} ${label}: Escape closes it`);
+
+          await page.click('#burger');
+          await new Promise(r => setTimeout(r, 200));
+          await page.mouse.click(w / 2, h - 60);
+          await new Promise(r => setTimeout(r, 250));
+          ok(!(await shown('#hdrMenu')).vis, `${name} ${label}: tapping outside closes it`);
+
+          // Choosing something inside closes it — the language toggle only relabels.
+          await page.click('#burger');
+          await new Promise(r => setTimeout(r, 200));
+          await page.click('#langBtn');
+          await new Promise(r => setTimeout(r, 250));
+          ok(!(await shown('#hdrMenu')).vis, `${name} ${label}: choosing an item closes it`);
+
+          // Growing past the breakpoint must not strand an open panel.
+          await page.click('#burger');
+          await new Promise(r => setTimeout(r, 200));
+          await page.setViewport({ width: 1280, height: 900 });
+          await new Promise(r => setTimeout(r, 300));
+          ok(await page.$eval('#burger', el => el.getAttribute('aria-expanded') === 'false'), `${name} ${label}: resizing to desktop closes it`);
+        }
+        await page.close();
+      }
+    }
+  } catch (e) {
+    fail++; console.log('ERROR ' + e.message);
+  }
+  await browser.close();
+  server.close();
+  console.log(`\n==== ${pass} passed, ${fail} failed ====`);
+  process.exit(fail ? 1 : 0);
+});

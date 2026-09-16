@@ -7,7 +7,7 @@
 <link rel="icon" href="/speakup/favicon.svg">
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
-<link rel="stylesheet" href="/speakup/theme.css?v=1">
+<link rel="stylesheet" href="/speakup/theme.css?v=2">
 <meta name="theme-color" content="#faf9f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -36,9 +36,12 @@
     <a class="tab" href="/speakup/meetings" id="tabMeet">Reuniones</a>
     <a class="tab on" href="/speakup/" id="tabFac">Fábrica</a>
   </nav>
-  <span class="where" id="ctx">digit2ai/RinglyPro-CRM</span>
-  <button class="lnk" id="langBtn">EN</button>
-  <button class="lnk" id="outBtn">Salir</button>
+  <div class="hdrmenu" id="hdrMenu">
+    <span class="where" id="ctx">digit2ai/RinglyPro-CRM</span>
+    <button class="lnk" id="langBtn">EN</button>
+    <button class="lnk" id="outBtn">Salir</button>
+  </div>
+  <button class="burger" id="burger" aria-label="Menú" aria-expanded="false" aria-controls="hdrMenu"><span></span><span></span><span></span></button>
 </header>
 
 <main>
@@ -64,5 +67,6 @@
 </footer>
 
 <script src="/speakup/console.js?v=5"></script>
+<script src="/speakup/header-menu.js?v=1"></script>
 </body>
 </html>
