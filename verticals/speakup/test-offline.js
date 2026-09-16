@@ -337,6 +337,21 @@ test('the console can be cleared, and the shell versions agree', () => {
   ok(/if \(jobId && jobTerminal\) dismiss\(jobId\)/.test(con), 'only a terminal job is remembered as dismissed');
 });
 
+test('the console screen is black', () => {
+  const html = read('verticals/speakup/public/app.html');
+  const manifest = JSON.parse(read('verticals/speakup/public/manifest.webmanifest'));
+  const black = /^#(000|000000)$/i;
+  // The page background comes from --bg, and the footer and header inherit it, so one token
+  // decides the whole screen. A near-black navy here is the thing this asserts against.
+  const bg = (html.match(/--bg:\s*(#[0-9a-f]{3,8})/i) || [])[1];
+  ok(bg && black.test(bg), 'the app shell paints the screen black');
+  ok(/background:var\(--bg\)/.test(html), 'the body background still reads the token');
+  // The browser chrome and the installed launch screen must not flash a different colour.
+  const theme = (html.match(/name="theme-color"\s+content="(#[0-9a-f]{3,8})"/i) || [])[1];
+  ok(theme && black.test(theme), 'the theme colour matches the black screen');
+  ok(black.test(manifest.background_color), 'the installed launch screen is black too');
+});
+
 test('patch and guard scripts', () => {
   const { execFileSync, spawnSync } = require('child_process');
   const os = require('os');
