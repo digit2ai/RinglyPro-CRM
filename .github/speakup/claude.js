@@ -60,6 +60,7 @@ function prompt(brief) {
   const poster = Poster(base(), jobId(), brief.plan_hash, process.env.PROGRESS_TOKEN);
   let result = {};
   let code = 127;
+  let billing = false;
   for (const model of models) {
   const raw = fs.createWriteStream(outFile);
   const errFile = fs.openSync(errPath, 'a');
@@ -77,6 +78,11 @@ function prompt(brief) {
         let ev = null;
         try { ev = JSON.parse(line); } catch (e) { continue; }
         if (ev && ev.type === 'result') result = ev;
+        // An account with no credit is not a code problem and must say so plainly.
+        try {
+          const txt = JSON.stringify(ev);
+          if (/credit balance is too low|insufficient_quota|billing/i.test(txt)) billing = true;
+        } catch (x) { /* ignore */ }
         try { poster.push(summarize(ev)); } catch (e) { /* activity is never load-bearing */ }
       }
     });
@@ -92,6 +98,13 @@ function prompt(brief) {
   const stderr = (() => { try { return fs.readFileSync(errPath, 'utf8').slice(-1500); } catch (e) { return ''; } })();
   const modelProblem = /model|not_found|404|does not exist|permission/i.test(stderr + JSON.stringify(result.subtype || ''));
   if (code === 0 && !result.is_error) break;
+  if (billing) {
+    await poster.done();
+    fs.writeFileSync(path.join(WORK, 'error.txt'),
+      'The Anthropic account has no credit left, so Claude stopped before writing anything. Add credit at console.anthropic.com (Billing) and send the instruction again.');
+    console.log('stopped: the Anthropic account has no credit');
+    process.exit(1);
+  }
   if (!modelProblem || model === models[models.length - 1]) {
     await poster.done();
     const why = stderr.split('\n').filter(Boolean).slice(-3).join(' ').replace(/[^\x20-\x7E]/g, ' ').slice(0, 300);
