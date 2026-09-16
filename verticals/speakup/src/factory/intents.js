@@ -33,6 +33,10 @@ const WAKE = /^(hey |hola |ok )?(ringly ?pro )?(architect|arquitecto|arquitecta)
 // "/ringlypro-architect" pasted from another tool is a prefix, not part of the request.
 const SLASH = /^\s*\/[a-z0-9-]+[ \t]*/i;
 function firstLine(s) { return String(s || '').replace(SLASH, '').split('\n')[0].trim().slice(0, 300) || String(s || '').slice(0, 300); }
+// "ringlypro-architect" with nothing after it wakes the agent; it is not an instruction.
+const WAKE_ONLY = /^(hey |hola |ok )?(ringly ?pro[ -]?)?(architect|arquitecto|arquitecta)( please| por favor)?$/;
+// normalizeSpoken already turns '/' and '-' into spaces, so '/ringlypro-architect' arrives as 'ringlypro architect'.
+function isWakeOnly(text) { return WAKE_ONLY.test(security.normalizeSpoken(text)); }
 
 function stripWake(n) { return n.replace(WAKE, '').trim(); }
 const es = (lang) => lang !== 'en';
@@ -407,6 +411,14 @@ async function run(input) {
     if (phraseSpoken) text = security.redactPhrase(original);
   }
 
+  if (isWakeOnly(text)) {
+    const list0 = await projects.list(tenant_id);
+    const p0 = (input.project_key && list0.find(p => p.key === input.project_key)) || list0.find(p => p.key === (process.env.SPEAKUP_DEFAULT_PROJECT || 'ringlypro')) || list0[0];
+    return { status: 200, intent: 'WAKE', classified_by: 'rules', project_key: p0 && p0.key, card: null,
+      reply: lang === 'en'
+        ? `RinglyPro Architect is ready on ${p0 ? p0.repo : ''}. Type or dictate the change you want; it runs straight away and ends as a branch and a pull request.`
+        : `RinglyPro Architect está listo en ${p0 ? p0.repo : ''}. Escribe o dicta el cambio que quieres; se ejecuta enseguida y termina en una rama y un pull request.` };
+  }
   const cls = await classify(text, mode);
   const def = INTENTS.find(i => i.name === cls.intent);
   if (def && def.operator && !security.isFactoryOperator(user)) {
@@ -448,4 +460,4 @@ async function run(input) {
     card, client_action: result.client_action || null };
 }
 
-module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, firstLine };
+module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isWakeOnly, firstLine };

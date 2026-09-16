@@ -279,6 +279,12 @@ test('pasted prompts are instructions, not commands', () => {
   ok(!intents.isPastedPrompt('what is the status of my last task?'), 'a short question is not');
   ok(intents.classifyRules(long) === 'CHECK_DEPLOYMENT', 'the command rules would have misread that prompt');
   ok(intents.firstLine('/ringlypro-architect Add a Beta tag\nsecond line') === 'Add a Beta tag', 'the slash command is stripped from the label');
+  ['/ringlypro-architect', 'ringlypro architect', 'RinglyPro Architect', 'arquitecto', 'Hey architect'].forEach(function (w) {
+    ok(intents.isWakeOnly(w), 'the wake word alone wakes the agent instead of starting a job: ' + w);
+  });
+  ['/ringlypro-architect add a beta tag', 'fix the login page', 'ringlypro-architect, add a beta tag'].forEach(function (w) {
+    ok(!intents.isWakeOnly(w), 'the wake word with an instruction after it is work: ' + w);
+  });
 });
 
 test('patch and guard scripts', () => {

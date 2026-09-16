@@ -30,13 +30,22 @@
   function status(s) { $('stat').textContent = s || ''; }
 
   // ── the top pane ───────────────────────────────────────────────────────────
+  var STATUS_TEXT = {
+    ANALYZING: ['Leyendo la instrucción', 'Reading the instruction'], PLANNING: ['Planificando', 'Planning'],
+    QUEUED: ['Arrancando en GitHub', 'Starting on GitHub'], CODING: ['Escribiendo código', 'Writing code'],
+    TESTING: ['Probando', 'Running tests'], FIXING: ['Corrigiendo', 'Fixing'], PUSHING: ['Subiendo la rama', 'Pushing the branch'],
+    PR_CREATED: ['Abriendo el PR', 'Opening the pull request'], READY_FOR_REVIEW: ['Listo para revisión', 'Ready for review'],
+    DEPLOYING: ['Desplegando', 'Deploying'], DEPLOYED: ['Desplegado', 'Deployed'],
+    FAILED: ['Falló', 'Failed'], CANCELLED: ['Cancelado', 'Cancelled']
+  };
   var KIND = { read: 'READ', edit: 'EDIT', write: 'WRITE', run: 'RUN', search: 'FIND', say: 'CLAUDE', test: 'TEST',
-    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'PR', todo: 'PLAN', tool: 'TOOL', you: 'YOU' };
+    error: 'ERROR', info: 'INFO', done: 'DONE', status: 'STATUS', pr: 'PR', todo: 'PLAN', tool: 'TOOL', you: 'YOU', ready: 'READY' };
   function cls(kind) {
     if (kind === 'error') return 'k err';
     if (kind === 'done' || kind === 'status' || kind === 'pr') return 'k ok';
     if (kind === 'test') return 'k warn';
     if (kind === 'you') return 'k you';
+    if (kind === 'ready') return 'k ok';
     return 'k';
   }
   function diffLines(txt, c) {
@@ -51,6 +60,14 @@
     return '<span class="ln"><span class="' + cls(e.kind) + '">' + (KIND[e.kind] || 'INFO') + '</span> ' + body + '</span>' + extra;
   }
   function write(events) {
+    // WAITING_APPROVAL is an internal step of the machine: the console approves as it
+    // dispatches, so showing it only made the pane look like it was waiting for the owner.
+    events = events.filter(function (e) { return !(e.kind === 'status' && e.text === 'WAITING_APPROVAL'); })
+      .map(function (e) {
+        if (e.kind !== 'status' || !STATUS_TEXT[e.text]) return e;
+        return { kind: 'status', text: L(STATUS_TEXT[e.text][0], STATUS_TEXT[e.text][1]), detail: e.detail };
+      });
+    if (!events.length) return;
     var out = $('out');
     var atBottom = out.scrollTop + out.clientHeight >= out.scrollHeight - 40;
     out.insertAdjacentHTML('beforeend', events.map(line).join(''));
@@ -137,7 +154,7 @@
       $('cmd').value = '';
       try { sessionStorage.removeItem(DRAFT); } catch (e) {}
       status('');
-      if (d.reply) write([{ kind: 'info', text: d.reply }]);
+      if (d.reply) write([{ kind: d.intent === 'WAKE' ? 'ready' : 'info', text: d.reply }]);
       if (d.card && d.card.job_id) follow(d.card.job_id);
     } catch (e) {
       status('');
