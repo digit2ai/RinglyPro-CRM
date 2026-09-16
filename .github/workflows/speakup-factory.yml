@@ -119,9 +119,19 @@ jobs:
         run: node "$RUNNER_TEMP/speakup-bin/fetch-brief.js"
       - name: Install dependencies and Claude Code
         run: |
-          set -euo pipefail
-          npm ci --ignore-scripts --no-audit --no-fund > "$RUNNER_TEMP/speakup/npm.log" 2>&1 || echo "npm ci failed (continuing; tests will show it)"
-          npm install -g --ignore-scripts @anthropic-ai/claude-code@2.1.272 > "$RUNNER_TEMP/speakup/claude-install.log" 2>&1
+          set +e
+          mkdir -p "$RUNNER_TEMP/speakup"
+          npm ci --no-audit --no-fund --ignore-scripts > "$RUNNER_TEMP/speakup/npm.log" 2>&1
+          echo "npm ci exit: $?"
+          npm install -g @anthropic-ai/claude-code@2.1.272 > "$RUNNER_TEMP/speakup/claude-install.log" 2>&1
+          rc=$?
+          echo "claude code install exit: $rc"
+          if [ "$rc" -ne 0 ]; then
+            tail -25 "$RUNNER_TEMP/speakup/claude-install.log"
+            echo "Claude Code could not be installed on the runner (npm exit $rc)." > "$RUNNER_TEMP/speakup/error.txt"
+            exit 1
+          fi
+          claude --version || { echo "Claude Code installed but would not start on the runner." > "$RUNNER_TEMP/speakup/error.txt"; exit 1; }
       - name: Claude builds the approved plan
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

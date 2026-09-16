@@ -49,17 +49,24 @@ function prompt(brief) {
     PUPPETEER_SKIP_DOWNLOAD: '1', SPEAKUP_FACTORY_POLLER: 'off', INCENTIVA_AGENTS: 'off'
   };
   if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY secret is not set in GitHub Actions');
-  const args = ['-p', '--model', brief.model, '--max-turns', String(brief.max_turns || 80), '--output-format', 'stream-json', '--verbose',
+  // The configured model may not be available to this key: fall back rather than
+  // reporting a failure the owner cannot act on.
+  const models = [brief.model, 'claude-sonnet-5', 'claude-haiku-4-5-20251001'].filter((m, i, a) => m && a.indexOf(m) === i);
+  const argsFor = (model) => ['-p', '--model', model, '--max-turns', String(brief.max_turns || 80), '--output-format', 'stream-json', '--verbose',
     '--permission-mode', 'acceptEdits', '--add-dir', WORK,
     '--allowedTools', ALLOWED.join(','), '--disallowedTools', DENIED.join(',')];
   const outFile = path.join(WORK, `claude-${MODE}${ROUND ? '-' + ROUND : ''}.jsonl`);
-  const raw = fs.createWriteStream(outFile);
-  const errFile = fs.openSync(path.join(WORK, 'claude-stderr.log'), 'a');
+  const errPath = path.join(WORK, 'claude-stderr.log');
   const poster = Poster(base(), jobId(), brief.plan_hash, process.env.PROGRESS_TOKEN);
   let result = {};
+  let code = 127;
+  for (const model of models) {
+  const raw = fs.createWriteStream(outFile);
+  const errFile = fs.openSync(errPath, 'a');
+  result = {};
   let buf = '';
-  const code = await new Promise((resolve) => {
-    const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', errFile] });
+  code = await new Promise((resolve) => {
+    const child = spawn('claude', argsFor(model), { env, stdio: ['pipe', 'pipe', errFile] });
     child.stdout.on('data', (chunk) => {
       raw.write(chunk);
       buf += chunk.toString();
@@ -79,14 +86,22 @@ function prompt(brief) {
   });
   raw.end();
   fs.closeSync(errFile);
-  await poster.done();
   // Only non-private facts reach the public log.
-  console.log(`claude ${MODE}${ROUND ? ' round ' + ROUND : ''}: exit ${code}, turns ${result.num_turns == null ? '?' : result.num_turns}, ` +
+  console.log(`claude ${MODE}${ROUND ? ' round ' + ROUND : ''} with ${model}: exit ${code}, turns ${result.num_turns == null ? '?' : result.num_turns}, ` +
     `error ${result.is_error ? 'yes' : 'no'}, cost_usd ${result.total_cost_usd == null ? '?' : result.total_cost_usd}`);
-  if (code !== 0 || result.is_error) {
-    fs.writeFileSync(path.join(WORK, 'error.txt'), `Claude Code ${MODE} step did not finish (exit ${code}${result.subtype ? ', ' + result.subtype : ''}).`);
+  const stderr = (() => { try { return fs.readFileSync(errPath, 'utf8').slice(-1500); } catch (e) { return ''; } })();
+  const modelProblem = /model|not_found|404|does not exist|permission/i.test(stderr + JSON.stringify(result.subtype || ''));
+  if (code === 0 && !result.is_error) break;
+  if (!modelProblem || model === models[models.length - 1]) {
+    await poster.done();
+    const why = stderr.split('\n').filter(Boolean).slice(-3).join(' ').replace(/[^\x20-\x7E]/g, ' ').slice(0, 300);
+    fs.writeFileSync(path.join(WORK, 'error.txt'),
+      `Claude Code ${MODE} step did not finish (exit ${code}${result.subtype ? ', ' + result.subtype : ''}). ${why}`);
     process.exit(1);
   }
+  console.log(`model ${model} was refused; trying the next one`);
+  }
+  await poster.done();
 })().catch(e => {
   fs.writeFileSync(path.join(WORK, 'error.txt'), 'Claude step failed: ' + e.message);
   console.error('claude step failed');
