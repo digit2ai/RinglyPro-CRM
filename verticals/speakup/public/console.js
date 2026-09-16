@@ -16,8 +16,17 @@
   var L = function (es, en) { return lang === 'en' ? en : es; };
   var DRAFT = 'speakup_console_draft';
 
-  var jobId = null, lastEvent = 0, timer = null, capturing = false, recog = null, tickTimer = null, startTs = 0;
+  var DISMISSED = 'speakup_console_dismissed';
+  var jobId = null, jobTerminal = false, lastEvent = 0, timer = null, capturing = false, recog = null, tickTimer = null, startTs = 0;
   var shots = []; // pasted screenshots waiting to go with the next instruction
+
+  // A FINISHED JOB IS DISMISSED FOR GOOD, A RUNNING ONE ALWAYS COMES BACK. On boot the
+  // console re-attaches to the newest job, which is right while it is running (close the
+  // tab, come back, the work is still on screen) and wrong once it has finished — the
+  // same completed run reappeared in every new window with no way to get rid of it.
+  // Clearing records the id, so only jobs newer than it are restored.
+  function dismissed() { try { return parseInt(localStorage.getItem(DISMISSED), 10) || 0; } catch (e) { return 0; } }
+  function dismiss(id) { try { localStorage.setItem(DISMISSED, String(id)); } catch (e) {} }
 
   // ── helpers ────────────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
@@ -96,10 +105,28 @@
     if (job && job.pr_url) html += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener">PR #' + job.pr_number + '</a>' +
       '<button class="lnk" id="diffBtn">' + L('Cambios', 'Changes') + '</button>';
     if (job && !job.terminal) html += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
+    html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
     html += '</span>';
     $('bar').innerHTML = html;
     if ($('diffBtn')) $('diffBtn').addEventListener('click', showDiff);
     if ($('cancelBtn')) $('cancelBtn').addEventListener('click', cancelJob);
+    $('clearBtn').addEventListener('click', clearPane);
+  }
+
+  function idleHint() {
+    write([{ kind: 'info', text: L('Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. Se crea una rama y un PR; main y producción no se tocan.',
+      'Type below what you want changed in digit2ai/RinglyPro-CRM. A branch and a PR are created; main and production are not touched.') }]);
+  }
+
+  // Clearing empties the pane only. It never cancels: a running job keeps running on
+  // GitHub, and the next reload re-attaches to it.
+  function clearPane() {
+    clearTimeout(timer);
+    if (jobId && jobTerminal) dismiss(jobId);
+    jobId = null; jobTerminal = false; lastEvent = 0;
+    $('out').innerHTML = '';
+    renderBar(null);
+    idleHint();
   }
 
   async function showDiff() {
@@ -131,6 +158,7 @@
       var d = await api('/factory/jobs/' + id + '/events?after=' + lastEvent);
       if (d.events.length) { lastEvent = d.events[d.events.length - 1].id; write(d.events); }
       renderBar({ status: d.status, terminal: d.terminal, pr_number: d.pr_number, pr_url: d.pr_url });
+      jobTerminal = !!d.terminal;
       if (!d.terminal && document.visibilityState === 'visible') timer = setTimeout(function () { follow(id); }, 2500);
       else if (d.terminal) {
         var j = (await api('/factory/jobs/' + id)).job;
@@ -281,10 +309,11 @@
         banner('<strong>' + L('La ejecución está cerrada hasta configurar:', 'Execution is closed until you set:') + '</strong><br>' +
           ov.readiness.blockers.map(function (b) { return esc(b.fix); }).join('<br>'));
       }
-      var live = (ov.jobs || []).filter(function (j) { return !j.terminal; })[0] || (ov.jobs || [])[0];
-      if (live) follow(live.id, true);
-      else write([{ kind: 'info', text: L('Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. Se crea una rama y un PR; main y producción no se tocan.',
-        'Type below what you want changed in digit2ai/RinglyPro-CRM. A branch and a PR are created; main and production are not touched.') }]);
+      var running = (ov.jobs || []).filter(function (j) { return !j.terminal; })[0];
+      var last = (ov.jobs || [])[0];
+      if (running) follow(running.id, true);
+      else if (last && last.id > dismissed()) follow(last.id, true);
+      else { renderBar(null); idleHint(); }
     } catch (e) { /* redirected on 401 */ }
   })();
 })();

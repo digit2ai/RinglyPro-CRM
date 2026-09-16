@@ -318,6 +318,25 @@ test('a question is answered, an instruction is built', async () => {
     'the answer handler opens no job and writes no document');
 });
 
+test('the console can be cleared, and the shell versions agree', () => {
+  const con = read('verticals/speakup/public/console.js');
+  const html = read('verticals/speakup/public/app.html');
+  const sw = read('verticals/speakup/public/sw.js');
+  // The page and the worker must ask for the SAME console.js, or the installed app keeps
+  // serving the cached one and a fix looks like it never deployed.
+  const inPage = (html.match(/console\.js\?v=(\d+)/) || [])[1];
+  const inWorker = (sw.match(/console\.js\?v=(\d+)/) || [])[1];
+  ok(inPage && inWorker && inPage === inWorker, 'app.html and sw.js request the same console.js version');
+  ok(/const CACHE = 'speakup-v(\d+)'/.test(sw), 'the worker names a cache version');
+  ok(/id="clearBtn"/.test(con) && /function clearPane\(/.test(con), 'the console has a Clear control');
+  const body = con.slice(con.indexOf('function clearPane('), con.indexOf('function clearPane(') + 500);
+  ok(!/cancel|\/cancel/i.test(body), 'clearing the pane never cancels the job running on GitHub');
+  // A finished job is dismissed for good; a running one is always restored.
+  ok(/last\.id > dismissed\(\)/.test(con), 'boot restores a finished job only when it is newer than the dismissed one');
+  ok(/if \(running\) follow\(running\.id/.test(con), 'a job still running is always restored');
+  ok(/if \(jobId && jobTerminal\) dismiss\(jobId\)/.test(con), 'only a terminal job is remembered as dismissed');
+});
+
 test('patch and guard scripts', () => {
   const { execFileSync, spawnSync } = require('child_process');
   const os = require('os');
