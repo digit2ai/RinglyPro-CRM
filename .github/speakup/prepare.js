@@ -11,10 +11,12 @@
  *    ever holding that content in plaintext.
  */
 
-const { base, jobId, secret, hmac, sha16, writeJSON, setOutput, words, shingles, SHINGLE, fail } = require('./lib');
+const { base, jobId, secret, fingerprint, hmac, sha16, writeJSON, setOutput, words, shingles, SHINGLE, fail } = require('./lib');
 
 (async () => {
   const id = jobId();
+  // Safe to print: a fingerprint of the secret, to compare with the one the app shows.
+  console.log('factory secret fingerprint on GitHub: ' + fingerprint());
   const ts = Math.floor(Date.now() / 1000);
   const res = await fetch(`${base()}/api/v1/factory/brief/${id}`, {
     headers: { 'x-speakup-ts': String(ts), 'x-speakup-sig': hmac(secret(), `brief.${id}.${ts}`), 'User-Agent': 'SpeakUp-Factory-Action' }
@@ -22,7 +24,7 @@ const { base, jobId, secret, hmac, sha16, writeJSON, setOutput, words, shingles,
   if (!res.ok) {
     const body = (await res.text().catch(() => '')).replace(/[^\x20-\x7E]/g, ' ').slice(0, 200);
     fail(`Could not fetch the approved brief: HTTP ${res.status} ${body}` +
-      (res.status === 401 ? ' (the GitHub secret SPEAKUP_FACTORY_SECRET does not match the value on Render)' : ''));
+      (res.status === 401 ? ' — the GitHub secret SPEAKUP_FACTORY_SECRET (fingerprint ' + fingerprint() + ') does not match the one on Render' : ''));
   }
   const brief = await res.json();
   if (String(brief.job_id) !== id) fail('The brief is for a different job.');

@@ -336,7 +336,8 @@ router.patch('/projects/:key', mutation, operator, wrap(async (req, res) => {
 }));
 
 router.get('/health', (req, res) => {
-  res.json({ github: github.configured(), model: llm.status(), readiness_blockers: jobs.readiness().blockers.map(b => b.code) });
+  res.json({ github: github.configured(), model: llm.status(), readiness_blockers: jobs.readiness().blockers.map(b => b.code),
+    factory_secret_fingerprint: security.secretFingerprint() });
 });
 
 module.exports = router;

@@ -114,7 +114,17 @@ function phraseWeak() {
   return n.split(' ').length < 4 || n.length < 20;
 }
 
-function factorySecret() { return process.env.SPEAKUP_FACTORY_SECRET || null; }
+function factorySecret() {
+  const s = String(process.env.SPEAKUP_FACTORY_SECRET || '').trim();
+  return s || null;
+}
+
+// First 8 hex of sha256(secret): safe to print in a public Actions log and to show in
+// the app, and enough to tell whether the two copies are the same value.
+function secretFingerprint() {
+  const s = factorySecret();
+  return s ? sha256(s).slice(0, 8) : null;
+}
 
 function allowedEmails() {
   return String(process.env.SPEAKUP_FACTORY_ALLOWED_EMAILS || 'mstagg@digit2ai.com')
@@ -196,7 +206,7 @@ function verifyConfirm(token, jobId, planHash, userId) {
 
 module.exports = {
   REDACTED, PUBLISHED_PASSWORDS, sha256, hmac, safeEqualHex, normalizeSpoken,
-  phraseConfigured, phraseMatches, containsPhrase, redactPhrase, phraseWeak, workflowToken, verifyWorkflowToken,
+  phraseConfigured, phraseMatches, containsPhrase, redactPhrase, phraseWeak, workflowToken, verifyWorkflowToken, secretFingerprint,
   teamPasswordWeak, authSecretIsDefault, factorySecret, allowedEmails, isFactoryOperator,
   rateLimit, resetRateLimits, ipHash, sameOriginRequest, signConfirm, verifyConfirm
 };

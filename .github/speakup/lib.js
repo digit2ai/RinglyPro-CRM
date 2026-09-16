@@ -27,11 +27,14 @@ function jobId() {
   return id;
 }
 
+// Trimmed: a secret pasted into GitHub often carries a trailing newline, and an
+// invisible character is otherwise indistinguishable from a wrong value.
 function secret() {
-  const s = process.env.SPEAKUP_FACTORY_SECRET;
-  if (!s) throw new Error('SPEAKUP_FACTORY_SECRET is not set');
+  const s = String(process.env.SPEAKUP_FACTORY_SECRET || '').trim();
+  if (!s) throw new Error('SPEAKUP_FACTORY_SECRET is not set on GitHub (repository secret)');
   return s;
 }
+function fingerprint() { return crypto.createHash('sha256').update(secret()).digest('hex').slice(0, 8); }
 
 function hmac(s, body) { return crypto.createHmac('sha256', s).update(body).digest('hex'); }
 function sha16(s) { return crypto.createHash('sha256').update(s).digest('hex').slice(0, 16); }
@@ -64,4 +67,4 @@ function shingles(ws) {
   return out;
 }
 
-module.exports = { WORK, base, jobId, secret, hmac, sha16, readJSON, writeJSON, readText, fail, setOutput, words, shingles, SHINGLE };
+module.exports = { WORK, base, jobId, secret, fingerprint, hmac, sha16, readJSON, writeJSON, readText, fail, setOutput, words, shingles, SHINGLE };
