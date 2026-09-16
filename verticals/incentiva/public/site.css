@@ -33,6 +33,17 @@
   --font-body: "Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-mono: "Mulish", "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
 
+  /* Chat surface only. The reference app pairs a grotesque for the interface with a
+     serif for the reply; its own typefaces are proprietary, so these are the nearest
+     freely licensable equivalents. The rest of the site keeps Mulish. */
+  --font-chat-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-chat-serif: "Source Serif 4", Charter, Georgia, "Times New Roman", serif;
+  --chat-ground: #FFFFFF;
+  --chat-bubble: #F0EEE9;
+  --chat-composer: #FFFFFF;
+  --chat-send: #1A1915;
+  --chat-send-ink: #FFFFFF;
+
   --radius: 16px;
   --radius-sm: 12px;
   --gutter: 20px;
@@ -67,6 +78,11 @@
     --critical-bg: #3A1A1B;
     --focus: #FF8A4C;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+    --chat-ground: #1B1730;
+    --chat-bubble: #2F2A4D;
+    --chat-composer: #26213F;
+    --chat-send: #F4F3F8;
+    --chat-send-ink: #1B1730;
     color-scheme: dark;
   }
 }
@@ -97,6 +113,11 @@
   --critical-bg: #3A1A1B;
   --focus: #FF8A4C;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .25);
+  --chat-ground: #1B1730;
+  --chat-bubble: #2F2A4D;
+  --chat-composer: #26213F;
+  --chat-send: #F4F3F8;
+  --chat-send-ink: #1B1730;
   color-scheme: dark;
 }
 
@@ -1139,3 +1160,40 @@ main > section.eco, .eco {
 /* Landing "Log in" link to the admin dashboard (owner request 2026-09-15) */
 .site-nav a.nav-login { border: 1.5px solid var(--ink); border-radius: 999px; padding-inline: 16px; }
 .site-nav a.nav-login:hover { background: var(--ink); color: var(--ground); }
+
+/* ---------- Chat surface: the reference assistant look (owner request 2026-09-16) ----------
+   White ground with no card around it; the buyer's own words in a plain grey bubble; Anna's
+   reply as serif prose with no bubble at all; one round dark send control carrying an arrow.
+   DELIBERATELY SCOPED TO THE CHAT: the rest of the landing keeps the Jome-derived brand
+   (Mulish, navy, orange) documented in CLAUDE.md, so this is a restyle of one surface and
+   not a rebrand of the site. Comes last in the file, so it wins on source order over the
+   .mch rules above at equal specificity. */
+main > section#intake { background: var(--chat-ground); }
+.mch { background: var(--chat-ground); border: 0; border-radius: 0; box-shadow: none; padding: 10px 0 18px; font-family: var(--font-chat-sans); }
+.mch-head, .mch-restart, .mch-count, .mch-back, .mch-progress li, .mch-chip, .mch-skip, .mch-linkbtn { font-family: var(--font-chat-sans); }
+.mch-b { font-family: var(--font-chat-sans); }
+/* The buyer: grey bubble, dark text, uniform corners. */
+.mch-b-u { background: var(--chat-bubble); color: var(--ink); border-radius: 20px; border-top-right-radius: 20px; font-weight: 400; padding: 12px 18px; }
+/* Anna: no bubble, serif, set to a reading measure. */
+.mch-b-m { background: none; padding: 2px 0; border-radius: 0; max-width: 68ch; font-family: var(--font-chat-serif); font-size: 1.1rem; line-height: 1.55; color: var(--ink); }
+.mch-b-m.mch-b-small { font-family: var(--font-chat-sans); font-size: .88rem; color: var(--muted); }
+.mch-typing { background: var(--chat-bubble); }
+.mch-composer { border: 1px solid var(--rule); border-radius: 26px; background: var(--chat-composer); padding: 6px 6px 6px 18px; box-shadow: 0 2px 10px rgba(38, 33, 63, .06); }
+/* Neutral, not orange, but still an unmistakable focus indicator: the input itself has no outline. */
+.mch-composer:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(38, 33, 63, .14); }
+.mch-composer input { font: 400 1.05rem/1.4 var(--font-chat-sans); min-height: 44px; }
+.mch-composer input::placeholder { color: var(--muted); opacity: 1; }
+.mch-prefix { font-family: var(--font-chat-sans); font-weight: 500; }
+/* Send: an arrow in a dark circle. The label lives on aria-label, so the icon carries no text.
+   Selector must be .mch-composer .mch-send, not .mch-send: under 480px `.btn { width: 100% }` is
+   already answered by `.mch-composer .btn { width: auto }`, which outranks a bare class and would
+   shrink the circle to the width of its 20px glyph, under the 44px touch target. */
+.mch-composer .mch-send { width: 44px; min-width: 44px; height: 44px; min-height: 44px; flex: none; padding: 0; border: 0; border-radius: 50%;
+  display: inline-grid; place-items: center; background: var(--chat-send); color: var(--chat-send-ink); }
+.mch-composer .mch-send:hover { background: var(--chat-send); opacity: .82; }
+.mch-composer .mch-send[disabled] { opacity: .4; }
+.mch-composer .mch-send svg { display: block; width: 20px; height: 20px; }
+@media (max-width: 640px) {
+  .mch-composer { padding: 6px 6px 6px 16px; }
+  .mch-b-m { font-size: 1.05rem; }
+}

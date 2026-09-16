@@ -313,6 +313,40 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
       assert(/data-theme-toggle/.test(html), f + ' has no toggle');
     }
   });
+  await t('the chat surface carries the assistant look: white ground, grey buyer bubble, no bubble on Anna, and an icon send button', () => {
+    const css = read(path.join(ROOT, 'public', 'site.css'));
+    // The restyle must come after the .mch rules it overrides, or source order defeats it at equal specificity.
+    const look = css.indexOf('main > section#intake { background: var(--chat-ground); }');
+    assert(look > 0 && look > css.indexOf('.mch-composer {') && look > css.indexOf('.mch-b-u {'), 'chat restyle missing or ahead of the rules it overrides');
+    const tail = css.slice(look);
+    assert(/\.mch \{[^}]*background: var\(--chat-ground\)[^}]*border: 0[^}]*box-shadow: none/.test(tail), 'the chat still sits in a bordered card');
+    assert(/\.mch-b-u \{[^}]*background: var\(--chat-bubble\)[^}]*color: var\(--ink\)/.test(tail), 'the buyer bubble is not grey with dark text');
+    assert(/\.mch-b-m \{[^}]*background: none[^}]*font-family: var\(--font-chat-serif\)/.test(tail), 'Anna still has a bubble, or is not serif');
+    // .mch-composer .btn sets width:auto, so a bare .mch-send loses the 44px circle on a phone.
+    assert(/\.mch-composer \.mch-send \{[^}]*width: 44px[^}]*border-radius: 50%[^}]*background: var\(--chat-send\)/.test(tail), 'send is not a dark 44px circle, or is not scoped to beat .mch-composer .btn');
+    assert(!/^\.mch-send \{/m.test(tail), 'send sized by a bare class, which .mch-composer .btn outranks');
+    assert(/\.mch-composer:focus-within \{[^}]*box-shadow: 0 0 0 3px/.test(tail), 'the composer lost its focus indicator');
+    // Every chat token is declared for light and restated for both ways of choosing dark: an undefined
+    // custom property invalidates the whole declaration silently.
+    const blocks = [css.slice(0, css.indexOf('@media (prefers-color-scheme: dark)')),
+      css.slice(css.indexOf('@media (prefers-color-scheme: dark)'), css.indexOf(':root[data-theme="dark"]')),
+      css.slice(css.indexOf(':root[data-theme="dark"]'), css.indexOf('/* ---------- Base ----------'))];
+    for (const tok of ['--chat-ground', '--chat-bubble', '--chat-composer', '--chat-send', '--chat-send-ink'])
+      blocks.forEach((b, i) => assert(b.indexOf(tok + ':') > 0, tok + ' undeclared in token block ' + i));
+    for (const tok of (css.match(/var\(--chat-[a-z-]+/g) || []).concat(css.match(/var\(--font-chat-[a-z]+/g) || []))
+      assert(css.indexOf(tok.slice(4) + ':') > 0, 'undeclared custom property ' + tok.slice(4));
+    // Fonts arrive on the one request to the origin the page already preconnects to.
+    const html = read(path.join(ROOT, 'public', 'index.html'));
+    const links = html.match(/https:\/\/fonts\.googleapis\.com\/css2[^"]+/g) || [];
+    eq(links.length, 1, 'the landing should make exactly one font request');
+    assert(/family=Inter:/.test(links[0]) && /family=Source\+Serif\+4:/.test(links[0]) && /family=Mulish:/.test(links[0]), 'chat fonts not requested, or Mulish dropped');
+    assert(/preconnect[^>]+fonts\.gstatic\.com/.test(html), 'font origin not preconnected');
+    // The icon is the button's only content, so the label has to live on aria-label.
+    const chat = stripComments(read(path.join(ROOT, 'public', 'intake-chat.js')));
+    const btn = chat.slice(chat.indexOf("class: 'btn btn-primary mch-send'"), chat.indexOf("class: 'btn btn-primary mch-send'") + 220);
+    assert(/'aria-label': ui\.busy \? T\('checking'\) : T\('send'\)/.test(btn) && /sendSvg\(\)/.test(btn), 'send button has no accessible name or no icon');
+    assert(/aria-hidden', 'true'/.test(chat.slice(chat.indexOf('function sendSvg'))), 'the send icon is not hidden from screen readers');
+  });
   await t('the workflow strip is readable with no script and pauses for reduced motion', () => {
     const html = read(path.join(ROOT, 'public', 'index.html'));
     const flow = html.slice(html.indexOf('id="flow"'), html.indexOf('<!-- Buying power') > 0 ? html.indexOf('<!-- Buying power') : html.indexOf('id="estimate"'));
