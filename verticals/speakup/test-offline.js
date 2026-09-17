@@ -1358,6 +1358,34 @@ test('every seeded project can actually be measured', () => {
   for (const p of dflt || []) ok(!(p.test_commands || []).some(c => !/^(node|npx jest|npm test)\b/.test(c)), 'test commands stay on the allow-list: ' + p.key);
 });
 
+test('the plan leads with a short numbered workflow', () => {
+  const prepare = require('./src/factory/prepare');
+  const spec = { requirements: [{ id: 'R1', text: 'Put a Close button on the meeting header', quote: 'q', kind: 'requirement' }],
+    decisions: [], acceptance_criteria: [], open_questions: [], sources: [], technical_considerations: [], held_back: { ideas: 0, suggestions: 0, discussion: 0, unverified: 0 }, instruction: 'Put a Close button on the meeting header' };
+  const project = { name: 'P', repo: 'o/r', default_branch: 'main', path_scope: [], deployment: 'Render' };
+  const cands = { files: [{ path: 'verticals/speakup/public/meetings.js', matched: ['meeting'] }] };
+  const h = prepare.heuristicPlan(spec, project, cands);
+  ok(Array.isArray(h.workflow) && h.workflow.length > 0 && h.workflow.length <= 7, 'the keyless plan still carries a workflow');
+  const raw = { title: 't', summary: 's',
+    workflow: ['  Read the current meeting header  ', 'Add the Close button', 'Edit verticals/speakup/public/meetings.js',
+      'A'.repeat(200), '', 'Check it on a phone', 'Run the tests', 'Ship it', 'One step too many'],
+    what_changes: ['A Close button appears'], what_stays: [], how_you_know: [], decisions: [], watch_out: [], scope_plain: 'the meetings screen',
+    steps: [{ title: 'do it', detail: 'd', files: [{ path: 'verticals/speakup/public/meetings.js', change: 'modify' }], covers: ['R1'] }],
+    affected_systems: [], dependencies: [], risks: [], acceptance_criteria: [], test_plan: [], out_of_scope: [] };
+  const v = prepare.verifyPlan(raw, spec, project, cands);
+  ok(v.workflow.length <= 7, 'at most seven steps reach the card');
+  ok(v.workflow.indexOf('Read the current meeting header') === 0, 'titles are trimmed');
+  ok(!v.workflow.some(t => /meetings\.js|\//.test(t)), 'a step naming a file is dropped, like every other plain field');
+  ok(v.workflow.every(t => t.length <= 80), 'a long line is cut to a title');
+  ok(!v.workflow.some(t => !t.trim()), 'no empty steps');
+  const md = prepare.renderMarkdown({ id: 1 }, project, spec, v);
+  ok(/## The plan\n1\. Read the current meeting header/.test(md), 'the markdown leads with the numbered workflow');
+  const noFlow = prepare.verifyPlan(Object.assign({}, raw, { workflow: [] }), spec, project, cands);
+  ok(noFlow.workflow.length > 0, 'with no workflow from the model, what changes stands in rather than an empty card');
+  const src = fs.readFileSync(path.join(__dirname, 'public/console.js'), 'utf8');
+  ok(/details class="more"/.test(src) && /ol class="pflow"/.test(src), 'the card renders the workflow and folds the rest away');
+});
+
 test('the research agent: read-only, confined, and asked what to find out', () => {
   const sub = require('./src/factory/claude-subscription');
   const research = require('./src/factory/research');

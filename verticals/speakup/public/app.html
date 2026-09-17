@@ -20,6 +20,11 @@
   /* While a job or an answer is running there is nothing to send, so the send button gives its
      place to a moving bar: the screen says plainly that something is happening, and comes back
      the moment the box is usable again. */
+  /* The plan at a glance: numbered titles, nothing else. */
+  #plan .pflow{margin:10px 0 4px;padding-left:26px}
+  #plan .pflow li{margin:0 0 7px;font-size:15px;line-height:1.45}
+  #plan details.more{margin-top:6px}
+  #plan details.more>summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px}
   .prog{margin-left:auto;width:120px;height:8px;border-radius:999px;background:var(--raised);border:1px solid var(--line-strong);overflow:hidden}
   .prog span{display:block;width:40%;height:100%;background:var(--accent-solid);border-radius:999px;animation:slide 1.15s ease-in-out infinite}
   @keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
@@ -83,7 +88,7 @@
   </div>
 </footer>
 
-<script src="/speakup/console.js?v=13"></script>
+<script src="/speakup/console.js?v=14"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

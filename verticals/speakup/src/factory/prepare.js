@@ -91,7 +91,13 @@ function verifyPlan(raw, spec, project, candidates) {
   // dropped here rather than shown to someone deciding whether this is what they asked for.
   const looksTechnical = (s) => /[\w-]+\.(js|css|html|md|sql|json|ya?ml|png|svg)\b|\//.test(s);
   const plain = (a, max) => strs(a, max).filter(s => !looksTechnical(s));
+  // THE FIRST THING THE OWNER SEES IS A NUMBERED WORKFLOW OF TITLES (owner request 2026-09-17:
+  // the card carried so much that it was approved without being read). Short lines, no detail,
+  // no paths — the reasoning is still below, folded away.
+  const short = (a, max) => plain(a, max).map(t => t.replace(/\s+/g, ' ').trim().replace(/[.;]+$/, '').slice(0, 80)).filter(Boolean);
+  const workflow = short(raw.workflow, 7);
   return {
+    workflow: workflow.length ? workflow : short(raw.what_changes, 7),
     what_changes: plain(raw.what_changes, 8),
     what_stays: plain(raw.what_stays, 8),
     how_you_know: plain(raw.how_you_know, 8),
@@ -127,6 +133,7 @@ function heuristicPlan(spec, project, candidates) {
   // this path exists so the factory still works with no key, not to fake a considered plan.
   const asked = spec.instruction ? String(spec.instruction).slice(0, 400) : spec.requirements.map(r => r.text).join('; ').slice(0, 400);
   return {
+    workflow: spec.requirements.map(r => String(r.text).replace(/\s+/g, ' ').trim().slice(0, 80)).slice(0, 7),
     what_changes: spec.requirements.map(r => r.text).slice(0, 8),
     what_stays: ['Anything not listed above is left alone.'],
     how_you_know: spec.acceptance_criteria.length ? spec.acceptance_criteria.map(a => a.text).slice(0, 8) : spec.requirements.map(r => r.text).slice(0, 8),
@@ -167,6 +174,9 @@ function planPrompt(spec, project, candidates, corrections) {
     `CANDIDATE FILES in the deployed repository (keyword matches):\n${candidates.files.map(f => f.path).join('\n') || '(none)'}\n\nEXCERPTS:\n${excerpts}\n\n` +
     'THE OWNER READS THIS PLAN TO DECIDE WHETHER IT IS WHAT THEY ASKED FOR. They do not read code. ' +
     'So write what the software will DO differently, in plain sentences, and never put a file name or a path in these five fields:\n' +
+    '  workflow: THE FIRST THING THEY READ. 3 to 7 steps, each a SHORT TITLE of at most 8 words, in the order ' +
+    'the work happens, plain English, no detail sentence, no file names, no jargon (for example: "Read the current login page", ' +
+    '"Add the new button", "Check it on a phone"). This is the whole plan at a glance.\n' +
     '  what_changes: what will be different for someone using it, and where they will see it.\n' +
     '  what_stays: what deliberately does not change — what they should NOT expect to move.\n' +
     '  how_you_know: how they can tell it worked, by looking at the running app.\n' +
@@ -175,7 +185,7 @@ function planPrompt(spec, project, candidates, corrections) {
     '  scope_plain: ONE sentence naming what is touched in plain words ("only the SpeakUp screens"), never as paths.\n' +
     'Also return the technical half: ' +
     'Return {"title": short neutral title (no people or client names), "summary": string, ' +
-    '"what_changes": [string], "what_stays": [string], "how_you_know": [string], ' +
+    '"workflow": [string], "what_changes": [string], "what_stays": [string], "how_you_know": [string], ' +
     '"decisions": [{"choice": string, "why": string, "tradeoff": string|null}], "watch_out": [string], "scope_plain": string, "affected_systems": [string], ' +
     '"steps": [{"title": string, "detail": string, "files": [{"path": repo-relative path, "change": "modify"|"create"}], "covers": ["R1"]}], ' +
     '"dependencies": [string], "risks": [{"risk": string, "mitigation": string}], "acceptance_criteria": [string], "test_plan": [string], "out_of_scope": [string]}. ' +
@@ -190,6 +200,7 @@ function renderMarkdown(job, project, spec, plan) {
   const list = (h, arr) => { if (arr && arr.length) L.push('## ' + h, ...arr.map(x => '- ' + x), ''); };
   L.push(`# ${plan.title}`, '');
   if (plan.is_simulated) L.push('> Assembled WITHOUT a model, from the words you used. It has not reasoned about the code.', '');
+  if (plan.workflow && plan.workflow.length) { L.push('## The plan', ...plan.workflow.map((t, i) => `${i + 1}. ${t}`), ''); }
   list('What changes', plan.what_changes);
   list('What does not change', plan.what_stays);
   list('How you will know it worked', plan.how_you_know);
@@ -264,7 +275,7 @@ async function buildPlan({ job, project, spec, corrections, lang }) {
 
 // WHAT YOUR WORDS DID. Shown before the new plan, so a review never becomes a re-read of
 // forty lines hunting for the line that moved — which is how a review becomes a rubber stamp.
-const PLAIN_FIELDS = ['what_changes', 'what_stays', 'how_you_know', 'watch_out'];
+const PLAIN_FIELDS = ['workflow', 'what_changes', 'what_stays', 'how_you_know', 'watch_out'];
 function planDiff(before, after) {
   const d = { added: [], removed: [], changed: [] };
   if (!before || !after) return d;

@@ -111,6 +111,7 @@
     planTradeoff: ['A cambio', 'Trade-off'],
     planWatchOut: ['Ten esto en cuenta', 'Watch out for'],
     planScope: ['Alcance', 'Scope'],
+    planMore: ['Ver el detalle', 'See the detail'],
     planTechnical: ['Detalle técnico', 'Technical detail'],
     planStepsTitle: ['Pasos', 'Steps'],
     planCandidates: ['Archivos candidatos', 'Candidate files'],
@@ -513,14 +514,27 @@
     if (cands.length) html += '<div class="psec"><h3>' + esc(m('planCandidates')) + '</h3><ul class="pfiles">' + cands.map(fileRow).join('') + '</ul></div>';
     return html + '</details>';
   }
+  // THE PLAN IS A NUMBERED WORKFLOW, AND EVERYTHING ELSE IS FOLDED (owner request 2026-09-17:
+  // "too much info which I don't read, so I approve immediately without reading"). Seven short
+  // titles fit on a phone and can be read in ten seconds; the reasoning that used to fill the
+  // card is still there, one tap away, and so is the technical half.
+  function workflowList(items) {
+    var list = (items || []).filter(function (x) { return x != null && String(x).trim() !== ''; }).slice(0, 7);
+    if (!list.length) return '';
+    return '<ol class="pflow">' + list.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>';
+  }
   function planBody(plan, open) {
-    var html = section('planWhatChanges', plan.what_changes) +
+    var detail = section('planWhatChanges', plan.what_changes) +
       section('planWhatStays', plan.what_stays) +
       section('planHowYouKnow', plan.how_you_know) +
       decisionSection(plan.decisions) +
       section('planWatchOut', plan.watch_out);
-    if (plan.scope_plain) html += '<p class="pscope">' + esc(m('planScope')) + ': ' + esc(plan.scope_plain) + '</p>';
-    return html + techFold(plan, open);
+    if (plan.scope_plain) detail += '<p class="pscope">' + esc(m('planScope')) + ': ' + esc(plan.scope_plain) + '</p>';
+    var flow = workflowList(plan.workflow && plan.workflow.length ? plan.workflow : plan.what_changes);
+    // No workflow and no plain sections at all: show what there is rather than an empty card.
+    if (!flow) return detail + techFold(plan, open);
+    var more = detail ? '<details class="more"><summary>' + esc(m('planMore')) + '</summary>' + detail + '</details>' : '';
+    return flow + more + techFold(plan, open);
   }
   // WHAT YOUR WORDS DID. Shown above the plan after a revision or a drop, so a change is not
   // something the owner has to find by re-reading forty lines.

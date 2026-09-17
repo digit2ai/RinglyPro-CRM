@@ -31,7 +31,7 @@ const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascrip
 
 const PLAN = { id: 42, status: 'WAITING_APPROVAL', terminal: false, title: 'Change the logo', project_name: 'AutoDev',
   plan_hash: 'h42', plan_md: 'x', revisions: [], composed_by: 'heuristic',
-  plan: { what_changes: ['The logo reads VoiceUp'], what_stays: ['Everything else'], how_you_know: ['You see it'],
+  plan: { workflow: ['Read the current header', 'Change the logo text', 'Check it on a phone'], what_changes: ['The logo reads VoiceUp'], what_stays: ['Everything else'], how_you_know: ['You see it'],
     decisions: [], watch_out: [], scope_plain: 'small' } };
 const RUNNING = { id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev', plan_hash: null, revisions: [] };
 const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev', plan_hash: 'h41', revisions: [] };
@@ -132,6 +132,16 @@ server.listen(0, async () => {
       s = await state(page);
       ok(!s.idle && s.plan, `${w} a plan is waiting: you land directly on it`);
       ok(s.sendOn && !s.prog, `${w} a plan is waiting: the box can be used, no progress bar`);
+      // THE CARD IS A SHORT NUMBERED WORKFLOW. The long version is one tap away, closed.
+      const card = await page.evaluate(() => {
+        const steps = [...document.querySelectorAll('#plan ol.pflow li')].map(li => li.textContent.trim());
+        const more = document.querySelector('#plan details.more');
+        const visible = document.getElementById('plan').innerText;
+        return { steps, more: !!more, moreOpen: !!(more && more.open), detailShown: /Everything else/.test(visible), words: visible.split(/\s+/).length };
+      });
+      ok(card.steps.length === 3 && card.steps[0] === 'Read the current header', `${w} the plan reads as a numbered workflow of titles`);
+      ok(card.more && !card.moreOpen && !card.detailShown, `${w} the long detail is folded away, not on screen`);
+      ok(card.words < 120, `${w} the whole card is short enough to actually read (${card.words} words)`);
       ok(s.bar, `${w} a plan is waiting: the step bar is drawn`);
       ok(s.cancel, `${w} a plan is waiting: Cancel is offered`);
       // THE DEFECT. Clear beside Cancel on a live plan is what stranded it.
