@@ -1436,6 +1436,15 @@ test('sandbox', () => {
   const body = html.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<[^>]*>/g, ' ');
   ok(/\bThis is Digit2ai Sandbox\b/.test(body), 'the requested sentence is still shown, unchanged');
 
+  // A source note the page was asked to carry. A comment is invisible by
+  // definition, so both halves are asserted: it is in the served markup, and it
+  // is NOT in the text a visitor reads. Writing it as visible copy instead would
+  // pass a grep of the file and change the page, which is the failure to catch.
+  const notes = html.match(/<!--[\s\S]*?-->/g) || [];
+  ok(notes.filter(c => c === '<!-- This is a test -->').length === 1,
+    'the source carries the one-line note exactly once, as a comment');
+  ok(!/This is a test/.test(body), 'the note is a comment, so nothing new is shown on the page');
+
   // Still nothing that can run, and the one asset it fetches is its own, from
   // this origin: a theme is not a reason to start loading a third-party file.
   ok(!/<script|<iframe|<img/i.test(html), 'the page runs no script and embeds nothing');
