@@ -438,8 +438,12 @@ test('every page and the worker agree on every asset version', () => {
 test('there is no empty page, and Clear cannot strand a live plan', () => {
   const con = read('verticals/speakup/public/console.js');
   const html = read('verticals/speakup/public/app.html');
-  ok(/function clearPane\(\) \{\s*if \(jobId && !jobTerminal\) return;/.test(con),
+  // `force` exists for ONE caller: switching project starts a clean thread. Every other path
+  // still refuses to hide a job that is running.
+  ok(/function clearPane\(force\) \{\s*if \(jobId && !jobTerminal && !force\) return;/.test(con),
      'clearPane refuses a job that is still in progress');
+  ok((con.match(/clearPane\(true\)/g) || []).length === 1 && /clearPane\(true\);\s*\n\s*status\(L\('Proyecto/.test(con),
+     'the only forced clear is the project switch');
   ok(/if \(job && job\.terminal\) html \+= '<button class="lnk" id="clearBtn">'/.test(con),
      'Clear is drawn only for a finished job');
   ok(/if \(\$\('clearBtn'\)\) \$\('clearBtn'\)\.addEventListener/.test(con),
@@ -1069,8 +1073,9 @@ test('the screen speaks plain words, not GitHub vocabulary', () => {
   ok(/'Saving the change'/.test(con) && /'Proposing the change'/.test(con), 'the pane says what happened, not how');
   // The link still opens a page GitHub calls a pull request, so the real word survives
   // where it is true — in the tooltip — rather than being scrubbed everywhere.
-  ok(/title="' \+\s*\n?\s*L\('Pull request en GitHub', 'Pull request on GitHub'\)/.test(con) || /Pull request on GitHub/.test(con),
-    'the link keeps the real word in its tooltip');
+  ok(/L\('Pull request #', 'Pull request #'\)/.test(con) && /L\('en GitHub', 'on GitHub'\)/.test(con),
+    'the link keeps the real word, and the number, in its tooltip');
+  ok(/var label = name \? String\(name\)/.test(con), 'and the chip itself reads as the name of the change');
   ok(/L\('Cambio #', 'Change #'\)/.test(con), 'and reads plainly on the chip');
   // "Cambio #5" beside a button labelled "Cambios" was two different things one letter apart.
   ok(!/L\('Cambios', 'Changes'\)/.test(con), 'the diff button no longer collides with the change link');

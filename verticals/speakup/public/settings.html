@@ -56,12 +56,18 @@
     <h2 id="rTitle">Reglas de la casa</h2>
     <p class="tiny" id="rNote">La fábrica las lee antes de cada instrucción.</p>
     <textarea class="edit" id="rules" spellcheck="false" rows="7"></textarea>
+    <div class="row"><span class="k" id="kProj">Proyecto</span>
+      <span class="v"><select class="btn small" id="projSel"></select></span></div>
+    <p class="tiny" id="pNote">Reglas solo para este proyecto, además de las de la casa. El nombre es el que verás en la Fábrica.</p>
+    <div class="row"><span class="k" id="kName">Nombre</span><span class="v"><input class="edit" id="projName" style="height:40px"></span></div>
+    <textarea class="edit" id="projRules" spellcheck="false" rows="5"></textarea>
+    <div class="acts"><button class="btn small primary" id="saveProj">Guardar proyecto</button><span class="stat" id="pStat"></span></div>
     <div class="acts"><button class="btn small primary" id="saveRules">Guardar</button>
       <button class="btn small" id="resetRules">Restaurar</button><span class="stat" id="rStat"></span></div>
   </section>
 </main>
 
-<script src="/speakup/settings.js?v=3"></script>
+<script src="/speakup/settings.js?v=4"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

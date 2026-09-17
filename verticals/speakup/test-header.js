@@ -100,6 +100,11 @@ server.listen(0, async () => {
           const targets = await page.$$eval('#hdrMenu .lnk', els => els.map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim(), h: r.height, w: r.width }; }));
           // History, New meeting, Settings, language, sign out — the same five on every screen.
           ok(targets.length === 5, `${name} ${label}: all five menu entries are in the menu (${targets.map(t => t.t).join(' / ')})`);
+          // The Factory also carries the workspace picker in there — a control, not a menu entry.
+          if (name === 'factory') {
+            const sel = await page.$eval('#hdrMenu .sel', el => { const r = el.getBoundingClientRect(); return { n: el.options.length, h: r.height, right: r.right }; }).catch(() => null);
+            ok(sel && sel.h >= 44, `${name} ${label}: the project picker is a 44px target`);
+          }
           ok(targets.every(t => t.h >= 44), `${name} ${label}: every control is a 44px target (${targets.map(t => Math.round(t.h)).join(',')})`);
 
           // The panel must sit over the page, not push it around.

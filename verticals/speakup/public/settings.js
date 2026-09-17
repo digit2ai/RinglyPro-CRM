@@ -28,6 +28,46 @@
       $('rStat').textContent = d.is_default ? L('Reglas por defecto', 'Default rules') : '';
     } catch (e) { /* not the operator: no card */ }
   }
+  /* PER-PROJECT RULES AND THE PROJECT'S NAME. The name is what the Factory header shows, so a
+   * workspace can be called what the owner calls it rather than a registry key. */
+  var projects = [], projKey = '';
+  async function loadProjects() {
+    try {
+      var d = await api('/factory/projects');
+      projects = (d && d.projects) || [];
+      if (!projects.length) return;
+      try { projKey = localStorage.getItem('speakup_project') || ''; } catch (e) {}
+      if (!projects.some(function (p) { return p.key === projKey; })) projKey = projects[0].key;
+      $('projSel').innerHTML = projects.map(function (p) { return '<option value="' + p.key + '">' + (p.name || p.key) + '</option>'; }).join('');
+      $('projSel').value = projKey;
+      $('projSel').addEventListener('change', function () { projKey = $('projSel').value; showProject(); });
+      showProject();
+    } catch (e) { /* not the operator */ }
+  }
+  async function showProject() {
+    var p = projects.filter(function (x) { return x.key === projKey; })[0];
+    $('projName').value = (p && p.name) || projKey;
+    $('pStat').textContent = '';
+    try {
+      var d = await api('/factory/rules?project=' + encodeURIComponent(projKey));
+      $('projRules').value = (d && d.rules) || '';
+    } catch (e) { $('projRules').value = ''; }
+  }
+  async function saveProject() {
+    $('saveProj').disabled = true;
+    $('pStat').textContent = L('Guardando…', 'Saving…');
+    try {
+      await api('/factory/rules', { method: 'PUT', body: JSON.stringify({ rules: $('projRules').value, project_key: projKey }) });
+      var name = $('projName').value.trim();
+      if (name) {
+        await api('/factory/projects/' + encodeURIComponent(projKey), { method: 'PATCH', body: JSON.stringify({ name: name }) });
+        var p = projects.filter(function (x) { return x.key === projKey; })[0];
+        if (p) { p.name = name; $('projSel').querySelector('option[value="' + projKey + '"]').textContent = name; }
+      }
+      $('pStat').textContent = L('Guardado', 'Saved');
+    } catch (e) { $('pStat').textContent = e.message; }
+    finally { $('saveProj').disabled = false; }
+  }
   async function saveRules() {
     $('saveRules').disabled = true;
     $('rStat').textContent = L('Guardando…', 'Saving…');
@@ -76,6 +116,11 @@
       'The factory reads these before every instruction, so you never have to repeat them.');
     $('saveRules').textContent = L('Guardar', 'Save');
     $('resetRules').textContent = L('Restaurar', 'Reset');
+    $('kProj').textContent = L('Proyecto', 'Project');
+    $('kName').textContent = L('Nombre', 'Name');
+    $('saveProj').textContent = L('Guardar proyecto', 'Save project');
+    $('pNote').textContent = L('Reglas solo para este proyecto, además de las de la casa. El nombre es el que verás en la Fábrica.',
+      'Rules for this project only, on top of the house rules. The name is what you see in the Factory.');
     document.title = L('AutoDev — Ajustes', 'AutoDev — Settings');
   }
   async function signOut() {
@@ -91,6 +136,8 @@
   $('saveRules').addEventListener('click', saveRules);
   $('resetRules').addEventListener('click', function () { $('rules').value = defaultRules; $('rStat').textContent = L('Sin guardar', 'Not saved yet'); });
   loadRules();
+  loadProjects();
+  $('saveProj').addEventListener('click', saveProject);
   api('/auth/me').then(function (d) { $('vUser').textContent = (d.user && d.user.email) || '—'; });
   api('/factory/health').then(function (d) { model = d.model || null; $('vModel').textContent = modelLine(); });
 })();

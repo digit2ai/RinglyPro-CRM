@@ -35,7 +35,7 @@ const PLAN = { id: 42, status: 'WAITING_APPROVAL', terminal: false, title: 'Chan
     decisions: [], watch_out: [], scope_plain: 'small' } };
 const REVIEW = { id: 44, status: 'READY_FOR_REVIEW', terminal: false, title: 'Waiting for you', project_name: 'AutoDev', pr_number: 12, pr_url: 'https://github.com/x/y/pull/12', revisions: [] };
 const RUNNING = { id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev', plan_hash: null, revisions: [] };
-const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev', plan_hash: 'h41', revisions: [] };
+const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev', plan_hash: 'h41', revisions: [], pr_number: 7, pr_url: 'https://github.com/x/y/pull/7' };
 
 let scenario = { jobs: [] };
 let newJobCalls = 0;
@@ -67,6 +67,8 @@ const server = http.createServer((req, res) => {
       // Anything reaching this endpoint while a plan is waiting is the second-job defect.
       newJobCalls++;
       body = { intent: 'PREPARE_IMPLEMENTATION', reply: 'new job', card: { job_id: 99 } };
+    } else if (/\/factory\/projects/.test(req.url)) {
+      body = { projects: [{ key: 'ringlypro', name: 'RinglyPro CRM' }, { key: 'speakup', name: 'AutoDev' }] };
     } else if (/\/factory\/jobs\/(\d+)\/events/.test(req.url)) {
       const j = byId(+RegExp.$1);
       body = { status: j.status, terminal: j.terminal, pr_number: null, pr_url: null, events: [{ id: 1, kind: 'status', text: j.status }] };
@@ -163,6 +165,8 @@ server.listen(0, async () => {
       s = await state(page);
       ok(!s.idle && s.bar, `${w} a finished job is shown`);
       ok(s.clear, `${w} a finished job: Clear IS offered`);
+      ok(/An older change/.test(await page.evaluate(() => document.getElementById('bar').textContent)),
+        `${w} the change reads as its name, not as a row number`);
       ok(s.sendOn && !s.prog, `${w} a finished job: the box is usable again`);
       await page.click('#clearBtn');
       await new Promise((r) => setTimeout(r, 400));
@@ -175,6 +179,32 @@ server.listen(0, async () => {
       await new Promise((r) => setTimeout(r, 600));
       s = await state(page);
       ok(!s.idle && s.out, `${w} from idle, sending brings the work area back`);
+      await page.close();
+
+      // ── 5a1. the workspace picker ────────────────────────────────────────────
+      // Every instruction used to go to one hardcoded project with one pile of memory.
+      page = await open([], width);
+      const pick = await page.evaluate(() => {
+        const s = document.getElementById('proj');
+        return { count: s.options.length, names: [...s.options].map(o => o.textContent), value: s.value };
+      });
+      ok(pick.count === 2 && pick.names.indexOf('RinglyPro CRM') >= 0, `${w} the header lists the projects by name`);
+      ok(pick.value === 'ringlypro', `${w} and starts on the default one`);
+      await page.select('#proj', 'speakup');
+      await new Promise((r) => setTimeout(r, 400));
+      const kept = await page.evaluate(() => localStorage.getItem('speakup_project'));
+      ok(kept === 'speakup', `${w} the choice is remembered on this device`);
+      // The instruction carries the chosen project, so its plan and its memory belong to it.
+      let sent = null;
+      await page.setRequestInterception(true);
+      page.on('request', (r) => {
+        if (/\/factory\/command/.test(r.url()) && r.method() === 'POST') { try { sent = JSON.parse(r.postData() || '{}'); } catch (e) {} }
+        r.continue();
+      });
+      await page.type('#cmd', 'add a footer line');
+      await page.click('#send');
+      await new Promise((r) => setTimeout(r, 500));
+      ok(sent && sent.project_key === 'speakup', `${w} the instruction is sent to the chosen project (${sent && sent.project_key})`);
       await page.close();
 
       // ── 5a2. where the step bar sits ─────────────────────────────────────────

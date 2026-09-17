@@ -21,7 +21,11 @@
 const { Op } = require('sequelize');
 const { Command, Job, Setting } = require('../models');
 
+// A WORKSPACE IS A PROJECT (owner request 2026-09-17). Rules and remembered work are kept per
+// project as well as globally: the global rules always apply, a project's rules are added on
+// top, and a project only ever remembers its own instructions.
 const RULES_KEY = 'house_rules';
+const projectKey = (k) => 'house_rules:' + String(k || '').slice(0, 60);
 const RULES_MAX = 4000;
 const THREAD_MAX = 2500;
 const DEFAULT_RULES = [
@@ -31,18 +35,20 @@ const DEFAULT_RULES = [
   'Write plainly in the plan: what I will see, and where.'
 ].join('\n');
 
-async function rules(tenant_id) {
-  const row = await Setting.findOne({ where: { tenant_id, key: RULES_KEY } });
-  if (!row) return { text: DEFAULT_RULES, is_default: true };
-  return { text: String(row.value || '').slice(0, RULES_MAX), is_default: false };
+async function rules(tenant_id, project_key) {
+  const key = project_key ? projectKey(project_key) : RULES_KEY;
+  const row = await Setting.findOne({ where: { tenant_id, key } });
+  if (!row) return { text: project_key ? '' : DEFAULT_RULES, is_default: !project_key, project_key: project_key || null };
+  return { text: String(row.value || '').slice(0, RULES_MAX), is_default: false, project_key: project_key || null };
 }
 
-async function setRules(tenant_id, text) {
+async function setRules(tenant_id, text, project_key) {
+  const key = project_key ? projectKey(project_key) : RULES_KEY;
   const value = String(text == null ? '' : text).replace(/\r/g, '').slice(0, RULES_MAX);
-  const row = await Setting.findOne({ where: { tenant_id, key: RULES_KEY } });
+  const row = await Setting.findOne({ where: { tenant_id, key } });
   if (row) await row.update({ value, updated_at: new Date() });
-  else await Setting.create({ tenant_id, key: RULES_KEY, value });
-  return { text: value, is_default: false };
+  else await Setting.create({ tenant_id, key, value });
+  return { text: value, is_default: false, project_key: project_key || null };
 }
 
 function line(cmd, job) {
@@ -67,8 +73,9 @@ function line(cmd, job) {
  * long history costs the same as a short one — the oldest lines are dropped, never summarised
  * by a model that could invent what happened.
  */
-async function recentWork(tenant_id, { limit = 8, exclude_command_id = null } = {}) {
+async function recentWork(tenant_id, { limit = 8, exclude_command_id = null, project_key = null } = {}) {
   const where = { tenant_id, mode: 'architect' };
+  if (project_key) where.project_key = String(project_key).slice(0, 60);
   if (exclude_command_id) where.id = { [Op.ne]: exclude_command_id };
   const cmds = await Command.findAll({ where, order: [['id', 'DESC']], limit: Math.min(limit, 20) });
   if (!cmds.length) return '';
@@ -99,12 +106,15 @@ async function recentWork(tenant_id, { limit = 8, exclude_command_id = null } = 
 
 // One block for a prompt. Empty string when there is nothing to say, so no prompt grows for free.
 async function contextBlock(tenant_id, opts) {
+  opts = opts || {};
   const r = await rules(tenant_id);
+  const pr = opts.project_key ? await rules(tenant_id, opts.project_key) : { text: '' };
   const work = await recentWork(tenant_id, opts);
   const parts = [];
   if (r.text) parts.push('HOUSE RULES the owner set for every change (follow them unless this instruction says otherwise):\n' + r.text);
+  if (pr.text) parts.push('RULES FOR THIS PROJECT (' + opts.project_key + '), on top of the house rules:\n' + pr.text);
   if (work) parts.push('RECENT WORK IN THIS CONSOLE, oldest first. The new instruction may be a follow-up to it — read it that way before assuming anything new:\n' + work);
   return parts.join('\n\n');
 }
 
-module.exports = { RULES_KEY, RULES_MAX, THREAD_MAX, DEFAULT_RULES, rules, setRules, recentWork, contextBlock, line };
+module.exports = { RULES_KEY, projectKey, RULES_MAX, THREAD_MAX, DEFAULT_RULES, rules, setRules, recentWork, contextBlock, line };

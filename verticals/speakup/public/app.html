@@ -35,6 +35,11 @@
   /* No empty page: with nothing in progress the step bar and the work pane are not drawn.
      console.js adds .idle only when there is no job; any job, event or plan removes it. */
   body.idle #bar, body.idle #out{display:none}
+  /* The workspace picker: the same chip as the other header controls. */
+  /* Its own class, not `.lnk`: the menu's five entries are counted, and a picker is not one
+     of them. Styled like a chip, and a real 44px target on a phone. */
+  .sel{max-width:44vw;font:inherit;min-height:44px;padding:0 10px;border-radius:11px;
+    border:1px solid var(--line-strong);background:var(--surface);color:var(--text)}
   /* Phone: header, work, box, then the steps. */
   #bar{flex:0 0 auto;margin:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);background:var(--paper);justify-content:center}
@@ -70,6 +75,7 @@
   </nav>
   <div class="hdrmenu" id="hdrMenu">
     <span class="where" id="ctx"></span>
+    <select class="sel" id="proj" aria-label="Proyecto"></select>
     <a class="lnk" href="/speakup/history" id="navHistory">Historial</a>
     <a class="lnk" href="/speakup/meetings?new=1" id="navNew">Nueva reunión</a>
     <a class="lnk" href="/speakup/settings" id="navSettings">Ajustes</a>

@@ -286,7 +286,7 @@ async function buildPlan({ job, project, spec, corrections, lang }) {
   // instructions are read on every plan, so a follow-up ("no, on the existing page") is
   // understood as a follow-up instead of a brand new request.
   let remembered = '';
-  try { remembered = await memory.contextBlock(job.tenant_id, { exclude_command_id: job.command_id }); }
+  try { remembered = await memory.contextBlock(job.tenant_id, { exclude_command_id: job.command_id, project_key: job.project_key }); }
   catch (e) { console.error('SpeakUp memory unavailable for the plan:', e.message); }
   const terms = repo.terms(spec.requirements.flatMap(r => [r.text, r.quote]).concat((corrections || []).map(c => c.text)));
   const candidates = repo.candidateFiles(project.path_scope, terms, 12);

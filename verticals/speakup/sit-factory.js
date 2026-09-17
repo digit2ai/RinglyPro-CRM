@@ -392,6 +392,25 @@ const server = app.listen(0, async () => {
     const memB = await call(B, 'GET', '/factory/memory');
     ok(!/Change a label on the SpeakUp console header/.test(memB.d.recent_work || ''), 'one owner never remembers another owner\'s work');
 
+    // ── A workspace is a project: its own rules, its own memory ───────────────
+    const pr1 = await call(A, 'PUT', '/factory/rules', { rules: 'Speakup only: never touch the recorder.', project_key: 'speakup' });
+    ok(pr1.status === 200 && pr1.d.project_key === 'speakup', 'a project can carry rules of its own');
+    const pr2 = await call(A, 'GET', '/factory/rules?project=speakup');
+    ok(/never touch the recorder/.test(pr2.d.rules), 'and they are kept for that project');
+    const otherProject = await call(A, 'GET', '/factory/rules?project=jobmd');
+    ok(!/recorder/.test(otherProject.d.rules || ''), 'another project does not inherit them');
+    const houseStill = await call(A, 'GET', '/factory/rules');
+    ok(/visible result/.test(houseStill.d.rules), 'and the house rules are untouched by a project rule');
+    const block = await memory.contextBlock(opA.id, { project_key: 'speakup' });
+    ok(/HOUSE RULES/.test(block) && /RULES FOR THIS PROJECT \(speakup\)/.test(block), 'a plan for that project reads both, house rules first');
+    const plain = await memory.contextBlock(opA.id, { project_key: 'jobmd' });
+    ok(/HOUSE RULES/.test(plain) && !/recorder/.test(plain), 'and a plan for another project reads only the house rules');
+    // Memory is per project too: the console job above ran on `speakup`.
+    const memSpeak = await call(A, 'GET', '/factory/memory?project=speakup');
+    const memJobmd = await call(A, 'GET', '/factory/memory?project=jobmd');
+    ok(/you asked: "/.test(memSpeak.d.recent_work), 'the project remembers its own instructions');
+    ok((memJobmd.d.recent_work || '') === '', 'a project with no work of its own remembers nothing');
+
     // ── Failure paths never disappear ─────────────────────────────────────────
     async function readyJob(title) {
       const r = await call(A, 'POST', '/recordings', { title, source: 'call', lang: 'es', text: 'Queda aprobado: el recordatorio de citas debe enviarse un día antes. ' + title });

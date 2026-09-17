@@ -97,6 +97,42 @@
   }
 
   // ── the top pane ───────────────────────────────────────────────────────────
+  /* WHICH PROJECT AM I WORKING ON (owner request 2026-09-17). Every instruction used to go to
+   * one hardcoded project, and the memory was everything the owner had ever done. The header
+   * now carries a picker: the choice is remembered on this device, travels with every
+   * instruction and every question, and scopes the remembered work, the project's own rules
+   * and which past change is restored on boot. All projects still point at one repository. */
+  var PROJ = 'speakup_project';
+  var projects = [], projectKey = (function () { try { return localStorage.getItem(PROJ) || ''; } catch (e) { return ''; } })();
+  function projectName(key) {
+    for (var i = 0; i < projects.length; i++) if (projects[i].key === key) return projects[i].name || key;
+    return key || '';
+  }
+  function setProject(key) {
+    projectKey = key || '';
+    try { localStorage.setItem(PROJ, projectKey); } catch (e) {}
+    if ($('proj')) $('proj').value = projectKey;
+  }
+  async function loadProjects() {
+    try {
+      var d = await api('/factory/projects');
+      projects = (d && d.projects) || [];
+      if (!projects.length) return;
+      if (!projects.some(function (p) { return p.key === projectKey; })) setProject((projects.filter(function (p) { return p.key === 'ringlypro'; })[0] || projects[0]).key);
+      var sel = $('proj');
+      sel.innerHTML = projects.map(function (p) { return '<option value="' + esc(p.key) + '">' + esc(p.name || p.key) + '</option>'; }).join('');
+      sel.value = projectKey;
+      sel.addEventListener('change', function () {
+        setProject(sel.value);
+        // A different project is a different thread: the pane starts clean rather than showing
+        // the last change of the project you just left.
+        clearPane(true);
+        status(L('Proyecto: ', 'Project: ') + projectName(projectKey));
+        boot();
+      });
+    } catch (e) { /* not the operator: no picker */ }
+  }
+
   var STATUS_TEXT = {
     ANALYZING: ['Leyendo la instrucción', 'Reading the instruction'], PLANNING: ['Planificando', 'Planning'],
     WAITING_APPROVAL: ['Plan listo: léelo abajo', 'Plan ready: read it below'],
@@ -253,8 +289,12 @@
     // The link opens a page GitHub calls a pull request, so the real word stays in the
     // tooltip while the chip itself reads in plain language. And the button beside it says
     // what it shows — "Cambio #5" next to "Cambios" was two different things, one letter apart.
+    // THE CHIP SAYS WHAT THE CHANGE IS, NOT WHICH NUMBER IT IS. "Change #10" is a row id and
+    // means nothing to the owner; the plan already gave the work a name.
+    var name = job && (job.title || (job.plan && job.plan.title));
+    var label = name ? String(name).slice(0, 42) : (L('Cambio #', 'Change #') + (job && job.pr_number));
     if (job && job.pr_url) html += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener" title="' +
-      L('Pull request en GitHub', 'Pull request on GitHub') + '">' + L('Cambio #', 'Change #') + job.pr_number + '</a>' +
+      L('Pull request #', 'Pull request #') + job.pr_number + ' — ' + L('en GitHub', 'on GitHub') + '">' + esc(label) + '</a>' +
       '<button class="lnk" id="diffBtn">' + L('Ver archivos', 'See the files') + '</button>';
     if (job && !job.terminal) html += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
     if (job && job.terminal) html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
@@ -283,8 +323,8 @@
   // and it nulled planJob — so the next message skipped the correction path and started a
   // SECOND job underneath the unread plan. "No new job under a plan waiting to be read" is
   // enforced in this file, and Clear was the way around it. A live job has Cancel.
-  function clearPane() {
-    if (jobId && !jobTerminal) return;
+  function clearPane(force) {
+    if (jobId && !jobTerminal && !force) return;
     clearTimeout(timer);
     if (jobId && jobTerminal) dismiss(jobId);
     jobId = null; jobTerminal = false; lastEvent = 0;
@@ -428,7 +468,7 @@
     status(L('Enviando…', 'Sending…'));
     try {
       var d = await api('/factory/command', { method: 'POST', body: JSON.stringify({
-        text: text, mode: 'architect', lang: lang, project_key: 'ringlypro', engine: SR ? 'webspeech' : 'typed',
+        text: text, mode: 'architect', lang: lang, project_key: projectKey || 'ringlypro', engine: SR ? 'webspeech' : 'typed',
         upload_ids: shots.map(function (s) { return s.id; }) }) });
       $('cmd').value = '';
       shots.forEach(function (s) { URL.revokeObjectURL(s.url); });
@@ -462,7 +502,7 @@
     setWorking(true);
     try {
       var r = await fetch('/speakup/api/v1/factory/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SpeakUp': '1' },
-        body: JSON.stringify({ text: text, lang: lang, history: talk.slice(-8) }) });
+        body: JSON.stringify({ text: text, lang: lang, project_key: projectKey || undefined, history: talk.slice(-8) }) });
       if (r.status === 401) { location.href = '/speakup/login'; return; }
       if (!r.ok || !r.body) { var j = await r.json().catch(function () { return {}; }); throw new Error(j.error || ('HTTP ' + r.status)); }
       var reader = r.body.getReader(), dec = new TextDecoder(), buf = '', final = null;
@@ -826,17 +866,25 @@
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && jobId) follow(jobId); });
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(function () {});
 
+    await loadProjects();
+    await boot();
+  })();
+
+  // What to show on opening, for the project on screen: a job of THIS project that is still
+  // running, else its last finished one unless it was cleared away.
+  async function boot() {
     try {
       var ov = await api('/factory/overview?lang=' + lang);
       if (!ov.operator) { banner('notOperator'); return; }
       if (ov.readiness && !ov.readiness.ready) {
         banner('blocked', { html: ov.readiness.blockers.map(function (b) { return esc(b.fix); }).join('<br>') });
       }
-      var running = (ov.jobs || []).filter(function (j) { return !j.terminal; })[0];
-      var last = (ov.jobs || [])[0];
+      var mine = (ov.jobs || []).filter(function (j) { return !projectKey || !j.project_key || j.project_key === projectKey; });
+      var running = mine.filter(function (j) { return !j.terminal; })[0];
+      var last = mine[0];
       if (running) follow(running.id, true);
       else if (last && last.id > dismissed()) follow(last.id, true);
       else { renderBar(null); showIdle(); }
     } catch (e) { /* redirected on 401 */ }
-  })();
+  }
 })();
