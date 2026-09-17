@@ -1,18 +1,17 @@
-/* SpeakUp — Meeting Notes Taker.
+/* AutoDev — Meetings: record a meeting, then talk to it.
  *
- * Record a meeting, read what was said back as a checklist, tick the items that are real
- * work, and carry them across to the Factory as editable text. Nothing here writes code,
- * dispatches a job, or sends anything on its own.
+ * The Decisions / Other checklist is gone. One meeting is on screen at a time — the one in
+ * ?id=, or the last one opened — and the owner asks for anything about it in plain words: a
+ * summary, the minutes, action items, a build prompt, an email. Past meetings moved to
+ * /speakup/history.
  *
- * THE CHECKLIST IS THE SERVER'S TRUTH, NEVER LOCAL STATE. Ticking a row PATCHes the item
- * and the whole list is re-rendered from the response. The verifier on the server may
- * refuse a promotion (a quote that is not in the transcript, an approval nobody said out
- * loud); if the screen drew the tick from local state it would show an approval the server
- * never granted, which is the one lie this product exists to prevent.
+ * THE THREAD IS THE SERVER'S TRUTH. A reply streams into a temporary bubble for speed, and
+ * the moment the server confirms what it stored, that bubble is replaced by the stored
+ * message — so the screen never shows an answer the database does not have.
  *
- * THE HAND-OFF IS A SESSION KEY, NOT A SEND. "Enviar a la Fábrica" stores the prompt under
- * sessionStorage['speakup_incoming_prompt'] as {text, recording_id, at} and navigates. The
- * console reads that key into its instruction box, where a person edits it and presses send.
+ * "TRANSFER TO FACTORY" STOPS AT A PLAN. The button and the typed or dictated command both
+ * go to the server, which hands the answer to the Factory without running anything; the
+ * receipt links to the job, where the owner reads the plan and types "approved".
  *
  * The recording engine is record-engine.js. This file draws.
  */
@@ -22,15 +21,12 @@
   var $ = function (id) { return document.getElementById(id); };
   var lang = (function () { try { return localStorage.getItem('speakup_lang') || 'es'; } catch (e) { return 'es'; } })();
   var L = function (es, en) { return lang === 'en' ? en : es; };
-  var INCOMING = 'speakup_incoming_prompt';
+  var ACTIVE = 'speakup_active_meeting';
 
-  var recId = null;           // the meeting on screen
-  var intel = null;           // the server's latest intelligence for it
-  var original = {};          // item id -> the classification it had when we first saw it
-  var promptText = '';
-  var promptRecId = null;
-  var meetings = [];
-  var busyItem = {};
+  var meeting = null;          // { id, title, date_label, transcript }
+  var messages = [];           // stored messages for the meeting on screen
+  var busy = false;
+  var pending = null;          // { name, mime, data_base64, url } — one screenshot per message
 
   // ── helpers ────────────────────────────────────────────────────────────────
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
@@ -42,258 +38,256 @@
     return d;
   }
   function stat(s) { $('stat').textContent = s || ''; }
+  function msgStat(s) { $('msgStat').textContent = s || ''; }
   function fmt(s) { return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
   function show(el, yes) { $(el).hidden = !yes; }
 
-  // ── the groups. Each item lands in exactly one, so nothing is shown twice and
-  //    nothing quietly disappears. Kind decides first, so a row does not jump to
-  //    another heading the moment it is ticked.
-  var GROUPS = [
-    { key: 'decisions', es: 'Decisiones', en: 'Decisions' },
-    { key: 'requirements', es: 'Requisitos', en: 'Requirements' },
-    { key: 'bugs', es: 'Errores', en: 'Bugs' },
-    { key: 'features', es: 'Funcionalidades', en: 'Features' },
-    { key: 'ideas', es: 'Ideas', en: 'Ideas' },
-    { key: 'suggestions', es: 'Sugerencias', en: 'Suggestions' },
-    { key: 'questions', es: 'Preguntas abiertas', en: 'Open questions' },
-    { key: 'other', es: 'Otros', en: 'Other' }
+  // ── starter chips. Optional shortcuts that send a sentence; the box takes anything. ──
+  var CHIPS = [
+    ['Resumen', 'Summary', 'Dame un resumen de la reunión.', 'Give me a summary of the meeting.'],
+    ['Acta', 'Minutes', 'Escribe el acta de la reunión.', 'Write the meeting minutes.'],
+    ['Tareas', 'Action items', 'Lista las tareas con responsable y fecha.', 'List the action items with owner and date.'],
+    ['Decisiones', 'Decisions', '¿Qué decisiones se tomaron?', 'What decisions were made?'],
+    ['Convertir a prompt', 'Build prompt', 'Convierte esto en un prompt de construcción.', 'Convert this into a build prompt.'],
+    ['Correo', 'Email', 'Redacta un correo con lo acordado.', 'Draft an email with what was agreed.'],
+    ['WhatsApp', 'WhatsApp', 'Redacta un mensaje de WhatsApp con lo acordado.', 'Draft a WhatsApp message with what was agreed.']
   ];
-  function groupOf(i) {
-    if (i.kind === 'requirement') return 'requirements';
-    if (i.kind === 'bug') return 'bugs';
-    if (i.kind === 'feature') return 'features';
-    if (i.kind === 'open_question') return 'questions';
-    if (i.kind === 'decision' || i.classification === 'DECISION') return 'decisions';
-    if (i.classification === 'IDEA') return 'ideas';
-    if (i.classification === 'SUGGESTION') return 'suggestions';
-    return 'other';
-  }
-  var KIND_LABEL = {
-    requirement: ['requisito', 'requirement'], bug: ['error', 'bug'], feature: ['funcionalidad', 'feature'],
-    business_rule: ['regla', 'business rule'], decision: ['decisión', 'decision'], action_item: ['tarea', 'action item'],
-    open_question: ['pregunta', 'open question'], technical_consideration: ['técnico', 'technical'],
-    acceptance_criterion: ['criterio', 'acceptance criterion']
-  };
-  function kindLabel(k) { var m = KIND_LABEL[k]; return m ? L(m[0], m[1]) : k; }
-
-  // ── the checklist ──────────────────────────────────────────────────────────
-  function remember(data) {
-    var items = (data && data.items) || [];
-    for (var i = 0; i < items.length; i++) {
-      // Only the FIRST sighting counts. After a tick the server reports
-      // APPROVED_REQUIREMENT, and overwriting here would lose what to restore on untick.
-      if (!Object.prototype.hasOwnProperty.call(original, items[i].id)) original[items[i].id] = items[i].classification;
-    }
-  }
-
-  function renderIntel() {
-    show('intelCard', !!intel);
-    if (!intel) return;
-    var items = intel.items || [];
-    var buckets = {};
-    for (var g = 0; g < GROUPS.length; g++) buckets[GROUPS[g].key] = [];
-    for (var i = 0; i < items.length; i++) buckets[groupOf(items[i])].push(items[i]);
-
-    var html = '';
-    for (var k = 0; k < GROUPS.length; k++) {
-      var grp = GROUPS[k], list = buckets[grp.key];
-      if (!list.length) continue;
-      html += '<div class="grp"><h3>' + esc(L(grp.es, grp.en)) + ' <span class="count">' + list.length + '</span></h3>';
-      for (var n = 0; n < list.length; n++) {
-        var it = list[n];
-        var on = it.classification === 'APPROVED_REQUIREMENT';
-        html += '<label class="row' + (on ? ' on' : '') + '">' +
-          '<input type="checkbox" data-item="' + esc(it.id) + '"' + (on ? ' checked' : '') + (busyItem[it.id] ? ' disabled' : '') +
-          ' aria-label="' + esc(L('Aprobar', 'Approve')) + '">' +
-          '<span class="body">' +
-            '<span class="txt"><span class="kind">' + esc(kindLabel(it.kind)) + '</span>' + esc(it.text) + '</span>' +
-            '<span class="tiny" style="display:block">' + esc(L('Dicho: ', 'Said: ')) + '“' + esc(it.quote) + '”</span>' +
-            (it.notes && it.notes.length ? '<span class="tiny" style="display:block">' + esc(it.notes.join(' · ')) + '</span>' : '') +
-          '</span></label>';
-      }
-      html += '</div>';
-    }
-    if (!html) html = '<p class="tiny">' + esc(L('No se extrajo nada de esta transcripción.', 'Nothing was extracted from this transcript.')) + '</p>';
-
-    if (intel.unverified && intel.unverified.length) {
-      html += '<div class="grp"><h3>' + esc(L('Sin verificar', 'Unverified')) + ' <span class="count">' + intel.unverified.length + '</span></h3>';
-      for (var u = 0; u < intel.unverified.length; u++) {
-        var uv = intel.unverified[u];
-        html += '<div class="row"><span class="body"><span class="txt">' + esc(uv.text) + '</span>' +
-          '<span class="tiny" style="display:block">' + esc(uv.reason || '') + '</span></span></div>';
-      }
-      html += '<p class="tiny">' + esc(L('No se pueden aprobar: su cita no aparece en la transcripción.',
-        'These cannot be approved: their quote is not in the transcript.')) + '</p></div>';
-    }
-
-    $('intelBody').innerHTML = html;
-    var boxes = $('intelBody').querySelectorAll('input[type=checkbox]');
-    for (var b = 0; b < boxes.length; b++) boxes[b].addEventListener('change', onTick);
-
-    var by = intel.is_simulated ? L(' · sin modelo (heurística)', ' · no model (keyword fallback)') : '';
-    $('intelHint').textContent = L('Marca lo que quieres construir. Cada línea muestra lo que se dijo.',
-      'Tick what you want built. Every line shows what was actually said.') + by;
-  }
-
-  async function onTick(ev) {
-    var box = ev.target;
-    var id = box.getAttribute('data-item');
-    var want = box.checked ? 'APPROVED_REQUIREMENT' : (original[id] || 'SUGGESTION');
-    busyItem[id] = true;
-    box.disabled = true;
-    stat(L('Guardando…', 'Saving…'));
-    try {
-      var d = await api('/factory/recordings/' + recId + '/intel/items/' + encodeURIComponent(id),
-        { method: 'PATCH', body: JSON.stringify({ classification: want }) });
-      intel = d.intel;            // the server's truth, never the click
-      remember(intel);
-      stat('');
-    } catch (e) {
-      stat(e.message);
-    } finally {
-      delete busyItem[id];
-      renderIntel();              // re-drawn from `intel`, so a refused change snaps back
-    }
-  }
-
-  // ── reading the meeting ────────────────────────────────────────────────────
-  async function readMeeting() {
-    if (!recId) return;
-    $('readBtn').disabled = true;
-    $('intelHint').textContent = '';
-    show('intelCard', true);
-    $('intelBody').innerHTML = '<p class="tiny"><span class="sp"></span>' + esc(L('Leyendo la reunión…', 'Reading the meeting…')) + '</p>';
-    try {
-      var d = await api('/factory/recordings/' + recId + '/intel', { method: 'POST', body: JSON.stringify({ lang: lang }) });
-      intel = d.intel; original = {}; remember(intel);
-      clearPrompt();
-      renderIntel();
-    } catch (e) {
-      $('intelBody').innerHTML = '<div class="notice">' + esc(e.message) + '</div>';
-    } finally { $('readBtn').disabled = false; }
-  }
-
-  // ── the prompt ─────────────────────────────────────────────────────────────
-  function clearPrompt() {
-    promptText = ''; promptRecId = null;
-    show('promptOut', false); show('promptNote', false); show('sendBtn', false);
-    $('promptOut').textContent = ''; $('promptNote').textContent = '';
-  }
-  function heldBackLine(hb) {
-    if (!hb) return '';
-    var parts = [];
-    if (hb.ideas) parts.push(hb.ideas + ' ' + L('ideas', 'ideas'));
-    if (hb.suggestions) parts.push(hb.suggestions + ' ' + L('sugerencias', 'suggestions'));
-    if (hb.discussion) parts.push(hb.discussion + ' ' + L('de discusión', 'discussion'));
-    if (hb.unverified) parts.push(hb.unverified + ' ' + L('sin verificar', 'unverified'));
-    if (!parts.length) return '';
-    return L('Retenido: ', 'Held back: ') + parts.join(', ') + '.';
-  }
-  async function buildPrompt() {
-    if (!recId) return;
-    $('promptBtn').disabled = true;
-    show('promptNote', false); show('sendBtn', false);
-    stat(L('Construyendo…', 'Building…'));
-    try {
-      var d = await api('/factory/recordings/' + recId + '/prompt', { method: 'POST', body: JSON.stringify({ lang: lang }) });
-      promptText = d.prompt || ''; promptRecId = d.recording_id || recId;
-      $('promptOut').textContent = promptText;
-      show('promptOut', true); show('sendBtn', !!promptText);
-      var hb = heldBackLine(d.held_back);
-      var n = (d.requirements || []).length;
-      $('promptNote').textContent = L(n + ' elemento(s) aprobados. ', n + ' approved item(s). ') + hb +
-        L(' Nada se ha enviado.', ' Nothing has been sent.');
-      show('promptNote', true);
-      stat('');
-    } catch (e) {
-      // 409: nothing is ticked. The server's own words plus what it held back.
-      var msg = e.message;
-      var hb2 = e.data && e.data.held_back ? heldBackLine(e.data.held_back) : '';
-      $('promptNote').textContent = msg + (hb2 ? ' ' + hb2 : '');
-      show('promptNote', true); show('promptOut', false);
-      stat('');
-    } finally { $('promptBtn').disabled = false; }
-  }
-  function sendToFactory() {
-    if (!promptText) return;
-    try {
-      sessionStorage.setItem(INCOMING, JSON.stringify({ text: promptText, recording_id: promptRecId, at: new Date().toISOString() }));
-    } catch (e) { stat(e.message); return; }
-    location.href = '/speakup/';
-  }
-
-  // ── a meeting on screen ────────────────────────────────────────────────────
-  async function openMeeting(id) {
-    recId = id; intel = null; original = {}; busyItem = {};
-    clearPrompt();
-    show('intelCard', false);
-    show('trCard', true);
-    $('live').classList.remove('empty');
-    $('live').hidden = true; $('trEdit').hidden = false; show('trActs', true);
-    $('trEdit').value = '';
-    $('trEdit').placeholder = L('Cargando…', 'Loading…');
-    renderMeetings();
-    try {
-      var d = await api('/recordings/' + id);
-      $('trEdit').value = (d.transcript && d.transcript.text) || '';
-      $('trEdit').placeholder = '';
-      $('trTitle').textContent = (d.recording && d.recording.title) || L('Transcripción', 'Transcript');
-      var got = await api('/factory/recordings/' + id + '/intel');
-      if (got.intel) { intel = got.intel; remember(intel); renderIntel(); }
-    } catch (e) { stat(e.message); }
-  }
-
-  async function saveTranscript() {
-    if (!recId) return;
-    $('saveTrBtn').disabled = true;
-    stat(L('Guardando…', 'Saving…'));
-    try {
-      await api('/recordings/' + recId + '/transcript', { method: 'PUT', body: JSON.stringify({ text: $('trEdit').value, lang: lang }) });
-      stat(L('Guardado', 'Saved'));
-    } catch (e) { stat(e.message); }
-    finally { $('saveTrBtn').disabled = false; }
-  }
-
-  // ── the list of past meetings ──────────────────────────────────────────────
-  function renderMeetings() {
-    if (!meetings.length) { $('meets').innerHTML = '<div class="tiny">' + esc(L('Todavía no hay reuniones.', 'No meetings yet.')) + '</div>'; return; }
-    $('meets').innerHTML = meetings.map(function (r) {
-      var when = r.created_at ? new Date(r.created_at).toLocaleString() : '';
-      var who = (r.participants && r.participants.length) ? r.participants.join(', ') : '';
-      return '<button class="meet' + (recId === r.id ? ' on' : '') + '" data-rec="' + esc(r.id) + '">' +
-        '<span class="t">' + esc(r.title || ('#' + r.id)) + '</span>' +
-        '<span class="tiny" style="display:block">' + esc(when) + (who ? ' · ' + esc(who) : '') + '</span></button>';
+  function renderChips() {
+    $('chips').innerHTML = CHIPS.map(function (c, i) {
+      return '<button class="chip" data-chip="' + i + '"' + (meeting && !busy ? '' : ' disabled') + '>' + esc(L(c[0], c[1])) + '</button>';
     }).join('');
-    var btns = $('meets').querySelectorAll('button[data-rec]');
-    for (var i = 0; i < btns.length; i++) {
-      btns[i].addEventListener('click', function () { openMeeting(parseInt(this.getAttribute('data-rec'), 10)); });
-    }
-  }
-  async function loadMeetings() {
-    try {
-      var d = await api('/recordings');
-      meetings = (d.recordings || []).filter(function (r) { return r.status !== 'recording'; });   // newest first, as the server returns them
-      renderMeetings();
-    } catch (e) { $('meets').innerHTML = '<div class="tiny">' + esc(e.message) + '</div>'; }
+    Array.prototype.forEach.call($('chips').querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { var c = CHIPS[+b.getAttribute('data-chip')]; send(L(c[2], c[3])); });
+    });
   }
 
-  // ── the ask box: read-only answers, never a job ────────────────────────────
-  async function ask() {
-    var text = $('ask').value.trim();
-    if (!text) { $('askStat').textContent = L('Escribe una pregunta', 'Type a question'); return; }
-    $('askSend').disabled = true;
-    $('askStat').textContent = L('Preguntando…', 'Asking…');
-    $('askOut').textContent = '';
+  // ── the thread ─────────────────────────────────────────────────────────────
+  function bubble(m) {
+    var cls = 'msg ' + (m.role === 'user' ? 'user' : 'assistant') + (m.kind === 'transfer' ? ' transfer' : '');
+    var h = '<div class="' + cls + '" data-id="' + esc(m.id || '') + '">';
+    if (m.attachment_url) h += '<img class="att" src="' + esc(m.attachment_url) + '" alt="">';
+    if (m.role === 'assistant' && m.offline) h += '<span class="tag off">' + esc(L('Sin modelo: respuesta de respaldo', 'No model: fallback reply')) + '</span>\n';
+    else if (m.role === 'assistant' && m.kind === 'prompt') h += '<span class="tag">' + esc(L('Prompt de construcción', 'Build prompt')) + '</span>\n';
+    h += '<span class="body">' + esc(m.content) + '</span>';
+    if (m.role === 'assistant' && m.id && !m.streaming) {
+      h += '<div class="mact">';
+      if (m.kind === 'transfer' && m.job_id) {
+        h += '<a class="btn small" href="/speakup/?job=' + esc(m.job_id) + '">' + esc(L('Abrir el trabajo #', 'Open job #') + m.job_id) + '</a>';
+      } else {
+        h += '<button class="btn small" data-copy="' + esc(m.id) + '">' + esc(L('Copiar', 'Copy')) + '</button>';
+        h += '<button class="btn small primary" data-transfer="' + esc(m.id) + '">' + esc(L('Transferir a la Fábrica', 'Transfer to Factory')) + '</button>';
+      }
+      h += '</div>';
+    }
+    return h + '</div>';
+  }
+  function renderThread() {
+    if (!meeting) {
+      $('thread').innerHTML = '<p class="empty-note">' + esc(L('Graba una reunión o abre una desde el Historial para hablar con ella.',
+        'Record a meeting, or open one from History, to talk to it.')) + '</p>';
+      return;
+    }
+    if (!messages.length) {
+      $('thread').innerHTML = '<p class="empty-note">' + esc(L('Pide lo que quieras sobre esta reunión: un resumen, el acta, las tareas, un prompt, un correo…',
+        'Ask anything about this meeting: a summary, the minutes, action items, a build prompt, an email…')) + '</p>';
+      return;
+    }
+    $('thread').innerHTML = messages.map(bubble).join('');
+    scrollEnd();
+  }
+  function scrollEnd() { $('thread').scrollTop = $('thread').scrollHeight; }
+
+  function onThreadClick(e) {
+    var c = e.target.closest && e.target.closest('[data-copy]');
+    if (c) return copyMessage(+c.getAttribute('data-copy'), c);
+    var t = e.target.closest && e.target.closest('[data-transfer]');
+    if (t) return transfer(+t.getAttribute('data-transfer'));
+  }
+  async function copyMessage(id, btn) {
+    var m = messages.filter(function (x) { return x.id === id; })[0];
+    if (!m) return;
+    try { await navigator.clipboard.writeText(m.content); }
+    catch (e) {
+      var ta = document.createElement('textarea'); ta.value = m.content; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (x) {} document.body.removeChild(ta);
+    }
+    var was = btn.textContent; btn.textContent = L('Copiado', 'Copied');
+    setTimeout(function () { btn.textContent = was; }, 1400);
+  }
+
+  // ── sending: a streamed reply ──────────────────────────────────────────────
+  function setBusy(b) {
+    busy = b;
+    $('send').disabled = b || !meeting;
+    $('msg').disabled = !meeting;
+    renderChips();
+  }
+  async function send(forced) {
+    if (!meeting || busy) return;
+    var text = (forced != null ? forced : $('msg').value).trim();
+    if (!text && !pending) { msgStat(L('Escribe o dicta algo', 'Type or dictate something')); return; }
+    if (capturing) stopCapture();
+    var body = { message: text, lang: lang };
+    if (pending) body.attachment = { name: pending.name, mime: pending.mime, data_base64: pending.data_base64 };
+    if (forced == null) $('msg').value = '';
+    clearPending();
+    setBusy(true);
+    msgStat(L('Pensando…', 'Thinking…'));
+
+    var live = null;                    // the streaming bubble
     try {
-      var d = await api('/factory/command', { method: 'POST', body: JSON.stringify({ text: text, mode: 'command', lang: lang }) });
-      $('askStat').textContent = '';
-      // A reply may carry card.job_id. This screen does NOT follow it: the ask box is
-      // read-only and the Factory tab is where work is watched.
-      $('askOut').textContent = d.reply || L('Sin respuesta.', 'No reply.');
+      var r = await fetch('/speakup/api/v1/meetings/' + meeting.id + '/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SpeakUp': '1' }, body: JSON.stringify(body) });
+      if (r.status === 401) { location.href = '/speakup/login'; return; }
+      if (!r.ok || !r.body) { var d = await r.json().catch(function () { return {}; }); throw new Error(d.error || ('HTTP ' + r.status)); }
+      var reader = r.body.getReader(), dec = new TextDecoder(), buf = '';
+      for (;;) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buf += dec.decode(chunk.value, { stream: true });
+        var nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          var line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+          if (!line) continue;
+          var ev; try { ev = JSON.parse(line); } catch (x) { continue; }
+          if (ev.type === 'user') { messages.push(ev.message); renderThread(); }
+          else if (ev.type === 'delta') {
+            if (!live) { live = { role: 'assistant', content: '', streaming: true }; messages.push(live); renderThread(); msgStat(''); }
+            live.content += ev.text;
+            var bodies = $('thread').querySelectorAll('.msg .body');
+            if (bodies.length) bodies[bodies.length - 1].textContent = live.content;
+            scrollEnd();
+          } else if (ev.type === 'done' || ev.type === 'message') {
+            // The stored message replaces the streaming bubble: the screen shows what was saved.
+            if (live) { messages.splice(messages.indexOf(live), 1); live = null; }
+            messages.push(ev.message); renderThread();
+          } else if (ev.type === 'error') {
+            msgStat(ev.error);
+          }
+        }
+      }
+      if (live) { messages.splice(messages.indexOf(live), 1); live = null; await loadThread(); }
+      if ($('msgStat').textContent === L('Pensando…', 'Thinking…')) msgStat('');
     } catch (e) {
-      $('askStat').textContent = '';
-      $('askOut').textContent = e.message;
-    } finally { $('askSend').disabled = false; }
+      if (live) { messages.splice(messages.indexOf(live), 1); live = null; }
+      msgStat(e.message);
+      await loadThread();
+    } finally { setBusy(false); }
+  }
+
+  async function transfer(messageId) {
+    if (!meeting || busy) return;
+    setBusy(true);
+    msgStat(L('Transfiriendo a la Fábrica…', 'Transferring to the Factory…'));
+    try {
+      var d = await api('/meetings/' + meeting.id + '/factory', { method: 'POST', body: JSON.stringify({ message_id: messageId, lang: lang }) });
+      (d.messages || []).forEach(function (m) { messages.push(m); });
+      renderThread();
+      msgStat('');
+    } catch (e) {
+      ((e.data && e.data.messages) || []).forEach(function (m) { messages.push(m); });
+      renderThread();
+      msgStat(e.message);
+    } finally { setBusy(false); }
+  }
+
+  // ── screenshots: one per message, sent with it ─────────────────────────────
+  function clearPending() { if (pending && pending.url) URL.revokeObjectURL(pending.url); pending = null; renderPending(); }
+  function renderPending() {
+    $('shots').innerHTML = pending ? '<div class="shot"><img src="' + pending.url + '" alt=""><button id="unshot" aria-label="' + esc(L('Quitar', 'Remove')) + '">×</button></div>' : '';
+    if (pending) $('unshot').addEventListener('click', clearPending);
+  }
+  async function attach(file) {
+    if (!meeting) return;
+    if (file.size > 6 * 1024 * 1024) { msgStat(L('La imagen pasa de 6 MB', 'That image is over 6 MB')); return; }
+    try {
+      var b64 = await new Promise(function (res, rej) {
+        var fr = new FileReader();
+        fr.onload = function () { res(String(fr.result).split(',')[1] || ''); };
+        fr.onerror = rej; fr.readAsDataURL(file);
+      });
+      clearPending();
+      pending = { name: file.name || 'screenshot.png', mime: file.type, data_base64: b64, url: URL.createObjectURL(file) };
+      renderPending();
+      msgStat(L('Captura adjunta', 'Screenshot attached'));
+    } catch (e) { msgStat(e.message); }
+  }
+  function imagesFrom(ev) {
+    var out = [], items = (ev.clipboardData || ev.dataTransfer || {}).items || [];
+    for (var i = 0; i < items.length; i++) if (items[i].kind === 'file') { var f = items[i].getAsFile(); if (f && /^image\//.test(f.type)) out.push(f); }
+    return out;
+  }
+
+  // ── dictation (the browser's own speech recognition, as in the Factory) ────
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var capturing = false, recog = null, baseText = '';
+  function startCapture() {
+    if (!SR) { msgStat(L('Este navegador no permite dictado; escribe.', 'This browser cannot dictate; type instead.')); return; }
+    if (!meeting) return;
+    baseText = $('msg').value ? $('msg').value.replace(/\s+$/, '') + ' ' : '';
+    capturing = true; $('mic').classList.add('rec'); msgStat(L('Escuchando…', 'Listening…'));
+    recog = new SR();
+    recog.lang = lang === 'en' ? 'en-US' : 'es-ES';
+    recog.continuous = true; recog.interimResults = true;
+    recog.onresult = function (ev) {
+      var all = '';
+      for (var i = 0; i < ev.results.length; i++) all += ev.results[i][0].transcript;
+      $('msg').value = baseText + all.replace(/\s+/g, ' ').trimStart();
+    };
+    recog.onerror = function (e) { if (e.error === 'not-allowed') msgStat(L('Permite el micrófono.', 'Allow the microphone.')); };
+    recog.onend = function () { if (capturing) stopCapture(true); };
+    try { recog.start(); } catch (e) { stopCapture(true); }
+  }
+  function stopCapture(fromEnd) {
+    capturing = false; $('mic').classList.remove('rec');
+    msgStat($('msg').value.trim() ? L('Revisa y envía', 'Review and send') : '');
+    if (recog && !fromEnd) { try { recog.stop(); } catch (e) {} }
+    recog = null;
+  }
+
+  // ── the meeting on screen ──────────────────────────────────────────────────
+  async function loadThread() {
+    if (!meeting) return;
+    try { var d = await api('/meetings/' + meeting.id + '/chat'); messages = d.messages || []; renderThread(); }
+    catch (e) { msgStat(e.message); }
+  }
+  async function openMeeting(id) {
+    try {
+      var d = await api('/meetings/' + id);
+      meeting = d.meeting;
+      try { localStorage.setItem(ACTIVE, String(id)); } catch (e) {}
+      if (!/[?&]id=/.test(location.search) || new URLSearchParams(location.search).get('id') !== String(id)) {
+        try { history.replaceState(null, '', '/speakup/meetings?id=' + id); } catch (e) {}
+      }
+      $('mTitle').textContent = meeting.title || ('#' + meeting.id);
+      $('mDate').textContent = meeting.date_label || (meeting.created_at ? new Date(meeting.created_at).toLocaleString() : '');
+      $('trEdit').value = meeting.transcript || '';
+      show('meetCard', true); show('trPanel', false);
+      if (!(R && R.state().recording)) show('recCard', false);
+      messages = [];
+      renderThread();
+      setBusy(false);
+      await loadThread();
+    } catch (e) {
+      // A meeting that no longer exists (or belongs to someone else) is not stuck on screen.
+      if (e.status === 404) { try { localStorage.removeItem(ACTIVE); } catch (x) {} newMeeting(); }
+      else stat(e.message);
+    }
+  }
+  function newMeeting() {
+    meeting = null; messages = [];
+    show('meetCard', false); show('recCard', true);
+    renderThread(); setBusy(false);
+  }
+  async function saveTranscript() {
+    if (!meeting) return;
+    $('saveTrBtn').disabled = true; $('trStat').textContent = L('Guardando…', 'Saving…');
+    try {
+      await api('/recordings/' + meeting.id + '/transcript', { method: 'PUT', body: JSON.stringify({ text: $('trEdit').value, lang: lang }) });
+      meeting.transcript = $('trEdit').value;
+      $('trStat').textContent = L('Guardado', 'Saved');
+    } catch (e) { $('trStat').textContent = e.message; }
+    finally { $('saveTrBtn').disabled = false; }
   }
 
   // ── the recorder ───────────────────────────────────────────────────────────
@@ -323,26 +317,20 @@
     if (phase === 'uploading') return L('Subiendo…', 'Uploading…');
     return L('Transcribiendo en tu dispositivo…', 'Transcribing on your device…');
   }
-
   function wireRecorder() {
     if (!R) { show('unsupported', true); $('unsupported').textContent = L('No se pudo cargar el motor de grabación.', 'The recording engine did not load.'); return; }
     if (!R.supported) {
       show('unsupported', true);
-      $('unsupported').textContent = L('Este navegador no permite grabar. Abre SpeakUp en Safari o Chrome.', 'This browser cannot record. Open SpeakUp in Safari or Chrome.');
+      $('unsupported').textContent = L('Este navegador no permite grabar. Abre AutoDev en Safari o Chrome.', 'This browser cannot record. Open AutoDev in Safari or Chrome.');
       $('startBtn').disabled = true;
     }
     R.on('state', function (e) { recState(e.state); });
     R.on('tick', function (e) { $('clock').textContent = fmt(e.seconds); });
     R.on('transcript', function (e) {
-      show('trCard', true);
-      $('live').hidden = false; $('trEdit').hidden = true; show('trActs', false);
-      $('live').classList.remove('empty');
-      $('live').textContent = e.text;
-      $('live').scrollTop = $('live').scrollHeight;
+      show('live', true); $('live').classList.remove('empty');
+      $('live').textContent = e.text; $('live').scrollTop = $('live').scrollHeight;
     });
-    R.on('segment', function (e) {
-      stat(e.saved ? L('Guardado automático', 'Autosaved') : L('Sin conexión: se reintenta', 'Offline: will retry'));
-    });
+    R.on('segment', function (e) { stat(e.saved ? L('Guardado automático', 'Autosaved') : L('Sin conexión: se reintenta', 'Offline: will retry')); });
     R.on('model', function (e) {
       if (e.background) { if (e.phase !== 'done') stat(modelMsg(e.phase) + (e.pct != null ? ' ' + e.pct + '%' : '')); return; }
       if (e.phase === 'done') overlay(false);
@@ -351,37 +339,27 @@
     R.on('saved', async function (e) {
       $('clock').textContent = '00:00';
       stat(L('Grabación guardada', 'Recording saved'));
-      // Mark the row a meeting. POST /recordings cannot carry it; this is the endpoint that can.
+      // Mark the row a meeting, so it appears in History and not among Factory instructions.
       try { await api('/factory/recordings/' + e.recording_id + '/session', { method: 'PATCH', body: JSON.stringify({ mode: 'meeting' }) }); } catch (x) {}
-      await loadMeetings();
+      $('live').textContent = ''; show('live', false);
       await openMeeting(e.recording_id);
-      await readMeeting();
     });
     R.on('discarded', function () {
       $('clock').textContent = '00:00';
       stat(L('No se captó voz; la grabación se descartó.', 'No speech was captured; the recording was discarded.'));
-      $('live').textContent = ''; $('live').classList.add('empty');
+      $('live').textContent = ''; show('live', false);
     });
-    R.on('recovered', function (e) {
-      stat(L('Grabación recuperada tras una interrupción.', 'Recording recovered after an interruption.'));
-      if (e.ids && e.ids.length) loadMeetings();
-    });
+    R.on('recovered', function () { stat(L('Grabación recuperada tras una interrupción.', 'Recording recovered after an interruption.')); });
     R.on('error', function (e) {
       overlay(false);
       if (e.code === 'no-display-audio') stat(L('Elige la pestaña de la llamada y activa “Compartir audio”.', 'Pick the call tab and turn on "Share audio".'));
       else stat(e.message || 'error');
     });
-
     $('startBtn').addEventListener('click', function () {
-      clearPrompt(); show('intelCard', false);
-      $('live').textContent = ''; $('live').classList.add('empty');
-      $('live').hidden = false; $('trEdit').hidden = true; show('trActs', false); show('trCard', true);
+      $('live').textContent = ''; $('live').classList.add('empty'); show('live', true);
       R.start({ mode: 'mic', lang: lang });
     });
-    $('pauseBtn').addEventListener('click', function () {
-      var s = R.state();
-      if (s.paused) R.resume(); else R.pause();
-    });
+    $('pauseBtn').addEventListener('click', function () { var s = R.state(); if (s.paused) R.resume(); else R.pause(); });
     $('stopBtn').addEventListener('click', function () { R.stop(); });
     recState('idle');
   }
@@ -391,29 +369,23 @@
     lang = l;
     try { localStorage.setItem('speakup_lang', l); } catch (e) {}
     document.documentElement.lang = l;
+    document.dispatchEvent(new CustomEvent('speakup:lang', { detail: l }));
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
     $('outBtn').textContent = L('Salir', 'Sign out');
     $('tabMeet').textContent = L('Reuniones', 'Meetings');
     $('tabFac').textContent = L('Fábrica', 'Factory');
-    $('ctx').textContent = L('Acta de reunión', 'Meeting notes');
+    $('ctx').textContent = L('Reunión', 'Meeting');
     $('startBtn').textContent = L('Grabar reunión', 'Record meeting');
     $('stopBtn').textContent = L('Detener', 'Stop');
     $('privacy').textContent = L('Se transcribe en tu dispositivo. El audio no sale de tu equipo.', 'Transcribed on your device. Audio never leaves your machine.');
     $('ovNote').textContent = $('privacy').textContent;
-    $('trTitle').textContent = L('Transcripción', 'Transcript');
+    $('trToggle').textContent = L('Transcripción', 'Transcript');
     $('saveTrBtn').textContent = L('Guardar transcripción', 'Save transcript');
-    $('readBtn').textContent = L('Leer la reunión', 'Read the meeting');
-    $('intelTitle').textContent = L('Lo que se dijo', 'What was said');
-    $('promptBtn').textContent = L('Construir el prompt', 'Build the prompt');
-    $('sendBtn').textContent = L('Enviar a la Fábrica', 'Send to Factory');
-    $('listTitle').textContent = L('Reuniones', 'Meetings');
-    $('listState').textContent = L('Cargando…', 'Loading…');
-    $('ask').placeholder = L('Pregunta: acta, resumen, qué tengo que hacer…', 'Ask: minutes, summary, what do I need to do…');
-    $('askSend').setAttribute('aria-label', L('Preguntar', 'Ask'));
-    $('askNote').textContent = L('Solo lectura: aquí no se ejecuta nada ni se toca código.', 'Read-only: nothing runs and no code is touched here.');
-    document.title = L('SpeakUp — Reuniones', 'SpeakUp — Meetings');
-    if (intel) renderIntel();
-    renderMeetings();
+    $('msg').placeholder = L('Pregunta lo que quieras sobre la reunión…', 'Ask anything about the meeting…');
+    $('mic').setAttribute('aria-label', L('Dictar', 'Dictate'));
+    $('send').setAttribute('aria-label', L('Enviar', 'Send'));
+    document.title = L('AutoDev — Reuniones', 'AutoDev — Meetings');
+    renderChips(); renderThread();
     recState(R && R.state().recording ? (R.state().paused ? 'paused' : 'recording') : 'idle');
   }
 
@@ -425,16 +397,23 @@
       await fetch('/speakup/api/v1/auth/logout', { method: 'POST', headers: { 'X-SpeakUp': '1' } });
       location.href = '/speakup/login';
     });
+    $('trToggle').addEventListener('click', function () { show('trPanel', $('trPanel').hidden); });
     $('saveTrBtn').addEventListener('click', saveTranscript);
-    $('readBtn').addEventListener('click', readMeeting);
-    $('promptBtn').addEventListener('click', buildPrompt);
-    $('sendBtn').addEventListener('click', sendToFactory);
-    $('askSend').addEventListener('click', ask);
-    $('ask').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ask(); } });
+    $('send').addEventListener('click', function () { send(); });
+    $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });
+    $('msg').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); } });
+    $('msg').addEventListener('paste', function (e) { var f = imagesFrom(e); if (f.length) { e.preventDefault(); attach(f[0]); } });
+    ['dragover', 'drop'].forEach(function (evt) {
+      document.addEventListener(evt, function (e) { e.preventDefault(); if (evt === 'drop') { var f = imagesFrom(e); if (f.length) attach(f[0]); } });
+    });
+    $('thread').addEventListener('click', onThreadClick);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(function () {});
 
     wireRecorder();
-    await loadMeetings();
+    var params = new URLSearchParams(location.search);
+    var stored = null; try { stored = localStorage.getItem(ACTIVE); } catch (e) {}
+    var id = parseInt(params.get('id') || (params.get('new') ? '' : stored) || '', 10);
+    if (id) await openMeeting(id); else newMeeting();
     if (R) R.recover();
   })();
 })();

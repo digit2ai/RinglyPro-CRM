@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>AutoDev — Ajustes</title>
+<link rel="icon" href="/speakup/favicon.svg">
+<link rel="manifest" href="/speakup/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
+<link rel="stylesheet" href="/speakup/theme.css?v=6">
+<meta name="theme-color" content="#1f2937">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  main{max-width:640px;margin:0 auto;padding:12px 14px calc(16px + env(safe-area-inset-bottom))}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line-strong);flex-wrap:wrap}
+  .row:first-of-type{border-top:0}
+  .row .k{font-weight:600}
+  .row .v{color:var(--muted);word-break:break-word}
+  .seg{display:flex;gap:6px}
+  @media(max-width:820px){ .top .lnk{min-height:44px;min-width:44px;justify-content:center} .top .tab{min-height:44px;padding:0 11px} }
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="/speakup/favicon.svg" alt="">
+  <img class="wordmark" src="/speakup/wordmark.svg?v=1" alt="Digit2AI">
+  <span class="product">AutoDev</span>
+  <nav class="tabs">
+    <a class="tab" href="/speakup/meetings" id="tabMeet">Reuniones</a>
+    <a class="tab" href="/speakup/" id="tabFac">Fábrica</a>
+  </nav>
+  <div class="hdrmenu" id="hdrMenu">
+    <span class="where" id="ctx"></span>
+    <a class="lnk" href="/speakup/history" id="navHistory">Historial</a>
+    <a class="lnk" href="/speakup/meetings?new=1" id="navNew">Nueva reunión</a>
+    <a class="lnk" href="/speakup/settings" id="navSettings">Ajustes</a>
+    <button class="lnk" id="langBtn">EN</button>
+    <button class="lnk" id="outBtn">Salir</button>
+  </div>
+  <button class="burger" id="burger" aria-label="Menú" aria-expanded="false" aria-controls="hdrMenu"><span></span><span></span><span></span></button>
+</header>
+
+<main>
+  <section class="card">
+    <h2 id="sTitle">Ajustes</h2>
+    <div class="row"><span class="k" id="kLang">Idioma</span>
+      <span class="seg"><button class="btn small" id="esBtn">Español</button><button class="btn small" id="enBtn">English</button></span></div>
+    <div class="row"><span class="k" id="kUser">Cuenta</span><span class="v" id="vUser">…</span></div>
+    <div class="row"><span class="k" id="kModel">Modelo de IA</span><span class="v" id="vModel">…</span></div>
+    <div class="row"><span class="k" id="kOut">Sesión</span><button class="btn small" id="signOut">Salir</button></div>
+  </section>
+</main>
+
+<script src="/speakup/settings.js?v=1"></script>
+<script src="/speakup/header-menu.js?v=2"></script>
+</body>
+</html>

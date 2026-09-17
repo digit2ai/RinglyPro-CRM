@@ -25,6 +25,8 @@ const server = http.createServer((req, res) => {
   let p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
   if (p === 'meetings') p = 'meetings.html';
   if (p === 'login') p = 'login.html';
+  if (p === 'history') p = 'history.html';
+  if (p === 'settings') p = 'settings.html';
   if (p === '') p = 'app.html';
   const f = path.join(DIR, p);
   // The screens call the API on boot; answer so the page settles instead of hanging. A
@@ -56,7 +58,7 @@ server.listen(0, async () => {
   const base = 'http://127.0.0.1:' + server.address().port + '/speakup/';
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   try {
-    for (const [name, url] of [['factory', base], ['meetings', base + 'meetings']]) {
+    for (const [name, url] of [['factory', base], ['meetings', base + 'meetings'], ['history', base + 'history'], ['settings', base + 'settings']]) {
       for (const [label, w, h] of [['phone 390', 390, 844], ['phone 360', 360, 780], ['desktop 1280', 1280, 900]]) {
         const page = await browser.newPage();
         await page.setViewport({ width: w, height: h });
@@ -96,7 +98,8 @@ server.listen(0, async () => {
           ok(!(await overflow()), `${name} ${label}: no overflow with the menu open`);
 
           const targets = await page.$$eval('#hdrMenu .lnk', els => els.map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent.trim(), h: r.height, w: r.width }; }));
-          ok(targets.length === 2, `${name} ${label}: both controls are in the menu`);
+          // History, New meeting, Settings, language, sign out — the same five on every screen.
+          ok(targets.length === 5, `${name} ${label}: all five menu entries are in the menu (${targets.map(t => t.t).join(' / ')})`);
           ok(targets.every(t => t.h >= 44), `${name} ${label}: every control is a 44px target (${targets.map(t => Math.round(t.h)).join(',')})`);
 
           // The panel must sit over the page, not push it around.

@@ -709,10 +709,104 @@ test('the meeting bridge carries only what was ticked', () => {
   const con = read('verticals/speakup/public/console.js');
   ok(/speakup_incoming_prompt/.test(con), 'the console picks the prompt up from the agreed key');
   ok(/sessionStorage\.removeItem\('speakup_incoming_prompt'\)/.test(con), 'and clears it, so a refresh cannot resurrect it');
+  // The meetings screen no longer hands a prompt over on this key: it talks to the meeting and
+  // transfers through its own server route (below). The console still reads the key.
+  ok(!/speakup_incoming_prompt/.test(read('verticals/speakup/public/meetings.js')), 'the meetings screen no longer uses the hand-off key');
+});
+
+// THE MEETINGS SCREEN IS A CONVERSATION, AND TRANSFERRING STOPS AT A PLAN (2026-09-17).
+// The Decisions / Other checklist was replaced by a chat over the transcript. What must hold:
+// no model is never dressed up as an answer, every query is tenant-scoped, and "Transfer to
+// Factory" reaches the same door as typing into the console — without auto_run, so nothing
+// runs until the owner reads the plan and types "approved".
+test('the meetings chat: honest without a model, tenant-scoped, and transfer stops at a plan', () => {
+  const chat = require('./src/factory/meeting-chat');
+  const routes = stripComments(read('verticals/speakup/src/routes/meetings.js'));
+  const svc = stripComments(read('verticals/speakup/src/factory/meeting-chat.js'));
+
+  // The checklist is gone from the screen, and so is the history list.
+  const html = read('verticals/speakup/public/meetings.html');
   const mjs = read('verticals/speakup/public/meetings.js');
-  ok(/speakup_incoming_prompt/.test(mjs), 'the meetings screen hands it over on the same key');
-  ok(!/factory\/command/.test(mjs.slice(mjs.indexOf('speakup_incoming_prompt'), mjs.indexOf('speakup_incoming_prompt') + 400)),
-    'handing over does not also send it');
+  ok(!/intelCard|promptBtn|Lo que se dijo|What was said/.test(html + mjs), 'the Decisions / Other checklist is gone');
+  ok(!/id="listCard"|id="meets"/.test(html), 'the meeting list moved off this screen');
+  ok(/id="thread"/.test(html) && /id="msg"/.test(html) && /id="mic"/.test(html) && /id="shots"/.test(html), 'a thread with the same input: text, mic, screenshot');
+  ok(/router\.get\('\/history'/.test(read('verticals/speakup/src/index.js')), 'history is its own page');
+  ['meetings.html', 'history.html', 'settings.html', 'app.html'].forEach((f) => {
+    const h = read('verticals/speakup/public/' + f);
+    ok(/id="navHistory"/.test(h) && /id="navNew"/.test(h) && /id="navSettings"/.test(h), f + ' carries History, New meeting and Settings in the menu');
+  });
+
+  // Starter chips are optional shortcuts, not the only way in.
+  ok(/var CHIPS = \[/.test(mjs) && /\$\('msg'\)/.test(mjs), 'chips exist and the free-form box stays');
+
+  // TRANSFER INTENT: typed or dictated, short, and never a question.
+  ['transfer to Factory', 'send to Factory', 'enviar a Factory', 'mandar a Factory', 'Envíalo a la fábrica'].forEach((t) => ok(chat.isTransfer(t), 'detects: ' + t));
+  ['what did we say about sending it to the factory?', 'Give me a summary', 'we should send the invoices to the factory next week']
+    .forEach((t) => ok(!chat.isTransfer(t), 'ignores: ' + t));
+
+  // TRANSFER STOPS AT A PLAN. Same door as the console, architect mode, no auto_run, and
+  // nothing here approves, dispatches or merges.
+  const tr = routes.slice(routes.indexOf('async function transfer('));
+  ok(/intents\.run\(/.test(tr) && /mode: 'architect'/.test(tr), 'transfer goes through intents.run in architect mode');
+  ok(!/auto_run/.test(tr), 'transfer never asks for auto_run');
+  ok(!/approve|dispatch|merge\(/i.test(routes.replace(/approved/g, '')), 'the meetings routes cannot approve, dispatch or merge');
+  ok(/isFactoryOperator\(req\.user\)/.test(tr), 'only the Factory operator can transfer');
+  ok(/^\/ringlypro-architect\n/.test(chat.factoryText({ prompt: 'BUILD PROMPT:\nDo x', meeting: { id: 7, title: 'T', created_at: new Date() } })),
+    'the handed-over text opens with the slash command, so the console reads it as an instruction, never a question');
+  const intents = require('./src/factory/intents');
+  ok(intents.isQuestion(chat.factoryText({ prompt: 'BUILD PROMPT:\nWhy is the header blue?', meeting: { id: 7, title: 'T' } })) === false,
+    'even a prompt that ends in a question mark is not routed as a question');
+  ok(/source\.kind === 'prompt' \|\| chat\.isBuildPrompt\(source\.content\)/.test(tr) && /callText\('chat'/.test(tr),
+    'an answer that is not a prompt yet is converted first, in the same step');
+
+  // NO MODEL IS NEVER DRESSED UP AS AN ANSWER.
+  const off = chat.offlineReply({ message: 'Dame un resumen', meeting: { id: 1 }, transcript: 'hola mundo', reason: 'the Anthropic account is out of credit' });
+  ok(/Sin modelo/.test(off.text) && /out of credit/.test(off.text) && /hola mundo/.test(off.text), 'offline: labelled, gives the reason, offers the transcript');
+  ok(!/resumen:/i.test(off.text), 'offline: it does not pretend to have summarised');
+  const offP = chat.offlineReply({ message: 'convert this to a build prompt', meeting: { id: 1 }, transcript: 'SECRET MEETING WORDS', reason: 'r' });
+  ok(offP.kind === 'text' && !chat.isBuildPrompt(offP.text) && /needs the model/.test(offP.text), 'offline: no build prompt is assembled, and it says why');
+  ok(!/SECRET MEETING WORDS/.test(offP.text), 'offline: a prompt request never gets the transcript pasted into it');
+  ok(!chat.wantsPrompt('what did we say about the build server?') && chat.wantsPrompt('convert this to a build prompt') && chat.wantsPrompt('convierte esto en un prompt'),
+    'a prompt is recognised by the request, not by any mention of "build"');
+  ok(typeof chat.offlinePrompt === 'undefined', 'there is no path that assembles a prompt from the transcript');
+
+  // THE MEETING DOES NOT RIDE ALONG INTO THE FACTORY — checked in code, since the push guard
+  // skips instruction text.
+  const T = 'We agreed to add a page that lists the open tasks for the weekly review with Juan Perez.';
+  ok(chat.meetingLeaks({ prompt: 'Add a page that lists the open tasks for the weekly review.', transcript: T }).some(l => l.type === 'quote'), 'a prompt quoting 8 words from the meeting is caught');
+  ok(chat.meetingLeaks({ prompt: 'Add a task page. Owner: Juan Perez.', transcript: T, participants: ['Juan Perez'] }).some(l => l.type === 'name'), 'a prompt naming a participant is caught');
+  ok(chat.meetingLeaks({ prompt: 'Add a page listing open tasks. Check it loads. Do not change login.', transcript: T, participants: ['Juan Perez'] }).length === 0, 'a prompt that describes functionality passes');
+  ok(!chat.factoryText({ prompt: 'BUILD PROMPT:\nDo x', meeting: { id: 7, title: 'Call with Acme and Juan', created_at: new Date() } }).includes('Acme'), 'the meeting title is left out of the hand-off');
+  ok(/meetingLeaks\(/.test(tr) && tr.indexOf('meetingLeaks(') < tr.indexOf('intents.run('), 'the leak check runs before anything reaches the Factory');
+  ok(/source\.factory_ref/.test(tr) && /status: 409/.test(tr), 'a transferred answer cannot be transferred twice');
+  ok(/status: 503/.test(tr) && !/offlinePrompt/.test(tr), 'transfer without a model stops rather than improvising a prompt');
+
+  // Cost: the long prefix is cacheable, the tab closing stops the model, and there is a daily cap.
+  ok(chat.systemBlocks({ meeting: { id: 1 }, transcript: 'x' })[0].cache_control.type === 'ephemeral', 'the transcript prefix is marked cacheable');
+  ok(/abort\.abort\(\)/.test(routes) && /signal: abort\.signal/.test(routes), 'closing the tab stops the model');
+  ok(/meeting-chat-day/.test(routes) && routes.indexOf("'meeting-chat-day'") < routes.indexOf('readAttachment(req.body'), 'a daily cap, checked before any image is decoded');
+  ok(/magicMatches\(mime, bytes\)/.test(routes), 'an image must be what its type claims, byte for byte');
+  ok(/composed_by = 'offline'/.test(routes), 'an offline reply is stored as offline, so the screen can label it');
+  ok(/Sin modelo: respuesta de respaldo/.test(mjs) && /No model: fallback reply/.test(mjs), 'and the screen labels it in both languages');
+
+  // TENANCY: every read and write of a meeting or its chat is scoped to the session tenant.
+  ok(/tenant_id: tenantOf\(req\)/.test(routes) && !/req\.body\.tenant_id|req\.query\.tenant_id/.test(routes), 'tenant comes from the session, never the request');
+  ok((routes.match(/MeetingChat\.(findAll|findOne|create)\(\{ where: \{ tenant_id|MeetingChat\.create\(\{ tenant_id/g) || []).length >= 5, 'every chat query carries tenant_id');
+  ok(/linked = await MeetingChat\.findOne/.test(routes), 'a screenshot is served only when a message in this meeting points at it');
+  ok(/r\.tenant_id = :tenant_id/.test(routes) && /mode IS NULL OR r\.mode = 'meeting'/.test(routes), 'history is tenant-scoped and lists meetings only');
+  ok(/\\\\'\s*\+\s*c/.test(routes) || /\(c\) => '\\\\' \+ c/.test(routes), 'search escapes LIKE wildcards');
+
+  // The model: one door, the system prompt holds the rules, and the transcript is cleaned.
+  ok(!/require\('@anthropic-ai\/sdk'\)/.test(svc + routes), 'the chat reaches Anthropic only through llm.js');
+  const sys = chat.systemPrompt({ meeting: { id: 3, title: 'Weekly', created_at: new Date('2026-09-17T15:00:00Z') }, transcript: 'hello' });
+  ok(/language of the user's latest message/.test(sys) && /No emojis/.test(sys) && /Plain text only/.test(sys), 'reply in the user language, plain text, no emojis');
+  ok(/Never invent a name, owner, date/.test(sys) && /not stated/.test(sys), 'an absent fact is said to be absent');
+  ok(/"Weekly"/.test(sys) && /meeting #3/.test(sys) && /2026/.test(sys), 'the title, id and date are injected');
+  ok(/collapseRepeats/.test(svc), 'the transcript sent to the model has Whisper loops removed');
+  const hist = chat.messagesFor([{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }, { role: 'assistant', kind: 'transfer', content: 'receipt' }], 'shorter');
+  ok(hist.length === 3 && hist[2].content === 'shorter' && !JSON.stringify(hist).includes('receipt'), 'refinements carry the prior turns, but not transfer receipts');
+  ok(/stream\.on\('text'/.test(read('verticals/speakup/src/factory/llm.js')) && /if \(started \|\| \(signal && signal\.aborted\) \|\| !isModelRefusal\(e\)\) break;/.test(read('verticals/speakup/src/factory/llm.js')),
+    'streaming never switches model after the first token');
 });
 
 test('two screens and nothing else', () => {

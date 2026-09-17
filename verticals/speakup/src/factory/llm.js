@@ -22,7 +22,10 @@ let client = (API_KEY && Anthropic) ? new Anthropic({ apiKey: API_KEY }) : null;
 const MODELS = {
   intel: process.env.SPEAKUP_INTEL_MODEL || 'claude-sonnet-5',
   plan: process.env.SPEAKUP_PLAN_MODEL || 'claude-opus-5',
-  intent: process.env.SPEAKUP_MODEL || 'claude-haiku-4-5-20251001'
+  intent: process.env.SPEAKUP_MODEL || 'claude-haiku-4-5-20251001',
+  // The meetings chat: minutes, action items and build prompts are judgment work over a
+  // long transcript, so it defaults to Sonnet, not the Haiku the intent classifier uses.
+  chat: process.env.SPEAKUP_CHAT_MODEL || 'claude-sonnet-5'
 };
 // Tried in order until one answers. The last is the model the rest of the repo runs on.
 const FALLBACK = ['claude-sonnet-5', 'claude-haiku-4-5-20251001'];
@@ -70,7 +73,55 @@ async function callJSON(kind, { system, user, max_tokens }) {
   throw err || new Error('no model answered');
 }
 
+/**
+ * Plain-text calls for the meetings chat. Same fallback chain and the same reporting as
+ * callJSON, with one rule of its own: a model refusal may move to the next model ONLY
+ * before the first token. Once text has reached the person, switching models mid-answer
+ * would splice two different replies into one.
+ */
+async function streamText(kind, { system, messages, max_tokens, signal }, onText) {
+  if (!client) return null;
+  let err = null;
+  for (const model of chain(kind)) {
+    let started = false;
+    try {
+      // signal: the person closed the tab — stop paying for an answer nobody will read.
+      const stream = client.messages.stream({ model, max_tokens: max_tokens || 2500, system, messages }, signal ? { signal } : undefined);
+      stream.on('text', (t) => { started = true; onText(t); });
+      const final = await stream.finalMessage();
+      const text = (final.content || []).map(b => b.text || '').join('');
+      if (working[kind] !== model) console.log(`SpeakUp: ${kind} is using ${model}`);
+      working[kind] = model;
+      delete lastError[kind];
+      return { model, text };
+    } catch (e) {
+      err = e;
+      lastError[kind] = `${model}: ${e.message}`.slice(0, 300);
+      if (started || (signal && signal.aborted) || !isModelRefusal(e)) break;
+    }
+  }
+  throw err || new Error('no model answered');
+}
+
+async function callText(kind, { system, messages, max_tokens }) {
+  if (!client) return null;
+  let err = null;
+  for (const model of chain(kind)) {
+    try {
+      const resp = await client.messages.create({ model, max_tokens: max_tokens || 2500, system, messages });
+      working[kind] = model;
+      delete lastError[kind];
+      return { model, text: (resp.content || []).map(b => b.text || '').join('') };
+    } catch (e) {
+      err = e;
+      lastError[kind] = `${model}: ${e.message}`.slice(0, 300);
+      if (!isModelRefusal(e)) break;
+    }
+  }
+  throw err || new Error('no model answered');
+}
+
 // SIT only: swap the client (or null it) without touching the environment.
 function __setClient(c) { client = c; for (const k of Object.keys(working)) delete working[k]; }
 
-module.exports = { MODELS, FALLBACK, configured, activeModel, status, callJSON, isModelRefusal, __setClient };
+module.exports = { MODELS, FALLBACK, configured, activeModel, status, callJSON, streamText, callText, isModelRefusal, __setClient };

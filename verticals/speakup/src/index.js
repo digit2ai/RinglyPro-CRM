@@ -63,6 +63,7 @@ router.use('/api/v1/auth', require('./routes/auth'));
 router.use('/health', require('./routes/health'));
 router.use('/api/v1/recordings', require('./routes/recordings'));
 router.use('/api/v1/factory', require('./routes/factory')); // AI Factory: voice -> architect -> GitHub PR
+router.use('/api/v1/meetings', require('./routes/meetings')); // History + the conversation about a meeting
 
 // ── Static app (no build step — self-contained HTML) ─────────────────────────────
 router.use(express.static(publicDir));
@@ -72,6 +73,9 @@ router.use(express.static(publicDir));
 // /api/v1 ai router that only served the removed editing tools.
 router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
 router.get('/meetings', (req, res) => res.sendFile(path.join(publicDir, 'meetings.html')));
+// History moved off the meetings screen to its own page; Settings is the third menu entry.
+router.get('/history', (req, res) => res.sendFile(path.join(publicDir, 'history.html')));
+router.get('/settings', (req, res) => res.sendFile(path.join(publicDir, 'settings.html')));
 router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
 
 // ── Init: sync tables + ensure columns + seed team (non-blocking) ────────────────

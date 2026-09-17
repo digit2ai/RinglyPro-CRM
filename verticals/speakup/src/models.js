@@ -308,6 +308,30 @@ const Upload = sequelize.define('SpeakUpload', {
   indexes: [{ name: 'su_uploads_tenant_idx', fields: ['tenant_id'] }, { name: 'su_uploads_job_idx', fields: ['job_id'] }]
 });
 
+// ─── su_meeting_chat ──────────────────────────────────────────────────────────
+// The conversation about one meeting. The meeting is a su_recordings row, so meeting_id
+// is a recording id. kind: text | prompt (a build prompt, first line "BUILD PROMPT:") |
+// transfer (the confirmation that it went to the Factory). composed_by records which model
+// answered, or 'offline' when the model could not be reached and the reply is labelled so.
+// attachment_url is 'upload:<su_uploads.id>' — the image lives in the database, not on disk.
+const MeetingChat = sequelize.define('SpeakMeetingChat', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  meeting_id: { type: DataTypes.INTEGER, allowNull: false },
+  user_id: { type: DataTypes.INTEGER },
+  role: { type: DataTypes.STRING(12), allowNull: false },   // user | assistant
+  kind: { type: DataTypes.STRING(12), defaultValue: 'text' },
+  content: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' },
+  attachment_url: { type: DataTypes.STRING(200) },
+  factory_ref: { type: DataTypes.STRING(120) },
+  composed_by: { type: DataTypes.STRING(60) },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'su_meeting_chat', timestamps: false,
+  indexes: [{ name: 'su_meeting_chat_tenant_idx', fields: ['tenant_id'] },
+    { name: 'su_meeting_chat_meeting_idx', fields: ['tenant_id', 'meeting_id', 'id'] }]
+});
+
 // ─── su_audit ─────────────────────────────────────────────────────────────────
 // Append-only trail. No route updates or deletes a row.
 const Audit = sequelize.define('SpeakAudit', {
@@ -342,4 +366,4 @@ Recording.hasMany(Document, { foreignKey: 'recording_id' });
 Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
-  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit };
+  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat };

@@ -27,4 +27,16 @@
   window.addEventListener('resize', function () { if (window.innerWidth > 700 && isOpen()) close(); });
 
   close();
+
+  // THE THREE MENU ENTRIES EVERY SCREEN SHARES — History, New meeting, Settings. Labelled here
+  // once rather than in each page's own language code, so a screen cannot forget one. A page
+  // announces a language change with the 'speakup:lang' event; on load the stored choice is used.
+  var NAV = { navHistory: ['Historial', 'History'], navNew: ['Nueva reunión', 'New meeting'], navSettings: ['Ajustes', 'Settings'] };
+  function relabel(l) {
+    for (var id in NAV) { var el = document.getElementById(id); if (el) el.textContent = l === 'en' ? NAV[id][1] : NAV[id][0]; }
+  }
+  var stored = 'es';
+  try { stored = localStorage.getItem('speakup_lang') || 'es'; } catch (e) {}
+  relabel(stored);
+  document.addEventListener('speakup:lang', function (e) { relabel(e.detail); });
 })();

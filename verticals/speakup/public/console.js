@@ -646,6 +646,7 @@
     lang = l;
     try { localStorage.setItem('speakup_lang', l); } catch (e) {}
     document.documentElement.lang = l;
+    document.dispatchEvent(new CustomEvent('speakup:lang', { detail: l }));
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
     setPlaceholder();
     $('outBtn').textContent = L('Salir', 'Sign out');

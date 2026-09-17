@@ -12,65 +12,69 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
-  /* Only what is specific to this screen. Everything else is theme.css. */
-  main{max-width:720px;margin:0 auto;padding:12px 14px calc(16px + env(safe-area-inset-bottom))}
-  section.card{margin-bottom:12px}
+  /* One window, like the Factory: the meeting and its conversation on top, the input pinned
+     to the bottom. On a phone the conversation is the whole screen. */
+  body{display:flex;flex-direction:column;overflow:hidden}
+  main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:10px 14px 0;max-width:860px;width:100%;margin:0 auto}
+  footer{flex:0 0 auto;padding:8px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--paper)}
+  footer .inner{max-width:860px;margin:0 auto}
+  section.card{margin-bottom:10px;flex:0 0 auto}
   .rechd{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .clock{font-family:var(--mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .clock{font-family:var(--mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
   .dot{width:11px;height:11px;border-radius:50%;background:var(--line-strong);flex:0 0 11px}
-  .dot.live{background:#c8412a;animation:beat 1.3s ease-in-out infinite}
+  .dot.live{background:#dc2626;animation:beat 1.3s ease-in-out infinite}
   .dot.hold{background:var(--warn)}
-  .ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .ctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .ctl .btn{flex:1 1 auto;min-width:120px}
-  .live{white-space:pre-wrap;word-break:break-word;background:var(--raised);border:1px solid var(--line);
-    border-radius:10px;padding:11px 12px;font-size:15px;line-height:1.6;max-height:44vh;overflow:auto}
+  /* the meeting on screen */
+  .mhd{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mhd .ttl{flex:1 1 auto;min-width:0}
+  .mhd h2{margin:0;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .live{white-space:pre-wrap;word-break:break-word;background:var(--raised);border:1px solid var(--line-strong);
+    border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.6;max-height:34vh;overflow:auto;margin-top:10px}
   .live.empty{color:var(--faint)}
-  textarea.edit{width:100%;min-height:150px;max-height:50vh;border:1px solid var(--line-strong);border-radius:10px;
-    padding:11px 12px;font:inherit;font-size:16px;line-height:1.55;background:var(--surface);color:var(--text);resize:vertical}
+  textarea.edit{width:100%;min-height:130px;max-height:40vh;margin-top:10px;border:1px solid var(--line-strong);border-radius:10px;
+    padding:10px 12px;font:inherit;font-size:16px;line-height:1.55;background:var(--surface-solid);color:var(--text);resize:vertical}
   textarea.edit:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
-  .grp{margin-top:14px}
-  .grp > h3{display:flex;align-items:baseline;gap:8px;margin:0 0 6px}
-  .grp .count{font-size:12.5px;color:var(--faint);font-family:var(--sans);font-weight:400}
-  .row{display:flex;align-items:flex-start;gap:11px;padding:10px 2px;border-top:1px solid var(--line);min-height:44px}
-  .row:first-of-type{border-top:0}
-  .row input[type=checkbox]{width:24px;height:24px;flex:0 0 24px;margin:8px 0 0;accent-color:var(--accent)}
-  .row .body{flex:1 1 auto;min-width:0}
-  .row .body .txt{font-size:14.5px;line-height:1.5;word-break:break-word}
-  .row .body .tiny{margin-top:3px;word-break:break-word}
-  .row.on{background:var(--accent-wash);border-radius:8px}
-  .kind{display:inline-block;font-size:11px;letter-spacing:.3px;text-transform:uppercase;color:var(--faint);
-    border:1px solid var(--line-strong);border-radius:999px;padding:1px 7px;margin-right:6px;vertical-align:1px}
-  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .acts .btn{flex:1 1 auto;min-width:150px}
-  .meets{display:flex;flex-direction:column;gap:0}
-  .meet{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;
-    color:inherit;font:inherit;padding:11px 2px;min-height:44px;cursor:pointer}
-  .meet:first-child{border-top:0}
-  .meet:hover{background:var(--raised)}
-  .meet.on{background:var(--accent-wash)}
-  .meet .t{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .askrow{display:flex;gap:9px;align-items:center;padding:3px 9px 9px}
-  #ask{height:56px;max-height:30vh}
-  #askOut{margin-top:10px;white-space:pre-wrap;word-break:break-word;font-size:14.5px;line-height:1.55}
-  .sp{display:inline-block;width:13px;height:13px;border:2px solid var(--line-strong);border-top-color:var(--accent);
-    border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  #ov{position:fixed;inset:0;background:rgba(31,30,29,.55);z-index:60;display:none;align-items:center;justify-content:center;padding:24px}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  /* the conversation */
+  #thread{flex:1 1 auto;min-height:0;overflow:auto;padding:4px 0 10px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:92%;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  .msg.user{align-self:flex-end;background:var(--accent-solid);color:#fff}
+  .msg.assistant{align-self:flex-start;background:var(--surface);color:var(--panel-text);border:1px solid var(--line);
+    --text:var(--panel-text);--muted:var(--panel-muted);--faint:var(--panel-faint)}
+  .msg.transfer{border-color:#86efac;background:#dcfce7;color:#14532d}
+  .msg img.att{display:block;max-width:220px;max-height:180px;border-radius:8px;margin-bottom:6px}
+  .msg .tag{display:inline-block;font-size:11.5px;letter-spacing:.2px;border:1px solid var(--line-strong);border-radius:999px;
+    padding:1px 8px;margin-bottom:6px;color:var(--panel-muted);white-space:normal}
+  .msg .tag.off{border-color:#fcd34d;background:#fef3c7;color:#78350f}
+  .mact{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;white-space:normal}
+  .mact .btn{min-height:36px;font-size:13px;padding:0 11px}
+  .mact a.btn{text-decoration:none}
+  .empty-note{color:var(--muted);font-size:14px;text-align:center;margin:auto;padding:24px 10px;max-width:420px}
+  /* starter chips: optional, above the input; the input accepts anything */
+  #chips{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none}
+  #chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);
+    color:var(--panel-text);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+  .chip:hover{background:var(--surface-solid)}
+  .chip:disabled{opacity:.45;cursor:default}
+  #msg{height:9vh;min-height:52px;max-height:28vh}
+  #ov{position:fixed;inset:0;background:rgba(17,24,39,.6);z-index:60;display:none;align-items:center;justify-content:center;padding:24px}
   #ov.on{display:flex}
   #ov .card{max-width:330px;width:100%;text-align:center}
   .prog{height:8px;background:var(--raised);border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:13px 0 7px}
   #ovFill{height:100%;width:0;background:var(--accent);transition:width .25s}
-  /* On a phone or tablet every control in the header is a finger target too. theme.css
-     sizes .lnk and .tab for a mouse; this raises them only where the input is a thumb,
-     so the two tabs of the app still look identical on a desktop. */
   @media(max-width:820px){
     .top .lnk{min-height:44px;min-width:44px;justify-content:center}
     .top .tab{min-height:44px;padding:0 11px}
+    .chip{min-height:40px}
+    .mact .btn{min-height:44px}
   }
   @media(max-width:560px){
-    main{padding-left:12px;padding-right:12px}
+    main,footer{padding-left:12px;padding-right:12px}
     .ctl .btn{min-width:0;flex:1 1 46%}
-    .clock{font-size:23px}
+    .msg{max-width:100%}
   }
 </style>
 </head>
@@ -85,6 +89,9 @@
   </nav>
   <div class="hdrmenu" id="hdrMenu">
     <span class="where" id="ctx"></span>
+    <a class="lnk" href="/speakup/history" id="navHistory">Historial</a>
+    <a class="lnk" href="/speakup/meetings?new=1" id="navNew">Nueva reunión</a>
+    <a class="lnk" href="/speakup/settings" id="navSettings">Ajustes</a>
     <button class="lnk" id="langBtn">EN</button>
     <button class="lnk" id="outBtn">Salir</button>
   </div>
@@ -92,8 +99,8 @@
 </header>
 
 <main>
-  <!-- a) the record control -->
-  <section class="card" id="recCard">
+  <!-- a new meeting: the record control. Shown when no meeting is open, or while recording. -->
+  <section class="card" id="recCard" hidden>
     <div class="rechd">
       <span class="dot" id="dot"></span>
       <span class="clock" id="clock">00:00</span>
@@ -106,54 +113,43 @@
     </div>
     <p class="tiny" id="privacy" style="margin:10px 0 0">Se transcribe en tu dispositivo. El audio no sale de tu equipo.</p>
     <div class="notice" id="unsupported" hidden></div>
+    <div class="live empty" id="live" hidden></div>
   </section>
 
-  <!-- b) the transcript: live while recording, editable once stopped -->
-  <section class="card" id="trCard" hidden>
-    <h2 id="trTitle">Transcripción</h2>
-    <div class="live empty" id="live"></div>
-    <textarea class="edit" id="trEdit" hidden spellcheck="false"></textarea>
-    <div class="acts" id="trActs" hidden>
-      <button class="btn" id="saveTrBtn">Guardar transcripción</button>
-      <button class="btn primary" id="readBtn">Leer la reunión</button>
+  <!-- the meeting on screen: its header, and the transcript on demand -->
+  <section class="card" id="meetCard" hidden>
+    <div class="mhd">
+      <div class="ttl"><h2 id="mTitle"></h2><div class="tiny" id="mDate"></div></div>
+      <button class="btn small" id="trToggle">Transcripción</button>
+    </div>
+    <div id="trPanel" hidden>
+      <textarea class="edit" id="trEdit" spellcheck="false"></textarea>
+      <div class="acts"><button class="btn small" id="saveTrBtn">Guardar transcripción</button><span class="stat" id="trStat"></span></div>
     </div>
   </section>
 
-  <!-- c) + d) the checklist -->
-  <section class="card" id="intelCard" hidden>
-    <h2 id="intelTitle">Lo que se dijo</h2>
-    <p class="tiny" id="intelHint"></p>
-    <div id="intelBody"></div>
-    <!-- e) + f) -->
-    <div class="acts">
-      <button class="btn primary" id="promptBtn">Construir el prompt</button>
-      <button class="btn" id="sendBtn" hidden>Enviar a la Fábrica</button>
-    </div>
-    <div class="notice" id="promptNote" hidden></div>
-    <div class="ink" id="promptOut" hidden style="margin-top:10px;max-height:46vh"></div>
-  </section>
+  <!-- the conversation about it -->
+  <div id="thread" aria-live="polite"></div>
+</main>
 
-  <!-- g) past meetings -->
-  <section class="card" id="listCard">
-    <h2 id="listTitle">Reuniones</h2>
-    <div class="meets" id="meets"><div class="tiny" id="listState">Cargando…</div></div>
-  </section>
-
-  <!-- h) the ask box -->
-  <section id="askCard">
+<footer>
+  <div class="inner">
+    <div id="chips"></div>
     <div class="box">
-      <textarea id="ask" spellcheck="false" placeholder="Pregunta: acta, resumen, qué tengo que hacer…"></textarea>
-      <div class="askrow">
-        <span class="stat" id="askStat"></span>
-        <button class="icon send" id="askSend" aria-label="Preguntar" title="Preguntar">
+      <div id="shots" class="shots"></div>
+      <textarea id="msg" spellcheck="false" placeholder="Pregunta lo que quieras sobre la reunión…"></textarea>
+      <div class="boxrow">
+        <button class="icon" id="mic" aria-label="Dictar" title="Dictar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+        </button>
+        <span class="stat" id="msgStat"></span>
+        <button class="icon send" id="send" aria-label="Enviar" title="Enviar">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
         </button>
       </div>
     </div>
-    <div id="askOut"></div>
-    <p class="tiny" id="askNote" style="margin:8px 0 0">Solo lectura: aquí no se ejecuta nada ni se toca código.</p>
-  </section>
-</main>
+  </div>
+</footer>
 
 <!-- model download / file transcription progress -->
 <div id="ov" role="dialog" aria-modal="true">
@@ -167,7 +163,7 @@
 
 <script src="/speakup/transcript-clean.js?v=1"></script>
 <script src="/speakup/record-engine.js?v=2"></script>
-<script src="/speakup/meetings.js?v=1"></script>
-<script src="/speakup/header-menu.js?v=1"></script>
+<script src="/speakup/meetings.js?v=2"></script>
+<script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>
