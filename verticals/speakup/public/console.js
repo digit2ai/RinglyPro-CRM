@@ -42,6 +42,20 @@
     return d;
   }
   function status(s) { $('stat').textContent = s || ''; }
+  /* WHILE SOMETHING IS RUNNING THE BOX CANNOT SEND, AND SAYS SO (owner request 2026-09-17).
+   * The send button used to sit there enabled through planning, coding and an answer being
+   * written, with no sign that work was in flight. Now it hands its place to a moving bar and
+   * comes back the moment the box is usable again — which includes a plan waiting for a word,
+   * because "approved" and a correction are typed into the same box. */
+  var workingNow = false;
+  function setWorking(on) {
+    workingNow = !!on;
+    var s = $('send'), p = $('prog');
+    if (!s || !p) return;
+    s.hidden = workingNow; s.disabled = workingNow;
+    p.hidden = !workingNow;
+    p.setAttribute('aria-label', L('Trabajando…', 'Working…'));
+  }
 
   // ── the top pane ───────────────────────────────────────────────────────────
   var STATUS_TEXT = {
@@ -269,6 +283,8 @@
       if (d.events.length) { lastEvent = d.events[d.events.length - 1].id; write(d.events); }
       renderBar({ status: d.status, terminal: d.terminal, pr_number: d.pr_number, pr_url: d.pr_url });
       jobTerminal = !!d.terminal;
+      // A plan waiting for a word is NOT "working": that is the box's turn.
+      setWorking(!d.terminal && d.status !== 'WAITING_APPROVAL');
       // The plan is ready: stop polling and hand the box over to the owner. Fetched once,
       // on the transition, so a plan on screen is never silently swapped underneath them.
       if (d.status === 'WAITING_APPROVAL') {
@@ -334,7 +350,7 @@
     if (!text && shots.length) text = L('Mira la captura adjunta y haz el cambio que muestra.', 'Look at the attached screenshot and make the change it shows.');
     if (!text) { status(L('Escribe o dicta una instrucción', 'Type or dictate an instruction')); return; }
     if (capturing) stopCapture();
-    $('send').disabled = true;
+    setWorking(true);
     write([{ kind: 'you', t: shots.length ? 'youSaidShots' : 'youSaid', args: { text: text, n: shots.length } }]);
     // WHILE A PLAN IS ON SCREEN THE BOX IS A CONVERSATION ABOUT IT. "approved" runs it; a
     // question is answered and leaves the plan exactly as it is; anything else is a
@@ -362,7 +378,7 @@
     } catch (e) {
       status('');
       write([{ kind: 'error', text: e.message }]);
-    } finally { $('send').disabled = false; }
+    } finally { if (!jobId || jobTerminal) setWorking(false); }
   }
 
   // ── research: ask anything, answered live ──────────────────────────────────
@@ -380,6 +396,7 @@
       out.scrollTop = out.scrollHeight;
     }
     status(L('Investigando…', 'Looking into it…'));
+    setWorking(true);
     try {
       var r = await fetch('/speakup/api/v1/factory/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SpeakUp': '1' },
         body: JSON.stringify({ text: text, lang: lang, history: talk.slice(-8) }) });
@@ -408,7 +425,7 @@
       }
     } catch (e) {
       write([{ kind: 'error', text: e.message }]);
-    } finally { status(''); }
+    } finally { status(''); setWorking(false); }
   }
 
   // ── the plan, and the one word that runs it ────────────────────────────────
@@ -519,6 +536,7 @@
   }
 
   function showPlan(job) {
+    setWorking(false);
     // The fold is collapsed for a NEW plan and only for a new plan: removing a step from
     // inside it rebuilds the card, and snapping shut under the finger that just tapped is
     // how a list of five files takes five taps of re-opening to prune.
@@ -586,7 +604,7 @@
     } catch (e) {
       status('');
       write([{ kind: 'error', text: e.message }]);
-    } finally { $('send').disabled = false; }
+    } finally { setWorking(false); }
   }
 
   async function approvePlan() {
@@ -604,7 +622,8 @@
       // The plan moved under them (a revision landed): show the current one rather than
       // leaving an approval pointing at a plan that no longer exists.
       if (e.data && e.data.job) { planDiff = null; showPlan(e.data.job); }
-    } finally { $('send').disabled = false; }
+      setWorking(false);
+    }
   }
 
   async function revisePlan(text) {
@@ -627,7 +646,7 @@
         planDiff = null;
         if (cur.status === 'WAITING_APPROVAL') showPlan(cur); else { hidePlan(); follow(id); }
       } catch (e2) { /* the page redirects on 401 */ }
-    } finally { $('send').disabled = false; }
+    } finally { setWorking(false); }
   }
 
   // A prompt handed over by the Meetings screen. It arrives as TEXT in the box — editable,

@@ -17,6 +17,13 @@
   main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:11px 14px 0}
   #out{flex:1 1 auto;min-height:0}
   #out .say{white-space:pre-wrap;word-break:break-word}
+  /* While a job or an answer is running there is nothing to send, so the send button gives its
+     place to a moving bar: the screen says plainly that something is happening, and comes back
+     the moment the box is usable again. */
+  .prog{margin-left:auto;width:120px;height:8px;border-radius:999px;background:var(--raised);border:1px solid var(--line-strong);overflow:hidden}
+  .prog span{display:block;width:40%;height:100%;background:var(--accent-solid);border-radius:999px;animation:slide 1.15s ease-in-out infinite}
+  @keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+  @media (prefers-reduced-motion: reduce){ .prog span{animation:none;width:100%;opacity:.55} }
   /* No empty page: with nothing in progress the step bar and the work pane are not drawn.
      console.js adds .idle only when there is no job; any job, event or plan removes it. */
   body.idle #bar, body.idle #out{display:none}
@@ -68,6 +75,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
       </button>
       <span class="stat" id="stat"></span>
+      <div class="prog" id="prog" role="status" aria-live="polite" hidden><span></span></div>
       <button class="icon send" id="send" aria-label="Enviar" title="Enviar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
       </button>
@@ -75,7 +83,7 @@
   </div>
 </footer>
 
-<script src="/speakup/console.js?v=12"></script>
+<script src="/speakup/console.js?v=13"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

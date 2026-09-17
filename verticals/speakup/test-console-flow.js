@@ -33,6 +33,7 @@ const PLAN = { id: 42, status: 'WAITING_APPROVAL', terminal: false, title: 'Chan
   plan_hash: 'h42', plan_md: 'x', revisions: [], composed_by: 'heuristic',
   plan: { what_changes: ['The logo reads VoiceUp'], what_stays: ['Everything else'], how_you_know: ['You see it'],
     decisions: [], watch_out: [], scope_plain: 'small' } };
+const RUNNING = { id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev', plan_hash: null, revisions: [] };
 const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev', plan_hash: 'h41', revisions: [] };
 
 let scenario = { jobs: [] };
@@ -58,7 +59,7 @@ const server = http.createServer((req, res) => {
   }
   if (req.url.indexOf('/api/') >= 0) {
     let body = {};
-    const byId = (id) => (id === 42 ? PLAN : DONE);
+    const byId = (id) => (id === 42 ? PLAN : (id === 43 ? RUNNING : DONE));
     if (/\/factory\/overview/.test(req.url)) {
       body = { operator: true, jobs: scenario.jobs, recordings: [], readiness: { ready: true, blockers: [] } };
     } else if (/\/factory\/command/.test(req.url) && req.method === 'POST') {
@@ -95,6 +96,8 @@ server.listen(0, async () => {
       idle: document.body.classList.contains('idle'),
       bar: shown('bar'), out: shown('out'), plan: shown('plan'),
       clear: !!document.getElementById('clearBtn'), cancel: !!document.getElementById('cancelBtn'),
+      sendOn: getComputedStyle(document.getElementById('send')).display !== 'none' && !document.getElementById('send').disabled,
+      prog: getComputedStyle(document.getElementById('prog')).display !== 'none',
       pane: document.getElementById('out').textContent.trim(),
       placeholder: document.getElementById('cmd').placeholder
     };
@@ -128,6 +131,7 @@ server.listen(0, async () => {
       page = await open([PLAN], width);
       s = await state(page);
       ok(!s.idle && s.plan, `${w} a plan is waiting: you land directly on it`);
+      ok(s.sendOn && !s.prog, `${w} a plan is waiting: the box can be used, no progress bar`);
       ok(s.bar, `${w} a plan is waiting: the step bar is drawn`);
       ok(s.cancel, `${w} a plan is waiting: Cancel is offered`);
       // THE DEFECT. Clear beside Cancel on a live plan is what stranded it.
@@ -148,6 +152,7 @@ server.listen(0, async () => {
       s = await state(page);
       ok(!s.idle && s.bar, `${w} a finished job is shown`);
       ok(s.clear, `${w} a finished job: Clear IS offered`);
+      ok(s.sendOn && !s.prog, `${w} a finished job: the box is usable again`);
       await page.click('#clearBtn');
       await new Promise((r) => setTimeout(r, 400));
       s = await state(page);
@@ -161,12 +166,22 @@ server.listen(0, async () => {
       ok(!s.idle && s.out, `${w} from idle, sending brings the work area back`);
       await page.close();
 
+      // ── 5b. while a job is running: no send button, a moving bar instead ─────
+      page = await open([{ id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev' }], width);
+      let sw = await state(page);
+      ok(!sw.sendOn && sw.prog, `${w} while the job is planning: the send button is gone and a progress bar shows`);
+      ok(await page.evaluate(() => { const r = document.getElementById('prog').getBoundingClientRect(); return r.width > 40 && r.height > 4; }),
+        `${w} the progress bar is actually visible`);
+      await page.close();
+
       // ── 6. a question is answered live, like Claude ─────────────────────────
       page = await open([], width);
       scenario.research = true; researchCalls = 0;
       await page.type('#cmd', 'what was the latest commit');
       await page.click('#send');
       await new Promise((r) => setTimeout(r, 450));
+      const during = await state(page);
+      ok(!during.sendOn && during.prog, `${w} while the answer is being written: the bar, not the send button`);
       const mid = await page.evaluate(() => document.getElementById('out').textContent);
       await new Promise((r) => setTimeout(r, 1200));
       const end = await page.evaluate(() => ({ text: document.getElementById('out').textContent, answers: [...document.querySelectorAll('#out .ln')].filter(l => /ANSWER/.test(l.textContent)).length,
@@ -175,6 +190,8 @@ server.listen(0, async () => {
       ok(/TOOL/.test(mid) && /api\.github\.com/.test(mid), `${w} what it is looking at shows while it works`);
       ok(/It fixed Close\./.test(end.text) && end.answers === 1, `${w} the final answer replaces the streamed text, shown once`);
       ok(end.ws === 'pre-wrap', `${w} a multi-line answer keeps its lines`);
+      const after = await state(page);
+      ok(after.sendOn && !after.prog, `${w} once the answer is finished you can write again`);
       await page.close();
     }
   } catch (e) {
