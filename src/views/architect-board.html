@@ -175,9 +175,9 @@ td code{font-size:13px; color:var(--accent-ink); background:var(--accent-soft);
 .cst .cap{fill:var(--faint); font-size:13px; letter-spacing:.20em; text-anchor:middle}
 
 /* Each agent lights in turn, 1.6s apart, so the sweep reads as the brain
-   working through its crew rather than eight things blinking at once. */
-.cst .nd{animation:cstlit 12.8s linear infinite}
-@keyframes cstlit{ 0%,6.2%{opacity:1} 12.5%,100%{opacity:.42} }
+   working through its crew rather than nine things blinking at once. */
+.cst .nd{animation:cstlit 14.4s linear infinite}
+@keyframes cstlit{ 0%,5.5%{opacity:1} 11.1%,100%{opacity:.42} }
 
 @media(prefers-reduced-motion:reduce){
   .cst .rings circle,.cst .lk,.cst .live,.cst .nd{animation:none}
@@ -278,13 +278,13 @@ footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
       <p class="eyebrow">Claude Code project skill &middot; RinglyPro CRM</p>
       <h1><span class="cmd">/ringlypro-architect</span></h1>
       <p class="dek">Natural language in, a deployed and verified ecosystem out. One MCP Brain routing
-        work across a bench of 89, then shipping it. This is the bench, the modes, and the rules it will
+        work across a bench of 102, then shipping it. This is the bench, the modes, and the rules it will
         not break.</p>
     </div>
     <div class="tally">
       <div><b>9</b><span>Modes</span></div>
       <div><b>7</b><span>Phases</span></div>
-      <div><b>89</b><span>Agents</span></div>
+      <div><b>102</b><span>Agents</span></div>
       <div><b>13</b><span>Rules</span></div>
     </div>
   </header>
@@ -294,7 +294,7 @@ footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
       <a href="#modes">Modes</a>
       <a href="#funnel">The funnel</a>
       <a href="#phases">Build phases</a>
-      <a href="#bench">The bench &middot; 89</a>
+      <a href="#bench">The bench &middot; 102</a>
       <a href="#routing">Routing</a>
       <a href="#patterns">House patterns</a>
       <a href="#briefs">Specialist briefs</a>
@@ -381,18 +381,18 @@ footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
     <!-- BENCH -->
     <section id="bench">
       <h2>The bench</h2>
-      <p class="h2sub">89 agents: 8 always on, 76 on call, 5 that only work as a crew</p>
+      <p class="h2sub">102 agents: 9 always on, 76 on call, 12 AI Services SMEs, 5 that only work as a crew</p>
       <p class="lede">Specialists are dispatched as subagents with a scoped brief and return artifacts,
         not commentary. Filter by name or by what you need done.</p>
 
       <figure class="cstwrap">
 <svg class="cst" viewBox="0 0 1280 860" role="img"
-     aria-label="The MCP Brain at the centre, wired to the eight always-on core agents: Senior BA, Research, Architect, Minutes, Findings, Voice AI, Inbox Triage and Outreach.">
+     aria-label="The MCP Brain at the centre, wired to the nine always-on core agents: Senior BA, Research, Architect, Minutes, Findings, Voice AI, Inbox Triage, Outreach and AI Specialist.">
   <g class="rings">
     <circle cx="640" cy="430" r="150"/><circle cx="640" cy="430" r="215"/>
     <circle cx="640" cy="430" r="285"/><circle cx="640" cy="430" r="352"/>
   </g>
-  <g class="links"><line class="lk" style="animation-delay:0.00s" x1="640" y1="430" x2="640" y2="144"/><line class="lk" style="animation-delay:0.42s" x1="640" y1="430" x2="944" y2="228"/><line class="lk" style="animation-delay:0.84s" x1="640" y1="430" x2="1070" y2="430"/><line class="lk" style="animation-delay:1.26s" x1="640" y1="430" x2="944" y2="632"/><line class="lk" style="animation-delay:1.68s" x1="640" y1="430" x2="640" y2="716"/><line class="lk" style="animation-delay:2.10s" x1="640" y1="430" x2="336" y2="632"/><line class="lk" style="animation-delay:2.52s" x1="640" y1="430" x2="210" y2="430"/><line class="lk" style="animation-delay:2.94s" x1="640" y1="430" x2="336" y2="228"/></g>
+  <g class="links"><line class="lk" style="animation-delay:0.00s" x1="640" y1="430" x2="640" y2="144"/><line class="lk" style="animation-delay:0.42s" x1="640" y1="430" x2="916" y2="211"/><line class="lk" style="animation-delay:0.84s" x1="640" y1="430" x2="1063" y2="380"/><line class="lk" style="animation-delay:1.26s" x1="640" y1="430" x2="1012" y2="573"/><line class="lk" style="animation-delay:1.68s" x1="640" y1="430" x2="787" y2="699"/><line class="lk" style="animation-delay:2.10s" x1="640" y1="430" x2="493" y2="699"/><line class="lk" style="animation-delay:2.52s" x1="640" y1="430" x2="268" y2="573"/><line class="lk" style="animation-delay:2.94s" x1="640" y1="430" x2="217" y2="380"/><line class="lk" style="animation-delay:3.36s" x1="640" y1="430" x2="364" y2="211"/></g>
   <g class="brain">
     <rect class="brainbox" x="472" y="234" width="336" height="392" rx="26"/>
     <rect class="slot" x="498" y="260" width="284" height="72" rx="14"/>
@@ -402,25 +402,26 @@ footer code{font-family:"JetBrains Mono",monospace; font-size:12.5px}
     <rect class="core" x="498" y="428" width="284" height="104" rx="14"/>
     <text class="coretop" x="640" y="458">MCP</text>
     <text class="corebig" x="640" y="496">BRAIN</text>
-    <text class="coresub" x="640" y="520">8 core &#183; 76 on call &#183; 5 crewed</text>
+    <text class="coresub" x="640" y="520">9 core &#183; 88 on call &#183; 5 crewed</text>
     <rect class="slot" x="498" y="544" width="284" height="72" rx="14"/>
     <circle class="live" cx="752" cy="570" r="5"/>
     <text class="livelbl" x="764" y="575">LIVE</text>
     <text class="slotlbl" id="cstNow" x="522" y="602">ORCHESTRATOR</text>
   </g>
-  <text class="cap" x="640" y="844">89-AGENT WORKFORCE &#183; WIRED VIA OPEN MCP</text>
+  <text class="cap" x="640" y="844">102-AGENT WORKFORCE &#183; WIRED VIA OPEN MCP</text>
   <g class="nodes">
   <g class="nd" style="animation-delay:0.00s" data-i="0"><circle class="stalk" cx="640" cy="103" r="5"/><line class="stalkline" x1="640" y1="107" x2="640" y2="121"/><rect class="chip" x="578" y="121" width="124" height="46" rx="12"/><rect class="chipin" x="594" y="133" width="92" height="22" rx="8"/><circle class="dot" cx="610" cy="144" r="3.4"/><line class="bar" x1="622" y1="144" x2="658" y2="144"/><circle class="dot" cx="670" cy="144" r="3.4"/><text class="nm" x="640" y="195">01 SENIOR BA</text><text class="sb" x="640" y="215">decks · plans · strategy</text></g>
-  <g class="nd" style="animation-delay:1.60s" data-i="1"><circle class="stalk" cx="944" cy="187" r="5"/><line class="stalkline" x1="944" y1="191" x2="944" y2="205"/><rect class="chip" x="882" y="205" width="124" height="46" rx="12"/><rect class="chipin" x="898" y="217" width="92" height="22" rx="8"/><circle class="dot" cx="914" cy="228" r="3.4"/><line class="bar" x1="926" y1="228" x2="962" y2="228"/><circle class="dot" cx="974" cy="228" r="3.4"/><text class="nm" x="944" y="279">02 RESEARCH</text><text class="sb" x="944" y="299">web search · competitive</text></g>
-  <g class="nd" style="animation-delay:3.20s" data-i="2"><circle class="stalk" cx="1070" cy="389" r="5"/><line class="stalkline" x1="1070" y1="393" x2="1070" y2="407"/><rect class="chip" x="1008" y="407" width="124" height="46" rx="12"/><rect class="chipin" x="1024" y="419" width="92" height="22" rx="8"/><circle class="dot" cx="1040" cy="430" r="3.4"/><line class="bar" x1="1052" y1="430" x2="1088" y2="430"/><circle class="dot" cx="1100" cy="430" r="3.4"/><text class="nm" x="1070" y="481">03 ARCHITECT</text><text class="sb" x="1070" y="501">build · UAT · ship</text></g>
-  <g class="nd" style="animation-delay:4.80s" data-i="3"><circle class="stalk" cx="944" cy="591" r="5"/><line class="stalkline" x1="944" y1="595" x2="944" y2="609"/><rect class="chip" x="882" y="609" width="124" height="46" rx="12"/><rect class="chipin" x="898" y="621" width="92" height="22" rx="8"/><circle class="dot" cx="914" cy="632" r="3.4"/><line class="bar" x1="926" y1="632" x2="962" y2="632"/><circle class="dot" cx="974" cy="632" r="3.4"/><text class="nm" x="944" y="683">04 MINUTES</text><text class="sb" x="944" y="703">summary · action items</text></g>
-  <g class="nd" style="animation-delay:6.40s" data-i="4"><circle class="stalk" cx="640" cy="675" r="5"/><line class="stalkline" x1="640" y1="679" x2="640" y2="693"/><rect class="chip" x="578" y="693" width="124" height="46" rx="12"/><rect class="chipin" x="594" y="705" width="92" height="22" rx="8"/><circle class="dot" cx="610" cy="716" r="3.4"/><line class="bar" x1="622" y1="716" x2="658" y2="716"/><circle class="dot" cx="670" cy="716" r="3.4"/><text class="nm" x="640" y="767">05 FINDINGS</text><text class="sb" x="640" y="787">risks · stalls · owners</text></g>
-  <g class="nd" style="animation-delay:8.00s" data-i="5"><circle class="stalk" cx="336" cy="591" r="5"/><line class="stalkline" x1="336" y1="595" x2="336" y2="609"/><rect class="chip" x="274" y="609" width="124" height="46" rx="12"/><rect class="chipin" x="290" y="621" width="92" height="22" rx="8"/><circle class="dot" cx="306" cy="632" r="3.4"/><line class="bar" x1="318" y1="632" x2="354" y2="632"/><circle class="dot" cx="366" cy="632" r="3.4"/><text class="nm" x="336" y="683">06 VOICE AI</text><text class="sb" x="336" y="703">Rachel · Ana · Lina · 24/7</text></g>
-  <g class="nd" style="animation-delay:9.60s" data-i="6"><circle class="stalk" cx="210" cy="389" r="5"/><line class="stalkline" x1="210" y1="393" x2="210" y2="407"/><rect class="chip" x="148" y="407" width="124" height="46" rx="12"/><rect class="chipin" x="164" y="419" width="92" height="22" rx="8"/><circle class="dot" cx="180" cy="430" r="3.4"/><line class="bar" x1="192" y1="430" x2="228" y2="430"/><circle class="dot" cx="240" cy="430" r="3.4"/><text class="nm" x="210" y="481">07 INBOX TRIAGE</text><text class="sb" x="210" y="501">score · flag · recommend</text></g>
-  <g class="nd" style="animation-delay:11.20s" data-i="7"><circle class="stalk" cx="336" cy="187" r="5"/><line class="stalkline" x1="336" y1="191" x2="336" y2="205"/><rect class="chip" x="274" y="205" width="124" height="46" rx="12"/><rect class="chipin" x="290" y="217" width="92" height="22" rx="8"/><circle class="dot" cx="306" cy="228" r="3.4"/><line class="bar" x1="318" y1="228" x2="354" y2="228"/><circle class="dot" cx="366" cy="228" r="3.4"/><text class="nm" x="336" y="279">08 OUTREACH</text><text class="sb" x="336" y="299">emails · WhatsApp · EN/ES</text></g>
+  <g class="nd" style="animation-delay:1.60s" data-i="1"><circle class="stalk" cx="916" cy="170" r="5"/><line class="stalkline" x1="916" y1="174" x2="916" y2="188"/><rect class="chip" x="854" y="188" width="124" height="46" rx="12"/><rect class="chipin" x="870" y="200" width="92" height="22" rx="8"/><circle class="dot" cx="886" cy="211" r="3.4"/><line class="bar" x1="898" y1="211" x2="934" y2="211"/><circle class="dot" cx="946" cy="211" r="3.4"/><text class="nm" x="916" y="262">02 RESEARCH</text><text class="sb" x="916" y="282">web search · competitive</text></g>
+  <g class="nd" style="animation-delay:3.20s" data-i="2"><circle class="stalk" cx="1063" cy="339" r="5"/><line class="stalkline" x1="1063" y1="343" x2="1063" y2="357"/><rect class="chip" x="1001" y="357" width="124" height="46" rx="12"/><rect class="chipin" x="1017" y="369" width="92" height="22" rx="8"/><circle class="dot" cx="1033" cy="380" r="3.4"/><line class="bar" x1="1045" y1="380" x2="1081" y2="380"/><circle class="dot" cx="1093" cy="380" r="3.4"/><text class="nm" x="1063" y="431">03 ARCHITECT</text><text class="sb" x="1063" y="451">build · UAT · ship</text></g>
+  <g class="nd" style="animation-delay:4.80s" data-i="3"><circle class="stalk" cx="1012" cy="532" r="5"/><line class="stalkline" x1="1012" y1="536" x2="1012" y2="550"/><rect class="chip" x="950" y="550" width="124" height="46" rx="12"/><rect class="chipin" x="966" y="562" width="92" height="22" rx="8"/><circle class="dot" cx="982" cy="573" r="3.4"/><line class="bar" x1="994" y1="573" x2="1030" y2="573"/><circle class="dot" cx="1042" cy="573" r="3.4"/><text class="nm" x="1012" y="624">04 MINUTES</text><text class="sb" x="1012" y="644">summary · action items</text></g>
+  <g class="nd" style="animation-delay:6.40s" data-i="4"><circle class="stalk" cx="787" cy="658" r="5"/><line class="stalkline" x1="787" y1="662" x2="787" y2="676"/><rect class="chip" x="725" y="676" width="124" height="46" rx="12"/><rect class="chipin" x="741" y="688" width="92" height="22" rx="8"/><circle class="dot" cx="757" cy="699" r="3.4"/><line class="bar" x1="769" y1="699" x2="805" y2="699"/><circle class="dot" cx="817" cy="699" r="3.4"/><text class="nm" x="787" y="750">05 FINDINGS</text><text class="sb" x="787" y="770">risks · stalls · owners</text></g>
+  <g class="nd" style="animation-delay:8.00s" data-i="5"><circle class="stalk" cx="493" cy="658" r="5"/><line class="stalkline" x1="493" y1="662" x2="493" y2="676"/><rect class="chip" x="431" y="676" width="124" height="46" rx="12"/><rect class="chipin" x="447" y="688" width="92" height="22" rx="8"/><circle class="dot" cx="463" cy="699" r="3.4"/><line class="bar" x1="475" y1="699" x2="511" y2="699"/><circle class="dot" cx="523" cy="699" r="3.4"/><text class="nm" x="493" y="750">06 VOICE AI</text><text class="sb" x="493" y="770">Rachel · Ana · Lina · 24/7</text></g>
+  <g class="nd" style="animation-delay:9.60s" data-i="6"><circle class="stalk" cx="268" cy="532" r="5"/><line class="stalkline" x1="268" y1="536" x2="268" y2="550"/><rect class="chip" x="206" y="550" width="124" height="46" rx="12"/><rect class="chipin" x="222" y="562" width="92" height="22" rx="8"/><circle class="dot" cx="238" cy="573" r="3.4"/><line class="bar" x1="250" y1="573" x2="286" y2="573"/><circle class="dot" cx="298" cy="573" r="3.4"/><text class="nm" x="268" y="624">07 INBOX TRIAGE</text><text class="sb" x="268" y="644">score · flag · recommend</text></g>
+  <g class="nd" style="animation-delay:11.20s" data-i="7"><circle class="stalk" cx="217" cy="339" r="5"/><line class="stalkline" x1="217" y1="343" x2="217" y2="357"/><rect class="chip" x="155" y="357" width="124" height="46" rx="12"/><rect class="chipin" x="171" y="369" width="92" height="22" rx="8"/><circle class="dot" cx="187" cy="380" r="3.4"/><line class="bar" x1="199" y1="380" x2="235" y2="380"/><circle class="dot" cx="247" cy="380" r="3.4"/><text class="nm" x="217" y="431">08 OUTREACH</text><text class="sb" x="217" y="451">emails · WhatsApp · EN/ES</text></g>
+  <g class="nd" style="animation-delay:12.80s" data-i="8"><circle class="stalk" cx="364" cy="170" r="5"/><line class="stalkline" x1="364" y1="174" x2="364" y2="188"/><rect class="chip" x="302" y="188" width="124" height="46" rx="12"/><rect class="chipin" x="318" y="200" width="92" height="22" rx="8"/><circle class="dot" cx="334" cy="211" r="3.4"/><line class="bar" x1="346" y1="211" x2="382" y2="211"/><circle class="dot" cx="394" cy="211" r="3.4"/><text class="nm" x="364" y="262">09 AI SPECIALIST</text><text class="sb" x="364" y="282">12 AI services · SMEs</text></g>
   </g>
 </svg>
-        <figcaption>The eight that are always on. The other 81 are spun up per project &mdash; filter them below.</figcaption>
+        <figcaption>The nine that are always on. The other 93 are spun up per project &mdash; filter them below.</figcaption>
       </figure>
 
       <div class="controls">
@@ -614,7 +615,7 @@ total_quote    = subtotal_price + IVA</pre>
   </main>
 
   <footer>
-    <span><code>.claude/commands/ringlypro-architect.md</code> &middot; 1,528 lines</span>
+    <span><code>.claude/commands/ringlypro-architect.md</code> &middot; 1,560 lines</span>
     <span>Digit2AI &middot; RinglyPro CRM</span>
   </footer>
 </div>
@@ -630,7 +631,22 @@ var GROUPS = [
     ['Inbox Triage','Scores requests, flags regulatory risk'],
     ['Meeting Minutes Synthesizer','Notes to summary, actions, assignments'],
     ['Voice AI Agents','Rachel, Ana and Lina &mdash; qualify, book, log'],
-    ['Neural Findings','Stalls, missing owners, overdue milestones']
+    ['Neural Findings','Stalls, missing owners, overdue milestones'],
+    ['AI Specialist','Leads the AI Services Practice &mdash; 12 services, 12 SMEs']
+  ]},
+  { id:'aisvc', name:'AI Services Practice', note:'Led by core 09. SMEs scope, specify and verify; the AI-native engineers build. Skills in /ai-specialist.', agents:[
+    ['AI Strategy &amp; Adoption SME','Use-case prioritisation, AI policy, 90-day plans'],
+    ['AI Agent Design SME','Tool schemas, authority allow-lists, approval gates'],
+    ['Conversational &amp; Voice AI SME','Voice orb, ConversationRelay, bilingual intake'],
+    ['Document AI &amp; Extraction SME','OCR/IDP, verbatim fields, verification queues'],
+    ['Knowledge &amp; RAG Solutions SME','Knowledge capture, cited answers, freshness'],
+    ['AI Workflow Automation SME','Measured processes, approvals, n8n/webhooks'],
+    ['Predictive AI &amp; Forecasting SME','Baselines, backtesting, drift monitoring'],
+    ['Computer Vision &amp; Multimodal SME','Capture protocols, labelling, provenance'],
+    ['Generative AI Content &amp; Media SME','Review queues, brand voice, AI disclosure'],
+    ['AI Governance, Risk &amp; Compliance SME','NIST AI RMF, EU AI Act, ISO 42001, Habeas Data'],
+    ['AI Economics &amp; ROI SME','Cost per call, token caps, ROI traced to inputs'],
+    ['AI Enablement &amp; Training SME','Role-based training, champions, adoption metrics']
   ]},
   { id:'dept', name:'AI Readiness Department', note:'Invoked as one crew, in this order. Never cherry-picked.', kind:'dept', agents:[
     ['Readiness Director','Overcomes not knowing where to start'],
@@ -705,8 +721,9 @@ var GROUPS = [
 ];
 
 var FILTERS = [
-  {id:'all',   label:'All 89'},
-  {id:'core',  label:'Core 8'},
+  {id:'all',   label:'All 102'},
+  {id:'core',  label:'Core 9'},
+  {id:'aisvc', label:'AI Services'},
   {id:'dept',  label:'Department'},
   {id:'brief', label:'Has a brief'},
   {id:'eng',   label:'Engineering'},
@@ -771,7 +788,7 @@ function render(){
   });
 
   benchEl.innerHTML = html || '<p class="empty">No agent on the bench matches that. Try a capability rather than a job title &mdash; "tenancy", "HIPAA", "token cost".</p>';
-  countEl.textContent = shown + ' of 89';
+  countEl.textContent = shown + ' of 102';
 }
 
 qEl.addEventListener('input', function(e){ query = e.target.value; render(); });
@@ -781,14 +798,14 @@ render();
 (function(){
   var now = document.getElementById('cstNow');
   if(!now) return;
-  var CORE = ['SENIOR BA','RESEARCH','ARCHITECT','MINUTES','FINDINGS','VOICE AI','INBOX TRIAGE','OUTREACH'];
+  var CORE = ['SENIOR BA','RESEARCH','ARCHITECT','MINUTES','FINDINGS','VOICE AI','INBOX TRIAGE','OUTREACH','AI SPECIALIST'];
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    now.textContent = 'ORCHESTRATOR \u00b7 8 CORE LINKED';
+    now.textContent = 'ORCHESTRATOR \u00b7 9 CORE LINKED';
     return;
   }
   var i = 0;
   function tick(){
-    now.textContent = 'ORCHESTRATOR \u00b7 ' + CORE[i] + ' [' + (i+1) + '/8]';
+    now.textContent = 'ORCHESTRATOR \u00b7 ' + CORE[i] + ' [' + (i+1) + '/9]';
     i = (i + 1) % CORE.length;
   }
   tick();

@@ -317,7 +317,7 @@ Recordatorios de vencimiento de documentos de tránsito para el Centro de Diagn�
 
 ## Architect Dispatch Board — the /ringlypro-architect reference, gated
 
-The modes, the seven build phases, the 89-agent bench (live-filterable), the routing table and the five house patterns, as one page. Internal reference, not a customer surface.
+The modes, the seven build phases, the 102-agent bench (9 core incl. the AI Specialist + its 12 AI Services SMEs, live-filterable), the routing table and the five house patterns, as one page. Internal reference, not a customer surface.
 
 **Live:** `/architect` on the app · `architect.digit2ai.com` root once that CNAME exists · health `GET /architect/health` (open by design — it reports whether the gate is configured, never content) · debug `/debug/architect-board-error`.
 
