@@ -81,6 +81,8 @@ body{margin:0;background:var(--paper);color:var(--on-dark);font-family:var(--san
 .tab.on{background:var(--surface-solid);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.10)}
 
 /* ── buttons ────────────────────────────────────────────────────────────────── */
+/* A display rule on a class beats the browser's own [hidden] rule, so a hidden button stayed on screen. */
+[hidden]{display:none!important}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 15px;
   border:1px solid var(--line-strong);background:var(--surface);color:var(--text);
   border-radius:10px;font:inherit;font-size:14px;cursor:pointer}

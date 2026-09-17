@@ -114,7 +114,15 @@ server.listen(0, async () => {
       ok(s.title === 'Weekly review' && /2026/.test(s.date), `${label} the meeting header shows its title and date`);
       ok(!s.rec, `${label} with a meeting open the screen is the header and the chat`);
       ok(s.chips.length === 7 && s.chipsOn === 7 && s.chips.includes('Summary') && s.chips.includes('Build prompt'), `${label} seven starter chips, all usable`);
-      ok(await page.$eval('#clearBtn', b => b.hidden), `${label} Clear is hidden when there is nothing to clear`);
+      // Measured, not the attribute: .btn{display:inline-flex} once beat [hidden] and left Clear on screen.
+      ok(await page.$eval('#clearBtn', b => getComputedStyle(b).display === 'none'), `${label} Clear is not on screen when there is nothing to clear`);
+      // Close forgets the meeting, so opening the screen again does not bring it back.
+      await page.click('#closeBtn'); await sleep(300);
+      s = await page.evaluate(() => ({ card: getComputedStyle(document.getElementById('meetCard')).display, rec: getComputedStyle(document.getElementById('recCard')).display, stored: localStorage.getItem('speakup_active_meeting'), url: location.search }));
+      ok(s.card === 'none' && s.rec !== 'none' && s.stored === null && !/id=/.test(s.url), `${label} Close takes the meeting off screen and forgets it`);
+      await page.goto(base + 'meetings', { waitUntil: 'networkidle0' });
+      ok(await page.$eval('#meetCard', c => getComputedStyle(c).display === 'none'), `${label} after Close, reopening the screen does not reopen the meeting`);
+      await page.goto(base + 'meetings?id=5', { waitUntil: 'networkidle0' });
 
       // ── a chip sends; the reply streams ────────────────────────────────────────
       await page.click('.chip');
@@ -199,7 +207,7 @@ server.listen(0, async () => {
       await sleep(4300);
       ok(/^Clear$/.test(await page.$eval('#clearBtn', b => b.textContent)) && deletes === before, `${label} left alone, it disarms itself`);
       await page.click('#clearBtn'); await sleep(150); await page.click('#clearBtn'); await sleep(500);
-      const afterClear = await page.evaluate(() => ({ n: document.querySelectorAll('.msg').length, hidden: document.getElementById('clearBtn').hidden, note: document.getElementById('thread').textContent }));
+      const afterClear = await page.evaluate(() => ({ n: document.querySelectorAll('.msg').length, hidden: getComputedStyle(document.getElementById('clearBtn')).display === 'none', note: document.getElementById('thread').textContent }));
       ok(deletes === before + 1 && afterClear.n === 0 && afterClear.hidden, `${label} a second tap clears it on the server and empties the screen`);
       await page.reload({ waitUntil: 'networkidle0' }); await sleep(400);
       ok((await page.evaluate(() => document.querySelectorAll('.msg').length)) === 0, `${label} and it stays cleared after a reload`);

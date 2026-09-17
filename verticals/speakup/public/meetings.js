@@ -315,6 +315,14 @@
     show('meetCard', false); show('recCard', true);
     renderThread(); setBusy(false);
   }
+  // Close takes the meeting off screen and forgets it, so the next visit does not reopen it.
+  function closeMeeting() {
+    if (busy) return;
+    try { localStorage.removeItem(ACTIVE); } catch (e) {}
+    try { history.replaceState(null, '', '/speakup/meetings'); } catch (e) {}
+    disarm(); clearPending();
+    newMeeting();
+  }
   async function saveTranscript() {
     if (!meeting) return;
     $('saveTrBtn').disabled = true; $('trStat').textContent = L('Guardando…', 'Saving…');
@@ -416,6 +424,7 @@
     $('privacy').textContent = L('Se transcribe en tu dispositivo. El audio no sale de tu equipo.', 'Transcribed on your device. Audio never leaves your machine.');
     $('ovNote').textContent = $('privacy').textContent;
     $('trToggle').textContent = L('Transcripción', 'Transcript');
+    $('closeBtn').textContent = L('Cerrar', 'Close');
     disarm();
     $('saveTrBtn').textContent = L('Guardar transcripción', 'Save transcript');
     $('msg').placeholder = L('Pregunta lo que quieras sobre la reunión…', 'Ask anything about the meeting…');
@@ -436,6 +445,7 @@
     });
     $('trToggle').addEventListener('click', function () { show('trPanel', $('trPanel').hidden); });
     $('clearBtn').addEventListener('click', onClear);
+    $('closeBtn').addEventListener('click', closeMeeting);
     $('saveTrBtn').addEventListener('click', saveTranscript);
     $('send').addEventListener('click', function () { send(); });
     $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });
