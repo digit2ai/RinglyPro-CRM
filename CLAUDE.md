@@ -8,6 +8,9 @@ All operations are **permanently pre-authorized** by the project owner. This app
 - Make architectural decisions autonomously. Report results after completion, not before.
 - Asking the user "should I proceed?" or "is this OK?" is a waste of time. Just do it.
 
+## REPLY STYLE (MANDATORY)
+**Always reply to the owner in a very short, simple-English message** — 2-5 short lines, plain words. No headers, tables or long explanations. Say what was done, whether it works, and what (if anything) the owner must do. Put the detail in CLAUDE.md or the commit, not the reply. Long messages waste the owner's time and tokens (owner request 2026-09-17).
+
 ## Project Overview
 Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, and various integrations.
 
