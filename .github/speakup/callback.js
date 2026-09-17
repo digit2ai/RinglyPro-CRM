@@ -15,7 +15,7 @@ const crypto = require('crypto');
 const { base, jobId, secret, hmac, readText } = require('./lib');
 
 const FIELDS = ['ts', 'job_id', 'event', 'status', 'plan_hash', 'commit_sha', 'files_changed',
-  'tests_passed', 'tests_failed', 'tests_measured', 'run_url', 'message', 'nonce', 'changed_files', 'suite_modified'];
+  'tests_passed', 'tests_failed', 'tests_measured', 'run_url', 'message', 'nonce', 'changed_files', 'suite_modified', 'baseline_ok'];
 
 (async () => {
   const event = process.argv[2];
@@ -24,7 +24,7 @@ const FIELDS = ['ts', 'job_id', 'event', 'status', 'plan_hash', 'commit_sha', 'f
     plan_hash: process.env.PLAN_HASH || null,
     commit_sha: null, files_changed: null, tests_passed: null, tests_failed: null, tests_measured: null,
     run_url: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
-    message: null, nonce: crypto.randomBytes(16).toString('hex'), changed_files: null, suite_modified: null
+    message: null, nonce: crypto.randomBytes(16).toString('hex'), changed_files: null, suite_modified: null, baseline_ok: null
   };
   if (event === 'pushed') {
     let t = {};
@@ -38,6 +38,8 @@ const FIELDS = ['ts', 'job_id', 'event', 'status', 'plan_hash', 'commit_sha', 'f
     payload.message = String(t.summary || '').replace(/[^\x20-\x7E]/g, ' ').slice(0, 300);
     payload.changed_files = process.env.CHANGED_FILES || '[]';
     payload.suite_modified = process.env.SUITE_MODIFIED === 'false' ? 'false' : 'true';
+    // Did the suite AS IT EXISTS ON THE BASE BRANCH pass over the changed code?
+    payload.baseline_ok = (t.baseline_ok === true || t.baseline_ok === 'true') ? 'true' : 'false';
   }
   if (event === 'failed') payload.message = (process.env.FAIL_MESSAGE || readText('error.txt') || 'The workflow failed at an unreported step.').slice(0, 400);
   const canonical = JSON.stringify(FIELDS.map(k => (payload[k] === undefined || payload[k] === '' ? null : payload[k])));

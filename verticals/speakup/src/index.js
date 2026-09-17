@@ -102,7 +102,7 @@ router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
       await sequelize.query(`UPDATE su_projects SET path_scope = '[]'::jsonb WHERE key = 'ringlypro' AND path_scope = '["src"]'::jsonb`);
       // AI Factory job snapshot + verification fields
       for (const ddl of ['auto_run BOOLEAN DEFAULT FALSE', "attachments JSONB DEFAULT '[]'", 'workflow_file VARCHAR(120)', "test_commands JSONB DEFAULT '[]'", "path_scope JSONB DEFAULT '[]'",
-        "changed_files JSONB DEFAULT '[]'", 'suite_modified BOOLEAN', 'brief_token_used_at TIMESTAMPTZ']) {
+        "changed_files JSONB DEFAULT '[]'", 'suite_modified BOOLEAN', 'baseline_ok BOOLEAN', 'brief_token_used_at TIMESTAMPTZ']) {
         await sequelize.query('ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS ' + ddl);
       }
     } catch (mErr) {

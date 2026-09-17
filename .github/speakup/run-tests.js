@@ -12,8 +12,17 @@
  * command with no count contributes 1 by exit code, and a non-zero exit always adds a failure.
  *
  * In the build job these numbers are only feedback for Claude. The authoritative run is
- * the verify job on a clean VM. The code under test can still print what it likes, which
- * is why a change that edits the suite itself cannot be merged from the phone.
+ * the verify job on a clean VM.
+ *
+ * THE BASELINE PASS IS WHAT MAKES "IT EDITED THE TESTS" MERGEABLE AGAIN.
+ * A change that also writes tests for itself is normal and good — and it used to block the
+ * merge for ever, because a suite the change wrote cannot vouch for the change. So each
+ * approved test script that this change MODIFIED is restored to the base-branch version
+ * (`git checkout -- <path>`, the patch is applied but not committed, so HEAD is the base) and
+ * the commands are run again. Those counts come from tests the change did not author, over the
+ * changed product code. `baseline_ok` is what the merge gate reads; the change's own suite is
+ * still run and reported, it just does not decide anything on its own. The patched files are
+ * restored afterwards, always, so the commit that gets pushed is untouched.
  */
 
 const { execFileSync, spawnSync } = require('child_process');
@@ -70,10 +79,47 @@ for (const cmd of commandsList) {
   commands.push({ cmd, exit: r.status, counts: c });
 }
 
+// ── the baseline pass ────────────────────────────────────────────────────────
+// Which approved commands name a script this change modified?
+const changedSet = new Set(changedFiles());
+const suiteFiles = [];
+for (const cmd of commandsList) {
+  if (!TEST_CMD.test(cmd)) continue;
+  for (const tok of cmd.split(/\s+/).slice(1)) if (changedSet.has(tok) && /\.(c|m)?js$/.test(tok)) suiteFiles.push(tok);
+}
+let baseline = { measured: ran > 0, passed, failed, restored: [] };
+if (suiteFiles.length) {
+  const saved = [];
+  try {
+    for (const f of suiteFiles) {
+      saved.push([f, fs.readFileSync(f)]);
+      spawnSync('git', ['checkout', 'HEAD', '--', f], { encoding: 'utf8' });
+    }
+    let bPassed = 0, bFailed = 0, bRan = 0;
+    for (const cmd of commandsList) {
+      if (!TEST_CMD.test(cmd)) continue;
+      bRan++;
+      const parts = cmd.split(/\s+/);
+      const r = spawnSync(parts[0], parts.slice(1), { encoding: 'utf8', timeout: 10 * 60 * 1000, maxBuffer: 20 * 1024 * 1024, env: childEnv });
+      const text = (r.stdout || '') + '\n' + (r.stderr || '');
+      log += `\n[baseline ${cmd}] exit ${r.status}\n${text}`;
+      const c = parseCounts(text);
+      if (c) { bPassed += c.passed; bFailed += c.failed; if (r.status !== 0 && c.failed === 0) bFailed++; }
+      else if (r.status === 0) bPassed++; else bFailed++;
+    }
+    baseline = { measured: bRan > 0, passed: bPassed, failed: bFailed, restored: suiteFiles };
+  } finally {
+    // Always put the change back: the branch that gets pushed must be exactly what Claude wrote.
+    for (const [f, buf] of saved) fs.writeFileSync(f, buf);
+  }
+}
+const baselineOk = baseline.measured && baseline.failed === 0;
+
 fs.writeFileSync(path.join(WORK, 'tests.log'), log);
 const summary = commands.map(c => c.refused ? `${c.cmd}: refused` : `${c.cmd}: ${c.counts ? c.counts.passed + '/' + (c.counts.passed + c.counts.failed) : (c.passed != null ? c.passed + '/' + (c.passed + c.failed) : 'exit ' + c.exit)}`).join('; ');
-const result = { measured: ran > 0, passed, failed, changed_files: files.length, summary };
+const result = { measured: ran > 0, passed, failed, changed_files: files.length, summary, baseline, baseline_ok: baselineOk };
 writeJSON('tests.json', result);
 setOutput('failed', failed);
+setOutput('baseline_ok', baselineOk ? 'true' : 'false');
 setOutput('tests', JSON.stringify(result));
-console.log(`tests: measured=${ran > 0} passed=${passed} failed=${failed}`);
+console.log(`tests: measured=${ran > 0} passed=${passed} failed=${failed} baseline_ok=${baselineOk}${suiteFiles.length ? ' (suite files restored: ' + suiteFiles.join(', ') + ')' : ''}`);

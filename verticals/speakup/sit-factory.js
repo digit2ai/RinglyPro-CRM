@@ -347,16 +347,23 @@ const server = app.listen(0, async () => {
       gh.headSha = opts.sha;
       await callback({ job_id: String(j.id), plan_hash: j.plan_hash, event: 'pushed', commit_sha: opts.sha, files_changed: '1',
         tests_measured: 'true', tests_passed: String(opts.passed), tests_failed: String(opts.failed),
-        changed_files: JSON.stringify(opts.files), suite_modified: opts.suite ? 'true' : 'false' });
+        changed_files: JSON.stringify(opts.files), suite_modified: opts.suite ? 'true' : 'false', baseline_ok: opts.baseline ? 'true' : 'false' });
       return Job.findByPk(j.id);
     }
     const auto1 = await consoleJobThrough('Change a label on the SpeakUp console header', { sha: 'aa'.repeat(20), passed: 7, failed: 0, files: ['verticals/speakup/public/app.html'] });
     ok(auto1.status === 'DEPLOYING' && auto1.merge_sha, 'tests green: the console job merged itself and Render is deploying');
     ok(await Audit.findOne({ where: { tenant_id: opA.id, entity: 'job', entity_id: auto1.id, action: 'job.auto_merged' } }), 'the automatic merge is audited');
     const auto2 = await consoleJobThrough('Change something and its test suite', { sha: 'bb'.repeat(20), passed: 7, failed: 0, files: ['verticals/speakup/test-offline.js'], suite: true });
-    ok(auto2.status === 'READY_FOR_REVIEW', 'a change that edited a test suite is left for a person, not merged');
+    ok(auto2.status === 'READY_FOR_REVIEW', 'a change that edited a test suite, with the base-branch suite NOT passing, is left for a person');
     const evs = await JobEvent.findAll({ where: { job_id: auto2.id } });
     ok(evs.some(e => /test suite/.test(e.text || '')), 'and the console says why');
+    // WRITING TESTS FOR YOUR OWN CHANGE IS NORMAL. The gate is the suite as it stands on the base
+    // branch, re-run over the change: when that passed, nothing here vouches for itself.
+    const auto2b = await consoleJobThrough('Change something and add tests for it', { sha: 'bd'.repeat(20), passed: 9, failed: 0, files: ['verticals/speakup/test-offline.js'], suite: true, baseline: true });
+    ok(auto2b.status === 'DEPLOYING' && auto2b.merge_sha, 'a change that ADDED tests still merges itself when the suite from main passed over it');
+    ok(auto2b.baseline_ok === true, 'the baseline result is recorded on the job');
+    const mergeBlocked = await call(A, 'POST', '/factory/jobs/' + auto2.id + '/merge', { passphrase: PHRASE, plan_hash: auto2.plan_hash });
+    ok(mergeBlocked.status !== 200, 'and the phone merge is still refused for the one with no baseline');
     process.env.SPEAKUP_AUTO_MERGE = 'off';
     const auto3 = await consoleJobThrough('Another change with the switch off', { sha: 'cc'.repeat(20), passed: 3, failed: 0, files: ['verticals/speakup/public/console.js'] });
     ok(auto3.status === 'READY_FOR_REVIEW', 'SPEAKUP_AUTO_MERGE=off stops the automatic merge');

@@ -1292,6 +1292,48 @@ test('console header', () => {
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });
 
+test('the baseline pass: a change that edits the suite is still measured by the approved suite', () => {
+  const { execFileSync, spawnSync } = require('child_process');
+  const os = require('os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speakup-baseline-'));
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), 'speakup-bwork-'));
+  const git = (args) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', ...args], { cwd: dir }).toString();
+  git(['init', '-q']);
+  const suite = path.join(dir, 'suite.js');
+  // The approved suite, as it stands on the base branch: it checks the product file.
+  fs.writeFileSync(suite, "const fs=require('fs');const ok=fs.readFileSync('app.js','utf8').indexOf('GOOD')>=0;console.log(ok?'3 passed, 0 failed':'2 passed, 1 failed');\n");
+  fs.writeFileSync(path.join(dir, 'app.js'), "// GOOD\n");
+  git(['add', '-A']); git(['commit', '-qm', 'base']);
+
+  const run = () => {
+    const r = spawnSync('node', [path.join(ROOT, '.github/speakup/run-tests.js')], { cwd: dir, encoding: 'utf8',
+      env: Object.assign({}, process.env, { WORK: work, GITHUB_OUTPUT: path.join(work, 'out.txt'), TEST_COMMANDS: JSON.stringify(['node suite.js']) }) });
+    return { r, tests: JSON.parse(fs.readFileSync(path.join(work, 'tests.json'), 'utf8')) };
+  };
+
+  // The change rewrites the suite so it always passes, and breaks the product file.
+  fs.writeFileSync(suite, "console.log('99 passed, 0 failed');\n");
+  fs.writeFileSync(path.join(dir, 'app.js'), "// BROKEN\n");
+  let out = run();
+  ok(out.tests.passed >= 99, 'the change’s own suite is still run and reported');
+  ok(out.tests.baseline && out.tests.baseline.failed > 0 && out.tests.baseline_ok === false,
+    'the suite from the base branch fails over the broken change, so baseline_ok is false');
+  ok(fs.readFileSync(suite, 'utf8').indexOf('99 passed') >= 0, 'the change is restored afterwards: the pushed branch is what Claude wrote');
+
+  // The same shape, but the product change is fine and the suite merely gained a test.
+  fs.writeFileSync(path.join(dir, 'app.js'), "// GOOD, and more\n");
+  fs.writeFileSync(suite, "const fs=require('fs');const ok=fs.readFileSync('app.js','utf8').indexOf('GOOD')>=0;console.log(ok?'9 passed, 0 failed':'0 passed, 9 failed');\n");
+  out = run();
+  ok(out.tests.baseline_ok === true && out.tests.baseline.failed === 0, 'a change that only ADDED tests keeps a passing baseline, so it can merge itself');
+  ok((out.tests.baseline.restored || []).indexOf('suite.js') >= 0, 'the report names which suite files were restored for the baseline');
+
+  // Nothing to restore: a change that touches no suite reports the same counts as the baseline.
+  fs.writeFileSync(path.join(dir, 'app.js'), "// GOOD, again\n");
+  git(['checkout', '--', 'suite.js']);
+  out = run();
+  ok(out.tests.baseline_ok === true && out.tests.baseline.restored.length === 0, 'with no suite edited, the baseline is simply the run itself');
+});
+
 test('every project is measurable, including one created later', () => {
   const projects = require('./src/factory/projects');
   const fresh = { key: 'brand-new', test_commands: [] };

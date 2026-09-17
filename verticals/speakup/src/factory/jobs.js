@@ -206,8 +206,11 @@ async function autoMerge(job) {
   const project = await projects.get(job.tenant_id, job.project_key);
   if (!projects.allows(project, 'merge')) return job;
   if (!job.tests || !job.tests.measured || job.tests.failed !== 0) return job;
-  if (job.suite_modified !== false) {
-    await addEvents(job, [{ kind: 'info', text: 'Left for you to review: this change edited a test suite the factory runs, so its green result cannot vouch for itself.', detail: { i18n: 'suite_modified' } }]);
+  // A change that also wrote tests is fine, PROVIDED the suite as it stands on the base branch
+  // passed over the changed code (the verify job's baseline pass). Only when that did not happen
+  // is there nothing left that the change did not author, and then a person decides.
+  if (job.suite_modified !== false && job.baseline_ok !== true) {
+    await addEvents(job, [{ kind: 'info', text: 'Left for you to review: this change edited a test suite the factory runs, and the tests as they stand on main did not pass, so nothing here can vouch for it.', detail: { i18n: 'suite_modified' } }]);
     return job;
   }
   try {
@@ -300,7 +303,7 @@ async function merge({ job, user, passphrase, confirmToken, planHash, req }) {
   if (!projects.allows(project, 'merge')) return { ok: false, status: 403, error: 'Merging from SpeakUp is not allowed for this project. Merge on GitHub.' };
   if (!job.tests || !job.tests.measured || job.tests.failed !== 0) return { ok: false, status: 409, error: 'Tests were not measured as passing; merge on GitHub after reviewing.' };
   const scope = changeScope(job);
-  if (job.suite_modified !== false) return { ok: false, status: 409, error: 'This change edited a test suite the factory runs, so the passing result cannot vouch for it. Review and merge on GitHub.' };
+  if (job.suite_modified !== false && job.baseline_ok !== true) return { ok: false, status: 409, error: 'This change edited a test suite the factory runs and the tests on main did not pass over it, so nothing can vouch for it. Review and merge on GitHub.' };
   if (scope.outside.length) return { ok: false, status: 409, error: 'The change touched files outside the approved plan (' + scope.outside.slice(0, 5).join(', ') + '). Review and merge on GitHub.' };
   let pr;
   try { pr = await github.getPR(job.repo, job.pr_number); } catch (e) { return { ok: false, status: 502, error: e.message }; }
@@ -320,7 +323,10 @@ async function merge({ job, user, passphrase, confirmToken, planHash, req }) {
 
 // ── Callbacks from the GitHub workflow (HMAC-signed, replay-guarded) ──────────
 const CALLBACK_FIELDS = ['ts', 'job_id', 'event', 'status', 'plan_hash', 'commit_sha', 'files_changed',
-  'tests_passed', 'tests_failed', 'tests_measured', 'run_url', 'message', 'nonce', 'changed_files', 'suite_modified'];
+  'tests_passed', 'tests_failed', 'tests_measured', 'run_url', 'message', 'nonce', 'changed_files', 'suite_modified', 'baseline_ok'];
+// A job dispatched before `baseline_ok` existed signs the list without it; both are accepted so
+// an in-flight run is never stranded by a deploy.
+const CALLBACK_FIELDS_V1 = CALLBACK_FIELDS.slice(0, -1);
 // What the job that runs Claude may report with its narrow progress token.
 const PROGRESS_TOKEN_STATUSES = ['TESTING', 'FIXING'];
 
@@ -334,8 +340,8 @@ function changeScope(job) {
   return { files, outside: files.filter(p => !inside(p)) };
 }
 
-function canonical(p) {
-  return JSON.stringify(CALLBACK_FIELDS.map(k => (p[k] === undefined || p[k] === '' ? null : p[k])));
+function canonical(p, fields) {
+  return JSON.stringify((fields || CALLBACK_FIELDS).map(k => (p[k] === undefined || p[k] === '' ? null : p[k])));
 }
 
 function verifySignature(payload, signature, progressToken) {
@@ -348,7 +354,10 @@ function verifySignature(payload, signature, progressToken) {
     if (!security.verifyWorkflowToken('progress', toInt(payload.job_id), progressToken)) return { ok: false, status: 401, error: 'bad progress token' };
     const allowed = (payload.event === 'status' && PROGRESS_TOKEN_STATUSES.includes(payload.status)) || payload.event === 'failed';
     if (!allowed) return { ok: false, status: 403, error: 'a progress token cannot report this event' };
-  } else if (!security.safeEqualHex(security.hmac(secret, canonical(payload)), String(signature || ''))) return { ok: false, status: 401, error: 'bad signature' };
+  } else if (!security.safeEqualHex(security.hmac(secret, canonical(payload)), String(signature || ''))
+    && !(payload.baseline_ok === undefined && security.safeEqualHex(security.hmac(secret, canonical(payload, CALLBACK_FIELDS_V1)), String(signature || '')))) {
+    return { ok: false, status: 401, error: 'bad signature' };
+  }
   if (!/^[a-f0-9]{16,64}$/.test(String(payload.nonce || ''))) return { ok: false, status: 400, error: 'bad nonce' };
   return { ok: true };
 }
@@ -400,8 +409,9 @@ async function applyCallback(payload, signature, progressToken) {
     try { changed = JSON.parse(String(payload.changed_files || '[]')); } catch (e) { changed = []; }
     changed = (Array.isArray(changed) ? changed : []).map(String).filter(p => p.length <= 300).slice(0, 500);
     const suiteModified = String(payload.suite_modified) === 'false' ? false : true;
+    const baselineOk = String(payload.baseline_ok) === 'true';
     return openPullRequest(job, { commit_sha: payload.commit_sha, files_changed: toInt(payload.files_changed), tests, run_url: runUrl, testsOk,
-      changed_files: changed, suite_modified: suiteModified });
+      changed_files: changed, suite_modified: suiteModified, baseline_ok: baselineOk });
   }
   return { ok: false, status: 400, error: 'unknown event' };
 }
@@ -416,7 +426,7 @@ function prBody(job, projectName, tests, filesChanged, runUrl, extra) {
     `- Base: \`${job.base_branch}\`${job.repo_sha ? ' (plan prepared against ' + String(job.repo_sha).slice(0, 7) + ')' : ''}`,
     `- Tests in CI: ${t}`,
     `- Files changed: ${filesChanged == null ? 'unknown' : filesChanged}`,
-    extra.suite_modified != null ? `- Edited a test suite the factory runs: ${extra.suite_modified ? 'YES, review the tests themselves' : 'no'}` : null,
+    extra.suite_modified != null ? `- Edited a test suite the factory runs: ${extra.suite_modified ? (extra.baseline_ok ? 'yes, and the suite from main still passed over the change' : 'YES, review the tests themselves') : 'no'}` : null,
     extra.outside != null ? `- Files outside the approved plan: ${extra.outside}` : null,
     runUrl ? `- Workflow run: ${runUrl}` : null,
     '',
@@ -428,7 +438,7 @@ function prBody(job, projectName, tests, filesChanged, runUrl, extra) {
   ].filter(l => l !== null).join('\n');
 }
 
-async function openPullRequest(job, { commit_sha, files_changed, tests, run_url, testsOk, changed_files, suite_modified }) {
+async function openPullRequest(job, { commit_sha, files_changed, tests, run_url, testsOk, changed_files, suite_modified, baseline_ok }) {
   const project = await projects.get(job.tenant_id, job.project_key);
   const name = project ? project.name : job.project_key;
   const outside = changeScope(Object.assign({}, job.get ? job.get({ plain: true }) : job, { changed_files })).outside.length;
@@ -437,15 +447,15 @@ async function openPullRequest(job, { commit_sha, files_changed, tests, run_url,
     pr = await github.findOpenPR(job.repo, job.branch);
     if (!pr) {
       pr = await github.createPR(job.repo, { title: `SpeakUp AI Factory · job #${job.id} (${name})`, head: job.branch,
-        base: job.base_branch, body: prBody(job, name, tests, files_changed, run_url, { suite_modified, outside }), draft: !testsOk });
+        base: job.base_branch, body: prBody(job, name, tests, files_changed, run_url, { suite_modified, baseline_ok, outside }), draft: !testsOk });
     }
   } catch (e) {
     const failed = await fail(job, `The branch ${job.branch} was pushed but the PR could not be opened: ${e.message}`,
-      { actor: 'system', fields: { commit_sha, files_changed, tests, run_url, changed_files, suite_modified } });
+      { actor: 'system', fields: { commit_sha, files_changed, tests, run_url, changed_files, suite_modified, baseline_ok } });
     return { ok: true, job: failed };
   }
   const created = await transition(job, 'PR_CREATED', { actor: 'system', detail: { pr: pr.number, draft: !!pr.draft },
-    fields: { commit_sha, files_changed, tests, run_url, changed_files, suite_modified, pr_number: pr.number, pr_url: pr.html_url, pr_draft: !!pr.draft } });
+    fields: { commit_sha, files_changed, tests, run_url, changed_files, suite_modified, baseline_ok, pr_number: pr.number, pr_url: pr.html_url, pr_draft: !!pr.draft } });
   if (!created) return { ok: false, status: 409, error: 'job moved while opening the PR' };
   if (testsOk) {
     const ready = await transition(created, 'READY_FOR_REVIEW', { actor: 'system', detail: { tests } }) || created;

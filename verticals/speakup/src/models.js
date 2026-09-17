@@ -245,6 +245,7 @@ const Job = sequelize.define('SpeakJob', {
   path_scope: { type: DataTypes.JSONB, defaultValue: [] },
   changed_files: { type: DataTypes.JSONB, defaultValue: [] },
   suite_modified: { type: DataTypes.BOOLEAN },
+  baseline_ok: { type: DataTypes.BOOLEAN },   // the base-branch suite passed over the change
   brief_token_used_at: { type: DataTypes.DATE },
   auto_run: { type: DataTypes.BOOLEAN, defaultValue: false }, // console job: dispatch as soon as the plan is ready
   attachments: { type: DataTypes.JSONB, defaultValue: [] },  // pasted screenshots the agent may look at
