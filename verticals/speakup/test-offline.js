@@ -1436,14 +1436,19 @@ test('sandbox', () => {
   const body = html.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<[^>]*>/g, ' ');
   ok(/\bThis is Digit2ai Sandbox\b/.test(body), 'the requested sentence is still shown, unchanged');
 
-  // A source note the page was asked to carry. A comment is invisible by
-  // definition, so both halves are asserted: it is in the served markup, and it
-  // is NOT in the text a visitor reads. Writing it as visible copy instead would
-  // pass a grep of the file and change the page, which is the failure to catch.
+  // The line the page was asked to SHOW. It was once an HTML comment, which is
+  // invisible by definition, so a grep of the file is not evidence a visitor can
+  // read it: assert it survives stripping the markup, that it is an element and
+  // not a comment, and that it lands under the heading rather than anywhere on
+  // the page. A copy left behind in a comment would be the same invisible text
+  // back again, so that is asserted absent too.
+  ok(/This is a test/.test(body), 'the line is visible text a visitor reads, not markup');
   const notes = html.match(/<!--[\s\S]*?-->/g) || [];
-  ok(notes.filter(c => c === '<!-- This is a test -->').length === 1,
-    'the source carries the one-line note exactly once, as a comment');
-  ok(!/This is a test/.test(body), 'the note is a comment, so nothing new is shown on the page');
+  ok(!notes.some(c => /This is a test/.test(c)), 'no invisible copy of the line is left in a comment');
+  const order = ['</h1>', 'This is a test', 'This is Digit2ai Sandbox'].map(s => html.indexOf(s));
+  ok(order.every(i => i !== -1) && order[0] < order[1] && order[1] < order[2],
+    'the line sits under the heading and above the existing sentence');
+  ok(/<p>This is a test<\/p>/.test(html), 'it is a plain paragraph, so it inherits the card text style with no new rule');
 
   // Still nothing that can run, and the one asset it fetches is its own, from
   // this origin: a theme is not a reason to start loading a third-party file.
