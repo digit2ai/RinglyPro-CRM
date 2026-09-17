@@ -398,6 +398,84 @@ test('the console can be cleared, and the shell versions agree', () => {
   ok(/if \(jobId && jobTerminal\) dismiss\(jobId\)/.test(con), 'only a terminal job is remembered as dismissed');
 });
 
+// EVERY VERSIONED ASSET, NOT JUST console.js. app.html and sw.js drifted to v4 and v3
+// once and the installed app went on serving the cached file, so a deployed fix looked
+// like it had never shipped. theme.css is now asked for by THREE pages and the worker,
+// which is the same trap with more places to get it wrong — so the check walks them all
+// instead of naming one file.
+test('every page and the worker agree on every asset version', () => {
+  const files = ['app.html', 'meetings.html', 'login.html', 'sw.js']
+    .map((f) => [f, read('verticals/speakup/public/' + f)]);
+  const seen = new Map(); // asset -> Map(version -> [files])
+  for (const [name, src] of files) {
+    for (const m of src.matchAll(/\/speakup\/([A-Za-z0-9._-]+)\?v=(\d+)/g)) {
+      if (!seen.has(m[1])) seen.set(m[1], new Map());
+      const byVer = seen.get(m[1]);
+      if (!byVer.has(m[2])) byVer.set(m[2], []);
+      byVer.get(m[2]).push(name);
+    }
+  }
+  ok(seen.size > 0, 'there are versioned assets to check');
+  for (const [asset, byVer] of seen) {
+    const detail = [...byVer].map(([v, fs_]) => `v${v} in ${fs_.join('+')}`).join(', ');
+    ok(byVer.size === 1, `${asset} has one version everywhere (${detail})`);
+  }
+  // A shell file changing without the cache version moving is the same failure by
+  // another route: the worker hands back the old copy from its own store.
+  ok(/const CACHE = 'speakup-v(\d+)'/.test(read('verticals/speakup/public/sw.js')),
+     'the worker still names a cache version');
+});
+
+// THE LOGIN IS THE FIRST SCREEN ANYONE SEES AND IT WAS THE LAST ONE ON THE OLD THEME.
+// It carried its own palette inline (a purple on navy) and never linked theme.css, so it
+// looked like a different product from the app behind it. A second palette inside a page
+// is how two screens drift apart, which is why the rule is asserted rather than trusted.
+test('the login wears the same theme as the app', () => {
+  const login = read('verticals/speakup/public/login.html');
+  const body = login.replace(/<!--[\s\S]*?-->/g, ''); // the file EXPLAINS the old palette
+  ok(/<link rel="stylesheet" href="\/speakup\/theme\.css\?v=\d+">/.test(login),
+     'it loads the shared stylesheet');
+  ok(!/:root\s*\{/.test(body), 'it declares no palette of its own');
+  ok(!/#7b6bff|#5a3fe0|#0a0e18|#131b2b/i.test(body), 'not one of the old theme colours survives');
+  // Page-local rules are fine — theme.css has no form styles — but they must read the
+  // shared tokens, so a change to the theme reaches this screen too.
+  const styleBlock = (body.match(/<style>([\s\S]*?)<\/style>/) || ['', ''])[1];
+  ok(/var\(--/.test(styleBlock), 'its own rules read the shared tokens');
+  const literals = (styleBlock.match(/#[0-9a-f]{3,8}\b/gi) || []);
+  ok(literals.length === 0, `no hard-coded colour in the page block (found ${literals.join(', ') || 'none'})`);
+  ok(/theme-color" content="#faf9f5"/.test(login), 'the browser chrome matches the paper ground');
+  // theme.css hides .product under 560px, where the app's tabs name the screen instead.
+  // There are no tabs here, so without this the card reads only DIGIT2AI on a phone.
+  ok(/\.brand \.product\{display:inline-block/.test(styleBlock),
+     'the product name survives the 560px rule that hides it in the app header');
+});
+
+// WHITE ON THE BRAND CLAY IS 3.12:1 — under AA — so every filled control was failing it,
+// and the login's old purple button was actually better. --accent stays the brand for
+// borders, focus rings and washes; anything carrying white text uses the darker
+// --accent-solid instead. Keep them separate.
+test('a filled control carries its label at AA', () => {
+  const css = read('verticals/speakup/public/theme.css');
+  const lum = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+      .map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const ratio = (a, b) => { const L = lum(a), M = lum(b); return (Math.max(L, M) + 0.05) / (Math.min(L, M) + 0.05); };
+  const token = (n) => (css.match(new RegExp('--' + n + ':\\s*(#[0-9a-f]{6})', 'i')) || [])[1];
+  const solid = token('accent-solid'), ink = token('accent-ink'), dark = token('accent-solid-dark');
+  ok(solid && ink && dark, 'the solid-clay tokens exist');
+  ok(ratio(solid, ink) >= 4.5, `--accent-solid carries --accent-ink at AA (${ratio(solid, ink).toFixed(2)}:1)`);
+  ok(ratio(dark, ink) >= 4.5, `and so does its hover (${ratio(dark, ink).toFixed(2)}:1)`);
+  ok(lum(dark) < lum(solid), 'the hover is darker, not lighter');
+  // Every surface that puts white text on clay must use the accessible token.
+  for (const rule of ['.btn.primary', '.icon.send', '.step.on']) {
+    const line = css.split('\n').find((l) => l.startsWith(rule + '{')) || '';
+    ok(/background:var\(--accent-solid\)/.test(line), `${rule} fills with --accent-solid, not the brand clay`);
+  }
+});
+
 test('the plan is read before anything runs', () => {
   const con = read('verticals/speakup/public/console.js');
   const jobsSrc = stripComments(read('verticals/speakup/src/factory/jobs.js'));

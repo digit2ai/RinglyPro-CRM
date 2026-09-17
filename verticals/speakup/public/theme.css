@@ -9,6 +9,12 @@
   --paper:#faf9f5; --surface:#ffffff; --raised:#f5f4ee; --line:#e5e3dc; --line-strong:#d6d3c8;
   --text:#1f1e1d; --muted:#6f6e69; --faint:#8b8a83;
   --accent:#d97757; --accent-ink:#ffffff; --accent-dark:#bf5f42; --accent-wash:#fdf1ec;
+  /* THE CLAY THAT CARRIES WHITE TEXT IS DARKER THAN THE BRAND CLAY, AND HAS TO BE.
+     White on --accent measures 3.12:1 — below AA for a label this size — so every
+     filled control was failing it. --accent is still the brand: borders, focus rings,
+     washes and anything decorative keep it. Only a surface with white text on top
+     uses --accent-solid (5.00:1). Measured, not eyeballed; the login test checks it. */
+  --accent-solid:#b05537; --accent-solid-dark:#9a4a30;
   --ok:#2f7d55; --warn:#a8690a; --err:#b4462f;
   /* the dark work pane */
   --ink-bg:#1d1c1a; --ink-line:#34322e; --ink-text:#ededea; --ink-muted:#a5a29b;
@@ -43,8 +49,8 @@ body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
   border:1px solid var(--line-strong);background:var(--surface);color:var(--text);
   border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
 .btn:hover{background:var(--raised)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:500}
-.btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn.primary{background:var(--accent-solid);border-color:var(--accent-solid);color:var(--accent-ink);font-weight:500}
+.btn.primary:hover{background:var(--accent-solid-dark);border-color:var(--accent-solid-dark)}
 .btn.quiet{border-color:transparent;background:transparent;color:var(--muted)}
 .btn.quiet:hover{background:var(--raised);color:var(--text)}
 .btn.small{min-height:34px;padding:0 11px;font-size:13px}
@@ -90,8 +96,8 @@ a{color:var(--accent-dark)}
 .icon{width:44px;height:44px;flex:0 0 44px;border-radius:11px;border:1px solid var(--line-strong);background:var(--surface);
   color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .icon:hover{background:var(--raised);color:var(--text)}
-.icon.send{margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.icon.send:hover{background:var(--accent-dark)}
+.icon.send{margin-left:auto;background:var(--accent-solid);border-color:var(--accent-solid);color:var(--accent-ink)}
+.icon.send:hover{background:var(--accent-solid-dark)}
 .icon.rec{background:#fdecec;border-color:#f0c4bb;color:#a33a26;animation:beat 1.3s ease-in-out infinite}
 .icon:disabled{opacity:.45;cursor:default}
 .stat{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -99,7 +105,7 @@ a{color:var(--accent-dark)}
 /* ── step bar ───────────────────────────────────────────────────────────────── */
 .bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px;flex:0 0 auto}
 .step{font-size:11.5px;padding:4px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--surface)}
-.step.on{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.step.on{border-color:var(--accent-solid);background:var(--accent-solid);color:var(--accent-ink)}
 .step.done{border-color:#bcdcc9;background:#eef7f1;color:var(--ok)}
 .step.fail{border-color:#eec4b9;background:#fdeee9;color:var(--err)}
 .bar .right{margin-left:auto;display:flex;gap:6px;align-items:center}

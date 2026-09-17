@@ -24,6 +24,7 @@ const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascrip
 const server = http.createServer((req, res) => {
   let p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
   if (p === 'meetings') p = 'meetings.html';
+  if (p === 'login') p = 'login.html';
   if (p === '') p = 'app.html';
   const f = path.join(DIR, p);
   // The screens call the API on boot; answer so the page settles instead of hanging. A
@@ -171,6 +172,56 @@ server.listen(0, async () => {
       ok(/Desplegado/.test(v.pane) && !/Deployed/.test(v.pane), 'back to Spanish: nothing English is left');
       ok(/Despliegue/.test(v.bar), 'back to Spanish: the step bar followed');
       await page.close();
+    }
+
+    // ── THE LOGIN WEARS THE APP'S THEME ────────────────────────────────────────
+    // It was the last screen on the old purple-on-navy palette, so the first thing
+    // anyone saw looked like a different product. Two things here are measurable only
+    // in a browser: the contrast a label actually renders at, and whether a rule WON —
+    // theme.css hides `.product` under 560px and the login has no tabs to name the
+    // screen instead, so `.brand .product` has to beat it on specificity.
+    {
+      const lum = (c) => {
+        const [r, g, b] = c.match(/\d+/g).map(Number)
+          .map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const ratio = (a, b) => { const L = lum(a), M = lum(b); return (Math.max(L, M) + 0.05) / (Math.min(L, M) + 0.05); };
+
+      for (const [label, w, h] of [['phone 390', 390, 844], ['desktop 1280', 1280, 900]]) {
+        const page = await browser.newPage();
+        await page.setViewport({ width: w, height: h });
+        await page.goto(base + 'login', { waitUntil: 'networkidle0' });
+
+        const v = await page.evaluate(() => {
+          const cs = (s) => getComputedStyle(document.querySelector(s));
+          const box = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return { w: r.width, h: r.height }; };
+          return {
+            bg: cs('body').backgroundColor,
+            btnBg: cs('#btn').backgroundColor, btnInk: cs('#btn').color, btnH: box('#btn').h,
+            tag: cs('.tag').color,
+            prod: { txt: document.querySelector('.brand .product').textContent, ...box('.brand .product') },
+            serif: cs('.brand .product').fontFamily,
+            wm: box('.brand img.wordmark'),
+            inputH: box('#email').h, inputFont: parseFloat(cs('#email').fontSize),
+            over: document.documentElement.scrollWidth > window.innerWidth + 1
+          };
+        });
+
+        ok(v.bg === 'rgb(250, 249, 245)', `login ${label}: the paper ground, not the old navy (${v.bg})`);
+        ok(ratio(v.btnBg, v.btnInk) >= 4.5, `login ${label}: the button label meets AA (${ratio(v.btnBg, v.btnInk).toFixed(2)}:1)`);
+        ok(ratio(v.tag, v.bg) >= 4.5, `login ${label}: the tagline meets AA (${ratio(v.tag, v.bg).toFixed(2)}:1)`);
+        ok(/serif/i.test(v.serif), `login ${label}: the product name is set in the serif`);
+        // The rule that only a browser can settle.
+        ok(v.prod.txt === 'SpeakUp' && v.prod.w > 0 && v.prod.h > 0,
+           `login ${label}: the product name is on screen (${Math.round(v.prod.w)}x${Math.round(v.prod.h)})`);
+        ok(v.wm.w > v.wm.h * 3, `login ${label}: the Digit2AI lockup is not squashed (${Math.round(v.wm.w)}x${Math.round(v.wm.h)})`);
+        ok(v.btnH >= 44 && v.inputH >= 44, `login ${label}: 44px targets (button ${Math.round(v.btnH)}, field ${Math.round(v.inputH)})`);
+        // Under 16px iOS zooms the page on focus and the card jumps off screen.
+        ok(v.inputFont >= 16, `login ${label}: the field is 16px, so iOS does not zoom (${v.inputFont}px)`);
+        ok(!v.over, `login ${label}: no horizontal overflow`);
+        await page.close();
+      }
     }
   } catch (e) {
     fail++; console.log('ERROR ' + e.message);

@@ -4,12 +4,12 @@
  * - JS/CSS: stale-while-revalidate, so a deploy reaches the phone on the next open.
  * - /api/ is NEVER cached: a task status from cache would be a lie.
  */
-const CACHE = 'speakup-v27';
+const CACHE = 'speakup-v28';
 const SHELL = [
   '/speakup/',
   '/speakup/meetings',
   '/speakup/login',
-  '/speakup/theme.css?v=3',
+  '/speakup/theme.css?v=4',
   '/speakup/wordmark.svg?v=1',
   '/speakup/header-menu.js?v=1',
   '/speakup/console.js?v=8',

@@ -7,58 +7,68 @@
 <link rel="icon" href="/speakup/favicon.svg">
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
-<meta name="theme-color" content="#5a3fe0">
+<meta name="theme-color" content="#faf9f5">
+<!-- The SAME stylesheet both screens use. This page used to carry its own palette
+     (a purple #7b6bff on a navy #0a0e18) and no link to theme.css at all, so it was
+     still wearing the theme the app left behind: the first screen anyone sees looked
+     like a different product from the one behind it. A page-local block follows for
+     the form, which theme.css has no rules for — but it reads the SHARED TOKENS and
+     declares no colour of its own, which is the whole point. -->
+<link rel="stylesheet" href="/speakup/theme.css?v=4">
 <style>
-  :root{--bg:#0a0e18;--card:#131b2b;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#7b6bff;--acc2:#5a3fe0}
-  *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:radial-gradient(1200px 600px at 50% -10%,#1a1440 0%,var(--bg) 55%);color:var(--txt);
-    display:flex;align-items:center;justify-content:center;padding:24px}
-  .card{width:100%;max-width:400px;background:linear-gradient(180deg,var(--card),#0e1522);
-    border:1px solid var(--line);border-radius:20px;padding:34px 28px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
-  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-  .brand img{width:44px;height:44px}
-  .brand h1{font-size:24px;margin:0;letter-spacing:-.5px}
-  .tag{color:var(--mut);font-size:13px;margin:0 0 26px}
-  label{display:block;font-size:13px;color:var(--mut);margin:16px 0 6px}
-  input{width:100%;padding:13px 14px;border-radius:11px;border:1px solid var(--line);background:#0c1320;
-    color:var(--txt);font-size:15px;outline:none}
-  input:focus{border-color:var(--acc)}
-  button{width:100%;margin-top:24px;padding:14px;border:0;border-radius:11px;cursor:pointer;
-    background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff;font-size:16px;font-weight:600}
-  button:disabled{opacity:.6;cursor:default}
-  .err{margin-top:16px;color:#ff8f8f;font-size:14px;min-height:18px}
-  .lang{position:fixed;top:16px;right:16px;display:flex;gap:6px}
-  .lang button{width:auto;margin:0;padding:6px 12px;background:#1b2536;font-size:13px;font-weight:500}
-  .lang button.on{background:var(--acc2)}
-  .foot{margin-top:22px;color:var(--mut);font-size:12px;text-align:center;line-height:1.5}
+  body{display:flex;align-items:center;justify-content:center;padding:24px;
+    padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  .card{width:100%;max-width:400px;padding:30px 26px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+  .brand img.mark{width:26px;height:26px;border-radius:6px;flex:0 0 auto}
+  .brand img.wordmark{height:15px;width:auto;color:var(--text);flex:0 0 auto}
+  /* theme.css hides `.product` below 560px — right in the app, where the tabs already
+     say which screen you are on, and wrong here, where there are no tabs and the card
+     would read only DIGIT2AI. `.brand .product` is (0,2,0) and beats the bare
+     `.product` (0,1,0) inside that media query, so it needs no !important. */
+  .brand .product{display:inline-block;font-family:var(--serif);font-size:16px;font-weight:600;
+    color:var(--text);padding-left:9px;border-left:1px solid var(--line)}
+  .tag{color:var(--muted);font-size:13.5px;margin:0 0 24px}
+  label{display:block;font-size:13px;color:var(--muted);margin:16px 0 6px}
+  input{width:100%;min-height:44px;padding:11px 13px;border-radius:10px;
+    border:1px solid var(--line-strong);background:var(--surface);color:var(--text);
+    font:inherit;font-size:16px;outline:none}
+  input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+  form .btn.primary{width:100%;margin-top:22px;font-size:15px}
+  .err{margin-top:14px;color:var(--err);font-size:14px;min-height:18px}
+  .lang{position:fixed;top:calc(14px + env(safe-area-inset-top));right:14px;display:flex;gap:6px}
+  .foot{margin-top:20px;text-align:center;line-height:1.55}
 </style>
 </head>
 <body>
 <div class="lang">
-  <button id="es" class="on" onclick="setLang('es')">ES</button>
-  <button id="en" onclick="setLang('en')">EN</button>
+  <button id="es" class="btn small primary" onclick="setLang('es')">ES</button>
+  <button id="en" class="btn small" onclick="setLang('en')">EN</button>
 </div>
 <div class="card">
-  <div class="brand"><img src="/speakup/favicon.svg" alt=""><h1>SpeakUp</h1></div>
+  <div class="brand">
+    <img class="mark" src="/speakup/favicon.svg" alt="">
+    <img class="wordmark" src="/speakup/wordmark.svg?v=1" alt="Digit2AI">
+    <span class="product">SpeakUp</span>
+  </div>
   <p class="tag" data-es="Voz a texto + IA · herramienta interna del equipo" data-en="Voice-to-text + AI · internal team tool">Voz a texto + IA · herramienta interna del equipo</p>
   <form id="f">
     <label data-es="Correo" data-en="Email">Correo</label>
     <input id="email" type="email" autocomplete="username" required>
     <label data-es="Contraseña" data-en="Password">Contraseña</label>
     <input id="password" type="password" autocomplete="current-password" required>
-    <button id="btn" type="submit" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</button>
+    <button id="btn" class="btn primary" type="submit" data-es="Iniciar sesión" data-en="Sign in">Iniciar sesión</button>
     <div class="err" id="err"></div>
   </form>
-  <p class="foot" data-es="Acceso solo por invitación. Contacta al administrador para tu cuenta." data-en="Invite-only access. Contact the administrator for an account.">Acceso solo por invitación. Contacta al administrador para tu cuenta.</p>
+  <p class="foot tiny" data-es="Acceso solo por invitación. Contacta al administrador para tu cuenta." data-en="Invite-only access. Contact the administrator for an account.">Acceso solo por invitación. Contacta al administrador para tu cuenta.</p>
 </div>
 <script>
   let lang = localStorage.getItem('speakup_lang') || 'es';
   function setLang(l){
     lang = l; localStorage.setItem('speakup_lang', l);
     document.documentElement.lang = l;
-    document.getElementById('es').classList.toggle('on', l==='es');
-    document.getElementById('en').classList.toggle('on', l==='en');
+    document.getElementById('es').classList.toggle('primary', l==='es');
+    document.getElementById('en').classList.toggle('primary', l==='en');
     document.querySelectorAll('[data-es]').forEach(el => { el.textContent = el.getAttribute('data-'+l); });
   }
   setLang(lang);
