@@ -7,7 +7,7 @@
 <link rel="icon" href="/speakup/favicon.svg">
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
-<link rel="stylesheet" href="/speakup/theme.css?v=7">
+<link rel="stylesheet" href="/speakup/theme.css?v=9">
 <meta name="theme-color" content="#1f2937">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -24,7 +24,7 @@
   #plan .pflow{margin:10px 0 4px;padding-left:26px}
   #plan .pflow li{margin:0 0 7px;font-size:15px;line-height:1.45}
   #plan details.more{margin-top:6px}
-  #plan details.more>summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px}
+  #plan details.more>summary{cursor:pointer;font-size:13.5px;color:var(--muted);padding:6px 0;min-height:44px;display:flex;align-items:center}
   .workw{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
   .workw:empty{display:none}
   .workw+.prog{margin-left:10px}
@@ -40,7 +40,7 @@
   /* The workspace picker: the same chip as the other header controls. */
   /* Its own class, not `.lnk`: the menu's five entries are counted, and a picker is not one
      of them. Styled like a chip, and a real 44px target on a phone. */
-  .sel{max-width:44vw;font:inherit;min-height:44px;padding:0 10px;border-radius:11px;
+  .sel{max-width:44vw;font-family:inherit;font-size:16px;min-height:44px;padding:0 10px;border-radius:11px;
     border:1px solid var(--line-strong);background:var(--surface);color:var(--text)}
   /* Phone: header, work, box, then the steps. */
   #bar{flex:0 0 auto;margin:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));
@@ -117,7 +117,8 @@
      top of the work area. One element, two places — never two copies to drift apart. -->
 <div class="bar" id="bar"></div>
 
-<script src="/speakup/console.js?v=19"></script>
+<script src="/speakup/console.js?v=20"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
+<script src="/speakup/install.js?v=1" defer></script>
 </body>
 </html>

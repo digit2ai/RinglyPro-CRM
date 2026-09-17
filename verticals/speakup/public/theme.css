@@ -189,6 +189,11 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 
 /* ── screenshots ────────────────────────────────────────────────────────────── */
 .shots{display:flex;gap:7px;flex-wrap:wrap;padding:9px 9px 0}
+.installbar{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:90;
+  display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:14px;background:var(--surface);
+  color:var(--panel-text);border:1px solid var(--line-strong);box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.installbar .itxt{--text:var(--panel-text);color:var(--panel-text);font-size:13.5px;line-height:1.35;flex:1 1 auto}
+.installbar .btn{flex:0 0 auto}
 .shot{position:relative;width:52px;height:52px;border-radius:9px;overflow:hidden;border:1px solid var(--line-strong);background:var(--raised)}
 .shot img{width:100%;height:100%;object-fit:cover;display:block}
 .shot button{position:absolute;top:0;right:0;width:20px;height:20px;border:0;border-radius:0 0 0 8px;
@@ -232,4 +237,26 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
   .top{padding-left:12px;padding-right:12px;gap:8px}
   .product{display:none}
   .top img.wordmark{height:15px}
+}
+
+/* ── ON A TOUCH SCREEN, EVERYTHING IS THUMB-SIZED ────────────────────────────
+ * Measured, not guessed: `test-pwa.js` drives every screen at 360, 390 and 414 and fails on a
+ * control under 44px, an input under 16px (iPhone zooms the whole page when you focus one) or
+ * text under 12px. These rules are the answer to what it found — tabs at 32px, chips at 40,
+ * the small buttons and links at 34, the pickers at 13px type, the step pills at 11.5px.
+ * Desktop keeps its tighter proportions: this block only applies below the phone breakpoint. */
+@media(max-width:700px){
+  .tab{min-height:44px;padding:0 14px}
+  .btn.small{min-height:44px;padding:0 13px;font-size:14px}
+  .lnk{min-height:44px;padding:0 12px;display:inline-flex;align-items:center;font-size:14px}
+  .chip{min-height:44px;font-size:14px}
+  .icon{width:46px;height:46px;flex-basis:46px}
+  .step{font-size:12px;padding:6px 10px}
+  /* 16px is the iOS zoom threshold, not a taste: below it, focusing an input scales the page. */
+  input,select,textarea,.edit{font-size:16px}
+  /* A select that also wears .btn.small would take the button's 14px: name it explicitly. */
+  select,select.btn,select.btn.small{min-height:44px;font-size:16px}
+  /* A fold is a control: "See the detail" and the technical section are tapped like a button. */
+  summary,details>summary{min-height:44px;display:flex;align-items:center}
+  .tiny{font-size:12.5px}
 }

@@ -4,17 +4,17 @@
  * - JS/CSS: stale-while-revalidate, so a deploy reaches the phone on the next open.
  * - /api/ is NEVER cached: a task status from cache would be a lie.
  */
-const CACHE = 'speakup-v48';
+const CACHE = 'speakup-v51';
 const SHELL = [
   '/speakup/',
   '/speakup/meetings',
   '/speakup/history',
   '/speakup/settings',
   '/speakup/login',
-  '/speakup/theme.css?v=7',
+  '/speakup/theme.css?v=9',
   '/speakup/wordmark.svg?v=1',
   '/speakup/header-menu.js?v=2',
-  '/speakup/console.js?v=19',
+  '/speakup/console.js?v=20',
   '/speakup/meetings.js?v=5',
   '/speakup/transcript-clean.js?v=1',
   '/speakup/history.js?v=1',
@@ -24,7 +24,9 @@ const SHELL = [
   '/speakup/favicon.svg',
   '/speakup/icon-192.png',
   '/speakup/icon-512.png',
-  '/speakup/apple-touch-icon.png'
+  '/speakup/apple-touch-icon.png',
+  '/speakup/offline.html',
+  '/speakup/install.js?v=1'
 ];
 
 self.addEventListener('install', (e) => {
@@ -59,5 +61,6 @@ self.addEventListener('fetch', (e) => {
     })));
     return;
   }
-  e.respondWith(fetch(req).catch(() => caches.match(req).then((hit) => hit || caches.match('/speakup/'))));
+  // Last resort for a navigation with no cached copy: a page that says so plainly.
+  e.respondWith(fetch(req).catch(() => caches.match(req).then((hit) => hit || caches.match('/speakup/offline.html') || caches.match('/speakup/'))));
 });

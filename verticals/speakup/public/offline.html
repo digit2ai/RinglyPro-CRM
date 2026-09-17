@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AutoDev — sin conexión</title>
+<link rel="stylesheet" href="/speakup/theme.css?v=9">
+<meta name="theme-color" content="#1f2937">
+<style>
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .card{max-width:420px;text-align:center}
+  h1{font-size:20px;margin:0 0 8px}
+</style>
+</head>
+<body>
+<section class="card">
+  <h1 id="t">Sin conexión</h1>
+  <p class="tiny" id="p">Tu trabajo sigue en el servidor: nada se pierde. Vuelve a intentarlo cuando tengas señal.</p>
+  <p><button class="btn primary" id="again">Reintentar</button></p>
+</section>
+<script>
+  (function () {
+    var lang = 'es';
+    try { lang = localStorage.getItem('speakup_lang') || 'es'; } catch (e) {}
+    if (lang === 'en') {
+      document.documentElement.lang = 'en';
+      document.title = 'AutoDev — offline';
+      document.getElementById('t').textContent = 'No connection';
+      document.getElementById('p').textContent = 'Your work is still on the server: nothing is lost. Try again when you have signal.';
+      document.getElementById('again').textContent = 'Try again';
+    }
+    document.getElementById('again').addEventListener('click', function () { location.replace('/speakup/'); });
+    window.addEventListener('online', function () { location.replace('/speakup/'); });
+  })();
+</script>
+</body>
+</html>
