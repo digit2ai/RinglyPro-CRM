@@ -1419,9 +1419,11 @@ test('the research agent: read-only, confined, and asked what to find out', () =
 // ── Sandbox page ──────────────────────────────────────────────────────────────
 // A standalone scratch page at /sandbox/. It carries no data and no script, so
 // the only things that can break it are the static mount moving out from under
-// it or someone adding content to it.
+// it or someone adding content to it. It now wears the corporate palette, which
+// adds one more: a token drifting away from the branded pages it was taken from.
 test('sandbox', () => {
   const html = read('public/sandbox/index.html');
+  const css = read('public/sandbox/theme.css');
   const app = read('src/app.js');
 
   // The address resolves because express.static publishes public/ at the root and
@@ -1430,14 +1432,50 @@ test('sandbox', () => {
     'public/ is still served at the root, which is what makes /sandbox/ resolve');
   ok(!/['"]\/sandbox/.test(app), 'no route in the app claims /sandbox, so the static file is what answers');
 
-  // Only the requested sentence is visible: strip the head, then every tag.
-  const body = html.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<[^>]*>/g, '').trim();
-  ok(body === 'This is Digit2ai Sandbox', 'the page shows only the requested sentence');
+  // The sentence the page was asked to carry is still on it, word for word.
+  const body = html.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<[^>]*>/g, ' ');
+  ok(/\bThis is Digit2ai Sandbox\b/.test(body), 'the requested sentence is still shown, unchanged');
 
-  // No second request: nothing to fetch, and nothing that could run.
-  ok(!/<script|<link|<img|<iframe|src=|href=/i.test(html), 'the page loads no external asset and runs no script');
+  // Still nothing that can run, and the one asset it fetches is its own, from
+  // this origin: a theme is not a reason to start loading a third-party file.
+  ok(!/<script|<iframe|<img/i.test(html), 'the page runs no script and embeds nothing');
+  ok(!/https?:|\/\//.test(html.replace(/<!DOCTYPE[^>]*>/i, '')), 'no absolute or protocol-relative URL, so nothing is fetched off this origin');
+  const links = html.match(/<link[^>]*>/gi) || [];
+  ok(links.length === 1 && /rel="stylesheet"/.test(links[0]) && /href="theme\.css"/.test(links[0]),
+    'the only linked asset is its own stylesheet, beside it');
   ok(/^<!DOCTYPE html>/i.test(html) && /<html lang="en">/.test(html) && /<meta charset="utf-8">/i.test(html),
     'it is a complete minimal HTML5 document');
+
+  // The theme is the corporate one, not a second palette invented here. These
+  // three values are read off the branded pages already published under the
+  // corporate domain; if one of those moves, this fails rather than drifting.
+  const brand = read('public/neural-intelligence.html');
+  for (const [name, value] of [['background', '#070b16'], ['secondary text', '#9db0cc'], ['accent', '#22d3ee']]) {
+    ok(css.includes(value), 'the stylesheet carries the corporate ' + name + ' ' + value);
+    ok(brand.includes(value), 'the corporate ' + name + ' is still ' + value + ' on the branded page it was taken from');
+  }
+  ok(/<meta name="theme-color" content="#070b16">/.test(html), 'the phone browser chrome tints to the corporate navy');
+  // A white flash before the stylesheet paints is the one thing a linked theme
+  // can cost a dark page, so the ground colour is inline too.
+  ok(/<style>html,body\{background:#070b16\}<\/style>/.test(html), 'the ground colour is set inline so the page never flashes white');
+  ok(/width=device-width/.test(html), 'it scales on a phone instead of rendering a desktop page small');
+
+  // No hosted webfont: the stacks fall back to the system, so there is no
+  // third-party request and no flash of unstyled text.
+  ok(/system-ui/.test(css) && !/@import|fonts\.googleapis|@font-face/.test(css), 'typography is a local-or-system stack, never a hosted webfont');
+
+  // Scoped to the sandbox: no other page in the static root may pick this dark
+  // theme up by accident, which is why the href is relative and stays in here.
+  const pages = [];
+  (function walk(dir) {
+    for (const e of fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true })) {
+      const rel = dir + '/' + e.name;
+      if (e.isDirectory()) walk(rel);
+      else if (e.name.endsWith('.html')) pages.push(rel);
+    }
+  })('public');
+  const strays = pages.filter(p => !p.startsWith('public/sandbox/') && /sandbox\/theme\.css/.test(read(p)));
+  ok(strays.length === 0, 'no page outside public/sandbox/ links the sandbox theme: ' + strays.join(', '));
 });
 
 setTimeout(() => {

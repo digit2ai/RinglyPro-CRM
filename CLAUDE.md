@@ -1494,6 +1494,20 @@ Browser → /agromercado/api/v1/* (Express Router) → Sequelize → PostgreSQL 
 FX poller (09:00/13:00) → AGROMERCADO_FX_SOURCE_URL → am_fx_rates ← /divisas/convert
 Bid POST → ACID txn (row-lock auction) → recompute P_min (ln formula) → am_bids → SSE broadcast to lot subscribers
 
+## Sandbox (`/sandbox/`) — the corporate palette, in one file, for scratch pages
+
+`public/sandbox/index.html` + `public/sandbox/theme.css`, served by `express.static` (no route claims the path — the static mount is what answers). A scratch page carrying one sentence, now wearing the DIGIT2AI look.
+
+**THE TOKENS ARE COPIED FROM THE BRANDED PAGES, NOT PICKED.** `theme.css` restates the values already shipping on `public/neural-intelligence.html` and the `*-ghl.html` pages published under the corporate domain — background `#070b16`, primary text `#eaf0fb`, secondary `#9db0cc`, accent `#22d3ee`, card `#0f1728`, hairline `rgba(120,150,200,.16)` — so a sandbox page matches what a visitor has already seen instead of introducing a second palette that drifts. **The offline suite asserts all three core values are still present on BOTH files**, so moving one without the other fails the build rather than going quietly out of step. A later brand change is one edit here; nothing is hard-coded into the markup.
+
+**Type is a local-or-system stack, never a hosted webfont**: `'Space Grotesk',…,system-ui,…` display and `'Inter',…,system-ui,…` body, the same two stacks the corporate deck declares. They render in the installed font where there is one and fall back to the system elsewhere — no third-party request, no flash of unstyled text, and the page still fetches exactly one asset (its own stylesheet, relative, same origin).
+
+**The ground colour is ALSO inline** (`<style>html,body{background:#070b16}</style>` ahead of the `<link>`) — a dark page that waits for a stylesheet flashes white first, which reads as a broken page. `theme-color` matches it so the phone browser chrome tints with the page.
+
+**The stylesheet is scoped to this directory and the test keeps it there** — it sets base element styles (`body`, `h1`, `p`, `a`), so a page elsewhere linking it would be restyled wholesale. The suite walks `public/` and fails if any page outside `public/sandbox/` references it.
+
+Measured in Chrome at 375 and 1440: no horizontal overflow, content centred, contrast on the navy 17.2:1 primary / 8.9:1 secondary / 10.9:1 accent (AA is 4.5:1). Covered by the `sandbox` test in `node verticals/speakup/test-offline.js`.
+
 ## PACC-CFL landing (`/pacccfl/`) — installable PWA, and why not at digit2ai.com
 
 `public/pacccfl/index.html` + `manifest.webmanifest` + `sw.js` + `offline.html` + `icon-*.png`, served by `express.static`. Test: `node scripts/test-pacccfl-pwa.js` → **16/16**, zero external keys (the browser half skips LOUDLY without puppeteer).
