@@ -19,8 +19,14 @@ const MONOREPO = process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM';
 
 const DEFAULT_PROJECTS = [
   // The console's default: the whole RinglyPro-CRM repository.
+  // EVERY PROJECT NEEDS AT LEAST ONE TEST COMMAND. The console's default project had none, so a
+  // change touching no .js file (a new HTML page) ran nothing at all: `measured:false`, which the
+  // merge gate correctly refuses, and the job ended FAILED with a draft PR nobody expected.
+  // This suite is keyless, DB-less and runs in seconds, so it always gives the runner something
+  // real to measure.
   { key: 'ringlypro', name: 'RinglyPro CRM', aliases: ['ringlypro', 'ringly pro', 'ringly', 'crm', 'rachel', 'lina'],
     path_scope: [], knowledge_sources: ['CLAUDE.md', '.claude/commands/ringlypro-architect.md'],
+    test_commands: ['node verticals/speakup/test-offline.js'],
     deployment: 'Render auto-deploy from main (aiagent.ringlypro.com)' },
   { key: 'speakup', name: 'SpeakUp', aliases: ['speakup', 'speak up'],
     path_scope: ['verticals/speakup'], test_commands: ['node verticals/speakup/test-offline.js'],
@@ -49,6 +55,13 @@ async function ensureDefaults(tenant_id) {
       }
     });
     if (isNew) created++;
+  }
+  // Fill-only backfill: a project seeded before this default had none gets it, and a command
+  // the owner set by hand is never touched.
+  for (const p of DEFAULT_PROJECTS) {
+    if (!(p.test_commands || []).length) continue;
+    const row = await Project.findOne({ where: { tenant_id, key: p.key } });
+    if (row && !(row.test_commands || []).length) await row.update({ test_commands: p.test_commands });
   }
   return created;
 }
@@ -136,4 +149,4 @@ function allows(project, action) {
   return !!(project && project.enabled && Array.isArray(project.allowed_actions) && project.allowed_actions.includes(action));
 }
 
-module.exports = { ACTIONS, DEFAULT_PROJECTS, TEST_CMD, ensureDefaults, list, get, matchProject, resolveFromText, sanitize, allows };
+module.exports = { __defaults: () => DEFAULT_PROJECTS, ACTIONS, DEFAULT_PROJECTS, TEST_CMD, ensureDefaults, list, get, matchProject, resolveFromText, sanitize, allows };

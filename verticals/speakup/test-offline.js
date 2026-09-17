@@ -1292,6 +1292,17 @@ test('console header', () => {
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });
 
+test('every seeded project can actually be measured', () => {
+  const projects = require('./src/factory/projects');
+  const dflt = projects.__defaults ? projects.__defaults() : null;
+  ok(!!dflt, 'the default project list is inspectable');
+  const ringly = (dflt || []).find(p => p.key === 'ringlypro');
+  // A project with no test command runs nothing when a change touches no .js file, and the
+  // job ends FAILED with a draft PR — which is what happened to the first static page.
+  ok(ringly && (ringly.test_commands || []).length > 0, "the console's own project has a test command");
+  for (const p of dflt || []) ok(!(p.test_commands || []).some(c => !/^(node|npx jest|npm test)\b/.test(c)), 'test commands stay on the allow-list: ' + p.key);
+});
+
 test('the research agent: read-only, confined, and asked what to find out', () => {
   const sub = require('./src/factory/claude-subscription');
   const research = require('./src/factory/research');
