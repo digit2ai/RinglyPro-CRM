@@ -7,14 +7,14 @@
 <link rel="icon" href="/speakup/favicon.svg">
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
-<meta name="theme-color" content="#faf9f5">
-<!-- The SAME stylesheet both screens use. This page used to carry its own palette
-     (a purple #7b6bff on a navy #0a0e18) and no link to theme.css at all, so it was
-     still wearing the theme the app left behind: the first screen anyone sees looked
-     like a different product from the one behind it. A page-local block follows for
-     the form, which theme.css has no rules for — but it reads the SHARED TOKENS and
-     declares no colour of its own, which is the whole point. -->
-<link rel="stylesheet" href="/speakup/theme.css?v=4">
+<meta name="theme-color" content="#1f2937">
+<!-- The SAME stylesheet both screens use, now carrying the RinglyPro CRM palette that
+     aiagent.ringlypro.com signs in with. This page used to declare its own colours
+     inline and never load theme.css at all, so it drifted a whole theme behind the app
+     and the first screen anyone saw looked like a different product. The page-local
+     block below exists because theme.css has no form rules — it reads the SHARED
+     TOKENS and declares no colour of its own, which is what keeps that from recurring. -->
+<link rel="stylesheet" href="/speakup/theme.css?v=5">
 <style>
   body{display:flex;align-items:center;justify-content:center;padding:24px;
     padding-top:calc(24px + env(safe-area-inset-top));padding-bottom:calc(24px + env(safe-area-inset-bottom))}
@@ -27,11 +27,11 @@
      would read only DIGIT2AI. `.brand .product` is (0,2,0) and beats the bare
      `.product` (0,1,0) inside that media query, so it needs no !important. */
   .brand .product{display:inline-block;font-family:var(--serif);font-size:16px;font-weight:600;
-    color:var(--text);padding-left:9px;border-left:1px solid var(--line)}
+    color:var(--text);padding-left:9px;border-left:1px solid var(--line-strong)}
   .tag{color:var(--muted);font-size:13.5px;margin:0 0 24px}
   label{display:block;font-size:13px;color:var(--muted);margin:16px 0 6px}
   input{width:100%;min-height:44px;padding:11px 13px;border-radius:10px;
-    border:1px solid var(--line-strong);background:var(--surface);color:var(--text);
+    border:1px solid var(--line-strong);background:var(--surface-solid);color:var(--text);
     font:inherit;font-size:16px;outline:none}
   input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
   form .btn.primary{width:100%;margin-top:22px;font-size:15px}

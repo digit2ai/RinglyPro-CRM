@@ -6,43 +6,79 @@
  * deliberately NOT theme-swapped.
  */
 :root{
-  --paper:#faf9f5; --surface:#ffffff; --raised:#f5f4ee; --line:#e5e3dc; --line-strong:#d6d3c8;
-  --text:#1f1e1d; --muted:#6f6e69; --faint:#8b8a83;
-  --accent:#d97757; --accent-ink:#ffffff; --accent-dark:#bf5f42; --accent-wash:#fdf1ec;
-  /* THE CLAY THAT CARRIES WHITE TEXT IS DARKER THAN THE BRAND CLAY, AND HAS TO BE.
-     White on --accent measures 3.12:1 — below AA for a label this size — so every
-     filled control was failing it. --accent is still the brand: borders, focus rings,
-     washes and anything decorative keep it. Only a surface with white text on top
-     uses --accent-solid (5.00:1). Measured, not eyeballed; the login test checks it. */
-  --accent-solid:#b05537; --accent-solid-dark:#9a4a30;
-  --ok:#2f7d55; --warn:#a8690a; --err:#b4462f;
-  /* the dark work pane */
-  --ink-bg:#1d1c1a; --ink-line:#34322e; --ink-text:#ededea; --ink-muted:#a5a29b;
-  --ink-accent:#e0886a; --ink-ok:#6cc08b; --ink-warn:#e3b341; --ink-err:#f08a70; --ink-path:#8ec7f0;
-  --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  --serif:ui-serif,Georgia,Cambria,"Times New Roman",serif;
+  /* THE PALETTE IS aiagent.ringlypro.com's, READ FROM THE LIVE PAGE, NOT EYEBALLED.
+     Its sign-in is Tailwind: ground #1f2937 (gray-800), a panel of white at 75% behind
+     blur(16px) saturate(180%) with a rgba(209,213,219,.3) hairline, blue-600 buttons,
+     gray-400 subtitles.
+
+     TWO DELIBERATE DEPARTURES, BOTH MEASURED. The panel ships SOLID at the colour that
+     glass composites to, because blurring a flat ground returns the flat ground — the
+     filter is pixel-identical here and costs real GPU work on a phone, and the one
+     element that genuinely overlays content, the mobile drawer, has to be opaque anyway
+     or the code pane ghosts through it and reads as a rendering fault. And it is the
+     composite of 86%, not the CRM's 75%: this app puts dense text on the panel, and at
+     75% it lands on rgb(199,202,205) where gray-500 body copy measures 2.94:1, under AA. */
+  --paper:#1f2937;                      /* the ground */
+  --surface:#e0e1e3;                    /* the panel — white @86% over the ground, pre-composited */
+  --surface-solid:#ffffff;              /* inputs and the selected tab, where glass-on-glass muddies */
+  --raised:#e5e7eb;                     /* gray-200, an inset INSIDE a panel — deliberately not translucent */
+  /* TWO HAIRLINES, AND THE DIFFERENCE IS WHICH SIDE OF A PANEL THEY SIT ON.
+     --line is the CRM edge where a panel meets the dark ground. --line-strong is any
+     rule INSIDE a light panel: at 35% alpha those simply vanish, which is how the
+     divider between DIGIT2AI and the product name disappeared. */
+  --line:rgba(209,213,219,.35); --line-strong:#d1d5db;
+  /* THE TEXT TOKENS ARE CONTEXTUAL, AND THAT IS THE POINT. A dark ground with light
+     panels has TWO text palettes, and a class like .tiny is used in both — inside a card
+     and bare on the ground a few lines later. Hard-coding it to either one leaves the
+     other unreadable: the meetings screen shipped a caption at 1.94:1 that way. So the
+     ROOT values are the on-the-ground ones, every light surface redefines the same three
+     names below, and custom properties inherit — so .tiny{color:var(--faint)} is simply
+     correct in both places and a new element cannot get it wrong. */
+  --text:#e5e7eb;                       /* on the ground — 10.9:1 */
+  --muted:#9ca3af;                      /* gray-400, the CRM subtitle — 5.78:1 */
+  --faint:#9ca3af;
+  --panel-text:#111827;                 /* gray-900 on a panel — 13.56:1 */
+  --panel-muted:#374151;                /* gray-700 — 7.88:1 */
+  --panel-faint:#4b5563;                /* gray-600 — 5.78:1. gray-500 FAILS here, do not reach for it */
+  --accent:#2563eb; --accent-ink:#ffffff; --accent-dark:#1d4ed8; --accent-wash:#eff6ff;
+  /* THE CRM PUTS ITS OWN LINKS IN blue-600 ON THAT PANEL, WHICH IS 3.14:1 — A DEFECT
+     NOT WORTH COPYING. Links and filled controls use blue-700 / blue-600 instead,
+     both measured: white on blue-600 is 5.17:1, blue-700 on the panel is 5.12:1. */
+  --accent-solid:#2563eb; --accent-solid-dark:#1d4ed8;
+  --ok:#166534; --warn:#854d0e; --err:#991b1b;   /* Tailwind 800s: all clear AA on the panel */
+  /* the dark work pane — now gray-900, a cousin of the ground rather than a warm brown */
+  --ink-bg:#111827; --ink-line:#374151; --ink-text:#e5e7eb; --ink-muted:#9ca3af;
+  --ink-accent:#93c5fd; --ink-ok:#6ee7b7; --ink-warn:#fcd34d; --ink-err:#fca5a5; --ink-path:#7dd3fc;
+  /* Tailwind's own stack, so the type matches the CRM rather than merely resembling it */
+  --sans:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+  --serif:var(--sans);                  /* the CRM sets nothing in a serif; the token stays so nothing breaks */
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --radius:12px;
 }
+/* Any light surface: restate the three text names, so everything inside resolves to the
+   panel palette by inheritance. */
+.top,.card,.box,.hdrmenu,.step,.btn,.icon,.notice,.lnk,.shot{
+  --text:var(--panel-text); --muted:var(--panel-muted); --faint:var(--panel-faint);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
+body{margin:0;background:var(--paper);color:var(--on-dark);font-family:var(--sans);
   font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
 
 /* ── header ─────────────────────────────────────────────────────────────────── */
 .top{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 16px 9px;
-  border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
+  border-bottom:1px solid var(--line);background:var(--surface);color:var(--text);flex:0 0 auto}
 .top img{width:22px;height:22px;border-radius:5px}
 /* The lockup takes the page colour through currentColor, so one file reads on paper and
    on the brand ink. Only the 2 is fixed — that cyan is the brand. */
 .top img.wordmark{height:17px;width:auto;border-radius:0;color:var(--text);flex:0 0 auto}
 .product{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--muted);
-  padding-left:9px;margin-left:2px;border-left:1px solid var(--line);white-space:nowrap}
+  padding-left:9px;margin-left:2px;border-left:1px solid var(--line-strong);white-space:nowrap}
 .where{font-size:13px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabs{display:flex;gap:2px;background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:2px}
+.tabs{display:flex;gap:2px;background:var(--raised);border:1px solid var(--line-strong);border-radius:10px;padding:2px}
 .tab{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:8px;border:0;background:transparent;
   color:var(--muted);font:inherit;font-size:13px;cursor:pointer;text-decoration:none}
-.tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.tab.on{background:var(--surface-solid);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.10)}
 
 /* ── buttons ────────────────────────────────────────────────────────────────── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 15px;
@@ -55,12 +91,13 @@ body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
 .btn.quiet:hover{background:var(--raised);color:var(--text)}
 .btn.small{min-height:34px;padding:0 11px;font-size:13px}
 .btn:disabled{opacity:.45;cursor:default}
-.btn.rec{background:#fdecec;border-color:#f0c4bb;color:#a33a26;animation:beat 1.3s ease-in-out infinite}
-@keyframes beat{0%{box-shadow:0 0 0 0 rgba(191,95,66,.35)}70%{box-shadow:0 0 0 12px rgba(191,95,66,0)}100%{box-shadow:0 0 0 0 rgba(191,95,66,0)}}
+.btn.rec{background:#fee2e2;border-color:#fca5a5;color:#991b1b;animation:beat 1.3s ease-in-out infinite}
+@keyframes beat{0%{box-shadow:0 0 0 0 rgba(220,38,38,.40)}70%{box-shadow:0 0 0 12px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
 
 /* ── cards, notices ─────────────────────────────────────────────────────────── */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px}
-.notice{background:var(--accent-wash);border:1px solid #f0cdbe;color:#8a4029;border-radius:10px;
+.card{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--radius);
+  padding:15px 16px}
+.notice{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;border-radius:10px;
   padding:11px 13px;font-size:14px;line-height:1.5}
 .muted{color:var(--muted)}
 .tiny{font-size:12.5px;color:var(--faint)}
@@ -81,13 +118,14 @@ a{color:var(--accent-dark)}
 .ink details{margin:2px 0 4px 58px}
 .ink summary{cursor:pointer;color:var(--ink-muted)}
 .ink .dl{display:block}
-.ink .dl.add{color:#8fe0a8}.ink .dl.del{color:#f5a3a3}.ink .dl.hdr{color:var(--ink-muted)}
-.ink .banner{background:#3a2f1c;border:1px solid #5a4a26;color:#f0d9a8;border-radius:10px;
+.ink .dl.add{color:#6ee7b7}.ink .dl.del{color:#fca5a5}.ink .dl.hdr{color:var(--ink-muted)}
+.ink .banner{background:#3f2d0b;border:1px solid #78350f;color:#fde68a;border-radius:10px;
   padding:10px 12px;font-family:var(--sans);font-size:13.5px;line-height:1.5;margin-bottom:9px;white-space:normal}
 
 /* ── the instruction box ────────────────────────────────────────────────────── */
-.box{background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
-  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.box{background:var(--surface);color:var(--text);border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;
+  
+  box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .box:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
 .box textarea{width:100%;border:0;background:transparent;color:var(--text);resize:none;padding:12px 14px 4px;
   font-family:var(--sans);font-size:16px;line-height:1.55}
@@ -98,7 +136,7 @@ a{color:var(--accent-dark)}
 .icon:hover{background:var(--raised);color:var(--text)}
 .icon.send{margin-left:auto;background:var(--accent-solid);border-color:var(--accent-solid);color:var(--accent-ink)}
 .icon.send:hover{background:var(--accent-solid-dark)}
-.icon.rec{background:#fdecec;border-color:#f0c4bb;color:#a33a26;animation:beat 1.3s ease-in-out infinite}
+.icon.rec{background:#fee2e2;border-color:#fca5a5;color:#991b1b;animation:beat 1.3s ease-in-out infinite}
 .icon:disabled{opacity:.45;cursor:default}
 .stat{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -106,8 +144,8 @@ a{color:var(--accent-dark)}
 .bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:9px;flex:0 0 auto}
 .step{font-size:11.5px;padding:4px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--surface)}
 .step.on{border-color:var(--accent-solid);background:var(--accent-solid);color:var(--accent-ink)}
-.step.done{border-color:#bcdcc9;background:#eef7f1;color:var(--ok)}
-.step.fail{border-color:#eec4b9;background:#fdeee9;color:var(--err)}
+.step.done{border-color:#86efac;background:#dcfce7;color:var(--ok)}
+.step.fail{border-color:#fca5a5;background:#fee2e2;color:var(--err)}
 .bar .right{margin-left:auto;display:flex;gap:6px;align-items:center}
 .lnk{font-size:13px;color:var(--accent-dark);text-decoration:none;border:1px solid var(--line-strong);background:var(--surface);
   border-radius:9px;padding:6px 10px;cursor:pointer;font-family:inherit;min-height:34px;display:inline-flex;align-items:center}
@@ -121,25 +159,25 @@ a{color:var(--accent-dark)}
 .pchoice{font-weight:600}
 .pscope{margin:12px 0 0;font-size:13px;color:var(--muted)}
 /* what your words did — shown above the plan after a revision or a removal */
-.pdiff{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin:10px 0 0}
+.pdiff{background:var(--raised);border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;margin:10px 0 0}
 .pdiff h3{font-size:13px;margin:0 0 6px}
 .pdiff .plist{font-size:13px;margin:0}
 .drow{display:flex;gap:8px;align-items:flex-start;margin:4px 0}
 .dtag{flex:0 0 auto;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line-strong);
   background:var(--surface);color:var(--muted)}
-.dtag.added{border-color:#bcdcc9;background:#eef7f1;color:var(--ok)}
-.dtag.removed{border-color:#eec4b9;background:#fdeee9;color:var(--err)}
+.dtag.added{border-color:#86efac;background:#dcfce7;color:var(--ok)}
+.dtag.removed{border-color:#fca5a5;background:#fee2e2;color:var(--err)}
 /* the technical detail: collapsed until someone wants to argue with a file */
-details.tech{margin:14px 0 0;border-top:1px solid var(--line);padding-top:4px}
+details.tech{margin:14px 0 0;border-top:1px solid var(--line-strong);padding-top:4px}
 details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-height:44px;display:flex;align-items:center}
 .psteps{list-style:none;margin:6px 0 0;padding:0}
-.pstep{border:1px solid var(--line);border-radius:10px;background:var(--raised);padding:4px 6px 6px;margin:8px 0}
+.pstep{border:1px solid var(--line-strong);border-radius:10px;background:var(--raised);padding:4px 6px 6px;margin:8px 0}
 .pstephd{display:flex;align-items:center;gap:8px;min-height:44px}
 .pstephd .n{flex:0 0 auto;font-size:11.5px;color:var(--faint);min-width:14px}
 .pstephd strong{flex:1 1 auto;min-width:0;font-size:14px;overflow-wrap:anywhere}
 .pdetail{margin:0 4px 4px 22px}
 .pfiles{list-style:none;margin:0;padding:0}
-.pfile{display:flex;align-items:center;gap:8px;min-height:44px;padding-left:22px;border-top:1px solid var(--line)}
+.pfile{display:flex;align-items:center;gap:8px;min-height:44px;padding-left:22px;border-top:1px solid var(--line-strong)}
 .pfile code{flex:1 1 auto;min-width:0;font-family:var(--mono);font-size:12px;overflow-wrap:anywhere;word-break:break-all}
 .pfile .tiny{flex:0 1 auto;min-width:0;max-width:40%;text-align:right;overflow-wrap:anywhere}
 .psec>.pfiles>.pfile{padding-left:0}
@@ -149,10 +187,10 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 
 /* ── screenshots ────────────────────────────────────────────────────────────── */
 .shots{display:flex;gap:7px;flex-wrap:wrap;padding:9px 9px 0}
-.shot{position:relative;width:52px;height:52px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--raised)}
+.shot{position:relative;width:52px;height:52px;border-radius:9px;overflow:hidden;border:1px solid var(--line-strong);background:var(--raised)}
 .shot img{width:100%;height:100%;object-fit:cover;display:block}
 .shot button{position:absolute;top:0;right:0;width:20px;height:20px;border:0;border-radius:0 0 0 8px;
-  background:rgba(31,30,29,.72);color:#fff;font-size:13px;line-height:18px;cursor:pointer;padding:0}
+  background:rgba(17,24,39,.78);color:#fff;font-size:13px;line-height:18px;cursor:pointer;padding:0}
 
 /* ── header menu: a row on a desktop, a drawer on a phone ───────────────────── */
 /* The panel is positioned against the bar, so the bar owns the stacking context. */
@@ -175,11 +213,11 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
   .hdrmenu{position:absolute;top:100%;right:8px;left:auto;min-width:220px;max-width:calc(100vw - 16px);z-index:90;
     flex-direction:column;align-items:stretch;gap:2px;margin-top:6px;padding:6px;
     background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
-    box-shadow:0 12px 32px rgba(31,30,29,.16)}
+    box-shadow:0 12px 32px rgba(0,0,0,.45)}
   .hdrmenu:not(.open){display:none}
   /* The repo label is information, not a control: it reads as a heading in the panel. */
   .hdrmenu .where{display:block;padding:8px 10px 6px;font-size:12.5px;color:var(--faint);white-space:normal;
-    border-bottom:1px solid var(--line);margin-bottom:2px}
+    border-bottom:1px solid var(--line-strong);margin-bottom:2px}
   .hdrmenu .lnk{min-height:48px;justify-content:flex-start;border:0;background:transparent;font-size:15px;padding:0 10px}
   .hdrmenu .lnk:hover{background:var(--raised)}
 }

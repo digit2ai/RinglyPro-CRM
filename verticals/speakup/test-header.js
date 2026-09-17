@@ -204,14 +204,24 @@ server.listen(0, async () => {
             serif: cs('.brand .product').fontFamily,
             wm: box('.brand img.wordmark'),
             inputH: box('#email').h, inputFont: parseFloat(cs('#email').fontSize),
+            // THE GROUND IS NOT WHAT IS BEHIND THE TEXT. The page has two surfaces now — a
+            // dark ground with a light panel on it — and the tagline sits INSIDE the panel.
+            // Measuring it against `body` reported 1.42:1 for type that actually renders at
+            // 7.88:1, i.e. a failure the product does not have.
+            cardBg: cs('.card').backgroundColor,
             over: document.documentElement.scrollWidth > window.innerWidth + 1
           };
         });
 
-        ok(v.bg === 'rgb(250, 249, 245)', `login ${label}: the paper ground, not the old navy (${v.bg})`);
+        ok(v.bg === 'rgb(31, 41, 55)', `login ${label}: the CRM ground #1f2937 (${v.bg})`);
+        ok(v.cardBg === 'rgb(224, 225, 227)', `login ${label}: the panel is the CRM's, solid (${v.cardBg})`);
         ok(ratio(v.btnBg, v.btnInk) >= 4.5, `login ${label}: the button label meets AA (${ratio(v.btnBg, v.btnInk).toFixed(2)}:1)`);
-        ok(ratio(v.tag, v.bg) >= 4.5, `login ${label}: the tagline meets AA (${ratio(v.tag, v.bg).toFixed(2)}:1)`);
-        ok(/serif/i.test(v.serif), `login ${label}: the product name is set in the serif`);
+        ok(ratio(v.tag, v.cardBg) >= 4.5, `login ${label}: the tagline meets AA on the panel (${ratio(v.tag, v.cardBg).toFixed(2)}:1)`);
+        // `/serif/i` USED TO BE THE CHECK AND IT FALSE-PASSES NOW: the CRM's stack begins
+        // `ui-sans-serif`, which contains the word. The CRM sets nothing in a serif, so the
+        // assertion is that this IS that stack.
+        ok(/^ui-sans-serif/.test(v.serif) && !/(^|,)\s*(Georgia|Cambria|Times|ui-serif)\b/i.test(v.serif),
+           `login ${label}: the product name uses the CRM sans stack (${v.serif.split(',')[0]})`);
         // The rule that only a browser can settle.
         ok(v.prod.txt === 'AutoDev' && v.prod.w > 0 && v.prod.h > 0,
            `login ${label}: the product name is on screen (${Math.round(v.prod.w)}x${Math.round(v.prod.h)})`);

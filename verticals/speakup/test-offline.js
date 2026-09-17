@@ -443,7 +443,7 @@ test('the login wears the same theme as the app', () => {
   ok(/var\(--/.test(styleBlock), 'its own rules read the shared tokens');
   const literals = (styleBlock.match(/#[0-9a-f]{3,8}\b/gi) || []);
   ok(literals.length === 0, `no hard-coded colour in the page block (found ${literals.join(', ') || 'none'})`);
-  ok(/theme-color" content="#faf9f5"/.test(login), 'the browser chrome matches the paper ground');
+  ok(/theme-color" content="#1f2937"/.test(login), 'the browser chrome matches the dark ground');
   // theme.css hides .product under 560px, where the app's tabs name the screen instead.
   // There are no tabs here, so without this the card reads only DIGIT2AI on a phone.
   ok(/\.brand \.product\{display:inline-block/.test(styleBlock),
@@ -792,25 +792,50 @@ test('the header controls are one node, not two copies', () => {
   ok(/header-menu\.js\?v=\d+/.test(sw), 'the worker caches the shared script');
 });
 
-test('both screens wear the same paper theme', () => {
+// EVERY SCREEN WEARS THE RinglyPro CRM PALETTE, READ FROM THE LIVE PAGE.
+// aiagent.ringlypro.com signs in on Tailwind: ground #1f2937, a light panel, blue-600
+// buttons, gray-400 subtitles. This replaced the warm paper theme at the owner's request.
+test('every screen wears the CRM palette', () => {
   const css = read('verticals/speakup/public/theme.css');
   const manifest = JSON.parse(read('verticals/speakup/public/manifest.webmanifest'));
-  const paper = (css.match(/--paper:\s*(#[0-9a-f]{3,8})/i) || [])[1];
-  ok(paper && /^#faf9f5$/i.test(paper), 'the ground is the warm off-white, not black');
-  ok(/--accent:\s*#d97757/i.test(css), 'the accent is the clay orange');
-  // THE WORK PANE STAYS DARK. Diff and status colours are unreadable on cream, so the
-  // code panel keeps its own ink tokens and is deliberately not theme-swapped.
-  ok(/--ink-bg:\s*#1d1c1a/i.test(css) && /\.ink\{/.test(css), 'the code and diff pane is still dark');
-  ok(/--serif:/.test(css) && /--mono:/.test(css), 'a serif for headings and a mono for code are declared');
-  // ONE stylesheet, both screens. A second palette is how two screens drift apart.
-  ['app.html', 'meetings.html'].forEach(function (f) {
+  const token = (n) => (css.match(new RegExp('--' + n + ':\\s*(#[0-9a-f]{3,8})', 'i')) || [])[1];
+  ok(/^#1f2937$/i.test(token('paper') || ''), 'the ground is the CRM gray-800');
+  ok(/^#2563eb$/i.test(token('accent') || ''), 'the accent is blue-600');
+  ok(/^#e0e1e3$/i.test(token('surface') || ''), 'the panel is the CRM glass, pre-composited');
+  // THE PANEL IS SOLID ON PURPOSE. Blurring a flat ground returns the flat ground, so the
+  // filter is pixel-identical here and costs GPU work on a phone — and the mobile drawer
+  // genuinely overlays the code pane, where anything translucent ghosts (the JobMD lesson).
+  ok(!/backdrop-filter/.test(css), 'nothing is translucent, so nothing needs a backdrop filter');
+  ok(/\.hdrmenu[^{]*\{[^}]*background:var\(--surface\)/.test(css.replace(/\n\s*/g, '')),
+     'the drawer uses the solid panel, so the pane cannot ghost through it');
+  // TWO TEXT PALETTES, ONE SET OF NAMES. A dark ground with light panels means .tiny is
+  // used in both; hard-coding it to either leaves the other unreadable, which shipped once
+  // as a 1.94:1 caption on the meetings screen.
+  ['panel-text', 'panel-muted', 'panel-faint'].forEach((t) => ok(!!token(t), `--${t} is declared`));
+  // Match the rule itself rather than anchoring to a line start — the source is flattened
+  // first, so there are no line starts left to anchor to (the first version of this check
+  // failed for that reason, not because the rule was missing).
+  // Strip CSS comments first: the rule is preceded by one explaining it, and a capture that
+  // swallows the comment makes the first selector read "/* … */.top" and never match.
+  const flat = css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n\s*/g, '');
+  const trio = (flat.match(/([^{}]*)\{--text:var\(--panel-text\);\s*--muted:var\(--panel-muted\);\s*--faint:var\(--panel-faint\);\}/) || [])[1] || '';
+  ok(!!trio, 'a rule restates the text trio, so inheritance resolves it');
+  // A light surface missing from that list renders light text on a light ground.
+  ['.top', '.card', '.box', '.hdrmenu', '.step', '.btn', '.icon'].forEach((sel) =>
+    ok(trio.split(',').map((s) => s.trim()).includes(sel), `${sel} is in the light-surface list`));
+  // The work pane stays dark, now a cousin of the ground rather than a warm brown.
+  ok(/^#111827$/i.test(token('ink-bg') || '') && /\.ink\{/.test(css), 'the code and diff pane is still dark');
+  ok(/--sans:ui-sans-serif,system-ui/.test(css) && /--mono:/.test(css), "the CRM's own sans stack and a mono are declared");
+  // ONE stylesheet, every screen. A second palette is how screens drift apart.
+  ['app.html', 'meetings.html', 'login.html'].forEach(function (f) {
     const html = read('verticals/speakup/public/' + f);
     ok(/theme\.css/.test(html), f + ' loads the shared stylesheet');
     ok(!/--bg:\s*#0a0e18/.test(html), f + ' carries no leftover dark palette');
+    const theme = (html.match(/name="theme-color"\s+content="(#[0-9a-f]{3,8})"/i) || [])[1];
+    ok(/^#1f2937$/i.test(theme || ''), f + ' tints the browser chrome to the ground');
   });
-  const theme = (read('verticals/speakup/public/app.html').match(/name="theme-color"\s+content="(#[0-9a-f]{3,8})"/i) || [])[1];
-  ok(theme && /^#faf9f5$/i.test(theme), 'the browser chrome matches the paper');
-  ok(/^#f(af9f5|ff)$/i.test(manifest.background_color || ''), 'the installed launch screen matches too');
+  ok(/^#1f2937$/i.test(manifest.background_color || ''), 'the installed launch screen matches too');
+  ok(/^#1f2937$/i.test(manifest.theme_color || ''), 'and so does the installed chrome');
 });
 
 test('patch and guard scripts', () => {
