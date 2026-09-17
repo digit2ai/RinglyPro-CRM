@@ -426,6 +426,34 @@ test('every page and the worker agree on every asset version', () => {
      'the worker still names a cache version');
 });
 
+// THE REPOSITORY NAME IS NOT SHOWN TO THE OPERATOR (owner request 2026-09-17).
+// The console only ever talks to one repository, so printing "digit2ai/RinglyPro-CRM" in
+// the header chip, in the idle message and again in the wake-word greeting was noise on
+// every screen. It is still sent to the MODEL as context and still stored on the job — the
+// rule is about display, not about forgetting which repository this is.
+test('the operator is not shown the repository name', () => {
+  ['app.html', 'meetings.html', 'login.html', 'console.js', 'meetings.js'].forEach((f) => {
+    const src = read('verticals/speakup/public/' + f).replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    ok(!/digit2ai\/RinglyPro-CRM/.test(src), f + ' does not print the repository');
+  });
+  const intents = stripComments(read('verticals/speakup/src/factory/intents.js'));
+  // The window opens BEFORE the marker: the flag is read on the line above the return,
+  // so a slice starting at the marker misses it and reports a fix that is actually there.
+  const at = intents.indexOf("intent: 'WAKE'");
+  const wake = intents.slice(Math.max(0, at - 400), at + 700);
+  ok(!/p0 \? p0\.repo/.test(wake), 'the wake greeting names no repository');
+  // AND IT NO LONGER PROMISES THE OPPOSITE OF WHAT HAPPENS. It used to say the change
+  // "runs straight away", which stopped being true when auto-run went off by default and
+  // the plan step returned; it reads the flag now instead of asserting either behaviour.
+  ok(/jobs\.autoRunEnabled\(\)/.test(wake), 'the greeting reads the auto-run flag rather than asserting one');
+  ok(/type approved|escribas aprobado/i.test(wake), 'and says the plan comes first when auto-run is off');
+  // The slot itself stays: meetings fills it with the screen name, and an empty one must
+  // collapse or the mobile drawer shows a blank bordered row.
+  ok(/id="ctx"/.test(read('verticals/speakup/public/app.html')), 'the slot is still in the markup');
+  ok(/\.hdrmenu \.where:empty\{display:none\}/.test(read('verticals/speakup/public/theme.css').replace(/\n\s*/g, '')),
+     'an empty slot collapses in the drawer');
+});
+
 // THE LOGIN IS THE FIRST SCREEN ANYONE SEES AND IT WAS THE LAST ONE ON THE OLD THEME.
 // It carried its own palette inline (a purple on navy) and never linked theme.css, so it
 // looked like a different product from the app behind it. A second palette inside a page

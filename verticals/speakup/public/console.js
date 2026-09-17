@@ -79,8 +79,8 @@
    * because inventing a translation for it would be worse than leaving it.
    */
   var MSG = {
-    idle: ['Escribe abajo lo que quieres cambiar en digit2ai/RinglyPro-CRM. El cambio se guarda aparte para que lo revises; nada llega al sitio en vivo hasta que escribas aprobado.',
-      'Type below what you want changed in digit2ai/RinglyPro-CRM. The change is kept separately for you to look at; nothing reaches the live site until you type approved.'],
+    idle: ['Escribe abajo el cambio que quieres. Primero recibes un plan para leer; nada llega al sitio en vivo hasta que escribas aprobado.',
+      'Type below the change you want. You get a plan to read first; nothing reaches the live site until you type approved.'],
     filesChanged: ['{n} archivos cambiados', '{n} files changed'],
     readyForReview: ['El cambio está aquí para que lo mires: {url}', 'The change is here for you to look at: {url}'],
     approved: ['Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.'],

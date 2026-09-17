@@ -562,10 +562,20 @@ async function run(input) {
   if (isWakeOnly(text)) {
     const list0 = await projects.list(tenant_id);
     const p0 = (input.project_key && list0.find(p => p.key === input.project_key)) || list0.find(p => p.key === (process.env.SPEAKUP_DEFAULT_PROJECT || 'ringlypro')) || list0[0];
+    // THE GREETING NAMES NO REPOSITORY (owner request 2026-09-17): the console only ever
+    // talks to one, so printing it on every wake is noise. And it READS the auto-run flag
+    // rather than asserting a behaviour — it used to promise the change "runs straight
+    // away", which stopped being true when auto-run became off-by-default and the plan
+    // step came back, so the greeting was describing the opposite of what happens.
+    const straightAway = jobs.autoRunEnabled();
     return { status: 200, intent: 'WAKE', classified_by: 'rules', project_key: p0 && p0.key, card: null,
       reply: lang === 'en'
-        ? `RinglyPro Architect is ready on ${p0 ? p0.repo : ''}. Type or dictate the change you want; it runs straight away and ends as a branch and a pull request.`
-        : `RinglyPro Architect está listo en ${p0 ? p0.repo : ''}. Escribe o dicta el cambio que quieres; se ejecuta enseguida y termina en una rama y un pull request.` };
+        ? `RinglyPro Architect is ready. Type or dictate the change you want; ${straightAway
+            ? 'it runs straight away and ends as a branch and a pull request.'
+            : 'you get a plan to read first, and nothing runs until you type approved.'}`
+        : `RinglyPro Architect está listo. Escribe o dicta el cambio que quieres; ${straightAway
+            ? 'se ejecuta enseguida y termina en una rama y un pull request.'
+            : 'primero recibes un plan para leer y nada se ejecuta hasta que escribas aprobado.'}` };
   }
   const cls = await classify(text, mode);
   const def = INTENTS.find(i => i.name === cls.intent);
