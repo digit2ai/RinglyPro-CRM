@@ -79,8 +79,6 @@
    * because inventing a translation for it would be worse than leaving it.
    */
   var MSG = {
-    idle: ['Escribe abajo el cambio que quieres. Primero recibes un plan para leer; nada llega al sitio en vivo hasta que escribas aprobado.',
-      'Type below the change you want. You get a plan to read first; nothing reaches the live site until you type approved.'],
     filesChanged: ['{n} archivos cambiados', '{n} files changed'],
     readyForReview: ['El cambio está aquí para que lo mires: {url}', 'The change is here for you to look at: {url}'],
     approved: ['Aprobado. La fábrica trabaja sola desde aquí.', 'Approved. The factory runs on its own from here.'],
@@ -163,6 +161,7 @@
   function write(events) {
     var list = (events || []).filter(Boolean);
     if (!list.length) return;
+    leaveIdle();
     for (var i = 0; i < list.length; i++) shown.push(list[i]);
     var out = $('out');
     var atBottom = out.scrollTop + out.clientHeight >= out.scrollHeight - 40;
@@ -185,6 +184,7 @@
   ];
   function renderBar(job) {
     lastJob = job;
+    if (job) leaveIdle();
     var idx = -1;
     STEPS.forEach(function (s, i) { if (job && s.at.indexOf(job.status) >= 0) idx = i; });
     var failed = job && (job.status === 'FAILED' || job.status === 'CANCELLED');
@@ -201,21 +201,34 @@
       L('Pull request en GitHub', 'Pull request on GitHub') + '">' + L('Cambio #', 'Change #') + job.pr_number + '</a>' +
       '<button class="lnk" id="diffBtn">' + L('Ver archivos', 'See the files') + '</button>';
     if (job && !job.terminal) html += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
-    html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
+    if (job && job.terminal) html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
     html += '</span>';
     $('bar').innerHTML = html;
     if ($('diffBtn')) $('diffBtn').addEventListener('click', showDiff);
     if ($('cancelBtn')) $('cancelBtn').addEventListener('click', cancelJob);
-    $('clearBtn').addEventListener('click', clearPane);
+    if ($('clearBtn')) $('clearBtn').addEventListener('click', clearPane);
   }
 
-  function idleHint() {
-    write([{ kind: 'info', t: 'idle' }]);
-  }
+  // THERE IS NO EMPTY PAGE (owner request 2026-09-17). Opening the factory used to land on
+  // five grey steps with none active, a Clear button with nothing to clear, and a dark pane
+  // holding one sentence. With nothing in progress the work area is not drawn at all; the
+  // box is the whole screen, and the plan card — which says exactly what "approved" does —
+  // arrives the moment there is something to read. A job with a plan is never idle: startup
+  // restores it, so you land straight on it.
+  function showIdle() { document.body.classList.add('idle'); }
+  function leaveIdle() { document.body.classList.remove('idle'); }
 
   // Clearing empties the pane only. It never cancels: a running job keeps running on
   // GitHub, and the next reload re-attaches to it.
+  //
+  // AND IT ONLY EVER CLEARS A FINISHED JOB. It used to be offered on every screen, including
+  // beside Cancel on a plan still waiting to be read, where it did two bad things: it hid a
+  // live plan (the owner landed on an empty page with the plan still waiting on the server),
+  // and it nulled planJob — so the next message skipped the correction path and started a
+  // SECOND job underneath the unread plan. "No new job under a plan waiting to be read" is
+  // enforced in this file, and Clear was the way around it. A live job has Cancel.
   function clearPane() {
+    if (jobId && !jobTerminal) return;
     clearTimeout(timer);
     if (jobId && jobTerminal) dismiss(jobId);
     jobId = null; jobTerminal = false; lastEvent = 0;
@@ -223,7 +236,7 @@
     shown = [];
     $('out').innerHTML = '';
     renderBar(null);
-    idleHint();
+    showIdle();
   }
 
   async function showDiff() {
@@ -464,6 +477,7 @@
     // how a list of five files takes five taps of re-opening to prune.
     var prev = $('plan').querySelector('details.tech');
     var keepOpen = planJob === job.id && !!(prev && prev.open);
+    leaveIdle();
     planJob = job.id; planHash = job.plan_hash; planShown = job;
     var plan = job.plan && typeof job.plan === 'object' ? job.plan : null;
     var revs = (job.revisions || []).map(function (r) { return '<div class="rev">' + esc(r.text) + '</div>'; }).join('');
@@ -679,7 +693,7 @@
       var last = (ov.jobs || [])[0];
       if (running) follow(running.id, true);
       else if (last && last.id > dismissed()) follow(last.id, true);
-      else { renderBar(null); idleHint(); }
+      else { renderBar(null); showIdle(); }
     } catch (e) { /* redirected on 401 */ }
   })();
 })();

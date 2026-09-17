@@ -426,6 +426,41 @@ test('every page and the worker agree on every asset version', () => {
      'the worker still names a cache version');
 });
 
+// THERE IS NO EMPTY PAGE, AND CLEAR CANNOT STRAND A LIVE PLAN (owner request 2026-09-17).
+// The owner kept landing on five grey steps, a Clear button with nothing to clear and a
+// dark pane holding one sentence — while a plan waited for them on the server. Clear was
+// drawn on every screen, including beside Cancel on a live plan, where it hid the plan AND
+// nulled planJob, so the next message started a second job underneath the unread plan.
+// This runs in CI; test-console-flow.js proves the same thing in a real browser.
+test('there is no empty page, and Clear cannot strand a live plan', () => {
+  const con = read('verticals/speakup/public/console.js');
+  const html = read('verticals/speakup/public/app.html');
+  ok(/function clearPane\(\) \{\s*if \(jobId && !jobTerminal\) return;/.test(con),
+     'clearPane refuses a job that is still in progress');
+  ok(/if \(job && job\.terminal\) html \+= '<button class="lnk" id="clearBtn">'/.test(con),
+     'Clear is drawn only for a finished job');
+  ok(/if \(\$\('clearBtn'\)\) \$\('clearBtn'\)\.addEventListener/.test(con),
+     'wiring Clear tolerates it being absent, which is now the common case');
+  // The empty page itself is gone rather than restyled.
+  ok(!/idleHint|t: 'idle'/.test(con), 'the INFO paragraph and its message are gone');
+  ok(/function showIdle\(\)/.test(con) && /function leaveIdle\(\)/.test(con), 'an idle state replaces it');
+  ok(/body\.idle #bar, body\.idle #out\{display:none\}/.test(html), 'idle draws no step bar and no work pane');
+  // Every door INTO work must leave idle, or a job would render into a hidden pane.
+  const writeFn = con.slice(con.indexOf('function write('), con.indexOf('function write(') + 200);
+  ok(/leaveIdle\(\)/.test(writeFn), 'writing to the pane leaves idle');
+  // Sliced up to a landmark inside the function, not a fixed character count: showPlan
+  // opens with a comment long enough to push leaveIdle() past a 200-character window, and
+  // that reported a missing call that was there — the second fixed-window slip today.
+  const spAt = con.indexOf('function showPlan(');
+  const showPlanFn = con.slice(spAt, con.indexOf('planJob = job.id', spAt));
+  ok(/leaveIdle\(\)/.test(showPlanFn), 'showing a plan leaves idle');
+  const barFn = con.slice(con.indexOf('function renderBar('), con.indexOf('function renderBar(') + 120);
+  ok(/if \(job\) leaveIdle\(\)/.test(barFn), 'drawing a job on the bar leaves idle');
+  // Startup goes straight to anything in progress; idle is only for when nothing is.
+  ok(/if \(running\) follow\(running\.id, true\);[\s\S]{0,120}else \{ renderBar\(null\); showIdle\(\); \}/.test(con),
+     'startup lands on work in progress first, and on idle only when there is none');
+});
+
 // THE REPOSITORY NAME IS NOT SHOWN TO THE OPERATOR (owner request 2026-09-17).
 // The console only ever talks to one repository, so printing "digit2ai/RinglyPro-CRM" in
 // the header chip, in the idle message and again in the wake-word greeting was noise on
