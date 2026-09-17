@@ -553,6 +553,7 @@ testAsync('the chat on the Claude subscription: locked down, streamed, and hones
   const bin = path.join(dir, 'claude');
   fs.writeFileSync(bin, '#!' + process.execPath + '\n' + `
     const fs = require('fs'); let input = '';
+    if (process.argv.includes('--version')) { process.stdout.write('2.1.272 (Claude Code)\\n'); process.exit(0); }
     process.stdin.on('data', d => input += d);
     process.stdin.on('end', () => {
       fs.writeFileSync(${JSON.stringify(dump)}, JSON.stringify({ argv: process.argv.slice(2), env: process.env, cwd: process.cwd(), input }));
@@ -655,7 +656,7 @@ testAsync('the chat on the Claude subscription: locked down, streamed, and hones
     const healthSrc = stripComments(read('verticals/speakup/src/routes/health.js'));
     ok(/subscription_token_set: s\.token_set/.test(healthSrc) && !/CLAUDE_CODE_OAUTH_TOKEN|token\(\)|last_error/.test(healthSrc), 'the public health check reports whether a token is set, never the token or an error body');
     const pr = await sub.probe();
-    ok(pr.runs === true && /Summary|claude|\d/.test(pr.version || 'x') || pr.runs === true, 'the probe confirms the CLI actually starts');
+    ok(pr.runs === true && /2\.1\.272/.test(pr.version || ''), 'the probe confirms the CLI actually starts and reports its version');
 
     // One door, one pinned version.
     ok(/require\('\.\/claude-subscription'\)/.test(read('verticals/speakup/src/factory/llm.js')), 'llm.js is the only place the subscription is reached from');
