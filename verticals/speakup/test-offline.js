@@ -1346,6 +1346,30 @@ test('the research agent: read-only, confined, and asked what to find out', () =
   }
 });
 
+// ── Sandbox page ──────────────────────────────────────────────────────────────
+// A standalone scratch page at /sandbox/. It carries no data and no script, so
+// the only things that can break it are the static mount moving out from under
+// it or someone adding content to it.
+test('sandbox', () => {
+  const html = read('public/sandbox/index.html');
+  const app = read('src/app.js');
+
+  // The address resolves because express.static publishes public/ at the root and
+  // answers a directory with its index.html. Nothing else wires this path.
+  ok(/app\.use\(express\.static\(path\.join\(__dirname, '\.\.\/public'\)\)\)/.test(app),
+    'public/ is still served at the root, which is what makes /sandbox/ resolve');
+  ok(!/['"]\/sandbox/.test(app), 'no route in the app claims /sandbox, so the static file is what answers');
+
+  // Only the requested sentence is visible: strip the head, then every tag.
+  const body = html.replace(/<head>[\s\S]*?<\/head>/i, '').replace(/<[^>]*>/g, '').trim();
+  ok(body === 'This is Digit2ai Sandbox', 'the page shows only the requested sentence');
+
+  // No second request: nothing to fetch, and nothing that could run.
+  ok(!/<script|<link|<img|<iframe|src=|href=/i.test(html), 'the page loads no external asset and runs no script');
+  ok(/^<!DOCTYPE html>/i.test(html) && /<html lang="en">/.test(html) && /<meta charset="utf-8">/i.test(html),
+    'it is a complete minimal HTML5 document');
+});
+
 setTimeout(() => {
   Promise.all(pendingTests).then(() => {
     console.log(`\n==== ${pass} passed, ${fail} failed ====`);
