@@ -9,6 +9,7 @@
  *   GET  /:id/chat              the conversation so far
  *   POST /:id/chat              ask anything; streams the reply as NDJSON and stores both turns
  *   POST /:id/factory           hand an answer to the Factory (stops at a plan)
+ *   DELETE /:id/chat            clear the conversation (server-side, with its screenshots)
  *   GET  /:id/chat/attachment/:uploadId   a screenshot shown in the thread
  *
  * A MEETING IS A su_recordings ROW. Every query is scoped to the tenant from the session,
@@ -112,6 +113,21 @@ router.get('/:id/chat', wrap(async (req, res) => {
   const rec = await ownMeeting(req, res); if (!rec) return;
   const rows = await MeetingChat.findAll({ where: { tenant_id: rec.tenant_id, meeting_id: rec.id }, order: [['id', 'ASC']], limit: 500 });
   res.json({ messages: rows.map(view) });
+}));
+
+// CLEAR THE CONVERSATION. Deleted on the server, not just hidden: the model is sent the prior
+// turns, so a screen-only clear would keep feeding the old conversation into every new answer and
+// bring it back on reload. Screenshots attached in this chat go with it. Jobs already sent to the
+// Factory are not touched, and the audit row records that a clear happened.
+router.delete('/:id/chat', mutation, wrap(async (req, res) => {
+  const rec = await ownMeeting(req, res); if (!rec) return;
+  const rows = await MeetingChat.findAll({ where: { tenant_id: rec.tenant_id, meeting_id: rec.id }, attributes: ['id', 'attachment_url'] });
+  const uploadIds = rows.map(r => r.attachment_url).filter(u => /^upload:\d+$/.test(u || '')).map(u => parseInt(u.slice(7), 10));
+  const removed = await MeetingChat.destroy({ where: { tenant_id: rec.tenant_id, meeting_id: rec.id } });
+  if (uploadIds.length) await Upload.destroy({ where: { tenant_id: rec.tenant_id, id: uploadIds, job_id: null } });
+  await audit.record({ tenant_id: rec.tenant_id, user_id: req.user.id, actor: req.user.email, action: 'meeting.chat_cleared', entity: 'recording', entity_id: rec.id,
+    detail: { messages: removed, screenshots: uploadIds.length }, req });
+  res.json({ ok: true, removed });
 }));
 
 // A screenshot shown in the thread. Only one that a message in THIS meeting, in THIS tenant,

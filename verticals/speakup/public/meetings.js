@@ -82,7 +82,15 @@
     }
     return h + '</div>';
   }
+  // Clear shows only when there is something to clear, and never while a reply is arriving.
+  function syncClear() {
+    var b = $('clearBtn'); if (!b) return;
+    b.hidden = !meeting || !messages.length;
+    b.disabled = busy;
+    if (!armed) b.textContent = L('Limpiar', 'Clear');
+  }
   function renderThread() {
+    syncClear();
     if (!meeting) {
       $('thread').innerHTML = '<p class="empty-note">' + esc(L('Graba una reunión o abre una desde el Historial para hablar con ella.',
         'Record a meeting, or open one from History, to talk to it.')) + '</p>';
@@ -119,6 +127,8 @@
   // ── sending: a streamed reply ──────────────────────────────────────────────
   function setBusy(b) {
     busy = b;
+    if (b) disarm();
+    syncClear();
     $('send').disabled = b || !meeting;
     $('msg').disabled = !meeting;
     renderChips();
@@ -190,6 +200,31 @@
       renderThread();
       msgStat(e.message);
     } finally { setBusy(false); }
+  }
+
+  // ── clear: two taps, deleted on the server ─────────────────────────────────
+  // The first tap arms it ("Tap again to clear"); a second tap within 4 seconds clears. One tap
+  // can never wipe a conversation by accident, and there is no blocking dialog on a phone.
+  var armed = false, armTimer = null;
+  function disarm() { armed = false; clearTimeout(armTimer); var b = $('clearBtn'); if (b) { b.textContent = L('Limpiar', 'Clear'); b.classList.remove('primary'); } }
+  async function onClear() {
+    if (!meeting || busy || !messages.length) return;
+    if (!armed) {
+      armed = true;
+      $('clearBtn').textContent = L('Toca otra vez para limpiar', 'Tap again to clear');
+      $('clearBtn').classList.add('primary');
+      armTimer = setTimeout(disarm, 4000);
+      return;
+    }
+    disarm();
+    setBusy(true);
+    try {
+      await api('/meetings/' + meeting.id + '/chat', { method: 'DELETE' });
+      messages = [];
+      renderThread();
+      msgStat(L('Conversación borrada', 'Conversation cleared'));
+    } catch (e) { msgStat(e.message); await loadThread(); }
+    finally { setBusy(false); }
   }
 
   // ── screenshots: one per message, sent with it ─────────────────────────────
@@ -381,6 +416,7 @@
     $('privacy').textContent = L('Se transcribe en tu dispositivo. El audio no sale de tu equipo.', 'Transcribed on your device. Audio never leaves your machine.');
     $('ovNote').textContent = $('privacy').textContent;
     $('trToggle').textContent = L('Transcripción', 'Transcript');
+    disarm();
     $('saveTrBtn').textContent = L('Guardar transcripción', 'Save transcript');
     $('msg').placeholder = L('Pregunta lo que quieras sobre la reunión…', 'Ask anything about the meeting…');
     $('mic').setAttribute('aria-label', L('Dictar', 'Dictate'));
@@ -399,6 +435,7 @@
       location.href = '/speakup/login';
     });
     $('trToggle').addEventListener('click', function () { show('trPanel', $('trPanel').hidden); });
+    $('clearBtn').addEventListener('click', onClear);
     $('saveTrBtn').addEventListener('click', saveTranscript);
     $('send').addEventListener('click', function () { send(); });
     $('mic').addEventListener('click', function () { if (capturing) stopCapture(); else startCapture(); });

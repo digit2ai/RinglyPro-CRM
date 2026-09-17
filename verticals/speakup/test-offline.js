@@ -915,6 +915,11 @@ test('the meetings chat: honest without a model, tenant-scoped, and transfer sto
   ok(/abort\.abort\(\)/.test(routes) && /signal: abort\.signal/.test(routes), 'closing the tab stops the model');
   ok(/meeting-chat-day/.test(routes) && routes.indexOf("'meeting-chat-day'") < routes.indexOf('readAttachment(req.body'), 'a daily cap, checked before any image is decoded');
   ok(/magicMatches\(mime, bytes\)/.test(routes), 'an image must be what its type claims, byte for byte');
+  // CLEAR deletes on the server — a screen-only clear would keep feeding old turns to the model.
+  ok(/router\.delete\('\/:id\/chat', mutation,/.test(routes) && /MeetingChat\.destroy\(\{ where: \{ tenant_id: rec\.tenant_id, meeting_id: rec\.id \} \}\)/.test(routes),
+    'clear is a same-origin DELETE, scoped to the tenant and the meeting');
+  ok(/Upload\.destroy\(\{ where: \{ tenant_id: rec\.tenant_id, id: uploadIds, job_id: null \} \}\)/.test(routes), 'it removes its screenshots, never an upload attached to a Factory job');
+  ok(/if \(!armed\)/.test(mjs) && /setTimeout\(disarm, 4000\)/.test(mjs), 'one tap only arms Clear; it disarms itself');
   ok(/composed_by = 'offline'/.test(routes), 'an offline reply is stored as offline, so the screen can label it');
   ok(/Sin modelo: respuesta de respaldo/.test(mjs) && /No model: fallback reply/.test(mjs), 'and the screen labels it in both languages');
 

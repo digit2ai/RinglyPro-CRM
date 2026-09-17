@@ -70,6 +70,7 @@
     .top .tab{min-height:44px;padding:0 11px}
     .chip{min-height:40px}
     .mact .btn{min-height:44px}
+    .mhd .btn{min-height:44px;min-width:44px}
   }
   @media(max-width:560px){
     main,footer{padding-left:12px;padding-right:12px}
@@ -120,6 +121,7 @@
   <section class="card" id="meetCard" hidden>
     <div class="mhd">
       <div class="ttl"><h2 id="mTitle"></h2><div class="tiny" id="mDate"></div></div>
+      <button class="btn small" id="clearBtn" hidden>Limpiar</button>
       <button class="btn small" id="trToggle">Transcripción</button>
     </div>
     <div id="trPanel" hidden>
@@ -163,7 +165,7 @@
 
 <script src="/speakup/transcript-clean.js?v=1"></script>
 <script src="/speakup/record-engine.js?v=2"></script>
-<script src="/speakup/meetings.js?v=3"></script>
+<script src="/speakup/meetings.js?v=4"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

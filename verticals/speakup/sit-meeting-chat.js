@@ -298,6 +298,23 @@ const server = app.listen(0, async () => {
     ok(all.status === 200 && all.d.messages.length >= 14 && all.d.messages.every(m => m.id), 'the whole conversation is stored and comes back in order');
     ok(await MeetingChat.count({ where: { tenant_id: other.id, meeting_id: meet.id } }) === 0, 'no row of this conversation was written under another tenant');
 
+    // ── Clear: deleted on the server, screenshots with it, other tenants untouched ──
+    const shotRows = await MeetingChat.findAll({ where: { tenant_id: op.id, meeting_id: meet.id } });
+    const shotIds = shotRows.map(r => r.attachment_url).filter(Boolean).map(u => parseInt(u.slice(7), 10));
+    const jobsKept = await Job.count({ where: { tenant_id: op.id } });
+    ok((await call(B, 'DELETE', '/meetings/' + meet.id + '/chat')).status === 404, 'another tenant cannot clear this conversation');
+    ok((await call(A, 'DELETE', '/meetings/' + meet.id + '/chat', null, { Origin: 'https://evil.example' })).status === 403, 'a cross-site clear is refused');
+    const cl = await call(A, 'DELETE', '/meetings/' + meet.id + '/chat');
+    ok(cl.status === 200 && cl.d.removed >= 14, 'clearing deletes the conversation (' + (cl.d && cl.d.removed) + ' messages)');
+    ok((await call(A, 'GET', '/meetings/' + meet.id + '/chat')).d.messages.length === 0, 'a reload shows an empty conversation, not the old one');
+    ok(shotIds.length > 0 && await Upload.count({ where: { id: shotIds } }) === 0, 'its screenshots are deleted too');
+    ok(await Job.count({ where: { tenant_id: op.id } }) === jobsKept, 'jobs already sent to the Factory are not touched');
+    ok(await Audit.count({ where: { tenant_id: op.id, action: 'meeting.chat_cleared', entity_id: meet.id } }) === 1, 'the clear is audited');
+    llm.__setClient(fake);
+    const fresh = await chat(A, meet.id, { message: 'Give me a summary', lang: 'en' });
+    const freshSent = fake.calls[fake.calls.length - 1].args.messages;
+    ok(fresh.done && freshSent.length === 1, 'the next question starts fresh: no old turn is sent to the model');
+
     // Let any background plan finish before its rows are deleted.
     const end = Date.now() + 30000;
     while (Date.now() < end && await Job.count({ where: { tenant_id: op.id, status: ['ANALYZING', 'PLANNING'] } })) await wait(500);

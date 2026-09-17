@@ -25,7 +25,7 @@ const DIR = path.join(__dirname, 'public');
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/json' };
 const MEETING = { id: 5, title: 'Weekly review', created_at: '2026-09-17T15:00:00Z', date_label: 'Thursday, September 17, 2026 at 11:00 AM', transcript: 'We agreed to add a task list.', has_transcript: true };
 
-let store = [], nextId = 100, lastQ = null, factoryPosts = [];
+let store = [], nextId = 100, lastQ = null, factoryPosts = [], deletes = 0;
 const server = http.createServer((req, res) => {
   const url = req.url;
   const json = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
@@ -40,6 +40,7 @@ const server = http.createServer((req, res) => {
           { id: 4, title: 'Kickoff', created_at: '2026-09-10T15:00:00Z', has_transcript: false }], page: 1, total: 2, has_more: false });
       }
       if (/\/meetings\/5\/chat$/.test(url) && req.method === 'GET') return json(200, { messages: store });
+      if (/\/meetings\/5\/chat$/.test(url) && req.method === 'DELETE') { deletes++; const n = store.length; store = []; return json(200, { ok: true, removed: n }); }
       if (/\/meetings\/5$/.test(url)) return json(200, { meeting: MEETING, model: { configured: true } });
       if (/\/meetings\/5\/factory$/.test(url)) {
         factoryPosts.push(b);
@@ -113,6 +114,7 @@ server.listen(0, async () => {
       ok(s.title === 'Weekly review' && /2026/.test(s.date), `${label} the meeting header shows its title and date`);
       ok(!s.rec, `${label} with a meeting open the screen is the header and the chat`);
       ok(s.chips.length === 7 && s.chipsOn === 7 && s.chips.includes('Summary') && s.chips.includes('Build prompt'), `${label} seven starter chips, all usable`);
+      ok(await page.$eval('#clearBtn', b => b.hidden), `${label} Clear is hidden when there is nothing to clear`);
 
       // ── a chip sends; the reply streams ────────────────────────────────────────
       await page.click('.chip');
@@ -185,6 +187,24 @@ server.listen(0, async () => {
         return out;
       });
       ok(bad.length === 0, `${label} no text fails contrast (${bad.join('; ') || 'none'})`);
+
+      // ── Clear: two taps, then the conversation is gone ──────────────────────────
+      ok(!(await page.$eval('#clearBtn', b => b.hidden)), `${label} Clear appears once there is a conversation`);
+      const clearBox = await page.$eval('#clearBtn', b => { const r = b.getBoundingClientRect(); return { w: r.width, h: r.height }; });
+      if (w <= 820) ok(clearBox.h >= 44 && clearBox.w >= 44, `${label} Clear is a 44px touch target (${Math.round(clearBox.w)}x${Math.round(clearBox.h)})`);
+      const before = deletes;
+      await page.click('#clearBtn');
+      await sleep(150);
+      ok(deletes === before && /again/i.test(await page.$eval('#clearBtn', b => b.textContent)), `${label} one tap only arms it — nothing is deleted yet`);
+      await sleep(4300);
+      ok(/^Clear$/.test(await page.$eval('#clearBtn', b => b.textContent)) && deletes === before, `${label} left alone, it disarms itself`);
+      await page.click('#clearBtn'); await sleep(150); await page.click('#clearBtn'); await sleep(500);
+      const afterClear = await page.evaluate(() => ({ n: document.querySelectorAll('.msg').length, hidden: document.getElementById('clearBtn').hidden, note: document.getElementById('thread').textContent }));
+      ok(deletes === before + 1 && afterClear.n === 0 && afterClear.hidden, `${label} a second tap clears it on the server and empties the screen`);
+      await page.reload({ waitUntil: 'networkidle0' }); await sleep(400);
+      ok((await page.evaluate(() => document.querySelectorAll('.msg').length)) === 0, `${label} and it stays cleared after a reload`);
+      // Put a message back for the language check below.
+      await page.type('#msg', 'hello again'); await page.click('#send'); await sleep(2200);
 
       // ── language: the screen relabels, what was said does not change ───────────
       const said = await page.$$eval('.msg .body', els => els.map(e => e.textContent));
