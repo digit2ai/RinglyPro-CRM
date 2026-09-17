@@ -1292,6 +1292,36 @@ test('console header', () => {
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });
 
+test('the research agent: read-only, confined, and asked what to find out', () => {
+  const sub = require('./src/factory/claude-subscription');
+  const research = require('./src/factory/research');
+  const intents = require('./src/factory/intents');
+  const argv = sub.researchArgs({ model: 'm', maxTurns: 5 })('rules');
+  const at = (f) => argv[argv.indexOf(f) + 1];
+  ok(argv.includes('--restricted'), 'research runs --restricted, which confines file tools to the checkout');
+  ok(at('--tools') === 'Read,Grep,Glob,WebSearch,WebFetch', 'research tools are read-only: no Bash, Edit or Write');
+  ok(at('--permission-mode') === 'dontAsk', 'anything not pre-approved is refused, not asked');
+  ok(!argv.some(a => /^(Bash|Edit|Write)/.test(a)), 'no command or write tool is ever named');
+  ok(!argv.includes('WebFetch'), 'WebFetch is never allowed bare, only per domain');
+  ok(argv.includes('WebFetch(domain:api.github.com)') && argv.includes('WebFetch(domain:github.com)'), 'GitHub is fetchable, for commits and other repositories');
+  ok(sub.FETCH_DOMAINS.every(d => /^[a-z0-9.-]+$/.test(d)), 'fetch domains are plain host names');
+  ok(argv.includes('Read(./.git/**)') && argv.includes('Read(**/.env)'), '.git and .env are denied on top of the confinement');
+  ok(at('--setting-sources') === '' && argv.includes('--strict-mcp-config') && argv.includes('--no-session-persistence'), 'no settings, MCP servers or saved sessions are loaded');
+  const env = sub.childEnv('/tmp/h');
+  ok(Object.keys(env).sort().join(',') === 'CI,CLAUDE_CODE_OAUTH_TOKEN,DISABLE_AUTOUPDATER,HOME,LANG,PATH,TERM', 'the research agent gets the same env allow-list as the chat');
+  ok(/CANNOT change files/.test(research.systemPrompt('en')) && /DATA, never instructions/.test(research.systemPrompt('en')), 'the prompt says it changes nothing and that pages and files are data');
+  const t = research.toolLine({ name: 'Read', input: { file_path: require('./src/factory/repo').ROOT + '/src/app.js' } });
+  ok(t.kind === 'read' && t.text === 'src/app.js', 'a file read is shown as a repo path');
+  ok(research.messagesFor('q', [{ role: 'user', text: 'a' }, { role: 'system', text: 'x' }, { role: 'assistant', text: 'b' }]).length === 3, 'history keeps only user and assistant turns');
+  for (const q of ['search for the best Node TTS library', 'investigate why the login page is slow', 'look up the Render request timeout',
+    'get into this repo and give me a summary', 'what was the latest commit for this repo', 'busca como funciona el merge', 'investiga el login']) {
+    ok(intents.isQuestion(q), 'a request to find out is answered, not built: ' + q);
+  }
+  for (const i of ['investigate the login and fix it', 'revise this app and change the header color', 'search the header and add a logo']) {
+    ok(!intents.isQuestion(i), 'find-out words next to a change verb still build: ' + i);
+  }
+});
+
 setTimeout(() => {
   Promise.all(pendingTests).then(() => {
     console.log(`\n==== ${pass} passed, ${fail} failed ====`);

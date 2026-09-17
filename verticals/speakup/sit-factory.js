@@ -23,6 +23,7 @@
 
 require('dotenv').config();
 delete process.env.ANTHROPIC_API_KEY;
+delete process.env.CLAUDE_CODE_OAUTH_TOKEN; // the model calls must be the fake client, never the owner's subscription
 delete process.env.CLAUDE_API_KEY;
 process.env.SPEAKUP_SEED_USERS = 'off';
 process.env.SPEAKUP_FACTORY_POLLER = 'off';

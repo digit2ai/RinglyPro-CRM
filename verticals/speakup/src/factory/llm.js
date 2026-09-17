@@ -38,9 +38,13 @@ function chain(kind) {
   return list.filter((m, i) => m && list.indexOf(m) === i);
 }
 
-function configured() { return !!client; }
+// THE SUBSCRIPTION IS PREFERRED FOR EVERY KIND, NOT ONLY THE CHAT (owner request 2026-09-17).
+// The API account is out of credit, so plans, intel, answers and intent all came back
+// heuristic. Suites that inject a fake client unset CLAUDE_CODE_OAUTH_TOKEN first.
+function useSubscription() { return subscription.available(); }
+function configured() { return !!client || useSubscription(); }
 // The meetings chat can also run on the owner's Claude subscription (claude-subscription.js).
-function chatConfigured() { return subscription.available() || !!client; }
+function chatConfigured() { return useSubscription() || !!client; }
 function activeModel(kind) { return working[kind] || MODELS[kind] || null; }
 function status() { return { configured: !!client, configured_models: MODELS, working: Object.assign({}, working), last_error: Object.assign({}, lastError), subscription: subscription.status() }; }
 
@@ -51,17 +55,25 @@ function isModelRefusal(e) {
   return s === 404 || /not_found|model/i.test(m) && (s === 400 || s === 403 || s === 404);
 }
 
+function parseJSON(raw) {
+  raw = String(raw || '').trim();
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('model returned no JSON object');
+  return JSON.parse(raw.slice(start, end + 1));
+}
+
 async function callJSON(kind, { system, user, max_tokens }) {
+  if (useSubscription()) {
+    const r = await viaSubscription(kind, { system, messages: [{ role: 'user', content: String(user || '') }] });
+    return parseJSON(r.text);
+  }
   if (!client) return null;
   let err = null;
   for (const model of chain(kind)) {
     try {
       const resp = await client.messages.create({ model, max_tokens: max_tokens || 3000, system, messages: [{ role: 'user', content: user }] });
-      const raw = (resp.content || []).map(b => b.text || '').join('').trim();
-      const start = raw.indexOf('{');
-      const end = raw.lastIndexOf('}');
-      if (start < 0 || end <= start) throw new Error('model returned no JSON object');
-      const parsed = JSON.parse(raw.slice(start, end + 1));
+      const parsed = parseJSON((resp.content || []).map(b => b.text || '').join(''));
       if (working[kind] !== model) console.log(`SpeakUp factory: ${kind} is using ${model}`);
       working[kind] = model;
       delete lastError[kind];
@@ -102,7 +114,7 @@ async function viaSubscription(kind, opts, onText) {
 }
 
 async function streamText(kind, { system, context, messages, max_tokens, signal }, onText) {
-  if (kind === 'chat' && subscription.available()) return viaSubscription(kind, { system, context, messages, signal }, onText);
+  if (useSubscription()) return viaSubscription(kind, { system, context, messages, signal }, onText);
   if (!client) return null;
   system = apiSystem(system, context);
   let err = null;
@@ -128,7 +140,7 @@ async function streamText(kind, { system, context, messages, max_tokens, signal 
 }
 
 async function callText(kind, { system, context, messages, max_tokens }) {
-  if (kind === 'chat' && subscription.available()) return viaSubscription(kind, { system, context, messages });
+  if (useSubscription()) return viaSubscription(kind, { system, context, messages });
   if (!client) return null;
   system = apiSystem(system, context);
   let err = null;
@@ -150,4 +162,4 @@ async function callText(kind, { system, context, messages, max_tokens }) {
 // SIT only: swap the client (or null it) without touching the environment.
 function __setClient(c) { client = c; for (const k of Object.keys(working)) delete working[k]; }
 
-module.exports = { MODELS, FALLBACK, configured, chatConfigured, activeModel, status, callJSON, streamText, callText, isModelRefusal, __setClient };
+module.exports = { useSubscription, MODELS, FALLBACK, configured, chatConfigured, activeModel, status, callJSON, streamText, callText, isModelRefusal, __setClient };

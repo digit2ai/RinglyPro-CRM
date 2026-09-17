@@ -37,9 +37,25 @@ const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older chan
 
 let scenario = { jobs: [] };
 let newJobCalls = 0;
+let researchCalls = 0;
 
 const server = http.createServer((req, res) => {
   const p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
+  if (/\/factory\/research/.test(req.url)) {
+    // The live answer: one line per tool, the answer in pieces, then the final text.
+    researchCalls++;
+    res.writeHead(200, { 'Content-Type': 'application/x-ndjson' });
+    const lines = [{ type: 'start' }, { type: 'tool', kind: 'tool', text: 'fetch https://api.github.com/repos/x/y/commits' },
+      { type: 'delta', text: 'The latest commit is ' }, { type: 'delta', text: 'abc123.' }, { type: 'done', text: 'The latest commit is abc123.\nIt fixed Close.' }, { type: 'end' }];
+    let i = 0;
+    const tick = () => { if (i < lines.length) { res.write(JSON.stringify(lines[i++]) + '\n'); setTimeout(tick, 120); } else res.end(); };
+    return tick();
+  }
+  if (req.url.indexOf('/api/') >= 0 && /\/factory\/command/.test(req.url) && scenario.research) {
+    newJobCalls++;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ intent: 'ASK', reply: '', card: { type: 'research' }, client_action: 'research' }));
+  }
   if (req.url.indexOf('/api/') >= 0) {
     let body = {};
     const byId = (id) => (id === 42 ? PLAN : DONE);
@@ -143,6 +159,22 @@ server.listen(0, async () => {
       await new Promise((r) => setTimeout(r, 600));
       s = await state(page);
       ok(!s.idle && s.out, `${w} from idle, sending brings the work area back`);
+      await page.close();
+
+      // ── 6. a question is answered live, like Claude ─────────────────────────
+      page = await open([], width);
+      scenario.research = true; researchCalls = 0;
+      await page.type('#cmd', 'what was the latest commit');
+      await page.click('#send');
+      await new Promise((r) => setTimeout(r, 450));
+      const mid = await page.evaluate(() => document.getElementById('out').textContent);
+      await new Promise((r) => setTimeout(r, 1200));
+      const end = await page.evaluate(() => ({ text: document.getElementById('out').textContent, answers: [...document.querySelectorAll('#out .ln')].filter(l => /ANSWER/.test(l.textContent)).length,
+        ws: getComputedStyle(document.querySelector('#out .say')).whiteSpace }));
+      ok(researchCalls === 1, `${w} a question opens the live research stream`);
+      ok(/TOOL/.test(mid) && /api\.github\.com/.test(mid), `${w} what it is looking at shows while it works`);
+      ok(/It fixed Close\./.test(end.text) && end.answers === 1, `${w} the final answer replaces the streamed text, shown once`);
+      ok(end.ws === 'pre-wrap', `${w} a multi-line answer keeps its lines`);
       await page.close();
     }
   } catch (e) {

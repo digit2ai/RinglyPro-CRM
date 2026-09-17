@@ -148,7 +148,7 @@
   function line(e) {
     var txt = phrase(e);
     if (e.kind === 'banner') return '<div class="banner"><strong>' + esc(txt) + '</strong>' + (e.args && e.args.html ? '<br>' + e.args.html : '') + '</div>';
-    var body = e.kind === 'say' || e.kind === 'you' ? '<span class="say">' + esc(txt) + '</span>'
+    var body = e.kind === 'say' || e.kind === 'you' || e.kind === 'answer' ? '<span class="say">' + esc(txt) + '</span>'
       : (['read', 'edit', 'write'].indexOf(e.kind) >= 0 ? '<span class="path">' + esc(txt) + '</span>' : esc(txt));
     var extra = '';
     var d = e.detail || {};
@@ -357,11 +357,58 @@
       try { sessionStorage.removeItem(DRAFT); } catch (e) {}
       status('');
       if (d.reply) write([{ kind: d.intent === 'WAKE' ? 'ready' : (d.intent === 'ASK' ? 'answer' : 'info'), text: d.reply }]);
+      if (d.client_action === 'research') await research(text);
       if (d.card && d.card.job_id) follow(d.card.job_id);
     } catch (e) {
       status('');
       write([{ kind: 'error', text: e.message }]);
     } finally { $('send').disabled = false; }
+  }
+
+  // ── research: ask anything, answered live ──────────────────────────────────
+  // The server streams one line per file read or search, then the answer as it is written.
+  // `talk` is this session's questions and answers, sent back so a follow-up has context.
+  var talk = [];
+  async function research(text) {
+    var out = $('out');
+    var ans = { kind: 'answer', text: '' }, ansEl = null;
+    function paintAnswer() {
+      var tmp = document.createElement('div'); tmp.innerHTML = line(ans);
+      var n = tmp.firstChild;
+      if (ansEl && ansEl.parentNode === out) out.replaceChild(n, ansEl); else { shown.push(ans); out.appendChild(n); }
+      ansEl = n;
+      out.scrollTop = out.scrollHeight;
+    }
+    status(L('Investigando…', 'Looking into it…'));
+    try {
+      var r = await fetch('/speakup/api/v1/factory/research', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SpeakUp': '1' },
+        body: JSON.stringify({ text: text, lang: lang, history: talk.slice(-8) }) });
+      if (r.status === 401) { location.href = '/speakup/login'; return; }
+      if (!r.ok || !r.body) { var j = await r.json().catch(function () { return {}; }); throw new Error(j.error || ('HTTP ' + r.status)); }
+      var reader = r.body.getReader(), dec = new TextDecoder(), buf = '', final = null;
+      for (;;) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buf += dec.decode(chunk.value, { stream: true });
+        var nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          var raw = buf.slice(0, nl); buf = buf.slice(nl + 1);
+          if (!raw.trim()) continue;
+          var ev; try { ev = JSON.parse(raw); } catch (x) { continue; }
+          if (ev.type === 'tool') { ansEl = null; write([{ kind: ev.kind || 'tool', text: ev.text }]); if (ans.text) { ans = { kind: 'answer', text: '' }; } }
+          else if (ev.type === 'delta') { ans.text += ev.text; paintAnswer(); }
+          else if (ev.type === 'done') { final = ev.text || ans.text; }
+          else if (ev.type === 'error') { write([{ kind: 'error', text: ev.error }]); }
+        }
+      }
+      if (final) {
+        // The streamed text includes "let me look…" asides between tool calls; the final answer replaces the last one.
+        ans.text = final; paintAnswer();
+        talk.push({ role: 'user', text: text }, { role: 'assistant', text: final });
+      }
+    } catch (e) {
+      write([{ kind: 'error', text: e.message }]);
+    } finally { status(''); }
   }
 
   // ── the plan, and the one word that runs it ────────────────────────────────

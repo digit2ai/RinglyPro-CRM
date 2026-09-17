@@ -99,7 +99,7 @@ function toUserContent({ context, messages }) {
  * Run one turn. onText (optional) receives text as it streams. Resolves { model, text };
  * rejects with an Error whose message says what went wrong ("Not logged in", a usage limit…).
  */
-function run({ system, context, messages, model, signal, onText, timeoutMs }) {
+function run({ system, context, messages, model, signal, onText, timeoutMs, argv, cwd, onTool }) {
   return new Promise((resolve, reject) => {
     const bin = findBin();
     if (!bin || !token()) return reject(new Error('Claude subscription not configured on the server'));
@@ -108,7 +108,7 @@ function run({ system, context, messages, model, signal, onText, timeoutMs }) {
     // Rules must fit in one argument; if they somehow do not, they move into the message.
     if (Buffer.byteLength(rules) > MAX_ARG) { ctx = rules + '\n\n' + ctx; rules = 'Follow the role and rules given at the start of the user message.'; }
     const dirs = workdirs();
-    const child = spawn(bin, args({ system: rules, model }), { cwd: dirs.cwd, env: childEnv(dirs.home), stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(bin, argv ? argv(rules) : args({ system: rules, model }), { cwd: cwd || dirs.cwd, env: childEnv(dirs.home), stdio: ['pipe', 'pipe', 'pipe'] });
     let buf = '', streamed = '', assistantText = '', result = null, stderr = '', settled = false;
     const done = (err, val) => {
       if (settled) return; settled = true;
@@ -132,6 +132,7 @@ function run({ system, context, messages, model, signal, onText, timeoutMs }) {
           if (onText) onText(ev.event.delta.text);
         } else if (ev.type === 'assistant' && ev.message && Array.isArray(ev.message.content)) {
           assistantText += ev.message.content.filter(b => b.type === 'text').map(b => b.text).join('');
+          if (onTool) for (const b of ev.message.content) if (b.type === 'tool_use') { try { onTool({ name: b.name, input: b.input || {} }); } catch (e) {} }
         } else if (ev.type === 'result') {
           result = ev;
         }
@@ -181,4 +182,42 @@ function probe() {
   });
 }
 
-module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe };
+/* THE RESEARCH AGENT: Claude that can LOOK, never touch (owner request 2026-09-17).
+ *
+ * The Factory answered questions from keyword-matched excerpts through an API account with no
+ * credit, so "investigate X", "summarize this repo" or "what was the latest commit" got
+ * nothing useful. This runs the same pinned CLI with READ-ONLY tools over the deployed checkout
+ * plus web search. It runs on the production server, so the locks are the design:
+ *   - --restricted: no Bash or any code-running tool, and the file tools are CONFINED to the
+ *     working directory. Verified against the real CLI: reading /etc/hosts is refused with
+ *     "outside ... --restricted confines the file tools to the working directory". That is what
+ *     keeps /proc/<pid>/environ — every secret on Render — out of reach.
+ *   - --tools names only Read, Grep, Glob, WebSearch, WebFetch. No Edit, no Write.
+ *   - --permission-mode dontAsk: anything not pre-approved is refused, not asked. WebFetch is
+ *     pre-approved only for FETCH_DOMAINS, large platforms where a stranger cannot read the
+ *     request logs, so a prompt-injected page cannot send what it read to its own server.
+ *     Verified: example.com was refused, github.com was allowed.
+ *   - .git and .env files are denied on top of the confinement.
+ *   - the environment is the same allow-list as the chat: no database URL, no secrets.
+ */
+const FETCH_DOMAINS = ['github.com', 'api.github.com', 'raw.githubusercontent.com', 'docs.anthropic.com', 'docs.claude.com',
+  'developer.mozilla.org', 'nodejs.org', 'www.npmjs.com', 'expressjs.com', 'render.com', 'stackoverflow.com'];
+const RESEARCH_DENY = ['Read(./.git/**)', 'Read(**/.env)', 'Read(**/.env.*)'];
+
+function researchArgs({ model, maxTurns }) {
+  return (rules) => ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--include-partial-messages', '--verbose',
+    '--restricted', '--tools', 'Read,Grep,Glob,WebSearch,WebFetch', '--permission-mode', 'dontAsk',
+    '--allowedTools', 'Read', 'Grep', 'Glob', 'WebSearch', ...FETCH_DOMAINS.map(d => 'WebFetch(domain:' + d + ')'),
+    '--disallowedTools', ...RESEARCH_DENY,
+    '--setting-sources', '', '--strict-mcp-config', '--no-session-persistence',
+    '--max-turns', String(maxTurns || 30), '--model', model, '--system-prompt', rules];
+}
+
+function research({ system, messages, model, cwd, signal, onText, onTool, timeoutMs, maxTurns }) {
+  if (!cwd || !fs.existsSync(cwd)) return Promise.reject(new Error('research working directory missing'));
+  return run({ system, context: '', messages, model, signal, onText, onTool, cwd,
+    timeoutMs: timeoutMs || parseInt(process.env.SPEAKUP_RESEARCH_TIMEOUT_MS, 10) || 300000,
+    argv: researchArgs({ model, maxTurns }) });
+}
+
+module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe, research, researchArgs, FETCH_DOMAINS };

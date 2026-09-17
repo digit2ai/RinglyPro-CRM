@@ -25,6 +25,7 @@ const prepare = require('../factory/prepare');
 const { buildBrief } = require('../factory/brief');
 const github = require('../factory/github');
 const llm = require('../factory/llm');
+const research = require('../factory/research');
 
 function tenantOf(req) { return (req.user && req.user.tenant_id) || (req.user && req.user.id) || 0; }
 function lang(req) { return (req.body && req.body.lang) === 'en' || req.query.lang === 'en' ? 'en' : 'es'; }
@@ -168,6 +169,38 @@ router.post('/command', mutation, wrap(async (req, res) => {
     upload_ids: Array.isArray(b.upload_ids) ? b.upload_ids.slice(0, 6) : [], req });
   if (out.status !== 200) return res.status(out.status).json(out);
   res.json(out);
+}));
+
+// ── Research: ask anything, answered live by the read-only agent ─────────────
+// NDJSON: {type:'tool', kind, text} per file read or search, {type:'delta', text} as the answer
+// arrives, then {type:'done', text} or {type:'error'}, then {type:'end'}. A ping every 15 s keeps
+// Cloudflare's idle limit away while a tool runs. Closing the tab kills the agent.
+router.post('/research', mutation, operator, wrap(async (req, res) => {
+  const b = req.body || {};
+  const text = String(b.text || '').trim().slice(0, 8000);
+  if (!text) return res.status(400).json({ error: 'text required' });
+  if (!research.available()) return res.status(503).json({ error: 'The Claude subscription is not set up on the server (CLAUDE_CODE_OAUTH_TOKEN).' });
+  if (!security.rateLimit('research', String(req.user.id), 30, 10 * 60 * 1000)) return res.status(429).json({ error: 'Too many questions. Wait a few minutes.' });
+  const lang = b.lang === 'en' ? 'en' : 'es';
+  await audit.record({ tenant_id: tenantOf(req), user_id: req.user.id, actor: req.user.email, action: 'factory.research', entity: 'command', detail: { chars: text.length }, req });
+  res.set({ 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no' });
+  res.flushHeaders && res.flushHeaders();
+  const send = (obj) => { try { res.write(JSON.stringify(obj) + '\n'); } catch (e) {} };
+  send({ type: 'start' });
+  const ping = setInterval(() => send({ type: 'ping' }), 15000);
+  const abort = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) abort.abort(); });
+  try {
+    const r = await research.ask({ text, history: b.history, lang, signal: abort.signal,
+      onText: (t) => send({ type: 'delta', text: t }), onTool: (l) => send(Object.assign({ type: 'tool' }, l)) });
+    send({ type: 'done', text: r.text });
+  } catch (e) {
+    if (!abort.signal.aborted) send({ type: 'error', error: String(e.message || e).slice(0, 400) });
+  } finally {
+    clearInterval(ping);
+    send({ type: 'end' });
+    res.end();
+  }
 }));
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ const prepare = require('./prepare');
 const llm = require('./llm');
 const audit = require('./audit');
 const aiEditor = require('../services/ai-editor');
+const research = require('./research');
 
 const WAKE = /^(hey |hola |ok )?(ringly ?pro )?(architect|arquitecto|arquitecta)[\s,.:;!-]*/;
 // "/ringlypro-architect" pasted from another tool is a prefix, not part of the request.
@@ -154,6 +155,7 @@ const handlers = {
   async ARCHITECT_REVIEW(ctx) {
     const sel = context.parseSelector(ctx.text);
     const refersToConversation = sel.ids.length || sel.latest || sel.range || sel.person || (ctx.recording_ids || []).length;
+    if (!refersToConversation && research.available()) return { reply: '', card: { type: 'research' }, client_action: 'research' };
     let subjectTexts = [ctx.text];
     let ctxRes = null;
     if (refersToConversation) {
@@ -184,6 +186,9 @@ const handlers = {
   // opens no job, writes no file. Without this the console turned "how does X work?"
   // into a code change, because Architect mode sends everything to PREPARE.
   async ASK(ctx) {
+    // With the subscription, a question goes to the read-only research agent, streamed to the
+    // console by POST /factory/research; this reply only tells the console to open that stream.
+    if (research.available()) return { reply: '', card: { type: 'research' }, client_action: 'research' };
     const project = ctx.project;
     const candidates = repo.candidateFiles(project ? project.path_scope : [], repo.terms([ctx.text]), 8);
     const answer = await askProse(ctx, project, candidates);
@@ -483,6 +488,10 @@ const INFO_ASK = /^(?:give me|dame|pasame|p[aá]same)\s+(?:a |an |the |un |una |
 // change. Without this the base-form rule read it as a state question, because the only
 // verb in it is a past participle — the same shape as "is it deployed", which is not.
 const PASSIVE_REQUEST = new RegExp('\\b(?:can|could|should|would|shall|puede|podr[ií]a|deber[ií]a)\\b[^?]*\\bbe\\s+\\w+(?:ed|d|n)\\b');
+// "Search for…", "investigate…", "look up…", "what's the latest commit" carry no question mark
+// and no change verb; they are requests to FIND OUT, answered by the read-only research agent.
+// Checked only after the change-verb test, so "investigate the login and fix it" still builds.
+const RESEARCH_CUE = /^(?:(?:please|por favor)\s+)?(?:search|look up|lookup|look into|find out|find|research|investigate|check|review|analy[sz]e|compare|audit|inspect|get into|go into|read|busca|buscar|investiga|investigar|revisa|revisar|analiza|analizar|compara|averigua|consulta|lee|entra)\b/;
 function isQuestion(text) {
   const s = String(text || '').trim();
   if (!s || /^\s*\//.test(s)) return false;
@@ -490,6 +499,7 @@ function isQuestion(text) {
   if (INFO_CUE.test(lowered) || INFO_ASK.test(lowered)) return true;
   if (PASSIVE_REQUEST.test(lowered)) return false;
   if (CHANGE_VERB.test(strip(lowered))) return false;
+  if (RESEARCH_CUE.test(lowered)) return true;
   return /\?\s*$/.test(s) || QUESTION_WORD.test(lowered);
 }
 
@@ -514,13 +524,16 @@ function classifyRulesAmong(text, allowed) {
 async function classify(text, mode) {
   if (mode === 'note') return { intent: 'CAPTURE_NOTE', by: 'mode' };
   const question = mode === 'architect' && isQuestion(text);
-  if (question) return { intent: classifyRulesAmong(text, QUESTION_INTENTS) || 'ASK', by: 'rules' };
+  // SEARCH_MEMORY searches recorded meetings; "search for a TTS library" is not about them.
+  const memoryWord = /\b(meeting|meetings|reunion|reunión|reuniones|recording|grabaci[oó]n|note|notes|nota|notas|conversation|conversaci[oó]n|call|llamada)\b/i.test(text);
+  const notMemory = (it) => (it === 'SEARCH_MEMORY' && !memoryWord) ? null : it;
+  if (question) return { intent: notMemory(classifyRulesAmong(text, QUESTION_INTENTS)) || 'ASK', by: 'rules' };
   // An instruction that merely MENTIONS a command word is still an instruction. "Add a
   // summary line to the header" matched the SUMMARIZE rule and went looking for a meeting
   // to summarise instead of building anything.
   if (mode === 'architect' && isInstruction(text)) return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
   if (mode === 'architect' && isPastedPrompt(text)) return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
-  const rule = classifyRules(text);
+  const rule = mode === 'architect' ? notMemory(classifyRules(text)) : classifyRules(text);
   if (rule) return { intent: rule, by: 'rules' };
   if (mode === 'architect') return { intent: 'PREPARE_IMPLEMENTATION', by: 'mode', architectRequest: true };
   if (llm.configured()) {
@@ -619,4 +632,4 @@ async function run(input) {
     card, client_action: result.client_action || null };
 }
 
-module.exports = { INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isInstruction, isWakeOnly, firstLine };
+module.exports = { RESEARCH_CUE, INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isInstruction, isWakeOnly, firstLine };
