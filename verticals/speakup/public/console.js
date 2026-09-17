@@ -47,6 +47,43 @@
    * written, with no sign that work was in flight. Now it hands its place to a moving bar and
    * comes back the moment the box is usable again — which includes a plan waiting for a word,
    * because "approved" and a correction are typed into the same box. */
+  /* A LIVE WORD AND A CLOCK, SO NOBODY THINKS IT HUNG (owner request 2026-09-17). A bar that
+   * only slides could be a stuck animation; a word that changes every few seconds and a
+   * counting clock say a machine is still on the other end — and keep the owner from closing
+   * the tab or typing over the top of a running job. */
+  var WORK_WORDS = {
+    es: ['Pensando', 'Cavilando', 'Rumiando', 'Tramando', 'Hilando', 'Forjando', 'Puliendo', 'Destilando', 'Conjurando',
+      'Tejiendo', 'Cocinando', 'Afinando', 'Desenredando', 'Calibrando', 'Componiendo', 'Bosquejando', 'Sintetizando',
+      'Deduciendo', 'Encantando', 'Meditando', 'Macerando', 'Trasteando', 'Barajando', 'Ensamblando', 'Limando'],
+    en: ['Thinking', 'Pondering', 'Musing', 'Noodling', 'Percolating', 'Simmering', 'Ruminating', 'Brewing', 'Conjuring',
+      'Weaving', 'Forging', 'Smoothing', 'Polishing', 'Shimmying', 'Channeling', 'Inferring', 'Synthesizing', 'Divining',
+      'Tinkering', 'Wrangling', 'Puzzling', 'Sketching', 'Composing', 'Assembling', 'Calibrating', 'Distilling',
+      'Untangling', 'Finessing', 'Marinating', 'Enchanting']
+  };
+  var workTimer = null, workStart = 0, workWord = '';
+  function pickWord() {
+    var list = WORK_WORDS[lang === 'en' ? 'en' : 'es'];
+    var w = list[Math.floor(Math.random() * list.length)];
+    if (w === workWord) w = list[(list.indexOf(w) + 1) % list.length];
+    workWord = w;
+  }
+  function paintWork() {
+    var el = $('workw'); if (!el) return;
+    if (!workingNow) { el.textContent = ''; return; }
+    var secs = Math.max(0, Math.round((Date.now() - workStart) / 1000));
+    el.textContent = workWord + '… ' + (secs < 60 ? secs + 's' : Math.floor(secs / 60) + 'm ' + (secs % 60) + 's');
+  }
+  function startWork() {
+    workStart = Date.now(); pickWord(); paintWork();
+    clearInterval(workTimer);
+    var n = 0;
+    workTimer = setInterval(function () { n++; if (n % 4 === 0) pickWord(); paintWork(); }, 1000);
+  }
+  function stopWork() { clearInterval(workTimer); workTimer = null; paintWork(); }
+  // A running job is work already paid for: a closed tab does not stop it, but the owner
+  // should be asked rather than losing sight of it by accident.
+  window.addEventListener('beforeunload', function (e) { if (workingNow) { e.preventDefault(); e.returnValue = ''; } });
+
   var workingNow = false;
   function setWorking(on) {
     workingNow = !!on;
@@ -55,6 +92,7 @@
     s.hidden = workingNow; s.disabled = workingNow;
     p.hidden = !workingNow;
     p.setAttribute('aria-label', L('Trabajando…', 'Working…'));
+    if (workingNow) { if (!workTimer) startWork(); } else stopWork();
   }
 
   // ── the top pane ───────────────────────────────────────────────────────────

@@ -25,6 +25,9 @@
   #plan .pflow li{margin:0 0 7px;font-size:15px;line-height:1.45}
   #plan details.more{margin-top:6px}
   #plan details.more>summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0;min-height:32px}
+  .workw{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .workw:empty{display:none}
+  .workw+.prog{margin-left:10px}
   .prog{margin-left:auto;width:120px;height:8px;border-radius:999px;background:var(--raised);border:1px solid var(--line-strong);overflow:hidden}
   .prog span{display:block;width:40%;height:100%;background:var(--accent-solid);border-radius:999px;animation:slide 1.15s ease-in-out infinite}
   @keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
@@ -80,6 +83,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
       </button>
       <span class="stat" id="stat"></span>
+      <span class="workw" id="workw" aria-hidden="true"></span>
       <div class="prog" id="prog" role="status" aria-live="polite" hidden><span></span></div>
       <button class="icon send" id="send" aria-label="Enviar" title="Enviar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
@@ -88,7 +92,7 @@
   </div>
 </footer>
 
-<script src="/speakup/console.js?v=14"></script>
+<script src="/speakup/console.js?v=15"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

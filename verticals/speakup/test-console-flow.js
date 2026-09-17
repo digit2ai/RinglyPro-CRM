@@ -182,6 +182,20 @@ server.listen(0, async () => {
       ok(!sw.sendOn && sw.prog, `${w} while the job is planning: the send button is gone and a progress bar shows`);
       ok(await page.evaluate(() => { const r = document.getElementById('prog').getBoundingClientRect(); return r.width > 40 && r.height > 4; }),
         `${w} the progress bar is actually visible`);
+      // A LIVE WORD AND A CLOCK: a bar alone could be a stuck animation.
+      const w1 = await page.evaluate(() => document.getElementById('workw').textContent);
+      ok(/\w+…\s+\d+s/.test(w1), `${w} a word and a clock say work is in flight: "${w1}"`);
+      await new Promise((r) => setTimeout(r, 5200));
+      const w2 = await page.evaluate(() => document.getElementById('workw').textContent);
+      const secs = (t) => parseInt((t.match(/(\d+)s/) || [0, 0])[1], 10);
+      ok(secs(w2) > secs(w1), `${w} the clock counts up (${w1} -> ${w2})`);
+      ok(w2.split('…')[0] !== w1.split('…')[0], `${w} the word changes while it works`);
+      ok(await page.evaluate(() => typeof window.onbeforeunload === 'function' || !!window.__hasUnloadGuard ||
+        (window.dispatchEvent(Object.assign(new Event('beforeunload', { cancelable: true }), {})) === false)),
+        `${w} closing the tab while a job runs asks first`);
+      await page.close();
+      page = await open([{ id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev' }], width);
+      ok((await page.evaluate(() => document.getElementById('workw').textContent)) === '', `${w} with nothing running there is no word`);
       await page.close();
 
       // ── 6. a question is answered live, like Claude ─────────────────────────
