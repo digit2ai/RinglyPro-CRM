@@ -1386,6 +1386,28 @@ test('the plan leads with a short numbered workflow', () => {
   ok(/details class="more"/.test(src) && /ol class="pflow"/.test(src), 'the card renders the workflow and folds the rest away');
 });
 
+test('memory: the house rules and the last few instructions travel with every plan', () => {
+  const memory = require('./src/factory/memory');
+  const prepare = require('./src/factory/prepare');
+  ok(/never create a new page/i.test(memory.DEFAULT_RULES), 'the default rules answer the mistake that prompted them');
+  ok(memory.DEFAULT_RULES.length < memory.RULES_MAX, 'the default rules fit the cap');
+  // One line per instruction: what was asked, what the plan decided, how it ended.
+  const l = memory.line({ transcript: 'add a one line comment to the sandbox', intent: 'PREPARE_IMPLEMENTATION', job_id: 9 },
+    { title: 'Add a comment', status: 'DEPLOYED', plan: { workflow: ['Read the page', 'Add the comment'] }, revisions: [{ text: 'no new page' }], changed_files: ['public/sandbox/index.html'] });
+  ok(/you asked: "add a one line comment/.test(l) && /ended DEPLOYED/.test(l) && /you corrected it: "no new page"/.test(l),
+    'a remembered line carries the request, the correction and the outcome');
+  ok(l.indexOf('\n') < 0, 'one instruction is one line');
+  const ask = memory.line({ transcript: 'what was the latest commit', intent: 'ASK' }, null);
+  ok(/nothing was built/.test(ask), 'a question is remembered as a question');
+  ok(memory.line({ transcript: '   ' }, null) === '', 'an empty instruction is not remembered');
+  // The prompt actually carries it, and the memory never replaces the instruction.
+  const src = fs.readFileSync(path.join(__dirname, 'src/factory/prepare.js'), 'utf8');
+  ok(/memory\.contextBlock\(job\.tenant_id/.test(src) && /planPrompt\(spec, project, candidates, corrections, remembered\)/.test(src),
+    'every plan is written with the house rules and the recent work in front of it');
+  ok(/catch \(e\) \{ console\.error\('SpeakUp memory unavailable/.test(src), 'a memory failure never stops a plan being made');
+  ok(memory.THREAD_MAX <= 4000, 'the remembered work is capped, so a long history costs no more than a short one');
+});
+
 test('the research agent: read-only, confined, and asked what to find out', () => {
   const sub = require('./src/factory/claude-subscription');
   const research = require('./src/factory/research');

@@ -51,8 +51,9 @@ function messagesFor(text, history) {
   return prior.concat([{ role: 'user', content: String(text).slice(0, 8000) }]);
 }
 
-function ask({ text, history, lang, signal, onText, onTool }) {
-  return subscription.research({ system: systemPrompt(lang), messages: messagesFor(text, history), model: MODEL(), cwd: repo.ROOT,
+function ask({ text, history, lang, remembered, signal, onText, onTool }) {
+  const system = systemPrompt(lang) + (remembered ? '\n\n' + remembered : '');
+  return subscription.research({ system, messages: messagesFor(text, history), model: MODEL(), cwd: repo.ROOT,
     signal, onText, onTool: onTool ? (t) => onTool(toolLine(t)) : null });
 }
 

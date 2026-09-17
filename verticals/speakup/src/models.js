@@ -217,6 +217,20 @@ const Command = sequelize.define('SpeakCommand', {
     { name: 'su_commands_tenant_created_idx', fields: ['tenant_id', 'created_at'] }]
 });
 
+// ─── su_settings ──────────────────────────────────────────────────────────────
+// Owner-level text the factory reads on EVERY instruction: the house rules. One row per
+// tenant per key, so adding a second setting later is a row, not a migration.
+const Setting = sequelize.define('SpeakSetting', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  key: { type: DataTypes.STRING(60), allowNull: false },
+  value: { type: DataTypes.TEXT, defaultValue: '' },
+  updated_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'su_settings', timestamps: false,
+  indexes: [{ name: 'su_settings_tenant_key_idx', unique: true, fields: ['tenant_id', 'key'] }]
+});
+
 // ─── su_jobs ──────────────────────────────────────────────────────────────────
 // A persistent engineering job. Never depends on an open browser.
 const Job = sequelize.define('SpeakJob', {
@@ -367,4 +381,4 @@ Recording.hasMany(Document, { foreignKey: 'recording_id' });
 Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
-  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat };
+  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat, Setting };

@@ -369,6 +369,29 @@ const server = app.listen(0, async () => {
     ok(auto3.status === 'READY_FOR_REVIEW', 'SPEAKUP_AUTO_MERGE=off stops the automatic merge');
     delete process.env.SPEAKUP_AUTO_MERGE;
 
+    // ── Memory: house rules and what came before ──────────────────────────────
+    // A follow-up used to read as a brand new request, because nothing from the last
+    // instruction reached the planner. These are per owner and never cross tenants.
+    const memory = require('./src/factory/memory');
+    const r0 = await call(A, 'GET', '/factory/rules');
+    ok(r0.status === 200 && r0.d.is_default === true && /never create a new page/i.test(r0.d.rules), 'a new owner starts with sane default house rules');
+    const saved = await call(A, 'PUT', '/factory/rules', { rules: 'Always show me the visible result.\nNever touch the meetings screen.' });
+    ok(saved.status === 200 && /visible result/.test(saved.d.rules), 'the owner can write their own rules');
+    const readBack = await call(A, 'GET', '/factory/rules');
+    ok(readBack.d.is_default === false && /Never touch the meetings screen/.test(readBack.d.rules), 'and they are kept');
+    const otherOwner = await call(B, 'GET', '/factory/rules');
+    ok(otherOwner.d.is_default === true && !/meetings screen/.test(otherOwner.d.rules), 'another owner never sees them');
+    ok((await call(M, 'GET', '/factory/rules')).status === 403, 'a member cannot read the factory rules');
+    ok((await call(M, 'PUT', '/factory/rules', { rules: 'do anything' })).status === 403, 'nor write them');
+    const long = await call(A, 'PUT', '/factory/rules', { rules: 'x'.repeat(memory.RULES_MAX + 500) });
+    ok(long.d.rules.length === memory.RULES_MAX, 'the rules are capped, so they can never crowd out the instruction');
+    await call(A, 'PUT', '/factory/rules', { rules: 'Always show me the visible result.' });
+    const mem = await call(A, 'GET', '/factory/memory');
+    ok(mem.status === 200 && /you asked: "/.test(mem.d.recent_work), 'the owner can see what it remembers, rather than trust it');
+    ok(mem.d.recent_work.length <= memory.THREAD_MAX, 'and it is capped');
+    const memB = await call(B, 'GET', '/factory/memory');
+    ok(!/Change a label on the SpeakUp console header/.test(memB.d.recent_work || ''), 'one owner never remembers another owner\'s work');
+
     // ── Failure paths never disappear ─────────────────────────────────────────
     async function readyJob(title) {
       const r = await call(A, 'POST', '/recordings', { title, source: 'call', lang: 'es', text: 'Queda aprobado: el recordatorio de citas debe enviarse un día antes. ' + title });

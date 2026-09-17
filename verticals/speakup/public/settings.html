@@ -50,9 +50,18 @@
     <div class="row"><span class="k" id="kModel">Modelo de IA</span><span class="v" id="vModel">…</span></div>
     <div class="row"><span class="k" id="kOut">Sesión</span><button class="btn small" id="signOut">Salir</button></div>
   </section>
+
+  <!-- The house rules: read before every instruction, so they do not have to be repeated. -->
+  <section class="card" id="rulesCard" hidden>
+    <h2 id="rTitle">Reglas de la casa</h2>
+    <p class="tiny" id="rNote">La fábrica las lee antes de cada instrucción.</p>
+    <textarea class="edit" id="rules" spellcheck="false" rows="7"></textarea>
+    <div class="acts"><button class="btn small primary" id="saveRules">Guardar</button>
+      <button class="btn small" id="resetRules">Restaurar</button><span class="stat" id="rStat"></span></div>
+  </section>
 </main>
 
-<script src="/speakup/settings.js?v=2"></script>
+<script src="/speakup/settings.js?v=3"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

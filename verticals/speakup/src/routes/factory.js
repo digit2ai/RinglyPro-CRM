@@ -26,6 +26,7 @@ const { buildBrief } = require('../factory/brief');
 const github = require('../factory/github');
 const llm = require('../factory/llm');
 const research = require('../factory/research');
+const memory = require('../factory/memory');
 
 function tenantOf(req) { return (req.user && req.user.tenant_id) || (req.user && req.user.id) || 0; }
 function lang(req) { return (req.body && req.body.lang) === 'en' || req.query.lang === 'en' ? 'en' : 'es'; }
@@ -191,7 +192,9 @@ router.post('/research', mutation, operator, wrap(async (req, res) => {
   const abort = new AbortController();
   res.on('close', () => { if (!res.writableEnded) abort.abort(); });
   try {
-    const r = await research.ask({ text, history: b.history, lang, signal: abort.signal,
+    let remembered = '';
+    try { remembered = await memory.contextBlock(tenantOf(req), {}); } catch (e) {}
+    const r = await research.ask({ text, history: b.history, lang, remembered, signal: abort.signal,
       onText: (t) => send({ type: 'delta', text: t }), onTool: (l) => send(Object.assign({ type: 'tool' }, l)) });
     send({ type: 'done', text: r.text });
   } catch (e) {
@@ -201,6 +204,21 @@ router.post('/research', mutation, operator, wrap(async (req, res) => {
     send({ type: 'end' });
     res.end();
   }
+}));
+
+// ── House rules: what the factory reads before every instruction ─────────────
+router.get('/rules', operator, wrap(async (req, res) => {
+  const r = await memory.rules(tenantOf(req));
+  res.json({ rules: r.text, is_default: r.is_default, max: memory.RULES_MAX, default_rules: memory.DEFAULT_RULES });
+}));
+router.put('/rules', mutation, operator, wrap(async (req, res) => {
+  const r = await memory.setRules(tenantOf(req), (req.body || {}).rules);
+  await audit.record({ tenant_id: tenantOf(req), user_id: req.user.id, actor: req.user.email, action: 'factory.rules_saved', entity: 'settings', detail: { chars: r.text.length }, req });
+  res.json({ rules: r.text, is_default: false });
+}));
+// What it remembers right now, so the owner can see it rather than trust it.
+router.get('/memory', operator, wrap(async (req, res) => {
+  res.json({ recent_work: await memory.recentWork(tenantOf(req), {}), rules: (await memory.rules(tenantOf(req))).text });
 }));
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────

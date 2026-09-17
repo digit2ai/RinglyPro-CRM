@@ -169,3 +169,12 @@ CREATE INDEX IF NOT EXISTS su_uploads_job_idx ON su_uploads(job_id);
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]';
 
 ALTER TABLE su_jobs ADD COLUMN IF NOT EXISTS baseline_ok BOOLEAN;
+
+CREATE TABLE IF NOT EXISTS su_settings (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  key VARCHAR(60) NOT NULL,
+  value TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS su_settings_tenant_key_idx ON su_settings (tenant_id, key);
