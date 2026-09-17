@@ -34,7 +34,9 @@
   @media (prefers-reduced-motion: reduce){ .prog span{animation:none;width:100%;opacity:.55} }
   /* No empty page: with nothing in progress the step bar and the work pane are not drawn.
      console.js adds .idle only when there is no job; any job, event or plan removes it. */
-  body.idle #bar, body.idle #out{display:none}
+  body.idle #bar, body.idle #out, body.idle #acts{display:none}
+  #acts{justify-content:flex-end;gap:8px;margin:0 0 9px}
+  #acts:empty{display:none}
   /* The workspace picker: the same chip as the other header controls. */
   /* Its own class, not `.lnk`: the menu's five entries are counted, and a picker is not one
      of them. Styled like a chip, and a real 44px target on a phone. */
@@ -86,6 +88,7 @@
 </header>
 
 <main>
+  <div class="bar acts" id="acts"></div>
   <section class="card" id="plan" aria-live="polite"></section>
   <div id="out" class="ink"></div>
 </main>
@@ -114,7 +117,7 @@
      top of the work area. One element, two places — never two copies to drift apart. -->
 <div class="bar" id="bar"></div>
 
-<script src="/speakup/console.js?v=18"></script>
+<script src="/speakup/console.js?v=19"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>

@@ -444,14 +444,14 @@ test('there is no empty page, and Clear cannot strand a live plan', () => {
      'clearPane refuses a job that is still in progress');
   ok((con.match(/clearPane\(true\)/g) || []).length === 1 && /clearPane\(true\);\s*\n\s*status\(L\('Proyecto/.test(con),
      'the only forced clear is the project switch');
-  ok(/if \(job && job\.terminal\) html \+= '<button class="lnk" id="clearBtn">'/.test(con),
+  ok(/if \(job && job\.terminal\) acts \+= '<button class="lnk" id="clearBtn">'/.test(con),
      'Clear is drawn only for a finished job');
   ok(/if \(\$\('clearBtn'\)\) \$\('clearBtn'\)\.addEventListener/.test(con),
      'wiring Clear tolerates it being absent, which is now the common case');
   // The empty page itself is gone rather than restyled.
   ok(!/idleHint|t: 'idle'/.test(con), 'the INFO paragraph and its message are gone');
   ok(/function showIdle\(\)/.test(con) && /function leaveIdle\(\)/.test(con), 'an idle state replaces it');
-  ok(/body\.idle #bar, body\.idle #out\{display:none\}/.test(html), 'idle draws no step bar and no work pane');
+  ok(/body\.idle #bar, body\.idle #out, body\.idle #acts\{display:none\}/.test(html), 'idle draws no step bar, no actions and no work pane');
   // Every door INTO work must leave idle, or a job would render into a hidden pane.
   const writeFn = con.slice(con.indexOf('function write('), con.indexOf('function write(') + 200);
   ok(/leaveIdle\(\)/.test(writeFn), 'writing to the pane leaves idle');
@@ -1073,10 +1073,13 @@ test('the screen speaks plain words, not GitHub vocabulary', () => {
   ok(/'Saving the change'/.test(con) && /'Proposing the change'/.test(con), 'the pane says what happened, not how');
   // The link still opens a page GitHub calls a pull request, so the real word survives
   // where it is true — in the tooltip — rather than being scrubbed everywhere.
-  ok(/L\('Pull request #', 'Pull request #'\)/.test(con) && /L\('en GitHub', 'on GitHub'\)/.test(con),
-    'the link keeps the real word, and the number, in its tooltip');
-  ok(/var label = name \? String\(name\)/.test(con), 'and the chip itself reads as the name of the change');
-  ok(/L\('Cambio #', 'Change #'\)/.test(con), 'and reads plainly on the chip');
+  // The chip says where it goes; the change's own name and its number live in the tooltip,
+  // where they are true and take no room on a phone.
+  ok(/'">GitHub<\/a>'/.test(con) && /L\('pull request #', 'pull request #'\)/.test(con),
+    'the link reads GitHub and keeps the real word and number in its tooltip');
+  ok(/L\('C[oó]digo', 'Code'\)/.test(con), 'the diff button reads Code');
+  ok(/\$\('acts'\)\.innerHTML = acts;/.test(con) && /\$\('bar'\)\.innerHTML = html;/.test(con),
+    'the actions and the steps are drawn into two different rows');
   // "Cambio #5" beside a button labelled "Cambios" was two different things one letter apart.
   ok(!/L\('Cambios', 'Changes'\)/.test(con), 'the diff button no longer collides with the change link');
 });

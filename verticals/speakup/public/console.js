@@ -285,21 +285,24 @@
       return '<span class="step ' + c + '">' + L(s.es, s.en) + '</span>';
     }).join('');
     if (failed) html += '<span class="step fail">' + esc(job.status) + '</span>';
-    html += '<span class="right">';
+    $('bar').innerHTML = html;
+    /* THE ACTIONS SIT AT THE TOP, THE STEPS AT THE BOTTOM (owner request 2026-09-17). They used
+     * to share one row: on a phone that put a long change title, two buttons and five step
+     * pills in the same place. The link is labelled GitHub — where it goes — with the change's
+     * name and number kept in its tooltip, and the diff button says Code. */
+    var acts = '';
     // The link opens a page GitHub calls a pull request, so the real word stays in the
     // tooltip while the chip itself reads in plain language. And the button beside it says
     // what it shows — "Cambio #5" next to "Cambios" was two different things, one letter apart.
     // THE CHIP SAYS WHAT THE CHANGE IS, NOT WHICH NUMBER IT IS. "Change #10" is a row id and
     // means nothing to the owner; the plan already gave the work a name.
     var name = job && (job.title || (job.plan && job.plan.title));
-    var label = name ? String(name).slice(0, 42) : (L('Cambio #', 'Change #') + (job && job.pr_number));
-    if (job && job.pr_url) html += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener" title="' +
-      L('Pull request #', 'Pull request #') + job.pr_number + ' — ' + L('en GitHub', 'on GitHub') + '">' + esc(label) + '</a>' +
-      '<button class="lnk" id="diffBtn">' + L('Ver archivos', 'See the files') + '</button>';
-    if (job && !job.terminal) html += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
-    if (job && job.terminal) html += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
-    html += '</span>';
-    $('bar').innerHTML = html;
+    if (job && job.pr_url) acts += '<a class="lnk" href="' + esc(job.pr_url) + '" target="_blank" rel="noopener" title="' +
+      esc((name ? String(name).slice(0, 80) + ' — ' : '') + L('pull request #', 'pull request #') + job.pr_number) + '">GitHub</a>' +
+      '<button class="lnk" id="diffBtn">' + L('Código', 'Code') + '</button>';
+    if (job && !job.terminal) acts += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
+    if (job && job.terminal) acts += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
+    $('acts').innerHTML = acts;
     if ($('diffBtn')) $('diffBtn').addEventListener('click', showDiff);
     if ($('cancelBtn')) $('cancelBtn').addEventListener('click', cancelJob);
     if ($('clearBtn')) $('clearBtn').addEventListener('click', clearPane);

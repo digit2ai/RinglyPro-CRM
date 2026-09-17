@@ -165,8 +165,18 @@ server.listen(0, async () => {
       s = await state(page);
       ok(!s.idle && s.bar, `${w} a finished job is shown`);
       ok(s.clear, `${w} a finished job: Clear IS offered`);
-      ok(/An older change/.test(await page.evaluate(() => document.getElementById('bar').textContent)),
-        `${w} the change reads as its name, not as a row number`);
+      // The actions sit at the top, under the menu bar; the steps stay at the bottom.
+      const top = await page.evaluate(() => {
+        const a = document.getElementById('acts');
+        const link = a.querySelector('a.lnk');
+        return { text: a.textContent, title: link && link.title, top: a.getBoundingClientRect().top,
+          barTop: document.getElementById('bar').getBoundingClientRect().top,
+          headerBottom: document.querySelector('header').getBoundingClientRect().bottom };
+      });
+      ok(/GitHub/.test(top.text) && /Código|Code/.test(top.text), `${w} the actions read GitHub and Code`);
+      ok(/An older change/.test(top.title || '') && /#7/.test(top.title || ''), `${w} the change's name and number live in the tooltip`);
+      ok(top.top >= top.headerBottom - 1, `${w} the actions sit right below the menu bar`);
+      if (width < 700) ok(top.top < top.barTop, `${w} with the steps down at the box, under them`);
       ok(s.sendOn && !s.prog, `${w} a finished job: the box is usable again`);
       await page.click('#clearBtn');
       await new Promise((r) => setTimeout(r, 400));
@@ -215,7 +225,7 @@ server.listen(0, async () => {
         const bar = document.getElementById('bar').getBoundingClientRect();
         const box = document.getElementById('cmd').getBoundingClientRect();
         const main = document.querySelector('main').getBoundingClientRect();
-        return { barTop: bar.top, boxBottom: box.bottom, mainTop: main.top, bars: document.querySelectorAll('#bar, .bar').length };
+        return { barTop: bar.top, boxBottom: box.bottom, mainTop: main.top, bars: document.querySelectorAll('#bar').length };
       });
       ok(place.bars === 1, `${w} there is exactly one step bar, not a copy per layout`);
       if (width < 700) ok(place.barTop > place.boxBottom, `${w} the steps sit under the instruction box`);
