@@ -213,7 +213,7 @@ server.listen(0, async () => {
         ok(ratio(v.tag, v.bg) >= 4.5, `login ${label}: the tagline meets AA (${ratio(v.tag, v.bg).toFixed(2)}:1)`);
         ok(/serif/i.test(v.serif), `login ${label}: the product name is set in the serif`);
         // The rule that only a browser can settle.
-        ok(v.prod.txt === 'SpeakUp' && v.prod.w > 0 && v.prod.h > 0,
+        ok(v.prod.txt === 'AutoDev' && v.prod.w > 0 && v.prod.h > 0,
            `login ${label}: the product name is on screen (${Math.round(v.prod.w)}x${Math.round(v.prod.h)})`);
         ok(v.wm.w > v.wm.h * 3, `login ${label}: the Digit2AI lockup is not squashed (${Math.round(v.wm.w)}x${Math.round(v.wm.h)})`);
         ok(v.btnH >= 44 && v.inputH >= 44, `login ${label}: 44px targets (button ${Math.round(v.btnH)}, field ${Math.round(v.inputH)})`);

@@ -888,7 +888,7 @@ test('workflow tokens + merge scope', () => {
 test('console header', () => {
   const html = fs.readFileSync(path.join(__dirname, 'public/app.html'), 'utf8');
   ok(/<img class="wordmark" src="\/speakup\/wordmark\.svg/.test(html), 'the header leads with the Digit2AI lockup');
-  ok(/<span class="product">SpeakUp<\/span>/.test(html), 'and still names the product');
+  ok(/<span class="product">AutoDev<\/span>/.test(html), 'and still names the product');
   ok(!/<span class="tag">/.test(html), 'no tag badge sits next to the SpeakUp name');
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });

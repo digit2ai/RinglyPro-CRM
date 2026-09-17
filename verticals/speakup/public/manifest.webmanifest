@@ -1,7 +1,7 @@
 {
   "id": "/speakup/",
-  "name": "SpeakUp — AI Factory",
-  "short_name": "SpeakUp",
+  "name": "AutoDev — Digit2AI",
+  "short_name": "AutoDev",
   "description": "Dos pantallas: toma notas de la reunión y construye. Habla, revisa el plan, aprueba.",
   "start_url": "/speakup/?source=pwa",
   "scope": "/speakup/",
