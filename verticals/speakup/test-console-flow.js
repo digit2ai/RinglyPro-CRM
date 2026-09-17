@@ -177,6 +177,21 @@ server.listen(0, async () => {
       ok(!s.idle && s.out, `${w} from idle, sending brings the work area back`);
       await page.close();
 
+      // ── 5a2. where the step bar sits ─────────────────────────────────────────
+      // On a phone the row of pills sat above the work and read as clutter; it belongs under
+      // the box, like a status line. On a wide screen it stays at the top.
+      page = await open([PLAN], width);
+      const place = await page.evaluate(() => {
+        const bar = document.getElementById('bar').getBoundingClientRect();
+        const box = document.getElementById('cmd').getBoundingClientRect();
+        const main = document.querySelector('main').getBoundingClientRect();
+        return { barTop: bar.top, boxBottom: box.bottom, mainTop: main.top, bars: document.querySelectorAll('#bar, .bar').length };
+      });
+      ok(place.bars === 1, `${w} there is exactly one step bar, not a copy per layout`);
+      if (width < 700) ok(place.barTop > place.boxBottom, `${w} the steps sit under the instruction box`);
+      else ok(place.barTop < place.mainTop, `${w} on a wide screen the steps stay above the work`);
+      await page.close();
+
       // ── 5b. while a job is running: no send button, a moving bar instead ─────
       page = await open([{ id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev' }], width);
       let sw = await state(page);

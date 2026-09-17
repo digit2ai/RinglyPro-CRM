@@ -35,6 +35,17 @@
   /* No empty page: with nothing in progress the step bar and the work pane are not drawn.
      console.js adds .idle only when there is no job; any job, event or plan removes it. */
   body.idle #bar, body.idle #out{display:none}
+  /* Phone: header, work, box, then the steps. */
+  #bar{flex:0 0 auto;margin:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:var(--paper);justify-content:center}
+  #bar .right{margin-left:0}
+  @media (min-width:701px){
+    /* Wide screen: the same element back above the work, inside the page padding. */
+    header{order:1} #bar{order:2} main{order:3} footer{order:4}
+    #bar{margin:11px 14px 0;padding:0;border-top:0;background:transparent;justify-content:flex-start}
+    #bar .right{margin-left:auto}
+    main{padding-top:9px}
+  }
   footer{flex:0 0 auto;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);background:var(--paper)}
   #cmd{height:11vh;min-height:58px;max-height:30vh}
@@ -69,7 +80,6 @@
 </header>
 
 <main>
-  <div class="bar" id="bar"></div>
   <section class="card" id="plan" aria-live="polite"></section>
   <div id="out" class="ink"></div>
 </main>
@@ -92,7 +102,13 @@
   </div>
 </footer>
 
-<script src="/speakup/console.js?v=17"></script>
+<!-- The step bar lives AFTER the box in the markup (owner request 2026-09-17: on a phone the
+     row of pills sat above everything and read as clutter). On a phone it stays there, under
+     the instruction box, where a status belongs; on a wide screen `order` puts it back at the
+     top of the work area. One element, two places — never two copies to drift apart. -->
+<div class="bar" id="bar"></div>
+
+<script src="/speakup/console.js?v=18"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 </body>
 </html>
