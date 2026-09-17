@@ -33,6 +33,7 @@ const PLAN = { id: 42, status: 'WAITING_APPROVAL', terminal: false, title: 'Chan
   plan_hash: 'h42', plan_md: 'x', revisions: [], composed_by: 'heuristic',
   plan: { workflow: ['Read the current header', 'Change the logo text', 'Check it on a phone'], what_changes: ['The logo reads VoiceUp'], what_stays: ['Everything else'], how_you_know: ['You see it'],
     decisions: [], watch_out: [], scope_plain: 'small' } };
+const REVIEW = { id: 44, status: 'READY_FOR_REVIEW', terminal: false, title: 'Waiting for you', project_name: 'AutoDev', pr_number: 12, pr_url: 'https://github.com/x/y/pull/12', revisions: [] };
 const RUNNING = { id: 43, status: 'PLANNING', terminal: false, title: 'Working', project_name: 'AutoDev', plan_hash: null, revisions: [] };
 const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev', plan_hash: 'h41', revisions: [] };
 
@@ -59,7 +60,7 @@ const server = http.createServer((req, res) => {
   }
   if (req.url.indexOf('/api/') >= 0) {
     let body = {};
-    const byId = (id) => (id === 42 ? PLAN : (id === 43 ? RUNNING : DONE));
+    const byId = (id) => (id === 42 ? PLAN : (id === 43 ? RUNNING : (id === 44 ? REVIEW : DONE)));
     if (/\/factory\/overview/.test(req.url)) {
       body = { operator: true, jobs: scenario.jobs, recordings: [], readiness: { ready: true, blockers: [] } };
     } else if (/\/factory\/command/.test(req.url) && req.method === 'POST') {
@@ -212,6 +213,21 @@ server.listen(0, async () => {
         prog: getComputedStyle(document.getElementById('prog')).display !== 'none' }));
       ok(fin.links <= 1, `${w} a finished job announces itself once, not once per look (${fin.links})`);
       ok(fin.word === '' && !fin.prog, `${w} and the bar and the clock stop when it is finished`);
+      await page.close();
+
+      // ── 5d. waiting for a person is not "working" ────────────────────────────
+      // READY_FOR_REVIEW is not terminal, so the bar used to slide for as long as the owner
+      // left it — sixteen minutes on a job that was waiting for THEM, saying nothing.
+      page = await open([REVIEW], width);
+      await new Promise((r) => setTimeout(r, 600));
+      const rev = await page.evaluate(() => ({
+        prog: getComputedStyle(document.getElementById('prog')).display !== 'none',
+        word: document.getElementById('workw').textContent,
+        sendOn: getComputedStyle(document.getElementById('send')).display !== 'none' && !document.getElementById('send').disabled,
+        told: (document.getElementById('out').textContent.match(/Your turn|Te toca a ti/g) || []).length }));
+      ok(!rev.prog && rev.word === '', `${w} a change waiting for review stops the bar`);
+      ok(rev.sendOn, `${w} and hands the box back`);
+      ok(rev.told === 1, `${w} and says once that it is your turn`);
       await page.close();
 
       // ── 6. a question is answered live, like Claude ─────────────────────────

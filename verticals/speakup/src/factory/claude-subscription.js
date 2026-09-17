@@ -204,20 +204,24 @@ const FETCH_DOMAINS = ['github.com', 'api.github.com', 'raw.githubusercontent.co
   'developer.mozilla.org', 'nodejs.org', 'www.npmjs.com', 'expressjs.com', 'render.com', 'stackoverflow.com'];
 const RESEARCH_DENY = ['Read(./.git/**)', 'Read(**/.env)', 'Read(**/.env.*)'];
 
-function researchArgs({ model, maxTurns }) {
+// web:false drops the two network tools entirely — the planner reads the repository and nothing
+// else, so a page on the internet cannot reach the prompt that writes the plan at all.
+function researchArgs({ model, maxTurns, web }) {
+  const tools = web === false ? 'Read,Grep,Glob' : 'Read,Grep,Glob,WebSearch,WebFetch';
+  const allow = web === false ? ['Read', 'Grep', 'Glob'] : ['Read', 'Grep', 'Glob', 'WebSearch', ...FETCH_DOMAINS.map(d => 'WebFetch(domain:' + d + ')')];
   return (rules) => ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--include-partial-messages', '--verbose',
-    '--restricted', '--tools', 'Read,Grep,Glob,WebSearch,WebFetch', '--permission-mode', 'dontAsk',
-    '--allowedTools', 'Read', 'Grep', 'Glob', 'WebSearch', ...FETCH_DOMAINS.map(d => 'WebFetch(domain:' + d + ')'),
+    '--restricted', '--tools', tools, '--permission-mode', 'dontAsk',
+    '--allowedTools', ...allow,
     '--disallowedTools', ...RESEARCH_DENY,
     '--setting-sources', '', '--strict-mcp-config', '--no-session-persistence',
     '--max-turns', String(maxTurns || 30), '--model', model, '--system-prompt', rules];
 }
 
-function research({ system, messages, model, cwd, signal, onText, onTool, timeoutMs, maxTurns }) {
+function research({ system, messages, model, cwd, signal, onText, onTool, timeoutMs, maxTurns, web }) {
   if (!cwd || !fs.existsSync(cwd)) return Promise.reject(new Error('research working directory missing'));
   return run({ system, context: '', messages, model, signal, onText, onTool, cwd,
     timeoutMs: timeoutMs || parseInt(process.env.SPEAKUP_RESEARCH_TIMEOUT_MS, 10) || 300000,
-    argv: researchArgs({ model, maxTurns }) });
+    argv: researchArgs({ model, maxTurns, web }) });
 }
 
 module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe, research, researchArgs, FETCH_DOMAINS };

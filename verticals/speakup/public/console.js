@@ -160,6 +160,8 @@
     planDropping: ['Quitando…', 'Removing…'],
     planUpdated: ['Plan actualizado.', 'Plan updated.'],
     planAsking: ['Buscando la respuesta…', 'Looking up the answer…'],
+    waitingReview: ['Te toca a ti: revisa el cambio en GitHub y fusiónalo. La fábrica no seguirá sola con este.',
+      'Your turn: review the change on GitHub and merge it. The factory will not go further on this one by itself.'],
     planUnchanged: ['Era una pregunta: el plan no cambió.', 'That was a question: the plan did not change.'],
     planDiffTitle: ['Esto hicieron tus palabras', 'What your words did'],
     diffAdded: ['Añadido', 'Added'],
@@ -330,8 +332,17 @@
       if (d.events.length) { lastEvent = d.events[d.events.length - 1].id; write(d.events); }
       renderBar({ status: d.status, terminal: d.terminal, pr_number: d.pr_number, pr_url: d.pr_url });
       jobTerminal = !!d.terminal;
-      // A plan waiting for a word is NOT "working": that is the box's turn.
-      setWorking(!d.terminal && d.status !== 'WAITING_APPROVAL');
+      /* A JOB WAITING FOR A PERSON IS NOT "WORKING". READY_FOR_REVIEW is not terminal — the
+       * server keeps it open until the pull request is merged — so the bar slid on for
+       * sixteen minutes over a job that was waiting for the owner and said nothing about it.
+       * Both states hand the screen back: a plan waits for a word in the box, a review waits
+       * on GitHub. The pane says which, once. */
+      var waits = d.status === 'WAITING_APPROVAL' || d.status === 'READY_FOR_REVIEW';
+      setWorking(!d.terminal && !waits);
+      if (d.status === 'READY_FOR_REVIEW' && !announced['w' + id]) {
+        announced['w' + id] = true;
+        write([{ kind: 'todo', t: 'waitingReview' }]);
+      }
       // The plan is ready: stop polling and hand the box over to the owner. Fetched once,
       // on the transition, so a plan on screen is never silently swapped underneath them.
       if (d.status === 'WAITING_APPROVAL') {
@@ -344,7 +355,7 @@
         return;
       }
       if (planJob === id) hidePlan();
-      if (!d.terminal && document.visibilityState === 'visible') timer = setTimeout(function () { follow(id); }, 2500);
+      if (!d.terminal && document.visibilityState === 'visible') timer = setTimeout(function () { follow(id); }, waits ? 10000 : 2500);
       else if (d.terminal) {
         var j = (await api('/factory/jobs/' + id)).job;
         if (gen !== followGen) return;

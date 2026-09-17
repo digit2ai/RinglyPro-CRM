@@ -75,14 +75,26 @@ async function recentWork(tenant_id, { limit = 8, exclude_command_id = null } = 
   const jobIds = cmds.map(c => c.job_id).filter(Boolean);
   const jobs = jobIds.length ? await Job.findAll({ where: { tenant_id, id: jobIds } }) : [];
   const byId = new Map(jobs.map(j => [j.id, j]));
-  const lines = cmds.reverse().map(c => line(c, c.job_id ? byId.get(c.job_id) : null)).filter(Boolean);
-  let out = [];
-  let size = 0;
-  for (const l of lines.slice().reverse()) {          // newest first while filling…
-    if (size + l.length > THREAD_MAX) break;
-    out.unshift(l); size += l.length + 1;             // …oldest first in the result
+  const rows = cmds.reverse().map(c => ({ cmd: c, job: c.job_id ? byId.get(c.job_id) : null, text: line(c, c.job_id ? byId.get(c.job_id) : null) }))
+    .filter(r => r.text);
+  // COMPACTION, THE HONEST KIND. What does not fit is not dropped in silence and not handed to
+  // a model that could invent what happened: the older instructions are counted, deterministically,
+  // into one line — how many, and how they ended — so the planner still knows work came before.
+  const kept = [];
+  let size = 0, cut = 0;
+  for (const r of rows.slice().reverse()) {           // newest first while filling…
+    if (size + r.text.length > THREAD_MAX) { cut++; continue; }
+    kept.unshift(r); size += r.text.length + 1;       // …oldest first in the result
   }
-  return out.join('\n');
+  if (!kept.length) return '';
+  if (cut) {
+    const older = rows.slice(0, rows.length - kept.length);
+    const ends = {};
+    for (const r of older) { const k = (r.job && r.job.status) || 'answered'; ends[k] = (ends[k] || 0) + 1; }
+    const how = Object.keys(ends).sort().map(k => `${ends[k]} ${k.toLowerCase()}`).join(', ');
+    kept.unshift(`- earlier: ${older.length} more instruction(s) before these (${how})`);
+  }
+  return kept.map(r => (typeof r === 'string' ? r : r.text)).join('\n');
 }
 
 // One block for a prompt. Empty string when there is nothing to say, so no prompt grows for free.

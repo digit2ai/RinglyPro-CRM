@@ -28,6 +28,8 @@ const llm = require('./llm');
 const jobs = require('./jobs');
 const projects = require('./projects');
 const memory = require('./memory');
+const subscription = require('./claude-subscription');
+const research = require('./research');
 const audit = require('./audit');
 const { sha256 } = require('./security');
 
@@ -250,6 +252,34 @@ function planHash(job, project, spec, plan, corrections) {
     corrections: (corrections || []).map(c => c.text), plan }));
 }
 
+/* THE PLANNER READS THE CODE (owner request 2026-09-17).
+ *
+ * Until now a plan was written from `repo.candidateFiles` — a keyword guess, six file heads,
+ * one model call. That is why plans proposed a new page when the page already existed: the
+ * planner could not look. With the owner's subscription the planner is now Claude Code itself,
+ * read-only over the deployed checkout (`--restricted`, Read/Grep/Glob, no Bash, no Edit, no
+ * web at all — see claude-subscription.js), bounded by turns and a timeout, and it must answer
+ * with the same single JSON object the one-shot path returns.
+ *
+ * Nothing downstream changes: `verifyPlan` still drops invented files, the plan hash still
+ * covers the plan, and a failure falls back to the one-shot call and then to the keyless
+ * heuristic. Every file it opens is written to the job's events, so the owner watches it look.
+ */
+const PLAN_TURNS = parseInt(process.env.SPEAKUP_PLAN_TURNS, 10) || 18;
+async function planWithTools({ job, system, user, onTool }) {
+  const r = await subscription.research({
+    system: system + ' You may read, search and list files in the working directory to check what already exists before you plan. ' +
+      'Prefer changing what is there over creating anything new. When you are done, reply with ONLY the JSON object — no prose around it.',
+    messages: [{ role: 'user', content: user }],
+    model: llm.MODELS.plan, cwd: repo.ROOT, web: false, maxTurns: PLAN_TURNS, onTool,
+    timeoutMs: parseInt(process.env.SPEAKUP_PLAN_TIMEOUT_MS, 10) || 240000
+  });
+  const raw = String((r && r.text) || '');
+  const start = raw.indexOf('{'), end = raw.lastIndexOf('}');
+  if (start < 0 || end <= start) throw new Error('the planner returned no JSON object');
+  return JSON.parse(raw.slice(start, end + 1));
+}
+
 // The planning half of a prepare, shared by the first pass and every revision.
 async function buildPlan({ job, project, spec, corrections, lang }) {
   // WHAT CAME BEFORE TRAVELS WITH THE INSTRUCTION. The house rules and the last few
@@ -260,10 +290,28 @@ async function buildPlan({ job, project, spec, corrections, lang }) {
   catch (e) { console.error('SpeakUp memory unavailable for the plan:', e.message); }
   const terms = repo.terms(spec.requirements.flatMap(r => [r.text, r.quote]).concat((corrections || []).map(c => c.text)));
   const candidates = repo.candidateFiles(project.path_scope, terms, 12);
+  const user = planPrompt(spec, project, candidates, corrections, remembered);
   let raw = null, composed_by = 'heuristic';
-  if (llm.configured()) {
+  // First choice: the planner that can actually look at the code.
+  if (subscription.available()) {
     try {
-      raw = await llm.callJSON('plan', { system: SYSTEM, user: planPrompt(spec, project, candidates, corrections, remembered), max_tokens: 6000 });
+      const seen = new Set();
+      raw = await planWithTools({ job, system: SYSTEM, user,
+        onTool: (t) => {
+          const line = research.toolLine(t);
+          if (!line || !line.text || seen.has(line.kind + line.text)) return;
+          seen.add(line.kind + line.text);
+          jobs.addEvents(job, [line]).catch(() => {});
+        } });
+      composed_by = 'subscription:' + llm.MODELS.plan;
+    } catch (e) {
+      console.error('SpeakUp planner-with-tools failed (falling back to one shot):', e.message);
+      raw = null;
+    }
+  }
+  if (!raw && llm.configured()) {
+    try {
+      raw = await llm.callJSON('plan', { system: SYSTEM, user, max_tokens: 6000 });
       composed_by = llm.activeModel('plan');
     } catch (e) {
       console.error('SpeakUp plan model error (falling back):', e.message);

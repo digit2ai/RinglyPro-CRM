@@ -1408,6 +1408,30 @@ test('memory: the house rules and the last few instructions travel with every pl
   ok(memory.THREAD_MAX <= 4000, 'the remembered work is capped, so a long history costs no more than a short one');
 });
 
+test('the planner reads the code, and reads nothing else', () => {
+  const sub = require('./src/factory/claude-subscription');
+  const argv = sub.researchArgs({ model: 'm', maxTurns: 18, web: false })('rules');
+  const at = (f) => argv[argv.indexOf(f) + 1];
+  ok(at('--tools') === 'Read,Grep,Glob', 'planning is read-only over the checkout: no Bash, no Edit, no Write');
+  ok(!argv.some(a => /Web(Search|Fetch)/.test(a)), 'and no web at all, so a page on the internet cannot reach the plan');
+  ok(argv.includes('--restricted') && at('--permission-mode') === 'dontAsk', 'the same confinement as the research agent');
+  ok(at('--max-turns') === '18', 'the planner is bounded by turns, so a plan is a handful of reads');
+  const src = fs.readFileSync(path.join(__dirname, 'src/factory/prepare.js'), 'utf8');
+  ok(/if \(subscription\.available\(\)\) \{[\s\S]{0,400}planWithTools/.test(src), 'the tool-using planner is tried first');
+  ok(/if \(!raw && llm\.configured\(\)\)/.test(src), 'a one-shot call is the fallback');
+  ok(/if \(!raw\) \{ raw = heuristicPlan/.test(src), 'and the keyless heuristic is the last resort');
+  ok(/jobs\.addEvents\(job, \[line\]\)/.test(src), 'every file the planner opens is shown to the owner while it plans');
+  ok(/const plan = verifyPlan\(raw, spec, project, candidates\)/.test(src), 'whatever wrote the plan, it is verified the same way');
+});
+
+test('memory compaction: older instructions are counted, never invented', () => {
+  const memory = require('./src/factory/memory');
+  const mem = fs.readFileSync(path.join(__dirname, 'src/factory/memory.js'), 'utf8');
+  ok(/earlier: \$\{older\.length\} more instruction\(s\)/.test(mem), 'what does not fit becomes a counted line, not silence');
+  ok(!/callJSON|streamText|llm\./.test(mem), 'compaction spends no model call, so it cannot invent history');
+  ok(memory.THREAD_MAX <= 4000, 'the block stays capped after compaction');
+});
+
 test('the research agent: read-only, confined, and asked what to find out', () => {
   const sub = require('./src/factory/claude-subscription');
   const research = require('./src/factory/research');
