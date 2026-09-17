@@ -165,6 +165,76 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// OWN DOMAIN: autodev.digit2ai.com is SpeakUp, the AI Factory.
+//
+// digit2ai.com/autodev CANNOT be created from this repo — the apex is a
+// GoHighLevel site (sites.ludicrous.cloud behind Cloudflare) and the request
+// never reaches this app; that path is made in GHL as a redirect or a frame.
+// A SUBDOMAIN pointed at Render is ours, and for this product it is the only
+// option that works at all: SpeakUp's session cookie is SameSite=Lax, which a
+// browser does not send inside a cross-site frame, iPhone Safari blocks
+// third-party cookies outright, and a service worker inside someone else's
+// frame is refused or partitioned — so an iframe embed would loop on the login
+// screen and could never be installed to a home screen.
+//
+// Registered HERE, beside the other brand domains, because Express matches in
+// registration order: the CRM defines hundreds of paths below, and a late
+// handler is shadowed on exactly the paths the CRM happens to define.
+//
+// THE ROOT REDIRECTS; IT DOES NOT REWRITE. Every asset in the vertical is an
+// absolute /speakup/... path, the manifest declares scope and start_url under
+// /speakup/, and a worker's scope is the directory it was fetched from. Serving
+// the app at this host's ROOT would therefore install a PWA whose scope
+// EXCLUDES the page that installed it, and register a worker controlling
+// nothing — the bug JobUp shipped once and is documented under its own section.
+// A 302 keeps the manifest, the worker and every path agreeing with each other.
+//
+// AN UNOWNED PATH ENDS IN A BRANDED 404, NOT THE CRM. Falling through served
+// the whole CRM on a brand domain — the jobmd.io/admin lesson, and what this
+// host did before this handler existed: autodev.digit2ai.com/login answered
+// with the RinglyPro CRM sign-in, an unrelated product on a Digit2AI address.
+// ═════════════════════════════════════════════════════════════════════════
+const AUTODEV_HOSTS = new Set(['autodev.digit2ai.com', 'www.autodev.digit2ai.com']);
+
+function autodev404(res) {
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<meta name="robots" content="noindex, nofollow"><title>AutoDev - not found</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;' +
+    'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;background:#0d1117}' +
+    'h1{font-size:3rem;margin:0}p{opacity:.72;margin:.5rem 0 1.5rem}' +
+    'a{display:inline-block;padding:.7rem 1.4rem;border-radius:.5rem;background:#4fc3e3;' +
+    'color:#06222c;text-decoration:none;font-weight:700}</style></head><body><div>' +
+    '<h1>404</h1><p>There is no such page on AutoDev.</p>' +
+    '<a href="/speakup/">Open AutoDev</a></div></body></html>');
+}
+
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!AUTODEV_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://autodev.digit2ai.com' + req.originalUrl);
+
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  const qs = cut === -1 ? '' : req.url.slice(cut);
+
+  // It is an internal, login-only console over a private repository. The whole
+  // domain stays out of every index.
+  if (path === '/robots.txt') {
+    return res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  }
+  if (path === '/' || path === '') return res.redirect(302, '/speakup/' + qs);
+  if (path === '/health') { req.url = '/speakup/health' + qs; return next(); }
+  if (path === '/speakup' || path.startsWith('/speakup/')) return next();
+  // A browser asks for these at the root on its own; answer with the app's own
+  // marks rather than letting the request fall through to the CRM's.
+  if (path === '/favicon.ico') return res.redirect(302, '/speakup/favicon.svg');
+  if (path === '/apple-touch-icon.png') return res.redirect(302, '/speakup/apple-touch-icon.png');
+
+  return autodev404(res);
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // DOMINIO PROPIO: hispanotec.digit2ai.com sirve el recorrido narrado de la
 // cámara Hispanotec (cv-105) en su RAÍZ.
 //
