@@ -17,6 +17,23 @@ const { normalizeSpoken } = require('./security');
 const ACTIONS = ['read', 'prepare', 'execute', 'merge'];
 const MONOREPO = process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM';
 
+/* EVERY PROJECT IS MEASURABLE, INCLUDING ONE CREATED TOMORROW.
+ *
+ * The runner only counts `node --check` on changed .js files, so a project with no test command
+ * measures NOTHING when a change touches only HTML or CSS — and "not measured" is refused by the
+ * merge gate, which is right, but it leaves a finished change stranded as a draft with no way
+ * forward. That is a property of the registry, not of one project, so the fallback lives here:
+ * a project whose own list is empty runs this suite. It is keyless, needs no database, takes
+ * seconds, and a change that breaks the factory itself fails it. A project that names its own
+ * commands is never touched. `commandsFor` is what prepare snapshots into the job, so the
+ * guarantee holds for every project that exists now and every one created later.
+ */
+const DEFAULT_TEST_COMMANDS = ['node verticals/speakup/test-offline.js'];
+function commandsFor(project) {
+  const own = (project && project.test_commands) || [];
+  return own.length ? own : DEFAULT_TEST_COMMANDS.slice();
+}
+
 const DEFAULT_PROJECTS = [
   // The console's default: the whole RinglyPro-CRM repository.
   // EVERY PROJECT NEEDS AT LEAST ONE TEST COMMAND. The console's default project had none, so a
@@ -149,4 +166,4 @@ function allows(project, action) {
   return !!(project && project.enabled && Array.isArray(project.allowed_actions) && project.allowed_actions.includes(action));
 }
 
-module.exports = { __defaults: () => DEFAULT_PROJECTS, ACTIONS, DEFAULT_PROJECTS, TEST_CMD, ensureDefaults, list, get, matchProject, resolveFromText, sanitize, allows };
+module.exports = { __defaults: () => DEFAULT_PROJECTS, DEFAULT_TEST_COMMANDS, commandsFor, ACTIONS, DEFAULT_PROJECTS, TEST_CMD, ensureDefaults, list, get, matchProject, resolveFromText, sanitize, allows };

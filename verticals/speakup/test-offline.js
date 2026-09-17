@@ -805,7 +805,7 @@ test('what a security review found, and what now holds it', () => {
   // row, so a stale snapshot made the approved hash and what actually runs disagree.
   const revise = prepSrc.slice(prepSrc.indexOf('async function revise('), prepSrc.indexOf('async function runPrepare('));
   ['repo: project.repo', 'base_branch: project.default_branch', 'workflow_file: project.workflow_file',
-   'test_commands: project.test_commands', 'path_scope: project.path_scope'].forEach(function (f) {
+   'test_commands: projects.commandsFor(project)', 'path_scope: project.path_scope'].forEach(function (f) {
     ok(revise.includes(f), 'revise refreshes ' + f.split(':')[0] + ' in the snapshot');
   });
 
@@ -1290,6 +1290,19 @@ test('console header', () => {
   ok(/<span class="product">AutoDev<\/span>/.test(html), 'and still names the product');
   ok(!/<span class="tag">/.test(html), 'no tag badge sits next to the SpeakUp name');
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
+});
+
+test('every project is measurable, including one created later', () => {
+  const projects = require('./src/factory/projects');
+  const fresh = { key: 'brand-new', test_commands: [] };
+  ok(projects.commandsFor(fresh).length > 0, 'a project created later still runs a real suite');
+  ok(projects.commandsFor({ test_commands: ['npm test'] })[0] === 'npm test', "a project's own commands are never replaced");
+  ok(projects.commandsFor(fresh).every(c => projects.TEST_CMD.test(c)), 'the fallback obeys the same command allow-list');
+  projects.commandsFor(fresh).push('rm -rf /');
+  ok(projects.commandsFor(fresh).indexOf('rm -rf /') < 0, 'the fallback list cannot be mutated by a caller');
+  const prepare = fs.readFileSync(path.join(__dirname, 'src/factory/prepare.js'), 'utf8');
+  ok(!/test_commands:\s*project\.test_commands/.test(prepare) && /test_commands: projects\.commandsFor\(project\)/.test(prepare),
+    'the job snapshot takes the commands through commandsFor, so the fallback cannot be bypassed');
 });
 
 test('every seeded project can actually be measured', () => {

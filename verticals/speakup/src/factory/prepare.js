@@ -140,7 +140,7 @@ function heuristicPlan(spec, project, candidates) {
     dependencies: [],
     risks: spec.technical_considerations.slice(0, 5).map(t => ({ risk: t.text, mitigation: null })),
     acceptance_criteria: [...spec.acceptance_criteria.map(a => a.text), ...spec.requirements.map(r => `${r.id} works as stated: ${r.text}`)],
-    test_plan: [...(project.test_commands || []), 'node --check on every changed JavaScript file'],
+    test_plan: [...projects.commandsFor(project), 'node --check on every changed JavaScript file'],
     out_of_scope: ['Anything not listed as an approved requirement']
   };
 }
@@ -232,7 +232,7 @@ function renderMarkdown(job, project, spec, plan) {
 // typed against the plan they rejected would still dispatch.
 function planHash(job, project, spec, plan, corrections) {
   return sha256(JSON.stringify({ job: job.id, project: project.key, repo: project.repo, base: project.default_branch,
-    workflow: project.workflow_file, tests: project.test_commands || [], scope: project.path_scope || [],
+    workflow: project.workflow_file, tests: projects.commandsFor(project), scope: project.path_scope || [],
     sources: spec.sources.map(s => s.recording_id), requirements: spec.requirements.map(r => [r.id, r.kind, r.text, r.quote]),
     corrections: (corrections || []).map(c => c.text), plan }));
 }
@@ -404,7 +404,7 @@ async function revise(jobId, text, { lang, user } = {}) {
       fields: { plan: built.plan, plan_md: built.plan_md, plan_hash: built.plan_hash, plan_composed_by: built.composed_by,
         repo_sha: built.plan.repo_sha, title: built.plan.title, spec,
         repo: project.repo, base_branch: project.default_branch, workflow_file: project.workflow_file,
-        test_commands: project.test_commands || [], path_scope: project.path_scope || [] } });
+        test_commands: projects.commandsFor(project), path_scope: project.path_scope || [] } });
     return { ok: true, job: ready || job, diff: planDiff(prevPlan, built.plan) };
   } catch (e) {
     // A RATE LIMIT MUST NOT DESTROY A PLAN THE OWNER ALREADY READ. FAILED is terminal, and
@@ -445,7 +445,7 @@ async function runPrepare(jobId, opts = {}) {
     const ready = await jobs.transition(job, 'WAITING_APPROVAL', { detail: { plan_hash, composed_by, steps: plan.steps.length },
       fields: { plan, plan_md, plan_hash, plan_composed_by: composed_by, repo_sha: plan.repo_sha, title: plan.title,
         repo: project.repo, base_branch: project.default_branch, workflow_file: project.workflow_file,
-        test_commands: project.test_commands || [], path_scope: project.path_scope || [] } }) || job;
+        test_commands: projects.commandsFor(project), path_scope: project.path_scope || [] } }) || job;
     if (ready && ready.auto_run && opts.user) return (await jobs.autoDispatch(ready, opts.user)) || ready;
     return ready;
   } catch (e) {
