@@ -2966,6 +2966,29 @@ app.get('/debug/citijobs-error', (req, res) => {
 });
 
 // =====================================================
+// AI FACTORY RUNTIME — the 102-agent bench as callable, audited, evaluated
+// tools (served at /factory/). Registry: verticals/factory/registry/workforce.js
+// =====================================================
+
+let factoryRuntimeError = null;
+try {
+  const factoryRuntime = require('../verticals/factory/src/index');
+  app.get('/factory', (req, res, next) => {
+    if (!req.originalUrl.split('?')[0].endsWith('/')) return res.redirect('/factory/');
+    next();
+  });
+  app.use('/factory', factoryRuntime);
+  console.log('AI Factory Runtime mounted at /factory (health: /factory/health, MCP: /factory/mcp)');
+} catch (error) {
+  factoryRuntimeError = error;
+  console.log('AI Factory Runtime not available:', error.message);
+}
+
+app.get('/debug/factory-error', (req, res) => {
+  res.json({ loaded: !factoryRuntimeError, error: factoryRuntimeError ? factoryRuntimeError.message : null });
+});
+
+// =====================================================
 // AI READINESS DEPARTMENT — five agents behind one Brain (served at /ai-readiness/)
 // Takes a CEO from fear to confidence: interview, three lane assessments
 // (cost / risk / data), a Red-Yellow-Green scorecard and a three-phase roadmap

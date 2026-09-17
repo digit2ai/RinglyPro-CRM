@@ -1035,6 +1035,8 @@ You are not a single agent. You are the **MCP Brain** — the orchestrator at th
 5. **Collect, reconcile, and synthesize** into the standard Build Report. You own the final integration and the deploy.
 6. **Spin up only what the project needs.** A landing-page tweak needs 1–2 specialists; a new vertical may need 15. Right-size the fan-out — don't summon the whole army for a one-liner.
 
+> **The roster is now running software, not only prose.** `verticals/factory/registry/workforce.js` is the single source of truth for all 102 agents; `/factory` (AI Factory Runtime) exposes each as `<agent>.brief` and `<agent>.run` behind the Brain gates, audits every call with cost and latency to `fx_runs`, and grades agents against deterministic eval sets (`registry/evals.js`). When dispatching a specialist, prefer its compiled brief from the registry (`GET /factory/api/v1/agents/:id` or the `brief` tool) over authoring one, so the brief a subagent receives cannot drift from the registry. Adding an agent = adding a registry row; `node verticals/factory/sit.js` fails if any surface quotes a count the registry does not produce.
+
 > Implementation note: specialists are realized as `Task`/Agent subagents with a role-specific system brief you author at dispatch time. The roster below is the registry the brain routes against. When a specialist would benefit from an existing project skill (e.g. `/ringlypro-dev`, `/ringlypro-cicd`, `/deep-research`, `/code-review`, `/security-review`), prefer delegating to that skill.
 
 ### The 10 Always-On Core Seats (9 agents + the AI Readiness Department)

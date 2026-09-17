@@ -318,6 +318,28 @@ Recordatorios de vencimiento de documentos de tránsito para el Centro de Diagn�
 - `ENRUTA_SEED_DEMO=1` — siembra al arrancar. **Siembra una vez y no vuelve**: la guarda es la marca `[demo]`, así que la variable puede quedarse puesta. `ENRUTA_SEED_RESET=1` borra el tenant antes de sembrar · `ENRUTA_SEED_CLIENTES` (80) · `ENRUTA_SEED_SEMILLA` (20260901) · `ENRUTA_SEED_TENANT`.
 - `ELEVENLABS_ENRUTA_AGENT_ID` — **ya no se lee en ninguna parte.**
 
+## AI Factory Runtime — the bench as running software (folder: factory, mounted /factory)
+
+**The 102-agent roster used to be prose**: a specialist existed only as a brief written into a subagent prompt at dispatch time, so nothing recorded that it ran, what it cost, how long it took, or whether it was any good — and the count lived in eight hand-edited files (which is how "83" survived on digit2ai.com after the bench had grown). This vertical makes the roster a runtime.
+
+- **ONE REGISTRY:** `verticals/factory/registry/workforce.js` holds every agent (id, team, role, skills, rules, tier). Adding an agent is adding a row. `counts()` is the only place a total is computed.
+- **THE DRIFT TEST IS THE ENFORCEMENT.** `sit.js` fails the build when the architect skill, the `/ai-specialist` skill, the Dispatch Board, the factory page or the digit2ai.com landing (`public/neural-intelligence.html`) quote a count, core row, SME or roster sum the registry does not produce. Change the registry, run the SIT, fix what it names.
+- **Brain gateway** (`src/brain.js`): each agent registers `<id>.brief` (compiled system prompt, no model call) and `<id>.run` (executes on a task). Gates: channel (`admin|system|mcp`), role (`owner|operator` run, `reader` brief only), task size cap (20k chars), per-tenant daily cost cap. `tenant_id` from session only and DELETED from arguments. Every call, denials included, is a row in `fx_runs` with tokens, cost and latency.
+- **Model tiers, not names:** `deep` (core, AI Services SMEs, vertical SMEs) = `FACTORY_MODEL_DEEP` (Sonnet 5), `fast` (specialists) = `FACTORY_MODEL_FAST` (Haiku 4.5). `src/model.js` is the ONLY file that reaches Anthropic (SIT greps). Cost is computed from the response usage against cited first-party prices; an unknown model records no cost rather than a guess.
+- **EVALS ARE DETERMINISTIC AND HONEST.** `registry/evals.js` feeds agents the input their rules exist to refuse (an invoice with no printed total, a board asking for a guaranteed saving, a POC in months, a booking tool that failed) and grades with fixed checks — no model grades a model. **Keyless = `not_run`, never passed**, score null. An agent with no cases shows "no evals", not a score. 16 agents / 20 cases seeded; coverage grows by adding cases.
+- **Every artifact is verified** whatever the model: empty output, emoji, and invalid JSON for JSON-only agents are flagged and recorded.
+- **Keyless:** no `ANTHROPIC_API_KEY` = `run` returns `executed:false, is_simulated:true` with the brief and NO artifact. Nothing is fabricated.
+- **Surfaces:** dashboard `/factory/` (roster with 30-day runs, success, spend, p50 latency, latest eval; per-agent brief, run box, eval button; "Run all evals" is a background job polled by the page because a full run exceeds the ~100 s proxy ceiling) · `GET /factory/health` (open, reports config only) · `ALL /factory/mcp` JSON-RPC (`initialize`, `tools/list` = 204 tools, `tools/call`). Page in `src/views/`, never `public/`.
+- **BOTH CREDENTIALS FAIL SHUT:** dashboard + API reuse `ARCHITECT_USER`/`ARCHITECT_PASSWORD` (same audience as the Dispatch Board); MCP needs `FACTORY_API_KEY`. Either unset = 503. Running agents spends money.
+- **Tables:** `fx_runs`, `fx_eval_runs` (`tenant_id NOT NULL`, named indexes), created idempotently on first use; no DB = in-memory store behind the same interface (`/health` names the backend).
+- **SIT:** `node verticals/factory/sit.js` → **80/80**, zero keys. NOT covered: a live Anthropic call and the Postgres store — verify with `GET /factory/health` then a run from the dashboard.
+
+**Environment Variables:**
+- `FACTORY_API_KEY` — Bearer key for `/factory/mcp`. No default; unset = MCP closed.
+- `FACTORY_MODEL_DEEP` (`claude-sonnet-5`) · `FACTORY_MODEL_FAST` (`claude-haiku-4-5-20251001`) — reuse `ANTHROPIC_API_KEY`.
+- `FACTORY_COST_CAP_USD` (20) — per-tenant daily spend ceiling across all agent runs and evals.
+- `FACTORY_TENANT_ID` (1) — tenant stamped on dashboard and MCP runs. `FACTORY_STORE=memory` forces the in-memory store.
+
 ## Architect Dispatch Board — the /ringlypro-architect reference, gated
 
 The modes, the seven build phases, the 102-agent bench (10 core seats: 9 agents incl. the AI Specialist + the AI Readiness Department as core 10; 76 specialists; 12 AI Services SMEs; live-filterable), the routing table and the five house patterns, as one page. Internal reference, not a customer surface.

@@ -1,0 +1,166 @@
+<title>AI Factory Runtime</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--ink:#141821;--mut:#5a6272;--faint:#7a8292;--line:#e3e6eb;--accent:#0b6bcb;--accent-soft:#e7f0fb;--ok:#137a3f;--warn:#9a5b00;--bad:#b42318;--chip:#f0f2f5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1117;--panel:#151b23;--ink:#e8ecf1;--mut:#a3adbb;--faint:#8a94a3;--line:#2a323d;--accent:#5aa8ff;--accent-soft:#16263a;--ok:#4cc38a;--warn:#e0a54a;--bad:#ff7b72;--chip:#1c2430}}
+:root[data-theme="dark"]{--bg:#0d1117;--panel:#151b23;--ink:#e8ecf1;--mut:#a3adbb;--faint:#8a94a3;--line:#2a323d;--accent:#5aa8ff;--accent-soft:#16263a;--ok:#4cc38a;--warn:#e0a54a;--bad:#ff7b72;--chip:#1c2430}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:24px 60px}
+h1{font-size:24px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 18px}
+.tally{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.tally div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:110px}
+.tally b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.tally span{color:var(--faint);font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+input[type=search]{flex:1 1 240px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;min-height:40px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.55;cursor:default}
+.notice{background:var(--accent-soft);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:14px;color:var(--ink)}
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600;background:var(--panel);position:sticky;top:0}
+tr.team td{background:var(--chip);font-weight:600;font-size:12.5px;color:var(--mut)}
+tr.agent{cursor:pointer}
+tr.agent:hover td{background:var(--accent-soft)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--faint)}
+.pill{display:inline-block;border-radius:999px;padding:1px 8px;font-size:12px;border:1px solid var(--line)}
+.pill.ok{color:var(--ok)}.pill.warn{color:var(--warn)}.pill.bad{color:var(--bad)}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);width:min(760px,calc(100vw - 32px));padding:0}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dh{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}
+.db{padding:16px 18px;max-height:70vh;overflow:auto}
+pre{white-space:pre-wrap;background:var(--chip);border-radius:8px;padding:10px 12px;font-size:12.5px;margin:6px 0 14px}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 4px}
+textarea{width:100%;box-sizing:border-box;min-height:80px}
+h3{font-size:13px;margin:16px 0 6px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+</style>
+
+<div class="wrap">
+  <h1>AI Factory Runtime</h1>
+  <p class="sub">Every agent on the bench as a callable, audited tool. Figures below are counts of real runs, not estimates.</p>
+  <div class="tally" id="tally"></div>
+  <div id="notice"></div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="Filter by name, team or skill" aria-label="Filter agents">
+    <button class="primary" id="evalAll">Run all evals</button>
+    <span class="muted" id="evalStatus"></span>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Agent</th><th>Model</th><th class="num">Runs (30d)</th><th class="num">Success</th><th class="num">Spend</th><th class="num">p50</th><th>Eval</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <div class="dh"><div><strong id="dName"></strong><div class="muted" id="dRole"></div></div><button id="dClose" aria-label="Close">Close</button></div>
+  <div class="db">
+    <h3>Brief (the system prompt it runs with)</h3>
+    <pre id="dBrief"></pre>
+    <h3>Run it</h3>
+    <label for="rTask">Task</label><textarea id="rTask"></textarea>
+    <label for="rCtx">Context (optional; the only material it may use)</label><textarea id="rCtx"></textarea>
+    <div class="bar" style="margin-top:10px"><button class="primary" id="rGo">Run agent</button><button id="eGo">Run this agent's evals</button><span class="muted" id="rMeta"></span></div>
+    <pre id="rOut" hidden></pre>
+    <h3>Eval cases</h3>
+    <div id="dEvals" class="muted"></div>
+  </div>
+</dialog>
+
+<script>
+var DATA = null, CURRENT = null;
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function usd(n){return n==null?'<span class="muted">-</span>':'$'+Number(n).toFixed(n<1?4:2);}
+function api(p,opts){return fetch('/factory/api/v1'+p,Object.assign({headers:{'Content-Type':'application/json'}},opts||{})).then(function(r){return r.json();});}
+
+function evalPill(e,cases){
+  if(!cases) return '<span class="muted">no evals</span>';
+  if(!e) return '<span class="muted">'+cases+' cases, not run</span>';
+  if(e.score==null) return '<span class="pill warn">not run ('+e.not_run+')</span>';
+  var cls = e.score>=0.9?'ok':(e.score>=0.6?'warn':'bad');
+  return '<span class="pill '+cls+'">'+e.passed+'/'+(e.passed+e.failed)+' passed</span>';
+}
+
+function render(){
+  var q=(document.getElementById('q').value||'').toLowerCase(), html='';
+  Object.keys(DATA.teams).forEach(function(t){
+    var rows=DATA.agents.filter(function(a){return a.team===t && (!q || (a.name+' '+DATA.teams[t].name+' '+a.skills.join(' ')).toLowerCase().indexOf(q)!==-1);});
+    if(!rows.length) return;
+    html+='<tr class="team"><td colspan="7">'+esc(DATA.teams[t].name)+' &middot; '+rows.length+'</td></tr>';
+    rows.forEach(function(a){
+      var s=a.stats||{};
+      html+='<tr class="agent" data-id="'+a.id+'"><td><strong>'+esc(a.name)+'</strong><div class="muted">'+esc(a.role)+'</div></td>'+
+        '<td class="muted">'+esc(a.model)+'</td>'+
+        '<td class="num">'+(s.runs||0)+'</td>'+
+        '<td class="num">'+(s.success_rate==null?'<span class="muted">-</span>':Math.round(s.success_rate*100)+'%')+'</td>'+
+        '<td class="num">'+(s.runs?usd(s.cost_usd):'<span class="muted">-</span>')+'</td>'+
+        '<td class="num">'+(s.p50_latency_ms==null?'<span class="muted">-</span>':(s.p50_latency_ms/1000).toFixed(1)+'s')+'</td>'+
+        '<td>'+evalPill(s.eval,a.eval_cases)+'</td></tr>';
+    });
+  });
+  document.getElementById('rows').innerHTML=html;
+}
+
+function load(){
+  return api('/roster').then(function(d){
+    DATA=d; var c=d.counts;
+    var spend=d.agents.reduce(function(s,a){return s+((a.stats&&a.stats.cost_usd)||0);},0);
+    var withEvals=d.agents.filter(function(a){return a.eval_cases;}).length;
+    document.getElementById('tally').innerHTML=[
+      [c.total,'agents'],[c.core_seats+' / '+c.core_agents,'core seats / agents'],[c.specialists,'specialists'],[c.ai_services_smes,'AI Services SMEs'],
+      [withEvals,'agents with evals'],['$'+spend.toFixed(2),'spend, 30 days']
+    ].map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('');
+    document.getElementById('notice').innerHTML = d.model_configured ? '' :
+      '<div class="notice">No model is configured on this server (ANTHROPIC_API_KEY). Agents will not run and evals will report <strong>not run</strong>, never passed.</div>';
+    render();
+  });
+}
+
+document.getElementById('q').addEventListener('input',render);
+document.getElementById('rows').addEventListener('click',function(e){
+  var tr=e.target.closest('tr.agent'); if(!tr) return;
+  api('/agents/'+tr.dataset.id).then(function(a){
+    CURRENT=a;
+    document.getElementById('dName').textContent=a.name;
+    document.getElementById('dRole').textContent=a.role+' · '+a.model;
+    document.getElementById('dBrief').textContent=a.brief;
+    document.getElementById('rOut').hidden=true; document.getElementById('rMeta').textContent='';
+    document.getElementById('eGo').disabled=!a.eval_cases.length;
+    document.getElementById('dEvals').innerHTML=a.eval_cases.length?a.eval_cases.map(function(c){return '<p><strong>'+esc(c.id)+'</strong> &mdash; '+esc(c.why)+'</p>';}).join(''):'No eval cases yet. Add them in verticals/factory/registry/evals.js.';
+    document.getElementById('dlg').showModal();
+  });
+});
+document.getElementById('dClose').onclick=function(){document.getElementById('dlg').close();load();};
+document.getElementById('rGo').onclick=function(){
+  var b=this; b.disabled=true; document.getElementById('rMeta').textContent='Running...';
+  api('/agents/'+CURRENT.id+'/run',{method:'POST',body:JSON.stringify({task:document.getElementById('rTask').value,context:document.getElementById('rCtx').value})}).then(function(r){
+    b.disabled=false; var out=document.getElementById('rOut'); out.hidden=false;
+    out.textContent = r.executed ? r.artifact : (r.error||'Did not run');
+    document.getElementById('rMeta').textContent = r.executed ? (r.model+' · '+usd(r.cost_usd).replace(/<[^>]+>/g,'')+' · '+(r.latency_ms/1000).toFixed(1)+'s'+(r.issues&&r.issues.length?' · issues: '+r.issues.join(', '):'')) : (r.code||'');
+  });
+};
+document.getElementById('eGo').onclick=function(){
+  var b=this; b.disabled=true; document.getElementById('rMeta').textContent='Running evals...';
+  api('/evals/run',{method:'POST',body:JSON.stringify({agent_id:CURRENT.id})}).then(function(r){
+    b.disabled=false; var out=document.getElementById('rOut'); out.hidden=false;
+    out.textContent=JSON.stringify({passed:r.passed,failed:r.failed,not_run:r.not_run,results:r.results},null,2);
+    document.getElementById('rMeta').textContent='';
+  });
+};
+document.getElementById('evalAll').onclick=function(){
+  var b=this, st=document.getElementById('evalStatus'); b.disabled=true;
+  api('/evals/run',{method:'POST',body:JSON.stringify({all:true})}).then(function(job){
+    (function poll(){ api('/evals/jobs/'+job.id).then(function(j){
+      st.textContent=j.status==='running'?('Running evals '+j.done+'/'+j.total+'...'):('Evals '+j.status);
+      if(j.status==='running') setTimeout(poll,4000); else { b.disabled=false; load(); }
+    }); })();
+  });
+};
+load();
+</script>
