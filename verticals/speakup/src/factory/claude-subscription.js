@@ -156,4 +156,29 @@ function run({ system, context, messages, model, signal, onText, timeoutMs }) {
   });
 }
 
-module.exports = { available, status, run, args, childEnv, toUserContent, findBin };
+// DOES THE CLI ACTUALLY RUN HERE? A binary that exists is not one that starts: the platform build
+// is an optional dependency, and an install that skipped it leaves a file that fails on launch.
+// `claude --version` answers that without a token and without spending anything; cached 10 min.
+let probeCache = null;
+function probe() {
+  if (probeCache && Date.now() - probeCache.at < 10 * 60 * 1000) return Promise.resolve(probeCache.value);
+  const bin = findBin();
+  if (!bin) { probeCache = { at: Date.now(), value: { runs: false, error: 'Claude Code CLI not installed' } }; return Promise.resolve(probeCache.value); }
+  return new Promise((resolve) => {
+    const dirs = workdirs();
+    let out = '', err = '';
+    const child = spawn(bin, ['--version'], { cwd: dirs.cwd, env: childEnv(dirs.home) });
+    const timer = setTimeout(() => { try { child.kill('SIGKILL'); } catch (e) {} finish(false, 'timed out'); }, 15000);
+    function finish(runs, error) {
+      clearTimeout(timer);
+      probeCache = { at: Date.now(), value: runs ? { runs: true, version: out.trim().split('\n')[0].slice(0, 60) } : { runs: false, error: String(error || err || 'failed').trim().slice(0, 160) } };
+      resolve(probeCache.value);
+    }
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { err += d; });
+    child.on('error', (e) => finish(false, e.message));
+    child.on('close', (code) => finish(code === 0, 'exit ' + code));
+  });
+}
+
+module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe };

@@ -651,6 +651,12 @@ testAsync('the chat on the Claude subscription: locked down, streamed, and hones
     ok(!sub.available(), 'SPEAKUP_CHAT_PROVIDER=api turns the subscription off');
     delete process.env.SPEAKUP_CHAT_PROVIDER;
 
+    // /health is public: it says which Claude the chat uses, in yes/no answers only.
+    const healthSrc = stripComments(read('verticals/speakup/src/routes/health.js'));
+    ok(/subscription_token_set: s\.token_set/.test(healthSrc) && !/CLAUDE_CODE_OAUTH_TOKEN|token\(\)|last_error/.test(healthSrc), 'the public health check reports whether a token is set, never the token or an error body');
+    const pr = await sub.probe();
+    ok(pr.runs === true && /Summary|claude|\d/.test(pr.version || 'x') || pr.runs === true, 'the probe confirms the CLI actually starts');
+
     // One door, one pinned version.
     ok(/require\('\.\/claude-subscription'\)/.test(read('verticals/speakup/src/factory/llm.js')), 'llm.js is the only place the subscription is reached from');
     ok(fs.readdirSync(path.join(__dirname, 'src')).length && !/claude-subscription/.test(read('verticals/speakup/src/routes/meetings.js')), 'the routes do not call it directly');
