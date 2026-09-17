@@ -1,0 +1,82 @@
+/* DIGIT2AI brand tokens for the sandbox pages.
+   The values are the ones already shipping on the corporate-branded pages in
+   this repository (public/neural-intelligence.html, public/*-ghl.html), so a
+   sandbox page matches what visitors already see without re-deriving a palette.
+   Scoped to public/sandbox/ on purpose: no other page links this file. */
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#070b16;            /* deep navy base */
+  --panel:#0f1728;         /* card surface */
+  --line:rgba(120,150,200,.16);
+  --txt:#eaf0fb;           /* primary text */
+  --mut:#9db0cc;           /* secondary text - AA on the navy */
+  --accent:#22d3ee;        /* electric teal accent */
+  --maxw:640px;
+  --fs-body:clamp(16px,1.05vw + 12px,19px);
+  --fs-h1:clamp(28px,3.4vw + 8px,44px);
+  /* Local-or-system stacks: no hosted webfont, so no third-party request and
+     no flash of unstyled text. */
+  --font-display:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --font-body:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+}
+
+html{background:var(--bg)}
+
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--font-body);
+  font-size:var(--fs-body);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+main{width:100%;max-width:var(--maxw);text-align:center}
+
+.card{
+  background:rgba(15,23,40,.72);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:clamp(24px,5vw,48px);
+}
+
+h1{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:var(--fs-h1);
+  letter-spacing:-.02em;
+  line-height:1.15;
+  margin-bottom:14px;
+}
+
+h1 .accent{color:var(--accent)}
+
+p{color:var(--mut)}
+
+footer{
+  margin-top:22px;
+  color:var(--mut);
+  font-family:var(--font-display);
+  font-size:13px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+a{color:var(--accent)}
+
+a:focus-visible,:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+}
