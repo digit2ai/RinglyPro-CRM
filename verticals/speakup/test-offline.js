@@ -442,8 +442,11 @@ test('there is no empty page, and Clear cannot strand a live plan', () => {
   // still refuses to hide a job that is running.
   ok(/function clearPane\(force\) \{\s*if \(jobId && !jobTerminal && !force\) return;/.test(con),
      'clearPane refuses a job that is still in progress');
-  ok((con.match(/clearPane\(true\)/g) || []).length === 1 && /clearPane\(true\);\s*\n\s*status\(L\('Proyecto/.test(con),
-     'the only forced clear is the project switch');
+  // Two callers force it, and both are deliberate starts, never a running job hidden by accident:
+  // switching project, and "New conversation".
+  ok((con.match(/clearPane\(true\)/g) || []).length === 2 && /clearPane\(true\);\s*\n\s*status\(L\('Proyecto/.test(con)
+     && /clearPane\(true\);\s*\n\s*status\(L\('Conversación nueva/.test(con),
+     'the only forced clears are the project switch and a new conversation');
   ok(/if \(job && job\.terminal\) acts \+= '<button class="lnk" id="clearBtn">'/.test(con),
      'Clear is drawn only for a finished job');
   ok(/if \(\$\('clearBtn'\)\) \$\('clearBtn'\)\.addEventListener/.test(con),
@@ -451,7 +454,10 @@ test('there is no empty page, and Clear cannot strand a live plan', () => {
   // The empty page itself is gone rather than restyled.
   ok(!/idleHint|t: 'idle'/.test(con), 'the INFO paragraph and its message are gone');
   ok(/function showIdle\(\)/.test(con) && /function leaveIdle\(\)/.test(con), 'an idle state replaces it');
-  ok(/body\.idle #bar, body\.idle #out, body\.idle #acts\{display:none\}/.test(html), 'idle draws no step bar, no actions and no work pane');
+  // The actions row survives the idle screen on purpose: "New conversation" belongs there too,
+  // and `#acts:empty{display:none}` keeps it invisible when it holds nothing.
+  ok(/body\.idle #bar, body\.idle #out\{display:none\}/.test(html), 'idle draws no step bar and no work pane');
+  ok(/#acts:empty\{display:none\}/.test(html), 'and an empty actions row draws nothing');
   // Every door INTO work must leave idle, or a job would render into a hidden pane.
   const writeFn = con.slice(con.indexOf('function write('), con.indexOf('function write(') + 200);
   ok(/leaveIdle\(\)/.test(writeFn), 'writing to the pane leaves idle');

@@ -40,6 +40,7 @@ const DONE = { id: 41, status: 'DEPLOYED', terminal: true, title: 'An older chan
 let scenario = { jobs: [] };
 let newJobCalls = 0;
 let researchCalls = 0;
+let newThreadCalls = 0;
 
 const server = http.createServer((req, res) => {
   const p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
@@ -67,6 +68,9 @@ const server = http.createServer((req, res) => {
       // Anything reaching this endpoint while a plan is waiting is the second-job defect.
       newJobCalls++;
       body = { intent: 'PREPARE_IMPLEMENTATION', reply: 'new job', card: { job_id: 99 } };
+    } else if (/\/factory\/new-thread/.test(req.url)) {
+      newThreadCalls++;
+      body = { ok: true, after_command_id: 12 };
     } else if (/\/factory\/projects/.test(req.url)) {
       body = { projects: [{ key: 'ringlypro', name: 'RinglyPro CRM' }, { key: 'speakup', name: 'AutoDev' }] };
     } else if (/\/factory\/jobs\/(\d+)\/events/.test(req.url)) {
@@ -215,6 +219,21 @@ server.listen(0, async () => {
       await page.click('#send');
       await new Promise((r) => setTimeout(r, 500));
       ok(sent && sent.project_key === 'speakup', `${w} the instruction is sent to the chosen project (${sent && sent.project_key})`);
+      await page.close();
+
+      // ── 5a1b. starting a new conversation ────────────────────────────────────
+      page = await open([DONE], width);
+      newThreadCalls = 0;
+      await new Promise((r) => setTimeout(r, 500));
+      ok(await page.evaluate(() => !!document.getElementById('newBtn')), `${w} a New conversation button is offered`);
+      await page.type('#cmd', 'half a thought');
+      await page.click('#newBtn');
+      await new Promise((r) => setTimeout(r, 500));
+      const fresh = await page.evaluate(() => ({ pane: document.getElementById('out').textContent.trim(), box: document.getElementById('cmd').value,
+        idle: document.body.classList.contains('idle'), still: !!document.getElementById('newBtn') }));
+      ok(newThreadCalls === 1, `${w} it tells the server to remember the work from here on`);
+      ok(fresh.pane === '' && fresh.box === '' && fresh.idle, `${w} and the screen starts clean`);
+      ok(fresh.still, `${w} and the button is still there for the next time`);
       await page.close();
 
       // ── 5a2. where the step bar sits ─────────────────────────────────────────

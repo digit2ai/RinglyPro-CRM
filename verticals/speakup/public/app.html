@@ -34,7 +34,7 @@
   @media (prefers-reduced-motion: reduce){ .prog span{animation:none;width:100%;opacity:.55} }
   /* No empty page: with nothing in progress the step bar and the work pane are not drawn.
      console.js adds .idle only when there is no job; any job, event or plan removes it. */
-  body.idle #bar, body.idle #out, body.idle #acts{display:none}
+  body.idle #bar, body.idle #out{display:none}
   #acts{justify-content:flex-end;gap:8px;margin:0 0 9px}
   #acts:empty{display:none}
   /* The workspace picker: the same chip as the other header controls. */
@@ -117,7 +117,7 @@
      top of the work area. One element, two places — never two copies to drift apart. -->
 <div class="bar" id="bar"></div>
 
-<script src="/speakup/console.js?v=20"></script>
+<script src="/speakup/console.js?v=21"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 <script src="/speakup/install.js?v=1" defer></script>
 </body>

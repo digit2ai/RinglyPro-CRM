@@ -24,6 +24,12 @@ const { Command, Job, Setting } = require('../models');
 // A WORKSPACE IS A PROJECT (owner request 2026-09-17). Rules and remembered work are kept per
 // project as well as globally: the global rules always apply, a project's rules are added on
 // top, and a project only ever remembers its own instructions.
+/* A NEW CONVERSATION (owner request 2026-09-17). Remembering the last eight instructions is
+ * what makes a follow-up work; it is the wrong thing when the owner turns to something else.
+ * "New conversation" writes a mark — the last instruction so far — and the remembered work
+ * starts after it. Nothing is deleted: the history, the jobs and the audit are untouched, so
+ * the mark can never destroy a record. It is per project, like the rest of the memory. */
+const THREAD_KEY = 'thread_start';
 const RULES_KEY = 'house_rules';
 const projectKey = (k) => 'house_rules:' + String(k || '').slice(0, 60);
 const RULES_MAX = 4000;
@@ -73,10 +79,30 @@ function line(cmd, job) {
  * long history costs the same as a short one — the oldest lines are dropped, never summarised
  * by a model that could invent what happened.
  */
+function threadKey(project_key) { return THREAD_KEY + (project_key ? ':' + String(project_key).slice(0, 60) : ''); }
+
+// Start fresh: remember the newest instruction id, and only look after it from now on.
+async function startNewThread(tenant_id, project_key) {
+  const where = { tenant_id, mode: 'architect' };
+  if (project_key) where.project_key = String(project_key).slice(0, 60);
+  const last = await Command.findOne({ where, order: [['id', 'DESC']] });
+  const value = String(last ? last.id : 0);
+  const key = threadKey(project_key);
+  const row = await Setting.findOne({ where: { tenant_id, key } });
+  if (row) await row.update({ value, updated_at: new Date() }); else await Setting.create({ tenant_id, key, value });
+  return { after_command_id: Number(value), project_key: project_key || null };
+}
+async function threadStart(tenant_id, project_key) {
+  const row = await Setting.findOne({ where: { tenant_id, key: threadKey(project_key) } });
+  return row ? (parseInt(row.value, 10) || 0) : 0;
+}
+
 async function recentWork(tenant_id, { limit = 8, exclude_command_id = null, project_key = null } = {}) {
   const where = { tenant_id, mode: 'architect' };
   if (project_key) where.project_key = String(project_key).slice(0, 60);
-  if (exclude_command_id) where.id = { [Op.ne]: exclude_command_id };
+  const after = await threadStart(tenant_id, project_key);
+  if (after) where.id = { [Op.gt]: after };
+  if (exclude_command_id) where.id = Object.assign({}, where.id, { [Op.ne]: exclude_command_id });
   const cmds = await Command.findAll({ where, order: [['id', 'DESC']], limit: Math.min(limit, 20) });
   if (!cmds.length) return '';
   const jobIds = cmds.map(c => c.job_id).filter(Boolean);
@@ -117,4 +143,4 @@ async function contextBlock(tenant_id, opts) {
   return parts.join('\n\n');
 }
 
-module.exports = { RULES_KEY, projectKey, RULES_MAX, THREAD_MAX, DEFAULT_RULES, rules, setRules, recentWork, contextBlock, line };
+module.exports = { RULES_KEY, THREAD_KEY, projectKey, startNewThread, threadStart, RULES_MAX, THREAD_MAX, DEFAULT_RULES, rules, setRules, recentWork, contextBlock, line };

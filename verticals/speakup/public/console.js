@@ -290,7 +290,9 @@
      * to share one row: on a phone that put a long change title, two buttons and five step
      * pills in the same place. The link is labelled GitHub — where it goes — with the change's
      * name and number kept in its tooltip, and the diff button says Code. */
-    var acts = '';
+    // "New conversation" is always offered, job or not: it is how the owner turns to something
+    // else without the last eight instructions colouring the next plan.
+    var acts = '<button class="lnk" id="newBtn">' + L('Nueva conversación', 'New conversation') + '</button>';
     // The link opens a page GitHub calls a pull request, so the real word stays in the
     // tooltip while the chip itself reads in plain language. And the button beside it says
     // what it shows — "Cambio #5" next to "Cambios" was two different things, one letter apart.
@@ -303,6 +305,7 @@
     if (job && !job.terminal) acts += '<button class="lnk" id="cancelBtn">' + L('Cancelar', 'Cancel') + '</button>';
     if (job && job.terminal) acts += '<button class="lnk" id="clearBtn">' + L('Limpiar', 'Clear') + '</button>';
     $('acts').innerHTML = acts;
+    if ($('newBtn')) $('newBtn').addEventListener('click', newConversation);
     if ($('diffBtn')) $('diffBtn').addEventListener('click', showDiff);
     if ($('cancelBtn')) $('cancelBtn').addEventListener('click', cancelJob);
     if ($('clearBtn')) $('clearBtn').addEventListener('click', clearPane);
@@ -336,6 +339,25 @@
     $('out').innerHTML = '';
     renderBar(null);
     showIdle();
+  }
+
+  /* START AGAIN. The pane empties, this session's questions are forgotten, and the server is
+   * told to remember the work from here on — the instructions before it stay in the history and
+   * in the audit, they simply stop being read into the next plan. A job that is still running
+   * keeps running: this is a fresh thread, not a cancel. */
+  async function newConversation() {
+    var btn = $('newBtn');
+    if (btn) btn.disabled = true;
+    try {
+      await api('/factory/new-thread', { method: 'POST', body: JSON.stringify({ project_key: projectKey || undefined }) });
+      talk = [];
+      try { sessionStorage.removeItem(DRAFT); } catch (e) {}
+      $('cmd').value = '';
+      clearPane(true);
+      status(L('Conversación nueva', 'New conversation'));
+    } catch (e) {
+      write([{ kind: 'error', text: e.message }]);
+    } finally { if ($('newBtn')) $('newBtn').disabled = false; }
   }
 
   async function showDiff() {

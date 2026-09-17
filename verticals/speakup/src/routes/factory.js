@@ -225,6 +225,14 @@ router.get('/memory', operator, wrap(async (req, res) => {
     rules: (await memory.rules(tenantOf(req))).text, project_rules: pk ? (await memory.rules(tenantOf(req), pk)).text : '' });
 }));
 
+// Start a new conversation: the remembered work begins after this point. Nothing is deleted.
+router.post('/new-thread', mutation, operator, wrap(async (req, res) => {
+  const pk = (req.body || {}).project_key ? String(req.body.project_key).slice(0, 60) : null;
+  const r = await memory.startNewThread(tenantOf(req), pk);
+  await audit.record({ tenant_id: tenantOf(req), user_id: req.user.id, actor: req.user.email, action: 'factory.new_thread', entity: 'settings', detail: r, req });
+  res.json(Object.assign({ ok: true }, r));
+}));
+
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 router.get('/jobs', operator, wrap(async (req, res) => {
   const rows = await Job.findAll({ where: { tenant_id: tenantOf(req) }, order: [['created_at', 'DESC']], limit: 50 });

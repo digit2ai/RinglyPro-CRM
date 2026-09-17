@@ -411,6 +411,19 @@ const server = app.listen(0, async () => {
     ok(/you asked: "/.test(memSpeak.d.recent_work), 'the project remembers its own instructions');
     ok((memJobmd.d.recent_work || '') === '', 'a project with no work of its own remembers nothing');
 
+    // New conversation: the memory starts again, the record does not move.
+    const beforeNew = await call(A, 'GET', '/factory/memory?project=speakup');
+    ok(/you asked: "/.test(beforeNew.d.recent_work), 'there is work to forget');
+    const cmdsBefore = await Command.count({ where: { tenant_id: opA.id } });
+    const started = await call(A, 'POST', '/factory/new-thread', { project_key: 'speakup' });
+    ok(started.status === 200 && started.d.after_command_id > 0, 'a new conversation marks where the memory starts');
+    const afterNew = await call(A, 'GET', '/factory/memory?project=speakup');
+    ok((afterNew.d.recent_work || '') === '', 'and the next plan reads none of the old instructions');
+    ok(await Command.count({ where: { tenant_id: opA.id } }) === cmdsBefore, 'nothing was deleted: the history is untouched');
+    const otherStill = await call(A, 'GET', '/factory/memory');
+    ok(/you asked: "/.test(otherStill.d.recent_work), 'a new conversation in one project leaves the others alone');
+    ok((await call(M, 'POST', '/factory/new-thread', {})).status === 403, 'only the operator can start one');
+
     // ── Failure paths never disappear ─────────────────────────────────────────
     async function readyJob(title) {
       const r = await call(A, 'POST', '/recordings', { title, source: 'call', lang: 'es', text: 'Queda aprobado: el recordatorio de citas debe enviarse un día antes. ' + title });
