@@ -6,11 +6,11 @@
  *   node verticals/speakup/scripts/make-icons.js          write the SVGs and PNGs
  *   node verticals/speakup/scripts/make-icons.js --check   fail if anything is out of date
  *
- * THE MARK: an S drawn as one continuous stroke, knocked out of a solid clay tile, with two
- * short rays coming off the open end. The S is the product; the rays are the only thing that
- * says SPEECH rather than monogram. It replaced a purple microphone on a near-black plate,
- * which was wrong twice over — the palette went with the old theme, and a microphone
- * describes half an app whose other half is a build pipeline.
+ * THE MARK IS THE COMPANY BRAND: Digit2AI. "D2" in the wordmark's own letterforms, white
+ * with the brand cyan on the brand ink, plus the full DIGIT2AI lockup for the header.
+ * The full wordmark cannot BE the icon — at 32px it is a grey smear — so the icon is the
+ * two characters that identify it. A lone "2" was tried and is ambiguous; the stacked
+ * DIGIT/2AI was tried and turns to mush.
  *
  * Decisions that are load-bearing, not taste:
  *  - FULL-BLEED SQUARE, no rounded corners in the source. iOS rounds apple-touch-icon
@@ -18,76 +18,83 @@
  *  - EVERYTHING INSIDE THE CENTRAL 80%, so the same file works as a `maskable` icon.
  *    Android crops to a circle inscribed in that box; the rays sat outside it at first
  *    and would have been shaved off.
- *  - NO GRADIENT, NO OPACITY. A faded stroke is the first thing to disappear at 32px —
- *    two of the four candidates died exactly there.
- *  - The curve is COMPUTED from two circles, not a hand-written bézier. The hand-written
- *    one collapsed into a lumpy ring, which is only visible if you actually look at it.
+ *  - NO GRADIENT, NO OPACITY. The first thing to disappear when the icon is small.
+ *  - The cyan is the ONE fixed colour. The letters follow the theme in the header
+ *    (currentColor) so the lockup reads on paper and on the brand ink alike; the 2 does
+ *    not, because that cyan is the brand.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const OUT = path.join(__dirname, '..', 'public');
-const CLAY = '#d97757', PAPER = '#faf9f5';
+const INK = '#0d1117', WHITE = '#ffffff', CYAN = '#4fc3e3';
+// Helvetica/Arial everywhere, Roboto on Android. A wordmark ideally ships as outlines, but
+// there is no font-to-path tool here, so the stack is named and the difference accepted.
+const SANS = "'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif";
 const S = 512, CX = 256, R = 78, W = 52, RAY = 32;
 const SAFE = [S * 0.1, S * 0.9]; // the maskable safe box
 
-const rad = (d) => (d * Math.PI) / 180;
-function arc(cx, cy, r, from, to, n = 56) {
-  const pts = [];
-  for (let i = 0; i <= n; i++) {
-    const t = from + ((to - from) * i) / n;
-    pts.push([cx + r * Math.cos(rad(t)), cy + r * Math.sin(rad(t))]);
-  }
-  return pts;
-}
-const d = (pts) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
-
-// The two rays. Kept inside the safe box on purpose — see the note above.
-const RAYS = [[376, 130, 408, 102], [406, 182, 440, 172]];
-
-function mark(stroke) {
-  return `<path d="${d(arc(CX, 256 - R, R, -60, -270))}" fill="none" stroke="${stroke}" stroke-width="${W}" stroke-linecap="round"/>` +
-    `<path d="${d(arc(CX, 256 + R, R, -90, 150))}" fill="none" stroke="${stroke}" stroke-width="${W}" stroke-linecap="round"/>` +
-    RAYS.map(([x1, y1, x2, y2]) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${RAY}" stroke-linecap="round"/>`).join('');
+// The mark: the two characters that identify the wordmark, set the way it sets them.
+function mark(size, y) {
+  return `<text x="256" y="${y}" text-anchor="middle" font-family="${SANS}" font-size="${size}" font-weight="700" letter-spacing="4" fill="${WHITE}">D<tspan fill="${CYAN}">2</tspan></text>`;
 }
 
 // Full bleed: the app icon. Rounded: the browser tab, where there is no OS mask.
-const masterSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
-  <rect width="${S}" height="${S}" fill="${CLAY}"/>
-  ${mark(PAPER)}
+const masterSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="${INK}"/>
+  ${mark(230, 336)}
 </svg>
 `;
-const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">
-  <rect width="${S}" height="${S}" rx="108" fill="${CLAY}"/>
-  ${mark(PAPER)}
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="108" fill="${INK}"/>
+  ${mark(230, 336)}
+</svg>
+`;
+// The header lockup. The letters take the page's colour so one file serves both grounds.
+const wordmarkSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 96" width="520" height="96" role="img" aria-label="Digit2AI">
+  <text x="6" y="66" font-family="${SANS}" font-size="62" font-weight="700" letter-spacing="9" fill="currentColor">DIGIT<tspan fill="${CYAN}">2</tspan>AI</text>
 </svg>
 `;
 
 const PNGS = [['apple-touch-icon.png', 180], ['icon-192.png', 192], ['icon-512.png', 512], ['favicon-32.png', 32]];
 
-function safeZoneViolations() {
-  const bad = [];
-  const half = W / 2;
-  for (const [x1, y1, x2, y2] of RAYS) {
-    for (const [x, y] of [[x1, y1], [x2, y2]]) {
-      if (x - RAY / 2 < SAFE[0] || x + RAY / 2 > SAFE[1] || y - RAY / 2 < SAFE[0] || y + RAY / 2 > SAFE[1]) bad.push(`ray point ${x},${y}`);
+/**
+ * THE SAFE ZONE IS MEASURED, NOT ASSUMED.
+ *
+ * Android crops a maskable icon to a circle inscribed in the central 80%, so anything
+ * outside that box is shaved off on someone's home screen and nowhere else. The previous
+ * version computed the box from the shape's own coordinates, which only works while the
+ * shape is made of coordinates — it cannot see where a glyph actually lands. This renders
+ * the real icon and finds the bounding box of every pixel that is not the background, so
+ * it is true for a curve, a letterform, or anything drawn later.
+ */
+async function safeZoneViolations(sharp) {
+  const size = 256, lo = size * 0.1, hi = size * 0.9;
+  const { data, info } = await sharp(Buffer.from(masterSvg)).resize(size, size).raw().toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  const bg = [data[0], data[1], data[2]];
+  let minX = size, minY = size, maxX = -1, maxY = -1;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * ch;
+      // A generous threshold: antialiasing at the edge of a glyph is not ink.
+      if (Math.abs(data[i] - bg[0]) + Math.abs(data[i + 1] - bg[1]) + Math.abs(data[i + 2] - bg[2]) < 90) continue;
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
     }
   }
-  for (const [cy, from, to] of [[256 - R, -60, -270], [256 + R, -90, 150]]) {
-    for (const [x, y] of arc(CX, cy, R, from, to, 24)) {
-      if (x - half < SAFE[0] || x + half > SAFE[1] || y - half < SAFE[0] || y + half > SAFE[1]) { bad.push(`stroke at ${x.toFixed(0)},${y.toFixed(0)}`); break; }
-    }
+  if (maxX < 0) return ['the icon renders as a blank tile'];
+  const bad = [];
+  if (minX < lo || minY < lo || maxX > hi || maxY > hi) {
+    bad.push(`ink spans ${minX},${minY} to ${maxX},${maxY} of ${size}; the safe box is ${lo}..${hi}`);
   }
   return bad;
 }
 
 async function main() {
   const check = process.argv.includes('--check');
-  const bad = safeZoneViolations();
-  if (bad.length) { console.error('The mark leaves the maskable safe box: ' + bad.join(', ')); process.exit(1); }
-
-  const files = [['icon-master.svg', masterSvg], ['favicon.svg', faviconSvg]];
+  const files = [['icon-master.svg', masterSvg], ['favicon.svg', faviconSvg], ['wordmark.svg', wordmarkSvg]];
   let stale = [];
   for (const [name, body] of files) {
     const p = path.join(OUT, name);
@@ -101,6 +108,9 @@ async function main() {
     console.log(stale.length ? ('svg updated: ' + stale.join(', ')) : 'svg already current');
     return;
   }
+  const bad = await safeZoneViolations(sharp);
+  if (bad.length) { console.error('The mark leaves the maskable safe box: ' + bad.join(', ')); process.exit(1); }
+
   for (const [name, size] of PNGS) {
     const p = path.join(OUT, name);
     const buf = await sharp(Buffer.from(masterSvg)).resize(size, size).png({ compressionLevel: 9 }).toBuffer();

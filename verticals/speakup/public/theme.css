@@ -27,7 +27,11 @@ body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);
 .top{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 16px 9px;
   border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
 .top img{width:22px;height:22px;border-radius:5px}
-.brand{font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:-.2px}
+/* The lockup takes the page colour through currentColor, so one file reads on paper and
+   on the brand ink. Only the 2 is fixed — that cyan is the brand. */
+.top img.wordmark{height:17px;width:auto;border-radius:0;color:var(--text);flex:0 0 auto}
+.product{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--muted);
+  padding-left:9px;margin-left:2px;border-left:1px solid var(--line);white-space:nowrap}
 .where{font-size:13px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tabs{display:flex;gap:2px;background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:2px}
 .tab{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:8px;border:0;background:transparent;
@@ -176,5 +180,6 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 
 @media(max-width:560px){
   .top{padding-left:12px;padding-right:12px;gap:8px}
-  .brand{font-size:16px}
+  .product{display:none}
+  .top img.wordmark{height:15px}
 }

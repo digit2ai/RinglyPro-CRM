@@ -664,7 +664,7 @@ test('the icon is generated from one source and survives being small', () => {
   [master, fav].forEach(function (svg) {
     ok(!/5a3fe0|8b7bff|0d1320|linearGradient|url\(#/.test(svg), 'no leftover purple or gradient in the mark');
     ok(!/opacity/.test(svg), 'no opacity: a faded stroke is the first thing to vanish at 32px');
-    ok(/#d97757/.test(svg) && /#faf9f5/.test(svg), 'it wears the clay and paper of the current theme');
+    ok(/#0d1117/.test(svg) && /#4fc3e3/.test(svg), 'it wears the Digit2AI ink and cyan');
   });
   // FULL BLEED for the app icon, ROUNDED only for the browser tab: iOS rounds
   // apple-touch-icon itself and a pre-rounded source gets double-rounded.
@@ -679,12 +679,14 @@ test('the icon is generated from one source and survives being small', () => {
   // EVERY SIZE COMES FROM ONE FILE. Hand-editing a 32px icon is how a mark drifts.
   ok(/--check/.test(gen) && /maskable safe box/.test(gen), 'the generator can verify itself and guards the maskable safe zone');
   ok(/icon-master\.svg/.test(gen) && /favicon\.svg/.test(gen) && /apple-touch-icon\.png/.test(gen), 'it writes every asset');
-  // The safe-zone guard is not decoration: it caught a ray that Android would have clipped.
-  const rays = (gen.match(/const RAYS = \[\[([\d, ]+)\], \[([\d, ]+)\]\]/) || []);
-  ok(rays.length === 3, 'the rays are declared where the guard can check them');
-  rays.slice(1).forEach(function (r) {
-    r.split(',').map(Number).forEach(function (v) { ok(v >= 51 && v <= 460, 'a ray stays inside the maskable box (' + v + ')'); });
-  });
+  // THE SAFE ZONE IS MEASURED, NOT COMPUTED FROM COORDINATES. The first version derived the
+  // box from the shape's own numbers, which works only while the mark is made of numbers —
+  // it cannot see where a glyph lands. The guard now renders the real icon and finds the
+  // bounding box of every non-background pixel, so it stays true for a letterform too.
+  ok(/async function safeZoneViolations\(sharp\)/.test(gen), 'the guard renders the icon rather than trusting the maths');
+  ok(/raw\(\)\.toBuffer/.test(gen) && /minX/.test(gen), 'it measures the ink it can actually see');
+  ok(/size \* 0\.1/.test(gen) && /size \* 0\.9/.test(gen), 'against the central 80%');
+  ok(!/const RAYS/.test(gen), 'the old coordinate guard went with the shape it guarded');
 });
 
 test('the header controls are one node, not two copies', () => {
@@ -807,7 +809,8 @@ test('workflow tokens + merge scope', () => {
 
 test('console header', () => {
   const html = fs.readFileSync(path.join(__dirname, 'public/app.html'), 'utf8');
-  ok(/<span class="brand">SpeakUp<\/span>/.test(html), 'the console header carries the SpeakUp name');
+  ok(/<img class="wordmark" src="\/speakup\/wordmark\.svg/.test(html), 'the header leads with the Digit2AI lockup');
+  ok(/<span class="product">SpeakUp<\/span>/.test(html), 'and still names the product');
   ok(!/<span class="tag">/.test(html), 'no tag badge sits next to the SpeakUp name');
   ok(!/header \.tag\{/.test(html), 'the badge style went with the badge');
 });

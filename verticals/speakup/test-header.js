@@ -71,6 +71,13 @@ server.listen(0, async () => {
         ok(phone ? burger.vis : !burger.vis, `${name} ${label}: burger ${phone ? 'is shown' : 'is hidden'}`);
         if (phone) ok(burger.w >= 44 && burger.h >= 44, `${name} ${label}: burger is a 44px target (${Math.round(burger.w)}x${Math.round(burger.h)})`);
 
+        // THE LOCKUP IS WIDE, AND ONLY A BROWSER KNOWS IT. `.top img` is (0,1,1) and beats a
+        // bare `.wordmark` (0,1,0) however late it appears, so the Digit2AI lockup rendered
+        // as a 22px square — a squashed logo no source grep can see.
+        const wm = await shown('.wordmark');
+        ok(wm.vis, `${name} ${label}: the Digit2AI lockup is on screen`);
+        ok(wm.w > wm.h * 3, `${name} ${label}: it is a lockup, not squashed into a square (${Math.round(wm.w)}x${Math.round(wm.h)})`);
+
         const menuClosed = await shown('#hdrMenu');
         ok(phone ? !menuClosed.vis : menuClosed.vis, `${name} ${label}: the controls are ${phone ? 'tucked away' : 'in the bar'}`);
 
