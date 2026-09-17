@@ -461,6 +461,82 @@ test('there is no empty page, and Clear cannot strand a live plan', () => {
      'startup lands on work in progress first, and on idle only when there is none');
 });
 
+// WHISPER'S REPETITION LOOPS ARE STOPPED WHILE THEY FORM AND COLLAPSED IF THEY GET THROUGH.
+// A real meeting came back 88% loop: one phrase 86 times in a row, another 65 times, each
+// about one 30-second window decoded to Whisper's 448-token ceiling. OpenAI's reference
+// implementation re-decodes any window whose text compresses above 2.4; the loops measured
+// 28-32 and the real speech 1.42, and transformers.js implements none of those checks.
+//
+// THE FIXTURE IS INVENTED ON PURPOSE. The repository is public, so no meeting wording goes
+// in it. It reproduces the SHAPE that failed — real sentences either side of an 86-copy loop
+// and a 65-copy loop, one of them sharing words with a real sentence beside it.
+test('Whisper repetition loops are stopped and collapsed', () => {
+  const zlib = require('zlib');
+  const { collapseRepeats } = require('./public/transcript-clean');
+  const ratio = (s) => { const b = Buffer.from(s); return b.length / zlib.gzipSync(b).length; };
+
+  const before = 'Welcome everyone. The quarterly figures are in the shared folder. ' +
+    'We need the vendor list... '.repeat(86) +
+    'That part is settled. The review moved to Tuesday. ' +
+    'The review moved to Tuesday. '.repeat(64) +
+    'Then the budget line. Any other questions? No.';
+  const out = collapseRepeats(before);
+  const count = (s, p) => s.split(p).length - 1;
+
+  ok(ratio(before) > 2.4, `the fixture reproduces the defect (compression ${ratio(before).toFixed(2)} above 2.4)`);
+  ok(ratio(out.text) < 2.4, `after cleaning it compresses like speech (${ratio(out.text).toFixed(2)} below 2.4)`);
+  ok(count(out.text, 'We need the vendor list...') === 1, 'the 86-copy loop is left as one copy');
+  ok(count(out.text, 'The review moved to Tuesday.') === 1, 'the 64-copy loop is left as one copy, including the real one beside it');
+  ok(out.loops === 2, `exactly two loops were found (${out.loops})`);
+  // Every real sentence survives, verbatim and in order.
+  let at = 0, inOrder = true;
+  for (const s of ['Welcome everyone.', 'The quarterly figures are in the shared folder.', 'That part is settled.',
+    'Then the budget line.', 'Any other questions?', 'No.']) {
+    const i = out.text.indexOf(s, at); if (i < 0) { inOrder = false; break; } at = i + s.length;
+  }
+  ok(inOrder, 'every real sentence survives, verbatim and in order');
+  // NOTHING IS INVENTED: the output is the input with words taken out, never added or moved.
+  const inW = before.split(/\s+/).filter(Boolean), outW = out.text.split(/\s+/).filter(Boolean);
+  let j = 0; for (const w of inW) { if (j < outW.length && w === outW[j]) j++; }
+  ok(j === outW.length, 'the output is a subsequence of the input: nothing added, nothing reordered');
+  ok(out.removed === inW.length - outW.length, `the count of removed words is honest (${out.removed})`);
+
+  // People do repeat themselves. Two copies are speech; three in a row is the decoder.
+  const twice = 'I agree with that. I agree with that. Moving on.';
+  ok(collapseRepeats(twice).text === twice, 'a sentence said twice is left alone');
+  ok(collapseRepeats('go go go now').text === 'go now', 'three in a row is collapsed');
+  // The same phrase comes back with different capitals and trailing punctuation.
+  ok(collapseRepeats('The plan. the plan... THE PLAN. done').text === 'The plan. done', 'matching ignores case and punctuation');
+  // THE SHORTEST REPEATING UNIT WINS: an 8-word window over a 4-word loop also "repeats",
+  // and collapsing to it would leave two copies of the phrase behind.
+  ok(collapseRepeats('a b c d '.repeat(6).trim()).text === 'a b c d', 'the shortest repeating unit is the one collapsed');
+  ok(collapseRepeats(out.text).text === out.text, 'cleaning is idempotent');
+  ok(collapseRepeats('').text === '' && collapseRepeats(null).text === '' && collapseRepeats('hi').text === 'hi', 'empty and short input are safe');
+
+  // THE DECODER GUARD. Traced through transformers.js 3.3.3: the pipeline spreads these into
+  // generation_config and Whisper's generate() adds NoRepeatNGramLogitsProcessor from it.
+  const eng = stripComments(read('verticals/speakup/public/record-engine.js'));
+  ok(/no_repeat_ngram_size:\s*8/.test(eng), 'the recorder asks Whisper not to repeat an 8-token sequence');
+  // repetition_penalty taxes every word already said, "the" and "and" included.
+  ok(!/repetition_penalty/.test(eng), 'repetition_penalty is deliberately not used');
+  ok(/SpeakUpTranscript\.collapseRepeats\(text\)/.test(eng), 'the recorder collapses whatever still gets through');
+  const mt = read('verticals/speakup/public/meetings.html');
+  ok(mt.indexOf('transcript-clean.js') > 0 && mt.indexOf('transcript-clean.js') < mt.indexOf('record-engine.js'),
+     'the page loads the cleaner before the recorder that calls it');
+
+  // THE SERVER CLEANS TOO, WITH THE SAME FILE. The phone is not the only writer and not always
+  // a current one: an installed app can serve a cached recorder for days.
+  const rt = stripComments(read('verticals/speakup/src/routes/recordings.js'));
+  ok(/require\('\.\.\/\.\.\/public\/transcript-clean'\)/.test(rt), 'the server requires the same file the browser loads');
+  ok(/const text = collapseRepeats\(String\(req\.body\.text \|\| ''\)\.trim\(\)\)\.text;/.test(rt), 'creating a recording cleans the text');
+  // Cleaned BEFORE the cap: a loop must not spend the 800,000-character limit and truncate the
+  // real speech that came after it.
+  ok(/collapseRepeats\(String\(req\.body\.text \|\| ''\)\)\.text\.slice\(0, 800000\)/.test(rt), 'autosave cleans before the length cap');
+  ok(/if \(result && !result\.is_simulated && result\.text\) result\.text = collapseRepeats/.test(rt),
+     'the server engine\'s output is cleaned, and the stub\'s labelled placeholder is not');
+  ok(/'\/speakup\/transcript-clean\.js\?v=\d+'/.test(read('verticals/speakup/public/sw.js')), 'the worker caches the cleaner for offline use');
+});
+
 // THE REPOSITORY NAME IS NOT SHOWN TO THE OPERATOR (owner request 2026-09-17).
 // The console only ever talks to one repository, so printing "digit2ai/RinglyPro-CRM" in
 // the header chip, in the idle message and again in the wake-word greeting was noise on

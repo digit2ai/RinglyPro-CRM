@@ -100,9 +100,27 @@
     // whatever was actually said. Forcing a language makes Whisper hallucinate
     // garbage when the audio doesn't match. The UI ES/EN toggle only controls the
     // language of generated deliverables, not the transcript.
-    var out = await asr(pcm, { chunk_length_s: 30, stride_length_s: 5, task: 'transcribe', return_timestamps: false });
+    //
+    // no_repeat_ngram_size STOPS A LOOP WHILE IT IS FORMING. Whisper writes each word with
+    // the previous ones as context, and on unclear audio it can lock onto a phrase and repeat
+    // it until the window's 448-token ceiling: a real meeting came back 88% loop. This option
+    // forbids emitting any 8-token sequence already emitted in the same window, so a loop is
+    // broken within about one extra copy. It was traced through transformers.js 3.3.3 rather
+    // than assumed: the pipeline spreads these options into generation_config, and Whisper's
+    // generate() hands that to _get_logits_processor, which adds NoRepeatNGramLogitsProcessor.
+    // 8 and not smaller: a small n also forbids legitimate repeats inside ordinary speech
+    // ("of the", "I think that"), while any n breaks a loop within one period plus n tokens.
+    // repetition_penalty is deliberately NOT used — it taxes every word already said,
+    // including "the" and "and", and bends normal sentences to avoid them.
+    var out = await asr(pcm, { chunk_length_s: 30, stride_length_s: 5, task: 'transcribe', return_timestamps: false,
+      no_repeat_ngram_size: 8 });
     setMsg('done', null);
-    return (out && out.text) ? out.text.trim() : '';
+    var text = (out && out.text) ? out.text.trim() : '';
+    // AND ANYTHING THAT GETS THROUGH IS COLLAPSED. The decoder guard is per window and exact;
+    // a loop with slightly different punctuation, or one straddling two windows, survives it.
+    // The same cleaner runs on the server when the transcript is saved.
+    if (window.SpeakUpTranscript) text = window.SpeakUpTranscript.collapseRepeats(text).text;
+    return text;
   }
 
   // fallback: hand the audio to the server (stub engine) so the recording is still saved

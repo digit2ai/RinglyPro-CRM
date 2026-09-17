@@ -18,6 +18,12 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+// THE SAME CLEANER THE PHONE RUNS. Loaded from public/ so the browser and the server share
+// one implementation. It runs again here because the phone is not the only writer and not
+// always a current one: an installed app can keep serving a cached recorder for days, and
+// the self-hosted server engine is Whisper too and loops the same way. Every summary and
+// extraction reads the stored text, so the loop is removed before it is stored.
+const { collapseRepeats } = require('../../public/transcript-clean');
 const router = express.Router();
 const { Recording, Transcript, Summary, Translation, Edit, Document, Usage } = require('../models');
 const stt = require('../services/stt');
@@ -46,6 +52,8 @@ async function logUsage(req, kind, units) {
 async function runTranscriptionJob(recordingId, meta) {
   try {
     const result = await stt.transcribe(meta);
+    // Only a real decode is cleaned; the stub's labelled placeholder is left exactly as it is.
+    if (result && !result.is_simulated && result.text) result.text = collapseRepeats(result.text).text;
     const rec = await Recording.findByPk(recordingId);
     if (!rec) return;
     const existing = await Transcript.findOne({ where: { recording_id: recordingId } });
@@ -80,7 +88,7 @@ async function runTranscriptionJob(recordingId, meta) {
 // ── Create (live mic / Web Speech: transcript text comes from the browser) ────
 router.post('/', async (req, res) => {
   try {
-    const text = String(req.body.text || '').trim();
+    const text = collapseRepeats(String(req.body.text || '').trim()).text;
     const status = ['recording', 'done'].includes(req.body.status) ? req.body.status : 'done';
     const rec = await Recording.create({
       tenant_id: tenantOf(req),
@@ -198,7 +206,9 @@ router.put('/:id/transcript', async (req, res) => {
   try {
     const rec = await Recording.findOne({ where: { id: req.params.id, tenant_id: tenantOf(req) } });
     if (!rec) return res.status(404).json({ error: 'Grabación no encontrada' });
-    const text = String(req.body.text || '').slice(0, 800000);
+    // Cleaned BEFORE the length cap, so a loop cannot spend the cap and truncate real speech
+    // that came after it.
+    const text = collapseRepeats(String(req.body.text || '')).text.slice(0, 800000);
     let tr = await Transcript.findOne({ where: { recording_id: rec.id } });
     if (tr) {
       tr.text = text;
