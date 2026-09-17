@@ -16,6 +16,7 @@
 let Anthropic = null;
 try { Anthropic = require('@anthropic-ai/sdk'); } catch (e) { Anthropic = null; }
 
+const subscription = require('./claude-subscription');
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 let client = (API_KEY && Anthropic) ? new Anthropic({ apiKey: API_KEY }) : null;
 
@@ -38,8 +39,10 @@ function chain(kind) {
 }
 
 function configured() { return !!client; }
+// The meetings chat can also run on the owner's Claude subscription (claude-subscription.js).
+function chatConfigured() { return subscription.available() || !!client; }
 function activeModel(kind) { return working[kind] || MODELS[kind] || null; }
-function status() { return { configured: !!client, configured_models: MODELS, working: Object.assign({}, working), last_error: Object.assign({}, lastError) }; }
+function status() { return { configured: !!client, configured_models: MODELS, working: Object.assign({}, working), last_error: Object.assign({}, lastError), subscription: subscription.status() }; }
 
 // A model the key cannot use, or a name that does not exist: try the next one.
 function isModelRefusal(e) {
@@ -79,8 +82,29 @@ async function callJSON(kind, { system, user, max_tokens }) {
  * before the first token. Once text has reached the person, switching models mid-answer
  * would splice two different replies into one.
  */
-async function streamText(kind, { system, messages, max_tokens, signal }, onText) {
+// system: the rules (short). context: the long material (a transcript). On the API they become
+// two system blocks with the long one cacheable; on the subscription the rules are the system
+// prompt and the context travels in the message.
+function apiSystem(system, context) {
+  if (!context) return system;
+  return [{ type: 'text', text: String(system || '') }, { type: 'text', text: String(context), cache_control: { type: 'ephemeral' } }];
+}
+
+// THE CHAT PREFERS THE SUBSCRIPTION. When the token and the CLI are present it is used, and a
+// failure there is reported as that failure — not silently retried on the API account, which is
+// the one that ran out of credit and would only replace a clear reason with a confusing one.
+async function viaSubscription(kind, opts, onText) {
+  try {
+    const r = await subscription.run({ system: opts.system, context: opts.context, messages: opts.messages, model: MODELS[kind] || MODELS.chat, signal: opts.signal, onText });
+    working[kind] = r.model; delete lastError[kind];
+    return r;
+  } catch (e) { lastError[kind] = String(e.message).slice(0, 300); throw e; }
+}
+
+async function streamText(kind, { system, context, messages, max_tokens, signal }, onText) {
+  if (kind === 'chat' && subscription.available()) return viaSubscription(kind, { system, context, messages, signal }, onText);
   if (!client) return null;
+  system = apiSystem(system, context);
   let err = null;
   for (const model of chain(kind)) {
     let started = false;
@@ -103,8 +127,10 @@ async function streamText(kind, { system, messages, max_tokens, signal }, onText
   throw err || new Error('no model answered');
 }
 
-async function callText(kind, { system, messages, max_tokens }) {
+async function callText(kind, { system, context, messages, max_tokens }) {
+  if (kind === 'chat' && subscription.available()) return viaSubscription(kind, { system, context, messages });
   if (!client) return null;
+  system = apiSystem(system, context);
   let err = null;
   for (const model of chain(kind)) {
     try {
@@ -124,4 +150,4 @@ async function callText(kind, { system, messages, max_tokens }) {
 // SIT only: swap the client (or null it) without touching the environment.
 function __setClient(c) { client = c; for (const k of Object.keys(working)) delete working[k]; }
 
-module.exports = { MODELS, FALLBACK, configured, activeModel, status, callJSON, streamText, callText, isModelRefusal, __setClient };
+module.exports = { MODELS, FALLBACK, configured, chatConfigured, activeModel, status, callJSON, streamText, callText, isModelRefusal, __setClient };

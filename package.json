@@ -48,6 +48,7 @@
   "author": "RinglyPro Team",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.272",
     "@anthropic-ai/sdk": "^0.67.0",
     "@aws-sdk/client-s3": "^3.609.0",
     "@aws-sdk/s3-request-presigner": "^3.609.0",

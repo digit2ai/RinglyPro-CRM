@@ -15,6 +15,13 @@
   }
   function modelLine() {
     if (!model) return '…';
+    var sub = model.subscription;
+    if (sub && sub.available) {
+      var err0 = model.last_error && model.last_error.chat;
+      return (err0 ? L('Suscripción de Claude, pero la última llamada falló: ', 'Claude subscription, but the last call failed: ') + err0
+        : L('Suscripción de Claude', 'Claude subscription') + (model.working && model.working.chat ? ' (' + model.working.chat.replace('subscription:', '') + ')' : ''));
+    }
+    if (sub && sub.token_set && !sub.cli_installed) return L('Hay token de suscripción, pero Claude Code no está instalado en el servidor.', 'A subscription token is set, but Claude Code is not installed on the server.');
     if (!model.configured) return L('Sin conectar: las respuestas se marcan como "sin modelo".', 'Not connected: replies are labelled "no model".');
     var err = model.last_error && model.last_error.chat;
     var using = model.working && model.working.chat;

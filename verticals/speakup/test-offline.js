@@ -19,6 +19,9 @@ const assert = require('assert');
 let pass = 0, fail = 0;
 function ok(cond, msg) { if (cond) { pass++; } else { fail++; console.log('FAIL ' + msg); } }
 function test(name, fn) { try { fn(); } catch (e) { fail++; console.log('FAIL ' + name + ': ' + e.message); } }
+// An async test starts after every synchronous one has run, and the summary waits for it.
+const pendingTests = [];
+function testAsync(name, fn) { pendingTests.push(Promise.resolve().then(fn).catch((e) => { fail++; console.log('FAIL ' + name + ': ' + e.message); })); }
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -537,6 +540,131 @@ test('Whisper repetition loops are stopped and collapsed', () => {
   ok(/'\/speakup\/transcript-clean\.js\?v=\d+'/.test(read('verticals/speakup/public/sw.js')), 'the worker caches the cleaner for offline use');
 });
 
+// THE CHAT RUNS ON THE OWNER'S CLAUDE SUBSCRIPTION, AND THE CLI IT RUNS CAN DO NOTHING BUT WRITE TEXT.
+// The server's API account ran out of credit while the Factory already used the subscription, so
+// the chat runs the pinned Claude Code CLI headless with CLAUDE_CODE_OAUTH_TOKEN. It runs on the
+// production server with untrusted meeting text as input, so every tool, setting and MCP server
+// is off and the environment is an allow-list. Proven here with a FAKE claude binary that records
+// exactly what it was given — no token, no network.
+testAsync('the chat on the Claude subscription: locked down, streamed, and honest about failures', async () => {
+  const os = require('os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'speakup-fakeclaude-'));
+  const dump = path.join(dir, 'dump.json');
+  const bin = path.join(dir, 'claude');
+  fs.writeFileSync(bin, '#!' + process.execPath + '\n' + `
+    const fs = require('fs'); let input = '';
+    process.stdin.on('data', d => input += d);
+    process.stdin.on('end', () => {
+      fs.writeFileSync(${JSON.stringify(dump)}, JSON.stringify({ argv: process.argv.slice(2), env: process.env, cwd: process.cwd(), input }));
+      const out = (o) => process.stdout.write(JSON.stringify(o) + '\\n');
+      out({ type: 'system', subtype: 'init', tools: [] });
+      if (/FAIL401/.test(input)) { out({ type: 'result', subtype: 'success', is_error: true, result: 'Failed to authenticate. API Error: 401 Invalid bearer token' }); process.exit(1); }
+      if (/SLEEP/.test(input)) { setTimeout(() => {}, 60000); return; }
+      const text = 'Summary: three short points.';
+      if (!/NODELTA/.test(input)) for (const p of text.match(/.{1,6}/g)) out({ type: 'stream_event', event: { type: 'content_block_delta', delta: { type: 'text_delta', text: p } } });
+      out({ type: 'assistant', message: { content: [{ type: 'text', text }] } });
+      out({ type: 'result', subtype: 'success', is_error: false, result: text });
+    });`);
+  fs.chmodSync(bin, 0o755);
+
+  const saved = { bin: process.env.SPEAKUP_CLAUDE_BIN, tok: process.env.CLAUDE_CODE_OAUTH_TOKEN, prov: process.env.SPEAKUP_CHAT_PROVIDER,
+    db: process.env.DATABASE_URL, fs_: process.env.SPEAKUP_FACTORY_SECRET, ak: process.env.ANTHROPIC_API_KEY };
+  process.env.SPEAKUP_CLAUDE_BIN = bin;
+  process.env.CLAUDE_CODE_OAUTH_TOKEN = 'sit-subscription-token';
+  process.env.DATABASE_URL = 'postgres://must-not-leak';
+  process.env.SPEAKUP_FACTORY_SECRET = 'must-not-leak-either';
+  process.env.ANTHROPIC_API_KEY = 'sk-must-not-leak';
+  delete process.env.SPEAKUP_CHAT_PROVIDER;
+  const sub = require('./src/factory/claude-subscription');
+  const chat = require('./src/factory/meeting-chat');
+  const read_ = () => JSON.parse(fs.readFileSync(dump, 'utf8'));
+  try {
+    ok(sub.available(), 'with a token and the CLI present, the subscription is used');
+
+    const meeting = { id: 9, title: 'Weekly', created_at: new Date('2026-09-17T15:00:00Z') };
+    const big = 'palabra '.repeat(40000);                              // ~320 KB: over the 128 KB argument cap
+    const deltas = [];
+    const r = await sub.run({ system: chat.systemRules({ meeting }), context: chat.transcriptContext(big), model: 'claude-sonnet-5',
+      messages: [{ role: 'user', content: 'Dame las minutas' }, { role: 'assistant', content: 'Acta...' }, { role: 'user', content: 'mas corto' }],
+      onText: (x) => deltas.push(x) });
+    const d = read_();
+    ok(r.text === 'Summary: three short points.' && deltas.length > 1 && deltas.join('') === r.text, 'the reply streams in pieces and the whole text comes back');
+    ok(r.model === 'subscription:claude-sonnet-5', 'the stored model says it came from the subscription');
+
+    // LOCKED DOWN.
+    const at = (f) => d.argv.indexOf(f);
+    ok(at('--tools') >= 0 && d.argv[at('--tools') + 1] === '', 'every tool is switched off (--tools "")');
+    ok(at('--restricted') >= 0, 'and --restricted removes the tools that run commands, belt and braces');
+    ok(at('--setting-sources') >= 0 && d.argv[at('--setting-sources') + 1] === '' && at('--strict-mcp-config') >= 0, 'no settings, hooks or MCP servers are loaded');
+    ok(at('--no-session-persistence') >= 0 && at('-p') === 0, 'headless, and nothing is saved between turns');
+    // macOS adds __CF_USER_TEXT_ENCODING to every process by itself; it is not ours and Render is Linux.
+    const envKeys = Object.keys(d.env).filter(k => !/^__CF_/.test(k)).sort();
+    ok(envKeys.join(',') === ['CI', 'CLAUDE_CODE_OAUTH_TOKEN', 'DISABLE_AUTOUPDATER', 'HOME', 'LANG', 'PATH', 'TERM'].sort().join(','), 'the environment is an allow-list: ' + envKeys.join(','));
+    ok(!JSON.stringify(d.env).includes('must-not-leak') && !JSON.stringify(d.env).includes('sk-must-not-leak'), 'no database URL, factory secret or API key reaches the CLI');
+    ok(fs.readdirSync(d.cwd).length === 0 && d.env.HOME !== os.homedir(), 'it runs in an empty directory with a private HOME, so no project file or user config is read');
+
+    // INPUT THROUGH STDIN.
+    const sys = d.argv[at('--system-prompt') + 1];
+    ok(Buffer.byteLength(sys) < 100 * 1024 && !sys.includes('palabra palabra'), 'only the short rules travel as an argument');
+    const msg = JSON.parse(d.input.trim());
+    const text = msg.message.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    ok(msg.type === 'user' && text.includes('palabra palabra') && text.includes('CONVERSATION SO FAR') && /LATEST MESSAGE FROM THE USER\nmas corto$/.test(text),
+      'the transcript, the conversation so far and the latest message go in through stdin');
+
+    const leading = require('./src/factory/claude-subscription').toUserContent({ context: '', messages: [{ role: 'user', content: '/bash rm -rf /' }] });
+    ok(!/^[\/!]/.test(leading[leading.length - 1].text), 'a message can never start with "/" or "!", so it is never read as a command');
+
+    // A screenshot stays an image block.
+    await sub.run({ system: 'r', context: 'c', model: 'claude-sonnet-5', messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'AAAA' } }, { type: 'text', text: 'what is this' }] }] });
+    const m2 = JSON.parse(read_().input.trim());
+    ok(m2.message.content[0].type === 'image' && m2.message.content[0].source.media_type === 'image/png', 'a screenshot reaches the model as an image');
+
+    // An older CLI that does not stream still hands over the whole text.
+    const once = [];
+    const r3 = await sub.run({ system: 'r', context: 'NODELTA', model: 'm', messages: [{ role: 'user', content: 'x' }], onText: (x) => once.push(x) });
+    ok(once.length === 1 && once[0] === r3.text, 'with no streamed pieces the whole answer is sent once');
+
+    // HONEST FAILURES.
+    let e401 = null; try { await sub.run({ system: 'r', context: 'FAIL401', model: 'm', messages: [{ role: 'user', content: 'x' }] }); } catch (e) { e401 = e; }
+    ok(e401 && /401 Invalid bearer token/.test(e401.message), "a bad token fails with Claude's own words");
+    ok(/invalid or expired/.test(chat.reasonOf(e401)), 'and the chat names it: the subscription token is invalid or expired');
+    ok(/usage limit/.test(chat.reasonOf(new Error('Claude subscription: usage limit reached'))), 'a usage limit is named as a usage limit');
+
+    const ac = new AbortController();
+    const t0 = Date.now();
+    const pAbort = sub.run({ system: 'r', context: 'SLEEP', model: 'm', messages: [{ role: 'user', content: 'x' }], signal: ac.signal }).catch(e => e);
+    setTimeout(() => ac.abort(), 300);
+    const eAbort = await pAbort;
+    ok(eAbort && eAbort.name === 'AbortError' && Date.now() - t0 < 3000, 'closing the tab kills the CLI at once');
+    const eTime = await sub.run({ system: 'r', context: 'SLEEP', model: 'm', messages: [{ role: 'user', content: 'x' }], timeoutMs: 400 }).catch(e => e);
+    ok(eTime && /timed out/.test(eTime.message), 'a stuck CLI is killed by a timeout, not left hanging a request');
+
+    // The chat prefers the subscription over the API client, and says so in the status.
+    const llm = require('./src/factory/llm');
+    let apiCalled = false;
+    llm.__setClient({ messages: { stream() { apiCalled = true; throw new Error('api'); }, create() { apiCalled = true; throw new Error('api'); } } });
+    const viaLlm = await llm.streamText('chat', { system: 'r', context: 'c', messages: [{ role: 'user', content: 'x' }] }, () => {});
+    ok(viaLlm.model === 'subscription:claude-sonnet-5' && !apiCalled, 'llm.streamText sends the chat to the subscription, not the API account');
+    ok(llm.status().subscription.available === true, 'the status reports the subscription as in use');
+    llm.__setClient(null);
+    process.env.SPEAKUP_CHAT_PROVIDER = 'api';
+    ok(!sub.available(), 'SPEAKUP_CHAT_PROVIDER=api turns the subscription off');
+    delete process.env.SPEAKUP_CHAT_PROVIDER;
+
+    // One door, one pinned version.
+    ok(/require\('\.\/claude-subscription'\)/.test(read('verticals/speakup/src/factory/llm.js')), 'llm.js is the only place the subscription is reached from');
+    ok(fs.readdirSync(path.join(__dirname, 'src')).length && !/claude-subscription/.test(read('verticals/speakup/src/routes/meetings.js')), 'the routes do not call it directly');
+    const pkg = JSON.parse(read('package.json'));
+    const wfVer = (read('.github/workflows/speakup-factory.yml').match(/claude-code@([0-9.]+)/) || [])[1];
+    ok(pkg.dependencies['@anthropic-ai/claude-code'] === wfVer, 'the server pins the same Claude Code version as the build job (' + wfVer + ')');
+  } finally {
+    const put = (k, v) => { if (v === undefined) delete process.env[k]; else process.env[k] = v; };
+    put('SPEAKUP_CLAUDE_BIN', saved.bin); put('CLAUDE_CODE_OAUTH_TOKEN', saved.tok); put('SPEAKUP_CHAT_PROVIDER', saved.prov);
+    put('DATABASE_URL', saved.db); put('SPEAKUP_FACTORY_SECRET', saved.fs_); put('ANTHROPIC_API_KEY', saved.ak);
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // THE REPOSITORY NAME IS NOT SHOWN TO THE OPERATOR (owner request 2026-09-17).
 // The console only ever talks to one repository, so printing "digit2ai/RinglyPro-CRM" in
 // the header chip, in the idle message and again in the wake-word greeting was noise on
@@ -782,7 +910,8 @@ test('the meetings chat: honest without a model, tenant-scoped, and transfer sto
   ok(/status: 503/.test(tr) && !/offlinePrompt/.test(tr), 'transfer without a model stops rather than improvising a prompt');
 
   // Cost: the long prefix is cacheable, the tab closing stops the model, and there is a daily cap.
-  ok(chat.systemBlocks({ meeting: { id: 1 }, transcript: 'x' })[0].cache_control.type === 'ephemeral', 'the transcript prefix is marked cacheable');
+  const blocks = chat.systemBlocks({ meeting: { id: 1 }, transcript: 'x' });
+  ok(blocks.length === 2 && !blocks[0].cache_control && blocks[1].cache_control.type === 'ephemeral' && /TRANSCRIPT/.test(blocks[1].text), 'the transcript block is the cacheable one; the rules are separate');
   ok(/abort\.abort\(\)/.test(routes) && /signal: abort\.signal/.test(routes), 'closing the tab stops the model');
   ok(/meeting-chat-day/.test(routes) && routes.indexOf("'meeting-chat-day'") < routes.indexOf('readAttachment(req.body'), 'a daily cap, checked before any image is decoded');
   ok(/magicMatches\(mime, bytes\)/.test(routes), 'an image must be what its type claims, byte for byte');
@@ -1152,6 +1281,8 @@ test('console header', () => {
 });
 
 setTimeout(() => {
-  console.log(`\n==== ${pass} passed, ${fail} failed ====`);
-  process.exit(fail ? 1 : 0);
+  Promise.all(pendingTests).then(() => {
+    console.log(`\n==== ${pass} passed, ${fail} failed ====`);
+    process.exit(fail ? 1 : 0);
+  });
 }, 50);

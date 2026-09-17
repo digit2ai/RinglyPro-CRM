@@ -23,6 +23,9 @@
 require('dotenv').config();
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.CLAUDE_API_KEY;
+// This suite drives the API path with a fake client; the subscription path is proven in
+// test-offline.js with a fake CLI. Keep a token in .env from switching this one over.
+delete process.env.CLAUDE_CODE_OAUTH_TOKEN;
 process.env.SPEAKUP_SEED_USERS = 'off';
 process.env.SPEAKUP_FACTORY_POLLER = 'off';
 process.env.SPEAKUP_AUTO_RUN = 'on';   // even with auto-run ON, a transfer must not dispatch
@@ -185,7 +188,7 @@ const server = app.listen(0, async () => {
     ok(/Summary:/.test(s1.done.message.content) && s1.done.message.composed_by === 'claude-sonnet-5' && !s1.done.message.offline, 'the stored answer names the model that wrote it');
     const sysArg = fake.calls[fake.calls.length - 1].args.system;
     const sys = [].concat(sysArg).map(b => (typeof b === 'string' ? b : b.text)).join('');
-    ok(Array.isArray(sysArg) && sysArg[0].cache_control && sysArg[0].cache_control.type === 'ephemeral', 'the transcript is sent as a cacheable block');
+    ok(Array.isArray(sysArg) && !sysArg[0].cache_control && sysArg[1].cache_control && sysArg[1].cache_control.type === 'ephemeral' && sysArg[1].text.includes(T), 'the transcript is sent as its own cacheable block, after the rules');
     ok(sys.includes(T) && sys.includes('SIT weekly review ' + STAMP) && sys.includes('meeting #' + meet.id), 'the model gets the transcript, the title and the meeting id');
     ok(/No emojis/.test(sys) && /language of the user's latest message/.test(sys), 'and the rules: plain text, no emojis, the user\'s language');
     fake.delay = 0;
@@ -279,7 +282,7 @@ const server = app.listen(0, async () => {
     // ── No model, or a broke one: labelled, never dressed up ───────────────────
     llm.__setClient(null);
     const o1 = await chat(A, meet.id, { message: 'Give me a summary', lang: 'en' });
-    ok(o1.done.message.offline === true && /No model/.test(o1.done.message.content) && /ANTHROPIC_API_KEY/.test(o1.done.message.content), 'no key: the reply is labelled and says why');
+    ok(o1.done.message.offline === true && /No model/.test(o1.done.message.content) && /subscription token nor an API key/.test(o1.done.message.content), 'no key: the reply is labelled and says why');
     ok(o1.done.message.content.includes('weekly report'), 'and offers the transcript instead of an invented summary');
     const o2 = await chat(A, meet.id, { message: 'convierte esto en un prompt', lang: 'es' });
     ok(o2.done.message.kind === 'text' && /necesita el modelo/.test(o2.done.message.content) && !o2.done.message.content.includes('weekly report'),

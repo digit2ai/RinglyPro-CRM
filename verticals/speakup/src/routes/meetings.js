@@ -105,7 +105,7 @@ router.get('/:id', wrap(async (req, res) => {
   const rec = await ownMeeting(req, res); if (!rec) return;
   const text = await transcriptOf(rec);
   res.json({ meeting: { id: rec.id, title: rec.title, created_at: rec.created_at, date_label: chat.meetingDate(rec), duration_sec: rec.duration_sec,
-    status: rec.status, participants: rec.participants || [], transcript: text, has_transcript: !!text.trim() }, model: { configured: llm.configured() } });
+    status: rec.status, participants: rec.participants || [], transcript: text, has_transcript: !!text.trim() }, model: { configured: llm.chatConfigured() } });
 }));
 
 router.get('/:id/chat', wrap(async (req, res) => {
@@ -186,14 +186,15 @@ router.post('/:id/chat', mutation, wrap(async (req, res) => {
   }
 
   const transcript = chat.cleanTranscript(await transcriptOf(rec));
-  const system = chat.systemBlocks({ meeting: rec, transcript });
+  const system = chat.systemRules({ meeting: rec });
+  const context = chat.transcriptContext(transcript);
   const messages = chat.messagesFor(prior, message, att.image);
   // The person closed the tab: stop the model rather than pay for an answer nobody reads.
   const abort = new AbortController();
   res.on('close', () => { if (!res.writableEnded) abort.abort(); });
   let reply = null, offline = null, composed_by = null;
   try {
-    const r = await llm.streamText('chat', { system, messages, max_tokens: 3000, signal: abort.signal }, (t) => send({ type: 'delta', text: t }));
+    const r = await llm.streamText('chat', { system, context, messages, max_tokens: 3000, signal: abort.signal }, (t) => send({ type: 'delta', text: t }));
     if (r) { reply = r.text; composed_by = r.model; }
     else offline = chat.reasonOf(null);
   } catch (e) {
@@ -253,7 +254,7 @@ async function transfer({ req, rec, prior, messageId, lang }) {
     const history = source ? prior.filter(m => m.id <= source.id) : [];
     let text = null, composed_by = null, why = null;
     try {
-      const r = await llm.callText('chat', { system: chat.systemBlocks({ meeting: rec, transcript }), messages: chat.messagesFor(history, ask), max_tokens: 3000 });
+      const r = await llm.callText('chat', { system: chat.systemRules({ meeting: rec }), context: chat.transcriptContext(transcript), messages: chat.messagesFor(history, ask), max_tokens: 3000 });
       if (r && chat.isBuildPrompt(r.text)) { text = r.text; composed_by = r.model; }
       else if (r) { text = chat.PROMPT_MARK + '\n' + r.text; composed_by = r.model; }
       else why = chat.reasonOf(null);
