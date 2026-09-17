@@ -93,6 +93,7 @@
     p.hidden = !workingNow;
     p.setAttribute('aria-label', L('Trabajando…', 'Working…'));
     if (workingNow) { if (!workTimer) startWork(); } else stopWork();
+    if (!workingNow) $('workw').textContent = '';
   }
 
   // ── the top pane ───────────────────────────────────────────────────────────
@@ -314,11 +315,18 @@
   }
 
   // ── following a job ────────────────────────────────────────────────────────
+  /* ONE POLLER, AND THE END IS ANNOUNCED ONCE. Coming back to the tab calls follow() again, so
+   * a second loop started beside the first and every one of them printed the finished line —
+   * the owner saw the same pull request link five times. A generation number retires the older
+   * loop at its next await, and `announced` keeps the closing lines to one per job. */
+  var followGen = 0, announced = {};
   async function follow(id, fresh) {
     if (id !== jobId) { jobId = id; lastEvent = 0; if (fresh) { shown = []; $('out').innerHTML = ''; } }
     clearTimeout(timer);
+    var gen = ++followGen;
     try {
       var d = await api('/factory/jobs/' + id + '/events?after=' + lastEvent);
+      if (gen !== followGen) return;   // a newer loop took over while this one was waiting
       if (d.events.length) { lastEvent = d.events[d.events.length - 1].id; write(d.events); }
       renderBar({ status: d.status, terminal: d.terminal, pr_number: d.pr_number, pr_url: d.pr_url });
       jobTerminal = !!d.terminal;
@@ -339,8 +347,13 @@
       if (!d.terminal && document.visibilityState === 'visible') timer = setTimeout(function () { follow(id); }, 2500);
       else if (d.terminal) {
         var j = (await api('/factory/jobs/' + id)).job;
-        if (j.status === 'FAILED' && j.error) write([{ kind: 'error', text: j.error }]);
-        if (j.pr_url) write([{ kind: 'pr', t: 'readyForReview', args: { url: j.pr_url } }]);
+        if (gen !== followGen) return;
+        if (!announced[id]) {
+          announced[id] = true;
+          if (j.status === 'FAILED' && j.error) write([{ kind: 'error', text: j.error }]);
+          if (j.pr_url) write([{ kind: 'pr', t: 'readyForReview', args: { url: j.pr_url } }]);
+        }
+        setWorking(false);
         renderBar(j);
       }
     } catch (e) { /* the page redirects on 401 */ }

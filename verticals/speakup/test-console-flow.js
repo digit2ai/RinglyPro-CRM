@@ -198,6 +198,22 @@ server.listen(0, async () => {
       ok((await page.evaluate(() => document.getElementById('workw').textContent)) === '', `${w} with nothing running there is no word`);
       await page.close();
 
+      // ── 5c. a finished job says so ONCE, and the bar stops ───────────────────
+      // Coming back to the tab used to start a second poller: the same pull request link was
+      // printed five times and the bar kept sliding after "Deployed".
+      page = await open([{ id: 41, status: 'DEPLOYED', terminal: true, title: 'An older change', project_name: 'AutoDev' }], width);
+      for (let i = 0; i < 3; i++) {
+        await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      const fin = await page.evaluate(() => ({
+        links: (document.getElementById('out').textContent.match(/for you to look at/g) || []).length,
+        word: document.getElementById('workw').textContent,
+        prog: getComputedStyle(document.getElementById('prog')).display !== 'none' }));
+      ok(fin.links <= 1, `${w} a finished job announces itself once, not once per look (${fin.links})`);
+      ok(fin.word === '' && !fin.prog, `${w} and the bar and the clock stop when it is finished`);
+      await page.close();
+
       // ── 6. a question is answered live, like Claude ─────────────────────────
       page = await open([], width);
       scenario.research = true; researchCalls = 0;
