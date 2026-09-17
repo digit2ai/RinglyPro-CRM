@@ -75,7 +75,8 @@
         h += '<a class="btn small" href="/speakup/?job=' + esc(m.job_id) + '">' + esc(L('Abrir el trabajo #', 'Open job #') + m.job_id) + '</a>';
       } else {
         h += '<button class="btn small" data-copy="' + esc(m.id) + '">' + esc(L('Copiar', 'Copy')) + '</button>';
-        h += '<button class="btn small primary" data-transfer="' + esc(m.id) + '">' + esc(L('Transferir a la Fábrica', 'Transfer to Factory')) + '</button>';
+        // A "No model" reply cannot be turned into a prompt, so offering to transfer it would only fail.
+        if (!m.offline) h += '<button class="btn small primary" data-transfer="' + esc(m.id) + '">' + esc(L('Transferir a la Fábrica', 'Transfer to Factory')) + '</button>';
       }
       h += '</div>';
     }
