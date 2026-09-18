@@ -43,6 +43,7 @@ const PUBLISHED = ['planea-2026-secret', 'dev-only-insecure-secret', 'Digit2Ai@7
 const DATA_DIR = path.join(__dirname, 'data');
 const PAGE = path.join(__dirname, 'admin-ui', 'admin.html');
 let DUMMY_HASH = null;
+const fingerprint = (h) => require('crypto').createHash('sha256').update(String(h || '')).digest('hex').slice(0, 16);
 
 const tenant = () => Number(process.env.PLANEA_TENANT_ID) || 1;
 const adminEmails = () => String(process.env.PLANEA_ADMIN_EMAILS || 'mstagg@digit2ai.com')
@@ -145,7 +146,9 @@ function build({ backend, sec }) {
     let p; try { p = jwt.verify(tok, s, { audience: AUD }); } catch (e) { return null; }
     const email = String(p.e || '').toLowerCase();
     if (adminEmails().indexOf(email) < 0) return null;       // quitar el correo corta el acceso ya
-    const [rows] = await db().query('SELECT id, email, full_name FROM planea_users WHERE lower(email) = :e LIMIT 1', { replacements: { e: email } });
+    const [rows] = await db().query('SELECT id, email, full_name, password_hash, locked_until FROM planea_users WHERE lower(email) = :e LIMIT 1', { replacements: { e: email } });
+    // Cambiar la clave o bloquear la cuenta termina la sesión admin de inmediato.
+    if (rows[0] && (p.f !== fingerprint(rows[0].password_hash) || sec.lockRemaining(rows[0]) > 0)) return null;
     return rows[0] ? { uid: rows[0].id, email, name: rows[0].full_name || email } : null;
   }
 
@@ -159,22 +162,29 @@ function build({ backend, sec }) {
   });
 
   const api = express.Router();
-  api.use(express.json({ limit: '12mb' }));
+  // Cuerpo pequeño para todo; el grande (12 MB) solo en POST /kb y DESPUÉS de verificar al admin.
+  const smallJson = express.json({ limit: '8kb' });
+  const bigJson = express.json({ limit: '12mb' });
+  api.use((req, res, next) => (req.method === 'POST' && req.path === '/kb' ? next() : smallJson(req, res, next)));
   api.use((req, res, next) => {
     if (!secret()) return res.status(503).json({ error: 'cerrado', message: 'El módulo administrativo no está configurado (falta un secreto de firma).' });
     if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
     // Toda escritura exige la cabecera propia: un formulario de otro sitio no la puede poner.
     if (req.method !== 'GET' && req.headers['x-planea-admin'] !== '1') return res.status(404).json({ error: 'not_found' });
-    ensureTables(db()).then(() => next(), (e) => res.status(500).json({ error: 'tablas', detail: e.message }));
+    ensureTables(db()).then(() => next(), (e) => { console.error('[planea-admin] tablas', e.message); res.status(500).json({ error: 'error_interno' }); });
   });
 
   // Correo -> bloqueo simple por cuenta además del límite por IP de security.cjs.
-  const emailFails = new Map();
+  // Ventana de 15 minutos que se limpia sola; solo cuenta correos que SÍ son admins, para que
+  // nadie deje fuera a un admin, ni llene la memoria, con intentos a correos inventados.
+  const emailFails = new Map(); // email -> { n, at }
+  const FAIL_WINDOW = 15 * 60 * 1000;
+  const failsOf = (e) => { const f = emailFails.get(e); if (!f || Date.now() - f.at > FAIL_WINDOW) { emailFails.delete(e); return 0; } return f.n; };
   api.post('/login', sec.loginLimiter, async (req, res) => {
     const email = String((req.body && req.body.email) || '').toLowerCase().trim();
     const password = String((req.body && req.body.password) || '');
-    const fail = (why) => { emailFails.set(email, (emailFails.get(email) || 0) + 1); audit(req, email, 'admin.login', why); return res.status(401).json({ error: 'Credenciales inválidas o sin permiso de administrador.' }); };
-    const f = emailFails.get(email) || 0;
+    const fail = (why) => { if (adminEmails().indexOf(email) >= 0) { const f = emailFails.get(email); emailFails.set(email, { n: failsOf(email) + 1, at: (f && f.at) || Date.now() }); } audit(req, email, 'admin.login', why); return res.status(401).json({ error: 'Credenciales inválidas o sin permiso de administrador.' }); };
+    const f = failsOf(email);
     if (f >= 10) return res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos.' });
     if (!email || !password) return fail('fail_empty');
     const [rows] = await db().query('SELECT id, email, full_name, password_hash, locked_until FROM planea_users WHERE lower(email) = :e LIMIT 1', { replacements: { e: email } });
@@ -186,7 +196,7 @@ function build({ backend, sec }) {
     if (sec.lockRemaining(u) > 0) return fail('blocked_locked');
     if (adminEmails().indexOf(email) < 0) return fail('fail_not_admin');
     emailFails.delete(email);
-    const tok = jwt.sign({ e: email }, secret(), { audience: AUD, expiresIn: Math.floor(TTL_MS / 1000) });
+    const tok = jwt.sign({ e: email, f: fingerprint(u.password_hash) }, secret(), { audience: AUD, expiresIn: Math.floor(TTL_MS / 1000) });
     res.cookie(COOKIE, tok, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: TTL_MS, path: '/' });
     req.admin = { uid: u.id };
     audit(req, email, 'admin.login', 'success');
@@ -301,7 +311,7 @@ function build({ backend, sec }) {
   api.get('/kb', async (req, res) => {
     try { res.json(await kb.list(db(), tenant())); } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
-  api.post('/kb', async (req, res) => {
+  api.post('/kb', bigJson, async (req, res) => {
     try {
       const b = req.body || {};
       let data = String(b.data_b64 || '');

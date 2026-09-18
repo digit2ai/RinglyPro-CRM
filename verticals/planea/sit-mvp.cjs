@@ -200,6 +200,19 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     const evs = aud.map((r) => r.event);
     ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
 
+    // Revisión de seguridad
+    const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
+    ok(bigLogin.status === 413, 'un cuerpo grande sin sesión admin se rechaza antes de procesarlo');
+    for (let i = 0; i < 12; i++) await call('POST', '/planea/admin/api/login', { body: { email: 'sit-mvp-nadie-' + i + '@example.test', password: 'mala-clave-123' } });
+    const stillIn = await call('GET', '/planea/admin/api/me', { cookie: ac });
+    ok(stillIn.status === 200, 'intentos a correos inventados no afectan al admin');
+    const bSrc = fs.readFileSync(path.join(__dirname, 'backend.cjs'), 'utf8');
+    ok(/!sent && process\.env\.NODE_ENV !== 'production'/.test(bSrc), 'el enlace de restablecimiento nunca vuelve al solicitante en producción');
+    ok(!/x-forwarded-host[^\n]*reset\?token/.test(bSrc) && /PLANEA_PUBLIC_URL/.test(bSrc), 'el enlace de restablecimiento no usa el Host de la petición');
+    await sq.query('UPDATE planea_users SET password_hash = :h WHERE id = :id', { replacements: { h: await bcrypt.hash(PW + '-nueva', 10), id: adminRow.id } });
+    ok((await call('GET', '/planea/admin/api/me', { cookie: ac })).status === 404, 'cambiar la clave termina la sesión admin');
+    await sq.query('UPDATE planea_users SET password_hash = :h WHERE id = :id', { replacements: { h: hash, id: adminRow.id } });
+
     // Salir
     const out = await call('POST', '/planea/admin/api/logout', { cookie: ac });
     ok(out.status === 200 && /planea_admin=;/.test(out.cookie || ''), 'salir borra la cookie');

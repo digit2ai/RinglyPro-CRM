@@ -509,6 +509,53 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 - `INCENTIVA_RATE_FEED` (`off` disables the Freddie Mac rate) · `INCENTIVA_RATE_FEED_URL` · `INCENTIVA_DEFAULT_TAX_RATE` (0.018) · `INCENTIVA_DEFAULT_INSURANCE_MONTHLY` (250) · `INCENTIVA_DEFAULT_PMI_RATE` (0.005) · `INCENTIVA_DEFAULT_CLOSING_PCT` (3).
 - `RENTCAST_API_KEY` — enables home search. Unset = search reports not connected. `RENTCAST_MONTHLY_CAP` (45) — hard stop on upstream requests per calendar month; raise it to match the plan (Foundation 1,000 / Growth 5,000 / Scale 25,000). `INCENTIVA_LISTINGS_TTL_HOURS` (24) · `INCENTIVA_LISTINGS_PER_HOUR` (60, per IP) · `RENTCAST_BASE_URL` (override for tests).
 
+## Planea MVP — admin module, Maya knowledge upload, tax reminder (folder: verticals/planea, mounted /planea)
+
+Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, admin module, 36 h estimate). Personal-finance PWA for Colombia; own Sequelize on `CRM_DATABASE_URL || DATABASE_URL`, session cookie `planea_session`.
+
+**`verticals/planea/package.json` IS `"type":"module"`.** Any new Node file here must be `.cjs`, and `require()` of a `portal/*.js` file returns an EMPTY namespace instead of throwing. `admin.cjs` therefore evaluates `portal/planea-tax.js` with its own `module` object (`loadPlaneaTax()`), so the browser card, the Inicio banner, the server and the SIT share one source file. That bug passed `node --check` and was only caught by the SIT.
+
+**Admin module (`admin.cjs`, page `admin-ui/admin.html`, URL `/planea/admin`).**
+- ADMINS SIGN IN WITH THEIR OWN PLANEA ACCOUNT. Permission comes from being listed in `PLANEA_ADMIN_EMAILS`, and it is re-checked on every request, so removing an email cuts access immediately. There is no separate admin password and no default one. With no usable signing secret (`PLANEA_ADMIN_SECRET`, else `PLANEA_JWT_SECRET`/`JWT_SECRET`, at least 16 chars, not a published value) the module answers 503, closed.
+- Cookie `planea_admin`: JWT, audience `planea-admin`, 8 h, HttpOnly. Every mutation needs the header `X-Planea-Admin: 1`, otherwise 404. A non-admin or no session also gets 404, not 403.
+- WHAT THE ADMIN SEES: registration date, onboarding finished and when, survey answers, Puntaje Planea per pillar, whether the user saw the score, days visited, NPS. THE ADMIN NEVER SEES AMOUNTS: `sanitizeAnswers` removes `monto|saldo|valor|amount|pesos` keys, numbers over 10,000 and money-shaped strings before anything leaves the server. The module never reads `finance_meta` or the `*_data` columns (the SIT greps for this). Maya conversations are not stored, so they cannot be shown.
+- Admins are not counted as test users.
+- Metrics come from real rows:
+  - Onboarding completion, target over 60%.
+  - 7-day retention: a visit after the finish day within 7 days, among eligible users only. Target over 30%.
+  - NPS: promoters minus detractors, target over 30.
+  - Critical bugs: reported as NOT MEASURED, never as zero.
+  - A 4-step funnel.
+- Every admin action is written to `planea_audit_log`. The admin token carries a fingerprint of the password hash, so changing the password or locking the account ends the admin session. Failed logins count only against real admin emails, in a 15-minute window, so nobody can lock an admin out by typing random emails. Only `POST /kb` accepts a 12 MB body, and only after the admin check.
+- User signals: `POST /api/v1/me/events` (`visit` from `planea-nav.js`, `score_view` from `planea-feedback.js`), one per user per event per Colombia day. `GET|POST /api/v1/me/nps`: one answer per person, 0-10; a second answer returns 409.
+
+**Maya knowledge (`kb.cjs`, table `planea_kb_docs`).**
+- Upload PDF, MD or TXT, checked by the file's bytes. Max 8 MB. A scanned PDF with no text is refused.
+- The extracted TEXT is stored in Postgres, because the Render disk is ephemeral.
+- Uploading with the same name (case-insensitive) creates a new version and deactivates the old one. Nothing is deleted.
+- Active docs are appended to Maya's system prompt (`buildMayaSystem() + mayaKnowledge()`). They are fenced and labelled, and the prompt says Maya's own rules prevail. THIS IS CONTEXT, NOT RETRAINING, and the admin page says so.
+- EVERYTHING ACTIVE TRAVELS IN EVERY MAYA MESSAGE. An upload that would push the total above `PLANEA_KB_MAX_CHARS` is refused and the refusal says why.
+- There is a 60 s cache per tenant.
+
+**Tax reminder (`portal/planea-tax.js`, `planea-tax-reminder.js`, `GET /api/v1/tax/calendar`).**
+- It uses the last two cédula digits the user saves in Impuestos (`finance_meta.tributario.cedula2`).
+- "exacta" only when Planea supplies the DIAN table as `verticals/planea/data/dian-calendar-<year>.json` (`{ranges:[{from,to,date}]}`). If the table does not cover the digits, the result is null, never guessed.
+- With no table, the reminder uses the referential windows, labelled "estimada".
+- The Inicio banner shows from `PLANEA_TAX_REMINDER_DAYS` before the window until it ends. In-app only: nothing is sent by email or message.
+
+**LEGACY ADMIN TOKEN CLOSED.** `/planea/api/v1/admin/{profile,reset-data,accounts}` and the Supabase admin routes in `server.cjs` used to accept the published default `Digit2Ai@7`. `reset-data?all=1`, a GET request, could wipe every user's data. They now require `PLANEA_ADMIN_TOKEN` (16+ chars, not a published value), compared in constant time. Unset means the routes are closed.
+
+**Tables:** `planea_kb_docs`, `planea_events`, `planea_nps` (`tenant_id NOT NULL`). They are created idempotently on first use. Canonical migration: `migrations/20260918_planea_mvp_admin.sql`.
+
+**SIT:** `node verticals/planea/sit-mvp.cjs` → **79/79**, zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
+
+**Environment Variables:**
+- `PLANEA_ADMIN_EMAILS` (default `mstagg@digit2ai.com`): comma list of admins. **ADD AN EMAIL ONLY AFTER THAT PERSON HAS CREATED THEIR PLANEA ACCOUNT.** Signup is open and unverified, so a listed email with no account yet can be registered by anyone and would then open the admin. The owner account already exists.
+- `PLANEA_PUBLIC_URL` (`https://planea.vip`): base of password-reset links. They are never built from the request Host, and in production they are never returned to the person who asked (`dev_link` exists only outside production).
+- `PLANEA_ADMIN_SECRET`: signs the admin cookie (falls back to `PLANEA_JWT_SECRET` / `JWT_SECRET`).
+- `PLANEA_KB_MAX_CHARS` (60000) · `PLANEA_TAX_REMINDER_DAYS` (30) · `PLANEA_TENANT_ID` (1).
+- `PLANEA_ADMIN_TOKEN`: legacy `?token=` endpoints. NO DEFAULT any more; unset means closed.
+
 ## Database Access
 ```javascript
 const { Sequelize } = require('sequelize');
