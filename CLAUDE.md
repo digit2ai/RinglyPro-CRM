@@ -559,18 +559,23 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 - It uses the last two cédula digits the user saves in Impuestos (`finance_meta.tributario.cedula2`).
 - "exacta" only when Planea supplies the DIAN table as `verticals/planea/data/dian-calendar-<year>.json` (`{ranges:[{from,to,date}]}`). If the table does not cover the digits, the result is null, never guessed.
 - With no table, the reminder uses the referential windows, labelled "estimada".
-- The Inicio banner shows from `PLANEA_TAX_REMINDER_DAYS` before the window until it ends. In-app only: nothing is sent by email or message.
+- The Inicio banner shows from `PLANEA_TAX_REMINDER_DAYS` before the date until it passes.
+- **THE OFFICIAL 2026 TABLE SHIPS** (`data/dian-calendar-2026.json`, Decreto 2229 de 2023, DUR 1625/2016 art. 1.6.1.13.2.15): 50 two-digit ranges, 12 Aug to 26 Oct 2026, for año gravable 2025. It was cross-checked against actualicese.com and tributi.com (both show the 28 Sep to 1 Oct jump; do not "fix" it). The SIT asserts it covers 01-00 with no gaps, on weekdays, in order. **Add `dian-calendar-2027.json` when the 2027 calendar is published**; without a file for the year, the app falls back to "estimada" and sends no email.
+- **EMAIL NOTICES** (`tax-notify.cjs`, table `planea_notifications`): go only to users who turned on "Próximas fechas tributarias" in Configuración (`finance_meta.notif.tributarias`, off by default) AND saved their two cédula digits. They go out 30, 7 and 1 day before the EXACT date, from 8 a.m. Colombia time. Each notice is claimed in the database before sending, so it is sent once, with no late catch-up. No official table means no email. The email states the date and the decree, never that the person must file, and says how to turn it off. It runs only in production because the local .env is the production database. As of 2026-09-18, 0 users had opted in.
+- **TAX DOCUMENT UPLOAD IS OFF** (agreed MVP scope): `POST /me/tax-docs` answers 410 and the Impuestos page has no upload. The card appears only for someone who already uploaded, so they can view or delete it; one legacy PDF exists, stored unencrypted. Re-enabling uploads requires encryption at rest first (Documento Maestro §23.3).
+- **ONBOARDING DROP-OFF AND TIME** (`planea_onboarding_progress`, `POST /me/onboarding`): the survey reports each question shown (number, key, title; never the answer) and when it finishes. The row closes on the first finish. Metrics show the median and average minutes, and the question where people stop (abandoned = started, not finished, idle 24 h). Test users show their minutes or the question they stopped at. This only counts from its 2026-09-18 deploy.
 
 **LEGACY ADMIN TOKEN CLOSED.** `/planea/api/v1/admin/{profile,reset-data,accounts}` and the Supabase admin routes in `server.cjs` used to accept the published default `Digit2Ai@7`. `reset-data?all=1`, a GET request, could wipe every user's data. They now require `PLANEA_ADMIN_TOKEN` (16+ chars, not a published value), compared in constant time. Unset means the routes are closed.
 
-**Tables:** `planea_admins`, `planea_kb_docs`, `planea_events`, `planea_nps` (`tenant_id NOT NULL`). They are created idempotently on first use. Canonical migration: `migrations/20260918_planea_mvp_admin.sql`.
+**Tables:** `planea_admins`, `planea_onboarding_progress`, `planea_notifications`, `planea_kb_docs`, `planea_events`, `planea_nps` (`tenant_id NOT NULL`). They are created idempotently on first use. Canonical migration: `migrations/20260918_planea_mvp_admin.sql`.
 
-**SIT:** `node verticals/planea/sit-mvp.cjs` → **92/92** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
+**SIT:** `node verticals/planea/sit-mvp.cjs` → **125/125** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
 
 **Environment Variables:**
 - `PLANEA_ADMIN_EMAILS` is **no longer read**; admins live in `planea_admins` (see above).
 - `PLANEA_PUBLIC_URL` (`https://planea.vip`): base of password-reset links. They are never built from the request Host, and in production they are never returned to the person who asked (`dev_link` exists only outside production).
 - `PLANEA_ADMIN_SECRET`: signs the admin cookie (falls back to `PLANEA_JWT_SECRET` / `JWT_SECRET`).
+- `PLANEA_TAX_EMAILS` (`off` stops the notice emails; `on` forces them outside production) · `PLANEA_TAX_EMAIL_DAYS` (`30,7,1`) · reuses `SENDGRID_API_KEY` / `SENDGRID_FROM_EMAIL`.
 - `PLANEA_KB_MAX_CHARS` (60000) · `PLANEA_TAX_REMINDER_DAYS` (30) · `PLANEA_TENANT_ID` (1).
 - `PLANEA_ADMIN_TOKEN`: legacy `?token=` endpoints. NO DEFAULT any more; unset means closed.
 
