@@ -38,6 +38,7 @@ const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 let planeaBackend = null;
 try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
 const planeaAdmin = require('./admin.cjs');
+const taxNotify = require('./tax-notify.cjs');
 
 // TEMPORARY: auto-confirm new signups when a Supabase service_role key is set
 // (PLANEA_SERVICE_ROLE_KEY), so users log in without email verification while SMTP
@@ -103,7 +104,7 @@ router.get('/health', (req, res) => {
     portal: hasPortal,
     admin: { service_key: !!SB_SERVICE_KEY, endpoints: !!SB_SERVICE_KEY },
     backend: planeaBackend ? planeaBackend.status() : { ready: false, error: 'not-loaded' },
-    admin_module: planeaAdmin.health(),
+    admin_module: planeaAdmin.health(), tax_emails: taxNotify.status(),
     ts: new Date().toISOString(),
   });
 });
@@ -482,6 +483,8 @@ if (planeaBackend) {
     const adm = planeaAdmin.build({ backend: planeaBackend, sec: security });
     router.use('/admin', adm.admin);
     router.use('/api/v1', adm.me);
+    // Avisos por correo de la fecha de renta (solo producción, solo quien los encendió).
+    taxNotify.start({ db: planeaBackend.db, PlaneaTax: planeaAdmin.PlaneaTax, dianTable: planeaAdmin.dianTable });
   } catch (e) { console.log('planea admin mount failed:', e.message); }
 }
 

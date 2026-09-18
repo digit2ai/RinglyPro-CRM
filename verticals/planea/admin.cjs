@@ -141,7 +141,7 @@ function dianTable() {
     const f = path.join(DATA_DIR, 'dian-calendar-' + year + '.json');
     if (fs.existsSync(f)) {
       const t = JSON.parse(fs.readFileSync(f, 'utf8'));
-      if (PlaneaTax.validTable(t)) table = { year: t.year || year, source: t.source || null, ranges: t.ranges };
+      if (PlaneaTax.validTable(t)) table = { year: t.year || year, tax_year: t.tax_year || null, source: t.source || null, ranges: t.ranges };
       else console.log('planea: ' + f + ' no es una tabla DIAN válida; se usa la ventana estimada');
     }
   } catch (e) { console.log('planea: no se pudo leer la tabla DIAN:', e.message); }
@@ -530,4 +530,4 @@ function health() {
   return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: !!dianTable(), kb_max_chars: kb.MAX_CHARS() };
 }
 
-module.exports = { PlaneaTax, build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };
+module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };

@@ -53,8 +53,13 @@
     var r = d.length === 2 ? T.forDigits(d, TAXCAL.table, +T.todayColombia().slice(0, 4)) : null;
     if (!r) { $('tx-prox').textContent = 'Cuéntanos tus dos últimos dígitos'; $('tx-fecha').textContent = ''; $('tx-keep').textContent = 'Ingresa los dos últimos dígitos de tu cédula en el perfil tributario para ver tu fecha de declaración.'; return; }
     $('tx-prox').textContent = 'Declaración de renta ' + r.year;
-    $('tx-fecha').textContent = r.kind === 'exacta' ? 'Fecha según el calendario DIAN: ' + r.label + '.' : 'Ventana estimada: ' + r.label + '. Confírmala con el calendario oficial de la DIAN.';
-    $('tx-keep').textContent = 'Ten a mano tus soportes (ingresos, retenciones, deducciones) antes de esa fecha. Si un contador te ayuda, avísale con tiempo.';
+    var hoy = T.todayColombia(), paso = r.kind === 'exacta' && r.date < hoy;
+    $('tx-fecha').textContent = r.kind === 'exacta'
+      ? (paso ? 'Tu fecha límite según el calendario DIAN fue el ' + r.label + '.' : 'Fecha límite según el calendario DIAN: ' + r.label + '.') + (r.source ? ' Fuente: ' + r.source.split('.')[0] + '.' : '')
+      : 'Ventana estimada: ' + r.label + '. Confírmala con el calendario oficial de la DIAN.';
+    $('tx-keep').textContent = paso
+      ? 'Si debías declarar y aún no lo hiciste, consulta con un contador lo antes posible.'
+      : 'Ten a mano tus soportes (ingresos, retenciones, deducciones) antes de esa fecha. Si un contador te ayuda, avísale con tiempo. Para recibir un correo 30, 7 y 1 día antes, activa "Próximas fechas tributarias" en Configuración.';
   }
 
   // ── Estado tributario §23.1 ────────────────────────────────────────────────────

@@ -57,6 +57,29 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   ok(T.reminder('37', table, '2026-08-21', 30) === null, 'pasada la fecha no hay aviso');
   ok(/^\d{4}-\d{2}-\d{2}$/.test(T.todayColombia()), 'hoy en Colombia es YYYY-MM-DD');
 
+  // ── 1b. Calendario oficial DIAN 2026 y avisos por correo (puro) ─────────────
+  const dian = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'dian-calendar-2026.json'), 'utf8'));
+  ok(T.validTable(dian) && dian.ranges.length === 50, 'tabla DIAN 2026 válida con 50 rangos');
+  let nxt = 1, weekdays = true, ordered = true;
+  dian.ranges.forEach((r, i) => { if (r.from !== nxt) nxt = -999; nxt = r.to + 1; const wd = new Date(r.date + 'T12:00:00Z').getUTCDay(); if (wd === 0 || wd === 6) weekdays = false; if (i && r.date <= dian.ranges[i - 1].date) ordered = false; });
+  ok(nxt === 101 && weekdays && ordered, 'la tabla cubre 01 a 00 sin huecos, en días hábiles y en orden');
+  ok(T.forDigits('01', dian, 2026).date === '2026-08-12' && T.forDigits('00', dian, 2026).date === '2026-10-26' && T.forDigits('67', dian, 2026).date === '2026-10-01', 'fechas del Decreto 2229 de 2023: 01 el 12-ago, 67 el 1-oct, 00 el 26-oct');
+  ok(/Decreto 2229 de 2023/.test(dian.source), 'la tabla cita su fuente');
+  const TN = require('./tax-notify.cjs');
+  const person = (fm) => [{ user_id: 1, email: 'a@example.test', full_name: 'Ana', finance_meta: fm }];
+  const on67 = { notif: { tributarias: true }, tributario: { cedula2: '67' } };
+  ok(TN.dueToday(person(on67), dian, '2026-09-01', T, [30, 7, 1]).length === 1, 'aviso 30 días antes');
+  ok(TN.dueToday(person(on67), dian, '2026-09-24', T, [30, 7, 1]).length === 1 && TN.dueToday(person(on67), dian, '2026-09-30', T, [30, 7, 1]).length === 1, 'aviso 7 días y 1 día antes');
+  ok(TN.dueToday(person(on67), dian, '2026-09-02', T, [30, 7, 1]).length === 0, 'ningún aviso en otros días');
+  ok(TN.dueToday(person({ notif: { tributarias: false }, tributario: { cedula2: '67' } }), dian, '2026-09-24', T, [30, 7, 1]).length === 0, 'quien no encendió el aviso no recibe correo');
+  ok(TN.dueToday(person({ notif: { tributarias: true } }), dian, '2026-09-24', T, [30, 7, 1]).length === 0, 'sin dígitos de cédula no hay correo');
+  ok(TN.dueToday(person(on67), null, '2026-09-24', T, [30, 7, 1]).length === 0, 'sin tabla oficial no se envía una fecha estimada por correo');
+  const msg = TN.message({ name: '<script>x', digits: '67', date: '2026-10-01', label: '1 de octubre de 2026', days_left: 7 }, dian);
+  ok(/1 de octubre de 2026/.test(msg.text) && /Decreto 2229 de 2023/.test(msg.text) && /configuracion/.test(msg.text), 'el correo dice la fecha, la fuente y cómo apagarlo');
+  ok(!/<script>/.test(msg.html) && /^Hola,/.test(msg.text), 'un nombre raro no entra al correo');
+  ok(/no determina si estás obligado/.test(msg.text) && !/debes declarar el|estás obligado a declarar\./.test(msg.text), 'el correo no afirma que la persona esté obligada a declarar');
+  ok(TN.enabled() === false, 'los avisos no corren fuera de producción');
+
   // ── 2. Respuestas sin montos (puro) ─────────────────────────────────────────
   const clean = adminMod.sanitizeAnswers({ edad: '35-44', monto_ingresos: 5200000, montos: { a: 1 }, deudas: 'si', otro: 3500000, texto: '$ 4.500.000', lista: [{ monto_pago: 90000, tipo: 'tc' }] });
   ok(clean.edad === '35-44' && clean.deudas === 'si', 'respuestas normales se conservan');
@@ -202,6 +225,20 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(tm && typeof tm.value === 'number', 'las métricas muestran el tiempo del onboarding');
     ok(!/respuesta|answer/i.test(fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8').match(/me\.post\('\/me\/onboarding'[\s\S]*?\n  \}\);/)[0].replace(/\/\/[^\n]*/g, '')), 'el progreso nunca guarda respuestas');
 
+    // Envío de avisos: una sola vez por aviso, con envío falso (nunca un correo real)
+    await sq.query("UPDATE planea_profiles SET finance_meta = CAST(:m AS JSONB) WHERE user_id = :u", { replacements: { u: userRow.id, m: JSON.stringify({ notif: { tributarias: true }, tributario: { cedula2: '67' } }) } });
+    const sentTo = [];
+    const fakeSend = async (to) => { sentTo.push(to); return { ok: true }; };
+    const when = new Date('2026-09-24T15:00:00Z');
+    const deps = { db: () => sq, PlaneaTax: T, dianTable: () => dian, send: fakeSend, now: when };
+    const run1 = await TN.runOnce(deps);
+    ok(run1.sent >= 1 && sentTo.indexOf(USER_EMAIL) >= 0, 'el aviso de 7 días se envía a quien lo pidió');
+    const before = sentTo.length;
+    const run2 = await TN.runOnce(deps);
+    ok(run2.sent === 0 && sentTo.length === before, 'el mismo aviso no se envía dos veces');
+    const [[nrow]] = await sq.query("SELECT status FROM planea_notifications WHERE tenant_id = 990918 AND user_id = :u AND ref = '2026:7'", { replacements: { u: userRow.id } });
+    ok(nrow && nrow.status === 'sent', 'queda registro de cada aviso enviado');
+
     // Métricas y señales del usuario
     ok((await call('POST', '/planea/api/v1/me/events', { body: { event: 'visit' } })).status === 401, 'evento sin sesión: 401');
     ok((await call('POST', '/planea/api/v1/me/events', { body: { event: 'borrar_todo' }, cookie: userCookie })).status === 400, 'evento no admitido: 400');
@@ -285,6 +322,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918').catch(() => {});
+    await sq.query('DELETE FROM planea_notifications WHERE tenant_id = 990918').catch(() => {});
     await sq.query("DELETE FROM planea_audit_log WHERE email LIKE 'sit-mvp-%' OR user_id IN (:ids)", { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_onboarding_progress WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_items WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
