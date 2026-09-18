@@ -24,7 +24,17 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const kb = require('./kb.cjs');
-const PlaneaTax = require('./portal/planea-tax.js');
+// portal/ vive bajo un package.json con "type":"module", así que require() de un .js
+// devuelve un módulo ESM vacío. Se evalúa el MISMO archivo que usa el navegador con un
+// `module` propio: una sola fuente para la tarjeta, el aviso, el servidor y la SIT.
+function loadPlaneaTax() {
+  const src = fs.readFileSync(path.join(__dirname, 'portal', 'planea-tax.js'), 'utf8');
+  const m = { exports: {} };
+  new Function('module', 'self', src)(m, {});
+  if (typeof m.exports.forDigits !== 'function') throw new Error('planea-tax.js no cargó');
+  return m.exports;
+}
+const PlaneaTax = loadPlaneaTax();
 
 const COOKIE = 'planea_admin';
 const TTL_MS = 8 * 60 * 60 * 1000;
@@ -380,4 +390,4 @@ function health() {
   return { configured: !!secret(), admins: adminEmails().length, dian_table: !!dianTable(), kb_max_chars: kb.MAX_CHARS() };
 }
 
-module.exports = { build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };
+module.exports = { PlaneaTax, build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };
