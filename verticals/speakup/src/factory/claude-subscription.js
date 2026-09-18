@@ -200,8 +200,13 @@ function probe() {
  *   - .git and .env files are denied on top of the confinement.
  *   - the environment is the same allow-list as the chat: no database URL, no secrets.
  */
+// Platforms where a stranger cannot read the request logs, PLUS the owner's own sites — asked
+// for after "summarise digit2ai.com" could not be answered because the site was not on the list.
+const OWN_SITES = ['digit2ai.com', 'www.digit2ai.com', 'autodev.digit2ai.com', 'architect.digit2ai.com', 'enruta.digit2ai.com',
+  'aiagent.ringlypro.com', 'buyersline.app', 'jobup.dev', 'jobmd.io', 'coljobs.app', 'tornajobs.com', 'orbup.app',
+  'lawncopilot.com', 'speakly.vip', 'visionarium.app', 'maramed.app', 'camaravirtual.app', 'www.camaravirtual.app'];
 const FETCH_DOMAINS = ['github.com', 'api.github.com', 'raw.githubusercontent.com', 'docs.anthropic.com', 'docs.claude.com',
-  'developer.mozilla.org', 'nodejs.org', 'www.npmjs.com', 'expressjs.com', 'render.com', 'stackoverflow.com'];
+  'developer.mozilla.org', 'nodejs.org', 'www.npmjs.com', 'expressjs.com', 'render.com', 'stackoverflow.com'].concat(OWN_SITES);
 const RESEARCH_DENY = ['Read(./.git/**)', 'Read(**/.env)', 'Read(**/.env.*)'];
 
 // web:false drops the two network tools entirely — the planner reads the repository and nothing
@@ -224,4 +229,4 @@ function research({ system, messages, model, cwd, signal, onText, onTool, timeou
     argv: researchArgs({ model, maxTurns, web }) });
 }
 
-module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe, research, researchArgs, FETCH_DOMAINS };
+module.exports = { available, status, run, args, childEnv, toUserContent, findBin, probe, research, researchArgs, FETCH_DOMAINS, OWN_SITES };

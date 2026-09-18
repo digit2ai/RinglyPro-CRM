@@ -1446,6 +1446,30 @@ test('memory compaction: older instructions are counted, never invented', () => 
   ok(memory.THREAD_MAX <= 4000, 'the block stays capped after compaction');
 });
 
+test('a summary of a website is not a summary of a meeting', () => {
+  const intents = require('./src/factory/intents');
+  const sub = require('./src/factory/claude-subscription');
+  // Live failure: "provide a summary of https://digit2ai.com/" matched the word "summary",
+  // the resolver picked the newest recording, and the answer was about a meeting nobody named.
+  for (const t of ['provide a summary of https://digit2ai.com/', 'give me a summary of digit2ai.com',
+    'summary of buyersline.app', 'resumen de digit2ai.com']) {
+    ok(intents.namesAWebsite(t), 'a web address is recognised: ' + t);
+    ok(intents.isQuestion(t), 'and asking about it is a question, not an instruction: ' + t);
+  }
+  for (const t of ['summarize the meeting with Greg', 'resume la última reunión', 'summarize how the merge gate works']) {
+    ok(!intents.namesAWebsite(t), 'a meeting or a system question names no website: ' + t);
+  }
+  const src = fs.readFileSync(path.join(__dirname, 'src/factory/intents.js'), 'utf8');
+  ok(/if \(namesAWebsite\(ctx\.text\) \|\| !refersToConversation\(ctx\)\) return handlers\.ASK\(ctx\);/.test(src),
+    'SUMMARIZE hands anything that is not a named conversation to the read-only agent');
+  // And the agent can actually open the owner's own sites.
+  ok(sub.OWN_SITES.indexOf('digit2ai.com') >= 0 && sub.FETCH_DOMAINS.indexOf('digit2ai.com') >= 0,
+    'the owner’s own sites are fetchable');
+  ok(sub.FETCH_DOMAINS.indexOf('example.com') < 0, 'and the list is still an allow-list, not everything');
+  const argv = sub.researchArgs({ model: 'm', maxTurns: 5 })('r');
+  ok(argv.indexOf('WebFetch(domain:digit2ai.com)') >= 0, 'which reaches the agent as a per-domain permission');
+});
+
 test('the research agent: read-only, confined, and asked what to find out', () => {
   const sub = require('./src/factory/claude-subscription');
   const research = require('./src/factory/research');

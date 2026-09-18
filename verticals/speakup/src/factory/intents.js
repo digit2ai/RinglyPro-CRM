@@ -63,6 +63,9 @@ async function resolveContext(ctx) {
 // Does the text point at a recorded conversation rather than at the system? A selector
 // ("meeting 184", "my latest", a participant, a date range) or the word itself.
 const MEETING_WORD = /\b(meeting|meetings|call|calls|conversation|conversations|recording|reuni[oó]n|reuniones|llamada|llamadas|conversaci[oó]n|grabaci[oó]n)\b/i;
+// A URL or a bare domain: the subject is out there, not in a recording.
+const WEBSITE = /\bhttps?:\/\/\S+|\b[a-z0-9][a-z0-9-]*\.(com|io|app|dev|net|org|ai|co|vip|es|mx)\b/i;
+function namesAWebsite(text) { return WEBSITE.test(String(text || '')); }
 function refersToConversation(ctx) {
   const sel = context.parseSelector(ctx.text);
   return !!(sel.ids.length || sel.latest || sel.range || sel.person || (ctx.recording_ids || []).length || MEETING_WORD.test(ctx.text));
@@ -101,6 +104,12 @@ const handlers = {
   },
 
   async SUMMARIZE(ctx) {
+    /* "Provide a summary of https://digit2ai.com/" IS NOT A REQUEST TO SUMMARISE A MEETING
+     * (owner, live, 2026-09-17). The rule matched the word "summary", the resolver picked the
+     * newest recording, and the answer came back about a meeting the owner had not mentioned —
+     * the worst kind of wrong, because it looks like an answer. A web address, or any subject
+     * that is not a conversation, goes to the read-only agent instead. */
+    if (namesAWebsite(ctx.text) || !refersToConversation(ctx)) return handlers.ASK(ctx);
     const r = await resolveContext(ctx);
     if (r.stop) {
       // "Summarize how the merge gate works" is a question about the system, not about a
@@ -497,6 +506,8 @@ function isQuestion(text) {
   if (!s || /^\s*\//.test(s)) return false;
   const lowered = s.toLowerCase();
   if (INFO_CUE.test(lowered) || INFO_ASK.test(lowered)) return true;
+  // "provide a summary of X", "summary of X": asking for information about something.
+  if (/^(?:provide|dame|give|send|write|make)?\s*(?:me\s+)?(?:a|an|the|un|una)?\s*(?:summary|overview|rundown|recap|resumen)\s+(?:of|about|de|sobre)\b/.test(lowered)) return true;
   if (PASSIVE_REQUEST.test(lowered)) return false;
   if (CHANGE_VERB.test(strip(lowered))) return false;
   if (RESEARCH_CUE.test(lowered)) return true;
@@ -632,4 +643,4 @@ async function run(input) {
     card, client_action: result.client_action || null };
 }
 
-module.exports = { RESEARCH_CUE, INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isInstruction, isWakeOnly, firstLine };
+module.exports = { RESEARCH_CUE, namesAWebsite, INTENTS, NAMES, classifyRules, classify, run, search, stripWake, devPrompt, brdMarkdown, isPastedPrompt, isQuestion, isInstruction, isWakeOnly, firstLine };
