@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario, módulo administrativo y entrenamiento de Maya — PLANEA MVP</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--azul-claro);color:#0f3a66;
+    border:1px solid var(--azul-borde);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  td.save{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
+    h2{break-after:avoid}
+    table.fin,.card{break-inside:avoid}
+  }
+</style>
+<style>.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0}.tw>table{margin:0}.opt{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}.opt>div{border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;background:#fff}.opt>div.full{background:var(--azul-claro)}.opt h3{margin:0 0 2px}.hrs{font-size:22px;font-weight:800;color:#0f3a66;margin:2px 0 8px}.lacks{font-size:12.5px;color:var(--gris);margin-top:8px}.lacks b{color:var(--tinta)}@media(max-width:700px){.opt{grid-template-columns:1fr}.page{padding:26px 16px;margin:0}h1{font-size:22px}table.fin{font-size:12.5px}table.fin th,table.fin td{padding:7px 8px}.meta td{display:block;padding:2px 0}.meta .lbl{width:auto;padding-top:8px}}</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>CALENDARIO, MÓDULO ADMINISTRATIVO Y ENTRENAMIENTO DE MAYA</h1>
+  <p class="sub">PLANEA — MVP para la etapa de prueba con 10 usuarios · Horas de desarrollo por opción</p>
+  <span class="conf">NOTA DE ALCANCE</span>
+  <hr class="rule">
+
+  <div class="tw"><table class="meta">
+    <tr><td class="lbl">Para:</td><td>Eduardo de Lima · Juan Alberto Bueno<br>Planea Financiera S.A.S.</td><td class="lbl">De:</td><td>Manuel Stagg<br>Digit2AI LLC</td></tr>
+    <tr><td class="lbl">Fecha:</td><td>18 de septiembre de 2026</td><td class="lbl">Referencia:</td><td>«Backend module y ajustes de cierre para el lanzamiento del MVP», 17 de septiembre de 2026</td></tr>
+  </table></div>
+
+  <h2>Resumen</h2>
+  <p>Para cada una de las tres partes que piden ofrecemos dos opciones: una <strong>sencilla</strong>, suficiente para arrancar la prueba con 10 usuarios, y una <strong>completa</strong>, con todo lo descrito en su documento. Se pueden combinar: por ejemplo, calendario completo y entrenamiento de Maya sencillo.</p>
+  <div class="tw"><table class="fin">
+    <tr><th>Parte</th><th class="num">Opción sencilla</th><th class="num">Opción completa</th></tr>
+    <tr><td>1. Calendario Planea</td><td class="num">12 horas</td><td class="num">22 horas</td></tr>
+    <tr><td>2. Módulo administrativo</td><td class="num">25 horas</td><td class="num">43 horas</td></tr>
+    <tr><td>3. Entrenamiento de Maya (Knowledge Base)</td><td class="num">7 horas</td><td class="num">22 horas</td></tr>
+    <tr class="total"><td>Total</td><td class="num">44 horas</td><td class="num">87 horas</td></tr>
+    <tr><td>Tiempo aproximado</td><td class="num">Más o menos 1 semana</td><td class="num">Más o menos 2 semanas</td></tr>
+  </table></div>
+  <p class="muted">Horas de desarrollo. Tiempo calculado con una persona dedicada, 40 horas por semana.</p>
+
+  <h2>1. Calendario Planea</h2>
+  <p>Una sección nueva donde se concentran las fechas que importan al usuario y desde donde se le recuerdan. Para esta etapa recibe dos fechas automáticas: la de declaración de renta y las fechas objetivo de las metas. Cualquier otra fecha la agrega el usuario.</p>
+  <div class="opt">
+    <div><h3>Opción sencilla</h3><div class="hrs">12 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Fecha de declaración de renta calculada con los dos últimos dígitos de la cédula y la tabla anual de la DIAN</td><td class="num">3</td></tr><tr><td>Fechas objetivo de las metas creadas en Mis Metas</td><td class="num">2</td></tr><tr><td>El usuario agrega, edita y elimina sus propias fechas</td><td class="num">2</td></tr><tr><td>Lista de próximas fechas, ordenada</td><td class="num">3</td></tr><tr><td>Aviso dentro de la app cuando una fecha se acerca</td><td class="num">1</td></tr><tr><td>Pruebas</td><td class="num">1</td></tr></table></div><div class="lacks"><b>No incluye:</b> Vista de mes · Recordatorios por correo · Que el usuario elija con cuánta anticipación le avisan.</div></div>
+    <div class="full"><h3>Opción completa</h3><div class="hrs">22 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Todo lo de la opción sencilla</td><td class="num">12</td></tr><tr><td>Vista de mes y de próximos 30 días</td><td class="num">4</td></tr><tr><td>Preferencias del usuario: anticipación del aviso, silenciar una fecha, marcarla como atendida</td><td class="num">3</td></tr><tr><td>Recordatorio por correo electrónico</td><td class="num">2</td></tr><tr><td>Pruebas adicionales</td><td class="num">1</td></tr></table></div><div class="lacks"><b>No incluye:</b> WhatsApp: queda fuera hasta que confirmen si lo quieren, porque cada mensaje tiene costo mensual.</div></div>
+  </div>
+
+  <h2>2. Módulo administrativo</h2>
+  <p>Un panel para los tres administradores (Manuel Stagg, Juan Alberto Bueno y Eduardo de Lima) para seguir la etapa de prueba con los 10 usuarios. Sin saldos ni montos del usuario y sin conversaciones con Maya.</p>
+  <div class="opt">
+    <div><h3>Opción sencilla</h3><div class="hrs">25 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Acceso para los tres administradores y registro de cada acción (quién y cuándo)</td><td class="num">6</td></tr><tr><td>Usuarios de prueba: fecha de registro, respuestas de la encuesta, Puntaje Planea por pilar y si terminó o no el onboarding</td><td class="num">8</td></tr><tr><td>Métricas en una tabla: completitud de onboarding, retención a 7 días y embudo de cuatro pasos</td><td class="num">5</td></tr><tr><td>Pregunta NPS sencilla dentro de la app</td><td class="num">3</td></tr><tr><td>Pruebas</td><td class="num">3</td></tr></table></div><div class="lacks"><b>No incluye:</b> En qué pregunta se quedó quien abandonó el onboarding · Cuánto tiempo tardó cada usuario en completarlo · Conteo automático de bugs críticos.</div></div>
+    <div class="full"><h3>Opción completa</h3><div class="hrs">43 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Todo lo de la opción sencilla</td><td class="num">25</td></tr><tr><td>Registro del onboarding pregunta por pregunta: cuándo empezó, en qué pregunta se quedó y cuánto tardó</td><td class="num">10</td></tr><tr><td>Registro automático de errores que impiden completar el onboarding o ver el puntaje (bugs críticos)</td><td class="num">4</td></tr><tr><td>Tablero con las cuatro metas del MVP marcadas en verde o rojo</td><td class="num">2</td></tr><tr><td>Pruebas adicionales</td><td class="num">2</td></tr></table></div></div>
+  </div>
+
+  <h2>3. Entrenamiento de Maya (Knowledge Base)</h2>
+  <p>La forma en que el equipo de Planea le entrega conocimiento a Maya: el documento maestro de reglas, la tabla anual de la DIAN y las correcciones que salgan de la etapa de prueba. Importante: esto no reentrena el modelo. Maya lee esos documentos y correcciones como contexto en cada respuesta.</p>
+  <div class="opt">
+    <div><h3>Opción sencilla</h3><div class="hrs">7 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Página para que los administradores suban documentos en PDF o Markdown</td><td class="num">3</td></tr><tr><td>Maya lee los documentos activos al responder</td><td class="num">2</td></tr><tr><td>Subir un documento con el mismo nombre lo reemplaza y guarda el historial</td><td class="num">1</td></tr><tr><td>Tope de tamaño, porque todo lo cargado viaja en cada mensaje de Maya</td><td class="num">1</td></tr></table></div><div class="lacks"><b>No incluye:</b> Chat para corregir a Maya: las correcciones se hacen editando el documento y volviéndolo a subir.</div></div>
+    <div class="full"><h3>Opción completa</h3><div class="hrs">22 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Todo lo de la opción sencilla</td><td class="num">7</td></tr><tr><td>Control de versiones: nombre, versión, fecha, quién lo subió; desactivar sin borrar el historial</td><td class="num">4</td></tr><tr><td>Chat donde el administrador conversa con Maya y corrige sus respuestas</td><td class="num">5</td></tr><tr><td>Las correcciones se aplican a las respuestas siguientes</td><td class="num">3</td></tr><tr><td>Pruebas: un documento desactivado deja de influir y dos versiones no se contradicen</td><td class="num">3</td></tr></table></div></div>
+  </div>
+
+  <h2>4. Además, requerido para el MVP</h2>
+  <div class="tw"><table class="fin">
+    <tr><th>Ajuste</th><th class="num">Horas</th></tr>
+    <tr><td>Sección Impuestos en modo manual: quitar la carga de PDF, cambiar el mensaje de Maya y confirmar que la carga de archivos queda deshabilitada en todas las secciones</td><td class="num">6</td></tr>
+  </table></div>
+  <p class="muted">Este ajuste aplica con cualquiera de las opciones y no está sumado en los totales de arriba.</p>
+
+  <h2>5. Lo que necesitamos de ustedes</h2>
+  <ul class="tight">
+    <li><strong>La tabla anual de la DIAN</strong> (dos últimos dígitos → fecha límite). Sin ella el calendario no puede calcular la fecha de renta.</li>
+    <li><strong>Por dónde avisar.</strong> Su documento dice que el calendario genera los recordatorios, pero no dice si por la app, por correo o por WhatsApp, ni con cuánta anticipación.</li>
+    <li><strong>El documento maestro de Maya</strong>, para cargarlo como primer documento de su base de conocimiento.</li>
+    <li><strong>Qué opción eligen</strong> en cada una de las tres partes.</li>
+  </ul>
+
+  <p class="foot">
+    Nota de alcance de Digit2AI para Planea Financiera S.A.S. Las horas son de desarrollo y de referencia, calculadas sobre la plataforma Planea ya construida. Se confirman al cerrar la opción elegida en cada parte.<br>
+    Digit2AI LLC · digit2ai.com · info@digit2ai.com
+  </p>
+
+</div>
+</body>
+</html>
