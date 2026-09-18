@@ -1,10 +1,10 @@
 /* PLANEA — módulo administrativo (versión sencilla) + rutas de medición del usuario.
  *
- * QUIÉN ENTRA: los tres administradores (Manuel Stagg, Juan Alberto Bueno, Eduardo de
- * Lima) entran con SU PROPIA CUENTA DE PLANEA, y el permiso lo da estar en
- * PLANEA_ADMIN_EMAILS. No hay contraseña de administrador aparte ni contraseña por
+ * QUIÉN ENTRA: los tres administradores (Manuel Stagg, Juan Bueno, Eduardo de Lima)
+ * entran con SU PROPIA CUENTA DE PLANEA, y el permiso lo da una fila en planea_admins con
+ * el ID de esa cuenta (scripts/planea-admins.cjs). No hay contraseña de administrador aparte ni contraseña por
  * defecto: la cuenta ya tiene bcrypt, bloqueo por intentos y restablecimiento. El
- * permiso se vuelve a leer en CADA petición, así que quitar un correo de la variable
+ * permiso se vuelve a leer en CADA petición, así que quitar la fila
  * corta el acceso de inmediato. Sin secreto de firma configurado, el módulo queda CERRADO.
  *
  * QUÉ SE VE Y QUÉ NO: fecha de registro, respuestas de la encuesta, Puntaje Planea por
@@ -46,8 +46,17 @@ let DUMMY_HASH = null;
 const fingerprint = (h) => require('crypto').createHash('sha256').update(String(h || '')).digest('hex').slice(0, 16);
 
 const tenant = () => Number(process.env.PLANEA_TENANT_ID) || 1;
-const adminEmails = () => String(process.env.PLANEA_ADMIN_EMAILS || 'mstagg@digit2ai.com')
-  .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+// QUIÉN ES ADMIN: una fila en planea_admins con el ID de su cuenta de Planea. No una
+// lista de correos (un correo en lista sin cuenta se podía registrar y abrir el admin):
+// el permiso va atado a una cuenta que ya existe. Solo la cuenta del dueño se siembra,
+// y solo cuando la tabla está vacía; las demás se conceden con scripts/planea-admins.cjs.
+const OWNER_EMAIL = 'mstagg@digit2ai.com';
+let adminCount = null;
+async function adminIds(sq) {
+  const [rows] = await sq.query('SELECT user_id FROM planea_admins WHERE tenant_id = :t', { replacements: { t: tenant() } });
+  adminCount = rows.length;
+  return new Set(rows.map((r) => r.user_id));
+}
 function secret() {
   const s = process.env.PLANEA_ADMIN_SECRET || process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || '';
   return s && s.length >= 16 && PUBLISHED.indexOf(s) < 0 ? s : null;
@@ -98,6 +107,14 @@ function ensureTables(sq) {
         id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
         score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 10), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
       await sq.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_nps_once ON planea_nps (tenant_id, user_id)');
+      await sq.query(`CREATE TABLE IF NOT EXISTS planea_admins (
+        id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
+        granted_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+      await sq.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_admins_user ON planea_admins (tenant_id, user_id)');
+      await sq.query(`INSERT INTO planea_admins (tenant_id, user_id, granted_by)
+        SELECT :t, u.id, 'bootstrap' FROM planea_users u
+         WHERE lower(u.email) = :o AND NOT EXISTS (SELECT 1 FROM planea_admins WHERE tenant_id = :t)
+        ON CONFLICT DO NOTHING`, { replacements: { t: tenant(), o: OWNER_EMAIL } });
       await kb.ensure(sq);
     })().catch((e) => { ensured = null; throw e; });
   }
@@ -144,9 +161,10 @@ function build({ backend, sec }) {
     const s = secret(); if (!s) return null;
     const tok = readCookie(req); if (!tok) return null;
     let p; try { p = jwt.verify(tok, s, { audience: AUD }); } catch (e) { return null; }
-    const email = String(p.e || '').toLowerCase();
-    if (adminEmails().indexOf(email) < 0) return null;       // quitar el correo corta el acceso ya
-    const [rows] = await db().query('SELECT id, email, full_name, password_hash, locked_until FROM planea_users WHERE lower(email) = :e LIMIT 1', { replacements: { e: email } });
+    const uid = Number(p.u) || 0;
+    if (!(await adminIds(db())).has(uid)) return null;       // quitar la fila corta el acceso ya
+    const [rows] = await db().query('SELECT id, email, full_name, password_hash, locked_until FROM planea_users WHERE id = :u LIMIT 1', { replacements: { u: uid } });
+    const email = rows[0] ? String(rows[0].email).toLowerCase() : '';
     // Cambiar la clave o bloquear la cuenta termina la sesión admin de inmediato.
     if (rows[0] && (p.f !== fingerprint(rows[0].password_hash) || sec.lockRemaining(rows[0]) > 0)) return null;
     return rows[0] ? { uid: rows[0].id, email, name: rows[0].full_name || email } : null;
@@ -183,7 +201,8 @@ function build({ backend, sec }) {
   api.post('/login', sec.loginLimiter, async (req, res) => {
     const email = String((req.body && req.body.email) || '').toLowerCase().trim();
     const password = String((req.body && req.body.password) || '');
-    const fail = (why) => { if (adminEmails().indexOf(email) >= 0) { const f = emailFails.get(email); emailFails.set(email, { n: failsOf(email) + 1, at: (f && f.at) || Date.now() }); } audit(req, email, 'admin.login', why); return res.status(401).json({ error: 'Credenciales inválidas o sin permiso de administrador.' }); };
+    let isAdm = false;
+    const fail = (why) => { if (isAdm) { const f = emailFails.get(email); emailFails.set(email, { n: failsOf(email) + 1, at: (f && f.at) || Date.now() }); } audit(req, email, 'admin.login', why); return res.status(401).json({ error: 'Credenciales inválidas o sin permiso de administrador.' }); };
     const f = failsOf(email);
     if (f >= 10) return res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos.' });
     if (!email || !password) return fail('fail_empty');
@@ -192,11 +211,12 @@ function build({ backend, sec }) {
     // bcrypt se corre siempre, para que "no existe" y "clave mala" tarden lo mismo.
     if (!DUMMY_HASH) DUMMY_HASH = await bcrypt.hash('planea-no-es-una-clave-' + Date.now(), 12);
     const ok = await bcrypt.compare(password, (u && u.password_hash) || DUMMY_HASH);
+    isAdm = !!u && (await adminIds(db())).has(u.id);
     if (!u || !ok) return fail(!u ? 'fail_no_user' : 'fail_password');
     if (sec.lockRemaining(u) > 0) return fail('blocked_locked');
-    if (adminEmails().indexOf(email) < 0) return fail('fail_not_admin');
+    if (!isAdm) return fail('fail_not_admin');
     emailFails.delete(email);
-    const tok = jwt.sign({ e: email, f: fingerprint(u.password_hash) }, secret(), { audience: AUD, expiresIn: Math.floor(TTL_MS / 1000) });
+    const tok = jwt.sign({ u: u.id, e: email, f: fingerprint(u.password_hash) }, secret(), { audience: AUD, expiresIn: Math.floor(TTL_MS / 1000) });
     res.cookie(COOKIE, tok, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: TTL_MS, path: '/' });
     req.admin = { uid: u.id };
     audit(req, email, 'admin.login', 'success');
@@ -230,8 +250,8 @@ function build({ backend, sec }) {
     const npsBy = new Map(nps.map((n) => [n.user_id, n.score]));
     const evBy = new Map();
     events.forEach((e) => { if (!evBy.has(e.user_id)) evBy.set(e.user_id, []); evBy.get(e.user_id).push(e); });
-    const admins = adminEmails();
-    const people = users.filter((u) => admins.indexOf(String(u.email).toLowerCase()) < 0).map((u) => {
+    const admins = await adminIds(sq);
+    const people = users.filter((u) => !admins.has(u.id)).map((u) => {
       const sd = prof.get(u.id) || null;
       const fin = finishInfo(sd);
       const ev = evBy.get(u.id) || [];
@@ -397,7 +417,7 @@ async function mayaKnowledge(backend) {
 }
 
 function health() {
-  return { configured: !!secret(), admins: adminEmails().length, dian_table: !!dianTable(), kb_max_chars: kb.MAX_CHARS() };
+  return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: !!dianTable(), kb_max_chars: kb.MAX_CHARS() };
 }
 
 module.exports = { PlaneaTax, build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };

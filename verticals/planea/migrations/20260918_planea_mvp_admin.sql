@@ -41,3 +41,13 @@ CREATE TABLE IF NOT EXISTS planea_nps (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_nps_once ON planea_nps (tenant_id, user_id);
+
+-- Administradores: por ID de cuenta, nunca por correo. Se conceden con scripts/planea-admins.cjs.
+CREATE TABLE IF NOT EXISTS planea_admins (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL DEFAULT 1,
+  user_id INTEGER NOT NULL,
+  granted_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_admins_user ON planea_admins (tenant_id, user_id);

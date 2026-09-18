@@ -9,10 +9,6 @@
   :root{--brand:#16373A;--green:#2E7D5B;--ink:#1c2b2a;--mut:#5b6b69;--line:#dde5e3;--bg:#f4f7f6;--card:#fff;--red:#B03A2E;--amber:#C87A32}
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,'DM Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5}
-  header{background:var(--brand);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  header b{font-size:17px;letter-spacing:.3px}
-  header .who{margin-left:auto;font-size:13px;opacity:.9;display:flex;gap:10px;align-items:center}
-  main{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
   h1{font-size:20px;margin:0 0 4px} h2{font-size:17px;margin:0 0 10px;color:var(--brand)}
   .mut{color:var(--mut);font-size:13px}
@@ -20,12 +16,31 @@
   input[type=email],input[type=password],input[type=text]{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:16px}
   button{font:inherit;border:0;border-radius:8px;padding:11px 16px;cursor:pointer;min-height:44px}
   .btn{background:var(--brand);color:#fff;font-weight:600}
-  .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);min-height:36px;padding:6px 12px}
   .btn.small{min-height:36px;padding:6px 12px;font-size:13px}
   .btn.warn{background:#fff;color:var(--red);border:1px solid var(--red)}
-  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 0}
-  .tab{background:#e7eeec;color:var(--brand);font-weight:600}
-  .tab.on{background:var(--brand);color:#fff}
+  /* Pantalla dividida: 20% navegación a la izquierda, 80% contenido a la derecha. */
+  .shell{display:grid;grid-template-columns:20% 80%;min-height:100vh}
+  .side{background:var(--brand);color:#fff;display:flex;flex-direction:column;padding:20px 12px;position:sticky;top:0;height:100vh;min-width:0}
+  .side .logo{font-weight:800;font-size:17px;letter-spacing:.4px;padding:0 10px 4px}
+  .side .sub{font-size:12px;opacity:.75;padding:0 10px 18px}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav a,.nav button{display:flex;align-items:center;min-height:44px;padding:10px 12px;border-radius:8px;color:#fff;text-decoration:none;background:transparent;text-align:left;font-weight:600;font-size:14px;width:100%}
+  .nav a:hover,.nav button:hover{background:rgba(255,255,255,.1)}
+  .nav a.on{background:#fff;color:var(--brand)}
+  .nav .sep{height:1px;background:rgba(255,255,255,.18);margin:10px 4px}
+  .side .who{margin-top:auto;font-size:12px;opacity:.85;padding:12px 10px 0;border-top:1px solid rgba(255,255,255,.18);word-break:break-word}
+  .content{padding:24px 28px 60px;min-width:0}
+  .content .card:first-child{margin-top:0}
+  .solo{padding:20px 16px}
+  @media(max-width:760px){
+    .shell{grid-template-columns:1fr}
+    .side{position:static;height:auto;padding:12px}
+    .side .sub,.side .who{display:none}
+    .nav{flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .nav a,.nav button{width:auto;white-space:nowrap;flex:none}
+    .nav .sep{display:none}
+    .content{padding:16px}
+  }
   .err{color:var(--red);font-size:14px;margin-top:10px;min-height:20px}
   .ok{color:var(--green);font-size:14px;margin-top:10px;min-height:20px}
   .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -45,11 +60,7 @@
 </style>
 </head>
 <body>
-<header>
-  <b>PLANEA · Administración</b>
-  <div class="who" id="who" hidden><span id="whoName"></span><button class="btn ghost" id="outBtn">Salir</button></div>
-</header>
-<main>
+<div class="solo" id="soloWrap">
 
   <section id="login" class="card" hidden style="max-width:420px;margin:40px auto">
     <h1>Entrar</h1>
@@ -67,12 +78,23 @@
     <p id="closedMsg" class="mut"></p>
   </section>
 
-  <section id="app" hidden>
-    <div class="tabs">
-      <button class="tab on" data-tab="users">Usuarios de prueba</button>
-      <button class="tab" data-tab="metrics">Métricas</button>
-      <button class="tab" data-tab="kb">Conocimiento de Maya</button>
-    </div>
+</div>
+
+<div class="shell" id="app" hidden>
+  <aside class="side">
+    <div class="logo">PLANEA</div>
+    <div class="sub">Administración</div>
+    <nav class="nav" aria-label="Módulo administrativo">
+      <a href="#users" data-tab="users" class="on">Usuarios de prueba</a>
+      <a href="#metrics" data-tab="metrics">Métricas</a>
+      <a href="#kb" data-tab="kb">Conocimiento de Maya</a>
+      <div class="sep"></div>
+      <a href="/planea/portal/inicio" target="_blank" rel="noopener">Abrir Planea</a>
+      <button type="button" id="outBtn">Salir</button>
+    </nav>
+    <div class="who" id="whoName"></div>
+  </aside>
+  <main class="content">
 
     <div id="tab-users" class="card">
       <h2>Usuarios de prueba</h2>
@@ -103,8 +125,8 @@
       <p class="mut" id="kbUsage"></p>
       <div class="tw"><table id="kbTbl"></table></div>
     </div>
-  </section>
-</main>
+  </main>
+</div>
 <script>
 (function () {
   'use strict';
@@ -119,14 +141,14 @@
       body: body ? JSON.stringify(body) : undefined
     }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._status = r.status; return j; }); });
   }
-  function show(id) { ['login', 'closed', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); }
+  function show(id) { ['login', 'closed', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); $('soloWrap').hidden = id === 'app'; }
 
   function boot() {
     call('GET', '/me').then(function (r) {
       if (r._status === 503) { $('closedMsg').textContent = r.message || 'El módulo no está disponible todavía.'; return show('closed'); }
       if (r._status !== 200) return show('login');
-      $('whoName').textContent = r.admin.name + ' · ' + r.admin.email; $('who').hidden = false;
-      show('app'); tab('users');
+      $('whoName').textContent = r.admin.name + ' · ' + r.admin.email;
+      show('app'); tab(tabFromHash());
     }).catch(function () { show('login'); });
   }
 
@@ -137,11 +159,12 @@
       else $('loginErr').textContent = r.error || r.message || 'No se pudo entrar.';
     });
   });
-  $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('who').hidden = true; show('login'); }); });
+  $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('whoName').textContent = ''; show('login'); }); });
 
-  document.querySelectorAll('.tab').forEach(function (b) { b.addEventListener('click', function () { tab(b.getAttribute('data-tab')); }); });
+  function tabFromHash() { var h = (location.hash || '').slice(1); return ['users', 'metrics', 'kb'].indexOf(h) >= 0 ? h : 'users'; }
+  window.addEventListener('hashchange', function () { if (!$('app').hidden) tab(tabFromHash()); });
   function tab(name) {
-    document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
+    document.querySelectorAll('.nav [data-tab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
     ['users', 'metrics', 'kb'].forEach(function (t) { $('tab-' + t).hidden = t !== name; });
     if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else loadKb();
   }

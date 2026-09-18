@@ -21,7 +21,6 @@ const RUN = Date.now().toString(36);
 const ADMIN_EMAIL = 'sit-mvp-admin-' + RUN + '@example.test';
 const USER_EMAIL = 'sit-mvp-user-' + RUN + '@example.test';
 const PW = 'Sit-Mvp-' + RUN + '-clave!';
-process.env.PLANEA_ADMIN_EMAILS = ADMIN_EMAIL;
 
 const fs = require('fs');
 const path = require('path');
@@ -104,8 +103,12 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const base = 'http://127.0.0.1:' + server.address().port;
   const SESSION_SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
   const userCookie = 'planea_session=' + jwt.sign({ id: userRow.id, email: USER_EMAIL, name: 'SIT Usuario' }, SESSION_SECRET, { expiresIn: '1h' });
-  async function call(method, p, { body, cookie, hdr = true } = {}) {
-    const headers = {};
+  // El límite de ingresos vive en la base por IP: cada corrida usa su propia IP de prueba
+  // (TEST-NET-2), así una corrida anterior no bloquea esta ni toca la de nadie.
+  const rnd = () => 1 + Math.floor(Math.random() * 250);
+  const SIT_IP = '198.51.100.' + rnd();
+  async function call(method, p, { body, cookie, hdr = true, ip = SIT_IP } = {}) {
+    const headers = { 'X-Forwarded-For': ip };
     if (body) headers['Content-Type'] = 'application/json';
     if (hdr) headers['X-Planea-Admin'] = '1';
     if (cookie) headers.Cookie = cookie;
@@ -123,6 +126,9 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
 
     // Entrada
     ok((await call('GET', '/planea/admin/api/me')).status === 404, 'sin sesión admin: 404');
+    // La primera llamada crea las tablas; el permiso es una fila con el ID de la cuenta.
+    ok((await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: PW } })).status === 401, 'una cuenta sin fila en planea_admins no entra');
+    await sq.query("INSERT INTO planea_admins (tenant_id, user_id, granted_by) VALUES (990918, :u, 'sit') ON CONFLICT DO NOTHING", { replacements: { u: adminRow.id } });
     ok((await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: PW }, hdr: false })).status === 404, 'login sin cabecera propia: 404');
     ok((await call('POST', '/planea/admin/api/login', { body: { email: USER_EMAIL, password: PW } })).status === 401, 'usuario de Planea que no es admin no entra');
     ok((await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'mala-clave-123' } })).status === 401, 'admin con clave equivocada no entra');
@@ -203,7 +209,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     // Revisión de seguridad
     const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
     ok(bigLogin.status === 413, 'un cuerpo grande sin sesión admin se rechaza antes de procesarlo');
-    for (let i = 0; i < 12; i++) await call('POST', '/planea/admin/api/login', { body: { email: 'sit-mvp-nadie-' + i + '@example.test', password: 'mala-clave-123' } });
+    for (let i = 0; i < 12; i++) await call('POST', '/planea/admin/api/login', { body: { email: 'sit-mvp-nadie-' + i + '@example.test', password: 'mala-clave-123' }, ip: '203.0.113.' + rnd() });
     const stillIn = await call('GET', '/planea/admin/api/me', { cookie: ac });
     ok(stillIn.status === 200, 'intentos a correos inventados no afectan al admin');
     const bSrc = fs.readFileSync(path.join(__dirname, 'backend.cjs'), 'utf8');
@@ -212,6 +218,12 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('UPDATE planea_users SET password_hash = :h WHERE id = :id', { replacements: { h: await bcrypt.hash(PW + '-nueva', 10), id: adminRow.id } });
     ok((await call('GET', '/planea/admin/api/me', { cookie: ac })).status === 404, 'cambiar la clave termina la sesión admin');
     await sq.query('UPDATE planea_users SET password_hash = :h WHERE id = :id', { replacements: { h: hash, id: adminRow.id } });
+
+    // Quitar la fila corta el acceso de inmediato
+    await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918 AND user_id = :u', { replacements: { u: adminRow.id } });
+    ok((await call('GET', '/planea/admin/api/me', { cookie: ac })).status === 404, 'quitar al admin de planea_admins corta su sesión');
+    await sq.query("INSERT INTO planea_admins (tenant_id, user_id, granted_by) VALUES (990918, :u, 'sit') ON CONFLICT DO NOTHING", { replacements: { u: adminRow.id } });
+    ok(!/PLANEA_ADMIN_EMAILS/.test(fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')), 'no queda una lista de correos que dé permiso');
 
     // Salir
     const out = await call('POST', '/planea/admin/api/logout', { cookie: ac });
@@ -222,6 +234,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('DELETE FROM planea_events WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
+    await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918').catch(() => {});
     await sq.query("DELETE FROM planea_audit_log WHERE email LIKE 'sit-mvp-%' OR user_id IN (:ids)", { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_profiles WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_users WHERE id IN (:ids)', { replacements: { ids } }).catch(() => {});
