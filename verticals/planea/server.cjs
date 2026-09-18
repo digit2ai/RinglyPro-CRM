@@ -39,6 +39,7 @@ let planeaBackend = null;
 try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
 const planeaAdmin = require('./admin.cjs');
 const taxNotify = require('./tax-notify.cjs');
+const planeaQuote = require('./quote.cjs');
 
 // TEMPORARY: auto-confirm new signups when a Supabase service_role key is set
 // (PLANEA_SERVICE_ROLE_KEY), so users log in without email verification while SMTP
@@ -484,6 +485,8 @@ if (planeaBackend) {
     router.use('/admin', adm.admin);
     router.use('/api/v1', adm.me);
     // Avisos por correo de la fecha de renta (solo producción, solo quien los encendió).
+    // Cotizaciones con enlace mágico: /planea/quote/:token (+ webhook de Stripe).
+    router.use('/quote', planeaQuote.build({ db: planeaBackend.db }));
     taxNotify.start({ db: planeaBackend.db, PlaneaTax: planeaAdmin.PlaneaTax, dianTable: planeaAdmin.dianTable });
   } catch (e) { console.log('planea admin mount failed:', e.message); }
 }

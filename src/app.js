@@ -82,6 +82,10 @@ app.use(['/api/v1/billing/webhook', '/jobup/api/v1/billing/webhook'], (req, res,
   return express.raw({ type: 'application/json' })(req, res, next);
 });
 
+// Planea: webhook de Stripe de las cotizaciones. Cuerpo crudo ANTES del parser global
+// (mismo motivo que JobUp arriba): una firma de Stripe cubre los bytes exactos.
+app.use('/planea/quote/stripe/webhook', express.raw({ type: 'application/json' }));
+
 // WordPress como proveedor de identidad — el webhook monta su propio
 // express.raw y DEBE ir antes del parser global: el HMAC cubre los bytes
 // exactos que envio WordPress, y si express.json los parsea y reserializa
