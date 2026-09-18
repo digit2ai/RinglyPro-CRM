@@ -10,6 +10,7 @@ const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { Tenant, Message, Appointment, AvailabilityRule, Call, Transcript } = require('../models');
 const booking = require('../services/booking');
+const tollFraud = require('../security/tollFraud');
 
 router.use(requireAuth);
 
@@ -36,13 +37,19 @@ router.get('/debug/booking', async (req, res) => {
       transcript: transcript.map(t => ({ role: t.role, tool: t.tool_name, text: t.text }))
     });
   } catch (e) {
-    res.status(500).json({ error: e.message, stack: e.stack });
+    res.status(500).json({ error: e.message });
   }
 });
 
 // One-time: pull synthetic-demo (tenant 0) messages/appointments into the
 // logged-in account so past demo activity becomes visible in the dashboard.
 router.post('/import-demo', async (req, res) => {
+  // SECURITY: this moves every demo-line caller's messages, appointments and
+  // call records (names and phone numbers of real people) into the caller's
+  // account. Signup is open, so without this check ANY new account could take
+  // them. Only the configured demo tenant may import; anyone else gets 404.
+  const demoTenantId = parseInt(process.env.LITE_DEMO_TENANT_ID || '7', 10);
+  if (!demoTenantId || req.tenantId !== demoTenantId) return res.status(404).json({ error: 'not_found' });
   try {
     const m = await Message.update({ tenant_id: req.tenantId }, { where: { tenant_id: 0 } });
     const a = await Appointment.update({ tenant_id: req.tenantId }, { where: { tenant_id: 0 } });
@@ -111,6 +118,18 @@ router.patch('/settings', async (req, res) => {
   const tenant = await Tenant.findByPk(req.tenantId);
   if (!tenant) return res.status(404).json({ error: 'not_found' });
   const allow = ['business_name', 'owner_name', 'owner_phone', 'owner_email', 'locale', 'timezone', 'greeting', 'transfer_number'];
+  // The two phone fields are numbers WE will dial and text, so they are checked
+  // against the toll-fraud allow-list here (a clear error for the owner) as well
+  // as at send time in the provider (the guarantee). Empty clears the field.
+  for (const f of ['owner_phone', 'transfer_number']) {
+    if (!(f in (req.body || {}))) continue;
+    const v = req.body[f];
+    if (v == null || String(v).trim() === '') { req.body[f] = null; continue; }
+    const chk = tollFraud.checkDestination(v, { defaultCountry: tenant.country });
+    if (!chk.ok) return res.status(400).json({ error: 'phone_not_allowed', field: f, reason: chk.reason,
+      message: 'Only US and Colombian phone numbers can receive calls and texts from RinglyPro Lite.' });
+    req.body[f] = chk.e164;
+  }
   for (const k of allow) if (k in (req.body || {})) tenant[k] = req.body[k];
   await tenant.save();
   res.json({ success: true, tenant });

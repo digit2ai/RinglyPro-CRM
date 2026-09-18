@@ -1,5 +1,7 @@
 'use strict';
 
+const tollFraud = require('../security/tollFraud');
+
 /**
  * RinglyPro Lite voice brain — adapted from full RinglyPro's
  * conversationRelayAgent.js (Twilio ConversationRelay + Claude Haiku + Polly).
@@ -196,6 +198,12 @@ class RelaySession {
       const number = this.ctx.transferNumber || this.ctx.ownerPhone;
       if (!number) {
         result = { success: false, error: 'no_transfer_number' };
+      } else if (!tollFraud.canSend('call', number).ok) {
+        // A number the guard would refuse (outside the allow-list, over budget,
+        // or Lite locked) is never dialled. Checking here, without consuming the
+        // budget, lets the agent offer to take a message instead of announcing a
+        // transfer that then goes silent.
+        result = { success: false, error: 'transfer_unavailable' };
       } else {
         this.disposition = 'transferred';
         this.events.push({ type: 'transfer', data: { number, reason: input.reason } });

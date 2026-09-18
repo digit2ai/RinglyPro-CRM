@@ -69,6 +69,7 @@ app.use('/api/billing', require('./routes/billing'));
 app.use('/api', require('./routes/api'));                // dashboard (auth-gated inside) — generic /api catch-all, mount LAST
 app.use('/webhooks', require('./routes/webhooks'));      // /webhooks/stripe
 app.use('/internal/economics', require('./routes/unit-economics'));
+app.use('/internal/security', require('./routes/security'));   // owner-only, 404 without the admin key
 
 // Telephony webhooks (Twilio hits these)
 app.use('/voice', require('./routes/voice-relay'));

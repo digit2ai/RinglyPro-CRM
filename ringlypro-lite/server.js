@@ -38,6 +38,20 @@ async function initDb() {
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS purchased_minutes NUMERIC(8,2) DEFAULT 0;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS rollover_period_start TIMESTAMP WITH TIME ZONE;
   `);
+  // Fraud-watch alert log: dedupes alerts across restarts, so a redeploy does
+  // not re-text the owner about something already reported. Platform-level
+  // (tenant 0), not tenant data.
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS lite_security_alerts (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL DEFAULT 0,
+      alert_key VARCHAR(200) NOT NULL,
+      type VARCHAR(40),
+      detail TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_security_alerts_key ON lite_security_alerts(tenant_id, alert_key);
+  `);
   console.log('[lite] DB ready');
 }
 
@@ -75,6 +89,12 @@ async function fireSms(ctx, ev) {
 
 /* ── Transfer the live call to a human (bypasses the AI) ──────────────── */
 async function fireTransfer(ctx, ev) {
+  // A transfer redirects a LIVE call on an account shared with the CRM. It only
+  // ever acts on a callSid that /voice/incoming answered, whatever the mode.
+  if (!ctx.callVerified) {
+    console.error('[lite:security] transfer refused: callSid was not answered by /voice/incoming');
+    return;
+  }
   try {
     const tt = t(ctx.locale);
     const voice = ctx.locale === 'es'
@@ -153,6 +173,16 @@ async function main() {
           // attach the pre-created call row id
           const call = msg.callSid ? await Call.findOne({ where: { call_sid: msg.callSid } }) : null;
           ctx.callId = call ? call.id : null;
+          // A socket is only a real call if /voice/incoming created its row in the
+          // last 15 minutes. Without that, anyone who opens the socket could run an
+          // AI session and name ANY callSid on this shared account for a transfer.
+          ctx.callVerified = !!(call && call.started_at && (Date.now() - new Date(call.started_at).getTime()) < 15 * 60 * 1000);
+          if (!ctx.callVerified) {
+            console.warn('[lite:security] relay setup for a callSid with no recent call row');
+            if (String(process.env.LITE_TWILIO_SIGNATURE || 'log').toLowerCase() === 'enforce') {
+              speak('Thank you for calling. Goodbye.'); try { ws.close(); } catch (_) {} return;
+            }
+          }
           ctx.businessName = ctx.businessName;
           session = new RelaySession(ctx, {
             onTurn: (role, text, tool) => transcript.log({ tenantId: ctx.tenantId, callSid: ctx.callSid, role, text, toolName: tool })
@@ -195,11 +225,44 @@ async function main() {
     let pathname = '/';
     try { pathname = new URL(req.url, 'http://localhost').pathname; } catch (_) {}
     if (pathname === '/voice-relay/ws') {
+      if (!require('./src/security/twilioSignature').allowUpgrade(req)) { socket.destroy(); return; }
       relayWss.handleUpgrade(req, socket, head, (ws) => relayWss.emit('connection', ws, req));
     } else {
       socket.destroy();
     }
   });
+
+  // FRAUD WATCH: reads the Twilio account on a timer for the signatures of the
+  // 2026-08-06 toll-fraud attack. Production only (or LITE_FRAUD_WATCH=on).
+  const fraudWatch = require('./src/security/fraudWatch');
+  const fraudWatchDeps = () => {
+    const provider = getProvider();
+    return {
+      client: provider.client(),
+      ownedDids: async () => (await require('./src/models').Number.findAll({ attributes: ['did'] })).map((n) => n.did),
+      hasSeen: async (key) => {
+        const [r] = await sequelize.query('SELECT 1 FROM lite_security_alerts WHERE tenant_id = 0 AND alert_key = :key LIMIT 1', { replacements: { key } });
+        return r.length > 0;
+      },
+      markSeen: async (key, alert) => {
+        await sequelize.query(
+          `INSERT INTO lite_security_alerts (tenant_id, alert_key, type, detail) VALUES (0, :key, :type, :detail)
+           ON CONFLICT (tenant_id, alert_key) DO NOTHING`,
+          { replacements: { key, type: alert.type, detail: String(alert.detail || '').slice(0, 500) } });
+      },
+      // Alerts bypass only the auto-lock, never the destination allow-list.
+      sendAlert: async (to, body) => {
+        const tf = require('./src/security/tollFraud');
+        if (!tf.checkDestination(to).ok) throw new Error('alert phone is not an allowed destination');
+        const msg = { to: tf.normalize(to), body };
+        if (process.env.LITE_MESSAGING_SERVICE_SID) msg.messagingServiceSid = process.env.LITE_MESSAGING_SERVICE_SID;
+        else msg.from = process.env.LITE_SMS_FROM || require('./src/telephony').TwilioProvider.DEFAULT_SMS_FROM;
+        await provider.client().messages.create(msg);
+      }
+    };
+  };
+  app.set('fraudWatchDeps', fraudWatchDeps);
+  if (fraudWatch.start(fraudWatchDeps)) console.log('[lite] fraud watch started');
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);

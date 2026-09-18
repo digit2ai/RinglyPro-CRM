@@ -1,0 +1,49 @@
+name: RinglyPro Lite security
+
+# Runs on every push and pull request that touches ringlypro-lite/. It is the
+# gate that keeps the 2026-08-06 toll-fraud defences in place: the destination
+# allow-list at the provider, the velocity breaker, the fraud watch, webhook
+# signatures, the import-demo guard, and a scan for committed secrets.
+# Needs no secrets of its own and holds a read-only token.
+
+on:
+  push:
+    paths:
+      - 'ringlypro-lite/**'
+      - '.github/workflows/lite-security.yml'
+  pull_request:
+    paths:
+      - 'ringlypro-lite/**'
+      - '.github/workflows/lite-security.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lite-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ringlypro-lite
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+      - name: Install (lockfile only, no install scripts)
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Syntax check
+        run: node test/syntax-check.js
+      - name: Security SIT
+        run: node test/security-sit.js
+      - name: Call simulator (agent tools, incl. the refused premium transfer)
+        run: node test/call-sim.js
+      - name: Known-vulnerable dependencies (high and above)
+        run: npm audit --omit=dev --audit-level=high

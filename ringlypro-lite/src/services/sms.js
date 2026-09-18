@@ -26,14 +26,14 @@ async function sendDemoConfirm(ctx, ev) {
       ? `${ctx.businessName} (demo): recibimos su mensaje. Así se le avisaría a su negocio al instante — y su cliente recibe esta confirmación.`
       : `${ctx.businessName} (demo): we got your message. This is how your business is alerted instantly — and your caller gets this confirmation.`;
   } else { return { sent: false, segments: 0 }; }
-  return send({ from: ctx.to, to, body });   // from is overridden by LITE_SMS_FROM
+  return send({ from: ctx.to, to, body, purpose: 'demo' });   // from is overridden by LITE_SMS_FROM
 }
 
-async function send({ from, to, body }) {
+async function send({ from, to, body, purpose }) {
   if (!to || !from) return { sent: false, segments: 0, reason: 'missing_from_or_to' };
   try {
     const provider = getProvider();
-    await provider.sendSMS({ from, to, body });
+    await provider.sendSMS({ from, to, body, purpose });
     return { sent: true, segments: segments(body) };
   } catch (e) {
     console.error('[lite:sms] send failed:', e.message);

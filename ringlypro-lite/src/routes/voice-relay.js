@@ -14,6 +14,8 @@ const { getProvider, TwilioProvider } = require('../telephony');
 const { getBusinessInfo } = require('../services/booking');
 const { t, relayLang } = require('../services/i18n');
 const { Call } = require('../models');
+const twilioSig = require('../security/twilioSignature');
+const tollFraud = require('../security/tollFraud');
 
 function wssUrl(req) {
   const base = (process.env.LITE_WEBHOOK_BASE_URL || `https://${req.headers.host}`).replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -61,14 +63,14 @@ async function incoming(req, res) {
   res.send(twiml);
 }
 
-router.post('/incoming', incoming);
-router.get('/incoming', incoming);
+router.post('/incoming', twilioSig.middleware, incoming);
+router.get('/incoming', twilioSig.middleware, incoming);
 
 // SMS fallback endpoint (Lite does not process inbound SMS in v1).
-router.post('/sms-fallback', (req, res) => { res.set('Content-Type', 'text/xml').send('<Response/>'); });
+router.post('/sms-fallback', twilioSig.middleware, (req, res) => { res.set('Content-Type', 'text/xml').send('<Response/>'); });
 
 // Twilio status callback — finalize duration/disposition.
-router.post('/status', async (req, res) => {
+router.post('/status', twilioSig.middleware, async (req, res) => {
   try {
     const b = req.body || {};
     const sid = b.CallSid;
@@ -105,6 +107,8 @@ router.get('/health', async (req, res) => {
     twilio_sid_len_trim: (process.env.LITE_TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID || '').trim().length,
     twilio_token_len_raw: (process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN || '').length,
     twilio_token_len_trim: (process.env.LITE_TWILIO_AUTH_TOKEN || process.env.TWILIO_AUTH_TOKEN || '').trim().length,
+    webhook_signature: twilioSig.status(),
+    outbound_guard: { allowed_countries: tollFraud.status().allowed_countries, locked: !!tollFraud.lockState() },
     ok: true
   };
   // ?check=twilio actively verifies credentials by making the same class of API

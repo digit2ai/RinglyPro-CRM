@@ -130,7 +130,7 @@ function ok(name, cond) { if (cond) { pass++; console.log('  PASS', name); } els
   console.log('== Scenario 6: transfer to a human ==');
   {
     const booking = makeMockBooking();
-    const ctx = { ...baseCtx('en'), transferNumber: '+15551112222', ownerPhone: '+15553334444' };
+    const ctx = { ...baseCtx('en'), transferNumber: '+14155552222', ownerPhone: '+14155553333' };
     const brain = (() => { let step = 0; return async () => { step++;
       if (step === 1) return { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'tt1', name: 'transfer_to_human', input: { reason: 'wants to talk to her husband' } }], usage: { input_tokens: 700, output_tokens: 30 } };
       return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'Of course — connecting you now, one moment.' }], usage: { input_tokens: 700, output_tokens: 20 } };
@@ -139,8 +139,29 @@ function ok(name, cond) { if (cond) { pass++; console.log('  PASS', name); } els
     s.openingGreeting();
     const reply = await s.handlePrompt('I need to talk to my husband please.');
     ok('disposition = transferred', s.disposition === 'transferred');
-    ok('emitted transfer event to owner number', s.events.some(e => e.type === 'transfer' && e.data.number === '+15551112222'));
+    ok('emitted transfer event to owner number', s.events.some(e => e.type === 'transfer' && e.data.number === '+14155552222'));
     ok('agent says connecting', /connect/i.test(reply));
+  }
+
+  console.log('== Scenario 7: transfer to a premium number is refused (toll-fraud guard) ==');
+  {
+    const booking = makeMockBooking();
+    // A tenant set their transfer number to a Cameroon premium line (the
+    // 2026-08-06 destination). The agent must not queue a transfer.
+    const ctx = { ...baseCtx('en'), transferNumber: '+237656876200', ownerPhone: null };
+    let toolResult = null;
+    const brain = (() => { let step = 0; return async (args) => { step++;
+      if (step === 1) return { stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 'tt2', name: 'transfer_to_human', input: { reason: 'wants a person' } }], usage: { input_tokens: 700, output_tokens: 30 } };
+      const last = args.messages[args.messages.length - 1];
+      toolResult = JSON.stringify(last && last.content);
+      return { stop_reason: 'end_turn', content: [{ type: 'text', text: 'I can take a message for them.' }], usage: { input_tokens: 700, output_tokens: 20 } };
+    }; })();
+    const s = new RelaySession(ctx, { booking, createMessage: brain });
+    s.openingGreeting();
+    await s.handlePrompt('Put me through to a person.');
+    ok('no transfer event queued', !s.events.some(e => e.type === 'transfer'));
+    ok('disposition is not transferred', s.disposition !== 'transferred');
+    ok('the agent is told the transfer is unavailable', /transfer_unavailable/.test(toolResult || ''));
   }
 
   console.log(`\nCall-sim: ${pass} passed, ${fail} failed.`);

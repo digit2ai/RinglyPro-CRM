@@ -9,7 +9,8 @@
     "start": "node server.js",
     "check": "node test/syntax-check.js",
     "sim": "node test/call-sim.js",
-    "cogs": "node test/cogs-report.js"
+    "cogs": "node test/cogs-report.js",
+    "security": "node test/security-sit.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",

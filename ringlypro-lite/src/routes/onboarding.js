@@ -11,6 +11,15 @@ const { Tenant, Number } = require('../models');
 const { getProvider } = require('../telephony');
 const { codesFor, carriers } = require('../services/forwardingCodes');
 const { canProvisionNumber } = require('../services/entitlement');
+const { Op } = require('sequelize');
+const tollFraud = require('../security/tollFraud');
+
+// NUMBER-PURCHASE CIRCUIT BREAKER. The 2026-08-06 attack began by BUYING a
+// number. Our own buy path is card-gated and one-per-tenant, but a burst of
+// paid signups (stolen cards) could still buy numbers in a loop. More than a
+// handful a day is not growth, it is abuse, so purchases stop and say why.
+// Counted from the database, so it holds across instances and restarts.
+const MAX_NUMBERS_PER_DAY = Math.max(0, parseInt(process.env.LITE_MAX_NUMBERS_PER_DAY || '5', 10) || 0);
 
 // List carriers for a country (drives the onboarding dropdown).
 router.get('/carriers', requireAuth, async (req, res) => {
@@ -49,6 +58,18 @@ router.post('/provision-number', requireAuth, async (req, res) => {
         error: 'co_numbers_gated',
         message: 'Colombia local numbers require a verified in-country address bundle (Twilio/Telnyx). Complete the regulatory bundle, then set LITE_CO_NUMBERS_ENABLED=1.'
       });
+    }
+
+    if (tollFraud.lockState()) {
+      return res.status(503).json({ success: false, error: 'outbound_locked',
+        message: 'Number activation is paused while a security check runs. Please try again later.' });
+    }
+    const since = new Date(Date.now() - 24 * 3600 * 1000);
+    const boughtToday = await Number.count({ where: { created_at: { [Op.gte]: since } } });
+    if (boughtToday >= MAX_NUMBERS_PER_DAY) {
+      console.error(`[lite:security] number purchase refused: ${boughtToday} bought in 24h (cap ${MAX_NUMBERS_PER_DAY})`);
+      return res.status(429).json({ success: false, error: 'purchase_cap_reached',
+        message: 'We have paused new number activations for today. Please try again tomorrow or contact support.' });
     }
 
     const bought = await provider.buyNumber({ country, areaCode: req.body && req.body.area_code, tenantId: tenant.id });

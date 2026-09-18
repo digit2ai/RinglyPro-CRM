@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { Tenant, User, AvailabilityRule } = require('../models');
 const auth = require('../middleware/auth');
+const tollFraud = require('../security/tollFraud');
 const { sendDbError } = require('../utils/db-error');
 
 const TRIAL_DAYS = parseInt(process.env.LITE_TRIAL_DAYS || '7', 10);
@@ -16,6 +17,15 @@ router.post('/register', async (req, res) => {
     if (!business_name || !email || !password) {
       return res.status(400).json({ error: 'business_name, email, password required' });
     }
+    // owner_phone receives our texts, so it must be a destination the
+    // toll-fraud allow-list accepts. Optional: blank stays blank.
+    let ownerPhone = null;
+    if (owner_phone && String(owner_phone).trim()) {
+      const chk = tollFraud.checkDestination(owner_phone, { defaultCountry: (country || 'US').toUpperCase() });
+      if (!chk.ok) return res.status(400).json({ error: 'phone_not_allowed', field: 'owner_phone', reason: chk.reason,
+        message: 'Only US and Colombian phone numbers can receive texts from RinglyPro Lite.' });
+      ownerPhone = chk.e164;
+    }
     const existing = await User.findOne({ where: { email: String(email).toLowerCase() } });
     if (existing) return res.status(409).json({ error: 'email_in_use' });
 
@@ -23,7 +33,7 @@ router.post('/register', async (req, res) => {
     const tenant = await Tenant.create({
       business_name,
       owner_name: owner_name || null,
-      owner_phone: owner_phone || null,
+      owner_phone: ownerPhone,
       owner_email: String(email).toLowerCase(),
       country: (country || 'US').toUpperCase().slice(0, 2),
       locale: (locale || 'en').toLowerCase().slice(0, 2),

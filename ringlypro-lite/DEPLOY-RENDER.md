@@ -56,3 +56,30 @@ That's enough for `/health`, `/signup`, `/dashboard`, and message/booking logic.
 Give Claude a **Render API key** (`rnd_…`) as an env var, or a **deploy-hook
 URL**, and it will create/trigger the service via the API in this session.
 Without one of those, this manual step is required once.
+
+## Security env vars (toll-fraud defences, added 2026-09-18)
+
+After the 2026-08-06 toll-fraud incident (stolen Twilio credentials, 10 calls to
+Cameroon/Tunisia, voice disabled account-wide with error 32005). All optional;
+the defaults are the safe choice.
+
+| Key | Default | What it does |
+|---|---|---|
+| `LITE_ALLOWED_DIAL_COUNTRIES` | `US,CO` | The only countries Lite will ever call or text. Add `CA` for Canada. |
+| `LITE_MAX_TRANSFERS_PER_HOUR` | `20` | Live transfers per hour (per instance). |
+| `LITE_MAX_SMS_PER_HOUR` | `60` | Owner alert texts per hour (per instance). |
+| `LITE_MAX_DEMO_SMS_PER_HOUR` | `30` | Demo confirmation texts per hour, a separate budget. |
+| `LITE_MAX_PER_DESTINATION_PER_DAY` | `10` | Texts or calls to any one number per day. |
+| `LITE_MAX_NUMBERS_PER_DAY` | `5` | Number purchases per 24 h (counted in the DB). |
+| `LITE_OUTBOUND_LOCK` | unset | `1` = refuse every outbound call and text (kill switch). |
+| `LITE_TWILIO_SIGNATURE` | `log` | `enforce` after `/voice/health` shows real calls as `valid`. |
+| `LITE_FRAUD_WATCH` | on in production | `off` stops it. Polls Twilio every `LITE_FRAUD_WATCH_MIN` (10). |
+| `LITE_FRAUD_AUTOLOCK` | on | `0` = alert only, never lock Lite's outbound. |
+| `LITE_FRAUD_CALL_BURST` | `8` | Outbound calls inside one minute that count as a burst. |
+| `LITE_SECURITY_ALERT_PHONE` | unset | Where fraud alerts are texted (must be US/CO). |
+| `LITE_KNOWN_NUMBERS` | the 5 current account numbers | Numbers on the shared account that are not Lite's. |
+| `LITE_WEBCHAT_PER_IP` / `LITE_WEBCHAT_MAX_SMS` | `40` / `1` | Public chat: messages per IP per 10 min, demo texts per session. |
+
+Security report: `GET /internal/security` with header `x-admin-key: <LITE_ADMIN_KEY>`
+(16+ chars; anything else answers 404). `POST /internal/security/unlock` lifts an
+auto-lock after a person has looked.

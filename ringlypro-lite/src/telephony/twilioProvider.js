@@ -1,5 +1,7 @@
 'use strict';
 
+const tollFraud = require('../security/tollFraud');
+
 const TelephonyProvider = require('./TelephonyProvider');
 
 /**
@@ -86,7 +88,19 @@ class TwilioProvider extends TelephonyProvider {
     };
   }
 
-  async sendSMS({ from, to, body }) {
+  async sendSMS({ from, to, body, purpose }) {
+    // TOLL-FRAUD GATE. Checked here, at the provider, so no caller can reach
+    // Twilio around it: owner alerts, demo confirmations, and any path added
+    // later all pass through this line. A refusal throws; nothing is sent.
+    // Demo confirmations (anyone on the internet can trigger one) draw on their
+    // own budget, so they can never exhaust the one carrying owner alerts.
+    const gate = tollFraud.authorize(purpose === 'demo' ? 'demo_sms' : 'sms', to);
+    if (!gate.ok) {
+      const e = new Error(`sms_refused:${gate.reason}`);
+      e.code = 'TOLL_FRAUD_GUARD';
+      throw e;
+    }
+    to = gate.e164;
     const c = this.client();
     // Delivery to US numbers requires an A2P-registered sender (else error 30034).
     // Default sender = Digit2AI's verified toll-free (+18886103810), which is
@@ -126,6 +140,16 @@ class TwilioProvider extends TelephonyProvider {
    * transfer_number that isn't forwarded (or use no-answer forwarding).
    */
   async redirectCall({ callSid, number, message, voice, language }) {
+    // TOLL-FRAUD GATE. transfer_to_human dials a number the tenant typed, and
+    // signup is open — this is the one line that keeps a self-served premium
+    // destination from becoming a call we pay for.
+    const gate = tollFraud.authorize('call', number);
+    if (!gate.ok) {
+      const e = new Error(`transfer_refused:${gate.reason}`);
+      e.code = 'TOLL_FRAUD_GUARD';
+      throw e;
+    }
+    number = gate.e164;
     const c = this.client();
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Speak the hand-off line with the SAME premium Amazon Polly voice Lina uses
