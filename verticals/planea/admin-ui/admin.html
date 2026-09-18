@@ -32,6 +32,12 @@
   .content{padding:24px 28px 60px;min-width:0}
   .content .card:first-child{margin-top:0}
   .solo{padding:20px 16px}
+  .acc-det td{background:#f7faf9}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .kv section{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .kv h3{font-size:13px;margin:0 0 8px;color:var(--brand);text-transform:uppercase;letter-spacing:.4px}
+  .kv dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px}
+  .kv dt{color:var(--mut)} .kv dd{margin:0;word-break:break-word}
   @media(max-width:760px){
     .shell{grid-template-columns:1fr}
     .side{position:static;height:auto;padding:12px}
@@ -85,6 +91,7 @@
     <div class="logo">PLANEA</div>
     <div class="sub">Administración</div>
     <nav class="nav" aria-label="Módulo administrativo">
+      <a href="#accounts" data-tab="accounts">Lista de usuarios</a>
       <a href="#users" data-tab="users" class="on">Usuarios de prueba</a>
       <a href="#metrics" data-tab="metrics">Métricas</a>
       <a href="#kb" data-tab="kb">Conocimiento de Maya</a>
@@ -95,6 +102,15 @@
     <div class="who" id="whoName"></div>
   </aside>
   <main class="content">
+
+    <div id="tab-accounts" class="card" hidden>
+      <h2>Lista de usuarios <span class="pill na">Solo lectura</span></h2>
+      <p class="mut">Todas las cuentas de Planea, administradores incluidos, con toda su información, excepto: <span id="accHidden"></span>.</p>
+      <label for="accQ">Buscar por nombre, correo o ID</label>
+      <input id="accQ" type="text" autocomplete="off" placeholder="Ej: Juan, @gmail.com, 18">
+      <p class="mut" id="accCount"></p>
+      <div class="tw"><table id="accTbl"></table></div>
+    </div>
 
     <div id="tab-users" class="card">
       <h2>Usuarios de prueba</h2>
@@ -161,12 +177,12 @@
   });
   $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('whoName').textContent = ''; show('login'); }); });
 
-  function tabFromHash() { var h = (location.hash || '').slice(1); return ['users', 'metrics', 'kb'].indexOf(h) >= 0 ? h : 'users'; }
+  function tabFromHash() { var h = (location.hash || '').slice(1); return ['accounts', 'users', 'metrics', 'kb'].indexOf(h) >= 0 ? h : 'users'; }
   window.addEventListener('hashchange', function () { if (!$('app').hidden) tab(tabFromHash()); });
   function tab(name) {
     document.querySelectorAll('.nav [data-tab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
-    ['users', 'metrics', 'kb'].forEach(function (t) { $('tab-' + t).hidden = t !== name; });
-    if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else loadKb();
+    ['accounts', 'users', 'metrics', 'kb'].forEach(function (t) { $('tab-' + t).hidden = t !== name; });
+    if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else loadKb();
   }
 
   var PILARES = ['flujo', 'deuda', 'ahorro', 'inversion', 'impuestos', 'seguros', 'retiro', 'patrimonio'];
@@ -192,6 +208,56 @@
       }).join('');
     });
   }
+
+  // ── Lista de usuarios (solo lectura) ──
+  var ACC = [];
+  function yn(v) { return v ? 'Sí' : 'No'; }
+  function dl(pairs) { return '<dl>' + pairs.map(function (p) { return '<dt>' + esc(p[0]) + '</dt><dd>' + (p[1] == null || p[1] === '' ? '—' : esc(p[1])) + '</dd>'; }).join('') + '</dl>'; }
+  function detail(u) {
+    var a = u.account, s = u.score, t = u.tributario, d = u.data, v = u.activity;
+    var html = '<div class="kv">' +
+      '<section><h3>Cuenta</h3>' + dl([['ID', u.id], ['Nombre', u.full_name], ['Correo', u.email], ['Administrador', yn(u.is_admin)], ['Registro', fecha(a.registered_at)], ['Última actualización', fecha(a.updated_at)], ['Último ingreso', fecha(a.last_login_at)], ['Ingresos exitosos', a.logins_ok], ['Ingresos fallidos', a.logins_failed], ['Fallidos seguidos', a.failed_in_a_row], ['Bloqueada', a.locked ? 'Sí, hasta ' + fecha(a.locked_until) : 'No']]) + '</section>' +
+      '<section><h3>Onboarding y puntaje</h3>' + dl([['Terminó onboarding', yn(u.onboarding.finished)], ['Cuándo', fecha(u.onboarding.finished_at)], ['Puntaje', s ? s.score : null], ['Rango', s ? s.rango : null]].concat(s && s.pilares ? PILARES.map(function (k) { return [PLABEL[k], s.pilares[k]]; }) : [])) +
+        (s && s.history && s.history.length ? '<details><summary>Historial del puntaje (' + s.history.length + ')</summary><pre>' + esc(s.history.map(function (h) { return fecha(h.at) + '  ' + h.score + (h.source ? '  (' + h.source + ')' : ''); }).join('\n')) + '</pre></details>' : '') + '</section>' +
+      '<section><h3>Perfil tributario y preferencias</h3>' + dl([['Cumplimiento', t && t.cumplimiento], ['Soportes', t && t.soportes], ['Quién prepara', t && t.preparador], ['Dos últimos dígitos cédula', t && t.cedula2], ['Mi Puntaje visible', yn(u.preferences.mi_puntaje_visible)]]) +
+        (u.preferences.interes_producto ? '<details><summary>Interés en productos</summary><pre>' + esc(JSON.stringify(u.preferences.interes_producto, null, 2)) + '</pre></details>' : '') + '</section>' +
+      '<section><h3>Datos cargados (sin montos)</h3>' + dl((d.modules.length ? d.modules.map(function (m) { return [m.category, m.records + ' registro' + (m.records === 1 ? '' : 's') + ' · ' + fecha(m.last_update)]; }) : [['Módulos', 'Ninguno']]).concat([['Metas', d.goals], ['Documentos de impuestos', d.tax_docs]])) + '</section>' +
+      '<section><h3>Actividad</h3>' + dl([['Días con visita', v.days_visited], ['Vio su puntaje', yn(v.saw_score)], ['NPS', v.nps]]) +
+        (v.recent.length ? '<details><summary>Últimos eventos (' + v.recent.length + ')</summary><pre>' + esc(v.recent.map(function (r) { return fecha(r.at) + '  ' + r.event + ' · ' + (r.outcome || ''); }).join('\n')) + '</pre></details>' : '') + '</section>' +
+      '</div>';
+    if (u.answers) html += '<details style="margin-top:10px"><summary>Respuestas de la encuesta</summary><pre>' + esc(JSON.stringify(u.answers, null, 2)) + '</pre></details>';
+    return html;
+  }
+  function renderAccounts() {
+    var q = ($('accQ').value || '').trim().toLowerCase();
+    var rows = ACC.filter(function (u) { return !q || String(u.id) === q || (u.full_name || '').toLowerCase().indexOf(q) >= 0 || (u.email || '').toLowerCase().indexOf(q) >= 0; });
+    $('accCount').textContent = rows.length + ' de ' + ACC.length + ' cuentas';
+    if (!rows.length) { $('accTbl').innerHTML = '<tr><td class="mut">Sin resultados.</td></tr>'; return; }
+    $('accTbl').innerHTML = '<tr><th class="num">ID</th><th>Usuario</th><th>Registro</th><th>Último ingreso</th><th>Estado</th><th>Onboarding</th><th class="num">Puntaje</th><th></th></tr>' + rows.map(function (u) {
+      var recs = u.data.modules.reduce(function (s, m) { return s + m.records; }, 0);
+      return '<tr><td class="num">' + esc(u.id) + '</td><td><b>' + esc(u.full_name || '—') + '</b>' + (u.is_admin ? ' <span class="pill yes">Admin</span>' : '') + '<div class="mut">' + esc(u.email) + '</div></td>' +
+        '<td>' + esc(fecha(u.account.registered_at)) + '</td><td>' + esc(fecha(u.account.last_login_at)) + '</td>' +
+        '<td>' + (u.account.locked ? '<span class="pill no">Bloqueada</span>' : '<span class="pill yes">Activa</span>') + '</td>' +
+        '<td>' + (u.onboarding.finished ? '<span class="pill yes">Terminó</span>' : '<span class="pill na">Pendiente</span>') + '</td>' +
+        '<td class="num">' + (u.score ? '<b>' + esc(u.score.score) + '</b>' : '—') + '<div class="mut">' + recs + ' registros</div></td>' +
+        '<td><button class="btn small" data-acc="' + u.id + '" aria-expanded="false">Ver todo</button></td></tr>' +
+        '<tr class="acc-det" id="acc-' + u.id + '" hidden><td colspan="8">' + detail(u) + '</td></tr>';
+    }).join('');
+  }
+  function loadAccounts() {
+    $('accTbl').innerHTML = '<tr><td class="mut">Cargando…</td></tr>';
+    call('GET', '/accounts').then(function (r) {
+      if (r._status !== 200) { $('accTbl').innerHTML = '<tr><td class="err">No se pudo cargar.</td></tr>'; if (r._status === 404) show('login'); return; }
+      $('accHidden').textContent = (r.hidden || []).join(', ').toLowerCase();
+      ACC = r.users || []; renderAccounts();
+    });
+  }
+  $('accQ').addEventListener('input', renderAccounts);
+  $('accTbl').addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-acc]'); if (!b) return;
+    var row = $('acc-' + b.getAttribute('data-acc')); row.hidden = !row.hidden;
+    b.textContent = row.hidden ? 'Ver todo' : 'Ocultar'; b.setAttribute('aria-expanded', String(!row.hidden));
+  });
 
   function loadMetrics() {
     $('metricGrid').innerHTML = '<div class="mut">Cargando…</div>';

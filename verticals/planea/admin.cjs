@@ -285,6 +285,52 @@ function build({ backend, sec }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
+  // ── Lista de usuarios: TODAS las cuentas, solo lectura ──────────────────────
+  // Todo lo que Planea sabe de cada cuenta EXCEPTO montos: de los módulos financieros
+  // se muestra cuántos registros hay por categoría, nunca los valores; de las metas, cuántas.
+  // Nunca la contraseña, tokens de restablecimiento, IP ni el contenido de documentos.
+  // Solo GET: esta vista no tiene ninguna ruta que escriba.
+  api.get('/accounts', async (req, res) => {
+    try {
+      const sq = db();
+      const [users] = await sq.query('SELECT id, email, full_name, created_at, updated_at, last_login_at, failed_logins, locked_until FROM planea_users ORDER BY created_at DESC');
+      const [profiles] = await sq.query("SELECT user_id, score_data, finance_meta, COALESCE(jsonb_array_length(CASE WHEN jsonb_typeof(goals) = 'array' THEN goals END), 0) AS goals FROM planea_profiles");
+      const [items] = await sq.query('SELECT user_id, category, COUNT(*)::int AS n, MAX(updated_at) AS last FROM planea_items GROUP BY user_id, category');
+      const [docs] = await sq.query('SELECT user_id, COUNT(*)::int AS n FROM planea_tax_docs GROUP BY user_id').catch(() => [[]]);
+      const [logins] = await sq.query(`SELECT user_id, COUNT(*) FILTER (WHERE outcome = 'success')::int AS ok, COUNT(*) FILTER (WHERE outcome <> 'success')::int AS bad
+                                          FROM planea_audit_log WHERE event = 'login' AND user_id IS NOT NULL GROUP BY user_id`);
+      const [recent] = await sq.query(`SELECT user_id, event, outcome, created_at FROM (
+          SELECT user_id, event, outcome, created_at, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
+            FROM planea_audit_log WHERE user_id IS NOT NULL AND event NOT LIKE 'admin.%') x WHERE rn <= 10 ORDER BY created_at DESC`);
+      const [events] = await sq.query('SELECT user_id, event, day FROM planea_events WHERE tenant_id = :t', { replacements: { t: tenant() } });
+      const [nps] = await sq.query('SELECT user_id, score FROM planea_nps WHERE tenant_id = :t', { replacements: { t: tenant() } });
+      const admins = await adminIds(sq);
+      const by = (rows) => { const m = new Map(); rows.forEach((r) => { if (!m.has(r.user_id)) m.set(r.user_id, []); m.get(r.user_id).push(r); }); return m; };
+      const P = new Map(profiles.map((p) => [p.user_id, p])), I = by(items), E = by(events), R = by(recent);
+      const D = new Map(docs.map((d) => [d.user_id, d.n])), L = new Map(logins.map((l) => [l.user_id, l])), N = new Map(nps.map((n) => [n.user_id, n.score]));
+      const out = users.map((u) => {
+        const p = P.get(u.id) || {}, sd = p.score_data || null, fin = finishInfo(sd), fm = p.finance_meta || {};
+        const t = fm.tributario && typeof fm.tributario === 'object' ? fm.tributario : null;
+        const ev = E.get(u.id) || [], lg = L.get(u.id) || { ok: 0, bad: 0 };
+        const locked = !!(u.locked_until && new Date(u.locked_until) > new Date());
+        return {
+          id: u.id, email: u.email, full_name: u.full_name || '', is_admin: admins.has(u.id),
+          account: { registered_at: u.created_at, updated_at: u.updated_at, last_login_at: u.last_login_at || null, logins_ok: lg.ok, logins_failed: lg.bad, failed_in_a_row: u.failed_logins || 0, locked, locked_until: locked ? u.locked_until : null },
+          onboarding: fin,
+          score: sd && sd.score != null ? { score: sd.score, rango: sd.rango || null, pilares: sd.pilares || null, history: Array.isArray(sd.history) ? sd.history.map((h) => ({ score: h.score, at: h.at, source: h.source || null })) : [] } : null,
+          answers: sd && sd.answers ? sanitizeAnswers(sd.answers) : null,
+          tributario: t ? { cumplimiento: t.cumplimiento || null, soportes: t.soportes || null, preparador: t.preparador || null, cedula2: t.cedula2 || null } : null,
+          preferences: { mi_puntaje_visible: fm.mi_puntaje_visible === true, interes_producto: fm.interes_producto ? sanitizeAnswers(fm.interes_producto) : null },
+          data: { modules: (I.get(u.id) || []).map((r) => ({ category: r.category, records: r.n, last_update: r.last })), goals: Number(p.goals) || 0, tax_docs: D.get(u.id) || 0 },
+          activity: { days_visited: ev.filter((e) => e.event === 'visit').length, saw_score: ev.some((e) => e.event === 'score_view'), nps: N.has(u.id) ? N.get(u.id) : null,
+            recent: (R.get(u.id) || []).map((r) => ({ event: r.event, outcome: r.outcome, at: r.created_at })) },
+        };
+      });
+      audit(req, req.admin.email, 'admin.view_accounts', 'success', { count: out.length });
+      res.json({ total: out.length, hidden: ['Montos y saldos de los módulos financieros', 'Montos de la encuesta', 'Contraseñas y enlaces de restablecimiento', 'IP y navegador', 'Contenido de documentos', 'Conversaciones con Maya (no se guardan)'], users: out });
+    } catch (e) { console.error('[planea-admin] accounts', e.message); res.status(500).json({ error: 'error_interno' }); }
+  });
+
   // ── Métricas del MVP ──
   api.get('/metrics', async (req, res) => {
     try {

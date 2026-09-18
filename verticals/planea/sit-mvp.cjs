@@ -76,7 +76,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const adminSrc = fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8');
   const pageSrc = fs.readFileSync(path.join(__dirname, 'admin-ui', 'admin.html'), 'utf8');
   ok(!/maya.*(chat|conversation|messages)/i.test(pageSrc.replace(/<p[\s\S]*?<\/p>/g, '')), 'la página admin no pide conversaciones de Maya');
-  ok(!/finance_meta|ingresos_data|gastos_data|assets_data|liabilities_data/.test(adminSrc), 'el módulo admin no lee datos financieros');
+  ok(!/ingresos_data|gastos_data|assets_data|liabilities_data|seguros_data|retiro_data|net_worth/.test(adminSrc), 'el módulo admin no lee columnas de montos');
+  ok(!/SELECT[^;]*\b(value|monthly)\b[^;]*FROM planea_items/.test(adminSrc), 'de planea_items solo se cuentan registros, nunca valores');
   ok(!/sendgrid|twilio|nodemailer/i.test(adminSrc + fs.readFileSync(path.join(__dirname, 'portal', 'planea-tax-reminder.js'), 'utf8')), 'el aviso de impuestos no envía mensajes');
   ok(!fs.existsSync(path.join(__dirname, 'portal', 'admin.html')), 'la página admin no vive en el portal público');
 
@@ -152,6 +153,21 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(!/monto|5200000|3100000/.test(raw), 'ningún monto sale en el listado');
     ok(!/password_hash|finance_meta|ingresos_data/.test(raw), 'ni claves ni datos financieros en el listado');
 
+    // Lista de usuarios: todas las cuentas, solo lectura, sin montos
+    await sq.query("INSERT INTO planea_items (user_id, category, name, type, value, monthly, meta, created_at, updated_at) VALUES (:u, 'ingreso', 'Salario SIT', 'fijo', 5200000, 5200000, '{}'::jsonb, NOW(), NOW())", { replacements: { u: userRow.id } });
+    const accs = await call('GET', '/planea/admin/api/accounts', { cookie: ac });
+    ok(accs.status === 200 && Array.isArray(accs.body.users), 'lista de usuarios responde');
+    const aU = accs.body.users && accs.body.users.find((u) => u.id === userRow.id);
+    const aA = accs.body.users && accs.body.users.find((u) => u.id === adminRow.id);
+    ok(!!aU && !!aA && aA.is_admin === true && aU.is_admin === false, 'la lista incluye a todos y marca a los administradores');
+    ok(aU && aU.data.modules.some((m) => m.category === 'ingreso' && m.records === 1), 'se ve cuántos registros tiene por módulo');
+    ok(aU && aU.account && typeof aU.account.logins_ok === 'number' && aU.onboarding.finished === true, 'se ve la cuenta, los ingresos y el onboarding');
+    const accRaw = JSON.stringify(accs.body);
+    ok(!/5200000|3100000|monto|Salario SIT/.test(accRaw), 'la lista no muestra montos ni nombres de registros financieros');
+    ok(!/password_hash|reset_token|ip_hash|user_agent|data_b64/.test(accRaw), 'la lista no muestra claves, tokens, IP ni documentos');
+    ok((await call('POST', '/planea/admin/api/accounts', { cookie: ac, body: {} })).status === 404, 'la lista es solo lectura');
+    ok((await call('GET', '/planea/admin/api/accounts', { cookie: userCookie })).status === 404, 'un usuario normal no ve la lista');
+
     // Métricas y señales del usuario
     ok((await call('POST', '/planea/api/v1/me/events', { body: { event: 'visit' } })).status === 401, 'evento sin sesión: 401');
     ok((await call('POST', '/planea/api/v1/me/events', { body: { event: 'borrar_todo' }, cookie: userCookie })).status === 400, 'evento no admitido: 400');
@@ -204,7 +220,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await new Promise((r) => setTimeout(r, 300));
     const [aud] = await sq.query('SELECT DISTINCT event FROM planea_audit_log WHERE lower(email) = :e', { replacements: { e: ADMIN_EMAIL } });
     const evs = aud.map((r) => r.event);
-    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
+    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
 
     // Revisión de seguridad
     const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
@@ -236,6 +252,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918').catch(() => {});
     await sq.query("DELETE FROM planea_audit_log WHERE email LIKE 'sit-mvp-%' OR user_id IN (:ids)", { replacements: { ids } }).catch(() => {});
+    await sq.query('DELETE FROM planea_items WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_profiles WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_users WHERE id IN (:ids)', { replacements: { ids } }).catch(() => {});
     const [[left]] = await sq.query("SELECT COUNT(*)::int AS n FROM planea_users WHERE email LIKE 'sit-mvp-%'");
