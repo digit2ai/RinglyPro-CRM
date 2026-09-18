@@ -319,11 +319,17 @@ function build() {
   });
 
   // ── Admin: list our own users (planea_users) — no Supabase, no service_role ──
-  // Gated by PLANEA_ADMIN_TOKEN (default matches the docs password). ?html=1 → table.
-  const ADMIN_TOKEN = process.env.PLANEA_ADMIN_TOKEN || 'Digit2Ai@7';
+  // Gated by PLANEA_ADMIN_TOKEN. There is NO default any more: the old default was a
+  // password published in this repository, and in production it opened a user list
+  // and a GET that wiped every user's data. Unset, short (<16) or a published value =
+  // these legacy endpoints are CLOSED. The real admin module is /planea/admin.
+  const LEGACY_PUBLISHED = ['Digit2Ai@7', 'Palindrome@7', 'planea-2026-secret'];
+  const RAW_ADMIN_TOKEN = String(process.env.PLANEA_ADMIN_TOKEN || '');
+  const ADMIN_TOKEN = RAW_ADMIN_TOKEN.length >= 16 && LEGACY_PUBLISHED.indexOf(RAW_ADMIN_TOKEN) < 0 ? RAW_ADMIN_TOKEN : null;
   function adminAuthed(req) {
+    if (!ADMIN_TOKEN) return false;
     const t = (req.query && req.query.token) || req.headers['x-planea-admin'] || '';
-    return !!t && String(t) === ADMIN_TOKEN;
+    return !!t && sec.safeEqual(String(t), ADMIN_TOKEN);
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
   // Inspect one user's full financial profile (debug). ?token=..&email=X
@@ -1038,4 +1044,4 @@ function build() {
   return router;
 }
 
-module.exports = { build, status: () => ({ ready, error: initErr }), authUser };
+module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize };

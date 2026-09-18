@@ -37,6 +37,7 @@ const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 // Supabase dependency. Mounted at /planea/api/v1 below. No email confirmation.
 let planeaBackend = null;
 try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
+const planeaAdmin = require('./admin.cjs');
 
 // TEMPORARY: auto-confirm new signups when a Supabase service_role key is set
 // (PLANEA_SERVICE_ROLE_KEY), so users log in without email verification while SMTP
@@ -102,6 +103,7 @@ router.get('/health', (req, res) => {
     portal: hasPortal,
     admin: { service_key: !!SB_SERVICE_KEY, endpoints: !!SB_SERVICE_KEY },
     backend: planeaBackend ? planeaBackend.status() : { ready: false, error: 'not-loaded' },
+    admin_module: planeaAdmin.health(),
     ts: new Date().toISOString(),
   });
 });
@@ -324,7 +326,9 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
       body: JSON.stringify({
         model: MAYA_MODEL,
         max_tokens: 380,
-        system: buildMayaSystem(profile),
+        // Las reglas escritas aquí primero; los documentos que sube el equipo de Planea
+        // (módulo administrativo) van después, como contexto, sin poder anularlas.
+        system: buildMayaSystem(profile) + await planeaAdmin.mayaKnowledge(planeaBackend),
         messages: clean,
       }),
     });
@@ -384,11 +388,14 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
 // Returns 503 until the service_role key is set on Render.
 const SB_ADMIN_URL = 'https://mfxujzvvrnsbiqcefvtg.supabase.co';
 const SB_SERVICE_KEY = process.env.PLANEA_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const ADMIN_TOKEN = process.env.PLANEA_ADMIN_TOKEN || DOCS_PASSWORD;
+// No default: the old fallback was the published docs password (see backend.cjs).
+const RAW_ADMIN_TOKEN = String(process.env.PLANEA_ADMIN_TOKEN || '');
+const ADMIN_TOKEN = RAW_ADMIN_TOKEN.length >= 16 && ['Digit2Ai@7', 'Palindrome@7', DOCS_PASSWORD].indexOf(RAW_ADMIN_TOKEN) < 0 ? RAW_ADMIN_TOKEN : null;
 
 function adminAuthed(req) {
+  if (!ADMIN_TOKEN) return false;
   const t = (req.query && req.query.token) || req.headers['x-planea-admin'] || (req.body && req.body.token) || '';
-  return !!t && String(t) === String(ADMIN_TOKEN);
+  return !!t && security.safeEqual(String(t), ADMIN_TOKEN);
 }
 function sbAdmin(pathQuery, opts) {
   return fetch(SB_ADMIN_URL + '/auth/v1/admin/' + pathQuery, Object.assign({
@@ -467,6 +474,16 @@ router.post('/api/v1/admin/confirm', express.json(), async (req, res) => {
     res.status(502).json({ error: e.message });
   }
 });
+
+// ── Admin module (/planea/admin) + user measurement routes (events, NPS, tax calendar) ──
+// Registered BEFORE the backend and the SPA catch-all so neither swallows them.
+if (planeaBackend) {
+  try {
+    const adm = planeaAdmin.build({ backend: planeaBackend, sec: security });
+    router.use('/admin', adm.admin);
+    router.use('/api/v1', adm.me);
+  } catch (e) { console.log('planea admin mount failed:', e.message); }
+}
 
 // ── Self-owned auth + data API (our Postgres) ──
 if (planeaBackend) {
