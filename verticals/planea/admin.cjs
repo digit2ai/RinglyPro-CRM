@@ -14,7 +14,8 @@
  *
  * MÉTRICAS: se calculan con filas reales (planea_users, planea_profiles, planea_events,
  * planea_nps). Los administradores no cuentan como usuarios de prueba. Lo que esta
- * versión no mide (en qué pregunta se abandonó, cuánto tardó, bugs críticos) lo dice.
+ * versión no mide (bugs críticos) lo dice. En qué pregunta se abandona y cuánto tarda el
+ * onboarding salen de planea_onboarding_progress, que la encuesta llena pregunta a pregunta.
  */
 'use strict';
 
@@ -91,6 +92,10 @@ function finishInfo(sd) {
   const first = hist.find((h) => h && h.source === 'onboarding' && h.at) || hist.find((h) => h && h.at);
   return { finished: true, finished_at: (first && first.at) || sd.timestamp || null };
 }
+// Abandono = empezó, no terminó y lleva más de ABANDON_H horas sin avanzar.
+const ABANDON_H = 24;
+function median(xs) { if (!xs.length) return null; const s = xs.slice().sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+function cleanTitle(t) { return String(t || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 140) || null; }
 function dayColombia(iso) { return iso ? PlaneaTax.todayColombia(new Date(iso)) : null; }
 function addDays(day, n) { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -107,6 +112,11 @@ function ensureTables(sq) {
         id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
         score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 10), created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
       await sq.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_nps_once ON planea_nps (tenant_id, user_id)');
+      await sq.query(`CREATE TABLE IF NOT EXISTS planea_onboarding_progress (
+        id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
+        started_at TIMESTAMPTZ, last_step INTEGER, last_key TEXT, last_title TEXT, last_step_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+      await sq.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_onb_user ON planea_onboarding_progress (tenant_id, user_id)');
       await sq.query(`CREATE TABLE IF NOT EXISTS planea_admins (
         id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
         granted_by TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
@@ -250,12 +260,14 @@ function build({ backend, sec }) {
     const npsBy = new Map(nps.map((n) => [n.user_id, n.score]));
     const evBy = new Map();
     events.forEach((e) => { if (!evBy.has(e.user_id)) evBy.set(e.user_id, []); evBy.get(e.user_id).push(e); });
+    const [prog] = await sq.query('SELECT user_id, started_at, last_step, last_key, last_title, last_step_at, completed_at FROM planea_onboarding_progress WHERE tenant_id = :t', { replacements: { t: tenant() } });
+    const progBy = new Map(prog.map((p) => [p.user_id, p]));
     const admins = await adminIds(sq);
     const people = users.filter((u) => !admins.has(u.id)).map((u) => {
       const sd = prof.get(u.id) || null;
       const fin = finishInfo(sd);
       const ev = evBy.get(u.id) || [];
-      return { u, sd, fin, ev, nps: npsBy.has(u.id) ? npsBy.get(u.id) : null };
+      return { u, sd, fin, ev, nps: npsBy.has(u.id) ? npsBy.get(u.id) : null, prog: progBy.get(u.id) || null };
     });
     return { people, admins_excluded: users.length - people.length };
   }
@@ -267,14 +279,17 @@ function build({ backend, sec }) {
       audit(req, req.admin.email, 'admin.view_users', 'success', { count: people.length });
       res.json({
         admins_excluded,
-        not_measured: ['En qué pregunta se quedó quien abandonó el onboarding', 'Cuánto tardó en completarlo'],
-        users: people.map(({ u, sd, fin, ev, nps }) => ({
+        not_measured: ['Bugs críticos'],
+        users: people.map(({ u, sd, fin, ev, nps, prog }) => ({
           id: u.id,
           email: u.email,
           full_name: u.full_name || '',
           registered_at: u.created_at,
           last_login_at: u.last_login_at || null,
-          onboarding: { finished: fin.finished, finished_at: fin.finished_at },
+          onboarding: { finished: fin.finished, finished_at: fin.finished_at,
+            started_at: prog && prog.started_at || null,
+            minutes: prog && prog.started_at && prog.completed_at ? Math.round((new Date(prog.completed_at) - new Date(prog.started_at)) / 6000) / 10 : null,
+            stopped_at: !fin.finished && prog && prog.last_step ? { step: prog.last_step, key: prog.last_key, title: prog.last_title, at: prog.last_step_at } : null },
           score: fin.finished && sd ? { score: sd.score != null ? sd.score : null, rango: sd.rango || null, pilares: sd.pilares || null } : null,
           answers: fin.finished && sd && sd.answers ? sanitizeAnswers(sd.answers) : null,
           saw_score: ev.some((e) => e.event === 'score_view'),
@@ -353,6 +368,21 @@ function build({ backend, sec }) {
       const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : null);
       const npsVal = scores.length ? Math.round(((promoters - detractors) / scores.length) * 100) : null;
       const completion = pct(finished.length, registered), retention = pct(returned, eligible);
+      // Dónde se quedan y cuánto tardan: solo con quienes la encuesta ya registró.
+      const cutoff = Date.now() - ABANDON_H * 3600 * 1000;
+      const tracked = people.filter((p) => p.prog && p.prog.started_at);
+      const inProgress = tracked.filter((p) => !p.fin.finished && p.prog.last_step_at && new Date(p.prog.last_step_at).getTime() >= cutoff).length;
+      const dropMap = new Map();
+      tracked.filter((p) => !p.fin.finished && (!p.prog.last_step_at || new Date(p.prog.last_step_at).getTime() < cutoff)).forEach((p) => {
+        const k = p.prog.last_step || 0;
+        if (!dropMap.has(k)) dropMap.set(k, { step: k, key: p.prog.last_key || null, title: p.prog.last_title || null, count: 0 });
+        dropMap.get(k).count++;
+      });
+      const dropoff = Array.from(dropMap.values()).sort((x, y) => y.count - x.count || x.step - y.step);
+      const mins = tracked.filter((p) => p.prog.completed_at).map((p) => (new Date(p.prog.completed_at) - new Date(p.prog.started_at)) / 60000).filter((m) => m >= 0 && m < 7 * 24 * 60);
+      const med = median(mins), avg = mins.length ? mins.reduce((s, m) => s + m, 0) / mins.length : null;
+      const r1 = (x) => (x == null ? null : Math.round(x * 10) / 10);
+      const abandoned = dropoff.reduce((s, d) => s + d.count, 0);
       audit(req, req.admin.email, 'admin.view_metrics', 'success');
       res.json({
         as_of: today,
@@ -361,8 +391,12 @@ function build({ backend, sec }) {
           { key: 'completion', label: 'Completitud de onboarding', value: completion, unit: '%', target: '> 60 %', met: completion == null ? null : completion > 60, detail: finished.length + ' de ' + registered + ' registrados terminaron la encuesta' },
           { key: 'retention_7d', label: 'Retención a 7 días', value: retention, unit: '%', target: '> 30 %', met: retention == null ? null : retention > 30, detail: returned + ' de ' + eligible + ' volvieron en los 7 días siguientes' + (pending ? ' · ' + pending + ' aún dentro de su semana' : '') },
           { key: 'nps', label: 'NPS', value: npsVal, unit: '', target: '> 30', met: npsVal == null ? null : npsVal > 30, detail: scores.length + ' respuestas · ' + promoters + ' promotores · ' + detractors + ' detractores' },
+          { key: 'onboarding_time', label: 'Tiempo del onboarding (mediana)', value: r1(med), unit: ' min', target: 'informativo', met: null, detail: mins.length ? mins.length + ' encuestas medidas · promedio ' + r1(avg) + ' min' : 'Aún nadie ha terminado la encuesta desde que se empezó a medir' },
+          { key: 'onboarding_dropoff', label: 'Abandonaron el onboarding', value: tracked.length ? abandoned : null, unit: '', target: 'informativo', met: null, detail: tracked.length ? abandoned + ' de ' + tracked.length + ' que la empezaron (sin avanzar en ' + ABANDON_H + ' h)' + (inProgress ? ' · ' + inProgress + ' en curso' : '') : 'Se mide desde el ' + 'despliegue de esta versión; aún no hay encuestas registradas' },
           { key: 'critical_bugs', label: 'Bugs críticos', value: null, unit: '', target: '0', met: null, detail: 'No se mide automáticamente en esta versión' },
         ],
+        dropoff,
+        dropoff_rule: 'Empezó la encuesta, no la terminó y no avanza hace más de ' + ABANDON_H + ' horas. Cuenta desde que existe esta medición.',
         funnel: [
           { step: 'Se registraron', count: registered },
           { step: 'Terminaron el onboarding', count: finished.length },
@@ -417,6 +451,36 @@ function build({ backend, sec }) {
         { replacements: { t: tenant(), u: a.id, e: ev, d: PlaneaTax.todayColombia() } });
       res.json({ ok: true });
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
+  // Progreso del onboarding: la encuesta avisa cada pregunta que muestra y cuándo termina.
+  // Solo número de pregunta, su clave y su título: nunca la respuesta. Tras terminar,
+  // la fila queda cerrada (repetir la encuesta no cambia el tiempo medido).
+  me.post('/me/onboarding', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    const b = req.body || {};
+    const done = b.done === true;
+    const step = Number(b.step);
+    const key = String(b.key || '');
+    if (!done && (!Number.isInteger(step) || step < 1 || step > 40 || !/^[a-z0-9_]{1,40}$/.test(key))) return res.status(400).json({ error: 'paso_invalido' });
+    try {
+      await ensureTables(db());
+      if (done) {
+        await db().query(`INSERT INTO planea_onboarding_progress (tenant_id, user_id, completed_at) VALUES (:t, :u, NOW())
+          ON CONFLICT (tenant_id, user_id) DO UPDATE SET completed_at = COALESCE(planea_onboarding_progress.completed_at, NOW())`,
+          { replacements: { t: tenant(), u: a.id } });
+      } else {
+        await db().query(`INSERT INTO planea_onboarding_progress (tenant_id, user_id, started_at, last_step, last_key, last_title, last_step_at)
+          VALUES (:t, :u, NOW(), :s, :k, :ti, NOW())
+          ON CONFLICT (tenant_id, user_id) DO UPDATE SET
+            started_at = COALESCE(planea_onboarding_progress.started_at, NOW()),
+            last_step = :s, last_key = :k, last_title = :ti, last_step_at = NOW()
+          WHERE planea_onboarding_progress.completed_at IS NULL`,
+          { replacements: { t: tenant(), u: a.id, s: step, k: key, ti: cleanTitle(b.title) } });
+      }
+      res.json({ ok: true });
+    } catch (e) { console.error('[planea-admin] onboarding', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
 
   me.get('/me/nps', async (req, res) => {

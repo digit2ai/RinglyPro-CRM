@@ -125,6 +125,9 @@
       <div class="grid" id="metricGrid"></div>
       <h2 style="margin-top:18px">Embudo</h2>
       <div class="tw"><table id="funnelTbl"></table></div>
+      <h2 style="margin-top:18px">Dónde abandonan el onboarding</h2>
+      <p class="mut" id="dropRule"></p>
+      <div class="tw"><table id="dropTbl"></table></div>
     </div>
 
     <div id="tab-kb" class="card" hidden>
@@ -196,7 +199,7 @@
       if (!r.users.length) { $('usersTbl').innerHTML = '<tr><td class="mut">Aún no hay usuarios de prueba.</td></tr>'; return; }
       var head = '<tr><th>Usuario</th><th>Registro</th><th>Onboarding</th><th class="num">Puntaje</th><th>Vio puntaje</th><th class="num">Días con visita</th><th class="num">NPS</th></tr>';
       $('usersTbl').innerHTML = head + r.users.map(function (u) {
-        var ob = u.onboarding.finished ? '<span class="pill yes">Terminó</span><div class="mut">' + esc(fecha(u.onboarding.finished_at)) + '</div>' : '<span class="pill no">Sin terminar</span>';
+        var ob = u.onboarding.finished ? '<span class="pill yes">Terminó</span><div class="mut">' + esc(fecha(u.onboarding.finished_at)) + (u.onboarding.minutes != null ? ' · ' + esc(u.onboarding.minutes) + ' min' : '') + '</div>' : '<span class="pill no">Sin terminar</span>' + (u.onboarding.stopped_at ? '<div class="mut">Se quedó en la pregunta ' + esc(u.onboarding.stopped_at.step) + ': ' + esc(u.onboarding.stopped_at.title || u.onboarding.stopped_at.key) + '</div>' : '');
         var sc = u.score ? '<b>' + esc(u.score.score) + '</b><div class="mut">' + esc(u.score.rango || '') + '</div>' : '—';
         var det = '';
         if (u.score && u.score.pilares) det += '<div class="mut" style="margin-top:6px">' + PILARES.map(function (k) { return PLABEL[k] + ': <b>' + esc(u.score.pilares[k] != null ? u.score.pilares[k] : '—') + '</b>'; }).join(' · ') + '</div>';
@@ -268,6 +271,10 @@
         var badge = m.met == null ? '<span class="pill na">Sin dato</span>' : (m.met ? '<span class="pill yes">Cumple</span>' : '<span class="pill no">No cumple</span>');
         return '<div class="metric"><div class="mut">' + esc(m.label) + ' · meta ' + esc(m.target) + '</div><div class="v">' + (m.value == null ? '—' : esc(m.value) + esc(m.unit)) + '</div>' + badge + '<div class="mut" style="margin-top:6px">' + esc(m.detail) + '</div></div>';
       }).join('');
+      $('dropRule').textContent = r.dropoff_rule || '';
+      $('dropTbl').innerHTML = (r.dropoff && r.dropoff.length)
+        ? '<tr><th class="num">Pregunta</th><th>Qué se preguntaba</th><th class="num">Personas</th></tr>' + r.dropoff.map(function (d) { return '<tr><td class="num">' + esc(d.step || '—') + '</td><td>' + esc(d.title || d.key || 'Antes de la primera pregunta') + '</td><td class="num"><b>' + esc(d.count) + '</b></td></tr>'; }).join('')
+        : '<tr><td class="mut">Nadie ha abandonado todavía (o aún no hay encuestas registradas).</td></tr>';
       $('funnelTbl').innerHTML = '<tr><th>Paso</th><th class="num">Personas</th></tr>' + r.funnel.map(function (f) { return '<tr><td>' + esc(f.step) + '</td><td class="num"><b>' + esc(f.count) + '</b></td></tr>'; }).join('');
     });
   }

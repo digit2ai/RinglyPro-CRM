@@ -906,7 +906,12 @@ function build() {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // Carga DESACTIVADA en el MVP (alcance acordado 18-sep-2026). Se conservan ver y
+  // eliminar para quien ya había subido algo. Para reactivarla hay que cifrar en reposo
+  // (Documento Maestro §23.3) antes de quitar esta línea.
+  const TAX_UPLOAD_ENABLED = false;
   router.post('/me/tax-docs', async (req, res) => {
+    if (!TAX_UPLOAD_ENABLED) return res.status(410).json({ error: 'carga_desactivada' });
     if (!requireReady(res)) return;
     const a = authUser(req);
     if (!a) return res.status(401).json({ error: 'unauthorized' });

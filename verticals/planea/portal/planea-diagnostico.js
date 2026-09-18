@@ -323,7 +323,18 @@
     // El encabezado con el texto de bienvenida solo va en la primera pantalla del onboarding.
     var hd = document.querySelector('.dg-hd'); if (hd) hd.style.display = (current === 'intro') ? '' : 'none';
   }
-  function go(step) { current = step; paint(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  // Métrica del módulo administrativo: qué pregunta se está viendo (número, clave, título;
+  // nunca la respuesta) y cuándo termina. Si falla, la encuesta sigue igual.
+  var lastTracked = null;
+  function track(body) {
+    try { fetch('/planea/api/v1/me/onboarding', { method: 'POST', credentials: 'include', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(function () {}); } catch (e) {}
+  }
+  function trackStep(step) {
+    if (typeof step !== 'number' || step === lastTracked || !Q[step]) return;
+    lastTracked = step;
+    track({ step: step, key: Q[step].key, title: Q[step].title });
+  }
+  function go(step) { current = step; paint(); trackStep(step); window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function next(from) {
     if (from === 'intro') { go(1); return; }
     var s = activeSteps(), idx = s.indexOf(from);
@@ -425,6 +436,7 @@
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje Planea guardado en tu perfil.';
         if (willTransfer) transferirMontos();   // §5.2: pasa los montos exactos a sus secciones (una vez)
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
+        track({ done: true });
         try { window.dispatchEvent(new CustomEvent('planea:onboarded')); } catch (e) {}
       })
       .catch(function (e) {

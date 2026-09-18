@@ -16,7 +16,9 @@
   function fmtSize(n) { n = +n || 0; return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB'; }
   function renderDocs(docs) {
     var box = $('tx-doclist'); if (!box) return;
-    if (!docs || !docs.length) { box.innerHTML = '<div class="tx-doc-empty">Aún no has subido documentos.</div>'; return; }
+    var card = $('tx-docs-card');
+    if (!docs || !docs.length) { box.innerHTML = ''; if (card) card.hidden = true; return; }
+    if (card) card.hidden = false;
     box.innerHTML = docs.map(function (d) {
       return '<div class="tx-doc"><span class="ic">PDF</span>' +
         '<span class="nm">' + esc(d.filename) + '<small>' + fmtSize(d.size_bytes) + '</small></span>' +
@@ -28,33 +30,12 @@
     fetch(TAXAPI + '/me/tax-docs', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { renderDocs(j && j.docs || []); }).catch(function () {});
   }
-  function uploadFile(file) {
-    if (!file) return;
-    if (file.type !== 'application/pdf') { toast('Solo se aceptan archivos PDF.'); return; }
-    if (file.size > 8 * 1024 * 1024) { toast('El archivo supera 8 MB.'); return; }
-    var btn = $('tx-up-btn'); if (btn) { btn.disabled = true; btn.textContent = 'Subiendo…'; }
-    var reader = new FileReader();
-    reader.onload = function () {
-      var b64 = String(reader.result || ''); var i = b64.indexOf(','); if (i >= 0) b64 = b64.slice(i + 1);
-      fetch(TAXAPI + '/me/tax-docs', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, mime: 'application/pdf', data_b64: b64 }) })
-        .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
-        .then(function () { toast('Documento subido.'); loadDocs(); })
-        .catch(function () { toast('No se pudo subir el documento.'); })
-        .then(function () { if (btn) { btn.disabled = false; btn.textContent = '＋ Subir PDF'; } });
-    };
-    reader.readAsDataURL(file);
-  }
   function delDoc(id) {
     fetch(TAXAPI + '/me/tax-docs/' + id, { method: 'DELETE', credentials: 'include' })
       .then(function () { toast('Documento eliminado.'); loadDocs(); }).catch(function () {});
   }
   function initDocs() {
-    var upBtn = $('tx-up-btn'), fileIn = $('tx-file'), list = $('tx-doclist');
-    if (upBtn && fileIn) {
-      upBtn.addEventListener('click', function () { fileIn.click(); });
-      fileIn.addEventListener('change', function () { if (fileIn.files && fileIn.files[0]) uploadFile(fileIn.files[0]); fileIn.value = ''; });
-    }
+    var list = $('tx-doclist');
     if (list) list.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-del]'); if (b) delDoc(b.getAttribute('data-del')); });
     loadDocs();
   }

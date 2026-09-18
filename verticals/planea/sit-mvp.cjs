@@ -91,6 +91,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const hash = await bcrypt.hash(PW, 10);
   const [[adminRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Admin', NOW(), NOW()) RETURNING id", { replacements: { e: ADMIN_EMAIL, h: hash } });
   const [[userRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Usuario', NOW(), NOW()) RETURNING id", { replacements: { e: USER_EMAIL, h: hash } });
+  const [[dropRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Abandono', NOW(), NOW()) RETURNING id", { replacements: { e: 'sit-mvp-drop-' + RUN + '@example.test', h: hash } });
   const sd = { score: 61, rango: 'En construcción', pilares: { flujo: 70, deuda: 50 }, answers: { edad: '35-44', monto_ingresos: 5200000, monto_gastos: 3100000, deudas: 'si' }, history: [{ score: 61, at: new Date().toISOString(), source: 'onboarding' }] };
   await sq.query("INSERT INTO planea_profiles (user_id, full_name, score_data, created_at, updated_at) VALUES (:u, 'SIT Usuario', CAST(:s AS JSONB), NOW(), NOW()) ON CONFLICT (user_id) DO UPDATE SET score_data = EXCLUDED.score_data", { replacements: { u: userRow.id, s: JSON.stringify(sd) } });
 
@@ -104,6 +105,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const base = 'http://127.0.0.1:' + server.address().port;
   const SESSION_SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
   const userCookie = 'planea_session=' + jwt.sign({ id: userRow.id, email: USER_EMAIL, name: 'SIT Usuario' }, SESSION_SECRET, { expiresIn: '1h' });
+  const dropCookie = 'planea_session=' + jwt.sign({ id: dropRow.id, email: 'sit-mvp-drop@example.test', name: 'SIT Abandono' }, SESSION_SECRET, { expiresIn: '1h' });
   // El límite de ingresos vive en la base por IP: cada corrida usa su propia IP de prueba
   // (TEST-NET-2), así una corrida anterior no bloquea esta ni toca la de nadie.
   const rnd = () => 1 + Math.floor(Math.random() * 250);
@@ -167,6 +169,38 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(!/password_hash|reset_token|ip_hash|user_agent|data_b64/.test(accRaw), 'la lista no muestra claves, tokens, IP ni documentos');
     ok((await call('POST', '/planea/admin/api/accounts', { cookie: ac, body: {} })).status === 404, 'la lista es solo lectura');
     ok((await call('GET', '/planea/admin/api/accounts', { cookie: userCookie })).status === 404, 'un usuario normal no ve la lista');
+
+    // Carga de documentos de impuestos: DESACTIVADA en el MVP
+    const upl = await call('POST', '/planea/api/v1/me/tax-docs', { cookie: userCookie, body: { filename: 'x.pdf', mime: 'application/pdf', data_b64: Buffer.from('%PDF-1.4 sit').toString('base64') } });
+    ok(upl.status === 410, 'subir documentos de impuestos está desactivado');
+    const [[td]] = await sq.query('SELECT COUNT(*)::int AS n FROM planea_tax_docs WHERE user_id = :u', { replacements: { u: userRow.id } });
+    ok(td.n === 0, 'no se guardó ningún documento');
+    const impHtml = fs.readFileSync(path.join(__dirname, 'portal', 'impuestos.html'), 'utf8');
+    ok(!/type="file"|tx-up-btn/.test(impHtml), 'la página de Impuestos no ofrece subir archivos');
+    ok((await call('GET', '/planea/api/v1/me/tax-docs', { cookie: userCookie })).status === 200, 'quien ya había subido algo aún puede ver su lista');
+
+    // Progreso del onboarding: dónde se quedan y cuánto tardan
+    ok((await call('POST', '/planea/api/v1/me/onboarding', { body: { step: 1, key: 'edad' } })).status === 401, 'progreso sin sesión: 401');
+    ok((await call('POST', '/planea/api/v1/me/onboarding', { cookie: userCookie, body: { step: 0, key: 'edad' } })).status === 400, 'paso inválido: 400');
+    ok((await call('POST', '/planea/api/v1/me/onboarding', { cookie: userCookie, body: { step: 2, key: 'x; DROP' } })).status === 400, 'clave inválida: 400');
+    ok((await call('POST', '/planea/api/v1/me/onboarding', { cookie: userCookie, body: { step: 1, key: 'edad', title: '¿En qué rango de edad estás?' } })).status === 200, 'la primera pregunta se registra');
+    await sq.query("UPDATE planea_onboarding_progress SET started_at = NOW() - INTERVAL '10 minutes' WHERE tenant_id = 990918 AND user_id = :u", { replacements: { u: userRow.id } });
+    ok((await call('POST', '/planea/api/v1/me/onboarding', { cookie: userCookie, body: { done: true } })).status === 200, 'terminar la encuesta se registra');
+    await call('POST', '/planea/api/v1/me/onboarding', { cookie: userCookie, body: { step: 5, key: 'ingresos' } });
+    const [[pr]] = await sq.query('SELECT last_step, completed_at FROM planea_onboarding_progress WHERE tenant_id = 990918 AND user_id = :u', { replacements: { u: userRow.id } });
+    ok(pr && pr.last_step === 1 && pr.completed_at, 'repetir la encuesta después de terminar no cambia lo medido');
+    for (const s of [1, 2, 3, 4]) await call('POST', '/planea/api/v1/me/onboarding', { cookie: dropCookie, body: { step: s, key: 'q' + s, title: 'Pregunta SIT ' + s + ' <b>' } });
+    await sq.query("UPDATE planea_onboarding_progress SET last_step_at = NOW() - INTERVAL '2 days' WHERE tenant_id = 990918 AND user_id = :u", { replacements: { u: dropRow.id } });
+    const us2 = await call('GET', '/planea/admin/api/users', { cookie: ac });
+    const mine2 = us2.body.users.find((u) => u.id === userRow.id), drop2 = us2.body.users.find((u) => u.id === dropRow.id);
+    ok(mine2 && mine2.onboarding.minutes >= 9.9 && mine2.onboarding.minutes <= 10.2, 'se ve cuántos minutos tardó en terminar');
+    ok(drop2 && drop2.onboarding.stopped_at && drop2.onboarding.stopped_at.step === 4, 'se ve en qué pregunta se quedó quien no terminó');
+    ok(drop2 && !/<b>/.test(drop2.onboarding.stopped_at.title || ''), 'el título guardado no lleva marcas HTML');
+    const mt2 = await call('GET', '/planea/admin/api/metrics', { cookie: ac });
+    ok(mt2.status === 200 && Array.isArray(mt2.body.dropoff) && mt2.body.dropoff.some((d) => d.step === 4 && d.count >= 1), 'las métricas muestran la pregunta donde abandonan');
+    const tm = mt2.body.metrics && mt2.body.metrics.find((m) => m.key === 'onboarding_time');
+    ok(tm && typeof tm.value === 'number', 'las métricas muestran el tiempo del onboarding');
+    ok(!/respuesta|answer/i.test(fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8').match(/me\.post\('\/me\/onboarding'[\s\S]*?\n  \}\);/)[0].replace(/\/\/[^\n]*/g, '')), 'el progreso nunca guarda respuestas');
 
     // Métricas y señales del usuario
     ok((await call('POST', '/planea/api/v1/me/events', { body: { event: 'visit' } })).status === 401, 'evento sin sesión: 401');
@@ -246,12 +280,13 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(out.status === 200 && /planea_admin=;/.test(out.cookie || ''), 'salir borra la cookie');
   } finally {
     server.close();
-    const ids = [adminRow.id, userRow.id];
+    const ids = [adminRow.id, userRow.id, dropRow.id];
     await sq.query('DELETE FROM planea_events WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918').catch(() => {});
     await sq.query("DELETE FROM planea_audit_log WHERE email LIKE 'sit-mvp-%' OR user_id IN (:ids)", { replacements: { ids } }).catch(() => {});
+    await sq.query('DELETE FROM planea_onboarding_progress WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_items WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_profiles WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_users WHERE id IN (:ids)', { replacements: { ids } }).catch(() => {});
