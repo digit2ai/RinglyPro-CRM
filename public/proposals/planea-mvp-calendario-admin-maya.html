@@ -71,14 +71,14 @@
   </table></div>
 
   <h2>Resumen</h2>
-  <p>Según lo conversado, el MVP incluye tres partes: la carga de conocimiento para Maya, el recordatorio de impuestos y el módulo administrativo. El módulo administrativo tiene dos opciones: una <strong>sencilla</strong>, suficiente para la prueba con 10 usuarios, y una <strong>completa</strong>, con todo lo descrito en su documento.</p>
+  <p>Según lo conversado, el MVP incluye tres partes: la carga de conocimiento para Maya, el recordatorio de impuestos y el módulo administrativo. Cada parte está en su versión sencilla, suficiente para la prueba con 10 usuarios.</p>
   <div class="tw"><table class="fin">
-    <tr><th>Parte</th><th class="num">Con administrativo sencillo</th><th class="num">Con administrativo completo</th></tr>
-    <tr><td>1. Carga de conocimiento para Maya</td><td class="num">7 horas</td><td class="num">7 horas</td></tr>
-    <tr><td>2. Recordatorio de impuestos</td><td class="num">4 horas</td><td class="num">4 horas</td></tr>
-    <tr><td>3. Módulo administrativo</td><td class="num">25 horas</td><td class="num">43 horas</td></tr>
-    <tr class="total"><td>Total</td><td class="num">36 horas</td><td class="num">54 horas</td></tr>
-    <tr><td>Tiempo aproximado</td><td class="num">Más o menos 1 semana</td><td class="num">Más o menos 1 semana y media</td></tr>
+    <tr><th>Parte</th><th class="num">Horas</th></tr>
+    <tr><td>1. Carga de conocimiento para Maya</td><td class="num">7 horas</td></tr>
+    <tr><td>2. Recordatorio de impuestos</td><td class="num">4 horas</td></tr>
+    <tr><td>3. Módulo administrativo</td><td class="num">25 horas</td></tr>
+    <tr class="total"><td>Total</td><td class="num">36 horas</td></tr>
+    <tr><td>Tiempo aproximado</td><td class="num">Más o menos 1 semana</td></tr>
   </table></div>
   <p class="muted">Horas de desarrollo. Tiempo calculado con una persona dedicada, 40 horas por semana.</p>
 
@@ -96,9 +96,8 @@
 
   <h2>3. Módulo administrativo</h2>
   <p>Un panel para los tres administradores (Manuel Stagg, Juan Alberto Bueno y Eduardo de Lima) para seguir la etapa de prueba con los 10 usuarios. Aquí vive también la carga de conocimiento de Maya. Sin saldos ni montos del usuario y sin conversaciones con Maya.</p>
-  <div class="opt">
-    <div><h3>Opción sencilla</h3><div class="hrs">25 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Acceso para los tres administradores y registro de cada acción (quién y cuándo)</td><td class="num">6</td></tr><tr><td>Usuarios de prueba: fecha de registro, respuestas de la encuesta, Puntaje Planea por pilar y si terminó o no el onboarding</td><td class="num">8</td></tr><tr><td>Métricas en una tabla: completitud de onboarding, retención a 7 días y embudo de cuatro pasos</td><td class="num">5</td></tr><tr><td>Pregunta NPS sencilla dentro de la app</td><td class="num">3</td></tr><tr><td>Pruebas</td><td class="num">3</td></tr></table></div><div class="lacks"><b>No incluye:</b> En qué pregunta se quedó quien abandonó el onboarding · Cuánto tardó cada usuario en completarlo · Conteo automático de bugs críticos.</div></div>
-    <div class="full"><h3>Opción completa</h3><div class="hrs">43 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Todo lo de la opción sencilla</td><td class="num">25</td></tr><tr><td>Registro del onboarding pregunta por pregunta: cuándo empezó, en qué pregunta se quedó y cuánto tardó</td><td class="num">10</td></tr><tr><td>Registro automático de errores que impiden completar el onboarding o ver el puntaje (bugs críticos)</td><td class="num">4</td></tr><tr><td>Tablero con las cuatro metas del MVP marcadas en verde o rojo</td><td class="num">2</td></tr><tr><td>Pruebas adicionales</td><td class="num">2</td></tr></table></div></div>
+  <div class="opt one">
+    <div><h3>Alcance</h3><div class="hrs">25 horas</div><div class="tw"><table class="fin"><tr><th>Incluye</th><th class="num">Horas</th></tr><tr><td>Acceso para los tres administradores y registro de cada acción (quién y cuándo)</td><td class="num">6</td></tr><tr><td>Usuarios de prueba: fecha de registro, respuestas de la encuesta, Puntaje Planea por pilar y si terminó o no el onboarding</td><td class="num">8</td></tr><tr><td>Métricas en una tabla: completitud de onboarding, retención a 7 días y embudo de cuatro pasos</td><td class="num">5</td></tr><tr><td>Pregunta NPS sencilla dentro de la app</td><td class="num">3</td></tr><tr><td>Pruebas</td><td class="num">3</td></tr></table></div><div class="lacks"><b>No incluye:</b> En qué pregunta se quedó quien abandonó el onboarding · Cuánto tardó cada usuario en completarlo · Conteo automático de bugs críticos.</div></div>
   </div>
 
   <h2>4. Lo que necesitamos de ustedes</h2>
@@ -106,11 +105,10 @@
     <li><strong>La tabla anual de la DIAN</strong> (dos últimos dígitos → fecha límite). Sin ella el recordatorio solo puede mostrar la ventana aproximada que Planea muestra hoy.</li>
     <li><strong>Con cuánta anticipación avisar</strong> de la fecha de renta (por ejemplo, 30 días antes).</li>
     <li><strong>El documento maestro de Maya</strong>, para cargarlo como primer documento de su base de conocimiento.</li>
-    <li><strong>Qué opción eligen</strong> para el módulo administrativo.</li>
-  </ul>
+      </ul>
 
   <p class="foot">
-    Nota de alcance de Digit2AI para Planea Financiera S.A.S. Las horas son de desarrollo y de referencia, calculadas sobre la plataforma Planea ya construida. Se confirman al cerrar la opción elegida.<br>
+    Nota de alcance de Digit2AI para Planea Financiera S.A.S. Las horas son de desarrollo y de referencia, calculadas sobre la plataforma Planea ya construida. Se confirman al iniciar el desarrollo.<br>
     Digit2AI LLC · digit2ai.com · info@digit2ai.com
   </p>
 
