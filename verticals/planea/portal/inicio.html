@@ -84,6 +84,11 @@
   .mes-cell{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
   .mes-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:700}
   .mes-val{font-family:'Inter';font-weight:800;font-size:20px;margin-top:5px;font-variant-numeric:tabular-nums}
+  .tx-remind{display:flex;gap:12px;align-items:flex-start;margin:10px 0 4px;padding:14px 16px;border-radius:14px;border:1px solid var(--green);background:var(--green-soft);color:var(--txt);text-decoration:none}
+  .tx-remind b{display:block;font-family:'Inter',sans-serif;font-size:14.5px;margin-bottom:2px}
+  .tx-remind [data-tx=body]{font-size:13.5px;color:var(--mut)}
+  .tx-remind-ic{flex:none;font-family:'Inter',sans-serif;font-weight:800;font-size:10px;letter-spacing:.08em;padding:6px 7px;border-radius:8px;background:var(--green);color:#fff}
+  .tx-remind[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -94,6 +99,12 @@
     <h1 data-pl="saludo">Hola</h1>
     <p class="greet-sub" data-pl="resumen">Tus finanzas, en un solo lugar.</p>
   </div>
+
+  <!-- Aviso de declaración de renta (dos últimos dígitos de la cédula). Oculto hasta que aplique. -->
+  <a class="tx-remind" id="tax-reminder" href="/planea/portal/impuestos" hidden>
+    <span class="tx-remind-ic" aria-hidden="true">DIAN</span>
+    <span><b data-tx="title">Declaración de renta</b><span data-tx="body"></span></span>
+  </a>
 
   <!-- Bloque 2 · Puntaje Base — tarjeta hero (como la referencia). -->
   <section class="sec">
@@ -157,8 +168,10 @@
   </section>
 
 </div></div>
-<script src="/planea/portal/planea-nav.js?v=72" defer></script>
+<script src="/planea/portal/planea-nav.js?v=73" defer></script>
 <script src="/planea/portal/planea-data.js?v=68" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
+<script src="/planea/portal/planea-tax.js?v=1" defer></script>
+<script src="/planea/portal/planea-tax-reminder.js?v=1" defer></script>
 </body>
 </html>

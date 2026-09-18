@@ -189,7 +189,7 @@ function build({ backend, sec }) {
       const a = await currentAdmin(req);
       if (!a) return res.status(404).json({ error: 'not_found' });
       req.admin = a; next();
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   api.get('/me', (req, res) => res.json({ admin: { email: req.admin.email, name: req.admin.name } }));
@@ -242,7 +242,7 @@ function build({ backend, sec }) {
           nps,
         })),
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   // ── Métricas del MVP ──
@@ -284,12 +284,12 @@ function build({ backend, sec }) {
           { step: 'Volvieron (7 días)', count: returned },
         ],
       });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   // ── Conocimiento de Maya ──
   api.get('/kb', async (req, res) => {
-    try { res.json(await kb.list(db(), tenant())); } catch (e) { res.status(500).json({ error: e.message }); }
+    try { res.json(await kb.list(db(), tenant())); } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
   api.post('/kb', async (req, res) => {
     try {
@@ -301,7 +301,7 @@ function build({ backend, sec }) {
       audit(req, req.admin.email, 'admin.kb_upload', r.status === 200 ? 'success' : r.error, r.doc ? { id: r.doc.id, name: r.doc.name, version: r.doc.version } : { name: String(b.name || b.filename || '').slice(0, 120) });
       if (r.status !== 200) return res.status(r.status).json({ error: r.error, message: r.message });
       res.json({ ok: true, doc: r.doc, replaced: r.replaced });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
   api.post('/kb/:id/deactivate', async (req, res) => {
     try {
@@ -309,7 +309,7 @@ function build({ backend, sec }) {
       audit(req, req.admin.email, 'admin.kb_deactivate', r ? 'success' : 'not_found', r || { id: req.params.id });
       if (!r) return res.status(404).json({ error: 'not_found' });
       res.json({ ok: true, doc: r });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   admin.use('/api', api);
@@ -330,7 +330,7 @@ function build({ backend, sec }) {
                         ON CONFLICT (tenant_id, user_id, event, day) DO NOTHING`,
         { replacements: { t: tenant(), u: a.id, e: ev, d: PlaneaTax.todayColombia() } });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   me.get('/me/nps', async (req, res) => {
@@ -340,7 +340,7 @@ function build({ backend, sec }) {
       await ensureTables(db());
       const [rows] = await db().query('SELECT score FROM planea_nps WHERE tenant_id = :t AND user_id = :u', { replacements: { t: tenant(), u: a.id } });
       res.json({ answered: rows.length > 0 });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
   me.post('/me/nps', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
@@ -354,7 +354,7 @@ function build({ backend, sec }) {
         { replacements: { t: tenant(), u: a.id, s } });
       if (!rows.length) return res.status(409).json({ error: 'ya_respondido' });
       res.json({ ok: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
   // Público: el calendario DIAN es información pública. Sin tabla -> null y la app estima.

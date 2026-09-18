@@ -59,33 +59,20 @@
     loadDocs();
   }
 
-  // ── Calendario DIAN PARAMETRIZABLE (§23.2) — actualizable por año, NO fijo en lógica.
-  //    Ventanas REFERENCIALES por los dos últimos dígitos de la cédula (persona natural,
-  //    declaración de renta). Deben confirmarse contra la resolución vigente de la DIAN. ──
-  var CAL_ANIO = 2026;
-  var CAL = [
-    { from: 1, to: 6, win: 'segunda quincena de agosto' },
-    { from: 7, to: 16, win: 'última semana de agosto' },
-    { from: 17, to: 28, win: 'primera semana de septiembre' },
-    { from: 29, to: 40, win: 'segunda semana de septiembre' },
-    { from: 41, to: 52, win: 'tercera semana de septiembre' },
-    { from: 53, to: 64, win: 'última semana de septiembre' },
-    { from: 65, to: 76, win: 'primera semana de octubre' },
-    { from: 77, to: 88, win: 'segunda semana de octubre' },
-    { from: 89, to: 100, win: 'tercera semana de octubre' }
-  ];
-  function ventana(dig2) {
-    var n = parseInt(dig2, 10); if (isNaN(n)) return null;
-    if (n === 0) n = 100;
-    for (var i = 0; i < CAL.length; i++) if (n >= CAL[i].from && n <= CAL[i].to) return CAL[i].win;
-    return null;
-  }
+  // ── Calendario DIAN (§23.2). Las ventanas y la tabla oficial viven en planea-tax.js y en
+  //    /planea/api/v1/tax/calendar; sin tabla oficial la fecha se muestra como ESTIMADA,
+  //    nunca como un día exacto que la DIAN no ha publicado. ──
+  var TAXCAL = { table: null, loaded: false };
+  fetch(TAXAPI + '/tax/calendar', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (j) { TAXCAL.table = j && j.table || null; TAXCAL.loaded = true; renderCalendario(); })
+    .catch(function () { TAXCAL.loaded = true; });
   function renderCalendario() {
+    var T = window.PlaneaTax; if (!T) return;
     var d = ($('t-cedula').value || '').replace(/\D/g, '').slice(-2);
-    var win = ventana(d);
-    if (!win) { $('tx-prox').textContent = 'Cuéntanos tus dos últimos dígitos'; $('tx-fecha').textContent = ''; $('tx-keep').textContent = 'Ingresa los dos últimos dígitos de tu cédula en el perfil tributario para ver tu ventana estimada.'; return; }
-    $('tx-prox').textContent = 'Declaración de renta ' + CAL_ANIO;
-    $('tx-fecha').textContent = 'Ventana estimada: ' + win + ' de ' + CAL_ANIO + '.';
+    var r = d.length === 2 ? T.forDigits(d, TAXCAL.table, +T.todayColombia().slice(0, 4)) : null;
+    if (!r) { $('tx-prox').textContent = 'Cuéntanos tus dos últimos dígitos'; $('tx-fecha').textContent = ''; $('tx-keep').textContent = 'Ingresa los dos últimos dígitos de tu cédula en el perfil tributario para ver tu fecha de declaración.'; return; }
+    $('tx-prox').textContent = 'Declaración de renta ' + r.year;
+    $('tx-fecha').textContent = r.kind === 'exacta' ? 'Fecha según el calendario DIAN: ' + r.label + '.' : 'Ventana estimada: ' + r.label + '. Confírmala con el calendario oficial de la DIAN.';
     $('tx-keep').textContent = 'Ten a mano tus soportes (ingresos, retenciones, deducciones) antes de esa fecha. Si un contador te ayuda, avísale con tiempo.';
   }
 

@@ -363,6 +363,16 @@
     applyLock(locked); // reflect initial state on the add-module button
     // Confirm against our backend: if the survey is already done, unlock.
     if (ourCookie()) {
+      // Una visita por día para la métrica de retención del módulo administrativo.
+      // Solo el día y el tipo de evento: ninguna cifra ni contenido. El servidor
+      // deduplica por día; localStorage solo evita repetir la llamada.
+      try {
+        var vday = new Date().toISOString().slice(0, 10);
+        if (localStorage.getItem('planea-visit-day') !== vday) {
+          fetch('/planea/api/v1/me/events', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{"event":"visit"}' })
+            .then(function (r) { if (r.ok) try { localStorage.setItem('planea-visit-day', vday); } catch (e) {} }).catch(function () {});
+        }
+      } catch (e) {}
       fetch('/planea/api/v1/me/profile', { credentials: 'include' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (data) {
