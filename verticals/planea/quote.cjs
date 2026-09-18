@@ -229,7 +229,12 @@ function build({ db, stripe } = {}) {
         // Sin secreto de firma: el cuerpo es solo una pista; el evento se le pide a Stripe.
         // Límite por IP: cada consulta usa la llave compartida de Stripe y su cuota.
         if (limited(hookHits, req.ip || 'x', 30, 60e3)) return res.status(429).json({ error: 'demasiadas' });
-        const id = JSON.parse(raw.toString('utf8')).id;
+        const hint = JSON.parse(raw.toString('utf8'));
+        // Todos los checkout de la cuenta llegan aquí (JobUp, Kancho...). Ignorar uno ajeno es
+        // inofensivo, así que se descarta sin gastar una llamada a Stripe.
+        const hm = hint && hint.data && hint.data.object && hint.data.object.metadata;
+        if (hint && hint.type && (!hm || hm.kind !== 'planea_quote')) return res.json({ received: true, ignored: true });
+        const id = hint && hint.id;
         if (!/^evt_[A-Za-z0-9]+$/.test(String(id || ''))) return res.status(400).json({ error: 'evento_invalido' });
         event = await s.events.retrieve(id);
       }

@@ -134,6 +134,9 @@ let stripeOn = true;
     const again = await call('POST', '/stripe/webhook', { hdr: false, raw: JSON.stringify({ id: 'evt_ok' }) });
     const [[pc]] = await sq.query("SELECT COUNT(*)::int AS n FROM planea_quote_events WHERE quote_id = :id AND event = 'paid'", { replacements: { id: q1.id } });
     ok(again.status === 200 && pc.n === 1, 'el mismo evento repetido no se aplica dos veces');
+    const before2 = events.size;
+    const foreign = await call('POST', '/stripe/webhook', { hdr: false, raw: JSON.stringify({ id: 'evt_jobup', type: 'checkout.session.completed', data: { object: { id: 'cs_x', metadata: { kind: 'jobup' } } } }) });
+    ok(foreign.status === 200 && foreign.body.ignored === true, 'un checkout de otro producto se ignora sin consultar a Stripe');
     // Otros eventos se ignoran
     events.set('evt_other', { id: 'evt_other', type: 'invoice.paid', data: { object: {} } });
     ok((await call('POST', '/stripe/webhook', { hdr: false, raw: JSON.stringify({ id: 'evt_other' }) })).body.ignored === true, 'eventos ajenos se ignoran');
