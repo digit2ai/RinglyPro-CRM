@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Test Page - RinglyPro</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#070b16">
+<style>html,body{background:#070b16}</style>
+<style>
+  :root{
+    --bg:#070b16; --card:#0f1728; --ink:#eaf0fb; --mut:#9db0cc;
+    --accent:#22d3ee; --line:rgba(120,150,200,.16);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--ink);
+    font:400 16px/1.6 'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    padding:32px 16px;
+  }
+  .card{
+    width:100%; max-width:560px; background:var(--card);
+    border:1px solid var(--line); border-radius:18px;
+    padding:36px 28px; text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+  }
+  h1{
+    margin:0 0 10px; font:700 clamp(26px,6vw,36px)/1.2 'Space Grotesk',system-ui,sans-serif;
+    letter-spacing:-.02em;
+  }
+  h1 .hi{color:var(--accent)}
+  p{margin:0 0 6px; color:var(--mut); font-size:15px}
+  .meta{margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--mut); word-break:break-word}
+  code{background:rgba(34,211,238,.10); color:var(--accent);
+    padding:2px 7px; border-radius:6px; font-size:13px}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1><span class="hi">Hello</span> — this is a test</h1>
+    <p>Static page served by the RinglyPro CRM app.</p>
+    <div class="meta">
+      Path: <code>/test/</code><br>
+      File: <code>public/test/index.html</code><br>
+      Deployed on Render from <code>main</code>.
+    </div>
+  </main>
+</body>
+</html>
