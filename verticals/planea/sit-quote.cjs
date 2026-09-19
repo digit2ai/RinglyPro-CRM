@@ -77,6 +77,7 @@ let stripeOn = true;
     ok(pg.status === 200 && /noindex/.test(pg.headers.get('x-robots-tag') || '') && /<meta name="robots" content="noindex/.test(pg.text), 'la página responde y es noindex');
     ok(/USD 240,80/.test(pg.text) && /1,72 h/.test(pg.text), 'la página muestra horas y total');
     ok(!/Tarifa por hora|USD 140,00/.test(pg.text), 'la página no muestra la tarifa por hora');
+    ok(!/entregas registradas|Tiempo real/.test(pg.text), 'la página no muestra fechas de desarrollo ni entregas registradas');
     ok(!/<b>uno<\/b>/.test(pg.text) && /&lt;b&gt;uno/.test(pg.text), 'el contenido se escapa');
     ok(/no-store/.test(pg.headers.get('cache-control') || ''), 'la página no se guarda en caché');
 

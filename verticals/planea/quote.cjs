@@ -146,12 +146,12 @@ textarea{width:100%;min-height:96px;font:inherit;font-size:16px;border:1px solid
 <div class="card">
   <h2>Valor</h2>
   <table>
-    <tr><td>Tiempo real de desarrollo${w.start && w.end ? '<div class="mut">Del ' + esc(w.start) + ' al ' + esc(w.end) + (w.commits ? ' · ' + esc(w.commits) + ' entregas registradas' : '') + '</div>' : ''}</td><td class="n">${esc(hours)} h</td></tr>
+    <tr><td>${esc(c.hours_label || 'Tiempo de desarrollo')}${c.delivery ? '<div class="mut">' + esc(c.delivery) + '</div>' : (w.start && w.end ? '<div class="mut">Del ' + esc(w.start) + ' al ' + esc(w.end) + '</div>' : '')}</td><td class="n">${esc(hours)} h</td></tr>
     <tr class="tot"><td>Total</td><td class="n">${esc(usd(q.amount_cents))}</td></tr>
   </table>
   <p class="mut">${esc(c.price_note || '')}</p>
 </div>
-<div class="card"><h2>Qué se construyó</h2><ul>${items}</ul></div>
+<div class="card"><h2>${esc(c.items_heading || "Qué incluye")}</h2><ul>${items}</ul></div>
 <div class="card"><h2>Qué no incluye</h2><ul>${excl}</ul></div>
 <div class="card" id="discussBox">
   <h2>Siguiente paso</h2>
