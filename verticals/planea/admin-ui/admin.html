@@ -176,6 +176,18 @@
       <p class="mut" id="kbUsage"></p>
       <div class="tw"><table id="kbTbl"></table></div>
 
+      <div class="probe" id="typeBox">
+        <h2>Escribir conocimiento</h2>
+        <p class="mut">Escribe aquí lo que Maya debe saber, sin necesidad de un archivo. Se guarda como un documento más: aparece en la lista, tiene versiones y se puede desactivar. Si usas el nombre de un documento que ya existe, se guarda como una versión nueva y reemplaza la anterior.</p>
+        <label for="typeName">Nombre</label>
+        <input id="typeName" type="text" maxlength="120" placeholder="Ej: Preguntas frecuentes de Planea">
+        <label for="typeText">Texto</label>
+        <textarea id="typeText" rows="8" maxlength="60000" placeholder="Ej: El Puntaje Planea va de 0 a 100 y se calcula con 8 pilares..."></textarea>
+        <p class="mut" id="typeCount">0 caracteres</p>
+        <div><button class="btn" type="button" id="typeBtn">Guardar conocimiento</button></div>
+        <div class="err" id="typeErr"></div><div class="ok" id="typeOk"></div>
+      </div>
+
       <div class="probe">
         <h2>Probar a Maya</h2>
         <p class="mut">Haz una pregunta cuya respuesta solo esté en tus documentos. Maya responde con las mismas reglas que usa en la app y con los documentos activos, y al lado verás qué respondería <b>sin</b> documentos. Si las respuestas cambian, Maya está leyendo lo que subiste.</p>
@@ -338,7 +350,7 @@
         return '<tr><td><b>' + esc(d.name) + '</b><div class="mut">' + esc(d.filename || '') + '</div></td><td class="num">' + esc(d.version) + '</td>' +
           '<td>' + (d.active ? '<span class="pill yes">Activo</span>' : '<span class="pill na">Historial</span>' + (d.deactivated_by ? '<div class="mut">' + esc(fecha(d.deactivated_at)) + '</div>' : '')) + '</td>' +
           '<td>' + esc(d.uploaded_by) + '<div class="mut">' + esc(fecha(d.created_at)) + '</div></td><td class="num">' + esc(Number(d.chars).toLocaleString('es-CO')) + '</td>' +
-          '<td>' + (d.active ? '<button class="btn warn small" data-off="' + d.id + '">Desactivar</button>' : '') + '</td></tr>';
+          '<td>' + (d.active ? '<button class="btn warn small" data-off="' + d.id + '" title="Maya deja de leerlo. No se borra: queda en el historial.">Desactivar</button>' : '') + '</td></tr>';
       }).join('');
     });
   }
@@ -418,6 +430,23 @@
       }, function () { q.busy = false; failed++; q.error = 'No se pudo leer el archivo'; })
         .then(function () { next(i + 1); });
     })(0);
+  });
+
+  // ── Escribir conocimiento: pasa por la MISMA carga que un archivo .md ──
+  $('typeText').addEventListener('input', function () { $('typeCount').textContent = this.value.length.toLocaleString('es-CO') + ' caracteres'; });
+  $('typeBtn').addEventListener('click', function () {
+    var name = $('typeName').value.trim(), text = $('typeText').value.trim();
+    $('typeErr').textContent = ''; $('typeOk').textContent = '';
+    if (!name) { $('typeErr').textContent = 'Ponle un nombre.'; return; }
+    if (text.length < 20) { $('typeErr').textContent = 'Escribe al menos 20 caracteres.'; return; }
+    var b64 = 'data:text/markdown;base64,' + btoa(unescape(encodeURIComponent(text)));
+    $('typeBtn').disabled = true; $('typeBtn').textContent = 'Guardando…';
+    call('POST', '/kb', { name: name, filename: 'escrito-en-admin.md', data_b64: b64 }).then(function (r) {
+      $('typeBtn').disabled = false; $('typeBtn').textContent = 'Guardar conocimiento';
+      if (r._status !== 200) { $('typeErr').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
+      $('typeOk').textContent = (r.replaced ? 'Nueva versión ' + r.doc.version + ' de ' : 'Guardado: ') + '«' + r.doc.name + '». Maya lo leerá en menos de un minuto.';
+      $('typeName').value = ''; $('typeText').value = ''; $('typeCount').textContent = '0 caracteres'; loadKb();
+    });
   });
 
   // ── Probar a Maya ──
