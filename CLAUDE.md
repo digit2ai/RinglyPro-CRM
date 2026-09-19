@@ -537,7 +537,7 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 - The page is a 20/80 split: a left navigation (Lista de usuarios, Usuarios de prueba, Métricas, Conocimiento de Maya, Abrir Planea, Salir; `#accounts|#users|#metrics|#kb` deep links) and the content on the right; below 760px the navigation becomes a scrolling row on top. With no usable signing secret (`PLANEA_ADMIN_SECRET`, else `PLANEA_JWT_SECRET`/`JWT_SECRET`, at least 16 chars, not a published value) the module answers 503, closed.
 - Cookie `planea_admin`: JWT, audience `planea-admin`, 8 h, HttpOnly. Every mutation needs the header `X-Planea-Admin: 1`, otherwise 404. A non-admin or no session also gets 404, not 403.
 - WHAT THE ADMIN SEES: registration date, onboarding finished and when, survey answers, Puntaje Planea per pillar, whether the user saw the score, days visited, NPS. THE ADMIN NEVER SEES AMOUNTS: `sanitizeAnswers` removes `monto|saldo|valor|amount|pesos` keys, numbers over 10,000 and money-shaped strings before anything leaves the server. The module never reads `finance_meta` or the `*_data` columns (the SIT greps for this). Maya conversations are not stored, so they cannot be shown.
-- Admins are not counted as test users.
+- Admins are not counted as test users. The Usuarios de prueba table shows Usuario, Registro, Onboarding and **Última visita** (owner request 2026-09-18: Puntaje, Vio puntaje, Días con visita and NPS columns removed; the pillar line and survey answers stay under the name). Última visita is the latest of the daily visit event (recorded since 2026-09-18) and the last login day, in Colombia time, or empty when neither exists.
 - Metrics come from real rows:
   - Onboarding completion, target over 60%.
   - 7-day retention: a visit after the finish day within 7 days, among eligible users only. Target over 30%.
@@ -581,7 +581,7 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 
 **Tables:** `planea_quotes`, `planea_quote_events`, `planea_admins`, `planea_onboarding_progress`, `planea_notifications`, `planea_kb_docs`, `planea_events`, `planea_nps` (`tenant_id NOT NULL`). They are created idempotently on first use. Canonical migration: `migrations/20260918_planea_mvp_admin.sql`.
 
-**SIT:** `node verticals/planea/sit-mvp.cjs` → **136/136** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
+**SIT:** `node verticals/planea/sit-mvp.cjs` → **138/138** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
 
 **Environment Variables:**
 - `PLANEA_ADMIN_EMAILS` is **no longer read**; admins live in `planea_admins` (see above).

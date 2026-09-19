@@ -96,6 +96,12 @@ function finishInfo(sd) {
 const ABANDON_H = 24;
 function median(xs) { if (!xs.length) return null; const s = xs.slice().sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
 function cleanTitle(t) { return String(t || '').replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, 140) || null; }
+function lastVisit(ev, lastLogin) {
+  const days = (ev || []).filter((e) => e.event === 'visit' && e.day).map((e) => String(e.day instanceof Date ? e.day.toISOString() : e.day).slice(0, 10));
+  const login = lastLogin ? dayColombia(lastLogin) : null;
+  if (login) days.push(login);
+  return days.length ? days.sort().pop() : null;
+}
 function dayColombia(iso) { return iso ? PlaneaTax.todayColombia(new Date(iso)) : null; }
 function addDays(day, n) { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
@@ -294,6 +300,9 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
           answers: fin.finished && sd && sd.answers ? sanitizeAnswers(sd.answers) : null,
           saw_score: ev.some((e) => e.event === 'score_view'),
           days_visited: ev.filter((e) => e.event === 'visit').length,
+          // Último día en que abrió la app: el evento diario de visita (existe desde el
+          // 18-sep-2026) o, si es más reciente o no hay eventos, su último ingreso.
+          last_visit: lastVisit(ev, u.last_login_at),
           nps,
         })),
       });

@@ -136,7 +136,7 @@
 
     <div id="tab-users" class="card">
       <h2>Usuarios de prueba</h2>
-      <p class="mut">Fecha de registro, onboarding, respuestas de la encuesta y Puntaje Planea por pilar. No se muestran saldos ni montos, ni conversaciones con Maya. <span id="adminsExcl"></span></p>
+      <p class="mut">Fecha de registro, onboarding, última visita, respuestas de la encuesta y Puntaje Planea por pilar. No se muestran saldos ni montos, ni conversaciones con Maya. <span id="adminsExcl"></span></p>
       <div class="tw"><table id="usersTbl"></table></div>
       <p class="mut" id="notMeasured"></p>
     </div>
@@ -213,6 +213,7 @@
   var API = '/planea/admin/api';
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function dia(d) { try { return new Date(d + 'T12:00:00Z').toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Bogota' }); } catch (e) { return d; } }
   function fecha(iso) { if (!iso) return '—'; try { return new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' }); } catch (e) { return String(iso).slice(0, 16); } }
   function call(method, path, body) {
     return fetch(API + path, {
@@ -258,17 +259,15 @@
       $('adminsExcl').textContent = r.admins_excluded ? '(' + r.admins_excluded + ' administradores no se cuentan.)' : '';
       $('notMeasured').textContent = 'No se mide en esta versión: ' + (r.not_measured || []).join(' · ') + '.';
       if (!r.users.length) { $('usersTbl').innerHTML = '<tr><td class="mut">Aún no hay usuarios de prueba.</td></tr>'; return; }
-      var head = '<tr><th>Usuario</th><th>Registro</th><th>Onboarding</th><th class="num">Puntaje</th><th>Vio puntaje</th><th class="num">Días con visita</th><th class="num">NPS</th></tr>';
+      var head = '<tr><th>Usuario</th><th>Registro</th><th>Onboarding</th><th>Última visita</th></tr>';
       $('usersTbl').innerHTML = head + r.users.map(function (u) {
         var ob = u.onboarding.finished ? '<span class="pill yes">Terminó</span><div class="mut">' + esc(fecha(u.onboarding.finished_at)) + (u.onboarding.minutes != null ? ' · ' + esc(u.onboarding.minutes) + ' min' : '') + '</div>' : '<span class="pill no">Sin terminar</span>' + (u.onboarding.stopped_at ? '<div class="mut">Se quedó en la pregunta ' + esc(u.onboarding.stopped_at.step) + ': ' + esc(u.onboarding.stopped_at.title || u.onboarding.stopped_at.key) + '</div>' : '');
-        var sc = u.score ? '<b>' + esc(u.score.score) + '</b><div class="mut">' + esc(u.score.rango || '') + '</div>' : '—';
         var det = '';
         if (u.score && u.score.pilares) det += '<div class="mut" style="margin-top:6px">' + PILARES.map(function (k) { return PLABEL[k] + ': <b>' + esc(u.score.pilares[k] != null ? u.score.pilares[k] : '—') + '</b>'; }).join(' · ') + '</div>';
         if (u.answers) det += '<details><summary>Respuestas de la encuesta</summary><pre>' + esc(JSON.stringify(u.answers, null, 2)) + '</pre></details>';
         return '<tr><td><b>' + esc(u.full_name || '—') + '</b><div class="mut">' + esc(u.email) + '</div>' + det + '</td>' +
-          '<td>' + esc(fecha(u.registered_at)) + '</td><td>' + ob + '</td><td class="num">' + sc + '</td>' +
-          '<td>' + (u.saw_score ? '<span class="pill yes">Sí</span>' : '<span class="pill na">No</span>') + '</td>' +
-          '<td class="num">' + esc(u.days_visited) + '</td><td class="num">' + (u.nps == null ? '—' : esc(u.nps)) + '</td></tr>';
+          '<td>' + esc(fecha(u.registered_at)) + '</td><td>' + ob + '</td>' +
+          '<td>' + (u.last_visit ? esc(dia(u.last_visit)) : '—') + '</td></tr>';
       }).join('');
     });
   }
