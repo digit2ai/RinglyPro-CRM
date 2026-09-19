@@ -61,7 +61,20 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
   .metric{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff}
   .metric .v{font-size:28px;font-weight:800;color:var(--brand)}
-  .drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;background:#fafcfb}
+  .dz{border:2px dashed #b9c9c5;border-radius:12px;padding:26px 18px;text-align:center;background:#fafcfb;cursor:pointer;transition:background .15s,border-color .15s}
+  .dz:hover,.dz:focus{border-color:var(--green);outline:none}
+  .dz.over{border-color:var(--green);background:#e9f5ef}
+  .dz-title{font-weight:700;font-size:16px;color:var(--brand);margin-bottom:4px}
+  .dz-link{color:var(--green);font-weight:700;text-decoration:underline}
+  .dz-types{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:12px 0 8px}
+  .dz-types .tag{background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--brand)}
+  .flist{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .fitem{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font-size:14px}
+  .fitem:last-child{border-bottom:0}
+  .fitem .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fitem .st{font-size:12px;font-weight:700;white-space:nowrap}
+  .fitem .st.bad{color:var(--red)} .fitem .st.good{color:var(--green)} .fitem .st.wait{color:var(--mut)}
+  .fitem button{min-height:32px;padding:4px 10px;background:transparent;color:var(--mut);font-size:13px}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -133,12 +146,22 @@
     <div id="tab-kb" class="card" hidden>
       <h2>Conocimiento de Maya</h2>
       <p class="mut">Sube documentos en PDF, Markdown (.md) o texto (.txt). Maya los lee como contexto en cada respuesta; esto no reentrena el modelo, y sus reglas de siempre siguen mandando. Subir un documento con el mismo nombre crea una versión nueva y guarda la anterior en el historial.</p>
-      <form id="kbForm" class="drop">
-        <label for="kbName" style="margin-top:0">Nombre del documento</label>
-        <input id="kbName" type="text" maxlength="120" placeholder="Ej: Documento maestro de Maya">
-        <label for="kbFile">Archivo</label>
-        <input id="kbFile" type="file" accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain" required>
-        <div style="margin-top:14px"><button class="btn" type="submit" id="kbBtn">Subir documento</button></div>
+      <form id="kbForm">
+        <div class="dz" id="dropZone" tabindex="0" role="button" aria-describedby="dzTypes">
+          <input id="kbFile" type="file" multiple accept=".pdf,.md,.markdown,.txt,application/pdf,text/markdown,text/plain" hidden>
+          <div class="dz-title">Arrastra y suelta tus documentos aquí</div>
+          <div class="mut">o <span class="dz-link">haz clic para elegirlos</span> (puedes subir varios a la vez)</div>
+          <div class="dz-types" id="dzTypes">
+            <span class="tag">PDF (.pdf)</span><span class="tag">Markdown (.md)</span><span class="tag">Texto (.txt)</span>
+          </div>
+          <div class="mut">Hasta 8 MB por archivo. El PDF debe tener texto seleccionable: un PDF escaneado (solo imagen) no se puede leer. Word, Excel e imágenes no se aceptan; guárdalos como PDF primero.</div>
+        </div>
+        <div id="fileList" class="flist" hidden></div>
+        <div id="nameRow" hidden>
+          <label for="kbName">Nombre del documento <span class="mut">(opcional; si lo dejas vacío se usa el nombre del archivo)</span></label>
+          <input id="kbName" type="text" maxlength="120" placeholder="Ej: Documento maestro de Maya">
+        </div>
+        <div style="margin-top:14px"><button class="btn" type="submit" id="kbBtn" disabled>Subir documento</button></div>
         <div class="err" id="kbErr"></div><div class="ok" id="kbOk"></div>
       </form>
       <p class="mut" id="kbUsage"></p>
@@ -298,21 +321,77 @@
     if (!confirm('¿Desactivar este documento? Maya dejará de leerlo; queda en el historial.')) return;
     call('POST', '/kb/' + b.getAttribute('data-off') + '/deactivate').then(loadKb);
   });
+  // ── Carga por arrastrar y soltar (varios archivos a la vez) ──
+  var OK_EXT = ['pdf', 'md', 'markdown', 'txt'], MAX = 8 * 1024 * 1024;
+  var queue = [];
+  function ext(n) { var m = String(n).toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
+  function size(b) { return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + ' KB' : (b / 1048576).toFixed(1) + ' MB'; }
+  function check(f) {
+    if (OK_EXT.indexOf(ext(f.name)) < 0) return 'Tipo no admitido: usa PDF, .md o .txt';
+    if (f.size > MAX) return 'Supera 8 MB';
+    if (!f.size) return 'Archivo vacío';
+    return null;
+  }
+  function renderQueue() {
+    var list = $('fileList');
+    list.hidden = !queue.length;
+    list.innerHTML = queue.map(function (q, i) {
+      var cls = q.error ? 'bad' : q.done ? 'good' : 'wait';
+      var txt = q.error || (q.done ? q.done : (q.busy ? 'Subiendo…' : 'Listo para subir'));
+      return '<div class="fitem"><span class="fn" title="' + esc(q.file.name) + '">' + esc(q.file.name) + ' <span class="mut">· ' + size(q.file.size) + '</span></span>' +
+        '<span class="st ' + cls + '">' + esc(txt) + '</span>' + (q.busy || q.done ? '' : '<button type="button" data-rm="' + i + '" aria-label="Quitar">Quitar</button>') + '</div>';
+    }).join('');
+    var ready = queue.filter(function (q) { return !q.error && !q.done; });
+    $('nameRow').hidden = ready.length !== 1;
+    $('kbBtn').disabled = !ready.length;
+    $('kbBtn').textContent = ready.length > 1 ? 'Subir ' + ready.length + ' documentos' : 'Subir documento';
+  }
+  function addFiles(files) {
+    $('kbErr').textContent = ''; $('kbOk').textContent = '';
+    queue = queue.filter(function (q) { return !q.done; });
+    Array.prototype.forEach.call(files || [], function (f) {
+      if (queue.some(function (q) { return q.file.name === f.name && q.file.size === f.size; })) return;
+      queue.push({ file: f, error: check(f) });
+    });
+    renderQueue();
+  }
+  var dz = $('dropZone');
+  dz.addEventListener('click', function () { $('kbFile').click(); });
+  dz.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('kbFile').click(); } });
+  $('kbFile').addEventListener('change', function () { addFiles(this.files); this.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (t) { dz.addEventListener(t, function (e) { e.preventDefault(); dz.classList.add('over'); }); });
+  ['dragleave', 'dragend', 'drop'].forEach(function (t) { dz.addEventListener(t, function (e) { e.preventDefault(); dz.classList.remove('over'); }); });
+  dz.addEventListener('drop', function (e) { addFiles(e.dataTransfer && e.dataTransfer.files); });
+  // Un archivo soltado fuera de la zona no debe abrirse en la pestaña y sacar al admin de la página.
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+  $('fileList').addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-rm]'); if (!b) return;
+    queue.splice(+b.getAttribute('data-rm'), 1); renderQueue();
+  });
+  function readB64(f) { return new Promise(function (ok, no) { var rd = new FileReader(); rd.onload = function () { ok(String(rd.result)); }; rd.onerror = no; rd.readAsDataURL(f); }); }
   $('kbForm').addEventListener('submit', function (e) {
     e.preventDefault(); $('kbErr').textContent = ''; $('kbOk').textContent = '';
-    var f = $('kbFile').files && $('kbFile').files[0]; if (!f) return;
-    if (f.size > 8 * 1024 * 1024) { $('kbErr').textContent = 'El archivo supera 8 MB.'; return; }
-    $('kbBtn').disabled = true; $('kbBtn').textContent = 'Subiendo…';
-    var rd = new FileReader();
-    rd.onload = function () {
-      call('POST', '/kb', { name: $('kbName').value, filename: f.name, data_b64: String(rd.result) }).then(function (r) {
-        $('kbBtn').disabled = false; $('kbBtn').textContent = 'Subir documento';
-        if (r._status !== 200) { $('kbErr').textContent = r.message || r.error || 'No se pudo subir.'; return; }
-        $('kbOk').textContent = (r.replaced ? 'Nueva versión ' : 'Documento ') + '«' + r.doc.name + '» (versión ' + r.doc.version + ') activo. Maya lo leerá en menos de un minuto.';
-        $('kbForm').reset(); loadKb();
-      });
-    };
-    rd.readAsDataURL(f);
+    var todo = queue.filter(function (q) { return !q.error && !q.done; });
+    if (!todo.length) return;
+    var single = todo.length === 1, name = $('kbName').value, done = 0, failed = 0;
+    $('kbBtn').disabled = true;
+    (function next(i) {
+      if (i >= todo.length) {
+        $('kbOk').textContent = done ? (done === 1 ? '1 documento activo.' : done + ' documentos activos.') + ' Maya los leerá en menos de un minuto.' : '';
+        if (failed) $('kbErr').textContent = failed === 1 ? '1 archivo no se pudo subir; mira el motivo en la lista.' : failed + ' archivos no se pudieron subir; mira el motivo en la lista.';
+        $('kbName').value = ''; renderQueue(); loadKb(); return;
+      }
+      var q = todo[i]; q.busy = true; renderQueue();
+      readB64(q.file).then(function (b64) {
+        return call('POST', '/kb', { name: single ? name : '', filename: q.file.name, data_b64: b64 });
+      }).then(function (r) {
+        q.busy = false;
+        if (r._status === 200) { done++; q.done = (r.replaced ? 'Nueva versión ' : 'Activo, versión ') + r.doc.version; }
+        else { failed++; q.error = r.message || r.error || 'No se pudo subir'; }
+      }, function () { q.busy = false; failed++; q.error = 'No se pudo leer el archivo'; })
+        .then(function () { next(i + 1); });
+    })(0);
   });
 
   boot();

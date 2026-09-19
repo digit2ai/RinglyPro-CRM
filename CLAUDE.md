@@ -548,7 +548,7 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 - User signals: `POST /api/v1/me/events` (`visit` from `planea-nav.js`, `score_view` from `planea-feedback.js`), one per user per event per Colombia day. `GET|POST /api/v1/me/nps`: one answer per person, 0-10; a second answer returns 409.
 
 **Maya knowledge (`kb.cjs`, table `planea_kb_docs`).**
-- Upload PDF, MD or TXT, checked by the file's bytes. Max 8 MB. A scanned PDF with no text is refused.
+- Upload PDF, MD or TXT, checked by the file's bytes. Max 8 MB. A scanned PDF with no text is refused. The page takes files by drag and drop or a click, several at once; it lists the accepted types (PDF, .md, .txt), flags a wrong type or an oversize file before sending, and uploads one at a time with a result per file. With exactly one file the optional name field is used; with several, each keeps its file name. The server still checks every file by its bytes.
 - The extracted TEXT is stored in Postgres, because the Render disk is ephemeral.
 - Uploading with the same name (case-insensitive) creates a new version and deactivates the old one. Nothing is deleted.
 - Active docs are appended to Maya's system prompt (`buildMayaSystem() + mayaKnowledge()`). They are fenced and labelled, and the prompt says Maya's own rules prevail. THIS IS CONTEXT, NOT RETRAINING, and the admin page says so.
