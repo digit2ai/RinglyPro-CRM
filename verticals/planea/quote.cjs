@@ -147,7 +147,6 @@ textarea{width:100%;min-height:96px;font:inherit;font-size:16px;border:1px solid
   <h2>Valor</h2>
   <table>
     <tr><td>Tiempo real de desarrollo${w.start && w.end ? '<div class="mut">Del ' + esc(w.start) + ' al ' + esc(w.end) + (w.commits ? ' · ' + esc(w.commits) + ' entregas registradas' : '') + '</div>' : ''}</td><td class="n">${esc(hours)} h</td></tr>
-    <tr><td>Tarifa por hora</td><td class="n">${esc(usd(q.rate_cents))}</td></tr>
     <tr class="tot"><td>Total</td><td class="n">${esc(usd(q.amount_cents))}</td></tr>
   </table>
   <p class="mut">${esc(c.price_note || '')}</p>
@@ -315,7 +314,7 @@ function build({ db, stripe } = {}) {
       const url = BASE() + '/quote/' + req.params.token;
       const session = await s.checkout.sessions.create({
         mode: 'payment',
-        line_items: [{ quantity: 1, price_data: { currency: q.currency, unit_amount: q.amount_cents, product_data: { name: q.title, description: Number(q.hours) + ' h x ' + usd(q.rate_cents) + '/h' } } }],
+        line_items: [{ quantity: 1, price_data: { currency: q.currency, unit_amount: q.amount_cents, product_data: { name: q.title, description: Number(q.hours).toLocaleString('es-CO') + ' h de desarrollo' } } }],
         metadata: { kind: 'planea_quote', quote_id: String(q.id), tenant_id: String(tenant()) },
         payment_intent_data: { metadata: { kind: 'planea_quote', quote_id: String(q.id) } },
         success_url: url + '?pago=ok',
