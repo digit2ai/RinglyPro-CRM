@@ -75,6 +75,15 @@
   .fitem .st{font-size:12px;font-weight:700;white-space:nowrap}
   .fitem .st.bad{color:var(--red)} .fitem .st.good{color:var(--green)} .fitem .st.wait{color:var(--mut)}
   .fitem button{min-height:32px;padding:4px 10px;background:transparent;color:var(--mut);font-size:13px}
+  .probe{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+  textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:16px;resize:vertical}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cmp section{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}
+  .cmp h3{font-size:13px;margin:0 0 8px;color:var(--brand);text-transform:uppercase;letter-spacing:.4px}
+  .cmp section:first-child{border-color:var(--green)}
+  .ans{white-space:pre-wrap;font-size:14px}
+  #sentPre{max-height:360px;overflow:auto}
+  @media(max-width:760px){.cmp{grid-template-columns:1fr}}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -166,6 +175,23 @@
       </form>
       <p class="mut" id="kbUsage"></p>
       <div class="tw"><table id="kbTbl"></table></div>
+
+      <div class="probe">
+        <h2>Probar a Maya</h2>
+        <p class="mut">Haz una pregunta cuya respuesta solo esté en tus documentos. Maya responde con las mismas reglas que usa en la app y con los documentos activos, y al lado verás qué respondería <b>sin</b> documentos. Si las respuestas cambian, Maya está leyendo lo que subiste.</p>
+        <label for="probeQ">Pregunta</label>
+        <textarea id="probeQ" rows="2" maxlength="1000" placeholder="Ej: ¿Qué es el Puntaje Planea y cómo se calcula?"></textarea>
+        <div style="margin-top:10px"><button class="btn" type="button" id="probeBtn">Preguntar a Maya</button></div>
+        <div class="err" id="probeErr"></div>
+        <div id="probeOut" hidden>
+          <p class="mut" id="probeDocs"></p>
+          <div class="cmp">
+            <section><h3>Con tus documentos</h3><div id="probeWith" class="ans"></div></section>
+            <section id="probeWithoutBox"><h3>Sin documentos</h3><div id="probeWithout" class="ans"></div></section>
+          </div>
+        </div>
+        <details id="sentBox" style="margin-top:14px"><summary>Ver exactamente lo que Maya recibe de tus documentos</summary><p class="mut" id="sentInfo"></p><pre id="sentPre"></pre></details>
+      </div>
     </div>
   </main>
 </div>
@@ -392,6 +418,34 @@
       }, function () { q.busy = false; failed++; q.error = 'No se pudo leer el archivo'; })
         .then(function () { next(i + 1); });
     })(0);
+  });
+
+  // ── Probar a Maya ──
+  $('probeBtn').addEventListener('click', function () {
+    var q = $('probeQ').value.trim(); $('probeErr').textContent = '';
+    if (!q) { $('probeErr').textContent = 'Escribe una pregunta.'; return; }
+    $('probeBtn').disabled = true; $('probeBtn').textContent = 'Maya está pensando…';
+    call('POST', '/kb/test', { question: q }).then(function (r) {
+      $('probeBtn').disabled = false; $('probeBtn').textContent = 'Preguntar a Maya';
+      if (r._status !== 200) { $('probeErr').textContent = r.message || r.error || 'No se pudo probar.'; return; }
+      $('probeOut').hidden = false;
+      $('probeDocs').textContent = r.docs.length
+        ? 'Documentos activos enviados a Maya: ' + r.docs.map(function (d) { return d.name + ' (v' + d.version + ')'; }).join(', ') + ' · ' + Number(r.chars).toLocaleString('es-CO') + ' caracteres.'
+        : 'No hay documentos activos: Maya respondió solo con sus reglas. Sube uno y vuelve a probar.';
+      var w = r.with_docs || {};
+      $('probeWith').textContent = w.ok ? w.reply : (w.reason || 'Sin respuesta.');
+      $('probeWithoutBox').hidden = !r.without_docs;
+      if (r.without_docs) $('probeWithout').textContent = r.without_docs.ok ? r.without_docs.reply : (r.without_docs.reason || 'Sin respuesta.');
+    });
+  });
+  $('sentBox').addEventListener('toggle', function () {
+    if (!this.open) return;
+    $('sentInfo').textContent = 'Cargando…'; $('sentPre').textContent = '';
+    call('GET', '/kb/sent').then(function (r) {
+      if (r._status !== 200) { $('sentInfo').textContent = 'No se pudo cargar.'; return; }
+      $('sentInfo').textContent = r.docs.length ? 'Este texto se agrega a las instrucciones de Maya en CADA mensaje (' + Number(r.chars).toLocaleString('es-CO') + ' caracteres).' : 'Nada: no hay documentos activos.';
+      $('sentPre').textContent = r.block || '';
+    });
   });
 
   boot();

@@ -149,7 +149,7 @@ function dianTable() {
   return table;
 }
 
-function build({ backend, sec }) {
+function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   const db = () => (backend && backend.db ? backend.db() : null);
   const ready = () => !!(backend && backend.status && backend.status().ready && db());
 
@@ -429,6 +429,58 @@ function build({ backend, sec }) {
       audit(req, req.admin.email, 'admin.kb_deactivate', r ? 'success' : 'not_found', r || { id: req.params.id });
       if (!r) return res.status(404).json({ error: 'not_found' });
       res.json({ ok: true, doc: r });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
+  // ── Prueba de Maya: la MISMA instrucción que usa la app + los documentos activos ──
+  // Así el equipo puede comprobar con una pregunta que Maya de verdad lee lo que subió.
+  // Compara la respuesta con y sin documentos: si cambia, los documentos están llegando.
+  // Solo admins, con tope por hora, y cada prueba queda en la auditoría.
+  const testHits = new Map();
+  async function askMaya(system, question) {
+    const KEY = process.env.ANTHROPIC_API_KEY;
+    if (!KEY) return { ok: false, reason: 'Falta la clave del modelo (ANTHROPIC_API_KEY): Maya no está respondiendo en este entorno.' };
+    const f = fetchImpl || fetch;
+    const r = await f('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: mayaModel || 'claude-haiku-4-5-20251001', max_tokens: 380, system, messages: [{ role: 'user', content: question }] }),
+    });
+    if (!r.ok) {
+      let msg = ''; try { const j = await r.json(); msg = (j && j.error && (j.error.message || j.error.type)) || ''; } catch (e) {}
+      return { ok: false, reason: 'El modelo respondió con error ' + r.status + (msg ? ': ' + String(msg).slice(0, 160) : '') };
+    }
+    const d = await r.json();
+    const text = String((d && d.content && d.content[0] && d.content[0].text) || '').replace(/<accion>[\s\S]*?<\/accion>/g, '').replace(/<propuesta>[\s\S]*?<\/propuesta>/g, '').trim();
+    return { ok: true, reply: text };
+  }
+  api.get('/kb/sent', async (req, res) => {
+    try {
+      kb._cache.delete(tenant());
+      const text = await kb.activeText(db(), tenant());
+      const [docs] = await db().query('SELECT name, version, chars FROM planea_kb_docs WHERE tenant_id = :t AND active ORDER BY lower(name)', { replacements: { t: tenant() } });
+      res.json({ docs, block: kb.promptBlock(text), chars: text.length });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/kb/test', async (req, res) => {
+    try {
+      const question = String((req.body && req.body.question) || '').trim().slice(0, 1000);
+      if (!question) return res.status(400).json({ error: 'pregunta_vacia', message: 'Escribe una pregunta.' });
+      const now = Date.now(), hits = (testHits.get(req.admin.uid) || []).filter((t) => now - t < 3600e3);
+      if (hits.length >= 20) return res.status(429).json({ error: 'demasiadas', message: 'Máximo 20 pruebas por hora.' });
+      hits.push(now); testHits.set(req.admin.uid, hits);
+      if (typeof mayaSystem !== 'function') return res.status(503).json({ error: 'sin_maya', message: 'La prueba no está conectada a Maya en este servidor.' });
+      kb._cache.delete(tenant()); // la prueba siempre ve lo último que se subió
+      const text = await kb.activeText(db(), tenant());
+      const [docs] = await db().query('SELECT name, version, chars FROM planea_kb_docs WHERE tenant_id = :t AND active ORDER BY lower(name)', { replacements: { t: tenant() } });
+      const base = mayaSystem();
+      const compare = !(req.body && req.body.compare === false) && !!text;
+      const [withDocs, without] = await Promise.all([
+        askMaya(base + kb.promptBlock(text), question),
+        compare ? askMaya(base, question) : Promise.resolve(null),
+      ]);
+      audit(req, req.admin.email, 'admin.kb_test', withDocs.ok ? 'success' : 'model_error', { docs: docs.length, compare });
+      res.json({ docs, chars: text.length, with_docs: withDocs, without_docs: without });
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 

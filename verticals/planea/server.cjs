@@ -481,7 +481,7 @@ router.post('/api/v1/admin/confirm', express.json(), async (req, res) => {
 // Registered BEFORE the backend and the SPA catch-all so neither swallows them.
 if (planeaBackend) {
   try {
-    const adm = planeaAdmin.build({ backend: planeaBackend, sec: security });
+    const adm = planeaAdmin.build({ backend: planeaBackend, sec: security, mayaSystem: () => buildMayaSystem({}), mayaModel: MAYA_MODEL });
     router.use('/admin', adm.admin);
     router.use('/api/v1', adm.me);
     // Avisos por correo de la fecha de renta (solo producción, solo quien los encendió).

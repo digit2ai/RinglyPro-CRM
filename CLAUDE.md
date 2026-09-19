@@ -554,6 +554,7 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 - Active docs are appended to Maya's system prompt (`buildMayaSystem() + mayaKnowledge()`). They are fenced and labelled, and the prompt says Maya's own rules prevail. THIS IS CONTEXT, NOT RETRAINING, and the admin page says so.
 - EVERYTHING ACTIVE TRAVELS IN EVERY MAYA MESSAGE. An upload that would push the total above `PLANEA_KB_MAX_CHARS` is refused and the refusal says why.
 - There is a 60 s cache per tenant.
+- **PROOF THAT MAYA READS IT: "Probar a Maya"** (`POST /admin/api/kb/test`, `GET /admin/api/kb/sent`). An admin asks a question; the server sends it twice with the SAME system prompt the app uses (`buildMayaSystem({})` passed in from `server.cjs` as `mayaSystem`), once with the active documents and once without, and shows both answers side by side plus the list of documents sent. `/kb/sent` shows the exact knowledge block appended to every Maya message. Both clear the 60 s cache first. 20 tests per admin per hour, audited `admin.kb_test`. No `ANTHROPIC_API_KEY` or a model error is shown as such, never as an answer.
 
 **Tax reminder (`portal/planea-tax.js`, `planea-tax-reminder.js`, `GET /api/v1/tax/calendar`).**
 - It uses the last two cédula digits the user saves in Impuestos (`finance_meta.tributario.cedula2`).
@@ -579,7 +580,7 @@ Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, a
 
 **Tables:** `planea_quotes`, `planea_quote_events`, `planea_admins`, `planea_onboarding_progress`, `planea_notifications`, `planea_kb_docs`, `planea_events`, `planea_nps` (`tenant_id NOT NULL`). They are created idempotently on first use. Canonical migration: `migrations/20260918_planea_mvp_admin.sql`.
 
-**SIT:** `node verticals/planea/sit-mvp.cjs` → **125/125** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
+**SIT:** `node verticals/planea/sit-mvp.cjs` → **136/136** (each run uses its own TEST-NET IP, because the login limit lives in the database per IP and a previous run would otherwise lock out the next), zero keys. It uses throwaway `sit-mvp-*` users and tenant 990918, and cleans up after itself. It does not cover Maya with a real model.
 
 **Environment Variables:**
 - `PLANEA_ADMIN_EMAILS` is **no longer read**; admins live in `planea_admins` (see above).

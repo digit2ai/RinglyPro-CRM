@@ -119,7 +119,10 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   await sq.query("INSERT INTO planea_profiles (user_id, full_name, score_data, created_at, updated_at) VALUES (:u, 'SIT Usuario', CAST(:s AS JSONB), NOW(), NOW()) ON CONFLICT (user_id) DO UPDATE SET score_data = EXCLUDED.score_data", { replacements: { u: userRow.id, s: JSON.stringify(sd) } });
 
   const app = express();
-  const built = adminMod.build({ backend, sec });
+  // Modelo FALSO: registra la instrucción recibida y responde según traiga o no documentos.
+  const mayaCalls = [];
+  const fakeFetch = async (url, opt) => { const b = JSON.parse(opt.body); mayaCalls.push(b.system); return { ok: true, json: async () => ({ content: [{ text: /DOCUMENTOS DE CONOCIMIENTO/.test(b.system) ? 'Según el documento: versión dos. <accion>{}</accion>' : 'No tengo ese dato.' }] }) }; };
+  const built = adminMod.build({ backend, sec, mayaSystem: () => 'REGLAS BASE DE MAYA', mayaModel: 'fake-model', fetchImpl: fakeFetch });
   app.use('/planea/admin', built.admin);
   app.use('/planea/api/v1', built.me);
   app.use('/planea/api/v1', backend.build());
@@ -264,6 +267,23 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     kb._cache.clear();
     let txt = await kb.activeText(sq, 990918);
     ok(/Versión dos/.test(txt) && !/Versión uno/.test(txt), 'Maya lee solo la versión activa');
+    // Probar a Maya: la misma instrucción base + los documentos activos, comparada sin ellos
+    const prevKey = process.env.ANTHROPIC_API_KEY; process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
+    ok((await call('POST', '/planea/admin/api/kb/test', { cookie: ac, body: { question: '  ' } })).status === 400, 'probar a Maya sin pregunta: 400');
+    ok((await call('POST', '/planea/admin/api/kb/test', { cookie: userCookie, body: { question: 'x' } })).status === 404, 'un usuario normal no puede probar a Maya');
+    const probe = await call('POST', '/planea/admin/api/kb/test', { cookie: ac, body: { question: '¿Qué dice la guía?' } });
+    ok(probe.status === 200 && probe.body.docs.some((d) => /gu/i.test(d.name) && d.version === 2), 'la prueba lista los documentos activos enviados');
+    ok(mayaCalls.length === 2 && mayaCalls.every((s) => s.indexOf('REGLAS BASE DE MAYA') === 0), 'las dos respuestas usan las reglas de Maya de la app');
+    ok(mayaCalls.some((s) => /Versión dos/.test(s)) && mayaCalls.some((s) => !/DOCUMENTOS DE CONOCIMIENTO/.test(s)), 'una lleva los documentos y la otra no');
+    ok(!mayaCalls.some((s) => /Versión uno/.test(s)), 'la versión desactivada no llega a Maya en la prueba');
+    ok(probe.body.with_docs.ok && /versión dos/.test(probe.body.with_docs.reply) && !/<accion>/.test(probe.body.with_docs.reply), 'la respuesta con documentos se muestra limpia');
+    ok(probe.body.without_docs && /No tengo/.test(probe.body.without_docs.reply), 'la respuesta sin documentos se muestra al lado');
+    const sent = await call('GET', '/planea/admin/api/kb/sent', { cookie: ac });
+    ok(sent.status === 200 && /Versión dos/.test(sent.body.block) && !/Versión uno/.test(sent.body.block), 'se puede ver exactamente lo que Maya recibe');
+    delete process.env.ANTHROPIC_API_KEY;
+    const nokey = await call('POST', '/planea/admin/api/kb/test', { cookie: ac, body: { question: 'x' } });
+    ok(nokey.status === 200 && nokey.body.with_docs.ok === false && /ANTHROPIC_API_KEY/.test(nokey.body.with_docs.reason), 'sin clave del modelo la prueba lo dice, no inventa una respuesta');
+    if (prevKey) process.env.ANTHROPIC_API_KEY = prevKey;
     const inPrompt = await adminMod.mayaKnowledge(backend);
     ok(/DOCUMENTOS DE CONOCIMIENTO/.test(inPrompt) && /Versión dos/.test(inPrompt), 'el conocimiento activo entra al prompt de Maya');
     const big = await call('POST', '/planea/admin/api/kb', { cookie: ac, body: { name: 'Grande', filename: 'grande.txt', data_b64: 'data:text/plain;base64,' + Buffer.from('x'.repeat(1500)).toString('base64') } });
@@ -291,7 +311,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await new Promise((r) => setTimeout(r, 300));
     const [aud] = await sq.query('SELECT DISTINCT event FROM planea_audit_log WHERE lower(email) = :e', { replacements: { e: ADMIN_EMAIL } });
     const evs = aud.map((r) => r.event);
-    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
+    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts', 'admin.kb_test'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
 
     // Revisión de seguridad
     const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
