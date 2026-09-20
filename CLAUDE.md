@@ -1257,6 +1257,190 @@ A security review of the rebuild found five things worth keeping fixed. **The pl
 
 New column: `su_jobs.revisions` JSONB (idempotent ALTER in `index.js`, canonical migration kept in step). New endpoints: `POST /factory/jobs/:id/approve`, `POST /factory/jobs/:id/revise`, `POST /factory/recordings/:id/prompt` — all operator-only and same-origin.
 
+### Claude Code — the THIRD tab: pick a repo, describe a build, watch it ship
+
+`/speakup/claude-code` (and the run at `/speakup/claude-code/runs/:id`), beside Reuniones and
+Fábrica. A brief becomes clone -> branch -> code -> test -> commit -> push -> pull request ->
+(merge -> Render deploy), streamed live into the page. Operator only, the SAME allow-list the
+Factory uses — a run clones a repository, spends money and pushes a branch, so it is the
+Factory's authority reached a different way and does not get a second, weaker gate. Code:
+`src/claudecode/{runner,store,github,redact}.js` + `src/routes/claude-code.js` +
+`public/claude-code{,-run}.html|.js|.css`. Tables `cc_runs`, `cc_run_events`, `cc_repos`
+(canonical `migrations/20260920_claude_code.sql`). Full runbook:
+`verticals/speakup/README-claude-code.md`.
+
+**THE ENGINE IS `@anthropic-ai/claude-agent-sdk` `query()`, NEVER THE MESSAGES API.** The work
+is "change this repository until the tests pass" — a tool loop over a filesystem — and the SDK
+already owns the loop, the tool definitions, the session (so a failing test is handed back with
+`resume` rather than restarting the reasoning) and the cost accounting. Against the Messages API
+all four would be re-implemented, and the cost figure would become an estimate.
+
+**IT IS LOADED WITH `import()`, NOT `require()`, AND THAT IS NOT STYLE.** The package is ESM
+(`"type":"module"`); `require()` of ESM only works from Node 22.12 onward, and this repository's
+`engines` says `>=16` with no pin on Render — a `require()` here works on a laptop and throws
+`ERR_REQUIRE_ESM` in production. It is also lazy, so the vertical boots and the SIT runs with the
+package absent, and an absent package is reported as itself instead of crashing the app.
+
+**THE PEER CONFLICT IS SCOPED IN `overrides`, NOT IN `.npmrc`.** The agent SDK declares a peer on
+`@anthropic-ai/sdk >= 0.93` while this repository pins `^0.67` for about forty call sites across
+the verticals. That peer is **declarative only** — `sdk.mjs` is fully bundled and imports nothing
+from it at runtime, verified by loading it with no peers installed at all. A root
+`legacy-peer-deps=true` was the first answer and was wrong: it excuses EVERY peer conflict in the
+repository and in CI for ever, so the next dependency with a real peer requirement would install
+silently unsatisfied and fail at runtime instead of at install time. `package.json` `overrides`
+pins the exemption to this one package. Revisit if the agent SDK ever starts importing it.
+
+**A CLONED REPOSITORY MAY INSTRUCT; IT MAY NOT EXECUTE.** `settingSources:['project']` is what
+makes the repository's own `CLAUDE.md` and skills outrank the agent's habits — the feature. The
+same source also carries `.claude/settings.json`, which can declare `hooks`, and `.mcp.json`:
+either runs a shell command on this production server before the first model turn, and anyone
+with push access to any repository the allow-list permits could plant one. `disarmWorkspace()`
+deletes both from the workspace after the clone and before the agent starts. CLAUDE.md, the
+skills and the code are untouched.
+
+**THE AGENT NEVER SEES THIS SERVER'S ENVIRONMENT, AND THE SDK MAKES THAT AN ACTIVE CHOICE.** Its
+own documentation: an omitted `env` INHERITS `process.env`, a supplied one REPLACES it. So it is
+supplied — `PATH`, a per-run private `HOME`, `LANG`, `TERM`, `CI` and `ANTHROPIC_API_KEY`, and
+nothing else. Otherwise one `bash -c 'env'` inside a bypassPermissions session hands a repository
+`DATABASE_URL` (the live CRM Postgres), `GITHUB_TOKEN`, `SPEAKUP_FACTORY_SECRET`, `JWT_SECRET`
+and the rest, and a `curl` carrying them away never passes through redaction, which only guards
+what is STORED. The cloned repository's own `npm test` runs under the same allow-list.
+
+**THE PUSH CREDENTIAL DOES NOT LIVE IN THE CLONE.** `git clone https://x-access-token:<token>@…`
+writes that URL verbatim into `.git/config`, and the agent has Bash in that directory — one `cat`
+would read an org-wide write token, with no environment access at all, which is why this survives
+the env allow-list. The remote is rewritten to a plain URL immediately after the clone; the push
+supplies the credential explicitly.
+
+**NOTHING CREDENTIAL-SHAPED IS COMMITTED TO A PUBLIC REPOSITORY.** The staged diff is scanned
+before every commit and the run refuses rather than pushing; `.env`, `.git/` and key files are
+never committed whatever the diff says. A sentence in the prompt was the only control before, and
+a sentence is not a control.
+
+**THE CONFIGURATION GATE: THIS SURFACE MUST NOT BE LOOSER THAN THE FACTORY.** While
+`SPEAKUP_TEAM_PASSWORD` is the value this public repository publishes, or `SPEAKUP_JWT_SECRET` is
+unset, the run / intake / merge routes answer **423** and name the fix — reading past runs still
+works. Without it, anyone who had read the repo could sign in, be an operator by email, and reach
+a surface that executes code, while the Factory next door refused them for exactly that reason.
+The role and the email are also re-read from the DATABASE on every request, never trusted from a
+30-day token, so an account demoted today loses this surface today.
+
+**A CANCEL IS FINAL.** `store.setStatus` is a compare-and-swap that refuses to leave a terminal
+status and reports whether the row moved. Before it, a cancel landing between a check and the
+next write was simply overwritten — cancelled -> running, so the operator who pressed Cancel was
+shown "Failed"; and in the push window, cancelled -> pushing -> pr_open, which with auto-merge on
+reached main. The cancel also kills the live `git`/`npm` PROCESS GROUP rather than leaving a
+twenty-minute test to its own timeout while it holds the slot and the workspace.
+
+**A FRESH CLONE INSTALLS BEFORE IT TESTS, AND A FAILED INSTALL IS NOT A RED SUITE.** `npm test` in
+a shallow clone of this repository is `jest`, which exits 127 in a tree that has never been
+installed — reported as a FAILING SUITE, that fed "the tests failed, fix it" to the agent three
+times, paid for each pass, and opened a draft PR the merge button then refused. Every run against
+any repository with devDependencies ended red. Now `npm ci --ignore-scripts` runs first (a
+lockfile's postinstall is arbitrary code from the cloned repository) and an install that cannot
+succeed reports **not measured**, which is what stops the fix loop.
+
+**NOTHING IS LEFT RUNNING BY A RESTART.** A boot sweep fails every non-terminal run with
+"interrupted by a server restart" and removes its workspace. A run cannot outlive the process
+that was running it, so anything non-terminal at startup was cut off by definition — without the
+sweep the row stayed `running` for ever, every watching browser held a ping interval and a bus
+listener, and the duration ticked up without bound.
+
+**THE MONEY AND THE TOKENS ARE COPIED, NEVER COMPUTED.** `cost_usd`, `tokens_in`, `tokens_out` and
+`turns` come from the SDK's own `result` message. A run that never reaches one stores `null` — an
+honest "not measured" rather than a plausible number — and the SIT greps the runner to prove no
+figure is derived from a token count times a rate. **A measured ZERO is not an absence**: `|| null`
+turned a subscription-billed run's real `0` into "not measured", so only `null` may mean that.
+
+**A TEST PASS IS MEASURED OR IT IS NOT CLAIMED.** The repository's own `npm test` runs when its
+`package.json` declares one; otherwise the run says plainly that nothing was measured. It never
+invents a command, and a red suite opens a DRAFT pull request that the merge button refuses.
+
+**THE OWNER ALLOW-LIST IS ENFORCED AT THE SERVER, AT EVERY STEP.** `github.assertAllowed()` guards
+the clone, the pull request and the merge, not only the create route: a run is a disposable VM
+holding a write token, and "the page only offers our repositories" is a statement about a page.
+`GITHUB_ORG` names the owners; unset it falls back to the owner of `SPEAKUP_FACTORY_REPO`, never to
+anyone. A malformed or traversal name is refused before it can reach a clone path.
+
+**SECRETS NEVER REACH AN EVENT.** `redact.js` scrubs on the way IN — every event is persisted to
+`cc_run_events` and pushed down an SSE stream, so a value scrubbed only at display time is still a
+value sitting in the database for ever. It works by VALUE (the tokens this process holds, including
+the one inside the clone URL) and by SHAPE (Anthropic, GitHub, AWS and Stripe credential prefixes),
+so a key belonging to someone else — pasted into a repo, printed by a test — is caught too.
+
+**THE WORKSPACE IS DISPOSABLE, WHICH IS WHAT LICENSES `bypassPermissions`.** A fresh shallow clone
+under `CC_WORKSPACE_ROOT`, removed on every terminal status including a crash, holding one
+credential for a repository the allow-list already approved. Git is spawned with an argv and never a
+shell string, so a branch name derived from a brief can never become a command. Ceilings: **3
+concurrent runs per tenant**, **$10 per run**, 200 turns, 3 test-fix cycles — whichever trips first
+stops the run and names itself.
+
+**A REPOSITORY WITHOUT THE HOUSE SKILL GETS OURS COPIED IN**, into the throwaway workspace only, so
+the run follows the same conventions as everything else here; the page badges which case a
+repository is in. `settingSources:['project']` is what makes the repository's own `CLAUDE.md` and
+skills outrank the agent's habits.
+
+**THE SPEAKUP TRANSFER NOW OPENS A CLAUDE CODE RUN** (`source='speakup'`,
+`source_ref='meeting:<id>'`), and the chat shows the run link. Everything that guarded the old path
+still runs first — the operator check, the rate limit, the duplicate guard, the model-required
+conversion and `meetingLeaks()`. **The human gate MOVED rather than disappearing**: from "type
+approved before it builds" to "merge the pull request before it ships", which is where it has to be,
+because a run ends at a branch and a PR and never at `main`. `SPEAKUP_TRANSFER_ENGINE=factory`
+restores the old path; `meetings.js` renders a `cc:<id>` reference as its own link.
+
+**THE HEADER TAKES A SECOND ROW ON A PHONE, AND THAT WAS MEASURED.** Three tabs beside the lockup
+laid out at **417px** at 360, 390 and 414 — it did not overflow visibly because `app.html` sets
+`body{overflow:hidden}`, and the only thing that noticed was the install bar, which `test-pwa.js`
+found sitting off the right edge. Truncating a tab label or shrinking the brand mark both cost more
+than a second row, so below 560px `.tabs` takes one (`order:1;flex:1 0 100%`). The drawer is
+positioned at `top:100%` of the header, so it follows the taller bar by itself.
+
+**Endpoints** (`/speakup/api/v1/claude-code`, operator + `X-SpeakUp: 1` + same-host Origin on every
+mutation): `GET /config` · `GET /repos`, `POST /repos/:id/sync`, `POST /repos/refresh` ·
+`POST /runs`, `GET /runs`, `GET /runs/:id`, `GET /runs/:id/stream` (SSE, replays stored events then
+follows the bus), `POST /runs/:id/cancel|merge` · `POST /intake` (the door SpeakUp and the Factory
+use — same gates, same creation path).
+
+**AUTO-MERGE FAILS SHUT, AND THAT WORD IS LOAD-BEARING.** `combinedStatus` used to return
+`unknown` both when GitHub reported nothing AND when the API call itself failed, and the merge
+treated `unknown` as permission — so one transient 502 squash-merged unreviewed agent output into
+a public main and fired the deploy hook. The two are now different values (`error` vs `none`), it
+reads **check-runs as well as the legacy statuses** (a repository whose CI is Actions reports
+nothing through statuses alone, so reading statuses only would have refused on exactly the
+repositories this is for), and a merge additionally needs a green MEASURED suite. A run
+transferred from a meeting is never auto-merged whatever the setting, and neither is one the agent
+itself reported an error on. **The deploy hook belongs to ONE repository** (`CC_DEPLOY_REPO`):
+firing it after merging a PR elsewhere would redeploy this CRM from another repo's main.
+
+**THE CONCURRENCY CEILING IS CLAIMED SYNCHRONOUSLY.** `atCapacity` alone was checked about three
+awaits before the runner registered the run, so a burst all saw an empty table and all started —
+N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
+first `await` and the runner hands the slot back as it registers.
+
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **223/223**, zero external keys and no
+database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
+are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
+repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a
+suite, a `tenant_id` in a body being honoured, a cross-tenant read, a draft PR being merged, a
+fourth concurrent run — and, since the 2026-09-20 reviews, every fix above: a child given the
+allow-list cannot see an unrelated variable, a planted hooks file is gone before the agent starts
+while CLAUDE.md survives, an unreachable GitHub reads as `error`, a cancelled run cannot reach
+`pr_open`, a published team password closes the door with 423, a demotion in the database takes
+effect on the next request, and an install that cannot succeed is not-measured rather than red.
+**NOT covered:** a real Agent SDK run, the real GitHub API, a real clone and push, the Postgres
+store, and whether Render's runtime user permits `bypassPermissions` — verify with `GET /config`
+on the deploy, then one real brief.
+
+**Environment Variables:** `GITHUB_TOKEN` (falls back to `CC_GITHUB_TOKEN`, then
+`SPEAKUP_GITHUB_TOKEN`; unset = cloning CLOSED) · `GITHUB_ORG` (owners a run may touch; unset =
+the owner of `SPEAKUP_FACTORY_REPO`) · `CC_WORKSPACE_ROOT` (`/tmp/cc-workspaces`) · `CC_MODEL`
+(`claude-sonnet-5`) · `CC_MAX_TURNS` (200) · `CC_AUTO_MERGE` (`false`) · `RENDER_DEPLOY_HOOK_URL`
+(unset = the run stops at `merged`) · `CC_COST_CAP_USD` (10) · `CC_MAX_CONCURRENT` (3) ·
+`CC_MAX_FIX_CYCLES` (3) · `CC_DEFAULT_REPO` · `CC_DEPLOY_REPO` (the one repository whose merge
+fires the deploy hook) · `CC_DEPLOY_URL` · `CC_EVENTS_PAGE` (500) · `SPEAKUP_TRANSFER_ENGINE`
+(`claude-code`) · reuses `ANTHROPIC_API_KEY`, `SPEAKUP_FACTORY_ALLOWED_EMAILS`, and requires
+`SPEAKUP_TEAM_PASSWORD` + `SPEAKUP_JWT_SECRET` to be set before a run may start.
+
 ### SpeakUp AI Factory — the iPhone as the front end of RinglyPro Architect
 
 SpeakUp is also the phone interface to the AI development workflow: **speak, review, approve, check status.** Voice becomes a note, a meeting or a command; a meeting becomes classified intelligence; approved requirements become a plan checked against the deployed code; an approved plan runs **Claude Code in GitHub Actions** on a review branch and SpeakUp opens the PR. Merge is a separate, gated step, and Render deploys main exactly as before. Code: `verticals/speakup/src/factory/*`, `src/routes/factory.js`, `public/factory.js`, `.github/workflows/speakup-factory.yml`, `.github/speakup/*.js`. Tables `su_projects, su_meeting_intel, su_commands, su_jobs, su_audit` + `mode/project_key/participants` on `su_recordings` (canonical `migrations/20260915_speakup_factory.sql`).

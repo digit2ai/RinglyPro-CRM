@@ -368,6 +368,68 @@ const Audit = sequelize.define('SpeakAudit', {
     { name: 'su_audit_entity_idx', fields: ['entity', 'entity_id'] }]
 });
 
+
+// ─── cc_runs / cc_run_events / cc_repos ───────────────────────────────────────
+// The Claude Code tab: one run = one brief executed by the Claude Agent SDK inside a
+// disposable clone of a repository. tenant_id is the operator's tenant, never a body
+// field. Money and tokens are copied from the SDK's own result message, never estimated.
+const CcRun = sequelize.define('CcRun', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  user_id: { type: DataTypes.INTEGER, allowNull: false },
+  repo_full_name: { type: DataTypes.TEXT, allowNull: false },
+  base_branch: { type: DataTypes.TEXT, defaultValue: 'main' },
+  work_branch: { type: DataTypes.TEXT },
+  brief: { type: DataTypes.TEXT, allowNull: false },
+  source: { type: DataTypes.TEXT, defaultValue: 'manual' },   // manual | speakup | factory
+  source_ref: { type: DataTypes.TEXT },
+  status: { type: DataTypes.TEXT, defaultValue: 'queued' },
+  session_id: { type: DataTypes.TEXT },
+  pr_url: { type: DataTypes.TEXT },
+  commit_sha: { type: DataTypes.TEXT },
+  deploy_url: { type: DataTypes.TEXT },
+  cost_usd: { type: DataTypes.DECIMAL(10, 4) },
+  tokens_in: { type: DataTypes.INTEGER },
+  tokens_out: { type: DataTypes.INTEGER },
+  turns: { type: DataTypes.INTEGER },
+  error: { type: DataTypes.TEXT },
+  started_at: { type: DataTypes.DATE },
+  finished_at: { type: DataTypes.DATE },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'cc_runs', timestamps: false,
+  // The same name must mean the same index in all three places that can create it (this
+  // model, migrations/20260920_claude_code.sql and the boot DDL in index.js): sync() runs first
+  // on a virgin database, so a differing CREATE INDEX IF NOT EXISTS elsewhere is a silent no-op
+  // and the canonical migration would describe an index production does not have.
+  indexes: [{ name: 'cc_runs_tenant_idx', fields: ['tenant_id', 'id'] }, { name: 'cc_runs_status_idx', fields: ['status'] }]
+});
+
+const CcRunEvent = sequelize.define('CcRunEvent', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  run_id: { type: DataTypes.INTEGER, allowNull: false },
+  ts: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  kind: { type: DataTypes.TEXT },   // system|assistant|tool_use|tool_result|result|log
+  payload: { type: DataTypes.JSONB, defaultValue: {} }
+}, {
+  tableName: 'cc_run_events', timestamps: false,
+  indexes: [{ name: 'cc_run_events_run_idx', fields: ['run_id', 'id'] }]
+});
+
+const CcRepo = sequelize.define('CcRepo', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  repo_full_name: { type: DataTypes.TEXT, allowNull: false },
+  default_branch: { type: DataTypes.TEXT },
+  render_service_id: { type: DataTypes.TEXT },
+  has_architect_skill: { type: DataTypes.BOOLEAN },
+  last_synced_at: { type: DataTypes.DATE },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, {
+  tableName: 'cc_repos', timestamps: false,
+  indexes: [{ name: 'cc_repos_tenant_repo_uniq', unique: true, fields: ['tenant_id', 'repo_full_name'] }]
+});
+
 // Associations
 Recording.hasOne(Transcript, { foreignKey: 'recording_id' });
 Transcript.belongsTo(Recording, { foreignKey: 'recording_id' });
@@ -381,4 +443,5 @@ Recording.hasMany(Document, { foreignKey: 'recording_id' });
 Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
-  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat, Setting };
+  Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat, Setting,
+  CcRun, CcRunEvent, CcRepo };

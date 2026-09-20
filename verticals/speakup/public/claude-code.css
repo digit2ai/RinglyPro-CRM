@@ -1,0 +1,80 @@
+/* Claude Code — the third tab.
+ *
+ * It adds NO palette of its own. Every colour here is a token from theme.css, because a
+ * second palette inside one app is how two screens drift apart (the lesson the login
+ * screen already taught). Only layout and the few classes theme.css does not carry
+ * (.chip, .pill, .inp, .sel) are defined, and this file is loaded by these two pages only.
+ */
+
+.ccmain { padding: 14px; display: flex; flex-direction: column; gap: 12px; max-width: 980px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.ccmain .card { display: flex; flex-direction: column; gap: 11px; }
+
+.ccrow { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.ccrow.ccmeta, .ccrow.ccactions { align-items: center; }
+.ccactions { margin-top: 2px; }
+.ccactions .btn.primary { margin-left: auto; }
+
+.ccfield { display: flex; flex-direction: column; gap: 5px; flex: 1 1 260px; min-width: 0; }
+.ccfield.narrow { flex: 0 1 190px; }
+.ccfield > span { font-size: 13px; color: var(--muted); }
+
+.inp, .sel {
+  font-family: inherit; font-size: 16px; min-height: 44px; padding: 0 11px; width: 100%; box-sizing: border-box;
+  border-radius: 11px; border: 1px solid var(--line-strong); background: var(--surface-solid); color: var(--text);
+}
+.ccmain textarea {
+  font-family: inherit; font-size: 16px; line-height: 1.55; padding: 11px 13px; width: 100%; box-sizing: border-box;
+  border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-solid); color: var(--text); resize: vertical;
+}
+.ccmain textarea:focus, .inp:focus, .sel:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+
+.chip {
+  display: inline-flex; align-items: center; min-height: 34px; padding: 0 11px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--raised); color: var(--muted); font-size: 13px;
+}
+.chip.ok  { border-color: #86efac; background: #dcfce7; color: var(--ok); }
+.chip.warn{ border-color: #fcd34d; background: #fef3c7; color: var(--warn); }
+
+/* The status of a run. Nine statuses, three readings: running, finished well, stopped. */
+.pill {
+  display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; border: 1px solid var(--line-strong); background: var(--raised); color: var(--muted);
+}
+.pill.live { border-color: var(--accent-solid); background: var(--accent-solid); color: var(--accent-ink); }
+.pill.good { border-color: #86efac; background: #dcfce7; color: var(--ok); }
+.pill.bad  { border-color: #fca5a5; background: #fee2e2; color: var(--err); }
+
+/* ── the run list ─────────────────────────────────────────────────────────── */
+.runs { display: flex; flex-direction: column; gap: 8px; }
+.runs .empty { color: var(--muted); font-size: 14px; }
+.runrow {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; text-decoration: none;
+  border: 1px solid var(--line-strong); background: var(--surface-solid); border-radius: 12px;
+  padding: 10px 12px; color: var(--text); min-height: 44px;
+}
+.runrow:hover { background: var(--raised); }
+.runrow .title { flex: 1 1 200px; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.runrow .meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+/* ── the run page ─────────────────────────────────────────────────────────── */
+.runpage { display: flex; flex-direction: column; min-height: 100vh; }
+.runmain { flex: 1 1 auto; min-height: 0; }
+.runhead { flex: 0 0 auto; }
+.runrepo { font-family: var(--mono); font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.runbrief { margin: 0; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 8.2em; overflow: auto; }
+.counters { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.counters b { color: var(--text); font-weight: 600; }
+
+.cclog { flex: 1 1 auto; min-height: 220px; }
+.cclog .ln { display: block; padding: 1px 0; }
+.cclog details { margin: 2px 0 4px 58px; }
+.cclog summary { cursor: pointer; color: var(--ink-muted); min-height: 0; }
+.cclog .body { display: block; white-space: pre-wrap; color: var(--ink-muted); margin-top: 2px; }
+
+@media (max-width: 700px) {
+  .ccmain { padding: 12px; }
+  .ccfield.narrow { flex: 1 1 140px; }
+  .ccactions .btn.primary { margin-left: 0; flex: 1 1 100%; }
+  .chip, .pill { min-height: 44px; font-size: 14px; }
+  .cclog details { margin-left: 0; }
+}

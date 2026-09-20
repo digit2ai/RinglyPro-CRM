@@ -71,7 +71,9 @@
     h += '<span class="body">' + esc(m.content) + '</span>';
     if (m.role === 'assistant' && m.id && !m.streaming) {
       h += '<div class="mact">';
-      if (m.kind === 'transfer' && m.job_id) {
+      if (m.kind === 'transfer' && m.run_id) {
+        h += '<a class="btn small" href="/speakup/claude-code/runs/' + esc(m.run_id) + '">' + esc(L('Abrir la ejecución #', 'Open run #') + m.run_id) + '</a>';
+      } else if (m.kind === 'transfer' && m.job_id) {
         h += '<a class="btn small" href="/speakup/?job=' + esc(m.job_id) + '">' + esc(L('Abrir el trabajo #', 'Open job #') + m.job_id) + '</a>';
       } else {
         h += '<button class="btn small" data-copy="' + esc(m.id) + '">' + esc(L('Copiar', 'Copy')) + '</button>';

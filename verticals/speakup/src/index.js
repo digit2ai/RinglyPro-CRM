@@ -64,6 +64,7 @@ router.use('/health', require('./routes/health'));
 router.use('/api/v1/recordings', require('./routes/recordings'));
 router.use('/api/v1/factory', require('./routes/factory')); // AI Factory: voice -> architect -> GitHub PR
 router.use('/api/v1/meetings', require('./routes/meetings')); // History + the conversation about a meeting
+router.use('/api/v1/claude-code', require('./routes/claude-code')); // Claude Code: brief -> clone -> code -> PR
 
 // ── Static app (no build step — self-contained HTML) ─────────────────────────────
 router.use(express.static(publicDir));
@@ -77,6 +78,11 @@ router.get('/meetings', (req, res) => res.sendFile(path.join(publicDir, 'meeting
 router.get('/history', (req, res) => res.sendFile(path.join(publicDir, 'history.html')));
 router.get('/settings', (req, res) => res.sendFile(path.join(publicDir, 'settings.html')));
 router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
+// Claude Code: the third tab. One page serves the list and one serves a run — the run id
+// is read from the path by the script, so there is no second HTML file to drift.
+router.get('/claude-code', (req, res) => res.sendFile(path.join(publicDir, 'claude-code.html')));
+router.get('/claude-code/history', (req, res) => res.sendFile(path.join(publicDir, 'claude-code.html')));
+router.get('/claude-code/runs/:id', (req, res) => res.sendFile(path.join(publicDir, 'claude-code-run.html')));
 
 // ── Init: sync tables + ensure columns + seed team (non-blocking) ────────────────
 (async function initialize() {
@@ -108,6 +114,20 @@ router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
     } catch (mErr) {
       console.error('  SPEAKUP column ensure error:', mErr.message);
     }
+    // Claude Code tab (cc_*). Its own try/catch: sharing the block above meant one unrelated
+    // ALTER failing skipped every cc_ statement and logged only "column ensure error".
+    // sync() creates the three tables and their indexes; these keep an older database in step.
+    try {
+      await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS deploy_url TEXT');
+      await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS session_id TEXT');
+      await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS cc_repos_tenant_repo_uniq ON cc_repos(tenant_id, repo_full_name)');
+    } catch (ccErr) {
+      console.error('  CLAUDE CODE column ensure error:', ccErr.message);
+    }
+    // A run cannot survive the process that was running it: anything non-terminal now was cut
+    // off by a restart, and left alone it would stay "running" for ever with a live SSE stream
+    // and an orphan workspace.
+    try { await require('./claudecode/runner').sweepInterrupted(); } catch (e) { console.error('  CLAUDE CODE sweep error:', e.message); }
     // SIT sets SPEAKUP_SEED_USERS=off: the local .env can point at the production
     // database, and seeding force-syncs the owner's password.
     if (process.env.SPEAKUP_SEED_USERS !== 'off') try {

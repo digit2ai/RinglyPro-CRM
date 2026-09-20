@@ -73,6 +73,7 @@ async function transcriptOf(rec) {
 function view(m) {
   return { id: m.id, role: m.role, kind: m.kind, content: m.content, attachment_url: m.attachment_url ? `/speakup/api/v1/meetings/${m.meeting_id}/chat/attachment/${String(m.attachment_url).replace(/^upload:/, '')}` : null,
     factory_ref: m.factory_ref, job_id: m.factory_ref && /^job:\d+$/.test(m.factory_ref) ? parseInt(m.factory_ref.slice(4), 10) : null,
+    run_id: m.factory_ref && /^cc:\d+$/.test(m.factory_ref) ? parseInt(m.factory_ref.slice(3), 10) : null,
     composed_by: m.composed_by, offline: m.composed_by === 'offline', created_at: m.created_at };
 }
 function uiLang(req, text) { const l = req.body && req.body.lang; return l === 'en' || l === 'es' ? l : (chat.looksSpanish(text) ? 'es' : 'en'); }
@@ -236,7 +237,7 @@ router.post('/:id/factory', mutation, wrap(async (req, res) => {
   const id = parseInt(req.body && req.body.message_id, 10) || 0;
   const out = await transfer({ req, rec, prior, messageId: id || null, lang: uiLang(req, '') });
   if (!out.ok) return res.status(out.status || 400).json({ error: out.error, messages: out.messages.map(view) });
-  res.json({ ok: true, job_id: out.job_id, messages: out.messages.map(view) });
+  res.json({ ok: true, job_id: out.job_id, run_id: out.run_id, messages: out.messages.map(view) });
 }));
 
 /**
@@ -295,6 +296,39 @@ async function transfer({ req, rec, prior, messageId, lang }) {
       ? `No se transfirió: el prompt contiene ${what}, y el repositorio es público. Pide "reescribe el prompt sin nombres ni citas" y vuelve a transferir.`
       : `Not transferred: the prompt contains ${what}, and the repository is public. Ask "rewrite the prompt without names or quotes", then transfer again.` };
   }
+  // CLAUDE CODE IS THE ENGINE NOW (SPEAKUP_TRANSFER_ENGINE=factory restores the old path).
+  // Everything above this line is unchanged and still runs: the operator check, the rate
+  // limit, the duplicate guard, the model-required conversion and the leak guard. What
+  // changes is only who executes the prompt — and the human gate moves from "type approved
+  // before it builds" to "merge the pull request before it ships", which is where it has to
+  // be anyway, because a Claude Code run ends at a branch and a PR and never at main.
+  if (String(process.env.SPEAKUP_TRANSFER_ENGINE || 'claude-code') !== 'factory') {
+    const ccRoute = require('./claude-code');
+    let run;
+    try {
+      run = await ccRoute.__createRun(req, {
+        repo_full_name: process.env.CC_DEFAULT_REPO || process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM',
+        brief: source.content, source: 'speakup', source_ref: 'meeting:' + rec.id
+      });
+    } catch (e) {
+      return { ok: false, status: e.status || 502, messages,
+        error: (es ? 'No se transfirió: ' : 'Not transferred: ') + e.message };
+    }
+    // SAVED BEFORE THE RECEIPT. The duplicate guard reads source.factory_ref, so a receipt insert
+    // that failed used to leave a STARTED run with no reference — and the next "transfer" opened
+    // a second run for the same prompt.
+    source.factory_ref = 'cc:' + run.id; await source.save();
+    const ccReceipt = await MeetingChat.create({ tenant_id: rec.tenant_id, meeting_id: rec.id, user_id: req.user.id, role: 'assistant', kind: 'transfer',
+      factory_ref: 'cc:' + run.id, composed_by: 'system',
+      content: es
+        ? `Transferido a Claude Code como ejecución #${run.id}. Termina en un pull request: nada llega a producción hasta que lo fusiones. Abrir: /speakup/claude-code/runs/${run.id}`
+        : `Transferred to Claude Code as run #${run.id}. It ends at a pull request: nothing reaches production until you merge it. Open: /speakup/claude-code/runs/${run.id}` });
+    messages.push(ccReceipt);
+    await audit.record({ tenant_id: rec.tenant_id, user_id: req.user.id, actor: req.user.email, action: 'meeting.transferred_to_claude_code',
+      entity: 'recording', entity_id: rec.id, detail: { run_id: run.id, message_id: source.id, composed_by: source.composed_by }, req });
+    return { ok: true, run_id: run.id, messages };
+  }
+
   const out = await intents.run({ tenant_id: rec.tenant_id, user: req.user, text: chat.factoryText({ prompt: source.content, meeting: rec }),
     mode: 'architect', lang: es ? 'es' : 'en', project_key: process.env.SPEAKUP_DEFAULT_PROJECT || 'ringlypro', engine: 'meeting-chat', req });
   const jobId = out && out.status === 200 && out.card && out.card.job_id;

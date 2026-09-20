@@ -237,6 +237,16 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
   .top{padding-left:12px;padding-right:12px;gap:8px}
   .product{display:none}
   .top img.wordmark{height:15px}
+  /* THREE TABS DO NOT FIT BESIDE THE LOCKUP ON A PHONE, AND THIS WAS MEASURED, NOT GUESSED.
+     With Claude Code added the header laid out at 417px at 360, 390 and 414 — it did not
+     overflow visibly because app.html sets body{overflow:hidden}, and the only thing that
+     noticed was the install bar, which the PWA suite found sitting off the right edge.
+     Truncating a tab label or shrinking the brand mark both cost more than a second row, so
+     the strip takes one: the lockup and the burger keep row one, the tabs get row two. The
+     drawer is positioned at top:100% of the header, so it follows the taller bar on its own. */
+  .top{flex-wrap:wrap;row-gap:8px}
+  .tabs{order:1;flex:1 0 100%;justify-content:center}
+  .burger{margin-left:auto}
 }
 
 /* ── ON A TOUCH SCREEN, EVERYTHING IS THUMB-SIZED ────────────────────────────

@@ -16,7 +16,7 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('PASS ' + m); } else { fail++; console.log('FAIL ' + m); } };
 const PUB = path.join(__dirname, 'public');
 const read = (f) => fs.readFileSync(path.join(PUB, f), 'utf8');
-const PAGES = ['app.html', 'meetings.html', 'history.html', 'settings.html', 'login.html'];
+const PAGES = ['app.html', 'meetings.html', 'history.html', 'settings.html', 'login.html', 'claude-code.html', 'claude-code-run.html'];
 
 // ── the manifest ─────────────────────────────────────────────────────────────
 const man = JSON.parse(read('manifest.webmanifest'));
@@ -71,11 +71,18 @@ try { puppeteer = require('puppeteer'); } catch (e) {
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/json' };
 const JOB = { id: 42, status: 'WAITING_APPROVAL', terminal: false, title: 'Show a visible test line on the sandbox page', project_name: 'AutoDev', plan_hash: 'h', revisions: [], pr_number: 7, pr_url: 'https://example.com/pull/7',
   plan: { workflow: ['Open the existing sandbox page', 'Put the words under the title', 'Check it on a phone'], what_changes: ['The words appear'], what_stays: ['Everything else'], how_you_know: ['You see it'], decisions: [], watch_out: [], scope_plain: 'the sandbox page' } };
+const CCRUN = { id: 3, repo_full_name: 'digit2ai/RinglyPro-CRM', base_branch: 'main', work_branch: 'cc/3-add-a-tab', brief: 'Add a Claude Code tab to the header',
+  source: 'manual', status: 'running', pr_url: null, cost_usd: 0.42, tokens_in: 1200, tokens_out: 300, turns: 6, started_at: new Date().toISOString(), terminal: false };
 const server = http.createServer((req, res) => {
   const p = req.url.split('?')[0].replace(/^\/speakup\/?/, '') || 'app.html';
   if (req.url.indexOf('/api/') >= 0) {
     let body = {};
-    if (/overview/.test(req.url)) body = { operator: true, jobs: [JOB], recordings: [], readiness: { ready: true, blockers: [] } };
+    if (/claude-code\/config/.test(req.url)) body = { model: 'claude-sonnet-5', max_turns: 200, cost_cap_usd: 10, auto_merge: false, max_concurrent: 3, github: true, anthropic_key: true, sdk: true, allowed_owners: ['digit2ai'] };
+    else if (/claude-code\/repos/.test(req.url)) body = { configured: true, allowed_owners: ['digit2ai'], repos: [{ id: 1, repo_full_name: 'digit2ai/RinglyPro-CRM', default_branch: 'main', has_architect_skill: true }] };
+    else if (/claude-code\/runs\/\d+\/stream/.test(req.url)) { res.writeHead(200, { 'Content-Type': 'text/event-stream' }); return res.end('data: {"kind":"end"}\n\n'); }
+    else if (/claude-code\/runs\/\d+/.test(req.url)) body = { run: CCRUN, events: [{ id: 1, kind: 'system', payload: { status: 'running' } }, { id: 2, kind: 'assistant', payload: { text: 'Reading the header.' } }] };
+    else if (/claude-code\/runs/.test(req.url)) body = { runs: [CCRUN] };
+    else if (/overview/.test(req.url)) body = { operator: true, jobs: [JOB], recordings: [], readiness: { ready: true, blockers: [] } };
     else if (/factory\/projects/.test(req.url)) body = { projects: [{ key: 'ringlypro', name: 'RinglyPro CRM' }, { key: 'speakup', name: 'AutoDev' }] };
     else if (/factory\/rules/.test(req.url)) body = { rules: 'Be brief.', default_rules: 'Be brief.', is_default: true };
     else if (/events/.test(req.url)) body = { status: JOB.status, terminal: false, events: [{ id: 1, kind: 'status', text: 'WAITING_APPROVAL' }] };
@@ -86,7 +93,10 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(body));
   }
-  const file = path.join(PUB, p.includes('.') ? p : p + '.html');
+  // /claude-code/runs/<id> is one page, like every run page: the id is read from the path
+  // by the script, so the harness maps it the way the server does.
+  const page = /^claude-code\/runs\/\d+$/.test(p) ? 'claude-code-run.html' : p;
+  const file = path.join(PUB, page.includes('.') ? page : page + '.html');
   if (!fs.existsSync(file)) { res.writeHead(404); return res.end('no'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'text/plain' });
   res.end(fs.readFileSync(file));
@@ -97,7 +107,7 @@ server.listen(0, async () => {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   try {
     for (const width of [360, 390, 414]) {
-      for (const name of ['', 'meetings', 'history', 'settings', 'login']) {
+      for (const name of ['', 'meetings', 'history', 'settings', 'login', 'claude-code', 'claude-code/runs/3']) {
         const page = await browser.newPage();
         await page.setViewport({ width, height: 780, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
         await page.evaluateOnNewDocument(() => { try { localStorage.clear(); } catch (e) {} });

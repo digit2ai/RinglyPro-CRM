@@ -27,6 +27,9 @@ const server = http.createServer((req, res) => {
   if (p === 'login') p = 'login.html';
   if (p === 'history') p = 'history.html';
   if (p === 'settings') p = 'settings.html';
+  // The Claude Code tab: the list, and a run (whose id the script reads from the path).
+  if (p === 'claude-code') p = 'claude-code.html';
+  if (/^claude-code\/runs\/\d+$/.test(p)) p = 'claude-code-run.html';
   if (p === '') p = 'app.html';
   const f = path.join(DIR, p);
   // The screens call the API on boot; answer so the page settles instead of hanging. A
@@ -35,6 +38,17 @@ const server = http.createServer((req, res) => {
   if (req.url.indexOf('/api/') >= 0) {
     const job = { id: 1, status: 'DEPLOYED', terminal: true, title: 'A change', project_name: 'SpeakUp', plan_hash: null, plan_md: null, revisions: [] };
     let body = { operator: true, jobs: [job], recordings: [], readiness: { ready: true, blockers: [] } };
+    if (req.url.indexOf('/claude-code/') >= 0) {
+      const run = { id: 3, repo_full_name: 'digit2ai/RinglyPro-CRM', base_branch: 'main', work_branch: 'cc/3-a-change',
+        brief: 'Add a Claude Code tab', source: 'manual', status: 'pr_open', pr_url: 'https://example.com/pull/9',
+        cost_usd: 0.42, tokens_in: 1200, tokens_out: 300, turns: 6, started_at: new Date().toISOString(), terminal: false };
+      body = /config/.test(req.url) ? { model: 'claude-sonnet-5', github: true, anthropic_key: true, sdk: true, max_concurrent: 3, cost_cap_usd: 10, auto_merge: false, max_turns: 200, allowed_owners: ['digit2ai'] }
+        : /repos/.test(req.url) ? { configured: true, allowed_owners: ['digit2ai'], repos: [{ id: 1, repo_full_name: 'digit2ai/RinglyPro-CRM', default_branch: 'main', has_architect_skill: true }] }
+        : /runs\/\d+/.test(req.url) ? { run, events: [{ id: 1, kind: 'assistant', payload: { text: 'Reading the header.' } }] }
+        : { runs: [run] };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify(body));
+    }
     if (req.url.indexOf('/events') >= 0) {
       body = { status: 'DEPLOYED', terminal: true, pr_number: null, pr_url: null, events: [
         { id: 1, kind: 'status', text: 'TESTING' },
@@ -58,7 +72,8 @@ server.listen(0, async () => {
   const base = 'http://127.0.0.1:' + server.address().port + '/speakup/';
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   try {
-    for (const [name, url] of [['factory', base], ['meetings', base + 'meetings'], ['history', base + 'history'], ['settings', base + 'settings']]) {
+    for (const [name, url] of [['factory', base], ['meetings', base + 'meetings'], ['history', base + 'history'], ['settings', base + 'settings'],
+      ['claude-code', base + 'claude-code'], ['claude-code run', base + 'claude-code/runs/3']]) {
       for (const [label, w, h] of [['phone 390', 390, 844], ['phone 360', 360, 780], ['desktop 1280', 1280, 900]]) {
         const page = await browser.newPage();
         await page.setViewport({ width: w, height: h });
