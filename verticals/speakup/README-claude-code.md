@@ -18,7 +18,7 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code-run.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **223/223**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **228/228**, zero keys, no database |
 
 ## The engine
 
@@ -74,6 +74,12 @@ committed whatever the diff says.
 - **The owner allow-list is enforced on the server**, at the clone, the pull request and the
   merge — not only when the page offers a repository. `GITHUB_ORG` names who may be touched;
   unset, it falls back to the owner of `SPEAKUP_FACTORY_REPO`, never to anyone.
+- **Write access is checked BEFORE a run starts.** Read access carries a run all the way through
+  the clone, the agent and the commit, and only fails at the push — after the money is spent.
+  That is exactly how the first live run ended: twenty turns and $0.23, then
+  `Permission to digit2ai/CRM-Co-Pilot.git denied`, because the fallback credential is the
+  Factory's fine-grained PAT and it is scoped to one repository. One API call at creation now
+  refuses immediately and names the fix, and the repository picker badges it.
 - **Auto-merge fails shut.** Off unless `CC_AUTO_MERGE=true`, and then it needs a green
   *measured* suite AND a CI verdict of `success` or a documented `none`. An unreachable GitHub
   reads as `error`, never as permission — that distinction is the whole point, because the

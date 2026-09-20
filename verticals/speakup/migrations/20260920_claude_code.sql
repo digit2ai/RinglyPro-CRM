@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS cc_repos (
   default_branch       TEXT,
   render_service_id    TEXT,
   has_architect_skill  BOOLEAN,
+  can_push             BOOLEAN,
   last_synced_at       TIMESTAMPTZ,
   created_at           TIMESTAMPTZ DEFAULT now()
 );

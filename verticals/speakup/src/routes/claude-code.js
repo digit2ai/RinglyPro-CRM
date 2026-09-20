@@ -93,7 +93,7 @@ router.get('/repos', wrap(async (req, res) => {
     allowed_owners: github.allowedOwners(),
     repos: rows.map(r => ({
       id: r.id, repo_full_name: r.repo_full_name, default_branch: r.default_branch || 'main',
-      has_architect_skill: r.has_architect_skill, last_synced_at: r.last_synced_at
+      has_architect_skill: r.has_architect_skill, can_push: r.can_push, last_synced_at: r.last_synced_at
     }))
   });
 }));
@@ -105,8 +105,9 @@ router.post('/repos/:id/sync', mutation, wrap(async (req, res) => {
   if (!row) return res.status(404).json({ error: 'No encontrado' });
   const meta = await github.getRepo(row.repo_full_name);
   const skill = await github.hasArchitectSkill(row.repo_full_name);
-  await row.update({ default_branch: meta.default_branch || row.default_branch || 'main', has_architect_skill: skill, last_synced_at: new Date() });
-  res.json({ ok: true, repo: { id: row.id, repo_full_name: row.repo_full_name, default_branch: row.default_branch, has_architect_skill: row.has_architect_skill, last_synced_at: row.last_synced_at } });
+  const push = !!(meta && meta.permissions && meta.permissions.push);
+  await row.update({ default_branch: meta.default_branch || row.default_branch || 'main', has_architect_skill: skill, can_push: push, last_synced_at: new Date() });
+  res.json({ ok: true, repo: { id: row.id, repo_full_name: row.repo_full_name, default_branch: row.default_branch, has_architect_skill: row.has_architect_skill, can_push: row.can_push, last_synced_at: row.last_synced_at } });
 }));
 
 // Re-read the whole list from GitHub (new repositories appear here).
@@ -134,6 +135,14 @@ async function createRun(req, { repo_full_name, brief, base_branch, source, sour
   if (!text) { const e = new Error('The brief is empty'); e.status = 400; throw e; }
   if (text.length > 50000) { const e = new Error('The brief is too long (50,000 characters)'); e.status = 400; throw e; }
   github.assertAllowed(repo_full_name);            // the owner allow-list, before anything is stored
+  // AND THE TOKEN MUST BE ABLE TO PUSH. Read access carries a run all the way through the clone,
+  // the agent and the commit before failing — after the money is spent. One API call here turns
+  // that into an immediate, actionable refusal.
+  const push = await github.canPush(repo_full_name);
+  if (!push.ok) {
+    const e = new Error(push.reason + '. Set GITHUB_TOKEN on Render to a token with Contents: Read and write and Pull requests: Read and write on this repository.');
+    e.status = 403; throw e;
+  }
   // CLAIMED BEFORE THE FIRST await, AND RELEASED BY THE RUNNER. `atCapacity` alone was checked
   // about three awaits before the runner registered the run, so a burst of requests all saw an
   // empty table and all started: N clones on the shared instance's /tmp and N times the cost cap.

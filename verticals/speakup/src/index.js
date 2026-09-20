@@ -120,6 +120,7 @@ router.get('/claude-code/runs/:id', (req, res) => res.sendFile(path.join(publicD
     try {
       await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS deploy_url TEXT');
       await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS session_id TEXT');
+      await sequelize.query('ALTER TABLE cc_repos ADD COLUMN IF NOT EXISTS can_push BOOLEAN');
       await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS cc_repos_tenant_repo_uniq ON cc_repos(tenant_id, repo_full_name)');
     } catch (ccErr) {
       console.error('  CLAUDE CODE column ensure error:', ccErr.message);

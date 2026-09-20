@@ -358,6 +358,26 @@ async function testRoutes() {
   eq('routes: an empty brief is refused', (await call('POST', '/runs', { repo_full_name: 'digit2ai/x', brief: '   ' }, M)).status, 400);
   eq('routes: a 60k brief is refused', (await call('POST', '/runs', { repo_full_name: 'digit2ai/x', brief: 'x'.repeat(60000) }, M)).status, 400);
 
+  // THE PUSH PERMISSION IS CHECKED BEFORE THE RUN EXISTS. The first live run proved why: read
+  // access carries a run through the clone, the agent and the commit, and only fails at the push,
+  // after the money is spent.
+  gh.__setFetch(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ default_branch: 'main', permissions: { push: false, pull: true } }) }));
+  const before = rows.runs.length;
+  const ro = await call('POST', '/runs', { repo_full_name: 'digit2ai/readonly', brief: 'anything' }, M);
+  eq('push: a repository this token cannot write to is refused with 403', ro.status, 403);
+  ok('push: and the refusal names the fix', /GITHUB_TOKEN/.test(JSON.stringify(await ro.json())));
+  eq('push: and NOTHING was stored, so no money can be spent on it', rows.runs.length, before);
+
+  gh.__setFetch(async () => ({ ok: true, status: 404, text: async () => JSON.stringify({ message: 'Not Found' }) }));
+  eq('push: a repository the token cannot even see is refused', (await call('POST', '/runs', { repo_full_name: 'digit2ai/invisible', brief: 'x' }, M)).status, 403);
+
+  gh.__setFetch(async () => { throw new Error('network down'); });
+  eq('push: an unreachable GitHub refuses rather than assuming write access',
+    (await call('POST', '/runs', { repo_full_name: 'digit2ai/x', brief: 'x' }, M)).status, 403);
+
+  // From here on the token can write.
+  gh.__setFetch(async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ default_branch: 'main', permissions: { push: true, pull: true } }) }));
+
   // A good run.
   r = await call('POST', '/runs', { repo_full_name: 'digit2ai/x', brief: 'Add a tab', base_branch: 'main' }, M);
   eq('routes: a valid run is created', r.status, 201);
@@ -397,9 +417,13 @@ async function testRoutes() {
   eq('merge: refused when the run has no pull request', (await call('POST', '/runs/' + run3.id + '/merge', {}, M)).status, 409);
 
   // A draft PR (red tests) is never merged by the button.
-  gh.__setFetch(async (url, opts) => ({
+  // URL-aware from here on: the routes below create runs as well as read a pull request, and a
+  // repository lookup that forgot to answer `permissions.push` would refuse them at the door.
+  gh.__setFetch(async (url) => ({
     ok: true, status: 200,
-    text: async () => JSON.stringify({ number: 12, draft: true, head: { sha: 'abc' }, html_url: 'https://github.com/digit2ai/x/pull/12' })
+    text: async () => JSON.stringify(/\/pulls\//.test(String(url))
+      ? { number: 12, draft: true, head: { sha: 'abc' }, html_url: 'https://github.com/digit2ai/x/pull/12' }
+      : { default_branch: 'main', permissions: { push: true, pull: true } })
   }));
   run3.pr_url = 'https://github.com/digit2ai/x/pull/12';
   const draftRes = await call('POST', '/runs/' + run3.id + '/merge', {}, M);

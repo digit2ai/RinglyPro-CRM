@@ -31,6 +31,9 @@
     skillYes: ['Lleva la guía del arquitecto', 'Carries the architect skill'],
     skillNo:  ['Sin guía del arquitecto: se copia la nuestra', 'No architect skill: ours is copied in'],
     skillUnk: ['Guía del arquitecto sin comprobar', 'Architect skill not checked'],
+    noPush:   ['Este token no puede escribir en este repositorio: la ejecución se detendrá al subir.',
+               'This token cannot write to this repository: a run would stop at the push.'],
+    canPush:  ['Con permiso de escritura', 'Write access'],
     noGit:    ['GITHUB_TOKEN no está configurado, así que no se puede clonar ningún repositorio.',
                'GITHUB_TOKEN is not set, so no repository can be cloned.'],
     noSdk:    ['El paquete @anthropic-ai/claude-agent-sdk no está instalado en el servidor.',
@@ -162,6 +165,7 @@
     var syncBtn = document.getElementById('syncBtn');
     var refreshBtn = document.getElementById('refreshBtn');
     var skillChip = document.getElementById('skillChip');
+    var pushChip = document.getElementById('pushChip');
     var notice = document.getElementById('ccNotice');
     var repos = [];
     var cfg = {};
@@ -188,10 +192,17 @@
     function current() { return repos.find(function (r) { return r.repo_full_name === repoSel.value; }) || null; }
     function paintSkill() {
       var r = current();
-      if (!r) { skillChip.hidden = true; return; }
+      if (!r) { skillChip.hidden = true; pushChip.hidden = true; return; }
       skillChip.hidden = false;
       skillChip.className = 'chip ' + (r.has_architect_skill === true ? 'ok' : (r.has_architect_skill === false ? 'warn' : ''));
       skillChip.textContent = r.has_architect_skill === true ? t('skillYes') : (r.has_architect_skill === false ? t('skillNo') : t('skillUnk'));
+      // Write access is the one thing that fails LAST and costs money: a read-only token carries
+      // a run through the clone, the agent and the commit and only dies at the push.
+      if (r.can_push === false) {
+        pushChip.hidden = false; pushChip.className = 'chip warn'; pushChip.textContent = t('noPush');
+      } else if (r.can_push === true) {
+        pushChip.hidden = false; pushChip.className = 'chip ok'; pushChip.textContent = t('canPush');
+      } else { pushChip.hidden = true; }
     }
     function paintRepos() {
       repoSel.innerHTML = repos.map(function (r) { return '<option value="' + esc(r.repo_full_name) + '">' + esc(r.repo_full_name) + '</option>'; }).join('');

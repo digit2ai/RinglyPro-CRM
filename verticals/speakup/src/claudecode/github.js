@@ -126,6 +126,32 @@ async function getRepo(repo) {
   return request('GET', `/repos/${owner}/${name}`);
 }
 
+/**
+ * Can this token actually PUSH to this repository?
+ *
+ * ASKED BEFORE A RUN STARTS, NOT DISCOVERED AT THE END. The first real run cloned, spent
+ * twenty turns and $0.23, wrote a commit — and then died on
+ * "Permission to digit2ai/CRM-Co-Pilot.git denied", because the fallback credential is the
+ * Factory's fine-grained PAT, which is scoped to ONE repository. Everything before the push
+ * succeeds with read access, so the failure arrives after the money is spent. GitHub reports
+ * the answer on the repository itself, so there is no reason to find out the hard way.
+ *
+ * Returns { ok, reason }. An API error is `ok:false` with the reason, never an optimistic yes.
+ */
+async function canPush(repo) {
+  try {
+    const r = await getRepo(repo);
+    if (r && r.permissions && r.permissions.push) return { ok: true };
+    if (r && r.archived) return { ok: false, reason: 'the repository is archived' };
+    return { ok: false, reason: 'this GitHub token has read access to ' + repo + ' but cannot push to it' };
+  } catch (e) {
+    if (e instanceof GitHubError && e.status === 404) {
+      return { ok: false, reason: 'this GitHub token cannot see ' + repo + ' at all' };
+    }
+    return { ok: false, reason: 'GitHub did not answer for ' + repo + ': ' + e.message };
+  }
+}
+
 async function createPR(repo, { title, head, base, body, draft }) {
   const { owner, name } = split(repo);
   return request('POST', `/repos/${owner}/${name}/pulls`, { title, head, base, body, draft: !!draft });
@@ -188,5 +214,5 @@ function __setFetch(f) { fetchImpl = f; }
 
 module.exports = {
   configured, GitHubError, allowedOwners, ownerAllowed, assertAllowed,
-  listRepos, hasArchitectSkill, getRepo, createPR, getPR, mergePR, combinedStatus, cloneUrl, __setFetch
+  listRepos, hasArchitectSkill, getRepo, canPush, createPR, getPR, mergePR, combinedStatus, cloneUrl, __setFetch
 };

@@ -423,6 +423,7 @@ const CcRepo = sequelize.define('CcRepo', {
   default_branch: { type: DataTypes.TEXT },
   render_service_id: { type: DataTypes.TEXT },
   has_architect_skill: { type: DataTypes.BOOLEAN },
+  can_push: { type: DataTypes.BOOLEAN },      // null = never checked; false = read-only for this token
   last_synced_at: { type: DataTypes.DATE },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {

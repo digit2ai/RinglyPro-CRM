@@ -1356,6 +1356,14 @@ turned a subscription-billed run's real `0` into "not measured", so only `null` 
 `package.json` declares one; otherwise the run says plainly that nothing was measured. It never
 invents a command, and a red suite opens a DRAFT pull request that the merge button refuses.
 
+**WRITE ACCESS IS CHECKED BEFORE A RUN STARTS, NOT DISCOVERED AT THE PUSH.** The first live run
+cloned, ran twenty turns, spent $0.23 and wrote a commit — then died on `Permission to
+digit2ai/CRM-Co-Pilot.git denied`. Everything before the push only needs READ, and the fallback
+credential is the Factory's fine-grained PAT, which is scoped to ONE repository, so every other
+repo failed at the last step after the money was gone. `github.canPush()` asks GitHub at creation
+time; a refusal is a 403 naming the fix, nothing is stored, and `cc_repos.can_push` badges the
+picker. An unreachable GitHub refuses rather than assuming write access.
+
 **THE OWNER ALLOW-LIST IS ENFORCED AT THE SERVER, AT EVERY STEP.** `github.assertAllowed()` guards
 the clone, the pull request and the merge, not only the create route: a run is a disposable VM
 holding a write token, and "the page only offers our repositories" is a statement about a page.
@@ -1417,7 +1425,7 @@ awaits before the runner registered the run, so a burst all saw an empty table a
 N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
 first `await` and the runner hands the slot back as it registers.
 
-**SIT:** `node verticals/speakup/sit-claude-code.js` -> **223/223**, zero external keys and no
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **228/228**, zero external keys and no
 database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
 are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
 repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a
