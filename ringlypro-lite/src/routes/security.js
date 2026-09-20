@@ -58,4 +58,57 @@ router.post('/unlock', (req, res) => {
   res.json({ ok: true, outbound_guard: tollFraud.status() });
 });
 
+/**
+ * GET /internal/security/users — who has signed up.
+ *
+ * The owner question "list the current users" had no answer: Lite is
+ * self-serve with no admin console, and its database is a SEPARATE Render
+ * instance whose URL is never in the repo. This answers it behind the SAME
+ * admin key and the same fail-shut 404, so no second credential exists.
+ *
+ * password_hash is never selected. Phone numbers are masked, exactly as the
+ * fraud watch masks them, because this report may be pasted somewhere.
+ */
+router.get('/users', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const { Tenant, User, Number } = require('../models');
+    const [tenants, users, numbers] = await Promise.all([
+      Tenant.findAll({ attributes: ['id', 'business_name', 'owner_name', 'owner_email', 'owner_phone',
+        'country', 'locale', 'timezone', 'subscription_status', 'trial_ends_at', 'suspended_at',
+        'active', 'created_at'], order: [['id', 'ASC']] }),
+      User.findAll({ attributes: ['id', 'tenant_id', 'email', 'name', 'created_at'], order: [['id', 'ASC']] }),
+      Number.findAll({ attributes: ['tenant_id', 'did', 'active'] })
+    ]);
+    const byTenant = new Map();
+    for (const t of tenants) byTenant.set(t.id, { tenant_id: t.id, business_name: t.business_name,
+      owner_name: t.owner_name || null, owner_email: t.owner_email || null,
+      owner_phone: t.owner_phone ? tollFraud.mask(t.owner_phone) : null,
+      country: t.country, locale: t.locale, timezone: t.timezone,
+      subscription_status: t.subscription_status, trial_ends_at: t.trial_ends_at,
+      suspended_at: t.suspended_at, active: t.active, created_at: t.created_at,
+      numbers: [], logins: [] });
+    for (const n of numbers) {
+      const row = byTenant.get(n.tenant_id);
+      if (row) row.numbers.push({ did: n.did ? tollFraud.mask(n.did) : null, active: n.active });
+    }
+    const orphans = [];
+    for (const u of users) {
+      const one = { user_id: u.id, email: u.email, name: u.name || null, created_at: u.created_at };
+      const row = byTenant.get(u.tenant_id);
+      if (row) row.logins.push(one); else orphans.push({ ...one, tenant_id: u.tenant_id });
+    }
+    const list = [...byTenant.values()];
+    res.json({
+      counts: { tenants: list.length, logins: users.length,
+        active_tenants: list.filter((t) => t.active).length,
+        trialing: list.filter((t) => t.subscription_status === 'trialing').length,
+        subscribed: list.filter((t) => t.subscription_status === 'active').length,
+        suspended: list.filter((t) => !!t.suspended_at).length },
+      tenants: list,
+      logins_without_a_tenant: orphans
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;

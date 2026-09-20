@@ -499,6 +499,22 @@ function providerWith(client) { const p = new TwilioProvider(); p._client = clie
       assert.strictEqual(await get({ 'x-admin-key': 'sit_admin_key_0123456789' }), 200);
     } finally { srv.close(); delete process.env.LITE_ADMIN_KEY; }
   });
+  await t('the user list is behind the same key and never selects a password hash', async () => {
+    process.env.LITE_ADMIN_KEY = 'sit_admin_key_0123456789';
+    const express = require('express');
+    const app = express(); app.set('fraudWatchDeps', () => ({}));
+    app.use('/internal/security', require(path.join(ROOT, 'src/routes/security')));
+    const srv = app.listen(0); const port = srv.address().port;
+    const get = (headers) => new Promise((resolve) => http.get({ port, path: '/internal/security/users', headers }, (r) => resolve(r.statusCode)));
+    try {
+      assert.strictEqual(await get({}), 404, 'no key must 404');
+      assert.strictEqual(await get({ 'x-admin-key': 'wrong' }), 404, 'a wrong key must 404');
+    } finally { srv.close(); delete process.env.LITE_ADMIN_KEY; }
+    const src = read('src/routes/security.js');
+    const block = src.slice(src.indexOf("router.get('/users'"));
+    assert.ok(!/password_hash/.test(block), 'the user list must never touch password_hash');
+    assert.ok(/tollFraud\.mask\(/.test(block), 'phone numbers in the user list must be masked');
+  });
   await t('a short admin key is treated as unset (closed, not open)', async () => {
     process.env.LITE_ADMIN_KEY = 'short';
     const express = require('express');
