@@ -26,7 +26,7 @@
   --display:"Mulish",system-ui,-apple-system,"Segoe UI",sans-serif; --serif:"Source Serif 4",Georgia,serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#0E0C1F;color:var(--on-navy);font-family:var(--display);-webkit-font-smoothing:antialiased}
+html,body{margin:0;height:100%;height:100dvh;background:#0E0C1F;color:var(--on-navy);font-family:var(--display);-webkit-font-smoothing:antialiased}
 body{display:flex;flex-direction:column;overflow:hidden}
 #viewport{flex:1;position:relative;overflow:hidden}
 #stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:0 0;background:
@@ -222,7 +222,63 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
 .ctl button.pp{background:var(--orange);border-color:var(--orange)}
 #count{font-size:13px;font-weight:800;color:var(--on-navy-2);font-variant-numeric:tabular-nums;white-space:nowrap}
 #bar{position:absolute;left:0;bottom:0;height:4px;background:var(--orange);width:0;transition:width .3s linear;z-index:5}
-@media (max-width:720px){#dock{grid-template-columns:1fr auto}#cap{grid-column:1/-1;order:3;font-size:13px}}
+/* PHONE LAYOUT (owner request 2026-09-21: most people will open this on a phone). Below 820px, or any
+   portrait screen, the 1280x720 stage is not scaled down to a postage stamp: each slide becomes a full
+   screen that scrolls, text is set for a phone, the phone mockups keep their real size, the desktop
+   admin mockups are zoomed to the width (JS sets --dz), and a swipe moves between slides. */
+@media (max-width:820px), (orientation:portrait) and (max-width:1024px){
+  #stage{position:relative;left:auto;top:auto;width:100%;height:100%;transform:none !important;border-radius:0;box-shadow:none}
+  .slide{padding:26px 18px 34px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .slide.on{display:flex;flex-direction:column;justify-content:flex-start}
+  .slide.cover{justify-content:center}
+  .col{justify-content:flex-start}
+  h1{font-size:38px}
+  h2{font-size:28px;margin-bottom:12px}
+  p.lede{font-size:16px}
+  .eyebrow{font-size:11.5px;letter-spacing:.12em;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .eyebrow .tag{margin-left:0 !important}
+  .brandrow{margin-bottom:22px}
+  .start{margin-top:18px;padding:16px 24px;font-size:17px}
+  .split,.split.wide{grid-template-columns:1fr;gap:22px}
+  .points li{font-size:15.5px}
+  .src{margin-top:12px}
+  .trio,.gl{grid-template-columns:1fr;gap:12px}
+  .card{padding:18px}
+  .card h3{font-size:18px}.card p{font-size:15px}
+  .lanes{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .lanes .lane-l,.lanes .cell:not(.st){display:none}
+  .lanes .cell.st{order:var(--o);border:0;padding:0;flex-direction:column;align-items:stretch}
+  .lanes .cell.st::before{content:attr(data-lane);font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--on-navy-2);margin:0 0 5px 2px}
+  .node{text-align:left;font-size:15px}
+  .phone{width:300px;height:566px;border-radius:40px;padding:10px;margin:0 auto}
+  /* The admin screens take the dashboard's own phone shape instead of a zoomed-out desktop, which was a
+     third of real size and unreadable: the menu becomes a scrolling row, content one column. */
+  .desk{height:auto;padding:8px;border-radius:24px}
+  .desk .win{grid-template-columns:1fr;grid-template-rows:auto auto auto;height:auto}
+  .tb .url{max-width:none}
+  .side{flex-direction:row;overflow-x:auto;gap:4px;padding:8px;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .side .lg,.side .grp{display:none}
+  .side a{white-space:nowrap;flex:none;padding:7px 11px}
+  .main{padding:14px;gap:10px}
+  .main[style]{display:flex !important;flex-direction:column}
+  .main h4{font-size:18px}
+  .qgrid,.qgrid[style]{grid-template-columns:1fr 1fr !important}
+  .q b{font-size:22px}
+  table.t{font-size:12px}
+  table.t.leads th:nth-child(3),table.t.leads td:nth-child(3),table.t.leads th:nth-child(5),table.t.leads td:nth-child(5),table.t.leads th:nth-child(6),table.t.leads td:nth-child(6),
+  table.t.users th:nth-child(2),table.t.users td:nth-child(2){display:none}
+  .btnrow{flex-wrap:wrap}
+  .secs{grid-template-columns:1fr}
+  .eyebrow{font-size:12px}
+  .sms{position:static;width:auto;margin-top:14px}
+  .next li{font-size:16.5px;grid-template-columns:38px 1fr}
+  .next li::before{width:38px;height:38px;font-size:16px}
+  .next li span{font-size:14.5px}
+  #dock{grid-template-columns:auto 1fr;gap:10px;padding-top:8px}
+  #cap{grid-column:1/-1;order:3;font-size:13px;max-height:38px}
+  #count{justify-self:end}
+}
 @media (prefers-reduced-motion:reduce){.orb,.wave i{animation:none}.slide.on{animation:none}}
 </style>
 </head>
@@ -256,16 +312,16 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
   <h2>Five steps. The buyer stays in control.</h2>
   <div class="lanes">
     <div class="lane-l">Buyer</div>
-    <div class="cell"><div class="node">Talks to Anna<small>5 questions, voice or text</small></div></div><div class="cell"></div><div class="cell"></div>
-    <div class="cell"><div class="node">Gets the report<small>by email, free</small></div></div><div class="cell"></div>
+    <div class="cell st" style="--o:1" data-lane="Buyer"><div class="node">Talks to Anna<small>5 questions, voice or text</small></div></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell st" style="--o:4" data-lane="Buyer"><div class="node">Gets the report<small>by email, free</small></div></div><div class="cell"></div>
     <div class="lane-l">BuyersLine AI</div>
     <div class="cell"></div>
-    <div class="cell"><div class="node ai">Builds the report<small>in seconds</small></div></div>
-    <div class="cell"><div class="node ai">Compliance check<small>every promotion</small></div></div>
+    <div class="cell st" style="--o:2" data-lane="BuyersLine AI"><div class="node ai">Builds the report<small>in seconds</small></div></div>
+    <div class="cell st" style="--o:3" data-lane="BuyersLine AI"><div class="node ai">Compliance check<small>every promotion</small></div></div>
     <div class="cell"></div><div class="cell"></div>
     <div class="lane-l">Licensed agent</div>
     <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-    <div class="cell"><div class="node human">Calls the buyer<small>only if they said yes</small></div></div>
+    <div class="cell st" style="--o:5" data-lane="Licensed agent"><div class="node human">Calls the buyer<small>only if they said yes</small></div></div>
   </div>
 </section>
 
@@ -451,7 +507,7 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
 <!-- 10 ADMIN TODAY -->
 <section class="slide col" data-n="Now the other side: the admin dashboard, at buyersline dot app, behind the Log in link. The left pane holds everything we need to run the platform: today's work, leads, promotions to verify, reports, compliance holds, the knowledge base, and, for admins, users, system health and the architecture. The Today screen shows what needs attention first, such as reports waiting for review and compliance holds.">
   <p class="eyebrow">For us · The admin dashboard <span class="tag sample" style="margin-left:10px">Sample data</span></p>
-  <div class="desk"><div class="win">
+  <div class="deskwrap"><div class="desk"><div class="win">
     <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/today</span></div>
     <nav class="side">
       <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
@@ -470,13 +526,13 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
         <div class="q"><small>Billable consults this month</small><b>0</b><p>Consults marked held that count toward this month's invoice.</p></div>
       </div>
     </div>
-  </div></div>
+  </div></div></div>
 </section>
 
 <!-- 11 ADMIN LEADS -->
 <section class="slide col" data-n="The Leads screen lists every buyer who created a report, with a readiness score from fixed rules, hot, warm or nurture, and flags such as already working with an agent. A buyer who did not agree to share their details is marked report only, and an agent cannot open them. Each lead keeps the consent records, notes and documents, and the knowledge base holds what the team learns, with links and files.">
   <p class="eyebrow">For us · Leads and knowledge <span class="tag sample" style="margin-left:10px">Sample data</span></p>
-  <div class="desk"><div class="win">
+  <div class="deskwrap"><div class="desk"><div class="win">
     <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/leads</span></div>
     <nav class="side">
       <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
@@ -486,7 +542,7 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
     </nav>
     <div class="main">
       <h4>Leads</h4><div class="sub">Every buyer who created a report. Readiness comes from fixed rules, never a model.</div>
-      <table class="t">
+      <table class="t leads">
         <thead><tr><th>Buyer</th><th>Area</th><th>Budget</th><th>Readiness</th><th>Flags</th><th>Status</th></tr></thead>
         <tbody>
           <tr><td><b>Sample Buyer A</b></td><td>Zephyrhills 33543</td><td>$2,800 / mo</td><td><span class="pill hot">Hot</span></td><td>Pre-approved · 3 to 6 months</td><td>New</td></tr>
@@ -499,13 +555,13 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
         <div class="q"><small>Knowledge base</small><p style="font-size:12.5px;color:var(--ink);margin-top:4px">Entries with notes, links and files, editable any time by the admin or the agent.</p></div>
       </div>
     </div>
-  </div></div>
+  </div></div></div>
 </section>
 
 <!-- 12 ADMIN USERS -->
 <section class="slide col" data-n="Access is maker and checker. Anyone on the team can create a login from the sign in page, with a password typed twice. The account stays pending, and the owner gets a text message right away from our registered business number. The owner approves it in Users, an email confirms it, and the new user signs in to the dashboard with agent access: they see only their own leads, never the admin screens.">
   <p class="eyebrow">For us · Users and approvals <span class="tag sample" style="margin-left:10px">Sample data</span></p>
-  <div class="desk"><div class="win">
+  <div class="deskwrap"><div class="desk"><div class="win">
     <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/users</span></div>
     <nav class="side">
       <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
@@ -515,7 +571,7 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
     </nav>
     <div class="main">
       <h4>Users</h4><div class="sub">Login requests wait for your approval. Approved logins get agent access.</div>
-      <table class="t">
+      <table class="t users">
         <thead><tr><th>Email</th><th>Requested</th><th>Status</th><th></th></tr></thead>
         <tbody>
           <tr><td><b>new-agent@example.com</b></td><td>Today, 9:12 a.m.</td><td><span class="pill pend">Pending</span></td><td><div class="btnrow"><span class="btn p">Approve</span><span class="btn">Reject</span></div></td></tr>
@@ -524,14 +580,14 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
       </table>
       <div class="note" style="font-size:12px">Text alerts: set your own mobile number on your row. Staff texts carry an email address at most, never buyer details.</div>
     </div>
-  </div></div>
+  </div></div></div>
   <div class="sms"><small>Text message · from BuyersLine</small><div class="bub">BuyersLine: new-agent@example.com created a login and is waiting for approval. Approve in Users: https://buyersline.app/admin/#/users</div></div>
 </section>
 
 <!-- 13 EXPERT QUESTIONNAIRE -->
 <section class="slide col" data-n="The last link in the left pane is the Expert questionnaire. This is how Anna gets smarter. A builder side expert answers seventy eight questions in fourteen sections, such as how builders decide incentives, inside the sales office, negotiation and financing. One question per screen, with why we ask it, dictation in English or Spanish, and autosave, so it can be finished over many short sessions. These answers become the knowledge Anna uses to answer buyers.">
   <p class="eyebrow">For us · Teaching Anna <span class="tag sample" style="margin-left:10px">Sample progress</span></p>
-  <div class="desk"><div class="win">
+  <div class="deskwrap"><div class="desk"><div class="win">
     <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/architecture/sme</span></div>
     <nav class="side">
       <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
@@ -563,7 +619,7 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
         <div class="note" style="margin-top:8px">Saved automatically every 10 seconds.</div>
       </div>
     </div>
-  </div></div>
+  </div></div></div>
 </section>
 
 <!-- 14 GUARDRAILS -->
@@ -617,11 +673,30 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
   var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
   var PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
 
+  var mobile = window.matchMedia('(max-width:820px), (orientation:portrait) and (max-width:1024px)');
   function fit() {
+    if (mobile.matches) {
+      // Phone layout: the stage fills the screen and scrolls; only the desktop mockups are zoomed to the width.
+      stage.style.transform = '';
+      // The menu row scrolls sideways: bring the screen's own item into view (Users, Expert questionnaire).
+      [].forEach.call(document.querySelectorAll('.slide.on .side'), function (side) {
+        var on = side.querySelector('a.on'); if (on) side.scrollLeft += on.getBoundingClientRect().left - side.getBoundingClientRect().left - 8;
+      });
+      return;
+    }
     var s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 720) * 0.96;
     stage.style.transform = 'translate(' + (-640 * s) + 'px,' + (-360 * s) + 'px) scale(' + s + ')';
   }
-  window.addEventListener('resize', fit); fit();
+  window.addEventListener('resize', fit);
+  if (mobile.addEventListener) mobile.addEventListener('change', fit);
+
+  // Swipe left or right to move between slides on a touch screen (vertical scrolling stays the slide's own).
+  var tx = 0, ty = 0;
+  stage.addEventListener('touchstart', function (e) { var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { audio.removeAttribute('src'); show(idx + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
 
   // Narration comes from the shared zero-key Edge route, one request per slide, prefetched one ahead.
   function tts(i) {
@@ -640,6 +715,7 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
     count.textContent = (idx + 1) + ' / ' + slides.length;
     cap.textContent = slides[idx].getAttribute('data-n');
     bar.style.width = ((idx + 1) / slides.length * 100) + '%';
+    slides[idx].scrollTop = 0; fit();
     if (playing) speak();
   }
 
@@ -658,6 +734,15 @@ table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
     });
   }
   function advance() { if (idx < slides.length - 1) show(idx + 1); else setPlaying(false); }
+  // On a phone a slide is taller than the screen: once the voice is a third of the way through, glide down to
+  // the mockup it is describing, so the viewer does not have to scroll while listening.
+  var glided = -1;
+  audio.addEventListener('timeupdate', function () {
+    if (!mobile.matches || glided === idx || !audio.duration || audio.currentTime / audio.duration < 0.33) return;
+    glided = idx;
+    var sl = slides[idx], target = sl.querySelector('.phone, .desk');
+    if (target && sl.scrollHeight > sl.clientHeight + 40) sl.scrollTo({ top: Math.max(0, target.offsetTop - 16), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  });
   audio.addEventListener('ended', function () { if (playing) setTimeout(function () { if (playing) advance(); }, 700); });
 
   function setPlaying(v) {
