@@ -132,7 +132,6 @@
       <a href="#users" data-tab="users" class="on">Usuarios de prueba</a>
       <a href="#train" data-tab="train">Entrenar a Maya</a>
       <a href="#kb" data-tab="kb">Conocimiento de Maya</a>
-      <a href="#dian" data-tab="dian">Calendario DIAN</a>
       <div class="sep"></div>
       <a href="/planea/portal/inicio" target="_blank" rel="noopener">Abrir Planea</a>
       <button type="button" id="outBtn">Salir</button>
@@ -178,27 +177,6 @@
       <div class="err" id="chatErr"></div>
     </div>
 
-    <div id="tab-dian" class="card" hidden>
-      <h2>Calendario DIAN</h2>
-      <p class="mut">Esta tabla es la <b>única</b> fuente de fechas de renta de Planea: el aviso de Inicio, Impuestos, el Calendario Planea, los correos y Maya. Mientras no haya una tabla <b>validada</b> del año en curso, a los usuarios no se les muestra ninguna fecha. Se carga una vez al año.</p>
-      <p id="dianNow"></p>
-      <h2 style="margin-top:14px">1. Cargar la tabla del año</h2>
-      <p class="mut">Formato estándar: un CSV con tres columnas <b>desde,hasta,fecha</b> (dígitos 01 a 00, fecha AAAA-MM-DD), una fila por grupo. También se acepta el JSON de ejemplo. Se revisa entera antes de guardarse: cubre del 01 al 00 sin huecos ni cruces, fechas en orden, en el año indicado y en días hábiles.</p>
-      <div class="grid">
-        <div><label for="dYear">Año del calendario</label><input id="dYear" type="text" inputmode="numeric" maxlength="4" placeholder="2026"></div>
-        <div><label for="dDecree">Decreto que fija los plazos</label><input id="dDecree" type="text" maxlength="300" placeholder="Ej: Decreto 2229 de 2023"></div>
-      </div>
-      <label for="dText">Tabla (pega el CSV o el JSON, o elige el archivo)</label>
-      <textarea id="dText" rows="8" placeholder="desde,hasta,fecha&#10;01,02,2026-08-12&#10;03,04,2026-08-13&#10;..."></textarea>
-      <div style="margin-top:8px"><input id="dFile" type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain"></div>
-      <div style="margin-top:12px"><button class="btn" type="button" id="dBtn">Cargar como borrador</button></div>
-      <div class="err" id="dErr"></div><div class="ok" id="dOk"></div>
-      <h2 style="margin-top:18px">2. Validar</h2>
-      <p class="mut">Otro administrador, no quien la cargó, revisa la tabla y la valida. Al validarla, reemplaza a la anterior del mismo año y los usuarios empiezan a ver su fecha.</p>
-      <div class="tw"><table id="dianTbl"></table></div>
-      <div id="dianView" hidden style="margin-top:12px"></div>
-    </div>
-
     <div id="tab-kb" class="card" hidden>
       <h2>Conocimiento de Maya</h2>
       <p class="mut">Sube documentos en PDF, Markdown (.md) o texto (.txt). Maya los lee como contexto en cada respuesta; esto no reentrena el modelo, y sus reglas de siempre siguen mandando. Subir un documento con el mismo nombre crea una versión nueva y guarda la anterior en el historial.</p>
@@ -235,21 +213,25 @@
         <div class="err" id="typeErr"></div><div class="ok" id="typeOk"></div>
       </div>
 
-      <div class="probe">
-        <h2>Probar a Maya</h2>
-        <p class="mut">Haz una pregunta cuya respuesta solo esté en tus documentos. Maya responde con las mismas reglas que usa en la app y con los documentos activos, y al lado verás qué respondería <b>sin</b> documentos. Si las respuestas cambian, Maya está leyendo lo que subiste.</p>
-        <label for="probeQ">Pregunta</label>
-        <textarea id="probeQ" rows="2" maxlength="1000" placeholder="Ej: ¿Qué es el Puntaje Planea y cómo se calcula?"></textarea>
-        <div style="margin-top:10px"><button class="btn" type="button" id="probeBtn">Preguntar a Maya</button></div>
-        <div class="err" id="probeErr"></div>
-        <div id="probeOut" hidden>
-          <p class="mut" id="probeDocs"></p>
-          <div class="cmp">
-            <section><h3>Con tus documentos</h3><div id="probeWith" class="ans"></div></section>
-            <section id="probeWithoutBox"><h3>Sin documentos</h3><div id="probeWithout" class="ans"></div></section>
-          </div>
-        </div>
-        <details id="sentBox" style="margin-top:14px"><summary>Ver exactamente lo que Maya recibe de tus documentos</summary><p class="mut" id="sentInfo"></p><pre id="sentPre"></pre></details>
+      <div class="probe" id="dianBox">
+      <h2>Calendario DIAN (tabla anual de vencimientos)</h2>
+      <p class="mut">Esta tabla es la <b>única</b> fuente de fechas de renta de Planea: el aviso de Inicio, Impuestos, el Calendario Planea, los correos y Maya. Mientras no haya una tabla <b>validada</b> del año en curso, a los usuarios no se les muestra ninguna fecha. Se carga una vez al año.</p>
+      <p id="dianNow"></p>
+      <h2 style="margin-top:14px">1. Cargar la tabla del año</h2>
+      <p class="mut">Formato estándar: un CSV con tres columnas <b>desde,hasta,fecha</b> (dígitos 01 a 00, fecha AAAA-MM-DD), una fila por grupo. También se acepta el JSON de ejemplo. Se revisa entera antes de guardarse: cubre del 01 al 00 sin huecos ni cruces, fechas en orden, en el año indicado y en días hábiles.</p>
+      <div class="grid">
+        <div><label for="dYear">Año del calendario</label><input id="dYear" type="text" inputmode="numeric" maxlength="4" placeholder="2026"></div>
+        <div><label for="dDecree">Decreto que fija los plazos</label><input id="dDecree" type="text" maxlength="300" placeholder="Ej: Decreto 2229 de 2023"></div>
+      </div>
+      <label for="dText">Tabla (pega el CSV o el JSON, o elige el archivo)</label>
+      <textarea id="dText" rows="8" placeholder="desde,hasta,fecha&#10;01,02,2026-08-12&#10;03,04,2026-08-13&#10;..."></textarea>
+      <div style="margin-top:8px"><input id="dFile" type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain"></div>
+      <div style="margin-top:12px"><button class="btn" type="button" id="dBtn">Cargar como borrador</button></div>
+      <div class="err" id="dErr"></div><div class="ok" id="dOk"></div>
+      <h2 style="margin-top:18px">2. Validar</h2>
+      <p class="mut">Otro administrador, no quien la cargó, revisa la tabla y la valida. Al validarla, reemplaza a la anterior del mismo año y los usuarios empiezan a ver su fecha.</p>
+      <div class="tw"><table id="dianTbl"></table></div>
+      <div id="dianView" hidden style="margin-top:12px"></div>
       </div>
     </div>
   </main>
@@ -289,14 +271,14 @@
   });
   $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('whoName').textContent = ''; show('login'); }); });
 
-  function tabFromHash() { var h = (location.hash || '').slice(1); return TABS.indexOf(h) >= 0 ? h : 'users'; }
+  function tabFromHash() { var h = (location.hash || '').slice(1); return h === 'dian' ? 'kb' : (TABS.indexOf(h) >= 0 ? h : 'users'); }
   // Métricas salió del menú (pedido del dueño, 21-sep-2026); la API /metrics sigue.
-  var TABS = ['accounts', 'users', 'train', 'kb', 'dian'];
+  var TABS = ['accounts', 'users', 'train', 'kb'];
   window.addEventListener('hashchange', function () { if (!$('app').hidden) tab(tabFromHash()); });
   function tab(name) {
     document.querySelectorAll('.nav [data-tab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
     TABS.concat('metrics').forEach(function (t) { $('tab-' + t).hidden = t !== name; });
-    if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else if (name === 'kb') loadKb(); else if (name === 'dian') loadDian();
+    if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else if (name === 'kb') { loadKb(); loadDian(); }
   }
 
   // Las 20 preguntas con la opción elegida, en palabras (el servidor ya las trae así).
@@ -529,34 +511,6 @@
       if (r._status !== 200) { $('typeErr').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
       $('typeOk').textContent = (r.replaced ? 'Nueva versión ' + r.doc.version + ' de ' : 'Guardado: ') + '«' + r.doc.name + '». Maya lo leerá en menos de un minuto.';
       $('typeName').value = ''; $('typeText').value = ''; $('typeCount').textContent = '0 caracteres'; loadKb();
-    });
-  });
-
-  // ── Probar a Maya ──
-  $('probeBtn').addEventListener('click', function () {
-    var q = $('probeQ').value.trim(); $('probeErr').textContent = '';
-    if (!q) { $('probeErr').textContent = 'Escribe una pregunta.'; return; }
-    $('probeBtn').disabled = true; $('probeBtn').textContent = 'Maya está pensando…';
-    call('POST', '/kb/test', { question: q }).then(function (r) {
-      $('probeBtn').disabled = false; $('probeBtn').textContent = 'Preguntar a Maya';
-      if (r._status !== 200) { $('probeErr').textContent = r.message || r.error || 'No se pudo probar.'; return; }
-      $('probeOut').hidden = false;
-      $('probeDocs').textContent = r.docs.length
-        ? 'Documentos activos enviados a Maya: ' + r.docs.map(function (d) { return d.name + ' (v' + d.version + ')'; }).join(', ') + ' · ' + Number(r.chars).toLocaleString('es-CO') + ' caracteres.'
-        : 'No hay documentos activos: Maya respondió solo con sus reglas. Sube uno y vuelve a probar.';
-      var w = r.with_docs || {};
-      $('probeWith').textContent = w.ok ? w.reply : (w.reason || 'Sin respuesta.');
-      $('probeWithoutBox').hidden = !r.without_docs;
-      if (r.without_docs) $('probeWithout').textContent = r.without_docs.ok ? r.without_docs.reply : (r.without_docs.reason || 'Sin respuesta.');
-    });
-  });
-  $('sentBox').addEventListener('toggle', function () {
-    if (!this.open) return;
-    $('sentInfo').textContent = 'Cargando…'; $('sentPre').textContent = '';
-    call('GET', '/kb/sent').then(function (r) {
-      if (r._status !== 200) { $('sentInfo').textContent = 'No se pudo cargar.'; return; }
-      $('sentInfo').textContent = r.docs.length ? 'Este texto se agrega a las instrucciones de Maya en CADA mensaje (' + Number(r.chars).toLocaleString('es-CO') + ' caracteres).' : 'Nada: no hay documentos activos.';
-      $('sentPre').textContent = r.block || '';
     });
   });
 
