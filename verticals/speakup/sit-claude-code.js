@@ -627,13 +627,21 @@ function testConfig() {
   delete require.cache[require.resolve('./src/claudecode/runner')];
   const runner = require('./src/claudecode/runner');
   const c = runner.config();
-  for (const k of ['model', 'max_turns', 'cost_cap_usd', 'auto_merge', 'max_concurrent', 'github', 'anthropic_key', 'sdk', 'allowed_owners']) {
+  for (const k of ['model', 'max_turns', 'cost_cap_usd', 'auto_merge', 'max_concurrent', 'github', 'anthropic_key', 'sdk', 'allowed_owners', 'default_repo', 'default_branch']) {
     ok('config: reports ' + k, Object.prototype.hasOwnProperty.call(c, k));
   }
   eq('config: auto merge is off unless CC_AUTO_MERGE=true', c.auto_merge, false);
   eq('config: the per-tenant concurrency ceiling is 3', c.max_concurrent, 3);
   eq('config: the cost cap is $10 unless overridden', c.cost_cap_usd, 10);
   ok('config: sdk presence is reported as a fact, not assumed', typeof c.sdk === 'boolean');
+  // A new conversation starts somewhere sensible, and the page carries no repository of its own.
+  eq('config: the default repository is this app\'s own', c.default_repo, 'digit2ai/RinglyPro-CRM');
+  eq('config: on its main branch', c.default_branch, 'main');
+  {
+    const pg = require('fs').readFileSync(require('path').join(__dirname, 'public/claude-code.js'), 'utf8');
+    ok('config: the page reads the default from the server rather than naming a repository',
+      /cfg\.default_repo/.test(pg) && !/digit2ai\//.test(pg));
+  }
 }
 
 

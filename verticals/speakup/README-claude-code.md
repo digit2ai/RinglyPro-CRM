@@ -41,7 +41,7 @@ Three things, all now fixed, and worth keeping fixed:
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **295/295**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **302/302**, zero keys, no database |
 
 ## The conversation
 
@@ -195,7 +195,7 @@ it ships", which is where it has to be: a run ends at a branch and a PR, never a
 | `CC_COST_CAP_USD` | `10` | Per run, across every pass. Tripping it aborts and says so. |
 | `CC_MAX_CONCURRENT` | `3` | Runs at once, per tenant. |
 | `CC_MAX_FIX_CYCLES` | `3` | Test-fix hand-backs into the same session before the run gives up. |
-| `CC_DEFAULT_REPO` | `SPEAKUP_FACTORY_REPO` | The repository a SpeakUp transfer targets. |
+| `CC_DEFAULT_REPO` | `SPEAKUP_FACTORY_REPO` | Where a new conversation starts when nobody has chosen, and the repository a SpeakUp transfer targets. `CC_DEFAULT_BRANCH` (`main`) goes with it. |
 | `CC_DEPLOY_URL` | — | Shown as "Open the deploy" after a deploy. |
 | `CC_DEPLOY_REPO` | `SPEAKUP_FACTORY_REPO` | The one repository whose merge fires the deploy hook. Merging a PR in any other repository never redeploys this CRM. |
 | `CC_EVENTS_PAGE` | `500` | Events returned per read. The page says plainly when a log is longer than one page. |

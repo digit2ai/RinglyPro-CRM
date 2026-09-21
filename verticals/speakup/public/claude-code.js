@@ -432,9 +432,14 @@
       $('repo').innerHTML = repos.map(function (r) {
         return '<option value="' + esc(r.repo_full_name) + '">' + esc(r.repo_full_name) + '</option>';
       }).join('');
+      // Your last choice wins; otherwise the server's default, which is the repository this app
+      // itself lives in. Falling back to whatever sorted first was arbitrary.
       var saved = null; try { saved = localStorage.getItem(REPO_KEY); } catch (e) {}
-      if (saved && repos.some(function (r) { return r.repo_full_name === saved; })) $('repo').value = saved;
-      var r0 = currentRepo(); if (r0) $('branch').value = r0.default_branch || 'main';
+      var has = function (n) { return !!n && repos.some(function (r) { return r.repo_full_name === n; }); };
+      if (has(saved)) $('repo').value = saved;
+      else if (has(cfg.default_repo)) $('repo').value = cfg.default_repo;
+      var r0 = currentRepo();
+      $('branch').value = (r0 && r0.default_branch) || cfg.default_branch || 'main';
     } catch (e) { notice(e.message); }
     paintNotice();
 

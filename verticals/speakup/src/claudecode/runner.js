@@ -892,6 +892,10 @@ async function sweepInterrupted() {
 function config() {
   return {
     model: MODEL, max_turns: MAX_TURNS, cost_cap_usd: COST_CAP_USD, auto_merge: AUTO_MERGE,
+    // Which repository a new conversation starts on when nobody has chosen one. Named here so
+    // the page carries no repository of its own and one env var moves it.
+    default_repo: process.env.CC_DEFAULT_REPO || process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM',
+    default_branch: process.env.CC_DEFAULT_BRANCH || 'main',
     max_concurrent: MAX_CONCURRENT, workspace_root: WORKSPACE_ROOT,
     github: github.configured(), allowed_owners: github.allowedOwners(),
     // Either credential pays for a run; reporting only one made the page warn falsely on a
