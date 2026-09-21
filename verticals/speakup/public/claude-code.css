@@ -74,20 +74,3 @@ main > .notice { flex: 0 0 auto; margin: 0 0 10px; }
 .empty-note b { color: var(--text); }
 
 /* ── the box ──────────────────────────────────────────────────────────────── */
-.starter { display: flex; gap: 6px; overflow-x: auto; padding: 0 0 8px; scrollbar-width: none; }
-.starter::-webkit-scrollbar { display: none; }
-.starter button { flex: 0 0 auto; min-height: 38px; padding: 0 12px; border-radius: 999px;
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--panel-text);
-  font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
-.starter button:hover { background: var(--surface-solid); }
-.starter button:disabled { opacity: .45; cursor: default; }
-#cmsg { min-height: 46px; max-height: 30vh; }
-.workw { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis; max-width: 40vw; margin-left: auto; }
-.workw:empty { display: none; }
-
-@media (max-width: 700px) {
-  .starter button { min-height: 44px; }
-  .work summary { min-height: 44px; }
-  .chip { min-height: 44px; font-size: 14px; }
-}

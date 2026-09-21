@@ -56,13 +56,6 @@
     confirmMerge: ['¿Fusionar el pull request?', 'Merge the pull request?'],
     stillWorking: ['Espera a que termine lo anterior.', 'Wait for the current one to finish.']
   };
-  // Examples, not a menu: the box takes anything.
-  var STARTERS = [
-    ['Explica este repo', 'Explain this repo', '¿Qué hace este repositorio? Explícamelo en pocas líneas.', 'What does this repository do? Explain it in a few lines.'],
-    ['Busca errores', 'Find bugs', 'Revisa el código y dime si encuentras errores reales, con el archivo y la línea.', 'Review the code and tell me any real bugs, with the file and the line.'],
-    ['Añade /health', 'Add /health', 'Añade un endpoint /health que devuelva estado ok y la versión en JSON.', 'Add a /health endpoint that returns status ok and the version as JSON.'],
-    ['Escribe pruebas', 'Write tests', 'Escribe pruebas para la parte más importante de este repositorio.', 'Write tests for the most important part of this repository.']
-  ];
 
   function t(k) { var e = T[k]; return e ? e[lang === 'en' ? 1 : 0] : k; }
   function $(id) { return document.getElementById(id); }
@@ -108,12 +101,6 @@
     if ($('mergeBtn').textContent !== t('merged')) $('mergeBtn').textContent = t('merge');
     var b = $('burger'); if (b) b.setAttribute('aria-label', t('menu'));
     var m = $('mic'); if (m) { m.setAttribute('aria-label', t('dictate')); m.title = t('dictate'); }
-    $('starter').innerHTML = STARTERS.map(function (s, i) {
-      return '<button type="button" data-s="' + i + '"' + (busy ? ' disabled' : '') + '>' + esc(lang === 'en' ? s[1] : s[0]) + '</button>';
-    }).join('');
-    Array.prototype.forEach.call($('starter').querySelectorAll('button'), function (btn) {
-      btn.addEventListener('click', function () { var s = STARTERS[+btn.getAttribute('data-s')]; send(lang === 'en' ? s[3] : s[2]); });
-    });
   }
 
   function paintNotice() {
@@ -278,7 +265,6 @@
     busy = v;
     $('send').disabled = v;
     $('workw').textContent = v ? t('working') : '';
-    Array.prototype.forEach.call($('starter').querySelectorAll('button'), function (b) { b.disabled = v; });
   }
 
   // ── sending ────────────────────────────────────────────────────────────────
