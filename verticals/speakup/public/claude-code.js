@@ -27,6 +27,8 @@
     sync:     ['Sync', 'Sync'],
     newShort: ['Nueva', 'New'],
     pr:       ['Pull request', 'Pull request'],
+    pickRepo: ['Elegir repositorio', 'Choose a repository'],
+    repoTitle:['Repositorio', 'Repository'],
     merge:    ['Merge', 'Merge'],
     merging:  ['Fusionando…', 'Merging…'],
     merged:   ['Fusionado', 'Merged'],
@@ -52,7 +54,7 @@
     menu:     ['Menú', 'Menu'],
     tabMeet:  ['Reuniones', 'Meetings'],
     tabFac:   ['Fábrica', 'Factory'],
-    tabCC:    ['Claude Code', 'Claude Code'],
+    tabCC:    ['Builder', 'Builder'],
     confirmMerge: ['¿Fusionar el pull request?', 'Merge the pull request?'],
     stillWorking: ['Espera a que termine lo anterior.', 'Wait for the current one to finish.']
   };
@@ -98,6 +100,7 @@
     $('syncBtn').textContent = t('sync');
     $('newBtn2').textContent = t('newShort');
     $('prLink').textContent = t('pr');
+    $('repoBtn').title = t('repoTitle');
     if ($('mergeBtn').textContent !== t('merged')) $('mergeBtn').textContent = t('merge');
     var b = $('burger'); if (b) b.setAttribute('aria-label', t('menu'));
     var m = $('mic'); if (m) { m.setAttribute('aria-label', t('dictate')); m.title = t('dictate'); }
@@ -114,24 +117,35 @@
 
   function currentRepo() { return repos.find(function (r) { return r.repo_full_name === $('repo').value; }) || null; }
 
+  // The picker is opened on purpose and closes itself: a conversation is tied to one repository,
+  // so the choice is made once and then gets out of the way.
+  var pickerOpen = false;
+
   function paintSetup() {
-    // Before the first message you choose where. After it the choice is made, so the picker goes
-    // away and one line says where you are.
     var started = !!(thread && turns.length);
-    $('setup').hidden = started;
-    $('where').hidden = !started;
-    if (started) {
-      $('whereTxt').textContent = thread.repo_full_name + ' · ' + (thread.work_branch || thread.base_branch);
-      $('prLink').hidden = !thread.pr_url;
-      if (thread.pr_url) $('prLink').href = thread.pr_url;
-      $('mergeBtn').hidden = !thread.pr_url;
-      return;
-    }
+    // Once a conversation has started its repository is fixed, so the picker cannot be opened —
+    // changing it mid-thread would mean the branch and the pull request no longer match the line.
+    if (started) pickerOpen = false;
+    $('setup').hidden = !pickerOpen;
+    $('repoBtn').disabled = started;
+
+    var repo = started ? thread.repo_full_name : $('repo').value;
+    var branch = started ? (thread.work_branch || thread.base_branch) : ($('branch').value || 'main');
+    $('repoTxt').textContent = (repo || t('pickRepo')) + (repo ? ' · ' + branch : '');
+
+    $('prLink').hidden = !(started && thread.pr_url);
+    if (started && thread.pr_url) $('prLink').href = thread.pr_url;
+    $('mergeBtn').hidden = !(started && thread.pr_url);
+    $('newBtn2').hidden = !started;
+
     var r = currentRepo();
     var chip = $('pushChip');
-    if (r && r.can_push === false) { chip.hidden = false; chip.className = 'chip warn'; chip.textContent = t('noPush'); }
-    else if (r && r.can_push === true) { chip.hidden = false; chip.className = 'chip ok'; chip.textContent = t('canPush'); }
-    else chip.hidden = true;
+    if (!pickerOpen || !r || r.can_push == null) chip.hidden = true;
+    else {
+      chip.hidden = false;
+      chip.className = 'chip ' + (r.can_push ? 'ok' : 'warn');
+      chip.textContent = r.can_push ? t('canPush') : t('noPush');
+    }
   }
 
   function bubble(cls, html) {
@@ -384,12 +398,20 @@
       this.style.height = Math.min(this.scrollHeight, Math.round(window.innerHeight * 0.3)) + 'px';
     });
     $('newBtn2').addEventListener('click', newThread);
+    $('repoBtn').addEventListener('click', function () {
+      if (this.disabled) return;
+      pickerOpen = !pickerOpen;
+      paintSetup();
+      if (pickerOpen) $('repo').focus();
+    });
     $('mergeBtn').addEventListener('click', doMerge);
     $('repo').addEventListener('change', function () {
       try { localStorage.setItem(REPO_KEY, this.value); } catch (e) {}
       var r = currentRepo(); if (r) $('branch').value = r.default_branch || 'main';
+      pickerOpen = false;
       paintSetup();
     });
+    $('branch').addEventListener('input', paintSetup);
     $('syncBtn').addEventListener('click', async function () {
       var r = currentRepo(); if (!r) return;
       $('syncBtn').disabled = true;

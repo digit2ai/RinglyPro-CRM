@@ -83,7 +83,7 @@
       });
       const d = await r.json();
       if (!r.ok) { err.textContent = d.error || 'Error'; btn.disabled = false; return; }
-      location.href = '/speakup/';
+      location.href = '/speakup/claude-code';
     } catch (e) { err.textContent = e.message; btn.disabled = false; }
   });
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/speakup/sw.js').catch(()=>{});

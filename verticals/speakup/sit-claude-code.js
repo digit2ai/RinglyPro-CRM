@@ -601,7 +601,11 @@ function testConversation() {
   ok('page: the conversation and the input are on one screen', /id="thread"/.test(html) && /id="cmsg"/.test(html));
   ok('page: Enter sends, Shift+Enter is a new line', /e\.key === 'Enter' && !e\.shiftKey/.test(page));
   ok('page: there is no Back link to a list', !/>Back</.test(html));
-  ok('page: the repository picker disappears once the conversation has started', /\$\('setup'\)\.hidden = started/.test(page));
+  // The picker is behind one quiet line now — a dropdown, a branch field, a Sync button and a
+  // badge above every conversation were four controls for a choice made once.
+  ok('page: the repository picker is closed until it is asked for', /\$\('setup'\)\.hidden = !pickerOpen/.test(page));
+  ok('page: and it cannot be opened once the conversation has started', /if \(started\) pickerOpen = false/.test(page));
+  ok('page: one line says which repository and branch you are on', /repoTxt'\)\.textContent/.test(page));
   ok('page: and Merge is offered inline, on the conversation', /id="mergeBtn"/.test(html));
 
   // A follow-up continues the same branch and the same pull request. This is the difference

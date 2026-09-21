@@ -863,7 +863,7 @@
     var tab = function (id, es, en) { var el = $(id); if (el) el.textContent = L(es, en); };
     tab('tabMeet', 'Reuniones', 'Meetings');
     tab('tabFac', 'Fábrica', 'Factory');
-    tab('tabCC', 'Code', 'Code');
+    tab('tabCC', 'Builder', 'Builder');
     // THE WHOLE SCREEN FOLLOWS, NOT JUST THE HEADER. The pane repaints from the raw events,
     // the step bar redraws from the job it last showed, and a plan on screen gets its
     // instructions back in the new language.

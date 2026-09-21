@@ -51,7 +51,7 @@
     var tab = function (id, es, en) { var el = $(id); if (el) el.textContent = L(es, en); };
     tab('tabMeet', 'Reuniones', 'Meetings');
     tab('tabFac', 'Fábrica', 'Factory');
-    tab('tabCC', 'Code', 'Code');
+    tab('tabCC', 'Builder', 'Builder');
     $('hTitle').textContent = L('Historial', 'History');
     $('q').placeholder = L('Buscar por título o por lo que se dijo…', 'Search by title or by what was said…');
     $('moreBtn').textContent = L('Cargar más', 'Load more');

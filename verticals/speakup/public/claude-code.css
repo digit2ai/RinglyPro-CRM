@@ -16,7 +16,20 @@ footer { flex: 0 0 auto; padding: 8px 14px calc(10px + env(safe-area-inset-botto
 footer .inner { max-width: 860px; margin: 0 auto; }
 main > .notice { flex: 0 0 auto; margin: 0 0 10px; }
 
-/* ── the one line of setup ────────────────────────────────────────────────── */
+/* ── one quiet line, and the picker behind it ─────────────────────────────── */
+/* The desktop app shows its folder as a small chip in the corner, not as a form above the
+   conversation. A dropdown, a branch field, a Sync button and a badge were four controls for a
+   choice made once per conversation, and they were the first thing on the screen. */
+.bar1 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; flex: 0 0 auto; }
+.repoBtn { flex: 0 1 auto; min-width: 0; max-width: 100%; display: inline-flex; align-items: center; gap: 7px;
+  background: transparent; border: 1px solid transparent; border-radius: 9px; cursor: pointer;
+  font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding: 6px 8px; min-height: 34px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repoBtn:hover { border-color: var(--line-strong); color: var(--text); }
+.repoBtn::after { content: '⌄'; font-family: var(--sans); opacity: .7; }
+.bar1 .btn { margin-left: auto; }
+.bar1 .btn + .btn, .bar1 .btn + a.btn { margin-left: 0; }
+
 .setup { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; flex: 0 0 auto; }
 .sel, .inp {
   font-family: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; box-sizing: border-box;
@@ -74,3 +87,15 @@ main > .notice { flex: 0 0 auto; margin: 0 0 10px; }
 .empty-note b { color: var(--text); }
 
 /* ── the box ──────────────────────────────────────────────────────────────── */
+#cmsg { min-height: 46px; max-height: 30vh; }
+.workw { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 40vw; margin-left: auto; }
+.workw:empty { display: none; }
+
+/* On a touch screen every control is thumb-sized. Measured by test-pwa.js at 360, 390 and 414;
+   it is what caught the repository line sitting at 34px. */
+@media (max-width: 700px) {
+  .repoBtn { min-height: 44px; }
+  .work summary { min-height: 44px; }
+  .chip { min-height: 44px; font-size: 14px; }
+}

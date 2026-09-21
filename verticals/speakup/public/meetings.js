@@ -424,7 +424,7 @@
     var tab = function (id, es, en) { var el = $(id); if (el) el.textContent = L(es, en); };
     tab('tabMeet', 'Reuniones', 'Meetings');
     tab('tabFac', 'Fábrica', 'Factory');
-    tab('tabCC', 'Code', 'Code');
+    tab('tabCC', 'Builder', 'Builder');
     $('ctx').textContent = L('Reunión', 'Meeting');
     $('startBtn').textContent = L('Grabar reunión', 'Record meeting');
     $('stopBtn').textContent = L('Detener', 'Stop');

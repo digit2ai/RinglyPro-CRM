@@ -8,7 +8,7 @@
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
 <link rel="stylesheet" href="/speakup/theme.css?v=10">
-<link rel="stylesheet" href="/speakup/claude-code.css?v=3">
+<link rel="stylesheet" href="/speakup/claude-code.css?v=4">
 <meta name="theme-color" content="#1f2937">
 </head>
 <body>
@@ -18,7 +18,7 @@
   <span class="product">AutoDev</span>
   <nav class="tabs">
     <a class="tab" href="/speakup/meetings" id="tabMeet">Reuniones</a>
-    <a class="tab on" href="/speakup/claude-code" id="tabCC">Code</a>
+    <a class="tab on" href="/speakup/claude-code" id="tabCC">Builder</a>
   </nav>
   <div class="hdrmenu" id="hdrMenu">
     <a class="lnk" href="/speakup/history" id="navHistory">Historial</a>
@@ -33,20 +33,20 @@
 <main>
   <p class="notice" id="ccNotice" hidden></p>
 
-  <!-- Before the first message: which repository. After it the picker is gone and this becomes
-       one line saying where you are, because by then the repository is settled and a picker
-       would only invite a wrong click. -->
-  <div class="setup" id="setup">
+  <!-- ONE QUIET LINE, the way the desktop app shows its folder in the corner. The repository
+       picker is behind it and only appears when you ask for it: a dropdown, a branch box, a Sync
+       button and a badge above every conversation was four controls for a choice made once. -->
+  <div class="bar1">
+    <button class="repoBtn" id="repoBtn" type="button" title="Repositorio"><span id="repoTxt"></span></button>
+    <a class="btn small" id="prLink" target="_blank" rel="noopener" hidden>Pull request</a>
+    <button class="btn small primary" id="mergeBtn" type="button" hidden>Merge</button>
+    <button class="btn small" id="newBtn2" type="button" hidden>Nueva</button>
+  </div>
+  <div class="setup" id="setup" hidden>
     <select id="repo" class="sel" aria-label="Repositorio"></select>
     <input id="branch" class="inp branch" type="text" value="main" aria-label="Rama base">
     <button class="btn small" id="syncBtn" type="button">Sync</button>
     <span class="chip" id="pushChip" hidden></span>
-  </div>
-  <div class="setup" id="where" hidden>
-    <span class="where2" id="whereTxt"></span>
-    <a class="btn small" id="prLink" target="_blank" rel="noopener" hidden>Pull request</a>
-    <button class="btn small primary" id="mergeBtn" type="button" hidden>Merge</button>
-    <button class="btn small" id="newBtn2" type="button">Nueva</button>
   </div>
 
   <div id="thread" aria-live="polite"></div>
@@ -70,7 +70,7 @@
   </div>
 </footer>
 
-<script src="/speakup/claude-code.js?v=5"></script>
+<script src="/speakup/claude-code.js?v=6"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 <script src="/speakup/install.js?v=1" defer></script>
 </body>
