@@ -568,7 +568,11 @@ function testSource() {
 
   // Spanish carries its tildes and its ñ.
   const js = read('public/claude-code.js');
-  ok('copy: Spanish strings carry tildes', js.includes('conversación') && js.includes('código'));
+  // Not tied to one phrase: copy is edited constantly and a test that names a single string
+  // breaks on every edit without ever catching what it is for, which is Spanish written without
+  // its accents.
+  ok('copy: Spanish strings carry their tildes and ñ', (js.match(/[áéíóúñ¿¡]/g) || []).length >= 10,
+    'only ' + (js.match(/[áéíóúñ¿¡]/g) || []).length + ' accented characters in the file');
   ok('copy: and the ñ where it belongs', js.includes('Escuchando') || js.includes('sesión') || js.includes('Añad') || js.includes('ejecución'));
   ok('copy: both languages exist for every label', !/\bT\s*=\s*{[^}]*:\s*\[\s*'[^']*'\s*\]/.test(js));
 
