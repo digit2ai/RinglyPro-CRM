@@ -1425,7 +1425,7 @@ awaits before the runner registered the run, so a burst all saw an empty table a
 N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
 first `await` and the runner hands the slot back as it registers.
 
-**SIT:** `node verticals/speakup/sit-claude-code.js` -> **241/241**, zero external keys and no
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **265/265**, zero external keys and no
 database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
 are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
 repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a

@@ -15,6 +15,8 @@
  * The token never reaches the browser and never enters a run event (see redact.js).
  */
 
+const { redactText } = require('./redact');
+
 const API = process.env.CC_GITHUB_API || 'https://api.github.com';
 let fetchImpl = (...a) => fetch(...a);
 
@@ -47,7 +49,17 @@ function normalizeOwner(entry) {
   if (!v) return '';
   v = v.replace(/^https?:\/\//, '').replace(/^(www\.)?github\.com\//, '');   // a pasted URL
   v = v.replace(/^@/, '').split('/')[0];                                        // @org, or org/repo
-  return /^[a-z0-9._-]+$/.test(v) ? v : '';
+  // A value the redactor recognises as a credential is never an owner, whatever its syntax.
+  // Reusing redact.js rather than keeping a second list of shapes here: one definition of "this
+  // looks like a secret" is the only way the two cannot drift. A short key prefix can otherwise
+  // be a syntactically valid GitHub organisation name.
+  if (redactText(v) !== v) return '';
+  // THE REAL GITHUB RULE, WHICH IS ALSO THE SAFETY RULE. An owner is 1-39 characters of letters,
+  // digits and hyphens — no underscores, no dots, nothing long. The owner pasted their TOKEN into
+  // GITHUB_ORG, and a looser pattern accepted it as an owner name: it would then have been echoed
+  // back to the page in `allowed_owners` and in the refusal message. A credential can never
+  // satisfy this, so it can never become an allow-list entry and can never be printed as one.
+  return /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/.test(v) ? v : '';
 }
 function allowedOwners() {
   const raw = String(process.env.GITHUB_ORG || process.env.CC_GITHUB_ORG || '').trim();

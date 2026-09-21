@@ -18,7 +18,7 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code-run.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **241/241**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **265/265**, zero keys, no database |
 
 ## The engine
 

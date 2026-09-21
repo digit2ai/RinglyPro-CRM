@@ -107,6 +107,23 @@ function testOwners() {
     eq('owners: ' + JSON.stringify(typed) + ' means the owner digit2ai', g.ownerAllowed('digit2ai/anything'), want);
     ok('owners: and it never allows anyone else', !g.ownerAllowed('attacker/x'));
   }
+  // A SECRET PASTED INTO GITHUB_ORG IS NOT AN OWNER, AND IS NEVER ECHOED BACK. The owner put
+  // their GitHub token into this variable; a looser pattern accepted it as an owner name, which
+  // would have printed it into the page's allowed_owners and into the refusal message.
+  for (const secret of ['github_pat_11ABCDEFG0123456789_abcdefghijklmnopqrstuv', 'ghp_TESTTOKENVALUE1234567890abcdef',
+    'sk-ant-api03-SOMETHING0987654321', 'a'.repeat(60), 'has_underscores', 'has.dots']) {
+    process.env.GITHUB_ORG = secret;
+    delete require.cache[require.resolve('./src/claudecode/github')];
+    const g = require('./src/claudecode/github');
+    ok('owners: ' + secret.slice(0, 14) + '… is not a GitHub owner name', g.normalizeOwner(secret) === '');
+    ok('owners: and it never reaches the allow-list', !g.allowedOwners().some(o => secret.toLowerCase().includes(o) && o.length > 8));
+    let m = '';
+    try { g.assertAllowed('digit2ai/x'); } catch (e) { m = e.message; }
+    ok('owners: so a refusal cannot print it', !m.includes(secret.slice(0, 20)));
+    // With nothing usable it falls back to the Factory repo's owner rather than opening up.
+    eq('owners: and an unusable value falls back, never to anyone', g.ownerAllowed('attacker/x'), false);
+  }
+
   process.env.GITHUB_ORG = 'digit2ai/CRM-Co-Pilot';
   delete require.cache[require.resolve('./src/claudecode/github')];
   {
