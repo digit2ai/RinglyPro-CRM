@@ -202,8 +202,24 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 /* ── header menu: a row on a desktop, a drawer on a phone ───────────────────── */
 /* The panel is positioned against the bar, so the bar owns the stacking context. */
 .top{position:relative}
-.hdrmenu{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;justify-content:flex-end}
-.burger{display:none;width:44px;height:44px;flex:0 0 44px;padding:0;position:relative;cursor:pointer;
+/* ONE MENU, AT EVERY WIDTH (owner request 2026-09-21). It used to be a row of links in the bar
+   on a desktop and a panel under a burger on a phone — two shapes for one set of controls, and
+   the wide one pushed the bar around as its labels changed language. Now the burger is always
+   the way in, and this is always the panel it opens. The panel is positioned against the header,
+   so it follows a taller bar (the tabs take their own row below 560px) on its own. */
+.hdrmenu{position:absolute;top:100%;right:8px;left:auto;min-width:220px;max-width:calc(100vw - 16px);z-index:90;
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;margin-top:6px;padding:6px;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.hdrmenu:not(.open){display:none}
+.hdrmenu .where{display:block;padding:8px 10px 6px;font-size:12.5px;color:var(--faint);white-space:normal;
+  border-bottom:1px solid var(--line-strong);margin-bottom:2px}
+.hdrmenu .where:empty{display:none}
+.hdrmenu .lnk{min-height:48px;justify-content:flex-start;border:0;background:transparent;font-size:15px;padding:0 10px}
+.hdrmenu .lnk:hover{background:var(--raised)}
+/* The bar has no flexible middle any more, so the burger is pushed to the end. */
+.top .tabs{margin-left:auto}
+.burger{display:block;width:44px;height:44px;flex:0 0 44px;padding:0;position:relative;cursor:pointer;
   border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;color:var(--text)}
 .burger span{position:absolute;left:12px;right:12px;height:2px;background:currentColor;border-radius:2px;
   transition:transform .16s ease,opacity .16s ease}
@@ -216,21 +232,7 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 .burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
 
 @media(max-width:700px){
-  .burger{display:block}
-  .hdrmenu{position:absolute;top:100%;right:8px;left:auto;min-width:220px;max-width:calc(100vw - 16px);z-index:90;
-    flex-direction:column;align-items:stretch;gap:2px;margin-top:6px;padding:6px;
-    background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
-    box-shadow:0 12px 32px rgba(0,0,0,.45)}
-  .hdrmenu:not(.open){display:none}
-  /* The repo label is information, not a control: it reads as a heading in the panel. */
-  .hdrmenu .where{display:block;padding:8px 10px 6px;font-size:12.5px;color:var(--faint);white-space:normal;
-    border-bottom:1px solid var(--line-strong);margin-bottom:2px}
-  /* The factory screen leaves this slot empty (it used to print the repository name),
-     and in the drawer .where is a block with a rule under it — an empty one renders as a
-     blank bordered row. Meetings still fills it with the screen name. */
-  .hdrmenu .where:empty{display:none}
-  .hdrmenu .lnk{min-height:48px;justify-content:flex-start;border:0;background:transparent;font-size:15px;padding:0 10px}
-  .hdrmenu .lnk:hover{background:var(--raised)}
+  /* the menu itself is the same at every width; only what it must clear differs */
 }
 
 @media(max-width:560px){

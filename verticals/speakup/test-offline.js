@@ -1158,8 +1158,10 @@ test('the icon is generated from one source and survives being small', () => {
 test('the header controls are one node, not two copies', () => {
   const css = read('verticals/speakup/public/theme.css');
   const js = read('verticals/speakup/public/header-menu.js');
-  ok(/\.burger\{[^}]*display:none/.test(css) && /@media\(max-width:700px\)\{\s*\.burger\{display:block\}/.test(css.replace(/\n\s*/g, '')),
-    'the burger appears only below the breakpoint');
+  // ONE MENU AT EVERY WIDTH (owner request 2026-09-21). It used to be a row of links in the bar
+  // on a desktop and a panel under a burger on a phone — two shapes for one set of controls.
+  ok(/\.burger\{[^}]*display:block/.test(css), 'the burger is shown at every width');
+  ok(/\.hdrmenu\{[^}]*position:absolute/.test(css.replace(/\n\s*/g, '')), 'and the menu is the panel it opens, not a row in the bar');
   ok(/\.hdrmenu:not\(\.open\)\{display:none\}/.test(css), 'the panel is hidden until it is opened');
   ok(/\.burger\[aria-expanded="true"\]/.test(css), 'the open state draws itself as an X');
   ['app.html', 'meetings.html'].forEach(function (f) {
@@ -1175,7 +1177,8 @@ test('the header controls are one node, not two copies', () => {
   });
   // Behaviour lives in one file for the same reason the markup does.
   ['Escape', 'resize', 'aria-expanded'].forEach(function (k) { ok(js.includes(k), 'the shared script handles ' + k); });
-  ok(/window\.innerWidth > 700/.test(js), 'growing past the breakpoint closes it, so no X is stranded on a desktop');
+  ok(/addEventListener\('resize'[\s\S]{0,80}close\(\)/.test(js),
+    'a resize closes it, so a panel is never stranded against a header that has just reflowed');
   const sw = read('verticals/speakup/public/sw.js');
   ok(/header-menu\.js\?v=\d+/.test(sw), 'the worker caches the shared script');
 });

@@ -86,9 +86,11 @@ server.listen(0, async () => {
           return { display: s.display, w: r.width, h: r.height, top: r.top, right: r.right, vis: r.width > 0 && r.height > 0 };
         });
 
+        // ONE MENU AT EVERY WIDTH (owner request 2026-09-21): the burger is the only way in, on a
+        // desktop as well as a phone, and the row of links in the bar is gone.
         const burger = await shown('#burger');
-        ok(phone ? burger.vis : !burger.vis, `${name} ${label}: burger ${phone ? 'is shown' : 'is hidden'}`);
-        if (phone) ok(burger.w >= 44 && burger.h >= 44, `${name} ${label}: burger is a 44px target (${Math.round(burger.w)}x${Math.round(burger.h)})`);
+        ok(burger.vis, `${name} ${label}: the burger is shown`);
+        ok(burger.w >= 44 && burger.h >= 44, `${name} ${label}: burger is a 44px target (${Math.round(burger.w)}x${Math.round(burger.h)})`);
 
         // THE LOCKUP IS WIDE, AND ONLY A BROWSER KNOWS IT. `.top img` is (0,1,1) and beats a
         // bare `.wordmark` (0,1,0) however late it appears, so the Digit2AI lockup rendered
@@ -98,13 +100,13 @@ server.listen(0, async () => {
         ok(wm.w > wm.h * 3, `${name} ${label}: it is a lockup, not squashed into a square (${Math.round(wm.w)}x${Math.round(wm.h)})`);
 
         const menuClosed = await shown('#hdrMenu');
-        ok(phone ? !menuClosed.vis : menuClosed.vis, `${name} ${label}: the controls are ${phone ? 'tucked away' : 'in the bar'}`);
+        ok(!menuClosed.vis, `${name} ${label}: the controls are tucked away until the burger is tapped`);
 
         // No horizontal overflow, closed or open.
         const overflow = () => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
         ok(!(await overflow()), `${name} ${label}: no horizontal overflow`);
 
-        if (phone) {
+        {
           await page.click('#burger');
           await new Promise(r => setTimeout(r, 250));
           const open = await shown('#hdrMenu');
@@ -148,12 +150,16 @@ server.listen(0, async () => {
           await new Promise(r => setTimeout(r, 250));
           ok(!(await shown('#hdrMenu')).vis, `${name} ${label}: choosing an item closes it`);
 
-          // Growing past the breakpoint must not strand an open panel.
+          // A resize must not strand an open panel against a header that has just reflowed.
+          // It has to be a real change of width: setting the viewport to the width it already
+          // has fires no resize event, so at 1280 this was asserting nothing.
           await page.click('#burger');
           await new Promise(r => setTimeout(r, 200));
-          await page.setViewport({ width: 1280, height: 900 });
+          await page.setViewport({ width: w === 1280 ? 900 : 1280, height: 900 });
           await new Promise(r => setTimeout(r, 300));
-          ok(await page.$eval('#burger', el => el.getAttribute('aria-expanded') === 'false'), `${name} ${label}: resizing to desktop closes it`);
+          ok(await page.$eval('#burger', el => el.getAttribute('aria-expanded') === 'false'), `${name} ${label}: resizing closes it`);
+          await page.setViewport({ width: w, height: h });
+          await new Promise(r => setTimeout(r, 200));
         }
         await page.close();
       }
@@ -164,6 +170,10 @@ server.listen(0, async () => {
     {
       const page = await browser.newPage();
       await page.setViewport({ width: 1280, height: 900 });
+      // The language is remembered, and the menu test above toggles it — on every screen now
+      // that the burger is the menu at every width. Start from a known state rather than from
+      // whatever the previous test left behind.
+      await page.evaluateOnNewDocument(() => { try { localStorage.setItem('speakup_lang', 'es'); } catch (e) {} });
       await page.goto(base, { waitUntil: 'networkidle0' });
       await new Promise(r => setTimeout(r, 600));
       const read = () => page.evaluate(() => ({
@@ -173,14 +183,21 @@ server.listen(0, async () => {
         btn: document.getElementById('langBtn').textContent.trim()
       }));
 
+      // The toggle lives inside the panel at every width now, so the burger opens it first.
+      const toggleLang = async () => {
+        await page.click('#burger');
+        await new Promise(r => setTimeout(r, 200));
+        await page.click('#langBtn');
+        await new Promise(r => setTimeout(r, 400));
+      };
+
       let v = await read();
       ok(v.lang === 'es', 'starts in Spanish');
       ok(/Desplegado/.test(v.pane) && /Probando/.test(v.pane), 'Spanish: the statuses are Spanish');
       ok(/Fusionado en main/.test(v.pane), 'Spanish: the server line is Spanish');
       ok(/Despliegue/.test(v.bar), 'Spanish: the step bar is Spanish');
 
-      await page.click('#langBtn');
-      await new Promise(r => setTimeout(r, 400));
+      await toggleLang();
       v = await read();
       ok(v.lang === 'en', 'toggles to English');
       ok(/Deployed/.test(v.pane) && /Running tests/.test(v.pane), 'English: the statuses turned English');
@@ -190,8 +207,7 @@ server.listen(0, async () => {
       // Prose from a model is shown as it arrived; inventing a translation is worse.
       ok(/Prose from the model/.test(v.pane), 'English: untranslatable prose is left alone');
 
-      await page.click('#langBtn');
-      await new Promise(r => setTimeout(r, 400));
+      await toggleLang();
       v = await read();
       ok(/Desplegado/.test(v.pane) && !/Deployed/.test(v.pane), 'back to Spanish: nothing English is left');
       ok(/Despliegue/.test(v.bar), 'back to Spanish: the step bar followed');

@@ -22,9 +22,10 @@
   menu.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('a,button')) close(); });
   document.addEventListener('click', function (e) { if (isOpen() && !menu.contains(e.target) && e.target !== burger) close(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) { close(); burger.focus(); } });
-  // Past the breakpoint the panel becomes a row again; leaving it "open" would strand the
-  // X-shaped burger on a desktop where there is nothing to close.
-  window.addEventListener('resize', function () { if (window.innerWidth > 700 && isOpen()) close(); });
+  // The menu is a panel at every width now, so a resize no longer changes its shape. It still
+  // closes on one, because a panel positioned against a header that has just reflowed is more
+  // likely to be in the wrong place than to be wanted.
+  window.addEventListener('resize', function () { if (isOpen()) close(); });
 
   close();
 

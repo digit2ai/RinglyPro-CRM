@@ -31,10 +31,19 @@ main > .notice { flex: 0 0 auto; margin: 0 0 10px; }
 .bar1 .btn + .btn, .bar1 .btn + a.btn { margin-left: 0; }
 
 .setup { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; flex: 0 0 auto; }
+/* A LIGHT CONTROL RESTATES ITS TEXT PALETTE. --text is the colour for type on the dark ground;
+   these sit on white, so taking it rendered pale grey on white and the repository name was
+   barely readable. Every light surface in this app does the same (theme.css lists them) — the
+   tokens inherit, so the option list and anything else inside is correct without knowing where
+   it is. */
 .sel, .inp {
   font-family: inherit; font-size: 16px; min-height: 44px; padding: 0 10px; box-sizing: border-box;
-  border-radius: 11px; border: 1px solid var(--line-strong); background: var(--surface-solid); color: var(--text);
+  border-radius: 11px; border: 1px solid var(--line-strong); background: var(--surface-solid);
+  --text: var(--panel-text); --muted: var(--panel-muted); --faint: var(--panel-faint);
+  color: var(--panel-text);
 }
+.sel option { color: var(--panel-text); background: var(--surface-solid); }
+.inp::placeholder { color: var(--panel-faint); opacity: 1; }
 .sel { flex: 1 1 240px; min-width: 0; }
 .inp.branch { flex: 0 1 130px; min-width: 0; }
 .sel:focus, .inp:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }

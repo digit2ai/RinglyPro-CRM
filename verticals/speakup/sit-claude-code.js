@@ -606,6 +606,15 @@ function testConversation() {
   ok('page: the repository picker is closed until it is asked for', /\$\('setup'\)\.hidden = !pickerOpen/.test(page));
   ok('page: and it cannot be opened once the conversation has started', /if \(started\) pickerOpen = false/.test(page));
   ok('page: one line says which repository and branch you are on', /repoTxt'\)\.textContent/.test(page));
+  {
+    // A LIGHT CONTROL ON A DARK PAGE MUST RESTATE ITS TEXT PALETTE. --text is the colour for the
+    // dark ground; a white select taking it rendered the repository name pale grey on white.
+    const css = read('public/claude-code.css');
+    const rule = (css.match(/\.sel, \.inp \{[^}]*\}/) || [''])[0];
+    ok('colour: a white control restates --text from the panel palette', /--text: var\(--panel-text\)/.test(rule));
+    ok('colour: and does not take the on-the-ground colour', !/color: var\(--text\)/.test(rule));
+    ok('colour: the option list is readable too', /\.sel option/.test(css));
+  }
   ok('page: and Merge is offered inline, on the conversation', /id="mergeBtn"/.test(html));
 
   // A follow-up continues the same branch and the same pull request. This is the difference

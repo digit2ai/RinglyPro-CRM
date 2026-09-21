@@ -41,7 +41,7 @@ Three things, all now fixed, and worth keeping fixed:
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **302/302**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **305/305**, zero keys, no database |
 
 ## The conversation
 
