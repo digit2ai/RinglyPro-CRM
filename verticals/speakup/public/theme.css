@@ -68,10 +68,10 @@ body{margin:0;background:var(--paper);color:var(--on-dark);font-family:var(--san
 /* ── header ─────────────────────────────────────────────────────────────────── */
 .top{display:flex;align-items:center;gap:10px;padding:calc(9px + env(safe-area-inset-top)) 16px 9px;
   border-bottom:1px solid var(--line);background:var(--surface);color:var(--text);flex:0 0 auto}
-.top img{width:22px;height:22px;border-radius:5px}
+.top img{width:28px;height:28px;border-radius:6px}
 /* The lockup takes the page colour through currentColor, so one file reads on paper and
    on the brand ink. Only the 2 is fixed — that cyan is the brand. */
-.top img.wordmark{height:17px;width:auto;border-radius:0;color:var(--text);flex:0 0 auto}
+.top img.wordmark{height:21px;width:auto;border-radius:0;color:var(--text);flex:0 0 auto}
 .product{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--muted);
   padding-left:9px;margin-left:2px;border-left:1px solid var(--line-strong);white-space:nowrap}
 .where{font-size:13px;color:var(--muted);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -238,7 +238,7 @@ details.tech>summary{cursor:pointer;color:var(--muted);font-size:13.5px;min-heig
 @media(max-width:560px){
   .top{padding-left:12px;padding-right:12px;gap:8px}
   .product{display:none}
-  .top img.wordmark{height:15px}
+  .top img.wordmark{height:18px}
   /* THREE TABS DO NOT FIT BESIDE THE LOCKUP ON A PHONE, AND THIS WAS MEASURED, NOT GUESSED.
      With Claude Code added the header laid out at 417px at 360, 390 and 414 — it did not
      overflow visibly because app.html sets body{overflow:hidden}, and the only thing that
