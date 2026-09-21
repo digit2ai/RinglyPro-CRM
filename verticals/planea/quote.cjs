@@ -15,8 +15,11 @@
  * - NADA SE ENVÍA AL CLIENTE. La cotización se comparte a mano (WhatsApp). Solo el dueño
  *   recibe un correo cuando el cliente pide discutir o cuando Stripe confirma el pago.
  *
- * Estados: sent -> approved (abrió el pago) -> paid (webhook). discuss en cualquier
- * momento antes de pagar. Una cotización pagada no vuelve atrás.
+ * Estados: sent -> paid (webhook). discuss en cualquier momento antes de pagar. Abrir la
+ * página de pago NO cambia el estado ni dice "aprobada": Planea lo señaló el 20-sep-2026,
+ * porque abrir Stripe no es aprobar. Queda solo como evento 'checkout_opened'. El estado
+ * 'approved' existe para filas viejas y se muestra como "Enviada".
+ * Una cotización pagada no vuelve atrás.
  */
 'use strict';
 
@@ -100,7 +103,7 @@ function defaultStripe() {
 }
 
 // ── Página ──────────────────────────────────────────────────────────────────
-const STATUS_TXT = { sent: 'Enviada', approved: 'Aprobada · pago en proceso', paid: 'Pagada', discuss: 'En conversación' };
+const STATUS_TXT = { sent: 'Enviada', approved: 'Enviada', paid: 'Pagada', discuss: 'En conversación' };
 function page(q, { payments, notice }) {
   const c = q.content || {};
   const items = (c.items || []).map((it) => '<li><b>' + esc(it.title) + '.</b> ' + esc(it.what) + (it.why ? ' <span class="why">' + esc(it.why) + '</span>' : '') + '</li>').join('');
@@ -320,9 +323,9 @@ function build({ db, stripe } = {}) {
         success_url: url + '?pago=ok',
         cancel_url: url + '?pago=cancelado',
       });
-      await sq.query("UPDATE planea_quotes SET status = CASE WHEN status = 'paid' THEN status ELSE 'approved' END, approved_at = COALESCE(approved_at, NOW()), stripe_session_id = :s WHERE id = :id AND tenant_id = :t",
+      await sq.query('UPDATE planea_quotes SET stripe_session_id = :s WHERE id = :id AND tenant_id = :t',
         { replacements: { s: session.id, id: q.id, t: tenant() } });
-      await logEvent(sq, q.id, 'approved', { session: session.id, amount_cents: q.amount_cents });
+      await logEvent(sq, q.id, 'checkout_opened', { session: session.id, amount_cents: q.amount_cents });
       res.json({ url: session.url });
     } catch (e) { console.error('[planea-quote] checkout', e.message); res.status(502).json({ error: 'stripe', message: 'No se pudo abrir el pago. Inténtalo de nuevo.' }); }
   });

@@ -101,12 +101,12 @@ let stripeOn = true;
     const co2 = await call('POST', '/' + q1.token + '/checkout');
     ok(co2.status === 200 && co2.body.url === co.body.url && created.length === 1, 'un segundo toque reusa el pago abierto, no abre otro cobro');
     let [[st]] = await sq.query('SELECT status FROM planea_quotes WHERE id = :id', { replacements: { id: q1.id } });
-    ok(st.status === 'approved', 'aprobar deja la cotización en "approved"');
+    ok(st.status === 'sent', 'abrir el pago no marca la cotización como aprobada');
 
     // La página de regreso NO marca pagada
     const back = await call('GET', '/' + q1.token + '?pago=ok');
     [[st]] = await sq.query('SELECT status FROM planea_quotes WHERE id = :id', { replacements: { id: q1.id } });
-    ok(back.status === 200 && st.status === 'approved' && /solo cuando Stripe nos avisa/.test(back.text), 'regresar de Stripe con ?pago=ok no marca pagada');
+    ok(back.status === 200 && st.status === 'sent' && /solo cuando Stripe nos avisa/.test(back.text), 'regresar de Stripe con ?pago=ok no marca pagada');
     ok((qsrc.match(/SET status = 'paid'/g) || []).length === 1 && qsrc.indexOf("SET status = 'paid'") > qsrc.indexOf("'/stripe/webhook'") && qsrc.indexOf("SET status = 'paid'") < qsrc.indexOf('router.use(noStore)') && !/'paid'\s*(,|WHERE)/.test(coSrc), 'solo el webhook escribe "paid"');
 
     const sid = sent ? 'cs_test_sit_' + n : null;
@@ -122,7 +122,7 @@ let stripeOn = true;
     evt('evt_wrongamt', sid);
     ok((await call('POST', '/stripe/webhook', { hdr: false, raw: JSON.stringify({ id: 'evt_wrongamt' }) })).status === 400, 'un pago por otro monto no marca pagada');
     [[st]] = await sq.query('SELECT status FROM planea_quotes WHERE id = :id', { replacements: { id: q1.id } });
-    ok(st.status === 'approved', 'sigue sin estar pagada');
+    ok(st.status === 'sent', 'sigue sin estar pagada');
     // Con secreto de firma: firma mala
     process.env.PLANEA_QUOTE_WEBHOOK_SECRET = 'whsec_sit';
     sessions.get(sid).amount_total = 24080;
@@ -172,7 +172,7 @@ let stripeOn = true;
     ok((await call('POST', '/' + q2.token + '/discuss', { body: { comment: 'sexta' } })).status === 429, 'más de 5 comentarios por hora se frenan');
     const [ev] = await sq.query('SELECT DISTINCT event FROM planea_quote_events WHERE quote_id IN (:a, :b)', { replacements: { a: q1.id, b: q2.id } });
     const evs = ev.map((r) => r.event);
-    ok(['created', 'viewed', 'approved', 'paid', 'discuss', 'webhook_rejected', 'webhook_unpaid', 'double_payment'].every((e) => evs.indexOf(e) >= 0), 'cada paso queda registrado');
+    ok(['created', 'viewed', 'checkout_opened', 'paid', 'discuss', 'webhook_rejected', 'webhook_unpaid', 'double_payment'].every((e) => evs.indexOf(e) >= 0), 'cada paso queda registrado');
   } catch (e) { console.error('SIT error:', e); fail++; }
   finally {
     server.close();

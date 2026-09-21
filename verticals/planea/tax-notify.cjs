@@ -8,9 +8,8 @@
  * Colombia. Cada aviso sale UNA vez (planea_notifications, único por usuario/año/aviso) y
  * no hay "puesta al día": un aviso cuyo día ya pasó no se manda tarde.
  *
- * QUÉ FECHA: solo la EXACTA de la tabla DIAN del año (data/dian-calendar-<año>.json,
- * Decreto 2229 de 2023). Sin tabla oficial no se envía correo: una ventana estimada sirve
- * en pantalla, no para escribirle a alguien una fecha.
+ * QUÉ FECHA: solo la de la tabla DIAN del año que Planea cargó y VALIDÓ en el módulo
+ * administrativo (dian.cjs). Sin tabla validada no se envía correo ni se muestra fecha.
  *
  * QUÉ DICE: la fecha y de dónde sale. Nunca afirma que la persona esté obligada a
  * declarar ni calcula topes o valores (misma regla que Maya).
@@ -99,7 +98,7 @@ async function sendEmail(to, msg) {
 
 async function runOnce({ db, PlaneaTax, dianTable, send, now } = {}) {
   const sq = db(); if (!sq) return { skipped: 'no_db' };
-  const table = dianTable(); if (!table) return { skipped: 'no_table' };
+  const table = await dianTable(); if (!table) return { skipped: 'no_table' };
   const today = PlaneaTax.todayColombia(now);
   await ensure(sq);
   const [people] = await sq.query(`SELECT p.user_id, u.email, u.full_name, p.finance_meta FROM planea_profiles p JOIN planea_users u ON u.id = p.user_id

@@ -25,6 +25,7 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const kb = require('./kb.cjs');
+const dian = require('./dian.cjs');
 // portal/ vive bajo un package.json con "type":"module", así que require() de un .js
 // devuelve un módulo ESM vacío. Se evalúa el MISMO archivo que usa el navegador con un
 // `module` propio: una sola fuente para la tarjeta, el aviso, el servidor y la SIT.
@@ -37,11 +38,39 @@ function loadPlaneaTax() {
 }
 const PlaneaTax = loadPlaneaTax();
 
+// Las 20 preguntas de la encuesta, leídas del MISMO archivo que usa el navegador, para
+// mostrar al admin la pregunta y la opción elegida en palabras, no en códigos.
+function loadSurvey() {
+  try {
+    const src = fs.readFileSync(path.join(__dirname, 'portal', 'planea-diagnostico.js'), 'utf8');
+    const a = src.indexOf('var Q = {'); const b = src.indexOf('\n  };', a);
+    if (a < 0 || b < 0) return null;
+    const Q = new Function('return ' + src.slice(a + 8, b + 4))();
+    return Object.keys(Q).map(Number).sort((x, y) => x - y).map((n) => ({ n, key: Q[n].key, tag: Q[n].tag, title: Q[n].title, type: Q[n].type, exactKey: Q[n].exactKey || null, options: Q[n].options || [] }));
+  } catch (e) { console.log('planea: no se pudieron leer las preguntas de la encuesta:', e.message); return null; }
+}
+const SURVEY = loadSurvey();
+// [{n, pilar, question, answer}] en el orden de la encuesta. Las cifras exactas opcionales
+// (monto_*) NO se muestran: solo se dice que el usuario escribió una. Una pregunta que la
+// encuesta omitió (por ejemplo sin deudas no hay cuota) dice "No aplica".
+function readableAnswers(ans) {
+  if (!SURVEY || !ans || typeof ans !== 'object') return null;
+  return SURVEY.map((q) => {
+    const v = ans[q.key];
+    const lab = (val) => { const o = q.options.find((x) => x.val === val); return o ? o.label : null; };
+    let answer;
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) answer = null;
+    else if (Array.isArray(v)) answer = v.map((x) => lab(x) || 'Otra respuesta').join(' · ');
+    else answer = lab(v) || 'Otra respuesta';
+    const exact = q.exactKey && ans[q.exactKey] != null && ans[q.exactKey] !== '';
+    return { n: q.n, pilar: q.tag.split(' · ')[0], question: q.title, answer: answer || 'No aplica / sin respuesta', exact_given: !!exact };
+  });
+}
+
 const COOKIE = 'planea_admin';
 const TTL_MS = 8 * 60 * 60 * 1000;
 const AUD = 'planea-admin';
 const PUBLISHED = ['planea-2026-secret', 'dev-only-insecure-secret', 'Digit2Ai@7', 'Palindrome@7'];
-const DATA_DIR = path.join(__dirname, 'data');
 const PAGE = path.join(__dirname, 'admin-ui', 'admin.html');
 let DUMMY_HASH = null;
 const fingerprint = (h) => require('crypto').createHash('sha256').update(String(h || '')).digest('hex').slice(0, 16);
@@ -132,31 +161,57 @@ function ensureTables(sq) {
          WHERE lower(u.email) = :o AND NOT EXISTS (SELECT 1 FROM planea_admins WHERE tenant_id = :t)
         ON CONFLICT DO NOTHING`, { replacements: { t: tenant(), o: OWNER_EMAIL } });
       await kb.ensure(sq);
+      await dian.ensure(sq);
     })().catch((e) => { ensured = null; throw e; });
   }
   return ensured;
 }
 
-// ── Calendario DIAN (tabla que Planea entrega) ───────────────────────────────
-let calCache = null;
-function dianTable() {
-  if (calCache && Date.now() - calCache.at < 5 * 60 * 1000) return calCache.table;
-  const year = +PlaneaTax.todayColombia().slice(0, 4);
-  let table = null;
+// ── Calendario DIAN: SOLO la tabla que Planea cargó y validó (dian.cjs) ─────────
+let dbRef = null;      // lo fija build(); dianTable() no tiene otra forma de llegar a la base
+let lastDian = null;   // para /health, que es síncrono
+async function dianTable() {
+  const sq = dbRef ? dbRef() : null;
+  if (!sq) return null;
   try {
-    const f = path.join(DATA_DIR, 'dian-calendar-' + year + '.json');
-    if (fs.existsSync(f)) {
-      const t = JSON.parse(fs.readFileSync(f, 'utf8'));
-      if (PlaneaTax.validTable(t)) table = { year: t.year || year, tax_year: t.tax_year || null, source: t.source || null, ranges: t.ranges };
-      else console.log('planea: ' + f + ' no es una tabla DIAN válida; se usa la ventana estimada');
+    await ensureTables(sq);
+    lastDian = await dian.current(sq, { tenant: tenant(), year: +PlaneaTax.todayColombia().slice(0, 4) });
+  } catch (e) { console.log('planea: no se pudo leer el calendario DIAN:', e.message); lastDian = null; }
+  return lastDian;
+}
+
+// Puro, para la SIT. Eventos ordenados por fecha + avisos (lo que viene en los próximos días).
+const GOAL_NOTICE_DAYS = 30;
+function calendarFor(goals, fm, table, today, taxDays) {
+  const events = [];
+  (Array.isArray(goals) ? goals : []).forEach((g) => {
+    if (!g || !/^\d{4}-\d{2}-\d{2}$/.test(String(g.fecha_objetivo || '')) || g.estado === 'archivada') return;
+    events.push({ id: 'meta:' + (g.id || g.name), date: g.fecha_objetivo, origin: 'meta', title: String(g.name || 'Meta').slice(0, 120),
+      detail: g.estado === 'cumplida' ? 'Meta cumplida' : 'Fecha objetivo de tu meta', link: '/planea/portal/metas' });
+  });
+  const t = fm && fm.tributario, d = t ? String(t.cedula2 || '').replace(/\D/g, '').slice(-2) : '';
+  let renta;
+  if (!table) renta = { status: 'sin_calendario', message: 'La fecha de renta aparecerá cuando Planea cargue y valide el calendario oficial de la DIAN.' };
+  else if (d.length !== 2) renta = { status: 'sin_digitos', message: 'Guarda los dos últimos dígitos de tu cédula en Impuestos para ver tu fecha de renta.' };
+  else {
+    const r = PlaneaTax.forDigits(d, table, table.year);
+    if (!r) renta = { status: 'sin_grupo', message: 'El calendario cargado no trae tu grupo de dígitos.' };
+    else {
+      renta = { status: 'ok', date: r.date };
+      events.push({ id: 'renta:' + table.year, date: r.date, origin: 'renta', title: 'Declaración de renta ' + table.year,
+        detail: 'Cédula terminada en ' + d + ' · ' + (table.decree || 'calendario DIAN'), link: '/planea/portal/impuestos' });
     }
-  } catch (e) { console.log('planea: no se pudo leer la tabla DIAN:', e.message); }
-  calCache = { at: Date.now(), table };
-  return table;
+  }
+  events.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
+  const days = (iso) => Math.round((Date.parse(iso + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000);
+  const notices = events.filter((e) => { const n = days(e.date); return n >= 0 && n <= (e.origin === 'renta' ? taxDays : GOAL_NOTICE_DAYS) && e.detail !== 'Meta cumplida'; })
+    .map((e) => Object.assign({}, e, { days_left: days(e.date) }));
+  return { today, events: events.map((e) => Object.assign({}, e, { days_left: days(e.date) })), notices, renta, goal_notice_days: GOAL_NOTICE_DAYS, tax_notice_days: taxDays };
 }
 
 function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   const db = () => (backend && backend.db ? backend.db() : null);
+  dbRef = db;
   const ready = () => !!(backend && backend.status && backend.status().ready && db());
 
   async function audit(req, email, event, outcome, meta) {
@@ -199,7 +254,10 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   // Cuerpo pequeño para todo; el grande (12 MB) solo en POST /kb y DESPUÉS de verificar al admin.
   const smallJson = express.json({ limit: '8kb' });
   const bigJson = express.json({ limit: '12mb' });
-  api.use((req, res, next) => (req.method === 'POST' && req.path === '/kb' ? next() : smallJson(req, res, next)));
+  // El chat de entrenamiento, la tabla DIAN y la edición de conocimiento necesitan algo más que 8 KB.
+  const midJson = express.json({ limit: '64kb' });
+  const MID = /^\/(train\/chat|train\/rule|dian|kb\/\d+\/edit)$/;
+  api.use((req, res, next) => (req.method === 'POST' && req.path === '/kb' ? next() : (req.method === 'POST' && MID.test(req.path) ? midJson : smallJson)(req, res, next)));
   api.use((req, res, next) => {
     if (!secret()) return res.status(503).json({ error: 'cerrado', message: 'El módulo administrativo no está configurado (falta un secreto de firma).' });
     if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
@@ -297,7 +355,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
             minutes: prog && prog.started_at && prog.completed_at ? Math.round((new Date(prog.completed_at) - new Date(prog.started_at)) / 6000) / 10 : null,
             stopped_at: !fin.finished && prog && prog.last_step ? { step: prog.last_step, key: prog.last_key, title: prog.last_title, at: prog.last_step_at } : null },
           score: fin.finished && sd ? { score: sd.score != null ? sd.score : null, rango: sd.rango || null, pilares: sd.pilares || null } : null,
-          answers: fin.finished && sd && sd.answers ? sanitizeAnswers(sd.answers) : null,
+          answers: fin.finished && sd && sd.answers ? readableAnswers(sd.answers) : null,
           saw_score: ev.some((e) => e.event === 'score_view'),
           days_visited: ev.filter((e) => e.event === 'visit').length,
           // Último día en que abrió la app: el evento diario de visita (existe desde el
@@ -342,7 +400,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
           account: { registered_at: u.created_at, updated_at: u.updated_at, last_login_at: u.last_login_at || null, logins_ok: lg.ok, logins_failed: lg.bad, failed_in_a_row: u.failed_logins || 0, locked, locked_until: locked ? u.locked_until : null },
           onboarding: fin,
           score: sd && sd.score != null ? { score: sd.score, rango: sd.rango || null, pilares: sd.pilares || null, history: Array.isArray(sd.history) ? sd.history.map((h) => ({ score: h.score, at: h.at, source: h.source || null })) : [] } : null,
-          answers: sd && sd.answers ? sanitizeAnswers(sd.answers) : null,
+          answers: sd && sd.answers ? readableAnswers(sd.answers) : null,
           tributario: t ? { cumplimiento: t.cumplimiento || null, soportes: t.soportes || null, preparador: t.preparador || null, cedula2: t.cedula2 || null } : null,
           preferences: { mi_puntaje_visible: fm.mi_puntaje_visible === true, interes_producto: fm.interes_producto ? sanitizeAnswers(fm.interes_producto) : null },
           data: { modules: (I.get(u.id) || []).map((r) => ({ category: r.category, records: r.n, last_update: r.last })), goals: Number(p.goals) || 0, tax_docs: D.get(u.id) || 0 },
@@ -351,7 +409,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
         };
       });
       audit(req, req.admin.email, 'admin.view_accounts', 'success', { count: out.length });
-      res.json({ total: out.length, hidden: ['Montos y saldos de los módulos financieros', 'Montos de la encuesta', 'Contraseñas y enlaces de restablecimiento', 'IP y navegador', 'Contenido de documentos', 'Conversaciones con Maya (no se guardan)'], users: out });
+      res.json({ total: out.length, hidden: ['Montos y saldos de los módulos financieros', 'Cifras exactas opcionales de la encuesta (se ve la opción elegida, no la cifra)', 'Contraseñas y enlaces de restablecimiento', 'IP y navegador', 'Contenido de documentos', 'Conversaciones con Maya (no se guardan)'], users: out });
     } catch (e) { console.error('[planea-admin] accounts', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
 
@@ -441,19 +499,109 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
+  api.get('/kb/:id(\\d+)', async (req, res) => {
+    try {
+      const d = await kb.getOne(db(), tenant(), req.params.id);
+      if (!d) return res.status(404).json({ error: 'not_found' });
+      res.json({ doc: d });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/kb/:id/edit', async (req, res) => {
+    try {
+      const r = await kb.edit(db(), { tenant: tenant(), id: req.params.id, text: String((req.body && req.body.text) || '').slice(0, 7000), by: req.admin.email });
+      audit(req, req.admin.email, 'admin.kb_edit', r.status === 200 ? 'success' : r.error, r.doc ? { id: r.doc.id, name: r.doc.name, version: r.doc.version, from: Number(req.params.id) } : { id: req.params.id });
+      if (r.status !== 200) return res.status(r.status).json({ error: r.error, message: r.message });
+      res.json({ ok: true, doc: r.doc });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
+  // ── Entrenar a Maya: chat del admin + corrección que queda como regla ──
+  // El chat usa la MISMA instrucción de la app, las reglas y documentos activos y el
+  // calendario DIAN validado: lo que el admin ve es lo que vería un usuario. Nada del chat
+  // se guarda salvo la corrección que el admin decide guardar.
+  const trainHits = new Map();
+  api.post('/train/chat', async (req, res) => {
+    try {
+      const raw = Array.isArray(req.body && req.body.messages) ? req.body.messages.slice(-12) : [];
+      const msgs = raw.map((m) => ({ role: m && m.role === 'assistant' ? 'assistant' : 'user', content: String((m && m.content) || '').slice(0, 2000) })).filter((m) => m.content.trim());
+      if (!msgs.length || msgs[msgs.length - 1].role !== 'user') return res.status(400).json({ error: 'sin_pregunta', message: 'Escribe una pregunta.' });
+      while (msgs.length && msgs[0].role !== 'user') msgs.shift();
+      const now = Date.now(), hits = (trainHits.get(req.admin.uid) || []).filter((t) => now - t < 3600e3);
+      if (hits.length >= 60) return res.status(429).json({ error: 'demasiadas', message: 'Máximo 60 mensajes por hora.' });
+      hits.push(now); trainHits.set(req.admin.uid, hits);
+      if (typeof mayaSystem !== 'function') return res.status(503).json({ error: 'sin_maya', message: 'El chat no está conectado a Maya en este servidor.' });
+      kb._cache.delete(tenant());
+      const system = mayaSystem() + kb.promptBlock(await kb.activeText(db(), tenant())) + dian.knowledgeBlock(await dianTable());
+      const r = await askMaya(system, null, msgs);
+      audit(req, req.admin.email, 'admin.train_chat', r.ok ? 'success' : 'model_error', { turns: msgs.length });
+      res.json(r);
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/train/rule', async (req, res) => {
+    try {
+      const b = req.body || {};
+      const r = await kb.addRule(db(), { tenant: tenant(), question: b.question, wrong: b.wrong_answer, correction: b.correction, by: req.admin.email });
+      audit(req, req.admin.email, 'admin.train_rule', r.status === 200 ? 'success' : r.error, r.doc ? { id: r.doc.id, name: r.doc.name, version: r.doc.version } : null);
+      if (r.status !== 200) return res.status(r.status).json({ error: r.error, message: r.message });
+      res.json({ ok: true, doc: r.doc, replaced: r.replaced });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
+  // ── Calendario DIAN: cargar (borrador) y validar (otro admin) ──
+  api.get('/dian', async (req, res) => {
+    try {
+      const cur = await dianTable();
+      res.json({ calendars: await dian.list(db(), tenant()), current: cur ? { id: cur.id, year: cur.year, decree: cur.decree } : null, year: +PlaneaTax.todayColombia().slice(0, 4) });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.get('/dian/:id(\\d+)', async (req, res) => {
+    try {
+      const c = await dian.get(db(), tenant(), req.params.id);
+      if (!c) return res.status(404).json({ error: 'not_found' });
+      res.json({ calendar: c });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/dian', async (req, res) => {
+    try {
+      const b = req.body || {};
+      const r = await dian.load(db(), { tenant: tenant(), text: String(b.text || '').slice(0, 7000), meta: { year: b.year, tax_year: b.tax_year, decree: b.decree }, by: req.admin.email });
+      audit(req, req.admin.email, 'admin.dian_load', r.status === 200 ? 'success' : 'invalid', r.calendar ? { id: r.calendar.id, year: r.calendar.year } : { errors: (r.errors || []).length });
+      if (r.status !== 200) return res.status(r.status).json({ error: 'tabla_invalida', errors: r.errors });
+      res.json({ ok: true, calendar: r.calendar, ranges: r.ranges });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/dian/:id/validate', async (req, res) => {
+    try {
+      const r = await dian.validate(db(), { tenant: tenant(), id: req.params.id, by: req.admin.email });
+      audit(req, req.admin.email, 'admin.dian_validate', r.status === 200 ? 'success' : (r.error || 'fail'), { id: Number(req.params.id) });
+      if (r.status !== 200) return res.status(r.status).json(r);
+      await dianTable();
+      res.json({ ok: true, id: r.id, year: r.year });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+  api.post('/dian/:id/discard', async (req, res) => {
+    try {
+      const r = await dian.discard(db(), { tenant: tenant(), id: req.params.id, by: req.admin.email });
+      audit(req, req.admin.email, 'admin.dian_discard', r ? 'success' : 'not_found', { id: Number(req.params.id) });
+      if (!r) return res.status(404).json({ error: 'not_found' });
+      await dianTable();
+      res.json({ ok: true });
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
   // ── Prueba de Maya: la MISMA instrucción que usa la app + los documentos activos ──
   // Así el equipo puede comprobar con una pregunta que Maya de verdad lee lo que subió.
   // Compara la respuesta con y sin documentos: si cambia, los documentos están llegando.
   // Solo admins, con tope por hora, y cada prueba queda en la auditoría.
   const testHits = new Map();
-  async function askMaya(system, question) {
+  async function askMaya(system, question, history) {
     const KEY = process.env.ANTHROPIC_API_KEY;
     if (!KEY) return { ok: false, reason: 'Falta la clave del modelo (ANTHROPIC_API_KEY): Maya no está respondiendo en este entorno.' };
     const f = fetchImpl || fetch;
     const r = await f('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: mayaModel || 'claude-haiku-4-5-20251001', max_tokens: 380, system, messages: [{ role: 'user', content: question }] }),
+      body: JSON.stringify({ model: mayaModel || 'claude-haiku-4-5-20251001', max_tokens: 380, system, messages: history || [{ role: 'user', content: question }] }),
     });
     if (!r.ok) {
       let msg = ''; try { const j = await r.json(); msg = (j && j.error && (j.error.message || j.error.type)) || ''; } catch (e) {}
@@ -468,7 +616,8 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
       kb._cache.delete(tenant());
       const text = await kb.activeText(db(), tenant());
       const [docs] = await db().query('SELECT name, version, chars FROM planea_kb_docs WHERE tenant_id = :t AND active ORDER BY lower(name)', { replacements: { t: tenant() } });
-      res.json({ docs, block: kb.promptBlock(text), chars: text.length });
+      const dblock = dian.knowledgeBlock(await dianTable());
+      res.json({ docs, block: kb.promptBlock(text) + dblock, chars: text.length + dblock.length });
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
   api.post('/kb/test', async (req, res) => {
@@ -482,7 +631,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
       kb._cache.delete(tenant()); // la prueba siempre ve lo último que se subió
       const text = await kb.activeText(db(), tenant());
       const [docs] = await db().query('SELECT name, version, chars FROM planea_kb_docs WHERE tenant_id = :t AND active ORDER BY lower(name)', { replacements: { t: tenant() } });
-      const base = mayaSystem();
+      const base = mayaSystem() + dian.knowledgeBlock(await dianTable());
       const compare = !(req.body && req.body.compare === false) && !!text;
       const [withDocs, without] = await Promise.all([
         askMaya(base + kb.promptBlock(text), question),
@@ -568,10 +717,28 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
-  // Público: el calendario DIAN es información pública. Sin tabla -> null y la app estima.
-  me.get('/tax/calendar', (req, res) => {
-    res.set('Cache-Control', 'public, max-age=300');
-    res.json({ table: dianTable(), reminder_days: reminderDays() });
+  // Público: el calendario DIAN es información pública. Sin tabla VALIDADA -> null, y la
+  // app no muestra ninguna fecha (no hay ventana estimada).
+  me.get('/tax/calendar', async (req, res) => {
+    res.set('Cache-Control', 'public, max-age=60');
+    const t = await dianTable();
+    res.json({ table: t ? { year: t.year, tax_year: t.tax_year, source: t.decree, ranges: t.ranges } : null, reminder_days: reminderDays() });
+  });
+
+  // ── Calendario Planea: fechas de metas + fecha de renta, y los avisos en la app ──
+  // Se ARMA en cada lectura desde lo que el usuario ya tiene: una meta con fecha objetivo
+  // aparece sola al crearla, y la renta sale de sus dos dígitos y la tabla DIAN validada.
+  // Así no hay una segunda copia de las fechas que se desactualice.
+  me.get('/me/calendar', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    try {
+      res.set('Cache-Control', 'no-store');
+      const [rows] = await db().query('SELECT goals, finance_meta FROM planea_profiles WHERE user_id = :u LIMIT 1', { replacements: { u: a.id } });
+      const p = rows[0] || {};
+      const out = calendarFor(p.goals, p.finance_meta, await dianTable(), PlaneaTax.todayColombia(), reminderDays());
+      res.json(out);
+    } catch (e) { console.error('[planea-admin] calendar', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
 
   return { admin, me };
@@ -583,12 +750,13 @@ async function mayaKnowledge(backend) {
     const sq = backend && backend.db ? backend.db() : null;
     if (!sq || !(backend.status && backend.status().ready)) return '';
     await ensureTables(sq);
-    return kb.promptBlock(await kb.activeText(sq, tenant()));
+    dbRef = () => backend.db();
+    return kb.promptBlock(await kb.activeText(sq, tenant())) + dian.knowledgeBlock(await dianTable());
   } catch (e) { return ''; }
 }
 
 function health() {
-  return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: !!dianTable(), kb_max_chars: kb.MAX_CHARS() };
+  return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: lastDian ? { year: lastDian.year, decree: lastDian.decree } : null, kb_max_chars: kb.MAX_CHARS() };
 }
 
-module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, finishInfo, _resetCalendarCache: () => { calCache = null; } };
+module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, readableAnswers, calendarFor, finishInfo, SURVEY, _resetCalendarCache: () => { dian._cache.clear(); lastDian = null; } };

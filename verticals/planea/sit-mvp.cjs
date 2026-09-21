@@ -40,10 +40,9 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
 
 (async function main() {
   // ── 1. Calendario de impuestos (puro) ───────────────────────────────────────
-  const est = T.forDigits('37', null, 2026);
-  ok(est && est.kind === 'estimada', 'sin tabla DIAN la fecha es "estimada"');
-  ok(est && /septiembre/.test(est.label), 'dígitos 37 caen en la ventana de septiembre');
-  ok(T.forDigits('00', null, 2026) && T.forDigits('00', null, 2026).window === T.forDigits('99', null, 2026).window, '"00" se trata como 100');
+  ok(T.forDigits('37', null, 2026) === null && T.reminder('37', null, '2026-09-01', 30) === null, 'sin tabla DIAN validada no hay fecha ni aviso (no hay ventana estimada)');
+  ok(!/estimada|WINDOWS/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-tax.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')), 'el módulo de impuestos ya no trae ventanas estimadas');
+  ok(T.forDigits('00', { ranges: [{ from: 99, to: 100, date: '2026-10-26' }] }, 2026).date === '2026-10-26', '"00" se trata como 100');
   const table = { year: 2026, source: 'SIT', ranges: [{ from: 1, to: 50, date: '2026-08-20' }] };
   ok(T.validTable(table), 'tabla DIAN bien formada es válida');
   ok(!T.validTable({ ranges: [{ from: 1, to: 2, date: 'mañana' }] }), 'tabla con fecha inválida se rechaza');
@@ -58,7 +57,9 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   ok(/^\d{4}-\d{2}-\d{2}$/.test(T.todayColombia()), 'hoy en Colombia es YYYY-MM-DD');
 
   // ── 1b. Calendario oficial DIAN 2026 y avisos por correo (puro) ─────────────
-  const dian = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'dian-calendar-2026.json'), 'utf8'));
+  const dian = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'dian-calendar-formato-ejemplo.json'), 'utf8'));
+  ok(!fs.readdirSync(path.join(__dirname, 'data')).some((n) => /^dian-calendar-\d{4}\.json$/.test(n)), 'ningún archivo del repositorio es fuente de fechas DIAN');
+  ok(!/dian-calendar-|readFileSync\([^)]*data/.test(fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8')), 'el servidor no lee fechas DIAN de un archivo');
   ok(T.validTable(dian) && dian.ranges.length === 50, 'tabla DIAN 2026 válida con 50 rangos');
   let nxt = 1, weekdays = true, ordered = true;
   dian.ranges.forEach((r, i) => { if (r.from !== nxt) nxt = -999; nxt = r.to + 1; const wd = new Date(r.date + 'T12:00:00Z').getUTCDay(); if (wd === 0 || wd === 6) weekdays = false; if (i && r.date <= dian.ranges[i - 1].date) ordered = false; });
@@ -80,6 +81,33 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   ok(/no determina si estás obligado/.test(msg.text) && !/debes declarar el|estás obligado a declarar\./.test(msg.text), 'el correo no afirma que la persona esté obligada a declarar');
   ok(TN.enabled() === false, 'los avisos no corren fuera de producción');
 
+  // ── 1c. Carga de la tabla DIAN (formato estándar, revisión completa) ──
+  const dianM = require('./dian.cjs');
+  const csv = 'desde,hasta,fecha\n' + dian.ranges.map((r) => [r.from === 100 ? '00' : String(r.from).padStart(2, '0'), r.to === 100 ? '00' : String(r.to).padStart(2, '0'), r.date].join(',')).join('\n');
+  const pOk = dianM.parse(csv, { year: 2026, decree: 'Decreto SIT de 2025' });
+  ok(pOk.table && pOk.table.ranges.length === 50 && pOk.table.tax_year === 2025, 'un CSV completo se acepta');
+  ok(!dianM.parse(csv, { year: 2026 }).table, 'sin decreto no se acepta');
+  ok(dianM.parse(csv.replace(/\n03,04,[^\n]+/, ''), { year: 2026, decree: 'Decreto SIT de 2025' }).errors.some((e) => /Falta el grupo 03/.test(e)), 'un hueco en los dígitos se rechaza y se nombra');
+  ok(dianM.parse(csv.replace('2026-08-12', '2026-08-15'), { year: 2026, decree: 'Decreto SIT de 2025' }).errors.some((e) => /fin de semana/.test(e)), 'una fecha en fin de semana se rechaza');
+  ok(dianM.parse(csv, { year: 2027, decree: 'Decreto SIT de 2025' }).errors.some((e) => /no cae en 2027/.test(e)), 'fechas de otro año se rechazan');
+  ok(dianM.parse(csv + '\n05,06,2026-10-27', { year: 2026, decree: 'Decreto SIT de 2025' }).errors.length > 0, 'un grupo repetido se rechaza');
+  ok(dianM.parse(JSON.stringify(Object.assign({}, dian, { decree: 'Decreto SIT de 2025' })), {}).table, 'el JSON de ejemplo también se acepta');
+  ok(/CALENDARIO TRIBUTARIO DIAN 2026/.test(dianM.knowledgeBlock(Object.assign({ decree: 'Decreto SIT' }, pOk.table))) && dianM.knowledgeBlock(null) === '', 'la tabla validada entra al conocimiento de Maya');
+
+  // ── 1d. Las 20 respuestas en palabras y el Calendario Planea (puro) ──
+  ok(adminMod.SURVEY && adminMod.SURVEY.length === 20, 'las 20 preguntas se leen de la encuesta');
+  const ra = adminMod.readableAnswers({ edad: 'e2', deuda_tipos: ['tarjeta', 'libre'], rango_ingresos: 'i3', monto_ingresos: 5200000 });
+  ok(ra.length === 20 && ra[0].answer === '30–39' && /Tarjeta de crédito · Préstamo/.test(ra[6].answer), 'cada pregunta muestra la opción elegida en palabras');
+  ok(ra[17].answer === 'Entre $3.000.000 y $6.000.000' && ra[17].exact_given === true && !/5200000|5\.200\.000/.test(JSON.stringify(ra)), 'la cifra exacta opcional no se muestra, solo que existe');
+  ok(ra[1].answer === 'No aplica / sin respuesta', 'una pregunta sin respuesta lo dice');
+  const tbl = Object.assign({ decree: 'Decreto SIT' }, pOk.table);
+  const cf = adminMod.calendarFor([{ id: 'g1', name: 'Viaje', fecha_objetivo: '2026-09-25' }, { id: 'g2', name: 'Sin fecha' }, { id: 'g3', name: 'Archivada', fecha_objetivo: '2026-09-26', estado: 'archivada' }], { tributario: { cedula2: '67' } }, tbl, '2026-09-21', 30);
+  ok(cf.events.length === 2 && cf.events.some((e) => e.origin === 'meta' && e.title === 'Viaje') && cf.events.some((e) => e.origin === 'renta' && e.date === '2026-10-01'), 'el calendario junta metas con fecha y la fecha de renta');
+  ok(cf.notices.length === 2 && cf.notices[0].days_left === 4, 'lo próximo genera un aviso en la app');
+  ok(adminMod.calendarFor([], { tributario: { cedula2: '67' } }, null, '2026-09-21', 30).renta.status === 'sin_calendario' && !adminMod.calendarFor([], { tributario: { cedula2: '67' } }, null, '2026-09-21', 30).events.length, 'sin tabla validada el calendario no muestra fecha de renta');
+  ok(adminMod.calendarFor([], {}, tbl, '2026-09-21', 30).renta.status === 'sin_digitos', 'sin dígitos de cédula lo pide');
+  ok(adminMod.calendarFor([], { tributario: { cedula2: '67' } }, tbl, '2026-08-01', 30).notices.length === 0, 'la renta lejana no genera aviso todavía');
+
   // ── 2. Respuestas sin montos (puro) ─────────────────────────────────────────
   const clean = adminMod.sanitizeAnswers({ edad: '35-44', monto_ingresos: 5200000, montos: { a: 1 }, deudas: 'si', otro: 3500000, texto: '$ 4.500.000', lista: [{ monto_pago: 90000, tipo: 'tc' }] });
   ok(clean.edad === '35-44' && clean.deudas === 'si', 'respuestas normales se conservan');
@@ -98,10 +126,12 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   // ── 4. Estructura: lo que el código promete ─────────────────────────────────
   const adminSrc = fs.readFileSync(path.join(__dirname, 'admin.cjs'), 'utf8');
   const pageSrc = fs.readFileSync(path.join(__dirname, 'admin-ui', 'admin.html'), 'utf8');
-  ok(!/maya.*(chat|conversation|messages)/i.test(pageSrc.replace(/<p[\s\S]*?<\/p>/g, '')), 'la página admin no pide conversaciones de Maya');
+  ok(!/\/conversations|chat_history|maya_messages/i.test(pageSrc + adminSrc), 'el admin no pide conversaciones de usuarios con Maya');
+  const trainSrc = adminSrc.match(/api\.post\('\/train\/chat'[\s\S]*?\n  \}\);/)[0];
+  ok(!/INSERT|kb\.|addRule/.test(trainSrc.replace(/kb\._cache|kb\.promptBlock|kb\.activeText/g, '')), 'el chat de entrenamiento no guarda la conversación');
   ok(!/ingresos_data|gastos_data|assets_data|liabilities_data|seguros_data|retiro_data|net_worth/.test(adminSrc), 'el módulo admin no lee columnas de montos');
   ok(!/SELECT[^;]*\b(value|monthly)\b[^;]*FROM planea_items/.test(adminSrc), 'de planea_items solo se cuentan registros, nunca valores');
-  ok(!/sendgrid|twilio|nodemailer/i.test(adminSrc + fs.readFileSync(path.join(__dirname, 'portal', 'planea-tax-reminder.js'), 'utf8')), 'el aviso de impuestos no envía mensajes');
+  ok(!/sendgrid|twilio|nodemailer/i.test(adminSrc + fs.readFileSync(path.join(__dirname, 'portal', 'planea-avisos.js'), 'utf8')), 'los avisos de la app no envían mensajes');
   ok(!fs.existsSync(path.join(__dirname, 'portal', 'admin.html')), 'la página admin no vive en el portal público');
 
   // ── 5. HTTP contra la base de datos ─────────────────────────────────────────
@@ -114,6 +144,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const hash = await bcrypt.hash(PW, 10);
   const [[adminRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Admin', NOW(), NOW()) RETURNING id", { replacements: { e: ADMIN_EMAIL, h: hash } });
   const [[userRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Usuario', NOW(), NOW()) RETURNING id", { replacements: { e: USER_EMAIL, h: hash } });
+  const ADMIN2_EMAIL = 'sit-mvp-admin2-' + RUN + '@example.test';
+  const [[admin2Row]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Admin 2', NOW(), NOW()) RETURNING id", { replacements: { e: ADMIN2_EMAIL, h: hash } });
   const [[dropRow]] = await sq.query("INSERT INTO planea_users (email, password_hash, full_name, created_at, updated_at) VALUES (:e, :h, 'SIT Abandono', NOW(), NOW()) RETURNING id", { replacements: { e: 'sit-mvp-drop-' + RUN + '@example.test', h: hash } });
   const sd = { score: 61, rango: 'En construcción', pilares: { flujo: 70, deuda: 50 }, answers: { edad: '35-44', monto_ingresos: 5200000, monto_gastos: 3100000, deudas: 'si' }, history: [{ score: 61, at: new Date().toISOString(), source: 'onboarding' }] };
   await sq.query("INSERT INTO planea_profiles (user_id, full_name, score_data, created_at, updated_at) VALUES (:u, 'SIT Usuario', CAST(:s AS JSONB), NOW(), NOW()) ON CONFLICT (user_id) DO UPDATE SET score_data = EXCLUDED.score_data", { replacements: { u: userRow.id, s: JSON.stringify(sd) } });
@@ -121,7 +153,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   const app = express();
   // Modelo FALSO: registra la instrucción recibida y responde según traiga o no documentos.
   const mayaCalls = [];
-  const fakeFetch = async (url, opt) => { const b = JSON.parse(opt.body); mayaCalls.push(b.system); return { ok: true, json: async () => ({ content: [{ text: /DOCUMENTOS DE CONOCIMIENTO/.test(b.system) ? 'Según el documento: versión dos. <accion>{}</accion>' : 'No tengo ese dato.' }] }) }; };
+  const chatCalls = [];
+  const fakeFetch = async (url, opt) => { const b = JSON.parse(opt.body); if (b.messages.length > 1 || /entrenamiento/.test(b.messages[0].content)) { chatCalls.push(b); return { ok: true, json: async () => ({ content: [{ text: 'Respuesta de entrenamiento' }] }) }; } mayaCalls.push(b.system); return { ok: true, json: async () => ({ content: [{ text: /DOCUMENTOS DE CONOCIMIENTO/.test(b.system) ? 'Según el documento: versión dos. <accion>{}</accion>' : 'No tengo ese dato.' }] }) }; };
   const built = adminMod.build({ backend, sec, mayaSystem: () => 'REGLAS BASE DE MAYA', mayaModel: 'fake-model', fetchImpl: fakeFetch });
   app.use('/planea/admin', built.admin);
   app.use('/planea/api/v1', built.me);
@@ -177,6 +210,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(us.body.users && !us.body.users.some((u) => u.email === ADMIN_EMAIL), 'los administradores no cuentan como usuarios de prueba');
     ok(mine && mine.onboarding.finished === true && !!mine.onboarding.finished_at, 'se ve que terminó el onboarding y cuándo');
     ok(mine && mine.score && mine.score.score === 61 && mine.score.pilares && mine.score.pilares.flujo === 70, 'se ve el Puntaje Planea por pilar');
+    ok(mine && Array.isArray(mine.answers) && mine.answers.length === 20 && mine.answers[0].question === '¿En qué rango de edad estás?', 'las respuestas salen como las 20 preguntas con su opción');
     const raw = JSON.stringify(us.body);
     ok(!/monto|5200000|3100000/.test(raw), 'ningún monto sale en el listado');
     ok(!/password_hash|finance_meta|ingresos_data/.test(raw), 'ni claves ni datos financieros en el listado');
@@ -303,18 +337,68 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(list.status === 200 && list.body.docs.length === 2 && list.body.docs.every((d) => !d.active), 'el historial conserva ambas versiones');
     ok(list.status === 200 && !('extracted_text' in (list.body.docs[0] || {})), 'el listado no devuelve el texto completo');
 
-    // Calendario público
+    // Entrenar a Maya: chat + corrección guardada como regla, editable y desactivable
+    process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
+    ok((await call('POST', '/planea/admin/api/train/chat', { cookie: userCookie, body: { messages: [{ role: 'user', content: 'hola' }] } })).status === 404, 'un usuario normal no entra al chat de entrenamiento');
+    const ch = await call('POST', '/planea/admin/api/train/chat', { cookie: ac, body: { messages: [{ role: 'user', content: 'pregunta de entrenamiento' }, { role: 'assistant', content: 'x' }, { role: 'user', content: '¿y el ahorro?' }] } });
+    ok(ch.status === 200 && ch.body.ok && ch.body.reply === 'Respuesta de entrenamiento' && chatCalls.length === 1 && chatCalls[0].messages.length === 3 && chatCalls[0].system.indexOf('REGLAS BASE DE MAYA') === 0, 'el chat usa las reglas de Maya y conserva la conversación');
+    const rule = await call('POST', '/planea/admin/api/train/rule', { cookie: ac, body: { question: '¿Cuánto debo ahorrar al mes?', wrong_answer: 'Ahorra el 50 %', correction: 'Planea no indica un porcentaje fijo; invita a registrar ingresos y gastos para ver el propio.' } });
+    ok(rule.status === 200 && rule.body.doc.kind === 'rule' && rule.body.doc.uploaded_by === ADMIN_EMAIL && !!rule.body.doc.created_at, 'la corrección se guarda como regla con autor y fecha');
+    kb._cache.clear();
+    let kt = await kb.activeText(sq, 990918);
+    ok(/CORRECCIONES DEL EQUIPO/.test(kt) && /no indica un porcentaje fijo/.test(kt) && !/Ahorra el 50/.test(kt), 'Maya recibe la corrección y nunca la respuesta equivocada');
+    ok(kt.indexOf('CORRECCIONES DEL EQUIPO') === 0, 'las correcciones van antes que los documentos');
+    const ed = await call('POST', '/planea/admin/api/kb/' + rule.body.doc.id + '/edit', { cookie: ac, body: { text: 'Cuando pregunten cuánto ahorrar: Planea no fija un porcentaje; muestra el propio con ingresos y gastos.' } });
+    ok(ed.status === 200 && ed.body.doc.version === 2 && ed.body.doc.kind === 'rule', 'editar una regla crea una versión nueva');
+    const oldV = await call('GET', '/planea/admin/api/kb/' + rule.body.doc.id, { cookie: ac });
+    ok(oldV.status === 200 && oldV.body.doc.active === false && oldV.body.doc.meta && oldV.body.doc.meta.wrong_answer === 'Ahorra el 50 %', 'la versión anterior queda en el historial con la pregunta y la respuesta marcada');
+    ok((await call('POST', '/planea/admin/api/kb/' + rule.body.doc.id + '/edit', { cookie: ac, body: { text: 'otra edición sobre una versión vieja' } })).status === 409, 'solo se edita la versión activa');
+    ok((await call('POST', '/planea/admin/api/kb/' + ed.body.doc.id + '/deactivate', { cookie: ac })).status === 200, 'una regla se puede desactivar');
+    kb._cache.clear(); kt = await kb.activeText(sq, 990918);
+    ok(!/porcentaje/.test(kt), 'una regla desactivada ya no llega a Maya');
+    delete process.env.ANTHROPIC_API_KEY;
+    if (prevKey) process.env.ANTHROPIC_API_KEY = prevKey;
+
+    // Calendario DIAN: cargar, validar (otro admin), única fuente
     adminMod._resetCalendarCache();
-    const cal = await call('GET', '/planea/api/v1/tax/calendar');
-    ok(cal.status === 200 && cal.body.reminder_days === 30, 'calendario público responde con días de aviso');
-    const hasFile = fs.existsSync(path.join(__dirname, 'data', 'dian-calendar-' + T.todayColombia().slice(0, 4) + '.json'));
-    ok(hasFile ? !!cal.body.table : cal.body.table === null, 'sin archivo DIAN la tabla es null (la app estima)');
+    let cal = await call('GET', '/planea/api/v1/tax/calendar');
+    ok(cal.status === 200 && cal.body.reminder_days === 30 && cal.body.table === null, 'sin tabla validada el calendario público no da fechas');
+    const bad = await call('POST', '/planea/admin/api/dian', { cookie: ac, body: { year: 2026, decree: 'Decreto SIT de 2025', text: csv.replace(/\n03,04,[^\n]+/, '') } });
+    ok(bad.status === 422 && bad.body.errors.some((e) => /Falta el grupo 03/.test(e)), 'una tabla con huecos no se guarda y dice por qué');
+    const yr = +T.todayColombia().slice(0, 4);
+    const csvY = csv.replace(/2026-/g, yr + '-');
+    const ld = await call('POST', '/planea/admin/api/dian', { cookie: ac, body: { year: yr, decree: 'Decreto SIT de 2025', text: csvY } });
+    const weekendFree = ld.status === 200;
+    ok(ld.status === 200 || (ld.status === 422 && yr !== 2026), 'una tabla completa se guarda como borrador');
+    if (weekendFree) {
+      adminMod._resetCalendarCache();
+      ok((await call('GET', '/planea/api/v1/tax/calendar')).body.table === null, 'un borrador no se muestra a los usuarios');
+      ok((await call('POST', '/planea/admin/api/dian/' + ld.body.calendar.id + '/validate', { cookie: ac })).status === 409, 'quien cargó la tabla no la puede validar');
+      await sq.query("INSERT INTO planea_admins (tenant_id, user_id, granted_by) VALUES (990918, :u, 'sit') ON CONFLICT DO NOTHING", { replacements: { u: admin2Row.id } });
+      const lg2 = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN2_EMAIL, password: PW } });
+      const ac2 = (lg2.cookie || '').split(';')[0];
+      ok((await call('POST', '/planea/admin/api/dian/' + ld.body.calendar.id + '/validate', { cookie: ac2 })).status === 200, 'otro administrador la valida');
+      cal = await call('GET', '/planea/api/v1/tax/calendar');
+      ok(cal.body.table && cal.body.table.ranges.length === 50 && cal.body.table.source === 'Decreto SIT de 2025', 'validada, la tabla es la fuente de fechas');
+      await sq.query("UPDATE planea_profiles SET finance_meta = CAST(:m AS JSONB), goals = CAST(:g AS JSONB) WHERE user_id = :u", { replacements: { u: userRow.id, m: JSON.stringify({ tributario: { cedula2: '67' } }), g: JSON.stringify([{ id: 'gs', name: 'Meta SIT', fecha_objetivo: T.todayColombia() }]) } });
+      const mc = await call('GET', '/planea/api/v1/me/calendar', { cookie: userCookie });
+      ok(mc.status === 200 && mc.body.events.some((e) => e.origin === 'renta') && mc.body.events.some((e) => e.origin === 'meta' && e.title === 'Meta SIT') && mc.body.notices.some((n) => n.title === 'Meta SIT'), 'el Calendario Planea del usuario trae su renta, su meta y el aviso');
+      ok((await call('GET', '/planea/api/v1/me/calendar')).status === 401, 'el calendario pide sesión');
+      const kp = await adminMod.mayaKnowledge(backend);
+      ok(/CALENDARIO TRIBUTARIO DIAN/.test(kp) && /Decreto SIT de 2025/.test(kp), 'Maya recibe la tabla validada');
+      const ld2 = await call('POST', '/planea/admin/api/dian', { cookie: ac, body: { year: yr, decree: 'Decreto SIT corregido', text: csvY } });
+      await call('POST', '/planea/admin/api/dian/' + ld2.body.calendar.id + '/validate', { cookie: ac2 });
+      const dl = await call('GET', '/planea/admin/api/dian', { cookie: ac });
+      ok(dl.body.calendars.filter((c) => c.status === 'validated').length === 1 && dl.body.current.decree === 'Decreto SIT corregido', 'validar una nueva retira la anterior del mismo año');
+      await call('POST', '/planea/admin/api/dian/' + ld2.body.calendar.id + '/discard', { cookie: ac });
+      ok((await call('GET', '/planea/api/v1/tax/calendar')).body.table === null, 'retirar la tabla validada deja a los usuarios sin fecha');
+    } else console.log('  (año ' + yr + ': la tabla de ejemplo cae en fin de semana; validación HTTP NO cubierta)');
 
     // Auditoría
     await new Promise((r) => setTimeout(r, 300));
     const [aud] = await sq.query('SELECT DISTINCT event FROM planea_audit_log WHERE lower(email) = :e', { replacements: { e: ADMIN_EMAIL } });
     const evs = aud.map((r) => r.event);
-    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts', 'admin.kb_test'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
+    ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts', 'admin.kb_test', 'admin.train_chat', 'admin.train_rule', 'admin.kb_edit', 'admin.dian_load'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
 
     // Revisión de seguridad
     const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
@@ -340,7 +424,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(out.status === 200 && /planea_admin=;/.test(out.cookie || ''), 'salir borra la cookie');
   } finally {
     server.close();
-    const ids = [adminRow.id, userRow.id, dropRow.id];
+    const ids = [adminRow.id, admin2Row.id, userRow.id, dropRow.id];
+    await sq.query('DELETE FROM planea_dian_calendars WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_events WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});

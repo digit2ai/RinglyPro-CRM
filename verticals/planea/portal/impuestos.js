@@ -41,8 +41,8 @@
   }
 
   // ── Calendario DIAN (§23.2). Las ventanas y la tabla oficial viven en planea-tax.js y en
-  //    /planea/api/v1/tax/calendar; sin tabla oficial la fecha se muestra como ESTIMADA,
-  //    nunca como un día exacto que la DIAN no ha publicado. ──
+  //    /planea/api/v1/tax/calendar; sin tabla que Planea haya cargado y validado NO se
+  //    muestra ninguna fecha (revisión de Planea, 20-sep-2026). ──
   var TAXCAL = { table: null, loaded: false };
   fetch(TAXAPI + '/tax/calendar', { credentials: 'include' }).then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) { TAXCAL.table = j && j.table || null; TAXCAL.loaded = true; renderCalendario(); })
@@ -51,12 +51,13 @@
     var T = window.PlaneaTax; if (!T) return;
     var d = ($('t-cedula').value || '').replace(/\D/g, '').slice(-2);
     var r = d.length === 2 ? T.forDigits(d, TAXCAL.table, +T.todayColombia().slice(0, 4)) : null;
+    if (!TAXCAL.table) { $('tx-prox').textContent = 'Fecha de renta pendiente'; $('tx-fecha').textContent = ''; $('tx-keep').textContent = 'Tu fecha aparecerá cuando Planea cargue y valide el calendario oficial de la DIAN de este año.'; return; }
     if (!r) { $('tx-prox').textContent = 'Cuéntanos tus dos últimos dígitos'; $('tx-fecha').textContent = ''; $('tx-keep').textContent = 'Ingresa los dos últimos dígitos de tu cédula en el perfil tributario para ver tu fecha de declaración.'; return; }
     $('tx-prox').textContent = 'Declaración de renta ' + r.year;
     var hoy = T.todayColombia(), paso = r.kind === 'exacta' && r.date < hoy;
     $('tx-fecha').textContent = r.kind === 'exacta'
       ? (paso ? 'Tu fecha límite según el calendario DIAN fue el ' + r.label + '.' : 'Fecha límite según el calendario DIAN: ' + r.label + '.') + (r.source ? ' Fuente: ' + r.source.split('.')[0] + '.' : '')
-      : 'Ventana estimada: ' + r.label + '. Confírmala con el calendario oficial de la DIAN.';
+      : '';
     $('tx-keep').textContent = paso
       ? 'Si debías declarar y aún no lo hiciste, consulta con un contador lo antes posible.'
       : 'Ten a mano tus soportes (ingresos, retenciones, deducciones) antes de esa fecha. Si un contador te ayuda, avísale con tiempo. Para recibir un correo 30, 7 y 1 día antes, activa "Próximas fechas tributarias" en Configuración.';

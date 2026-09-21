@@ -70,3 +70,27 @@ CREATE TABLE IF NOT EXISTS planea_quote_events (
 );
 CREATE INDEX IF NOT EXISTS idx_planea_quote_events_quote ON planea_quote_events (tenant_id, quote_id, created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_quote_events_stripe ON planea_quote_events ((detail->>'stripe_event')) WHERE event = 'paid';
+
+-- ── Revisión de Planea, 20-sep-2026 ──────────────────────────────────────────
+-- Reglas de Maya (correcciones del chat de entrenamiento) viven en planea_kb_docs.
+ALTER TABLE planea_kb_docs ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'document';
+ALTER TABLE planea_kb_docs ADD COLUMN IF NOT EXISTS meta JSONB;
+
+-- Calendario DIAN: la única fuente de fechas de renta. Borrador -> validada (otro admin).
+CREATE TABLE IF NOT EXISTS planea_dian_calendars (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL DEFAULT 1,
+  year INTEGER NOT NULL,
+  tax_year INTEGER,
+  decree TEXT NOT NULL,
+  ranges JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft',
+  loaded_by TEXT NOT NULL,
+  loaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  validated_by TEXT,
+  validated_at TIMESTAMPTZ,
+  retired_at TIMESTAMPTZ,
+  retired_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_planea_dian_tenant_year ON planea_dian_calendars (tenant_id, year, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_dian_one_valid ON planea_dian_calendars (tenant_id, year) WHERE status = 'validated';

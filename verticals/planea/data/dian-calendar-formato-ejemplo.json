@@ -1,4 +1,5 @@
 {
+  "_nota": "EJEMPLO DE FORMATO. Este archivo NO es fuente de fechas: la app solo usa la tabla que Planea carga y valida en el módulo administrativo (Calendario DIAN). Formato: year, tax_year, decree, ranges[{from,to,date}] con from/to 1..100 (00 = 100).",
   "year": 2026,
   "tax_year": 2025,
   "obligation": "Declaración de renta y complementarios — personas naturales y sucesiones ilíquidas (fecha límite para declarar y pagar en una sola cuota)",
@@ -255,5 +256,6 @@
       "to": 100,
       "date": "2026-10-26"
     }
-  ]
+  ],
+  "decree": "Decreto que fija los plazos (Planea lo confirma al cargar)"
 }

@@ -84,6 +84,21 @@
   .ans{white-space:pre-wrap;font-size:14px}
   #sentPre{max-height:360px;overflow:auto}
   @media(max-width:760px){.cmp{grid-template-columns:1fr}}
+  .qa{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  .qa td{padding:5px 6px;border-bottom:1px solid var(--line)}
+  .qa td:first-child{color:var(--mut);white-space:nowrap;width:1%}
+  .qa .pq{color:var(--mut)}
+  .chat{border:1px solid var(--line);border-radius:12px;background:#fafcfb;padding:12px;min-height:160px;max-height:520px;overflow:auto}
+  .msg{margin:8px 0;display:flex;flex-direction:column}
+  .msg .b{display:inline-block;max-width:85%;padding:10px 12px;border-radius:12px;white-space:pre-wrap;font-size:14px}
+  .msg.user{align-items:flex-end}.msg.user .b{background:var(--brand);color:#fff}
+  .msg.maya .b{background:#fff;border:1px solid var(--line)}
+  .msg .acts{margin-top:4px}
+  .msg .acts button{min-height:32px;padding:4px 10px;font-size:12.5px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:8px}
+  .fix{margin-top:8px;max-width:85%;border:1px solid var(--amber);border-radius:10px;padding:10px;background:#fff}
+  .fix.saved{border-color:var(--green)}
+  .kind{font-size:11px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:6px;background:#eceff0;color:var(--mut)}
+  .kind.rule{background:#fbeede;color:var(--amber)}
   [hidden]{display:none!important}
 </style>
 </head>
@@ -116,7 +131,9 @@
       <a href="#accounts" data-tab="accounts">Lista de usuarios</a>
       <a href="#users" data-tab="users" class="on">Usuarios de prueba</a>
       <a href="#metrics" data-tab="metrics">Métricas</a>
+      <a href="#train" data-tab="train">Entrenar a Maya</a>
       <a href="#kb" data-tab="kb">Conocimiento de Maya</a>
+      <a href="#dian" data-tab="dian">Calendario DIAN</a>
       <div class="sep"></div>
       <a href="/planea/portal/inicio" target="_blank" rel="noopener">Abrir Planea</a>
       <button type="button" id="outBtn">Salir</button>
@@ -150,6 +167,37 @@
       <h2 style="margin-top:18px">Dónde abandonan el onboarding</h2>
       <p class="mut" id="dropRule"></p>
       <div class="tw"><table id="dropTbl"></table></div>
+    </div>
+
+    <div id="tab-train" class="card" hidden>
+      <h2>Entrenar a Maya</h2>
+      <p class="mut">Conversa con Maya como lo haría un usuario: responde con sus mismas reglas, las correcciones y documentos activos y el calendario DIAN validado. Si una respuesta está mal, toca <b>Marcar como incorrecta</b> y escribe la respuesta correcta. La corrección se guarda como una <b>regla</b> con tu nombre y la fecha, aparece en Conocimiento de Maya (donde se puede ver, editar o desactivar) y Maya la aplica desde la siguiente conversación con cualquier usuario. La conversación no se guarda; solo la corrección.</p>
+      <div class="chat" id="chatBox"><div class="mut" id="chatEmpty">Escribe una pregunta para empezar.</div></div>
+      <label for="chatQ">Tu mensaje</label>
+      <textarea id="chatQ" rows="2" maxlength="2000" placeholder="Ej: ¿Cuándo tengo que declarar renta si mi cédula termina en 45?"></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" id="chatBtn">Enviar</button><button class="btn warn" type="button" id="chatNew">Nueva conversación</button></div>
+      <div class="err" id="chatErr"></div>
+    </div>
+
+    <div id="tab-dian" class="card" hidden>
+      <h2>Calendario DIAN</h2>
+      <p class="mut">Esta tabla es la <b>única</b> fuente de fechas de renta de Planea: el aviso de Inicio, Impuestos, el Calendario Planea, los correos y Maya. Mientras no haya una tabla <b>validada</b> del año en curso, a los usuarios no se les muestra ninguna fecha. Se carga una vez al año.</p>
+      <p id="dianNow"></p>
+      <h2 style="margin-top:14px">1. Cargar la tabla del año</h2>
+      <p class="mut">Formato estándar: un CSV con tres columnas <b>desde,hasta,fecha</b> (dígitos 01 a 00, fecha AAAA-MM-DD), una fila por grupo. También se acepta el JSON de ejemplo. Se revisa entera antes de guardarse: cubre del 01 al 00 sin huecos ni cruces, fechas en orden, en el año indicado y en días hábiles.</p>
+      <div class="grid">
+        <div><label for="dYear">Año del calendario</label><input id="dYear" type="text" inputmode="numeric" maxlength="4" placeholder="2026"></div>
+        <div><label for="dDecree">Decreto que fija los plazos</label><input id="dDecree" type="text" maxlength="300" placeholder="Ej: Decreto 2229 de 2023"></div>
+      </div>
+      <label for="dText">Tabla (pega el CSV o el JSON, o elige el archivo)</label>
+      <textarea id="dText" rows="8" placeholder="desde,hasta,fecha&#10;01,02,2026-08-12&#10;03,04,2026-08-13&#10;..."></textarea>
+      <div style="margin-top:8px"><input id="dFile" type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain"></div>
+      <div style="margin-top:12px"><button class="btn" type="button" id="dBtn">Cargar como borrador</button></div>
+      <div class="err" id="dErr"></div><div class="ok" id="dOk"></div>
+      <h2 style="margin-top:18px">2. Validar</h2>
+      <p class="mut">Otro administrador, no quien la cargó, revisa la tabla y la valida. Al validarla, reemplaza a la anterior del mismo año y los usuarios empiezan a ver su fecha.</p>
+      <div class="tw"><table id="dianTbl"></table></div>
+      <div id="dianView" hidden style="margin-top:12px"></div>
     </div>
 
     <div id="tab-kb" class="card" hidden>
@@ -242,14 +290,22 @@
   });
   $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('whoName').textContent = ''; show('login'); }); });
 
-  function tabFromHash() { var h = (location.hash || '').slice(1); return ['accounts', 'users', 'metrics', 'kb'].indexOf(h) >= 0 ? h : 'users'; }
+  function tabFromHash() { var h = (location.hash || '').slice(1); return TABS.indexOf(h) >= 0 ? h : 'users'; }
+  var TABS = ['accounts', 'users', 'metrics', 'train', 'kb', 'dian'];
   window.addEventListener('hashchange', function () { if (!$('app').hidden) tab(tabFromHash()); });
   function tab(name) {
     document.querySelectorAll('.nav [data-tab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
-    ['accounts', 'users', 'metrics', 'kb'].forEach(function (t) { $('tab-' + t).hidden = t !== name; });
-    if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else loadKb();
+    TABS.forEach(function (t) { $('tab-' + t).hidden = t !== name; });
+    if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else if (name === 'kb') loadKb(); else if (name === 'dian') loadDian();
   }
 
+  // Las 20 preguntas con la opción elegida, en palabras (el servidor ya las trae así).
+  function answersHtml(list) {
+    if (!list || !list.length) return '';
+    return '<table class="qa">' + list.map(function (q) {
+      return '<tr><td>' + esc(q.n) + '</td><td><div class="pq">' + esc(q.pilar) + ' · ' + esc(q.question) + '</div><b>' + esc(q.answer) + '</b>' + (q.exact_given ? ' <span class="mut">(también escribió una cifra exacta; no se muestra)</span>' : '') + '</td></tr>';
+    }).join('') + '</table>';
+  }
   var PILARES = ['flujo', 'deuda', 'ahorro', 'inversion', 'impuestos', 'seguros', 'retiro', 'patrimonio'];
   var PLABEL = { flujo: 'Flujo', deuda: 'Deuda', ahorro: 'Ahorro', inversion: 'Inversión', impuestos: 'Impuestos', seguros: 'Seguros', retiro: 'Retiro', patrimonio: 'Patrimonio' };
   function loadUsers() {
@@ -263,8 +319,9 @@
       $('usersTbl').innerHTML = head + r.users.map(function (u) {
         var ob = u.onboarding.finished ? '<span class="pill yes">Terminó</span><div class="mut">' + esc(fecha(u.onboarding.finished_at)) + (u.onboarding.minutes != null ? ' · ' + esc(u.onboarding.minutes) + ' min' : '') + '</div>' : '<span class="pill no">Sin terminar</span>' + (u.onboarding.stopped_at ? '<div class="mut">Se quedó en la pregunta ' + esc(u.onboarding.stopped_at.step) + ': ' + esc(u.onboarding.stopped_at.title || u.onboarding.stopped_at.key) + '</div>' : '');
         var det = '';
-        if (u.score && u.score.pilares) det += '<div class="mut" style="margin-top:6px">' + PILARES.map(function (k) { return PLABEL[k] + ': <b>' + esc(u.score.pilares[k] != null ? u.score.pilares[k] : '—') + '</b>'; }).join(' · ') + '</div>';
-        if (u.answers) det += '<details><summary>Respuestas de la encuesta</summary><pre>' + esc(JSON.stringify(u.answers, null, 2)) + '</pre></details>';
+        if (u.score && u.score.score != null) det += '<div style="margin-top:6px">Puntaje Planea: <b>' + esc(u.score.score) + '</b>' + (u.score.rango ? ' <span class="mut">(' + esc(u.score.rango) + ')</span>' : '') + '</div>';
+        if (u.score && u.score.pilares) det += '<div class="mut">' + PILARES.map(function (k) { return PLABEL[k] + ': <b>' + esc(u.score.pilares[k] != null ? u.score.pilares[k] : '—') + '</b>'; }).join(' · ') + '</div>';
+        if (u.answers) det += '<details><summary>Las 20 respuestas de la encuesta</summary>' + answersHtml(u.answers) + '</details>';
         return '<tr><td><b>' + esc(u.full_name || '—') + '</b><div class="mut">' + esc(u.email) + '</div>' + det + '</td>' +
           '<td>' + esc(fecha(u.registered_at)) + '</td><td>' + ob + '</td>' +
           '<td>' + (u.last_visit ? esc(dia(u.last_visit)) : '—') + '</td></tr>';
@@ -288,7 +345,7 @@
       '<section><h3>Actividad</h3>' + dl([['Días con visita', v.days_visited], ['Vio su puntaje', yn(v.saw_score)], ['NPS', v.nps]]) +
         (v.recent.length ? '<details><summary>Últimos eventos (' + v.recent.length + ')</summary><pre>' + esc(v.recent.map(function (r) { return fecha(r.at) + '  ' + r.event + ' · ' + (r.outcome || ''); }).join('\n')) + '</pre></details>' : '') + '</section>' +
       '</div>';
-    if (u.answers) html += '<details style="margin-top:10px"><summary>Respuestas de la encuesta</summary><pre>' + esc(JSON.stringify(u.answers, null, 2)) + '</pre></details>';
+    if (u.answers) html += '<details style="margin-top:10px" open><summary>Las 20 respuestas de la encuesta</summary>' + answersHtml(u.answers) + '</details>';
     return html;
   }
   function renderAccounts() {
@@ -345,15 +402,42 @@
       if (r._status !== 200) { $('kbTbl').innerHTML = '<tr><td class="err">No se pudo cargar.</td></tr>'; if (r._status === 404) show('login'); return; }
       $('kbUsage').textContent = 'Conocimiento activo: ' + r.active_chars.toLocaleString('es-CO') + ' de ' + r.max_chars.toLocaleString('es-CO') + ' caracteres. Todo lo activo viaja en cada mensaje de Maya.';
       if (!r.docs.length) { $('kbTbl').innerHTML = '<tr><td class="mut">Aún no hay documentos. Maya usa solo sus reglas de siempre.</td></tr>'; return; }
-      $('kbTbl').innerHTML = '<tr><th>Documento</th><th class="num">Versión</th><th>Estado</th><th>Subido por</th><th class="num">Caracteres</th><th></th></tr>' + r.docs.map(function (d) {
-        return '<tr><td><b>' + esc(d.name) + '</b><div class="mut">' + esc(d.filename || '') + '</div></td><td class="num">' + esc(d.version) + '</td>' +
+      $('kbTbl').innerHTML = '<tr><th>Documento o regla</th><th class="num">Versión</th><th>Estado</th><th>Autor y fecha</th><th class="num">Caracteres</th><th></th></tr>' + r.docs.map(function (d) {
+        return '<tr><td><span class="kind' + (d.kind === 'rule' ? ' rule' : '') + '">' + (d.kind === 'rule' ? 'REGLA' : 'DOCUMENTO') + '</span> <b>' + esc(d.name) + '</b><div class="mut">' + esc(d.filename || '') + '</div></td><td class="num">' + esc(d.version) + '</td>' +
           '<td>' + (d.active ? '<span class="pill yes">Activo</span>' : '<span class="pill na">Historial</span>' + (d.deactivated_by ? '<div class="mut">' + esc(fecha(d.deactivated_at)) + '</div>' : '')) + '</td>' +
           '<td>' + esc(d.uploaded_by) + '<div class="mut">' + esc(fecha(d.created_at)) + '</div></td><td class="num">' + esc(Number(d.chars).toLocaleString('es-CO')) + '</td>' +
-          '<td>' + (d.active ? '<button class="btn warn small" data-off="' + d.id + '" title="Maya deja de leerlo. No se borra: queda en el historial.">Desactivar</button>' : '') + '</td></tr>';
+          '<td style="white-space:nowrap"><button class="btn small" data-view="' + d.id + '">' + (d.active ? 'Ver / editar' : 'Ver') + '</button> ' + (d.active ? '<button class="btn warn small" data-off="' + d.id + '" title="Maya deja de leerlo. No se borra: queda en el historial.">Desactivar</button>' : '') + '</td></tr>' +
+          '<tr class="acc-det" id="kbv-' + d.id + '" hidden><td colspan="6"></td></tr>';
       }).join('');
     });
   }
   $('kbTbl').addEventListener('click', function (e) {
+    var v = e.target.closest && e.target.closest('[data-view]');
+    if (v) {
+      var id = v.getAttribute('data-view'), row = $('kbv-' + id), cell = row.firstChild;
+      if (!row.hidden) { row.hidden = true; return; }
+      row.hidden = false; cell.innerHTML = '<span class="mut">Cargando…</span>';
+      call('GET', '/kb/' + id).then(function (r) {
+        if (r._status !== 200) { cell.innerHTML = '<span class="err">No se pudo cargar.</span>'; return; }
+        var d = r.doc, m = d.meta || {};
+        cell.innerHTML = (d.kind === 'rule' && m.question ? '<p class="mut">Pregunta: ' + esc(m.question) + (m.wrong_answer ? '<br>Respuesta que se marcó como incorrecta: ' + esc(m.wrong_answer) : '') + '</p>' : '') +
+          '<p class="mut">' + (d.kind === 'rule' ? 'Regla' : 'Documento') + ' de ' + esc(d.uploaded_by) + ' · ' + esc(fecha(d.created_at)) + (d.active ? '' : ' · en el historial (no activo)') + '</p>' +
+          '<textarea rows="8" data-edit-text="' + d.id + '"' + (d.active ? '' : ' readonly') + '>' + esc(d.extracted_text) + '</textarea>' +
+          (d.active ? '<div style="margin-top:8px"><button class="btn small" data-save="' + d.id + '">Guardar cambios</button> <span class="mut">Se guarda como versión nueva; la anterior queda en el historial.</span></div><div class="err" data-edit-err="' + d.id + '"></div>' : '');
+      });
+      return;
+    }
+    var sv = e.target.closest && e.target.closest('[data-save]');
+    if (sv) {
+      var sid = sv.getAttribute('data-save'), ta = document.querySelector('[data-edit-text="' + sid + '"]');
+      sv.disabled = true;
+      call('POST', '/kb/' + sid + '/edit', { text: ta.value }).then(function (r) {
+        sv.disabled = false;
+        if (r._status !== 200) { document.querySelector('[data-edit-err="' + sid + '"]').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
+        loadKb();
+      });
+      return;
+    }
     var b = e.target.closest && e.target.closest('[data-off]'); if (!b) return;
     if (!confirm('¿Desactivar este documento? Maya dejará de leerlo; queda en el historial.')) return;
     call('POST', '/kb/' + b.getAttribute('data-off') + '/deactivate').then(loadKb);
@@ -474,6 +558,115 @@
       $('sentInfo').textContent = r.docs.length ? 'Este texto se agrega a las instrucciones de Maya en CADA mensaje (' + Number(r.chars).toLocaleString('es-CO') + ' caracteres).' : 'Nada: no hay documentos activos.';
       $('sentPre').textContent = r.block || '';
     });
+  });
+
+  // ── Entrenar a Maya ──
+  var CHAT = [];
+  function renderChat() {
+    var box = $('chatBox');
+    if (!CHAT.length) { box.innerHTML = '<div class="mut">Escribe una pregunta para empezar.</div>'; return; }
+    box.innerHTML = CHAT.map(function (m, i) {
+      if (m.role === 'user') return '<div class="msg user"><span class="b">' + esc(m.content) + '</span></div>';
+      var fix = '';
+      if (m.fixOpen) fix = '<div class="fix' + (m.saved ? ' saved' : '') + '">' + (m.saved ? '<b>Regla guardada.</b> <span class="mut">' + esc(m.saved) + '</span>' :
+        '<label for="fx-' + i + '">Respuesta correcta</label><textarea id="fx-' + i + '" rows="3" maxlength="4000" placeholder="Escribe cómo debe responder Maya"></textarea>' +
+        '<div style="margin-top:8px"><button class="btn small" data-fsave="' + i + '">Guardar corrección</button> <button class="btn small warn" data-fcancel="' + i + '">Cancelar</button></div><div class="err" id="fxe-' + i + '"></div>') + '</div>';
+      return '<div class="msg maya"><span class="b">' + esc(m.content) + '</span>' + (m.error ? '' : (m.fixOpen ? '' : '<div class="acts"><button type="button" data-fix="' + i + '">Marcar como incorrecta</button></div>')) + fix + '</div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+  function send() {
+    var q = $('chatQ').value.trim(); $('chatErr').textContent = '';
+    if (!q) { $('chatErr').textContent = 'Escribe un mensaje.'; return; }
+    CHAT.push({ role: 'user', content: q }); $('chatQ').value = ''; renderChat();
+    $('chatBtn').disabled = true; $('chatBtn').textContent = 'Maya está pensando…';
+    var hist = CHAT.filter(function (m) { return !m.error; }).map(function (m) { return { role: m.role === 'user' ? 'user' : 'assistant', content: m.content }; });
+    call('POST', '/train/chat', { messages: hist }).then(function (r) {
+      $('chatBtn').disabled = false; $('chatBtn').textContent = 'Enviar';
+      if (r._status !== 200) { $('chatErr').textContent = r.message || r.error || 'No se pudo enviar.'; CHAT.pop(); $('chatQ').value = q; renderChat(); return; }
+      if (!r.ok) { CHAT.push({ role: 'maya', content: r.reason || 'Sin respuesta.', error: true }); }
+      else CHAT.push({ role: 'maya', content: r.reply });
+      renderChat();
+    });
+  }
+  $('chatBtn').addEventListener('click', send);
+  $('chatQ').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  $('chatNew').addEventListener('click', function () { CHAT = []; renderChat(); });
+  $('chatBox').addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('button'); if (!t) return;
+    var i;
+    if (t.hasAttribute('data-fix')) { i = +t.getAttribute('data-fix'); CHAT[i].fixOpen = true; renderChat(); var ta = $('fx-' + i); if (ta) ta.focus(); return; }
+    if (t.hasAttribute('data-fcancel')) { i = +t.getAttribute('data-fcancel'); CHAT[i].fixOpen = false; renderChat(); return; }
+    if (t.hasAttribute('data-fsave')) {
+      i = +t.getAttribute('data-fsave');
+      var corr = $('fx-' + i).value.trim(), q = '';
+      for (var k = i - 1; k >= 0; k--) if (CHAT[k].role === 'user') { q = CHAT[k].content; break; }
+      if (corr.length < 10) { $('fxe-' + i).textContent = 'Escribe la corrección (al menos 10 caracteres).'; return; }
+      t.disabled = true;
+      call('POST', '/train/rule', { question: q, wrong_answer: CHAT[i].content, correction: corr }).then(function (r) {
+        t.disabled = false;
+        if (r._status !== 200) { $('fxe-' + i).textContent = r.message || r.error || 'No se pudo guardar.'; return; }
+        CHAT[i].saved = '«' + r.doc.name + '», versión ' + r.doc.version + '. Maya la aplica desde la siguiente conversación (en menos de un minuto). Se puede editar o desactivar en Conocimiento de Maya.';
+        renderChat();
+      });
+    }
+  });
+
+  // ── Calendario DIAN ──
+  var ST = { draft: '<span class="pill na">Borrador</span>', validated: '<span class="pill yes">Validada</span>', retired: '<span class="pill no">Retirada</span>' };
+  function loadDian() {
+    $('dianTbl').innerHTML = '<tr><td class="mut">Cargando…</td></tr>';
+    call('GET', '/dian').then(function (r) {
+      if (r._status !== 200) { $('dianTbl').innerHTML = '<tr><td class="err">No se pudo cargar.</td></tr>'; if (r._status === 404) show('login'); return; }
+      if (!$('dYear').value) $('dYear').value = r.year;
+      $('dianNow').innerHTML = r.current ? '<span class="pill yes">En uso</span> Calendario ' + esc(r.current.year) + ' validado · ' + esc(r.current.decree) + '.' : '<span class="pill no">Sin tabla validada para ' + esc(r.year) + '</span> Hoy los usuarios no ven ninguna fecha de renta.';
+      if (!r.calendars.length) { $('dianTbl').innerHTML = '<tr><td class="mut">Aún no se ha cargado ninguna tabla.</td></tr>'; return; }
+      $('dianTbl').innerHTML = '<tr><th>Año</th><th>Decreto</th><th>Fechas</th><th>Estado</th><th>Cargó</th><th>Validó</th><th></th></tr>' + r.calendars.map(function (c) {
+        return '<tr><td><b>' + esc(c.year) + '</b></td><td>' + esc(c.decree) + '</td><td>' + esc(c.ranges) + ' grupos<div class="mut">' + esc(c.first_date) + ' a ' + esc(c.last_date) + '</div></td><td>' + (ST[c.status] || esc(c.status)) + '</td>' +
+          '<td>' + esc(c.loaded_by) + '<div class="mut">' + esc(fecha(c.loaded_at)) + '</div></td><td>' + (c.validated_by ? esc(c.validated_by) + '<div class="mut">' + esc(fecha(c.validated_at)) + '</div>' : '—') + '</td>' +
+          '<td style="white-space:nowrap"><button class="btn small" data-dview="' + c.id + '">Ver</button> ' +
+          (c.status === 'draft' ? '<button class="btn small" data-dval="' + c.id + '">Validar</button> ' : '') +
+          (c.status !== 'retired' ? '<button class="btn warn small" data-ddis="' + c.id + '">' + (c.status === 'draft' ? 'Descartar' : 'Retirar') + '</button>' : '') + '</td></tr>';
+      }).join('');
+    });
+  }
+  $('dFile').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.size > 64 * 1024) { $('dErr').textContent = 'El archivo es demasiado grande para una tabla de fechas.'; return; }
+    var rd = new FileReader(); rd.onload = function () { $('dText').value = String(rd.result); }; rd.readAsText(f);
+  });
+  $('dBtn').addEventListener('click', function () {
+    $('dErr').textContent = ''; $('dOk').textContent = '';
+    $('dBtn').disabled = true;
+    call('POST', '/dian', { year: $('dYear').value.trim(), decree: $('dDecree').value.trim(), text: $('dText').value }).then(function (r) {
+      $('dBtn').disabled = false;
+      if (r._status !== 200) { $('dErr').innerHTML = esc(r.message || 'La tabla no se guardó:') + (r.errors ? '<ul>' + r.errors.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : ''); return; }
+      $('dOk').textContent = 'Borrador guardado (' + r.ranges + ' grupos). Ahora otro administrador debe validarlo.';
+      $('dText').value = ''; loadDian();
+    });
+  });
+  $('dianTbl').addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('button'); if (!t) return;
+    if (t.hasAttribute('data-dview')) {
+      call('GET', '/dian/' + t.getAttribute('data-dview')).then(function (r) {
+        if (r._status !== 200) return;
+        var c = r.calendar, pad = function (n) { return n === 100 ? '00' : String(n).padStart(2, '0'); };
+        $('dianView').hidden = false;
+        $('dianView').innerHTML = '<h2>Calendario ' + esc(c.year) + ' · ' + esc(c.decree) + '</h2><div class="tw"><table><tr><th>Dígitos</th><th>Fecha límite</th></tr>' +
+          c.ranges.map(function (x) { return '<tr><td>' + pad(x.from) + (x.to !== x.from ? ' a ' + pad(x.to) : '') + '</td><td>' + esc(dia(x.date)) + '</td></tr>'; }).join('') + '</table></div>';
+        $('dianView').scrollIntoView({ behavior: 'smooth' });
+      });
+      return;
+    }
+    if (t.hasAttribute('data-dval')) {
+      if (!confirm('¿Validar esta tabla? Los usuarios empezarán a ver su fecha de renta con ella.')) return;
+      call('POST', '/dian/' + t.getAttribute('data-dval') + '/validate').then(function (r) { if (r._status !== 200) alert(r.message || 'No se pudo validar.' + (r.errors ? '\n' + r.errors.join('\n') : '')); loadDian(); });
+      return;
+    }
+    if (t.hasAttribute('data-ddis')) {
+      if (!confirm('¿Retirar esta tabla? Si está validada, los usuarios dejan de ver fechas hasta que se valide otra.')) return;
+      call('POST', '/dian/' + t.getAttribute('data-ddis') + '/discard').then(loadDian);
+    }
   });
 
   boot();

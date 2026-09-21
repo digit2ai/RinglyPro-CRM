@@ -3,13 +3,15 @@
 (function () {
   'use strict';
   var BASE = '/planea/portal/';
-  // Las CATORCE secciones oficiales del portal (Documento Maestro §29), en su orden.
+  // Las secciones oficiales del portal (Documento Maestro §29) más Calendario Planea
+  // (revisión de Planea, 20-sep-2026), en su orden.
   // El listado es cerrado: no hay "Cuentas vinculadas", "Planea IA", "Guía de uso" ni
   // "Más" (Doc 2 §1.6). "Retiro / Pensión" es la denominación única (Doc 2 §1.7 / §2).
   var ITEMS = [
     { k: 'inicio', label: 'Inicio', icon: 'M3 10.5 12 3l9 7.5|M5 9.5V21h14V9.5' },
     { k: 'diagnostico', label: 'Puntaje Planea', icon: 'circle:12,12,9|M12 7v5l3 2' },
     { k: 'metas', label: 'Mis metas', icon: 'circle:12,12,9|circle:12,12,4.5|circle:12,12,0.8' },
+    { k: 'calendario', label: 'Calendario Planea', icon: 'rect:3,5,18,16,2|M3 10h18|M8 3v4M16 3v4' },
     { k: 'ingreso', label: 'Ingresos', plus: true, icon: 'rect:2.5,7,19,10,2|circle:12,12,2.2|M6 10v.01M18 14v.01' },
     { k: 'gastos', label: 'Gastos', plus: true, icon: 'M3 17l6-6 4 4 8-8|M21 13V7h-6' },
     { k: 'ahorro', label: 'Ahorro', module: true, plus: true, icon: 'M19 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2|M15 12h7v4h-7a2 2 0 0 1 0-4Z' },
