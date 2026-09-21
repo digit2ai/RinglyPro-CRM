@@ -55,7 +55,19 @@ async function networkResolve(input) {
   const a = hit.address;
   if (a.state && !/florida/i.test(a.state)) return { ok: false, reason: 'outside_florida' };
   const city = a.city || a.town || a.village || a.hamlet || a.suburb || a.neighbourhood || hit.name || null;
-  const zipOut = a.postcode && /^\d{5}/.test(a.postcode) ? a.postcode.slice(0, 5) : null;
+  let zipOut = a.postcode && /^\d{5}/.test(a.postcode) ? a.postcode.slice(0, 5) : null;
+  // OpenStreetMap often attaches a NEIGHBOURING ZIP to a town (Wesley Chapel came back as 33559, which is Lutz, and the
+  // search then ran on Lutz; owner voice test 2026-09-21). The postal service's own list of ZIPs for that city wins:
+  // keep OSM's ZIP only if the city really has it, else take the city's ZIP nearest the point OSM returned.
+  if (city) {
+    const zc = await getJson('https://api.zippopotam.us/us/fl/' + encodeURIComponent(city.toLowerCase())).catch(() => ({}));
+    const places = (zc.data && zc.data.places) || [];
+    if (places.length && !places.some((p) => p['post code'] === zipOut)) {
+      const lat = Number(hit.lat), lon = Number(hit.lon);
+      const d = (p) => (Number(p.latitude) - lat) ** 2 + (Number(p.longitude) - lon) ** 2;
+      zipOut = places.slice().sort((x, y) => d(x) - d(y))[0]['post code'];
+    }
+  }
   return { ok: true, resolved: true, zip: zipOut, city, county: cleanCounty(a.county), state: 'FL', label: [city, 'FL'].filter(Boolean).join(', ') + (zipOut ? ' ' + zipOut : '') };
 }
 
