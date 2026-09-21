@@ -540,7 +540,9 @@ function testSource() {
   ok('source: every event is redacted before it is stored', /redact\(/.test(store));
 
   // The tab is on every screen, from one markup node per page.
-  for (const f of ['public/app.html', 'public/meetings.html', 'public/history.html', 'public/settings.html', 'public/claude-code.html', 'public/claude-code-run.html']) {
+  ok('screen: the separate run page is gone — the conversation IS the screen',
+    !fs.existsSync(path.join(__dirname, 'public/claude-code-run.html')));
+  for (const f of ['public/app.html', 'public/meetings.html', 'public/history.html', 'public/settings.html', 'public/claude-code.html']) {
     const html = read(f);
     eq('tab: exactly one Claude Code tab on ' + path.basename(f), (html.match(/id="tabCC"/g) || []).length, 1);
     ok('tab: it points at /speakup/claude-code on ' + path.basename(f), html.includes('href="/speakup/claude-code"'));
@@ -549,7 +551,7 @@ function testSource() {
   const sw = read('public/sw.js');
   for (const asset of ['theme.css', 'claude-code.js', 'claude-code.css', 'meetings.js']) {
     const versions = new Set();
-    for (const f of ['public/app.html', 'public/meetings.html', 'public/history.html', 'public/settings.html', 'public/login.html', 'public/claude-code.html', 'public/claude-code-run.html', 'public/sw.js']) {
+    for (const f of ['public/app.html', 'public/meetings.html', 'public/history.html', 'public/settings.html', 'public/login.html', 'public/claude-code.html', 'public/sw.js']) {
       const m = read(f).match(new RegExp(asset.replace('.', '\\.') + '\\?v=(\\d+)', 'g')) || [];
       for (const hit of m) versions.add(hit);
     }
@@ -560,13 +562,13 @@ function testSource() {
   // No emojis anywhere in what ships.
   const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
   for (const f of ['src/claudecode/runner.js', 'src/claudecode/store.js', 'src/claudecode/github.js', 'src/claudecode/redact.js',
-    'src/routes/claude-code.js', 'public/claude-code.js', 'public/claude-code.css', 'public/claude-code.html', 'public/claude-code-run.html']) {
+    'src/routes/claude-code.js', 'public/claude-code.js', 'public/claude-code.css', 'public/claude-code.html']) {
     ok('copy: no emoji in ' + path.basename(f), !emoji.test(read(f)));
   }
 
   // Spanish carries its tildes and its ñ.
   const js = read('public/claude-code.js');
-  ok('copy: Spanish strings carry tildes', js.includes('ejecución') && js.includes('Programando'));
+  ok('copy: Spanish strings carry tildes', js.includes('conversación') && js.includes('código'));
   ok('copy: and the ñ where it belongs', js.includes('Escuchando') || js.includes('sesión') || js.includes('Añad') || js.includes('ejecución'));
   ok('copy: both languages exist for every label', !/\bT\s*=\s*{[^}]*:\s*\[\s*'[^']*'\s*\]/.test(js));
 
@@ -576,6 +578,40 @@ function testSource() {
   ok('transfer: it now reaches Claude Code', /__createRun/.test(meetings));
   ok('transfer: the old Factory path is still reachable by configuration', /SPEAKUP_TRANSFER_ENGINE/.test(meetings));
   ok('transfer: a transferred answer records its reference', /factory_ref\s*=\s*'cc:'/.test(meetings));
+}
+
+// ── 8b. the conversation: one box, one branch, one pull request ──────────────
+function testConversation() {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (p) => fs.readFileSync(path.join(__dirname, p), 'utf8');
+  const strip = (x) => x.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  const page = read('public/claude-code.js');
+  const html = read('public/claude-code.html');
+  const runner = strip(read('src/claudecode/runner.js'));
+  const route = strip(read('src/routes/claude-code.js'));
+
+  // ONE PAGE. The owner's complaint was that it was not like Claude: a form, then a card, then a
+  // separate run page with no box on it. The box must be on the same screen as the answers.
+  ok('page: the conversation and the input are on one screen', /id="thread"/.test(html) && /id="cmsg"/.test(html));
+  ok('page: Enter sends, Shift+Enter is a new line', /e\.key === 'Enter' && !e\.shiftKey/.test(page));
+  ok('page: there is no Back link to a list', !/>Back</.test(html));
+  ok('page: the repository picker disappears once the conversation has started', /\$\('setup'\)\.hidden = started/.test(page));
+  ok('page: and Merge is offered inline, on the conversation', /id="mergeBtn"/.test(html));
+
+  // A follow-up continues the same branch and the same pull request. This is the difference
+  // between a chat and a queue of unrelated jobs.
+  ok('thread: a turn carries its thread', /thread_id/.test(route));
+  ok('thread: a follow-up checks the conversation branch out again', /checkout', '-B', branch/.test(runner));
+  ok('thread: and reuses the pull request instead of opening a second', /thread\.pr_number/.test(runner));
+  ok('thread: the earlier turns travel in the prompt, or a follow-up is not a follow-up',
+    /WHAT HAS HAPPENED SO FAR/.test(runner));
+  ok('thread: the agent session is resumed when it is still there', /thread && thread\.session_id/.test(runner));
+  ok('thread: the agent answer is stored, not only streamed', /summary: result\.text/.test(runner));
+  ok('thread: one turn at a time per conversation', /still working/.test(route));
+  ok('thread: the merge reads the pull request number from the THREAD, never the caller',
+    /thread\.pr_number\)/.test(route) && !/body\.pr_number/.test(route));
 }
 
 // ── 9. config is reported, never guessed ─────────────────────────────────────
@@ -782,6 +818,7 @@ async function testStatusMachine() {
   testStore();
   await testRoutes();
   testSource();
+  testConversation();
   testConfig();
   await testReviewFixes();
   await testStatusMachine();

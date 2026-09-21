@@ -1,8 +1,16 @@
 # Claude Code — the third tab on autodev.digit2ai.com
 
-Pick a repository, describe a build, and Claude Code executes it end to end:
-clone -> branch -> code -> test -> commit -> push -> pull request -> (merge -> Render deploy),
-streaming every step into the page as it happens.
+ONE PAGE, ONE BOX, ONE CONVERSATION. You type, it works, the answer appears under your message,
+you type again. A follow-up continues the SAME branch and the SAME pull request, so the unit is
+the conversation, not the job — that is what makes it feel like Claude Code rather than a form
+that queues unrelated work. Behind each message: clone -> branch -> code -> install -> test ->
+commit -> push -> pull request, streamed into the page as it happens.
+
+**There is no run page and no Back.** An earlier version had a form, then a card, then a separate
+run screen with no input on it; the owner's verdict was that it was not usable. The repository
+picker is on screen only until the first message, after which one line says where you are and
+Merge sits inline. `/claude-code/runs/:id` still resolves — it redirects to the conversation that
+run belongs to, so an old link lands somewhere true.
 
 Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), beside
 **Reuniones** and **Fábrica**. Operator only — the same allow-list the AI Factory uses.
@@ -16,9 +24,22 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | GitHub client + the owner allow-list | `src/claudecode/github.js` |
 | Secret redaction | `src/claudecode/redact.js` |
 | HTTP surface | `src/routes/claude-code.js` |
-| Pages | `public/claude-code.html`, `public/claude-code-run.html`, `public/claude-code.js`, `public/claude-code.css` |
-| Schema | `migrations/20260920_claude_code.sql` (`cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **265/265**, zero keys, no database |
+| Pages | `public/claude-code.html`, `public/claude-code.js`, `public/claude-code.css` |
+| Schema | `migrations/20260920_claude_code.sql` (`cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`) |
+| SIT | `sit-claude-code.js` -> **276/276**, zero keys, no database |
+
+## The conversation
+
+A **thread** is one repository, one branch, one pull request and as many turns as you type. A turn
+is a `cc_runs` row, so a thread needs no message table: its messages ARE its runs, in order.
+
+The first turn creates the branch. Every later turn fetches and checks out that same branch, so the
+work accumulates in one place behind one pull request — and the earlier turns travel in the prompt,
+because a follow-up that cannot see what came before is not a follow-up. The agent session is
+resumed when it is still on disk; when it is not, the replayed turns carry the thread anyway.
+
+One turn runs at a time per conversation. A second message while the first is working is refused
+with a plain message, the way a chat waits for its answer.
 
 ## The engine
 

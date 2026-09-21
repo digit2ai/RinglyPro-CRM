@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS cc_runs (
   id              SERIAL PRIMARY KEY,
   tenant_id       INTEGER NOT NULL,
   user_id         INTEGER NOT NULL,
+  thread_id       INTEGER,
   repo_full_name  TEXT NOT NULL,
   base_branch     TEXT DEFAULT 'main',
   work_branch     TEXT,
@@ -14,6 +15,7 @@ CREATE TABLE IF NOT EXISTS cc_runs (
   source_ref      TEXT,                            -- meeting id / factory job id
   status          TEXT DEFAULT 'queued',           -- queued|cloning|running|testing|pushing|pr_open|merged|deployed|failed|cancelled
   session_id      TEXT,
+  summary         TEXT,
   pr_url          TEXT,
   commit_sha      TEXT,
   deploy_url      TEXT,
@@ -37,6 +39,23 @@ CREATE TABLE IF NOT EXISTS cc_run_events (
   payload  JSONB DEFAULT '{}'::jsonb
 );
 CREATE INDEX IF NOT EXISTS cc_run_events_run_idx ON cc_run_events(run_id, id);
+
+CREATE TABLE IF NOT EXISTS cc_threads (
+  id              SERIAL PRIMARY KEY,
+  tenant_id       INTEGER NOT NULL,
+  user_id         INTEGER NOT NULL,
+  repo_full_name  TEXT NOT NULL,
+  base_branch     TEXT DEFAULT 'main',
+  work_branch     TEXT,
+  pr_url          TEXT,
+  pr_number       INTEGER,
+  session_id      TEXT,
+  title           TEXT,
+  archived        BOOLEAN DEFAULT false,
+  created_at      TIMESTAMPTZ DEFAULT now(),
+  last_run_at     TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS cc_threads_tenant_idx ON cc_threads(tenant_id, id);
 
 CREATE TABLE IF NOT EXISTS cc_repos (
   id                   SERIAL PRIMARY KEY,

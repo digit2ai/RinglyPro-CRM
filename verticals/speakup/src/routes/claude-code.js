@@ -179,6 +179,97 @@ async function createRun(req, { repo_full_name, brief, base_branch, source, sour
   } catch (e) { release(); throw e; }
 }
 
+/**
+ * ONE ENDPOINT FOR THE WHOLE CONVERSATION. The page sends a message; if it carries no thread it
+ * starts one, and if it carries a thread it continues that thread's branch and pull request. No
+ * "create a run" step, no separate page — this is what makes the surface feel like typing into
+ * Claude rather than filling in a form.
+ */
+router.post('/chat', mutation, configured, wrap(async (req, res) => {
+  const tenant_id = tenantOf(req);
+  const b = req.body || {};
+  const text = String(b.text || '').trim();
+  if (!text) return res.status(400).json({ error: 'Write what you want done' });
+
+  let thread = null;
+  if (b.thread_id) {
+    thread = await models.CcThread.findOne({ where: { tenant_id, id: b.thread_id } });
+    if (!thread) return res.status(404).json({ error: 'No encontrado' });
+  }
+  const repo = thread ? thread.repo_full_name : String(b.repo_full_name || '');
+  const base = thread ? thread.base_branch : String(b.base_branch || 'main');
+
+  // A turn that is still working must not be overtaken: one at a time per conversation, the
+  // same way a chat waits for its answer.
+  if (thread) {
+    const live = await models.CcRun.findOne({
+      where: { tenant_id, thread_id: thread.id, status: { [Op.notIn]: store.TERMINAL } }, order: [['id', 'DESC']]
+    });
+    if (live) return res.status(409).json({ error: 'This conversation is still working. Wait for it to finish.', run_id: live.id });
+  }
+
+  const run = await createRun(req, { repo_full_name: repo, brief: text, base_branch: base, source: b.source || 'manual' });
+
+  if (!thread) {
+    thread = await models.CcThread.create({
+      tenant_id, user_id: req.user.id, repo_full_name: repo, base_branch: base,
+      title: text.split('\n')[0].slice(0, 90), last_run_at: new Date()
+    });
+  } else {
+    await thread.update({ last_run_at: new Date() });
+  }
+  await run.update({ thread_id: thread.id });
+  res.status(201).json({ ok: true, thread: threadView(thread), run: store.view(run) });
+}));
+
+function threadView(t) {
+  return {
+    id: t.id, repo_full_name: t.repo_full_name, base_branch: t.base_branch, work_branch: t.work_branch,
+    pr_url: t.pr_url, pr_number: t.pr_number, title: t.title, created_at: t.created_at, last_run_at: t.last_run_at
+  };
+}
+
+// The conversation: the thread, its turns in order, and the events of the turn still running.
+router.get('/threads/:id', wrap(async (req, res) => {
+  const tenant_id = tenantOf(req);
+  const thread = await models.CcThread.findOne({ where: { tenant_id, id: req.params.id } });
+  if (!thread) return res.status(404).json({ error: 'No encontrado' });
+  const runs = await models.CcRun.findAll({ where: { tenant_id, thread_id: thread.id }, order: [['id', 'ASC']] });
+  res.json({ thread: threadView(thread), turns: runs.map(store.view) });
+}));
+
+// The most recent conversations, so the page can reopen the last one on boot.
+router.get('/threads', wrap(async (req, res) => {
+  const tenant_id = tenantOf(req);
+  const rows = await models.CcThread.findAll({
+    where: { tenant_id, archived: false }, order: [['id', 'DESC']], limit: Math.min(50, Number(req.query.limit) || 20)
+  });
+  res.json({ threads: rows.map(threadView) });
+}));
+
+// Merge the conversation's pull request. It reads the number from the THREAD, never the caller.
+router.post('/threads/:id/merge', mutation, configured, wrap(async (req, res) => {
+  const tenant_id = tenantOf(req);
+  const thread = await models.CcThread.findOne({ where: { tenant_id, id: req.params.id } });
+  if (!thread) return res.status(404).json({ error: 'No encontrado' });
+  if (!thread.pr_number) return res.status(409).json({ error: 'This conversation has no pull request yet' });
+  const pr = await github.getPR(thread.repo_full_name, thread.pr_number);
+  if (pr.merged) return res.json({ ok: true, already: true, thread: threadView(thread) });
+  if (pr.draft) return res.status(409).json({ error: 'The pull request is a draft: the tests were red. Read it on GitHub.' });
+  await github.mergePR(thread.repo_full_name, thread.pr_number, pr.head.sha, thread.title || ('AutoDev thread ' + thread.id));
+  await audit.record({
+    tenant_id, user_id: req.user.id, actor: req.user.email, action: 'cc.thread_merged',
+    entity: 'cc_thread', entity_id: thread.id, detail: { pr: thread.pr_url }, req
+  });
+  const hook = process.env.RENDER_DEPLOY_HOOK_URL;
+  const hookRepo = process.env.CC_DEPLOY_REPO || process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM';
+  let deployed = false;
+  if (hook && thread.repo_full_name.toLowerCase() === String(hookRepo).toLowerCase()) {
+    try { await fetch(hook, { method: 'POST' }); deployed = true; } catch (e) { /* reported below */ }
+  }
+  res.json({ ok: true, merged: true, deployed, thread: threadView(thread) });
+}));
+
 router.post('/runs', mutation, configured, wrap(async (req, res) => {
   const run = await createRun(req, req.body || {});
   res.status(201).json({ ok: true, run: store.view(run) });

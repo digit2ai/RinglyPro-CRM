@@ -1257,15 +1257,28 @@ A security review of the rebuild found five things worth keeping fixed. **The pl
 
 New column: `su_jobs.revisions` JSONB (idempotent ALTER in `index.js`, canonical migration kept in step). New endpoints: `POST /factory/jobs/:id/approve`, `POST /factory/jobs/:id/revise`, `POST /factory/recordings/:id/prompt` — all operator-only and same-origin.
 
-### Claude Code — the THIRD tab: pick a repo, describe a build, watch it ship
+### Claude Code — the THIRD tab: ONE BOX, and the conversation is the unit
 
-`/speakup/claude-code` (and the run at `/speakup/claude-code/runs/:id`), beside Reuniones and
-Fábrica. A brief becomes clone -> branch -> code -> test -> commit -> push -> pull request ->
-(merge -> Render deploy), streamed live into the page. Operator only, the SAME allow-list the
+`/speakup/claude-code`, beside Reuniones and Fábrica. **One page, one box.** You type, it works,
+the answer appears under your message, you type again — and a follow-up continues the SAME branch
+and the SAME pull request. Behind each message: clone -> branch -> code -> install -> test ->
+commit -> push -> pull request, streamed live.
+
+**THE FIRST VERSION WAS A FORM, A CARD AND A SEPARATE RUN PAGE, AND THE OWNER COULD NOT USE IT**
+("this should be like Claude, plain and simple" — 2026-09-21, after a run left them on a screen
+with no input box and a Back link). The unit is now the CONVERSATION, not the job: `cc_threads`
+holds the repository, the branch, the pull request and the agent session, and each turn is a
+`cc_runs` row belonging to it, so a thread needs no message table. The first turn creates the
+branch; every later turn fetches and checks out that same one, reuses the pull request rather than
+opening a second, and **carries the earlier turns in its prompt** — a follow-up that cannot see
+what came before is not a follow-up. One turn at a time per conversation; a second message while
+the first works is refused plainly, the way a chat waits. The repository picker is on screen only
+until the first message. `/claude-code/runs/:id` redirects to the conversation that run belongs
+to, so an old link still lands somewhere true. Operator only, the SAME allow-list the
 Factory uses — a run clones a repository, spends money and pushes a branch, so it is the
 Factory's authority reached a different way and does not get a second, weaker gate. Code:
 `src/claudecode/{runner,store,github,redact}.js` + `src/routes/claude-code.js` +
-`public/claude-code{,-run}.html|.js|.css`. Tables `cc_runs`, `cc_run_events`, `cc_repos`
+`public/claude-code.html|.js|.css`. Tables `cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`
 (canonical `migrations/20260920_claude_code.sql`). Full runbook:
 `verticals/speakup/README-claude-code.md`.
 
@@ -1425,7 +1438,7 @@ awaits before the runner registered the run, so a burst all saw an empty table a
 N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
 first `await` and the runner hands the slot back as it registers.
 
-**SIT:** `node verticals/speakup/sit-claude-code.js` -> **265/265**, zero external keys and no
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **276/276**, zero external keys and no
 database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
 are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
 repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a

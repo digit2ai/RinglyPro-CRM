@@ -8,7 +8,7 @@
 <link rel="manifest" href="/speakup/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/speakup/apple-touch-icon.png">
 <link rel="stylesheet" href="/speakup/theme.css?v=10">
-<link rel="stylesheet" href="/speakup/claude-code.css?v=1">
+<link rel="stylesheet" href="/speakup/claude-code.css?v=2">
 <meta name="theme-color" content="#1f2937">
 </head>
 <body>
@@ -31,50 +31,48 @@
   <button class="burger" id="burger" aria-label="Menú" aria-expanded="false" aria-controls="hdrMenu"><span></span><span></span><span></span></button>
 </header>
 
-<main class="ccmain">
-  <section class="card" id="newRun">
-    <h2 id="tNew">Nueva ejecución</h2>
-    <p class="notice" id="ccNotice" hidden></p>
+<main>
+  <p class="notice" id="ccNotice" hidden></p>
 
-    <div class="ccrow">
-      <label class="ccfield">
-        <span id="tRepo">Repositorio</span>
-        <select id="repo" class="sel wide"></select>
-      </label>
-      <label class="ccfield narrow">
-        <span id="tBranch">Rama base</span>
-        <input id="branch" class="inp" type="text" value="main" spellcheck="false">
-      </label>
-    </div>
+  <!-- Before the first message: which repository. After it the picker is gone and this becomes
+       one line saying where you are, because by then the repository is settled and a picker
+       would only invite a wrong click. -->
+  <div class="setup" id="setup">
+    <select id="repo" class="sel" aria-label="Repositorio"></select>
+    <input id="branch" class="inp branch" type="text" value="main" aria-label="Rama base">
+    <button class="btn small" id="syncBtn" type="button">Sync</button>
+    <span class="chip" id="pushChip" hidden></span>
+  </div>
+  <div class="setup" id="where" hidden>
+    <span class="where2" id="whereTxt"></span>
+    <a class="btn small" id="prLink" target="_blank" rel="noopener" hidden>Pull request</a>
+    <button class="btn small primary" id="mergeBtn" type="button" hidden>Merge</button>
+    <button class="btn small" id="newBtn2" type="button">Nueva</button>
+  </div>
 
-    <div class="ccrow ccmeta">
-      <span class="chip" id="skillChip" hidden></span>
-      <span class="chip" id="pushChip" hidden></span>
-      <button class="btn small" id="syncBtn" type="button">Sincronizar</button>
-      <button class="btn small" id="refreshBtn" type="button">Buscar repositorios</button>
-    </div>
-
-    <label class="ccfield">
-      <span id="tBrief">Qué construir</span>
-      <textarea id="brief" rows="7" spellcheck="false" placeholder="Describe el cambio. Claude Code clona, programa, prueba, hace commit y abre el pull request."></textarea>
-    </label>
-
-    <div class="ccrow ccactions">
-      <button class="icon" id="mic" type="button" aria-label="Dictar" title="Dictar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
-      </button>
-      <span class="stat" id="micStat"></span>
-      <button class="btn primary" id="runBtn" type="button">Ejecutar</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 id="tHist">Ejecuciones</h2>
-    <div id="runs" class="runs"></div>
-  </section>
+  <div id="thread" aria-live="polite"></div>
 </main>
 
-<script src="/speakup/claude-code.js?v=2"></script>
+<footer>
+  <div class="inner">
+    <div class="starter" id="starter"></div>
+    <div class="box">
+      <textarea id="cmsg" spellcheck="false" placeholder="Dile qué construir, o pregunta algo sobre el código…"></textarea>
+      <div class="boxrow">
+        <button class="icon" id="mic" aria-label="Dictar" title="Dictar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+        </button>
+        <span class="stat" id="micStat"></span>
+        <span class="workw" id="workw" aria-hidden="true"></span>
+        <button class="icon send" id="send" aria-label="Enviar" title="Enviar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="/speakup/claude-code.js?v=3"></script>
 <script src="/speakup/header-menu.js?v=2"></script>
 <script src="/speakup/install.js?v=1" defer></script>
 </body>

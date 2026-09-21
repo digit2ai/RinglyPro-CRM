@@ -109,7 +109,7 @@ function subscribe(runId, fn) {
 function view(run) {
   return {
     id: run.id, repo_full_name: run.repo_full_name, base_branch: run.base_branch, work_branch: run.work_branch,
-    brief: run.brief, source: run.source, source_ref: run.source_ref, status: run.status,
+    thread_id: run.thread_id, brief: run.brief, summary: run.summary, source: run.source, source_ref: run.source_ref, status: run.status,
     pr_url: run.pr_url, commit_sha: run.commit_sha, deploy_url: run.deploy_url,
     cost_usd: run.cost_usd == null ? null : Number(run.cost_usd),
     tokens_in: run.tokens_in, tokens_out: run.tokens_out, turns: run.turns,

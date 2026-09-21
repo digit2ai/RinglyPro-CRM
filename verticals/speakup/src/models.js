@@ -377,6 +377,7 @@ const CcRun = sequelize.define('CcRun', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
   user_id: { type: DataTypes.INTEGER, allowNull: false },
+  thread_id: { type: DataTypes.INTEGER },     // the conversation this turn belongs to
   repo_full_name: { type: DataTypes.TEXT, allowNull: false },
   base_branch: { type: DataTypes.TEXT, defaultValue: 'main' },
   work_branch: { type: DataTypes.TEXT },
@@ -385,6 +386,7 @@ const CcRun = sequelize.define('CcRun', {
   source_ref: { type: DataTypes.TEXT },
   status: { type: DataTypes.TEXT, defaultValue: 'queued' },
   session_id: { type: DataTypes.TEXT },
+  summary: { type: DataTypes.TEXT },          // what the agent said at the end: the assistant message
   pr_url: { type: DataTypes.TEXT },
   commit_sha: { type: DataTypes.TEXT },
   deploy_url: { type: DataTypes.TEXT },
@@ -416,6 +418,28 @@ const CcRunEvent = sequelize.define('CcRunEvent', {
   indexes: [{ name: 'cc_run_events_run_idx', fields: ['run_id', 'id'] }]
 });
 
+// A THREAD IS THE CONVERSATION, AND IT IS THE UNIT THAT FEELS LIKE CLAUDE CODE. One repository,
+// one branch, one pull request, and as many turns as the owner types. Each turn is a cc_runs row,
+// so a thread needs no message table: its messages ARE its runs, in order.
+const CcThread = sequelize.define('CcThread', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  tenant_id: { type: DataTypes.INTEGER, allowNull: false },
+  user_id: { type: DataTypes.INTEGER, allowNull: false },
+  repo_full_name: { type: DataTypes.TEXT, allowNull: false },
+  base_branch: { type: DataTypes.TEXT, defaultValue: 'main' },
+  work_branch: { type: DataTypes.TEXT },          // created by the first turn, reused by the rest
+  pr_url: { type: DataTypes.TEXT },
+  pr_number: { type: DataTypes.INTEGER },
+  session_id: { type: DataTypes.TEXT },           // the agent session, resumed when it is still there
+  title: { type: DataTypes.TEXT },
+  archived: { type: DataTypes.BOOLEAN, defaultValue: false },
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  last_run_at: { type: DataTypes.DATE }
+}, {
+  tableName: 'cc_threads', timestamps: false,
+  indexes: [{ name: 'cc_threads_tenant_idx', fields: ['tenant_id', 'id'] }]
+});
+
 const CcRepo = sequelize.define('CcRepo', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   tenant_id: { type: DataTypes.INTEGER, allowNull: false },
@@ -445,4 +469,4 @@ Document.belongsTo(Recording, { foreignKey: 'recording_id' });
 
 module.exports = { sequelize, User, Recording, Transcript, Summary, Translation, Edit, Document, Usage,
   Project, MeetingIntel, Command, Job, JobEvent, Upload, Audit, MeetingChat, Setting,
-  CcRun, CcRunEvent, CcRepo };
+  CcRun, CcRunEvent, CcRepo, CcThread };

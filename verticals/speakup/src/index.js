@@ -81,8 +81,18 @@ router.get('/recorder', (req, res) => res.redirect('/speakup/meetings'));
 // Claude Code: the third tab. One page serves the list and one serves a run — the run id
 // is read from the path by the script, so there is no second HTML file to drift.
 router.get('/claude-code', (req, res) => res.sendFile(path.join(publicDir, 'claude-code.html')));
-router.get('/claude-code/history', (req, res) => res.sendFile(path.join(publicDir, 'claude-code.html')));
-router.get('/claude-code/runs/:id', (req, res) => res.sendFile(path.join(publicDir, 'claude-code-run.html')));
+router.get('/claude-code/history', (req, res) => res.redirect('/speakup/claude-code'));
+// THERE IS NO RUN PAGE ANY MORE — the conversation is the screen. An old link to a run still
+// works: it lands on the conversation that run belongs to.
+router.get('/claude-code/runs/:id', async (req, res) => {
+  try {
+    const { CcRun } = require('./models');
+    const tenant = (req.user && (req.user.tenant_id || req.user.id)) || 0;
+    const run = await CcRun.findOne({ where: { id: parseInt(req.params.id, 10) || 0, tenant_id: tenant } });
+    if (run && run.thread_id) return res.redirect('/speakup/claude-code?thread=' + run.thread_id);
+  } catch (e) { /* fall through to the page */ }
+  res.redirect('/speakup/claude-code');
+});
 
 // ── Init: sync tables + ensure columns + seed team (non-blocking) ────────────────
 (async function initialize() {
@@ -121,6 +131,9 @@ router.get('/claude-code/runs/:id', (req, res) => res.sendFile(path.join(publicD
       await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS deploy_url TEXT');
       await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS session_id TEXT');
       await sequelize.query('ALTER TABLE cc_repos ADD COLUMN IF NOT EXISTS can_push BOOLEAN');
+      await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS thread_id INTEGER');
+      await sequelize.query('ALTER TABLE cc_runs ADD COLUMN IF NOT EXISTS summary TEXT');
+      await sequelize.query('CREATE INDEX IF NOT EXISTS cc_runs_thread_idx ON cc_runs(thread_id, id)');
       await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS cc_repos_tenant_repo_uniq ON cc_repos(tenant_id, repo_full_name)');
     } catch (ccErr) {
       console.error('  CLAUDE CODE column ensure error:', ccErr.message);

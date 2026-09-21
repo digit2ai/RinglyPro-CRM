@@ -16,7 +16,7 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('PASS ' + m); } else { fail++; console.log('FAIL ' + m); } };
 const PUB = path.join(__dirname, 'public');
 const read = (f) => fs.readFileSync(path.join(PUB, f), 'utf8');
-const PAGES = ['app.html', 'meetings.html', 'history.html', 'settings.html', 'login.html', 'claude-code.html', 'claude-code-run.html'];
+const PAGES = ['app.html', 'meetings.html', 'history.html', 'settings.html', 'login.html', 'claude-code.html'];
 
 // ── the manifest ─────────────────────────────────────────────────────────────
 const man = JSON.parse(read('manifest.webmanifest'));
@@ -95,8 +95,7 @@ const server = http.createServer((req, res) => {
   }
   // /claude-code/runs/<id> is one page, like every run page: the id is read from the path
   // by the script, so the harness maps it the way the server does.
-  const page = /^claude-code\/runs\/\d+$/.test(p) ? 'claude-code-run.html' : p;
-  const file = path.join(PUB, page.includes('.') ? page : page + '.html');
+  const file = path.join(PUB, p.includes('.') ? p : p + '.html');
   if (!fs.existsSync(file)) { res.writeHead(404); return res.end('no'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'text/plain' });
   res.end(fs.readFileSync(file));
@@ -107,7 +106,7 @@ server.listen(0, async () => {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   try {
     for (const width of [360, 390, 414]) {
-      for (const name of ['', 'meetings', 'history', 'settings', 'login', 'claude-code', 'claude-code/runs/3']) {
+      for (const name of ['', 'meetings', 'history', 'settings', 'login', 'claude-code']) {
         const page = await browser.newPage();
         await page.setViewport({ width, height: 780, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
         await page.evaluateOnNewDocument(() => { try { localStorage.clear(); } catch (e) {} });

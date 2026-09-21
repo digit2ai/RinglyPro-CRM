@@ -137,7 +137,39 @@ function slug(s) {
 // The brief is the owner's own words and travels verbatim. Everything around it is the
 // operating contract: unattended, commit as you go, and never ask a question, because
 // there is nobody on the other end of this session to answer one.
-function buildPrompt(run) {
+function buildPrompt(run, priorTurns) {
+  // A FOLLOW-UP IS A FOLLOW-UP ONLY IF THE EARLIER TURNS TRAVEL WITH IT. The workspace is
+  // disposable, so nothing on disk remembers the last message; the thread's earlier turns are
+  // replayed here, oldest first, capped so a long conversation cannot grow the prompt without
+  // limit. The branch is already checked out with the earlier work on it, so the code state is
+  // real — this is the talking, not the doing.
+  const history = [];
+  for (const t of (priorTurns || []).slice(-8)) {
+    history.push('You were asked: ' + String(t.brief || '').slice(0, 1200));
+    if (t.summary) history.push('You answered: ' + String(t.summary).slice(0, 1200));
+  }
+  if (history.length) {
+    return [
+      'You are continuing a conversation inside a disposable clone of ' + run.repo_full_name + '.',
+      'You are on branch ' + run.work_branch + '. Your earlier work in this conversation is already committed on it.',
+      '',
+      'WHAT HAS HAPPENED SO FAR',
+      history.join('\n'),
+      '',
+      'RULES',
+      '- Never ask a question and never wait for confirmation. Nobody can answer you. Decide and act.',
+      '- Follow the repository\'s own CLAUDE.md and its skills. They outrank your habits.',
+      '- Commit as you go, in small commits with clear messages. Do not push; the pipeline pushes.',
+      '- Run the repository\'s tests when there are any, and fix what you break.',
+      '- Never write a secret, an API key or a token into a file.',
+      '- If part of the request cannot be done, do the rest and say plainly at the end what you did not do.',
+      '- No emojis anywhere.',
+      '- If the message is a question rather than a change, just answer it and change nothing.',
+      '',
+      'THE NEW MESSAGE, WORD FOR WORD',
+      run.brief
+    ].join('\n');
+  }
   return [
     'You are running unattended inside a disposable clone of ' + run.repo_full_name + '.',
     'You are on branch ' + run.work_branch + ', created from ' + run.base_branch + '.',
@@ -410,6 +442,11 @@ async function execute(runId, onRegistered) {
   if (!run) { if (onRegistered) onRegistered(); return; }
   if (run.status !== 'queued') { if (onRegistered) onRegistered(); return; }
 
+  const thread = run.thread_id ? await models.CcThread.findByPk(run.thread_id) : null;
+  const priorTurns = thread
+    ? (await models.CcRun.findAll({ where: { thread_id: thread.id, tenant_id: run.tenant_id }, order: [['id', 'ASC']] }))
+      .filter(r => r.id !== run.id).map(r => ({ brief: r.brief, summary: r.summary }))
+    : [];
   const abortController = new AbortController();
   active.set(run.id, { abort: () => abortController.abort(), tenant_id: run.tenant_id });
   // The request's reservation becomes this run's slot: counted as active from here, so the
@@ -452,8 +489,18 @@ async function execute(runId, onRegistered) {
     await git(ws, ['remote', 'set-url', 'origin', 'https://github.com/' + run.repo_full_name + '.git']);
     await store.log(run.id, 'Cloned ' + run.repo_full_name + ' at ' + run.base_branch + ' (shallow, 50 commits). The push credential is not left in the workspace.');
 
-    const branch = 'cc/' + run.id + '-' + slug(run.brief);
-    await git(ws, ['checkout', '-b', branch], run.id, 'branch');
+    // A THREAD KEEPS ITS BRANCH. The first turn creates it; every later turn checks the same one
+    // out, so the conversation accumulates on one branch behind one pull request instead of
+    // scattering a branch per message.
+    let branch = thread && thread.work_branch;
+    if (branch) {
+      const fetched = await git(ws, ['fetch', '--depth', '50', github.cloneUrl(run.repo_full_name), branch], run.id, 'fetch');
+      if (fetched.code === 0) await git(ws, ['checkout', '-B', branch, 'FETCH_HEAD'], run.id, 'branch');
+      else { await store.log(run.id, 'The conversation branch was not on GitHub any more; starting it again from ' + run.base_branch + '.'); await git(ws, ['checkout', '-B', branch], run.id, 'branch'); }
+    } else {
+      branch = 'cc/' + run.id + '-' + slug(run.brief);
+      await git(ws, ['checkout', '-b', branch], run.id, 'branch');
+    }
     await git(ws, ['config', 'user.name', 'AutoDev Claude Code']);
     await git(ws, ['config', 'user.email', 'autodev@digit2ai.com']);
     await run.update({ work_branch: branch });
@@ -466,10 +513,10 @@ async function execute(runId, onRegistered) {
     // 2. the agent
     await step('running', { work_branch: branch });
     await store.log(run.id, 'Model ' + MODEL + ', up to ' + MAX_TURNS + ' turns, cost cap $' + COST_CAP_USD.toFixed(2) + '. Architect skill: ' + skill + '.');
-    let result = await runAgent(run, ws, buildPrompt(run), null, abortController, totals);
+    let result = await runAgent(run, ws, buildPrompt(run, priorTurns), thread && thread.session_id, abortController, totals);
     if (totals.capped) throw new Error('stopped at the $' + COST_CAP_USD.toFixed(2) + ' cost cap for one run');
     if (abortController.signal.aborted) { cancelled = true; throw new Error('cancelled'); }
-    await run.update(persistTotals(totals, { session_id: result.session_id }));
+    await run.update(persistTotals(totals, { session_id: result.session_id, summary: result.text || null }));
 
     // 3. tests, with up to MAX_FIX_CYCLES hand-backs into the same session
     await step('testing');
@@ -482,7 +529,7 @@ async function execute(runId, onRegistered) {
       result = await runAgent(run, ws, fixPrompt, result.session_id || run.session_id, abortController, totals);
       if (totals.capped) throw new Error('stopped at the $' + COST_CAP_USD.toFixed(2) + ' cost cap for one run');
       if (abortController.signal.aborted) { cancelled = true; throw new Error('cancelled'); }
-      await run.update(persistTotals(totals, { session_id: result.session_id || run.session_id }));
+      await run.update(persistTotals(totals, { session_id: result.session_id || run.session_id, summary: result.text || run.summary }));
       tests = await runTests(run, ws);
       if (await cancelledNow()) { cancelled = true; throw new Error('cancelled'); }
     }
@@ -514,7 +561,18 @@ async function execute(runId, onRegistered) {
     await store.log(run.id, 'Pushed ' + commits + ' commit(s) to ' + branch + '.');
 
     const wantDraft = (tests.measured && !tests.ok) || (result && result.is_error);
-    let pr;
+    let pr = null;
+    if (thread && thread.pr_number) {
+      // The conversation already has one. A second pull request for the same branch is not
+      // possible on GitHub anyway, and the owner should keep reading the one they opened.
+      try {
+        const existing = await github.getPR(run.repo_full_name, thread.pr_number);
+        if (existing && existing.state === 'open') pr = existing;
+      } catch (e) { /* it was closed or deleted; a new one is opened below */ }
+    }
+    if (pr) {
+      await store.log(run.id, 'Added to the existing pull request.');
+    } else
     try {
       pr = await github.createPR(run.repo_full_name, { title: prTitle(run, result), head: branch, base: run.base_branch, body: prBody(run, result, tests), draft: wantDraft });
     } catch (e) {
@@ -525,6 +583,12 @@ async function execute(runId, onRegistered) {
       pr = await github.createPR(run.repo_full_name, { title: prTitle(run, result), head: branch, base: run.base_branch, body: prBody(run, result, tests), draft: false });
     }
     await step('pr_open', Object.assign(persistTotals(totals, {}), { pr_url: pr.html_url, commit_sha: sha }));
+    if (thread) {
+      await thread.update({
+        work_branch: branch, pr_url: pr.html_url, pr_number: pr.number,
+        session_id: result.session_id || thread.session_id, last_run_at: new Date()
+      });
+    }
 
     // 6. AUTO-MERGE FAILS SHUT. It used to merge on 'unknown', which is exactly what
     // combinedStatus returns when the GitHub call ERRORS — so a transient 502 merged unreviewed
