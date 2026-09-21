@@ -54,7 +54,18 @@ async function networkResolve(input) {
   if (!hit || !hit.address) return { ok: false, reason: 'not_found' };
   const a = hit.address;
   if (a.state && !/florida/i.test(a.state)) return { ok: false, reason: 'outside_florida' };
-  const city = a.city || a.town || a.village || a.hamlet || a.suburb || a.neighbourhood || hit.name || null;
+  // A street, a building or a shop is not a search area: "zip code" once matched a road called Zip and filed the
+  // buyer under Military Park. Only places and boundaries count.
+  // A neighbourhood OpenStreetMap only knows through named places ("New Tampa" = a park and shops) still counts when
+  // that name contains every word the buyer said; the area is then the town it sits in.
+  const words = String(input).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const named = String(hit.name || '').toLowerCase();
+  const areaLike = ['place', 'boundary'].includes(hit.class);
+  if (!areaLike && !(words.length && words.every((w) => named.split(/[^a-z0-9]+/).includes(w)))) return { ok: false, reason: 'not_found' };
+  // The name the buyer said wins over the city OpenStreetMap files it under ("Lutz" sits inside Tampa's admin area).
+  const said = String(input).toLowerCase().replace(/[^a-z]/g, '');
+  const own = areaLike && hit.name && String(hit.name).toLowerCase().replace(/[^a-z]/g, '') === said ? hit.name : null;
+  const city = own || (areaLike ? a.city || a.town : a.town || a.city) || a.village || a.hamlet || a.suburb || a.neighbourhood || hit.name || null;
   let zipOut = a.postcode && /^\d{5}/.test(a.postcode) ? a.postcode.slice(0, 5) : null;
   // OpenStreetMap often attaches a NEIGHBOURING ZIP to a town (Wesley Chapel came back as 33559, which is Lutz, and the
   // search then ran on Lutz; owner voice test 2026-09-21). The postal service's own list of ZIPs for that city wins:
@@ -77,6 +88,10 @@ async function resolveArea(tenantId, raw) {
   const digits = input.replace(/\s/g, '');
   if (/^\d+$/.test(digits) && !/^\d{5}$/.test(digits)) return { ok: false, reason: 'invalid_zip' };
   const query = (/^\d{5}$/.test(digits) ? digits : input).toLowerCase();
+  // Words ABOUT the answer are not the answer: "zip code" matched a road named Zip Code and "the neighborhood"
+  // matched Orlando (voice test 2026-09-21). With only such words left there is no place to look up.
+  const GENERIC = new Set(['zip', 'code', 'zipcode', 'postal', 'area', 'city', 'town', 'place', 'neighborhood', 'neighbourhood', 'the', 'my', 'a', 'an', 'in', 'near', 'around', 'codigo', 'c\u00f3digo', 'zona', 'barrio', 'vecindario', 'ciudad', 'el', 'la', 'mi', 'un', 'una', 'cerca', 'de']);
+  if (!/^\d{5}$/.test(query) && query.split(/[^a-z\u00e0-\u00ff0-9]+/).filter(Boolean).every((w) => GENERIC.has(w))) return { ok: false, reason: 'not_found' };
 
   if (resolver) return Object.assign({ input }, await resolver(query));
   if (process.env.INCENTIVA_GEOCODE === 'off') {
