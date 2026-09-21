@@ -108,6 +108,11 @@ function page(q, { payments, notice }) {
   const c = q.content || {};
   const items = (c.items || []).map((it) => '<li><b>' + esc(it.title) + '.</b> ' + esc(it.what) + (it.why ? ' <span class="why">' + esc(it.why) + '</span>' : '') + '</li>').join('');
   const excl = (c.not_included || []).map((x) => '<li>' + esc(x) + '</li>').join('');
+  // Capturas: solo imágenes embebidas (data: jpeg/png/webp en base64). Viven en la fila de la
+  // cotización, no en el repositorio (que es público), y nunca se carga una URL externa.
+  const IMG = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/;
+  const shots = (Array.isArray(c.screenshots) ? c.screenshots : []).filter((x) => x && IMG.test(String(x.src || ''))).slice(0, 12)
+    .map((x) => '<figure><img src="' + x.src + '" alt="' + esc(x.caption || '') + '" loading="lazy"><figcaption>' + esc(x.caption || '') + '</figcaption></figure>').join('');
   const who = (q.recipients || []).map((r) => esc(r.name)).join(' y ');
   const paid = q.status === 'paid';
   const hours = Number(q.hours).toLocaleString('es-CO', { minimumFractionDigits: 2 });
@@ -136,6 +141,7 @@ button{font:inherit;font-weight:700;border-radius:10px;padding:12px 18px;min-hei
 .pri{background:var(--brand2);color:#fff}.sec{background:#fff;color:var(--brand2)}button[disabled]{opacity:.55;cursor:default}
 textarea{width:100%;min-height:96px;font:inherit;font-size:16px;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px}
 .note{margin-top:10px;font-size:14px}.err{color:#b03a2e}.ok{color:var(--ok)}
+figure{margin:0 0 18px}figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px}figcaption{font-size:13.5px;color:var(--mut);margin-top:6px}
 .foot{margin-top:24px;font-size:12px;color:var(--mut)}
 @media print{.actions,#discussBox{display:none}}
 </style></head><body><div class="wrap">
@@ -155,6 +161,7 @@ textarea{width:100%;min-height:96px;font:inherit;font-size:16px;border:1px solid
   <p class="mut">${esc(c.price_note || '')}</p>
 </div>
 <div class="card"><h2>${esc(c.items_heading || "Qué incluye")}</h2><ul>${items}</ul></div>
+${shots ? '<div class="card"><h2>' + esc(c.screenshots_heading || 'Así se verá') + '</h2>' + shots + '</div>' : ''}
 <div class="card"><h2>Qué no incluye</h2><ul>${excl}</ul></div>
 <div class="card" id="discussBox">
   <h2>Siguiente paso</h2>
