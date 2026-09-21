@@ -203,7 +203,7 @@ router.post('/chat', mutation, configured, wrap(async (req, res) => {
   // same way a chat waits for its answer.
   if (thread) {
     const live = await models.CcRun.findOne({
-      where: { tenant_id, thread_id: thread.id, status: { [Op.notIn]: store.TERMINAL } }, order: [['id', 'DESC']]
+      where: { tenant_id, thread_id: thread.id, status: { [Op.notIn]: store.SETTLED } }, order: [['id', 'DESC']]
     });
     if (live) return res.status(409).json({ error: 'This conversation is still working. Wait for it to finish.', run_id: live.id });
   }
@@ -334,16 +334,41 @@ router.get('/runs/:id/stream', wrap(async (req, res) => {
   for (const e of stored) send({ id: e.id, kind: e.kind, payload: e.payload, ts: e.ts });
 
   let closed = false;
+  let lastId = stored.length ? stored[stored.length - 1].id : after;
   const unsubscribe = store.subscribe(run.id, (ev) => {
+    if (ev.id && ev.id <= lastId) return;
+    if (ev.id) lastId = ev.id;
     send(ev);
-    if (ev.kind === 'system' && ev.payload && store.isTerminal(ev.payload.status)) finish();
+    if (ev.kind === 'system' && ev.payload && store.isSettled(ev.payload.status)) finish();
   });
+  // THE BUS IS PER INSTANCE. Render runs more than one, so the browser's stream can land on an
+  // instance that is not running the turn and would hear nothing from the bus — the screen sat on
+  // "cloning" while the turn had finished minutes earlier. The table is shared, so the stream also
+  // reads new rows from it. Deltas stay bus-only; the finished message carries the whole text.
+  let polling = false;
+  const poll = setInterval(async () => {
+    if (closed || polling) return;
+    polling = true;
+    try {
+      const rows = await models.CcRunEvent.findAll({
+        where: { run_id: run.id, id: { [Op.gt]: lastId } }, order: [['id', 'ASC']], limit: 500
+      });
+      for (const e of rows) {
+        if (closed) break;
+        lastId = e.id;
+        send({ id: e.id, kind: e.kind, payload: e.payload, ts: e.ts });
+        if (e.kind === 'system' && e.payload && store.isSettled(e.payload.status)) finish();
+      }
+    } catch (e) { /* the next tick tries again */ }
+    polling = false;
+  }, 2000);
   // A 20 s comment keeps Cloudflare and the browser from closing an idle stream.
   const ping = setInterval(() => { try { res.write(': ping\n\n'); } catch (e) {} }, 20000);
   function finish() {
     if (closed) return;
     closed = true;
     clearInterval(ping);
+    clearInterval(poll);
     unsubscribe();
     send({ kind: 'end' });
     try { res.end(); } catch (e) {}
@@ -351,7 +376,7 @@ router.get('/runs/:id/stream', wrap(async (req, res) => {
   req.on('close', finish);
 
   const fresh = await store.own(tenantOf(req), req.params.id);
-  if (fresh && store.isTerminal(fresh.status)) { send({ kind: 'system', payload: store.view(fresh) }); finish(); }
+  if (fresh && store.isSettled(fresh.status)) { send({ kind: 'system', payload: store.view(fresh) }); finish(); }
 }));
 
 router.post('/runs/:id/cancel', mutation, wrap(async (req, res) => {

@@ -25,10 +25,17 @@ const { redact, clip } = require('./redact');
 const bus = new EventEmitter();
 bus.setMaxListeners(0);
 
-const TERMINAL = ['merged', 'deployed', 'failed', 'cancelled'];
+// `answered` ends a turn that changed nothing: a question gets an answer, not a branch.
+const TERMINAL = ['merged', 'deployed', 'failed', 'cancelled', 'answered'];
 const STATUSES = ['queued', 'cloning', 'running', 'testing', 'pushing', 'pr_open', ...TERMINAL];
+// SETTLED = nothing is working on this turn any more. pr_open is not TERMINAL (it can still
+// move to merged, which setStatus refuses from a terminal status) but it is settled: treating it
+// as live made a conversation with an open pull request refuse every follow-up, and made the boot
+// sweep fail a turn that had finished fine.
+const SETTLED = [...TERMINAL, 'pr_open'];
 
 function isTerminal(status) { return TERMINAL.includes(String(status)); }
+function isSettled(status) { return SETTLED.includes(String(status)); }
 
 async function emit(runId, kind, payload) {
   const safe = redact(payload || {});
@@ -135,4 +142,4 @@ async function own(tenantId, id) {
   return models.CcRun.findOne({ where: { tenant_id: tenantId, id } });
 }
 
-module.exports = { bus, emit, push, setStatus, forceStatus, log, subscribe, view, own, isTerminal, TERMINAL, STATUSES };
+module.exports = { bus, emit, push, setStatus, forceStatus, log, subscribe, view, own, isTerminal, isSettled, TERMINAL, SETTLED, STATUSES };

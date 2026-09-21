@@ -18,7 +18,7 @@
   var API = '/speakup/api/v1/claude-code';
   var THREAD_KEY = 'cc_thread';
   var REPO_KEY = 'cc_repo';
-  var TERMINAL = ['merged', 'deployed', 'failed', 'cancelled', 'pr_open'];
+  var TERMINAL = ['merged', 'deployed', 'failed', 'cancelled', 'pr_open', 'answered'];
   var lang = 'es';
   try { lang = localStorage.getItem('speakup_lang') === 'en' ? 'en' : 'es'; } catch (e) {}
 
@@ -230,9 +230,11 @@
     return String(p.text || '');
   }
 
-  function closeStream() { if (es) { try { es.close(); } catch (e) {} es = null; } }
+  function closeStream() { if (es) { try { es.close(); } catch (e) {} es = null; } followingId = 0; }
 
+  var followingId = 0;
   function follow(runId) {
+    followingId = runId;
     var mine = ++gen;
     closeStream();
     es = new EventSource(API + '/runs/' + runId + '/stream');
@@ -271,12 +273,17 @@
       setBusy(live);
       if (!live) { liveEvents = []; streaming = ''; }
       paint();
-      if (live) follow(last.id);
+      if (live && (!es || followingId !== last.id)) follow(last.id);
     } catch (e) { /* the next event or the next send re-reads it */ }
   }
 
+  // A safety net under the stream: while a turn works, the thread is re-read every 8 s, so a
+  // stream that goes quiet (a proxy, a sleeping phone) can never leave the screen frozen.
+  var watch = null;
   function setBusy(v) {
     busy = v;
+    if (v && !watch) watch = setInterval(function () { if (busy) refresh(); }, 8000);
+    if (!v && watch) { clearInterval(watch); watch = null; }
     $('send').disabled = v;
     $('workw').textContent = v ? t('working') : '';
   }

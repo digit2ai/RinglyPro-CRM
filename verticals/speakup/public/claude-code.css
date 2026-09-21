@@ -66,7 +66,10 @@ main > .notice { flex: 0 0 auto; margin: 0 0 10px; }
 .msg.assistant { align-self: flex-start; background: var(--surface); color: var(--panel-text);
   border: 1px solid var(--line);
   --text: var(--panel-text); --muted: var(--panel-muted); --faint: var(--panel-faint); }
-.msg.assistant.live { border-color: var(--accent-solid); }
+.msg.assistant.live { border-color: var(--accent-solid); min-width: min(320px, 86%); }
+/* The live bubble has no text yet, so without a floor it shrank to its buttons and 'Working...'
+   broke one letter per line. */
+.doing span:last-child { white-space: nowrap; }
 .msg .tag { display: inline-block; font-size: 11.5px; border: 1px solid var(--line-strong); border-radius: 999px;
   padding: 1px 8px; margin-bottom: 6px; color: var(--panel-muted); white-space: normal; }
 .msg .tag.bad  { border-color: #fca5a5; background: #fee2e2; color: var(--err); }

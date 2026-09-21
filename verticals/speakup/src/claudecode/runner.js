@@ -152,6 +152,9 @@ async function prepareFolder(run, dir, branch, fromBase) {
   } else {
     await sh('git', ['checkout', '-B', branch], { cwd: dir, runId: run.id, timeoutMs: 120000 });
   }
+  // Said out loud: a fresh clone happens on the first turn after a deploy (the folder lives on
+  // the instance's disk, which a deploy replaces) and every later turn reuses it.
+  await store.log(run.id, 'Cloned ' + run.repo_full_name + ' (first turn on this server since the last deploy; later turns reuse the folder).');
   return 'cloned';
 }
 
@@ -204,7 +207,10 @@ function slug(s) {
 // The brief is the owner's own words and travels verbatim. Everything around it is the
 // operating contract: unattended, commit as you go, and never ask a question, because
 // there is nobody on the other end of this session to answer one.
-function buildPrompt(run, priorTurns) {
+function buildPrompt(run, priorTurns, opts) {
+  const canWrite = !(opts && opts.canWrite === false);
+  const questionRule = '- If the message is a question or asks you to look at, check, review or summarise something, answer it and change nothing: no files, no commits, no notes recording what you found. Only change code when you are asked to change it.';
+  const writeRule = canWrite ? [] : ['- This session cannot push to GitHub. Do not change any file; answer only, and say that building here needs a token with write access.'];
   // A FOLLOW-UP IS A FOLLOW-UP ONLY IF THE EARLIER TURNS TRAVEL WITH IT. The workspace is
   // disposable, so nothing on disk remembers the last message; the thread's earlier turns are
   // replayed here, oldest first, capped so a long conversation cannot grow the prompt without
@@ -231,7 +237,8 @@ function buildPrompt(run, priorTurns) {
       '- Never write a secret, an API key or a token into a file.',
       '- If part of the request cannot be done, do the rest and say plainly at the end what you did not do.',
       '- No emojis anywhere.',
-      '- If the message is a question rather than a change, just answer it and change nothing.',
+      questionRule,
+      ...writeRule,
       '',
       'THE NEW MESSAGE, WORD FOR WORD',
       run.brief
@@ -249,6 +256,8 @@ function buildPrompt(run, priorTurns) {
     '- Never write a secret, an API key or a token into a file.',
     '- If part of the brief cannot be done, do the rest and say plainly at the end what you did not do.',
     '- No emojis anywhere, in code, comments, commit messages or output.',
+    questionRule,
+    ...writeRule,
     '',
     'THE BRIEF, WORD FOR WORD',
     run.brief
@@ -640,16 +649,39 @@ async function executeLocked(runId, onRegistered) {
     await fsp.mkdir(homeFor(run.id), { recursive: true });
     await disarmWorkspace(ws, run);
     const skill = await ensureArchitectSkill(ws, run);
+    // Where the turn started, so "did it change anything" means THIS turn, not the thread.
+    const startSha = String((await git(ws, ['rev-parse', 'HEAD'])).out).trim();
+    // CAN THIS TOKEN ACTUALLY WRITE HERE? GitHub's repository API reports the ACCOUNT's
+    // permission, not a fine-grained token's, so canPush() said yes and the push was refused after
+    // four minutes and a dollar of work. A dry-run push asks the one place that knows, costs a
+    // second, and writes nothing. A read-only token still answers questions; it just builds nothing.
+    const probe = await sh('git', ['push', '--dry-run', github.cloneUrl(run.repo_full_name), 'HEAD:refs/heads/' + branch],
+      { cwd: ws, runId: run.id, timeoutMs: 60000 });
+    const canWrite = probe.code === 0;
+    if (!canWrite) await store.log(run.id, 'The GitHub token cannot push to ' + run.repo_full_name + ', so this turn can answer but not change code. Give the token Contents: Read and write on this repository to build here.');
 
     if (await cancelledNow()) { cancelled = true; throw new Error('cancelled');}
 
     // 2. the agent
     await step('running', { work_branch: branch });
     await store.log(run.id, 'Model ' + MODEL + ', up to ' + MAX_TURNS + ' turns, cost cap $' + COST_CAP_USD.toFixed(2) + '. Architect skill: ' + skill + '.');
-    let result = await runAgent(run, ws, buildPrompt(run, priorTurns), thread && thread.session_id, abortController, totals);
+    let result = await runAgent(run, ws, buildPrompt(run, priorTurns, { canWrite }), thread && thread.session_id, abortController, totals);
     if (totals.capped) throw new Error('stopped at the $' + COST_CAP_USD.toFixed(2) + ' cost cap for one run');
     if (abortController.signal.aborted) { cancelled = true; throw new Error('cancelled'); }
     await run.update(persistTotals(totals, { session_id: result.session_id, summary: result.text || null }));
+
+    // A TURN THAT CHANGED NOTHING IS AN ANSWER, NOT A FAILURE. A question used to fall through
+    // to "the agent produced no commits" and end red — or worse, the agent committed a note just
+    // to have something to push. Nothing to test, nothing to push: the answer is the result.
+    await git(ws, ['add', '-A']);
+    const dirty0 = String((await git(ws, ['status', '--porcelain'])).out).trim();
+    const headNow = String((await git(ws, ['rev-parse', 'HEAD'])).out).trim();
+    if (!dirty0 && headNow === startSha) {
+      await step('answered', persistTotals(totals, {}));
+      if (thread) await thread.update({ session_id: result.session_id || thread.session_id, last_run_at: new Date() });
+      return;
+    }
+    if (!canWrite) throw new Error('the GitHub token cannot push to ' + run.repo_full_name + ' (it needs Contents: Read and write), so the change was made but not saved');
 
     // 3. tests, with up to MAX_FIX_CYCLES hand-backs into the same session.
     // Staged first, so runTests can see WHAT changed: a documentation-only change has nothing
@@ -874,7 +906,7 @@ async function sweepInterrupted() {
   const { Op } = require('sequelize');
   let swept = 0;
   try {
-    const rows = await models_.CcRun.findAll({ where: { status: { [Op.notIn]: store.TERMINAL } }, limit: 200 });
+    const rows = await models_.CcRun.findAll({ where: { status: { [Op.notIn]: store.SETTLED } }, limit: 200 });
     for (const row of rows) {
       if (active.has(row.id)) continue;                       // this process owns it
       await store.forceStatus(row, 'failed', { error: 'Interrupted by a server restart. Nothing was merged; any branch already pushed is still on GitHub.' });
