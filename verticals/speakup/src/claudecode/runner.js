@@ -348,7 +348,26 @@ async function installDeps(run, ws) {
   return { ok: r.code === 0, output: out.slice(-4000) };
 }
 
+// Files a test suite cannot have an opinion about. A change confined to these has nothing to
+// measure, and on a large repository installing a thousand packages and running the whole suite
+// to prove that costs minutes and buys nothing. It is reported as NOT MEASURED with the reason,
+// never as a pass — the run does not get to claim a green suite it never ran.
+const UNTESTABLE = /\.(md|markdown|txt|rst|adoc)$|^(LICENSE|CODEOWNERS|\.gitignore|\.gitattributes)$|(^|\/)docs\//i;
+async function changeIsUntestable(ws) {
+  const r = await sh('git', ['diff', '--cached', '--name-only'], { cwd: ws, timeoutMs: 60 * 1000 });
+  if (r.code !== 0) return null;
+  const files = String(r.out).split('\n').map(x => x.trim()).filter(Boolean);
+  if (!files.length) return null;
+  return files.every(f => UNTESTABLE.test(f)) ? files : null;
+}
+
 async function runTests(run, ws) {
+  const docsOnly = await changeIsUntestable(ws);
+  if (docsOnly) {
+    await store.log(run.id, 'Only documentation changed (' + docsOnly.slice(0, 6).join(', ') +
+      (docsOnly.length > 6 ? ', …' : '') + '), so the suite was not installed or run. Reported as not measured, not as a pass.');
+    return { measured: false, ok: true, output: '', why: 'the change is documentation only' };
+  }
   const cmd = await repoTestCommand(ws);
   if (!cmd) {
     await store.log(run.id, 'No test script in package.json — nothing to run. Reported as not measured, not as a pass.');
@@ -518,7 +537,11 @@ async function execute(runId, onRegistered) {
     if (abortController.signal.aborted) { cancelled = true; throw new Error('cancelled'); }
     await run.update(persistTotals(totals, { session_id: result.session_id, summary: result.text || null }));
 
-    // 3. tests, with up to MAX_FIX_CYCLES hand-backs into the same session
+    // 3. tests, with up to MAX_FIX_CYCLES hand-backs into the same session.
+    // Staged first, so runTests can see WHAT changed: a documentation-only change has nothing
+    // for a suite to measure, and on a large repository proving that costs an install and a
+    // full run. The same staging is reused by the commit below.
+    await git(ws, ['add', '-A']);
     await step('testing');
     let tests = await runTests(run, ws);
     if (await cancelledNow()) { cancelled = true; throw new Error('cancelled'); }

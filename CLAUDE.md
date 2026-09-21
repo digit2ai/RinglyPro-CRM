@@ -1345,6 +1345,12 @@ shown "Failed"; and in the push window, cancelled -> pushing -> pr_open, which w
 reached main. The cancel also kills the live `git`/`npm` PROCESS GROUP rather than leaving a
 twenty-minute test to its own timeout while it holds the slot and the workspace.
 
+**A DOCUMENTATION-ONLY CHANGE INSTALLS NOTHING AND RUNS NOTHING.** Asking a question about a
+large repository usually ends in a one-line README edit, and the owner watched a docs answer sit
+for minutes at `npm ci` on this repo proving that a `.md` file passes `jest`. The staged diff is
+inspected first; a change confined to markdown, text and `docs/` is reported NOT MEASURED with the
+reason — never as a pass, because the run does not get to claim a suite it never ran.
+
 **A FRESH CLONE INSTALLS BEFORE IT TESTS, AND A FAILED INSTALL IS NOT A RED SUITE.** `npm test` in
 a shallow clone of this repository is `jest`, which exits 127 in a tree that has never been
 installed — reported as a FAILING SUITE, that fed "the tests failed, fix it" to the agent three
@@ -1438,7 +1444,7 @@ awaits before the runner registered the run, so a burst all saw an empty table a
 N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
 first `await` and the runner hands the slot back as it registers.
 
-**SIT:** `node verticals/speakup/sit-claude-code.js` -> **276/276**, zero external keys and no
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **279/279**, zero external keys and no
 database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
 are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
 repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a

@@ -26,7 +26,7 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **276/276**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **279/279**, zero keys, no database |
 
 ## The conversation
 
@@ -129,6 +129,10 @@ committed whatever the diff says.
   burst cannot walk past the ceiling; a $10 ceiling per run, 200 turns, three test-fix cycles.
   Whichever trips first stops the run and says which — the cap reports itself as the cap, not
   as an anonymous abort.
+- **A documentation-only change installs nothing and runs nothing.** Asking a question about a
+  large repository often ends in a one-line README edit, and proving a `.md` file passes `jest`
+  costs an install of a thousand packages and a full suite run — minutes, for a file no test can
+  have an opinion about. It is reported as not measured with the reason, never as a pass.
 - **A fresh clone installs before it tests.** `npm ci --ignore-scripts` (install scripts are
   arbitrary code from the cloned repository). An install that cannot succeed reports the suite
   as **not measured**, never as red — reporting red would feed "the tests failed, fix it" to the

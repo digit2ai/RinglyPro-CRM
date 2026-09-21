@@ -734,6 +734,29 @@ async function testReviewFixes() {
   eq('tests: an install that cannot succeed is NOT MEASURED, never red', t2.measured, false);
   ok('tests: and the reason is named', !!t2.why);
   await fsp.rm(ws2, { recursive: true, force: true });
+
+  // A DOCUMENTATION-ONLY CHANGE HAS NOTHING TO MEASURE, and proving it on a large repository
+  // costs an install of a thousand packages and a full suite run. It is reported as not
+  // measured with the reason — never as a pass.
+  const ws3 = await fsp.mkdtemp(path.join(os.tmpdir(), 'cc-docs-'));
+  const { execFileSync } = require('child_process');
+  const git = (...a) => execFileSync('git', a, { cwd: ws3, stdio: 'pipe' });
+  git('init', '-q');
+  git('config', 'user.email', 'sit@example.com'); git('config', 'user.name', 'SIT');
+  await fsp.writeFile(path.join(ws3, 'package.json'), JSON.stringify({ name: 'x', scripts: { test: 'node -e "0"' } }));
+  git('add', '-A'); git('commit', '-qm', 'base');
+  await fsp.writeFile(path.join(ws3, 'README.md'), '# hello');
+  git('add', '-A');
+  const docs = await runner.runTests({ id: 1 }, ws3);
+  eq('tests: a documentation-only change is not measured', docs.measured, false);
+  ok('tests: and it never reports a pass it did not run', /documentation only/.test(docs.why || ''));
+
+  await fsp.writeFile(path.join(ws3, 'app.js'), 'module.exports = 1;');
+  git('add', '-A');
+  const code = await runner.runTests({ id: 1 }, ws3);
+  eq('tests: a change touching code IS measured', code.measured, true);
+  await fsp.rm(ws3, { recursive: true, force: true });
+
   store.emit = quiet.emit; store.log = quiet.log;
 
   // corr-F10: a measured zero is not an absence.
