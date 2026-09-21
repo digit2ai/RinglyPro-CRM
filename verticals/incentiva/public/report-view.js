@@ -22,6 +22,7 @@
       pp_down_assumed: 'Assumes {pct}% down.',
       pp_calc: 'Check with your income', pp_income_in: 'Yearly household income', pp_debts_in: 'Monthly debt payments (car, student loans, cards)', pp_calc_go: 'Calculate',
       pp_calc_result: 'With {income} a year and {debts} in monthly debts, homes up to about {price} keep total debts under {cap}% of income.',
+      pp_calc_capped: 'With {income} a year and {debts} in monthly debts, your income supports homes up to about {income_price} (about {income_pay} a month). Your own limit of {target} a month keeps you at about {price}.',
       pp_calc_blocked: 'Those monthly debts already use the {cap}% limit, so there is no room for a home payment yet.', pp_calc_more: 'Enter your yearly income.',
       builders: "Today's promotions by builder", builders_sub: 'Checked against builder websites. Each promotion passed our compliance review before it is shown.',
       th_builder: 'Builder', th_promo: "Today's promotion", th_from: 'From', th_expires: 'Ends',
@@ -69,6 +70,7 @@
       pp_down_assumed: 'Supone un {pct}% de pago inicial.',
       pp_calc: 'Calcular con su ingreso', pp_income_in: 'Ingreso anual del hogar', pp_debts_in: 'Pagos mensuales de deudas (auto, préstamos estudiantiles, tarjetas)', pp_calc_go: 'Calcular',
       pp_calc_result: 'Con {income} al año y {debts} en deudas mensuales, casas de hasta unos {price} mantienen sus deudas por debajo del {cap}% del ingreso.',
+      pp_calc_capped: 'Con {income} al año y {debts} de deudas mensuales, su ingreso alcanza para casas de hasta unos {income_price} (unos {income_pay} al mes). Con su propio límite de {target} al mes, llega a unos {price}.',
       pp_calc_blocked: 'Esas deudas mensuales ya usan el límite del {cap}%, así que todavía no queda espacio para un pago de casa.', pp_calc_more: 'Escriba su ingreso anual.',
       builders: 'Promociones de hoy por constructora', builders_sub: 'Revisadas en los sitios de las constructoras. Cada promoción pasó nuestra revisión de cumplimiento antes de mostrarse.',
       th_builder: 'Constructora', th_promo: 'Promoción de hoy', th_from: 'Desde', th_expires: 'Vence',
@@ -337,7 +339,8 @@
       var w = (rep && rep.wish) || {};
       api('POST', '/api/v1/public/buying-power?lang=' + lang, { gross_income_annual: income, monthly_debts: d, down_payment: w.down_payment, target_payment: w.max_monthly || null }).then(function (res) {
         var dd = res.data || {};
-        if (dd.estimate && dd.estimate.price_high) calc.out = { text: T('pp_calc_result', { income: usd(income), debts: usd(d), price: usd(dd.estimate.price_high), cap: 50 }) };
+        if (dd.estimate && dd.estimate.price_high && dd.limited_by === 'target' && dd.income_only && dd.income_only.price_high > dd.estimate.price_high) calc.out = { text: T('pp_calc_capped', { income: usd(income), debts: usd(d), income_price: usd(dd.income_only.price_high), income_pay: usd(dd.income_only.payment_high), target: usd(w.max_monthly), price: usd(dd.estimate.price_high) }) };
+        else if (dd.estimate && dd.estimate.price_high) calc.out = { text: T('pp_calc_result', { income: usd(income), debts: usd(d), price: usd(dd.estimate.price_high), cap: 50 }) };
         else if (dd.blocked) calc.out = { text: T('pp_calc_blocked', { cap: 50 }) };
         else calc.out = { text: T('pp_calc_more') };
         paint();

@@ -434,6 +434,20 @@ function stripComments(s) { return s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(
     assert(/<meta name="robots" content="index, follow">/.test(html) && /<link rel="canonical" href="https:\/\/buyersline\.app\/">/.test(html) && !/content="noindex/.test(html), 'landing not indexable');
     assert(!/blur|paywall|unlock|upgrade/i.test(read(path.join(ROOT, 'public', 'report-view.js'))), 'the report must stay free: no paywall or blurred unlock');
   });
+  await t('best deal needs a real offer, and the income check says when the buyer\'s own monthly limit caps the price (owner test 2026-09-21)', () => {
+    const S = require('./src/services/searchReport');
+    assert(!S.isRealOffer({ promotion: 'No confirmed active buyer discount for Sept 2026; historical listing noted closing-cost incentive with preferred lender/title' }), 'negated offer crowned');
+    assert(!S.isRealOffer({ promotion: 'No specific current promotion amount confirmed via official site' }), 'no-amount offer crowned');
+    assert(!S.isRealOffer({ promotion: 'Centex buyers have access to Pulte Mortgage financing options' }), 'vague offer crowned');
+    assert(S.isRealOffer({ promotion: 'Up to $10,000 toward closing costs' }) && S.isRealOffer({ promotion: '2-1 buydown' }) && S.isRealOffer({ promotion: 'x', origin: 'agent_verified' }), 'real offer rejected');
+    const bp = require('./src/engines/buyingPower');
+    const settings = { reference_rate: 6.95, tax_rate_default: 0.018, insurance_monthly: 250, pmi_rate_annual: 0.005 };
+    const capped = bp.estimate({ gross_income_annual: 95000, monthly_debts: 650, down_payment: 25000, target_payment: 2800 }, settings);
+    eq(capped.limited_by, 'target'); assert(capped.income_only && capped.income_only.price_high > capped.estimate.price_high, 'income alone should support more than the capped price');
+    eq(bp.estimate({ gross_income_annual: 95000, monthly_debts: 650, down_payment: 25000 }, settings).income_only, null);
+    const rv = read(path.join(ROOT, 'public', 'report-view.js'));
+    assert(/pp_calc_capped/.test(rv) && /income_only/.test(rv), 'the page does not explain the monthly cap');
+  });
   await t('research enforcement: verified only with a URL the search returned, expired and fair-housing rows hidden, no links in text, invented reasons dropped', () => {
     const R = require('./src/services/research');
     const parsed = { rows: [

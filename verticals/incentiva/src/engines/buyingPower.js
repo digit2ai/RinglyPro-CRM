@@ -91,7 +91,10 @@ function estimate(input, settings = {}, lang = 'en') {
       ok: true,
       estimate: { price_low: pLow !== null && pLow >= 50000 ? r1000(pLow) : null, price_high: r1000(pHigh), payment_low: pLow !== null && pLow >= 50000 ? Math.round(lowPay) : null, payment_high: Math.round(high) },
       missing: [], assumptions, is_estimate: true, limited_by: limitedBy,
-      debts_note: limitedBy === 'debts' ? debtsNote() : null
+      debts_note: limitedBy === 'debts' ? debtsNote() : null,
+      // When the buyer's own monthly limit is what caps the price, say what the income alone supports too,
+      // or a salary change looks like it does nothing (owner test 2026-09-21).
+      income_only: limitedBy === 'target' ? (() => { const pay = Math.min(incomeCap, debtCap); const p = priceForPayment(pay, args); return p !== null && p >= 50000 ? { price_high: r1000(p), payment_high: Math.round(pay) } : null; })() : null
     };
   }
   // No room for a home payment. Say exactly why, with the arithmetic, instead of a bare "can't estimate".

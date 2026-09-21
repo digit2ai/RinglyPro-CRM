@@ -178,6 +178,19 @@ async function loadSearch(tenantId, tok) {
   return db.one('SELECT * FROM nca_searches WHERE tenant_id = :t AND token = :tok', { t: tenantId, tok });
 }
 
+// "Best deal" only for a row that states a real, current offer (owner test 2026-09-21: a row saying "no confirmed
+// active buyer discount" was crowned best deal). The research text often DESCRIBES the absence of an offer, so the
+// presence of text is not enough: negated or historical wording disqualifies it, and a concrete term must be named.
+const NO_OFFER = /\b(no (confirmed|specific|current|active|published)|not (yet )?(confirmed|reconfirmed|verified|advertised)|none (found|listed)|advertised periodically|historical(ly)?)\b/i;
+const CONCRETE = /\$\s?\d|\d\s?%|buy\s*-?down|closing[- ]cost|credit|rate\b|free\b|\boff\b|discount|upgrade/i;
+function isRealOffer(r) {
+  if (!r) return false;
+  if (r.origin === 'agent_verified') return true;
+  const text = [r.promotion, r.rate, r.closing_credit, r.other_incentives].filter(Boolean).join(' ');
+  if (!text || NO_OFFER.test(text)) return false;
+  return !!(r.rate || r.closing_credit || CONCRETE.test(text));
+}
+
 async function buildReport(tenantId, s, { lang, allowGeocode = true } = {}) {
   const l = lang === 'es' || lang === 'en' ? lang : s.lang;
   const market = await getMarket(tenantId);
@@ -197,10 +210,10 @@ async function buildReport(tenantId, s, { lang, allowGeocode = true } = {}) {
   let best = null;
   if (run && run.status === 'done') {
     const byId = new Map(communities.map((c) => [c.id, c]));
-    const top = (run.top_deals || []).map((t) => ({ row: byId.get(t.row_id), reason: t.reason })).find((t) => t.row);
+    const top = (run.top_deals || []).map((t) => ({ row: byId.get(t.row_id), reason: t.reason })).find((t) => isRealOffer(t.row));
     if (top) best = { row: top.row, reason: top.reason, basis: 'research_ranking' };
     else {
-      const offers = communities.filter((c) => (c.promotion || c.rate || c.closing_credit) && c.est_monthly_from != null).sort((a, b) => a.est_monthly_from - b.est_monthly_from);
+      const offers = communities.filter((c) => isRealOffer(c) && c.est_monthly_from != null).sort((a, b) => a.est_monthly_from - b.est_monthly_from);
       if (offers.length) best = { row: offers[0], reason: null, basis: 'lowest_estimated_payment' };
     }
   }
@@ -258,4 +271,4 @@ async function buildReport(tenantId, s, { lang, allowGeocode = true } = {}) {
   };
 }
 
-module.exports = { validateSearch, createSearch, buildReport, loadSearch, purchasingPower, fitScore, builderTable, DTI_CAP };
+module.exports = { validateSearch, createSearch, buildReport, isRealOffer, loadSearch, purchasingPower, fitScore, builderTable, DTI_CAP };
