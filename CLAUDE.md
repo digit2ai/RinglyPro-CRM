@@ -1266,6 +1266,14 @@ the answer appears under your message, you type again — and a follow-up contin
 and the SAME pull request. Behind each message: clone -> branch -> code -> install -> test ->
 commit -> push -> pull request, streamed live.
 
+**`/speakup/` IS THE BUILDER; THE FACTORY CONSOLE HAS NO DOOR** (owner request 2026-09-21, after
+it kept appearing at sign-in). The root redirects, login lands there, the manifest starts there,
+and the worker's offline fallback names it. **The page file stays, unreachable, and that is not
+laziness:** `src/factory/security` (the operator gate, the same-origin check, the rate limiter),
+`audit`, `jobs.readiness` and `intents` are what the Builder and the Meetings screen are BUILT ON,
+and `test-offline.js` guards them through assertions that read `console.js`. Deleting the file
+means rewriting that suite — a separate, careful job, not a side effect of hiding a page.
+
 **THE TAB BAR IS `Reuniones | Code`, AND THE INSTALLED APP OPENS ON CODE** (owner request
 2026-09-21). The Factory link is gone from every screen and the manifest's `start_url` moved;
 the console is still served at `/speakup/` and `test-console-flow.js` still drives it — a working

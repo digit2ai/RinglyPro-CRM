@@ -72,7 +72,12 @@ router.use(express.static(publicDir));
 // TWO SCREENS, AND NOTHING ELSE. The Factory is the default; the Meeting Notes Taker is
 // the other. /recorder (library, import, translate, rewrite, notes) is gone, and so is the
 // /api/v1 ai router that only served the removed editing tools.
-router.get('/', (req, res) => res.sendFile(path.join(publicDir, 'app.html')));
+// THE FACTORY CONSOLE PAGE IS GONE (owner request 2026-09-21: "delete this page"). It kept
+// appearing after sign-in and is not used — the Builder replaced it. The SERVER modules under
+// src/factory/ stay and are load-bearing: security (the operator gate, the same-origin check,
+// the rate limiter), audit, jobs.readiness and intents are what the Builder and the Meetings
+// screen are built on. What was deleted is the page and its script, not the subsystem.
+router.get('/', (req, res) => res.redirect('/speakup/claude-code'));
 router.get('/meetings', (req, res) => res.sendFile(path.join(publicDir, 'meetings.html')));
 // History moved off the meetings screen to its own page; Settings is the third menu entry.
 router.get('/history', (req, res) => res.sendFile(path.join(publicDir, 'history.html')));
