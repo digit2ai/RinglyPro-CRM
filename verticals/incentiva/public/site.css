@@ -1197,3 +1197,28 @@ main > section#intake { background: var(--chat-ground); }
   .mch-composer { padding: 6px 6px 6px 16px; }
   .mch-b-m { font-size: 1.05rem; }
 }
+
+/* PRINTING A REPORT PRINTS THE REPORT, NOTHING ELSE (owner test 2026-09-21: the whole landing page went to
+   the printer with it and the PDF came out at 34,989 pages). While a report is on screen, every other
+   section, the chat and the footer drop out of print. The buyer's own income check prints its result
+   (not the form), so the numbers they typed are on the paper they take to a lender. */
+@media print {
+  html.bl-report-on main > section:not(#intake),
+  html.bl-report-on .site-footer,
+  html.bl-report-on #intake .intake-head,
+  html.bl-report-on #configStatus,
+  html.bl-report-on #blChat { display: none !important; }
+  html.bl-report-on main > section#intake { padding: 0; background: #fff; }
+  .rv .rv-calc.has-out { display: block !important; border: 0; padding: 0; }
+  .rv .rv-calc.has-out > summary, .rv .rv-calc-form { display: none !important; }
+  .rv-home, .rv-stat, .mch-table tr { break-inside: avoid; }
+  .rv-h { break-after: avoid; }
+  /* Tables stay tables on paper: the phone layout (one card per row) doubled the page count. */
+  .rv .mch-tablewrap { overflow: visible; }
+  .rv .mch-table { min-width: 0; font-size: 9pt; }
+  .rv .mch-table thead { display: table-header-group !important; }
+  .rv .mch-table tr { display: table-row !important; padding: 0; }
+  .rv .mch-table th { position: static; padding: 6px; }
+  .rv .mch-table td { display: table-cell !important; padding: 6px; border-top: 1px solid #bbb; }
+  .rv .mch-table td::before { content: none !important; }
+}

@@ -164,7 +164,7 @@
     var scrollY = window.scrollY;
     var active = document.activeElement && host.contains(document.activeElement) ? document.activeElement.id : null;
     clearHost();
-    host.hidden = false;
+    host.hidden = false; document.documentElement.classList.add("bl-report-on");
     host.setAttribute('lang', lang);
     var r = rep;
     host.appendChild(h('div', { class: 'rv-top' },
@@ -326,7 +326,7 @@
 
   var calc = { income: '', debts: '', out: null };
   function calcBox(pp) {
-    var box = h('details', { class: 'rv-calc no-print', open: calc.out ? true : null }, h('summary', { text: T('pp_calc') }));
+    var box = h('details', { class: 'rv-calc no-print' + (calc.out ? ' has-out' : ''), open: calc.out ? true : null }, h('summary', { text: T('pp_calc') }));
     var inc = h('input', { id: 'rvCalcIncome', type: 'text', inputmode: 'numeric', autocomplete: 'off' }); inc.value = calc.income;
     var debts = h('input', { id: 'rvCalcDebts', type: 'text', inputmode: 'numeric', autocomplete: 'off' }); debts.value = calc.debts;
     var f = h('form', { class: 'rv-calc-form', novalidate: true, onsubmit: function (e) {
@@ -490,14 +490,14 @@
       lang = (opts && opts.lang) || lang;
       if (token !== tok) { rep = null; formUi = { errors: {}, busy: false, error: null, done: null }; showAllHomes = false; calc = { income: '', debts: '', out: null }; }
       tok = token; pollStart = Date.now();
-      host.hidden = false;
+      host.hidden = false; document.documentElement.classList.add("bl-report-on");
       clearHost();
       host.appendChild(h('p', { class: 'muted', role: 'status' }, T('loading')));
       if (!config) api('GET', '/api/v1/public/config?lang=' + lang).then(function (r) { if (r.ok) { config = r.data; if (rep) paint(); } });
       load((opts && opts.onLoad) || true);
       if (opts && opts.scroll) setTimeout(function () { host.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }, 250);
     },
-    clear: function () { stopPoll(); tok = null; rep = null; if (host) { clearHost(); host.hidden = true; } },
+    clear: function () { stopPoll(); tok = null; rep = null; if (host) { clearHost(); host.hidden = true; document.documentElement.classList.remove("bl-report-on"); } },
     setLang: function (l) { lang = l === 'es' ? 'es' : 'en'; config = null; if (tok) { api('GET', '/api/v1/public/config?lang=' + lang).then(function (r) { if (r.ok) config = r.data; load(false); }); } },
     status: statusText,
     nextPrompt: nextPrompt,
