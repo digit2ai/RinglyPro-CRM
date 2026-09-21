@@ -18,7 +18,7 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code-run.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **228/228**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **241/241**, zero keys, no database |
 
 ## The engine
 
@@ -146,7 +146,7 @@ it ships", which is where it has to be: a run ends at a branch and a PR, never a
 |---|---|---|
 | `ANTHROPIC_API_KEY` | — | The agent. Unset: a run fails when it reaches the agent, and the page says so before you start one. |
 | `GITHUB_TOKEN` | falls back to `CC_GITHUB_TOKEN`, then `SPEAKUP_GITHUB_TOKEN` | Repo scope: list, clone, push, pull request, merge. Unset = cloning is **closed**, not open. |
-| `GITHUB_ORG` | owner of `SPEAKUP_FACTORY_REPO` | Comma list of owners a run may touch. Anything else is refused with 403 at the server. |
+| `GITHUB_ORG` | owner of `SPEAKUP_FACTORY_REPO` | Comma list of owners a run may touch. A full repo path, a URL or an `@org` are all accepted and reduced to the owner. Anything else is refused with 403, and the refusal names what is allowed. |
 | `CC_WORKSPACE_ROOT` | `/tmp/cc-workspaces` | Where clones live. Ephemeral on Render by design — a workspace outlives nothing. |
 | `CC_MODEL` | `claude-sonnet-5` | The model the agent runs on. |
 | `CC_MAX_TURNS` | `200` | Hard turn ceiling per pass. |

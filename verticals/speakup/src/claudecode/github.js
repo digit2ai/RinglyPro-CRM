@@ -31,12 +31,30 @@ class GitHubError extends Error {
 
 // Owners this tenant may run against. Unset GITHUB_ORG falls back to the owner of the
 // repository the Factory already works on, so it is never accidentally "anyone".
+/**
+ * Owners a run may touch. Unset falls back to the owner of the repository the Factory already
+ * works on, never to anyone.
+ *
+ * IT TAKES WHAT A PERSON ACTUALLY TYPES. The owner set GITHUB_ORG to a full repository name and
+ * got "repository owner is not allowed: digit2ai" on their own organisation — a true message
+ * about a value nobody would read as wrong. A URL, a trailing slash and a repo path all name the
+ * same owner, so they are all accepted and reduced to it. This widens nothing: whatever is
+ * written, only the OWNER part is ever allowed, and an empty result still falls back rather than
+ * opening up.
+ */
+function normalizeOwner(entry) {
+  let v = String(entry || '').trim().toLowerCase();
+  if (!v) return '';
+  v = v.replace(/^https?:\/\//, '').replace(/^(www\.)?github\.com\//, '');   // a pasted URL
+  v = v.replace(/^@/, '').split('/')[0];                                        // @org, or org/repo
+  return /^[a-z0-9._-]+$/.test(v) ? v : '';
+}
 function allowedOwners() {
   const raw = String(process.env.GITHUB_ORG || process.env.CC_GITHUB_ORG || '').trim();
-  const list = raw ? raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+  const list = raw ? raw.split(',').map(normalizeOwner).filter(Boolean) : [];
   if (!list.length) {
-    const fallback = String(process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM').split('/')[0];
-    if (fallback) list.push(fallback.toLowerCase());
+    const fallback = normalizeOwner(process.env.SPEAKUP_FACTORY_REPO || 'digit2ai/RinglyPro-CRM');
+    if (fallback) list.push(fallback);
   }
   return list;
 }
@@ -51,7 +69,10 @@ function assertAllowed(repoFullName) {
     throw new GitHubError(400, 'invalid repository name');
   }
   if (!ownerAllowed(repoFullName)) {
-    throw new GitHubError(403, 'repository owner is not allowed: ' + String(repoFullName).split('/')[0]);
+    // Naming what IS allowed turns a dead end into an instruction: the first person to hit this
+    // had set GITHUB_ORG to a repository path and had no way to see that from the message.
+    throw new GitHubError(403, 'repository owner is not allowed: ' + String(repoFullName).split('/')[0] +
+      '. GITHUB_ORG on Render currently allows: ' + (allowedOwners().join(', ') || '(nothing)') + '.');
   }
   return true;
 }
@@ -213,6 +234,6 @@ function cloneUrl(repo) {
 function __setFetch(f) { fetchImpl = f; }
 
 module.exports = {
-  configured, GitHubError, allowedOwners, ownerAllowed, assertAllowed,
+  configured, GitHubError, allowedOwners, normalizeOwner, ownerAllowed, assertAllowed,
   listRepos, hasArchitectSkill, getRepo, canPush, createPR, getPR, mergePR, combinedStatus, cloneUrl, __setFetch
 };

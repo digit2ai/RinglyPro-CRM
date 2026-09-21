@@ -96,6 +96,26 @@ function testOwners() {
   try { gh.cloneUrl('../../evil/x'); } catch (e) { cloneThrew = true; }
   ok('owners: cloneUrl refuses a traversal name', cloneThrew);
 
+  // WHATEVER A PERSON TYPES INTO GITHUB_ORG, ONLY THE OWNER IS EVER ALLOWED. The owner set it to
+  // a full repository path and was refused on their own organisation, which is a true message
+  // about a value nobody reads as wrong.
+  for (const [typed, want] of [['digit2ai/CRM-Co-Pilot', true], ['https://github.com/digit2ai', true],
+    ['github.com/digit2ai/CRM-Co-Pilot', true], ['@digit2ai', true], ['digit2ai/', true], ['  digit2ai  ', true]]) {
+    process.env.GITHUB_ORG = typed;
+    delete require.cache[require.resolve('./src/claudecode/github')];
+    const g = require('./src/claudecode/github');
+    eq('owners: ' + JSON.stringify(typed) + ' means the owner digit2ai', g.ownerAllowed('digit2ai/anything'), want);
+    ok('owners: and it never allows anyone else', !g.ownerAllowed('attacker/x'));
+  }
+  process.env.GITHUB_ORG = 'digit2ai/CRM-Co-Pilot';
+  delete require.cache[require.resolve('./src/claudecode/github')];
+  {
+    const g = require('./src/claudecode/github');
+    let msg = '';
+    try { g.assertAllowed('someone/else'); } catch (e) { msg = e.message; }
+    ok('owners: a refusal names what IS allowed, so it diagnoses itself', /allows: digit2ai/.test(msg));
+  }
+
   delete process.env.GITHUB_ORG;
   delete require.cache[require.resolve('./src/claudecode/github')];
   const gh2 = require('./src/claudecode/github');
