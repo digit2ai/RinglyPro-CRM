@@ -130,7 +130,6 @@
     <nav class="nav" aria-label="Módulo administrativo">
       <a href="#accounts" data-tab="accounts">Lista de usuarios</a>
       <a href="#users" data-tab="users" class="on">Usuarios de prueba</a>
-      <a href="#metrics" data-tab="metrics">Métricas</a>
       <a href="#train" data-tab="train">Entrenar a Maya</a>
       <a href="#kb" data-tab="kb">Conocimiento de Maya</a>
       <a href="#dian" data-tab="dian">Calendario DIAN</a>
@@ -291,11 +290,12 @@
   $('outBtn').addEventListener('click', function () { call('POST', '/logout').then(function () { $('whoName').textContent = ''; show('login'); }); });
 
   function tabFromHash() { var h = (location.hash || '').slice(1); return TABS.indexOf(h) >= 0 ? h : 'users'; }
-  var TABS = ['accounts', 'users', 'metrics', 'train', 'kb', 'dian'];
+  // Métricas salió del menú (pedido del dueño, 21-sep-2026); la API /metrics sigue.
+  var TABS = ['accounts', 'users', 'train', 'kb', 'dian'];
   window.addEventListener('hashchange', function () { if (!$('app').hidden) tab(tabFromHash()); });
   function tab(name) {
     document.querySelectorAll('.nav [data-tab]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
-    TABS.forEach(function (t) { $('tab-' + t).hidden = t !== name; });
+    TABS.concat('metrics').forEach(function (t) { $('tab-' + t).hidden = t !== name; });
     if (name === 'accounts') loadAccounts(); else if (name === 'users') loadUsers(); else if (name === 'metrics') loadMetrics(); else if (name === 'kb') loadKb(); else if (name === 'dian') loadDian();
   }
 
