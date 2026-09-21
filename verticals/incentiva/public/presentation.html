@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>BuyersLine Walkthrough</title>
+<meta name="theme-color" content="#1B1730">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<!--
+  BuyersLine narrated walkthrough (owner request 2026-09-21). One 1280x720 stage scaled to the window,
+  one narration per slide read by Ava through the shared zero-key /api/tts/edge route (no second TTS
+  backend), the caption shows what is being said, and the deck advances when the voice ends.
+  EVERY FIGURE ON THE BUYER SCREENS COMES FROM THE LIVE TEST RUN OF 2026-09-21 FOR ZIP 33543. The admin
+  screens carry a "Sample data" tag: their names and counts are illustrations, not real buyers.
+  The agent partner is never named here (owner rule): the role only.
+-->
+<style>
+:root{
+  --navy:#1B1730; --navy-2:#26213F; --navy-3:#332C55; --ink:#26213F; --paper:#FFFFFF; --band:#F4F5F9; --rule:#E7E8E9;
+  --orange:#FC4C02; --orange-ink:#C93D00; --muted:#6B6880; --on-navy:#ECEAF6; --on-navy-2:#B9B4D6;
+  --green:#1E7A4C; --green-bg:#E7F4EC; --amber:#8A5A00; --amber-bg:#FFF4DC; --red:#8a1d22;
+  --display:"Mulish",system-ui,-apple-system,"Segoe UI",sans-serif; --serif:"Source Serif 4",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0E0C1F;color:var(--on-navy);font-family:var(--display);-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;overflow:hidden}
+#viewport{flex:1;position:relative;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:0 0;background:
+  radial-gradient(900px 520px at 88% -10%,rgba(252,76,2,.16),transparent 70%),
+  radial-gradient(700px 520px at -5% 110%,rgba(120,110,210,.18),transparent 70%),var(--navy);
+  border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.slide{position:absolute;inset:0;padding:56px 64px 60px;display:none}
+.slide.on{display:flex;animation:fadein .45s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* .col and .cover set display:flex too; without this every column slide stayed on screen under the current one. */
+.slide:not(.on){display:none !important}
+.eyebrow{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#FF7A3D;margin:0 0 12px}
+h1{font-size:64px;line-height:1.02;font-weight:900;letter-spacing:-.02em;margin:0 0 20px;text-wrap:balance}
+h2{font-size:40px;line-height:1.08;font-weight:900;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.hl{color:var(--orange)}
+p.lede{font-size:20px;line-height:1.5;color:var(--on-navy-2);margin:0 0 22px;max-width:56ch}
+.col{display:flex;flex-direction:column;justify-content:center}
+.split{display:grid;grid-template-columns:1fr 360px;gap:56px;width:100%;align-items:center}
+.split.wide{grid-template-columns:1fr 1.25fr}
+.points{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.points li{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:18px;line-height:1.45;color:var(--on-navy)}
+.points li b{color:#fff}
+.points .k{width:28px;height:28px;border-radius:50%;background:rgba(252,76,2,.16);color:#FF7A3D;display:grid;place-items:center;font-size:13px;font-weight:900}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--on-navy-2)}
+.tag.sample{background:rgba(255,196,0,.14);color:#FFD66B}
+.src{font-size:13px;color:var(--on-navy-2);margin-top:18px}
+
+/* Cover */
+.cover{flex-direction:column;justify-content:center}
+.brandrow{display:flex;align-items:center;gap:14px;margin-bottom:34px}
+.brandrow svg{width:56px;height:56px;border-radius:14px}
+.brandrow span{font-size:26px;font-weight:900;letter-spacing:-.01em}
+.start{margin-top:30px;display:inline-flex;align-items:center;gap:12px;background:var(--orange);color:#fff;border:0;border-radius:999px;padding:18px 30px;font:800 19px var(--display);cursor:pointer;box-shadow:0 12px 30px rgba(252,76,2,.35)}
+.start:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.start svg{width:20px;height:20px}
+
+/* Three ideas */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:10px}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:24px}
+.card h3{font-size:21px;margin:0 0 10px;font-weight:900}
+.card p{font-size:16px;line-height:1.5;color:var(--on-navy-2);margin:0}
+.card .n{font-size:13px;font-weight:900;color:#FF7A3D;letter-spacing:.12em;margin-bottom:10px}
+
+/* Flow: three lanes */
+.lanes{display:grid;grid-template-columns:150px repeat(5,1fr);grid-template-rows:repeat(3,92px);gap:0;margin-top:18px;position:relative}
+.lane-l{display:flex;align-items:center;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--on-navy-2);border-top:1px dashed rgba(255,255,255,.14)}
+.cell{border-top:1px dashed rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;padding:6px}
+.node{background:#fff;color:var(--ink);border-radius:14px;padding:12px 14px;font-size:14px;font-weight:800;line-height:1.3;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.25);width:100%}
+.node small{display:block;font-weight:600;color:var(--muted);margin-top:4px;font-size:12px}
+.node.ai{background:#FFF1EA}
+.node.human{background:#E7F4EC}
+
+/* Phone */
+.phone{width:340px;height:640px;border-radius:44px;background:#0b0a14;padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.5),inset 0 0 0 2px #2b2744;position:relative;justify-self:center}
+.phone::before{content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);width:96px;height:26px;border-radius:14px;background:#0b0a14;z-index:3}
+.screen{width:100%;height:100%;border-radius:34px;background:var(--paper);color:var(--ink);overflow:hidden;display:flex;flex-direction:column;font-size:13px;position:relative}
+.sb{height:42px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 26px 6px;font-size:12px;font-weight:800;color:var(--ink)}
+.appbar{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px 10px;border-bottom:1px solid var(--rule)}
+.appbar svg{width:24px;height:24px;border-radius:6px}
+.appbar b{font-size:15px;font-weight:900}
+.appbar .r{margin-left:auto;font-size:11px;font-weight:800;border:1.5px solid var(--ink);border-radius:999px;padding:4px 10px}
+.body{flex:1;overflow:hidden;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.scrolly{flex:1;overflow:hidden;position:relative}
+.scrolly>.inner{display:flex;flex-direction:column;gap:10px}
+
+/* Chat */
+.anna-h{display:flex;align-items:center;gap:8px}
+.av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#FC4C02,#FF9A6B);display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px}
+.anna-h b{font-size:13px}.anna-h small{color:var(--muted);font-size:11px;display:block}
+.dots{display:flex;gap:5px;margin:2px 0}
+.dots i{width:22px;height:5px;border-radius:3px;background:var(--rule)}
+.dots i.d{background:var(--ink)}.dots i.c{background:var(--orange)}
+.m-a{font-family:var(--serif);font-size:15px;line-height:1.5;color:var(--ink);max-width:95%}
+.m-u{align-self:flex-end;background:#EEF0F4;border-radius:18px;padding:9px 13px;font-size:13px;line-height:1.4;max-width:82%}
+.m-s{font-size:11.5px;color:var(--muted)}
+.composer{flex:none;margin:0 12px 14px;border:1px solid var(--rule);border-radius:24px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:8px;color:#9a97a8;font-size:13px}
+.composer .send{margin-left:auto;width:32px;height:32px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+.composer .send svg{width:14px;height:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--rule);border-radius:999px;padding:6px 10px;font-size:11.5px;font-weight:700}
+.chip.on{border-color:var(--ink);background:var(--ink);color:#fff}
+
+/* Voice */
+.voice{background:linear-gradient(180deg,#1B1730 0%,#2b2450 100%);color:#fff}
+.orbwrap{flex:none;display:grid;place-items:center;padding:26px 0 10px}
+.orb{width:128px;height:128px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFB38F,#FC4C02 55%,#9b2c00);box-shadow:0 0 0 12px rgba(252,76,2,.12),0 0 0 26px rgba(252,76,2,.06),0 18px 50px rgba(252,76,2,.45);animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.06);box-shadow:0 0 0 16px rgba(252,76,2,.14),0 0 0 34px rgba(252,76,2,.05),0 18px 60px rgba(252,76,2,.55)}}
+.vstate{text-align:center;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#FFB38F;margin-top:14px}
+.vcap{padding:6px 18px;display:flex;flex-direction:column;gap:10px}
+.vcap .u{align-self:flex-end;background:rgba(255,255,255,.12);border-radius:16px;padding:8px 12px;font-size:12.5px;line-height:1.4;max-width:85%}
+.vcap .a{font-family:var(--serif);font-size:14px;line-height:1.5;color:#F2F0FB}
+.vbar{margin:auto 16px 18px;display:flex;gap:8px}
+.vbar span{flex:1;text-align:center;border-radius:999px;padding:10px;font-size:12px;font-weight:800;background:rgba(255,255,255,.1)}
+.vbar span.end{background:#fff;color:var(--ink)}
+.wave{display:flex;gap:3px;justify-content:center;height:18px;align-items:center;margin-top:8px}
+.wave i{width:3px;border-radius:2px;background:#FFB38F;animation:wv 1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}
+@keyframes wv{0%,100%{height:4px}50%{height:18px}}
+
+/* Report pieces */
+.rep-eb{font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--orange-ink);text-transform:uppercase}
+.rep-t{font-size:20px;font-weight:900;margin:2px 0 0}
+.sec-h{font-size:14px;font-weight:900;margin:4px 0 2px}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kv div{background:var(--band);border-radius:10px;padding:7px 9px}
+.kv small{display:block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.kv b{font-size:12.5px}
+.big{font-size:15px;font-weight:800;line-height:1.35}
+.note{font-size:11px;line-height:1.45;color:var(--muted)}
+.callout{background:var(--band);border-radius:10px;padding:9px 10px;font-size:11.5px;line-height:1.45;font-weight:700}
+.brow{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--rule);font-size:11.5px;line-height:1.4}
+.brow b{font-size:12px}
+.badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--amber-bg);color:var(--amber);margin-top:4px}
+.badge.g{background:var(--green-bg);color:var(--green)}
+.stat2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat2 div{border:1px solid var(--rule);border-radius:10px;padding:8px}
+.stat2 small{font-size:10px;color:var(--muted);display:block}
+.stat2 b{font-size:16px}
+.school{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--rule);font-size:12px}
+.grade{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-weight:900;background:var(--green-bg);color:var(--green)}
+.grade.b{background:#EAF1FB;color:#1d4f91}
+.home{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--rule);border-radius:12px;padding:9px 10px;font-size:11.5px}
+.home b{display:block;font-size:13px}
+.fit{font-size:10px;font-weight:900;background:var(--green-bg);color:var(--green);border-radius:999px;padding:2px 7px;display:inline-block;margin-top:4px}
+.field{border:1px solid var(--rule);border-radius:10px;padding:8px 10px;font-size:12.5px}
+.field small{display:block;font-size:10px;color:var(--muted);font-weight:700}
+.yn{display:flex;gap:6px;align-items:center;font-size:11.5px;font-weight:700}
+.yn span{border:1.5px solid var(--rule);border-radius:999px;padding:5px 12px}
+.yn span.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.check{display:grid;grid-template-columns:18px 1fr;gap:8px;font-size:11.5px;line-height:1.4;align-items:start}
+.check i{width:18px;height:18px;border:2px solid var(--ink);border-radius:5px}
+.cta{background:var(--orange);color:#fff;border-radius:999px;text-align:center;padding:11px;font-weight:900;font-size:13px}
+.disc{font-size:10px;line-height:1.4;color:var(--muted);border-left:3px solid var(--orange);padding-left:8px}
+
+/* Desktop / admin */
+.desk{width:100%;height:560px;background:#0b0a14;border-radius:16px;padding:10px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.desk .win{width:100%;height:100%;border-radius:10px;background:var(--paper);color:var(--ink);overflow:hidden;display:grid;grid-template-columns:200px 1fr;grid-template-rows:38px 1fr}
+.tb{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding:0 12px;background:#F1F1F5;border-bottom:1px solid var(--rule);font-size:11px;color:var(--muted)}
+.tb i{width:10px;height:10px;border-radius:50%;background:#e2e2ea}
+.tb .url{margin-left:14px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:4px 12px;flex:1;max-width:360px}
+.side{background:var(--navy-2);color:#E6E3F5;padding:12px 10px;display:flex;flex-direction:column;gap:0;font-size:12px;font-weight:700}
+.side .lg{display:flex;align-items:center;gap:8px;font-weight:900;font-size:14px;color:#fff;padding:2px 8px 12px}
+.side .lg svg{width:22px;height:22px;border-radius:5px}
+.side a{padding:5px 10px;border-radius:8px;color:inherit;text-decoration:none;display:flex;justify-content:space-between}
+.side a.on{background:rgba(255,255,255,.12);color:#fff}
+.side .grp{font-size:10px;letter-spacing:.14em;color:#9f99c4;text-transform:uppercase;padding:9px 10px 3px}
+.side .bd{background:var(--orange);color:#fff;border-radius:999px;font-size:10px;padding:1px 7px}
+.main{padding:18px 22px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.main h4{font-size:20px;font-weight:900;margin:0}
+.main .sub{font-size:12px;color:var(--muted);margin-top:-6px}
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.q{border:1px solid var(--rule);border-radius:12px;padding:12px}
+.q.hot{border-color:var(--orange);background:#FFF7F2}
+.q small{font-size:11px;font-weight:800;color:var(--muted)}
+.q b{display:block;font-size:26px;font-weight:900;margin:2px 0}
+.q p{font-size:11px;color:var(--muted);margin:0;line-height:1.4}
+table.t{width:100%;border-collapse:collapse;font-size:12px}
+table.t th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:7px 8px;background:var(--band)}
+table.t td{padding:8px;border-top:1px solid var(--rule);vertical-align:top}
+.pill{display:inline-block;font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 8px}
+.pill.hot{background:#FFE7DC;color:#9b2c00}.pill.warm{background:var(--amber-bg);color:var(--amber)}.pill.nur{background:#EEF0F4;color:#4b4866}
+.pill.pend{background:var(--amber-bg);color:var(--amber)}.pill.ok{background:var(--green-bg);color:var(--green)}
+.btnrow{display:flex;gap:6px}
+.btn{font-size:11px;font-weight:800;border-radius:999px;padding:5px 11px;border:1.5px solid var(--ink)}
+.btn.p{background:var(--ink);color:#fff}
+.sms{position:absolute;right:48px;bottom:70px;width:300px;background:#fff;color:var(--ink);border-radius:18px;padding:14px;box-shadow:0 24px 50px rgba(0,0,0,.45);font-size:12.5px;line-height:1.45}
+.sms small{display:block;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:6px}
+.sms .bub{background:#EEF0F4;border-radius:14px;padding:10px 12px}
+.prog{height:8px;border-radius:5px;background:var(--band);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--orange)}
+.secs{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11.5px}
+.secs div{display:flex;justify-content:space-between;border:1px solid var(--rule);border-radius:9px;padding:6px 9px}
+.qcard{border:1px solid var(--rule);border-radius:14px;padding:14px}
+.qcard .why{font-size:11.5px;color:var(--muted);margin:6px 0 10px;line-height:1.45}
+.ta{border:1px solid var(--rule);border-radius:10px;height:70px;padding:8px;font-size:12px;color:#9a97a8}
+.mic{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;border:1.5px solid var(--ink);border-radius:999px;padding:5px 10px}
+
+/* Guardrails + next */
+.gl{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.gl .card h3{font-size:18px}
+.next{list-style:none;margin:0;padding:0;counter-reset:n;display:grid;gap:14px;max-width:760px}
+.next li{counter-increment:n;display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;font-size:19px;line-height:1.45}
+.next li::before{content:counter(n);width:44px;height:44px;border-radius:12px;background:var(--orange);color:#fff;display:grid;place-items:center;font-weight:900;font-size:18px}
+.next li b{color:#fff}.next li span{color:var(--on-navy-2);display:block;font-size:16px}
+
+/* Player */
+#dock{flex:none;background:#0E0C1F;border-top:1px solid rgba(255,255,255,.08);padding:10px max(16px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+#cap{font-size:15px;line-height:1.45;color:#E6E3F5;max-height:44px;overflow:hidden;text-wrap:pretty}
+.ctl{display:flex;gap:8px;align-items:center}
+.ctl button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;display:grid;place-items:center;cursor:pointer}
+.ctl button:focus-visible{outline:2px solid #FF7A3D;outline-offset:2px}
+.ctl button svg{width:18px;height:18px}
+.ctl button.pp{background:var(--orange);border-color:var(--orange)}
+#count{font-size:13px;font-weight:800;color:var(--on-navy-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+#bar{position:absolute;left:0;bottom:0;height:4px;background:var(--orange);width:0;transition:width .3s linear;z-index:5}
+@media (max-width:720px){#dock{grid-template-columns:1fr auto}#cap{grid-column:1/-1;order:3;font-size:13px}}
+@media (prefers-reduced-motion:reduce){.orb,.wave i{animation:none}.slide.on{animation:none}}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage" role="region" aria-roledescription="presentation" aria-label="BuyersLine walkthrough">
+
+<!-- 1 COVER -->
+<section class="slide cover on" data-n="Welcome to BuyersLine. In the next few minutes you will see the whole product: first the way a home buyer uses it on a phone, talking or typing with Anna, and then the admin dashboard we run it from. Every buyer screen you are about to see comes from a real test run on September twenty first, for the ZIP code three three five four three, in Zephyrhills.">
+  <div class="brandrow"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" fill="#26213F"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#fff"/><path d="M22 32l10-8 10 8" fill="none" stroke="#26213F" stroke-width="3.2" stroke-linejoin="round"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg><span>BuyersLine</span></div>
+  <p class="eyebrow">Product walkthrough · Tampa Bay · September 2026</p>
+  <h1>Your direct line to<br><span class="hl">new homes</span> in Tampa Bay.</h1>
+  <p class="lede">Five questions with Anna, an instant free report with today's builder promotions, and a licensed agent only if the buyer says yes.</p>
+  <div><button class="start" id="startBtn" type="button"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>Start the walkthrough</button></div>
+</section>
+
+<!-- 2 WHY -->
+<section class="slide col" data-n="Here is why BuyersLine exists. A buyer who walks into a builder's sales office alone can lose the chance of free representation. Promotions change every day and are hard to compare, because each builder describes them differently. BuyersLine puts one AI guide, Anna, in front of the buyer, checks the promotions for them, and hands them to a licensed agent only when they ask for one.">
+  <p class="eyebrow">Why it exists</p>
+  <h2>New-home buyers are on their own.<br>BuyersLine gives them a guide.</h2>
+  <div class="trio">
+    <div class="card"><div class="n">THE BUYER</div><h3>Walks in alone</h3><p>Visiting a sales office first can cost a buyer free representation. Most buyers do not know that until it is too late.</p></div>
+    <div class="card"><div class="n">THE PROMOTIONS</div><h3>Change every day</h3><p>Rate buydowns, closing credits, lender rules. Each builder words them differently, so they are hard to compare.</p></div>
+    <div class="card"><div class="n">BUYERSLINE</div><h3>One guide, then a person</h3><p>Anna asks five questions, the report checks the promotions, and a licensed agent steps in only when the buyer says yes.</p></div>
+  </div>
+</section>
+
+<!-- 3 FLOW -->
+<section class="slide col" data-n="This is the whole journey on one picture. The buyer talks to Anna. BuyersLine's AI builds the report in seconds, and a compliance agent checks every promotion before it is shown. The buyer gets the full report by email. And a licensed real estate agent is involved only if the buyer ticks the box to share their details. The human stays in the loop, and the buyer stays in control.">
+  <p class="eyebrow">How it works</p>
+  <h2>Five steps. The buyer stays in control.</h2>
+  <div class="lanes">
+    <div class="lane-l">Buyer</div>
+    <div class="cell"><div class="node">Talks to Anna<small>5 questions, voice or text</small></div></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell"><div class="node">Gets the report<small>by email, free</small></div></div><div class="cell"></div>
+    <div class="lane-l">BuyersLine AI</div>
+    <div class="cell"></div>
+    <div class="cell"><div class="node ai">Builds the report<small>in seconds</small></div></div>
+    <div class="cell"><div class="node ai">Compliance check<small>every promotion</small></div></div>
+    <div class="cell"></div><div class="cell"></div>
+    <div class="lane-l">Licensed agent</div>
+    <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    <div class="cell"><div class="node human">Calls the buyer<small>only if they said yes</small></div></div>
+  </div>
+</section>
+
+<!-- 4 ANNA CHAT -->
+<section class="slide" data-n="On the phone, the buyer taps See my options and Anna starts. Only the first question is required: where they are looking. In our test, the buyer typed somewhere around Zephyrhills, the zip is three three five four three. Anna understood both, confirmed Zephyrhills, and moved on to the budget. The buyer answered twenty eight hundred a month, and Anna asked about the down payment. Five questions, one at a time, and every one after the first can be skipped.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · Anna</p>
+      <h2>Five questions,<br>like a conversation.</h2>
+      <ul class="points">
+        <li><span class="k">1</span><span><b>Where</b> — a ZIP, a city or a neighborhood. The only required answer.</span></li>
+        <li><span class="k">2</span><span><b>Budget</b> — a maximum price or a monthly payment.</span></li>
+        <li><span class="k">3</span><span><b>Down payment</b>, <b>timeframe</b> and <b>financing</b>, each with Skip.</span></li>
+      </ul>
+      <p class="src">Real conversation from the test run, 21 Sep 2026.</p>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>9:41</span><span>5G</span></div>
+      <div class="appbar"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#26213F"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#fff"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg><b>BuyersLine</b><span class="r">Log in</span></div>
+      <div class="body">
+        <div class="anna-h"><span class="av">A</span><span><b>Anna</b><small>BuyersLine assistant · Question 3 of 5</small></span></div>
+        <div class="dots"><i class="d"></i><i class="d"></i><i class="c"></i><i></i><i></i></div>
+        <div class="m-a">Hi, I'm Anna. Five quick questions and your report appears right below. Only the first one is required.</div>
+        <div class="m-u">somewhere around Zephyrhills, the zip is 33543</div>
+        <div class="m-s">Got it: Zephyrhills, FL 33543.</div>
+        <div class="m-u">around 2,800 a month, tops</div>
+        <div class="m-s">Noted: $2,800 a month.</div>
+        <div class="m-a">How much do you have for a down payment?</div>
+      </div>
+      <div class="composer">For example 25,000<span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 5 ANNA VOICE -->
+<section class="slide" data-n="The buyer can also just talk. Anna is an AI assistant, not a form. She takes answers in any order, understands numbers said in words, accepts corrections, and repeats or explains a question when asked. In our voice test, the buyer asked what do you mean by maximum price, like the total or monthly? Anna explained it in plain words and asked again. She works in English and in Spanish, and she never ticks the consent box for the buyer.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · Anna by voice</p>
+      <h2>Just talk.<br>Anna listens like a person.</h2>
+      <ul class="points">
+        <li><span class="k">✓</span><span>Answers in <b>any form and order</b>: "three three five four three", "twenty five grand".</span></li>
+        <li><span class="k">✓</span><span><b>Patient</b>: repeats, explains, accepts "actually, make it Wesley Chapel".</span></li>
+        <li><span class="k">✓</span><span><b>English and Spanish</b>. Only the buyer can tick consent.</span></li>
+      </ul>
+      <p class="src">Exchange from the live voice test, 21 Sep 2026.</p>
+    </div>
+    <div class="phone"><div class="screen voice">
+      <div class="sb" style="color:#fff"><span>9:41</span><span>5G</span></div>
+      <div class="orbwrap"><div class="orb"></div><div class="vstate">Anna is speaking</div><div class="wave"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div class="vcap">
+        <div class="u">what do you mean by maximum price? like the total or monthly?</div>
+        <div class="a">Good question. Maximum price means the total amount you're willing to spend on the home itself. Or, if it's easier, just tell me the most you want to pay each month.</div>
+        <div class="u">okay, around twenty eight hundred a month, tops</div>
+        <div class="a">Perfect, $2,800 a month. Next, how much are you planning to put down?</div>
+      </div>
+      <div class="vbar"><span>Type instead</span><span class="end">End</span></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 6 REPORT: WISH LIST + POWER -->
+<section class="slide" data-n="After the fifth answer, the report appears right below the conversation, in about five seconds. It starts with the buyer's wish list and their purchasing power. A payment of twenty eight hundred dollars a month buys up to about three hundred nineteen thousand dollars. The buyer can add an income check: with ninety five thousand a year and six hundred fifty in monthly debts, their income supports about three hundred sixty two thousand, and the report says clearly that their own monthly limit is what keeps them lower.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · The report</p>
+      <h2>A free report,<br>in about five seconds.</h2>
+      <ul class="points">
+        <li><span class="k">$</span><span><b>Purchasing power</b> from their budget, with all monthly debts kept under 50% of gross income.</span></li>
+        <li><span class="k">✓</span><span><b>Income check</b> says when their own monthly limit is what caps the price.</span></li>
+        <li><span class="k">i</span><span>Every figure is calculated, never written by the AI. Not a loan approval.</span></li>
+      </ul>
+      <p class="src">Figures from the ZIP 33543 test report, 21 Sep 2026, at the 6.95% reference rate of 17 Sep 2026.</p>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>9:42</span><span>5G</span></div>
+      <div class="body">
+        <div><div class="rep-eb">New construction near Zephyrhills, FL 33543</div><div class="rep-t">Your BuyersLine report</div></div>
+        <div class="sec-h">Your wish list</div>
+        <div class="kv"><div><small>Area</small><b>Zephyrhills 33543</b></div><div><small>Budget</small><b>$2,800 a month</b></div><div><small>Down payment</small><b>$25,000</b></div><div><small>Timeframe</small><b>3 to 6 months</b></div><div><small>Paying with</small><b>Pre-approved</b></div></div>
+        <div class="sec-h">Purchasing power</div>
+        <div class="big">A payment of $2,800 a month buys up to about $319,000.</div>
+        <div class="note">Estimate at a 6.95% reference rate, 30-year fixed, with taxes and insurance. Not a loan approval.</div>
+        <div class="callout">With $95,000 a year and $650 in monthly debts, your income supports homes up to about $362,000. Your own limit of $2,800 a month keeps you at about $319,000.</div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 7 PROMOTIONS -->
+<section class="slide" data-n="Next come today's promotions by builder. Lennar, D R Horton, M I Homes, Taylor Morrison and KB Home are always listed, plus any other builder found in the area. Every promotion passes a compliance agent before a buyer sees it, and it carries a plain note, such as requires the builder's lender, or not yet confirmed by a licensed agent. And the report is honest: in this area no promotion stated a real, concrete offer, so the best deal box says so, instead of inventing one.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · Today's promotions</p>
+      <h2>Checked, labelled,<br>and never invented.</h2>
+      <ul class="points">
+        <li><span class="k">5</span><span>The <b>five major builders</b> always listed, plus any other active builder.</span></li>
+        <li><span class="k">✓</span><span>A <b>compliance agent</b> clears every promotion and adds plain notes.</span></li>
+        <li><span class="k">!</span><span>No real offer? <b>Best deal says so</b> rather than crowning a weak one.</span></li>
+      </ul>
+      <p class="src">Rows from the ZIP 33543 test report, 21 Sep 2026.</p>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>9:42</span><span>5G</span></div>
+      <div class="body">
+        <div class="sec-h">Today's promotions by builder</div>
+        <div class="note">Each promotion passed our compliance review before it is shown.</div>
+        <div class="brow"><b>Lennar</b><span>No current promotion found in this area today.</span></div>
+        <div class="brow"><b>D.R. Horton</b><span><b>Woodcreek</b> · from $290,000<br><span class="note">Requires the builder's lender or title company. No end date published. Not yet confirmed by a licensed agent.</span><br><span class="badge">Unverified</span></span></div>
+        <div class="brow"><b>M/I Homes</b><span>No current promotion found in this area today.</span></div>
+        <div class="brow"><b>Taylor Morrison</b><span>No current promotion found in this area today.</span></div>
+        <div class="brow"><b>KB Home</b><span>No current promotion found in this area today.</span></div>
+        <div class="sec-h">Best deal today</div>
+        <div class="callout">No promotion in your range to rank yet.</div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 8 MARKET + SCHOOLS + HOMES -->
+<section class="slide" data-n="The report also shows the market around the buyer. In this area, the lowest price available was one hundred seventy two thousand nine hundred dollars, the median price per square foot was one hundred ninety four dollars, and fifteen new construction homes were listed within ten miles. School grades appear only when the official source was found, here from the Florida Department of Education. Then the homes at the buyer's price point, sorted by fit.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · The area</p>
+      <h2>Prices, schools<br>and homes that fit.</h2>
+      <ul class="points">
+        <li><span class="k">$</span><span><b>Lowest price</b> and <b>median price per square foot</b> from live listings.</span></li>
+        <li><span class="k">A</span><span><b>School grades</b> only with an official source.</span></li>
+        <li><span class="k">✓</span><span><b>Fit</b> weighs price, payment and location. Incentives never add to fit.</span></li>
+      </ul>
+      <p class="src">Figures from the ZIP 33543 test report, 21 Sep 2026.</p>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>9:43</span><span>5G</span></div>
+      <div class="body">
+        <div class="sec-h">Prices in this area</div>
+        <div class="stat2"><div><small>Lowest price available</small><b>$172,900</b></div><div><small>Price per sq ft (median)</small><b>$194</b></div></div>
+        <div class="note">New-construction homes listed within 10 miles: 15</div>
+        <div class="sec-h">School ratings</div>
+        <div class="school"><span>Sand Pine Elementary</span><span class="grade">A</span></div>
+        <div class="school"><span>Double Branch Elementary</span><span class="grade b">B</span></div>
+        <div class="school"><span>Dr. John Long Middle</span><span class="grade">A</span></div>
+        <div class="school"><span>Wiregrass Ranch High</span><span class="grade">A</span></div>
+        <div class="note">Grade source: Florida Department of Education</div>
+        <div class="sec-h">Homes at your price point</div>
+        <div class="home"><span><b>Zephyrhills, FL 33541</b>3 bd · 2 ba · 1,352 sq ft</span><span style="text-align:right"><b>$172,900</b><span class="fit">Fit 94</span></span></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 9 CONTACT + CONSENT -->
+<section class="slide" data-n="Contact details come after the report, never before. The buyer gives a first name, email and phone, and answers two quick questions: are they already working with a real estate agent, and have they already visited a new construction site. Then one box: share my details with a licensed real estate agent. Only the buyer can tick it. If they already have an agent, the box disappears and they can send the report to their own agent instead. The full report arrives by email.">
+  <div class="split">
+    <div class="col">
+      <p class="eyebrow">For the buyer · Consent</p>
+      <h2>Report first.<br>Contact details second.</h2>
+      <ul class="points">
+        <li><span class="k">1</span><span>Name, email, phone and <b>two yes or no questions</b>.</span></li>
+        <li><span class="k">2</span><span><b>One consent box</b>, ticked by the buyer only. Anna cannot tick it.</span></li>
+        <li><span class="k">3</span><span>Already has an agent? They <b>send the report to that agent</b> instead.</span></li>
+      </ul>
+    </div>
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>9:44</span><span>5G</span></div>
+      <div class="body">
+        <div class="sec-h">Get your report by email</div>
+        <div class="field"><small>First name</small>Rosa</div>
+        <div class="field"><small>Email</small>rosa@example.com</div>
+        <div class="field"><small>Phone</small>(813) 555-0142</div>
+        <div class="note" style="font-weight:700;color:var(--ink)">Are you already working with a real estate agent?</div>
+        <div class="yn"><span>Yes</span><span class="on">No</span></div>
+        <div class="note" style="font-weight:700;color:var(--ink)">Have you already visited a new construction site?</div>
+        <div class="yn"><span>Yes</span><span class="on">No</span></div>
+        <div class="check"><i></i><span>Share my name, contact details and criteria with a licensed real estate agent.</span></div>
+        <div class="cta">Create report</div>
+        <div class="disc">Builder promotions change daily and are subject to change without notice. BuyersLine is not a real estate agent or broker.</div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 10 ADMIN TODAY -->
+<section class="slide col" data-n="Now the other side: the admin dashboard, at buyersline dot app, behind the Log in link. The left pane holds everything we need to run the platform: today's work, leads, promotions to verify, reports, compliance holds, the knowledge base, and, for admins, users, system health and the architecture. The Today screen shows what needs attention first, such as reports waiting for review and compliance holds.">
+  <p class="eyebrow">For us · The admin dashboard <span class="tag sample" style="margin-left:10px">Sample data</span></p>
+  <div class="desk"><div class="win">
+    <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/today</span></div>
+    <nav class="side">
+      <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
+      <a class="on">Today</a><a>Leads <span class="bd">3</span></a><a>Verify <span class="bd">2</span></a><a>Reports</a><a>Compliance</a><a>Buyers</a><a>Knowledge base</a><a>Incentives</a><a>Settings</a>
+      <div class="grp">Admin</div><a>Users <span class="bd">1</span></a><a>System</a><a>Architecture</a>
+      <div class="grp">More</div><a>View the website</a><a>Expert questionnaire</a>
+    </nav>
+    <div class="main">
+      <h4>Today</h4><div class="sub">What needs you first.</div>
+      <div class="qgrid">
+        <div class="q hot"><small>Reports awaiting review</small><b>2</b><p>Buyer reports that need your approval before they are shared.</p></div>
+        <div class="q"><small>Compliance holds</small><b>1</b><p>Items stopped by the compliance check. Release requires a note.</p></div>
+        <div class="q"><small>Consult requests</small><b>1</b><p>Buyers asking to talk with you.</p></div>
+        <div class="q"><small>Buyers stopped at the gate</small><b>1</b><p>Buyers who did not pass intake, for example another agent or a prior builder visit.</p></div>
+        <div class="q hot"><small>Deadlines, next 21 days</small><b>2</b><p>Incentive contract, close and expiry dates coming up.</p></div>
+        <div class="q"><small>Billable consults this month</small><b>0</b><p>Consults marked held that count toward this month's invoice.</p></div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 11 ADMIN LEADS -->
+<section class="slide col" data-n="The Leads screen lists every buyer who created a report, with a readiness score from fixed rules, hot, warm or nurture, and flags such as already working with an agent. A buyer who did not agree to share their details is marked report only, and an agent cannot open them. Each lead keeps the consent records, notes and documents, and the knowledge base holds what the team learns, with links and files.">
+  <p class="eyebrow">For us · Leads and knowledge <span class="tag sample" style="margin-left:10px">Sample data</span></p>
+  <div class="desk"><div class="win">
+    <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/leads</span></div>
+    <nav class="side">
+      <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
+      <a>Today</a><a class="on">Leads <span class="bd">3</span></a><a>Verify</a><a>Reports</a><a>Compliance</a><a>Buyers</a><a>Knowledge base</a><a>Incentives</a><a>Settings</a>
+      <div class="grp">Admin</div><a>Users</a><a>System</a><a>Architecture</a>
+      <div class="grp">More</div><a>View the website</a><a>Expert questionnaire</a>
+    </nav>
+    <div class="main">
+      <h4>Leads</h4><div class="sub">Every buyer who created a report. Readiness comes from fixed rules, never a model.</div>
+      <table class="t">
+        <thead><tr><th>Buyer</th><th>Area</th><th>Budget</th><th>Readiness</th><th>Flags</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><b>Sample Buyer A</b></td><td>Zephyrhills 33543</td><td>$2,800 / mo</td><td><span class="pill hot">Hot</span></td><td>Pre-approved · 3 to 6 months</td><td>New</td></tr>
+          <tr><td><b>Sample Buyer B</b></td><td>Wesley Chapel 33545</td><td>$400,000</td><td><span class="pill warm">Warm</span></td><td>Cash · 12+ months</td><td>Contacted</td></tr>
+          <tr><td><b>Sample Buyer C</b></td><td>Riverview 33568</td><td>$2,500 / mo</td><td><span class="pill nur">Nurture</span></td><td>Report only: no outreach consent</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <div class="qgrid" style="grid-template-columns:1fr 1fr">
+        <div class="q"><small>On every lead</small><p style="font-size:12.5px;color:var(--ink);margin-top:4px">Consent records with the wording shown, notes, documents, the report snapshot, and follow-ups.</p></div>
+        <div class="q"><small>Knowledge base</small><p style="font-size:12.5px;color:var(--ink);margin-top:4px">Entries with notes, links and files, editable any time by the admin or the agent.</p></div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 12 ADMIN USERS -->
+<section class="slide col" data-n="Access is maker and checker. Anyone on the team can create a login from the sign in page, with a password typed twice. The account stays pending, and the owner gets a text message right away from our registered business number. The owner approves it in Users, an email confirms it, and the new user signs in to the dashboard with agent access: they see only their own leads, never the admin screens.">
+  <p class="eyebrow">For us · Users and approvals <span class="tag sample" style="margin-left:10px">Sample data</span></p>
+  <div class="desk"><div class="win">
+    <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/admin/#/users</span></div>
+    <nav class="side">
+      <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
+      <a>Today</a><a>Leads</a><a>Verify</a><a>Reports</a><a>Compliance</a><a>Buyers</a><a>Knowledge base</a><a>Incentives</a><a>Settings</a>
+      <div class="grp">Admin</div><a class="on">Users <span class="bd">1</span></a><a>System</a><a>Architecture</a>
+      <div class="grp">More</div><a>View the website</a><a>Expert questionnaire</a>
+    </nav>
+    <div class="main">
+      <h4>Users</h4><div class="sub">Login requests wait for your approval. Approved logins get agent access.</div>
+      <table class="t">
+        <thead><tr><th>Email</th><th>Requested</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><b>new-agent@example.com</b></td><td>Today, 9:12 a.m.</td><td><span class="pill pend">Pending</span></td><td><div class="btnrow"><span class="btn p">Approve</span><span class="btn">Reject</span></div></td></tr>
+          <tr><td><b>team-member@example.com</b></td><td>Sep 15</td><td><span class="pill ok">Approved</span></td><td><div class="btnrow"><span class="btn">Disable</span></div></td></tr>
+        </tbody>
+      </table>
+      <div class="note" style="font-size:12px">Text alerts: set your own mobile number on your row. Staff texts carry an email address at most, never buyer details.</div>
+    </div>
+  </div></div>
+  <div class="sms"><small>Text message · from BuyersLine</small><div class="bub">BuyersLine: new-agent@example.com created a login and is waiting for approval. Approve in Users: https://buyersline.app/admin/#/users</div></div>
+</section>
+
+<!-- 13 EXPERT QUESTIONNAIRE -->
+<section class="slide col" data-n="The last link in the left pane is the Expert questionnaire. This is how Anna gets smarter. A builder side expert answers seventy eight questions in fourteen sections, such as how builders decide incentives, inside the sales office, negotiation and financing. One question per screen, with why we ask it, dictation in English or Spanish, and autosave, so it can be finished over many short sessions. These answers become the knowledge Anna uses to answer buyers.">
+  <p class="eyebrow">For us · Teaching Anna <span class="tag sample" style="margin-left:10px">Sample progress</span></p>
+  <div class="desk"><div class="win">
+    <div class="tb"><i></i><i></i><i></i><span class="url">buyersline.app/architecture/sme</span></div>
+    <nav class="side">
+      <div class="lg"><svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#fff"/><path d="M14 22a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8H30l-9 7v-7h1a8 8 0 0 1-8-8z" fill="#26213F"/><circle cx="32" cy="34" r="3.2" fill="#FC4C02"/></svg>Admin dashboard</div>
+      <a>Today</a><a>Leads</a><a>Verify</a><a>Reports</a><a>Compliance</a><a>Buyers</a><a>Knowledge base</a><a>Incentives</a><a>Settings</a>
+      <div class="grp">Admin</div><a>Users</a><a>System</a><a>Architecture</a>
+      <div class="grp">More</div><a>View the website</a><a class="on">Expert questionnaire</a>
+    </nav>
+    <div class="main" style="display:grid;grid-template-columns:1fr 1.1fr;gap:16px;align-content:start">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <h4>Expert questionnaire</h4><div class="sub">78 questions · 14 sections · answer in several sessions</div>
+        <div class="prog"><i style="width:9%"></i></div>
+        <div class="secs">
+          <div><span>Background and career</span><b>3/5</b></div>
+          <div><span>How builders decide incentives</span><b>2/6</b></div>
+          <div><span>Quick move-in vs. to-be-built</span><b>0/5</b></div>
+          <div><span>Inside the sales office</span><b>1/6</b></div>
+          <div><span>Agent registration</span><b>0/6</b></div>
+          <div><span>Negotiation</span><b>0/5</b></div>
+          <div><span>Financing</span><b>0/6</b></div>
+          <div><span>Tampa Bay market today</span><b>0/5</b></div>
+        </div>
+      </div>
+      <div class="qcard">
+        <div class="note" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase">Background and career · Question 3</div>
+        <div style="font-size:16px;font-weight:800;margin-top:6px;line-height:1.35">Which Tampa Bay markets and communities do you know best?</div>
+        <div class="why">Why we ask: it tells Anna where your answers apply.</div>
+        <div class="ta">Type or dictate your answer…</div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center"><span class="mic">● Dictate</span><span class="btn">Skip for now</span><span class="btn p" style="margin-left:auto">Save and next</span></div>
+        <div class="note" style="margin-top:8px">Saved automatically every 10 seconds.</div>
+      </div>
+    </div>
+  </div></div>
+</section>
+
+<!-- 14 GUARDRAILS -->
+<section class="slide col" data-n="Everything here is built on a few rules, enforced in the code, not just in Anna's instructions. The AI writes words, never numbers: every price and payment is calculated. A promotion reaches a buyer only after the compliance check. Consent is the buyer's own act. And BuyersLine is a technology company: not a broker, not a lender, and never paid on a closing.">
+  <p class="eyebrow">The rules</p>
+  <h2>Trust is built into the code.</h2>
+  <div class="gl">
+    <div class="card"><div class="n">NUMBERS</div><h3>The AI never writes a figure</h3><p>Prices, payments and buying power are calculated. A sentence that adds a number is discarded.</p></div>
+    <div class="card"><div class="n">PROMOTIONS</div><h3>Compliance before display</h3><p>Guarantees, expired offers, fair-housing wording and offers with no source are held back.</p></div>
+    <div class="card"><div class="n">CONSENT</div><h3>The buyer ticks the box</h3><p>No voice, form or AI can share a buyer's details. Without consent, nobody contacts them.</p></div>
+    <div class="card"><div class="n">HONESTY</div><h3>Says "none" when there is none</h3><p>Best deal stays empty rather than crowning an offer that is not real.</p></div>
+    <div class="card"><div class="n">ACCESS</div><h3>Maker and checker</h3><p>Every login is approved by the owner. Agents see only their own leads.</p></div>
+    <div class="card"><div class="n">THE BUSINESS</div><h3>Technology, not a brokerage</h3><p>Free for buyers. No fee tied to an agreement, a registration or a closing.</p></div>
+  </div>
+</section>
+
+<!-- 15 NEXT -->
+<section class="slide col" data-n="Here is what comes next. First, fill in the expert questionnaire, so Anna answers buyers from real builder-side knowledge. Second, more real promotions: research finds offers every morning, and a licensed agent confirms them, so buyers see verified deals. Third, keep testing Anna by voice with real buyers, in English and Spanish. And then, launch. Thank you for watching.">
+  <p class="eyebrow">What's next</p>
+  <h2>Three steps to launch.</h2>
+  <ol class="next">
+    <li><div><b>Fill in the expert questionnaire.</b><span>Your answers become what Anna knows. Last link in the left pane.</span></div></li>
+    <li><div><b>More real, verified promotions.</b><span>Research runs every morning; a licensed agent confirms what buyers see.</span></div></li>
+    <li><div><b>Test Anna with real buyers.</b><span>By voice and text, in English and Spanish, on a phone. Then launch.</span></div></li>
+  </ol>
+  <p class="src" style="margin-top:28px">buyersline.app</p>
+</section>
+
+<div id="bar"></div>
+</div>
+</div>
+
+<div id="dock">
+  <div class="ctl">
+    <button id="prev" type="button" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button id="play" class="pp" type="button" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button id="next" type="button" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+  <div id="cap" aria-live="polite">Press Start. Ava narrates each screen and the walkthrough moves on by itself.</div>
+  <div id="count">1 / 15</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), vp = document.getElementById('viewport');
+  var cap = document.getElementById('cap'), count = document.getElementById('count'), bar = document.getElementById('bar');
+  var playBtn = document.getElementById('play');
+  var idx = 0, playing = false, audio = new Audio(), cache = {}, token = 0;
+  var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+
+  function fit() {
+    var s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 720) * 0.96;
+    stage.style.transform = 'translate(' + (-640 * s) + 'px,' + (-360 * s) + 'px) scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  // Narration comes from the shared zero-key Edge route, one request per slide, prefetched one ahead.
+  function tts(i) {
+    if (cache[i]) return cache[i];
+    var text = slides[i].getAttribute('data-n');
+    cache[i] = fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text, voice: 'ava', rate: '-2%' }) })
+      .then(function (r) { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+      .then(function (b) { return URL.createObjectURL(b); })
+      .catch(function (e) { delete cache[i]; throw e; });
+    return cache[i];
+  }
+
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === idx); });
+    count.textContent = (idx + 1) + ' / ' + slides.length;
+    cap.textContent = slides[idx].getAttribute('data-n');
+    bar.style.width = ((idx + 1) / slides.length * 100) + '%';
+    if (playing) speak();
+  }
+
+  function speak() {
+    var my = ++token;
+    audio.pause();
+    tts(idx).then(function (url) {
+      if (my !== token || !playing) return;
+      audio.src = url; audio.play().catch(function () { setPlaying(false); });
+      if (idx + 1 < slides.length) tts(idx + 1).catch(function () {});
+    }).catch(function () {
+      // Voice unavailable: keep the caption on screen and move on after a reading pause.
+      if (my !== token || !playing) return;
+      var ms = Math.max(6000, slides[idx].getAttribute('data-n').length * 60);
+      setTimeout(function () { if (my === token && playing) advance(); }, ms);
+    });
+  }
+  function advance() { if (idx < slides.length - 1) show(idx + 1); else setPlaying(false); }
+  audio.addEventListener('ended', function () { if (playing) setTimeout(function () { if (playing) advance(); }, 700); });
+
+  function setPlaying(v) {
+    playing = v;
+    playBtn.innerHTML = v ? PAUSE : PLAY;
+    playBtn.setAttribute('aria-label', v ? 'Pause' : 'Play');
+    if (v) { if (audio.src && audio.paused && audio.currentTime > 0 && !audio.ended) audio.play(); else speak(); }
+    else { token++; audio.pause(); }
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function () { setPlaying(true); });
+  playBtn.addEventListener('click', function () { setPlaying(!playing); });
+  document.getElementById('prev').addEventListener('click', function () { audio.removeAttribute('src'); show(idx - 1); });
+  document.getElementById('next').addEventListener('click', function () { audio.removeAttribute('src'); show(idx + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); audio.removeAttribute('src'); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); audio.removeAttribute('src'); show(idx - 1); }
+    else if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'Home') { show(0); } else if (e.key === 'End') { show(slides.length - 1); }
+  });
+  show(0);
+})();
+</script>
+</body>
+</html>

@@ -260,6 +260,8 @@ function createApp(opts = {}) {
   router.get('/admin/manifest.webmanifest', (req, res) => pwa.send(res, 'application/manifest+json', JSON.stringify(pwa.consoleManifest(req), null, 2)));
   router.get('/sw.js', (req, res) => pwa.send(res, 'application/javascript; charset=utf-8', pwa.serviceWorker(req)));
   router.get('/offline', shell('offline.html'));
+  // Narrated product walkthrough with app and admin mockups (owner request 2026-09-21). Noindex via shell().
+  router.get('/presentation', shell('presentation.html'));
 
   router.get('/', shell('index.html'));
   router.get('/r/:token', shell('report.html'));
