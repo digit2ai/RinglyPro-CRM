@@ -75,6 +75,7 @@
   var cfg = {};
   var busy = false;
   var liveEvents = [];    // lines for the turn currently running
+  var streaming = '';     // text arriving now, before the finished message replaces it
   var es = null;          // the open EventSource, if any
   var gen = 0;            // retires an older stream when a newer one opens
 
@@ -161,7 +162,11 @@
     if (turn.status === 'failed') head = '<span class="tag bad">' + esc(t('failed')) + '</span>\n';
     else if (turn.status === 'cancelled') head = '<span class="tag">' + esc(t('cancelled')) + '</span>\n';
 
-    var body = turn.summary ? esc(turn.summary) : (turn.error ? esc(turn.error) : '');
+    // While a turn runs, the text that has arrived so far IS the bubble. When the turn ends the
+    // stored summary replaces it, so the screen never keeps an answer the database does not have.
+    var body = turn.summary ? esc(turn.summary)
+      : (turn.error ? esc(turn.error)
+        : (isLast && streaming ? esc(streaming) : ''));
     var node = bubble('assistant' + (finished ? '' : ' live'), head + body);
 
     if (!finished) {
@@ -218,6 +223,7 @@
     }
     if (ev.kind === 'tool_result') return (p.is_error ? 'error  ' : 'ok     ') + String(p.text || '').split('\n')[0].slice(0, 120);
     if (ev.kind === 'assistant') return String(p.text || '').slice(0, 400);
+    if (ev.kind === 'delta') return '';
     if (ev.kind === 'system') return '· ' + (p.status || '');
     if (ev.kind === 'result') return '· done';
     return String(p.text || '');
@@ -233,6 +239,13 @@
       if (mine !== gen) return;
       var ev; try { ev = JSON.parse(m.data); } catch (e) { return; }
       if (ev.kind === 'end') { closeStream(); refresh(); return; }
+      if (ev.kind === 'delta') {
+        streaming += (ev.payload && ev.payload.text) || '';
+        paintThread();
+        return;
+      }
+      // A finished assistant message supersedes whatever was streaming into the bubble.
+      if (ev.kind === 'assistant' || ev.kind === 'result') streaming = '';
       var line = lineFor(ev);
       if (line) { liveEvents.push(line); if (liveEvents.length > 400) liveEvents.shift(); }
       if (ev.kind === 'system' && ev.payload && done(ev.payload.status)) { closeStream(); refresh(); return; }
@@ -255,7 +268,7 @@
       var last = turns[turns.length - 1];
       var live = !!(last && !done(last.status));
       setBusy(live);
-      if (!live) liveEvents = [];
+      if (!live) { liveEvents = []; streaming = ''; }
       paint();
       if (live) follow(last.id);
     } catch (e) { /* the next event or the next send re-reads it */ }
@@ -278,7 +291,7 @@
 
     $('cmsg').value = '';
     $('cmsg').style.height = 'auto';
-    liveEvents = [];
+    liveEvents = []; streaming = '';
     // Drawn at once, so the screen answers the keystroke; the server's copy replaces it below.
     turns.push({ id: 0, brief: msg, status: 'queued', summary: null });
     setBusy(true);
@@ -322,7 +335,7 @@
 
   function newThread() {
     closeStream(); gen++;
-    thread = null; turns = []; liveEvents = [];
+    thread = null; turns = []; liveEvents = []; streaming = '';
     try { localStorage.removeItem(THREAD_KEY); } catch (e) {}
     $('mergeBtn').disabled = false;
     setBusy(false);

@@ -96,6 +96,19 @@ function publicFields(f) {
   return out;
 }
 
+/**
+ * TRANSIENT: streamed to whoever is watching, never written down.
+ *
+ * A text delta is one fragment of one sentence. Persisting them would put thousands of rows in
+ * cc_run_events for every run, to reconstruct a message the finished assistant event already
+ * carries in full. So they go to the bus only — the stream is how an answer gets to the screen,
+ * and the stored message remains the single truth about what was said.
+ */
+function push(runId, kind, payload) {
+  const safe = redact(payload || {});
+  bus.emit('run:' + runId, { id: 0, run_id: runId, ts: new Date(), kind, payload: safe });
+}
+
 async function log(runId, text) {
   return emit(runId, 'log', { text: clip(text, 2000) });
 }
@@ -122,4 +135,4 @@ async function own(tenantId, id) {
   return models.CcRun.findOne({ where: { tenant_id: tenantId, id } });
 }
 
-module.exports = { bus, emit, setStatus, forceStatus, log, subscribe, view, own, isTerminal, TERMINAL, STATUSES };
+module.exports = { bus, emit, push, setStatus, forceStatus, log, subscribe, view, own, isTerminal, TERMINAL, STATUSES };

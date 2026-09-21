@@ -26,6 +26,10 @@ ok(man.display === 'standalone' && man.theme_color && man.background_color, 'it 
 ok((man.icons || []).some(i => i.sizes === '512x512' && /maskable/.test(i.purpose || '')), 'a 512px maskable icon exists');
 for (const i of man.icons || []) ok(fs.existsSync(path.join(PUB, i.src.replace('/speakup/', ''))), 'the icon file exists: ' + i.src);
 ok((man.shortcuts || []).length >= 2, 'home-screen shortcuts reach both screens');
+// The app opens on Code: it is the product. The Factory console is still served at /speakup/
+// for anyone who types it, and test-console-flow still drives it — it is unlinked, not deleted.
+ok(/claude-code/.test(man.start_url), 'the installed app opens on Code');
+ok((man.shortcuts || []).some(s2 => /claude-code/.test(s2.url)), 'and a shortcut goes straight there');
 
 // ── the worker ───────────────────────────────────────────────────────────────
 // Comments explain the rule; the CODE is what is asserted (the file says the word "addAll"

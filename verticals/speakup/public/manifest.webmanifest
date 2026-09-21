@@ -2,19 +2,37 @@
   "id": "/speakup/",
   "name": "AutoDev — Digit2AI",
   "short_name": "AutoDev",
-  "description": "Dos pantallas: toma notas de la reunión y construye. Habla, revisa el plan, aprueba.",
-  "start_url": "/speakup/?source=pwa",
+  "description": "Habla con tu repositorio: pide un cambio, lo construye y abre el pull request.",
+  "start_url": "/speakup/claude-code?source=pwa",
   "scope": "/speakup/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1f2937",
   "theme_color": "#1f2937",
   "icons": [
-    { "src": "/speakup/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/speakup/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/speakup/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/speakup/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Fábrica", "url": "/speakup/", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Reuniones", "url": "/speakup/meetings", "icons": [{ "src": "/speakup/icon-192.png", "sizes": "192x192" }] }
+    {
+      "name": "Code",
+      "short_name": "Code",
+      "url": "/speakup/claude-code?source=pwa"
+    },
+    {
+      "name": "Reuniones",
+      "short_name": "Reuniones",
+      "url": "/speakup/meetings?source=pwa"
+    }
   ]
 }

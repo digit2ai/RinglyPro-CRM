@@ -12,8 +12,23 @@ picker is on screen only until the first message, after which one line says wher
 Merge sits inline. `/claude-code/runs/:id` still resolves — it redirects to the conversation that
 run belongs to, so an old link lands somewhere true.
 
-Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), beside
-**Reuniones** and **Fábrica**. Operator only — the same allow-list the AI Factory uses.
+Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`). The tab bar is
+**Reuniones | Code**, and the installed app opens here — this is the product now. The Factory
+console is still served at `/speakup/` and its own suite still drives it; it is unlinked, not
+deleted. Operator only, the same allow-list the AI Factory uses.
+
+## Why it used to feel nothing like the desktop app
+
+Three things, all now fixed, and worth keeping fixed:
+
+1. **There was no folder.** The desktop app opens a directory already on your Mac — cloned,
+   installed, instant. This cloned from scratch every turn and deleted the result, so every code
+   change paid for a full clone and a full `npm ci`. Each repository now has a folder that stays:
+   fetched, not cloned, with `node_modules` reused unless the lockfile moved.
+2. **The answer arrived in one lump.** The SDK yields a finished assistant message, so the screen
+   sat on a moving bar for two minutes and then printed everything at once.
+   `includePartialMessages` makes it type.
+3. **It was a form, a card and a separate run page.** It is one box now.
 
 ## What it is made of
 
@@ -26,7 +41,7 @@ Live at `/speakup/claude-code` (so `autodev.digit2ai.com/speakup/claude-code`), 
 | HTTP surface | `src/routes/claude-code.js` |
 | Pages | `public/claude-code.html`, `public/claude-code.js`, `public/claude-code.css` |
 | Schema | `migrations/20260920_claude_code.sql` (`cc_threads`, `cc_runs`, `cc_run_events`, `cc_repos`) |
-| SIT | `sit-claude-code.js` -> **279/279**, zero keys, no database |
+| SIT | `sit-claude-code.js` -> **295/295**, zero keys, no database |
 
 ## The conversation
 

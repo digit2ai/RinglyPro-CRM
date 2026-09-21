@@ -88,6 +88,73 @@ function runEnv(home, extra) {
 }
 function homeFor(runId) { return path.join(WORKSPACE_ROOT, 'home-' + runId); }
 
+/**
+ * THE WORKING FOLDER: why this app felt nothing like Claude Code on the desktop.
+ *
+ * The desktop app opens a folder that is already on your Mac — already cloned, already
+ * installed — so it starts instantly. This ran on a server with no copy of anything, cloned
+ * from scratch every turn and threw the result away, so every code change paid for a full
+ * clone and a full `npm ci`. On a repository this size that is minutes of staring at a bar.
+ *
+ * So each repository gets a folder here that STAYS: fetched instead of cloned, and its
+ * node_modules left alone unless the lockfile actually changed. One folder per repository per
+ * tenant, so two conversations on the same repository do not trample each other mid-run — the
+ * lock below makes a second turn wait rather than corrupt a checkout.
+ *
+ * It is still disposable. Nothing of value lives here: the branch is on GitHub after every
+ * turn, and the folder is rebuilt from scratch whenever git says it is not usable.
+ */
+function repoDirFor(tenantId, repo) {
+  return path.join(WORKSPACE_ROOT, 'repo-' + tenantId + '-' + String(repo).replace(/[^A-Za-z0-9._-]/g, '_'));
+}
+
+// One turn at a time per folder. Per instance, like the folder it guards.
+const folderLocks = new Map();
+async function withFolder(key, fn) {
+  const prev = folderLocks.get(key) || Promise.resolve();
+  let release;
+  const mine = new Promise(r => { release = r; });
+  folderLocks.set(key, prev.then(() => mine));
+  await prev.catch(() => {});
+  try { return await fn(); } finally {
+    release();
+    if (folderLocks.get(key) === mine) folderLocks.delete(key);
+  }
+}
+
+// Bring the folder to `branch` at the newest commit, keeping node_modules. Returns how it got
+// there, which the log states plainly — "reused" is the whole point and should be visible.
+async function prepareFolder(run, dir, branch, fromBase) {
+  const url = github.cloneUrl(run.repo_full_name);
+  const usable = fs.existsSync(path.join(dir, '.git'));
+  if (usable) {
+    const fetched = await sh('git', ['fetch', '--depth', '50', url, (fromBase ? run.base_branch : branch)],
+      { cwd: dir, runId: run.id, timeoutMs: 10 * 60 * 1000 });
+    if (fetched.code === 0) {
+      // A leftover from an interrupted turn must never become part of the next one.
+      await sh('git', ['reset', '--hard', 'FETCH_HEAD'], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+      await sh('git', ['clean', '-fd', '-e', 'node_modules', '-e', '.claude'], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+      await sh('git', ['checkout', '-B', branch, 'FETCH_HEAD'], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+      await store.log(run.id, 'Reused the working folder for ' + run.repo_full_name + ' (fetched, not cloned).');
+      return 'reused';
+    }
+    await store.log(run.id, 'The working folder could not be updated, so it is being rebuilt.');
+  }
+  await fsp.rm(dir, { recursive: true, force: true });
+  await fsp.mkdir(path.dirname(dir), { recursive: true });
+  const clone = await sh('git', ['clone', '--depth', '50', '--branch', run.base_branch, url, dir],
+    { runId: run.id, timeoutMs: 15 * 60 * 1000 });
+  if (clone.code !== 0) throw new Error('clone failed: ' + redactText(clone.err || clone.out).slice(0, 400));
+  if (!fromBase) {
+    const f2 = await sh('git', ['fetch', '--depth', '50', url, branch], { cwd: dir, runId: run.id, timeoutMs: 10 * 60 * 1000 });
+    if (f2.code === 0) await sh('git', ['checkout', '-B', branch, 'FETCH_HEAD'], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+    else await sh('git', ['checkout', '-B', branch], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+  } else {
+    await sh('git', ['checkout', '-B', branch], { cwd: dir, runId: run.id, timeoutMs: 120000 });
+  }
+  return 'cloned';
+}
+
 // ── shell ────────────────────────────────────────────────────────────────────
 // git only, by argument array — never a shell string, so a branch name derived from a
 // brief can never become a command. Output is redacted before it is stored.
@@ -231,6 +298,11 @@ async function runAgent(run, ws, prompt, resume, abortController, totals) {
       // repository is fine; letting a repository run a shell command on this server is not.
       settingSources: ['project'],
       allowedTools: ['Read', 'Edit', 'Write', 'Bash', 'Glob', 'Grep'],
+      // THE ANSWER ARRIVES AS IT IS WRITTEN, NOT IN ONE LUMP AT THE END. Without this the SDK
+      // only yields a finished assistant message, so the screen sat on a moving bar for two
+      // minutes and then printed everything at once — the single biggest reason this felt
+      // nothing like the desktop app, which types.
+      includePartialMessages: true,
       // Supplied, never omitted: the SDK REPLACES the subprocess environment with this and
       // INHERITS process.env when it is absent. See runEnv().
       env: runEnv(homeFor(run.id), process.env.ANTHROPIC_API_KEY ? { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY } : {}),
@@ -240,9 +312,23 @@ async function runAgent(run, ws, prompt, resume, abortController, totals) {
   });
 
   let result = null;
+  let streamed = '';        // what the current partial message has said so far
   for await (const msg of iterator) {
     if (!msg || typeof msg !== 'object') continue;
+    if (msg.type === 'stream_event') {
+      // One event per fragment of text. They are emitted as their own kind so the page can grow
+      // a bubble, and the finished assistant message that follows REPLACES it — the stored
+      // message stays the truth, and the stream is only how it gets there.
+      const ev = msg.event || {};
+      const delta = ev.delta && (ev.delta.text || ev.delta.partial_json);
+      if (ev.type === 'content_block_delta' && ev.delta && ev.delta.type === 'text_delta' && delta) {
+        streamed += delta;
+        store.push(run.id, 'delta', { text: String(delta) });
+      }
+      continue;
+    }
     if (msg.type === 'assistant' || msg.type === 'user') {
+      streamed = '';
       for (const block of blocksOf(msg)) {
         if (block.type === 'text' && String(block.text || '').trim()) {
           await store.emit(run.id, 'assistant', { text: clip(block.text, 4000) });
@@ -331,9 +417,33 @@ async function repoTestCommand(ws) {
 // opened as a draft that the merge button refuses. So: install first, with scripts DISABLED
 // (a lockfile's postinstall is arbitrary code from the cloned repository), and treat a failed
 // install as NOT MEASURED — never as a red suite, which is what starts the fix loop.
+// The stamp records WHICH lockfile the installed node_modules belongs to. Keeping the folder is
+// only half the speed-up; the other half is not reinstalling when nothing about the dependencies
+// has changed — and reinstalling the moment it has, so a stale tree can never be tested against.
+function lockStamp(ws) {
+  const crypto = require('crypto');
+  const h = crypto.createHash('sha256');
+  let any = false;
+  for (const f of ['package-lock.json', 'npm-shrinkwrap.json', 'package.json']) {
+    const p2 = path.join(ws, f);
+    if (fs.existsSync(p2)) { h.update(f).update(fs.readFileSync(p2)); any = true; }
+  }
+  return any ? h.digest('hex') : null;
+}
+
 async function installDeps(run, ws) {
-  if (fs.existsSync(path.join(ws, 'node_modules'))) return { ok: true, skipped: true };
   if (!fs.existsSync(path.join(ws, 'package.json'))) return { ok: true, skipped: true };
+  const stampFile = path.join(ws, 'node_modules', '.autodev-lock');
+  const want = lockStamp(ws);
+  if (fs.existsSync(path.join(ws, 'node_modules'))) {
+    let have = null;
+    try { have = fs.readFileSync(stampFile, 'utf8').trim(); } catch (e) { /* first time on this folder */ }
+    if (have && want && have === want) {
+      await store.log(run.id, 'Dependencies are already installed and the lockfile has not changed.');
+      return { ok: true, skipped: true };
+    }
+    await store.log(run.id, 'The lockfile changed since the last install, so the dependencies are being reinstalled.');
+  }
   const env = runEnv(homeFor(run.id));
   const lock = fs.existsSync(path.join(ws, 'package-lock.json'));
   await store.log(run.id, 'Installing dependencies (' + (lock ? 'npm ci' : 'npm install') + ', install scripts disabled)…');
@@ -345,6 +455,10 @@ async function installDeps(run, ws) {
   }
   const out = (r.out + '\n' + r.err).trim();
   if (r.code !== 0) await store.log(run.id, 'The install failed, so the suite is reported as NOT MEASURED rather than as red:\n' + out.slice(-1500));
+  // Stamped only on success: a half-finished install must not be mistaken for a good one.
+  if (r.code === 0 && want) {
+    try { await fsp.writeFile(stampFile, want); } catch (e) { /* the next run reinstalls, which is safe */ }
+  }
   return { ok: r.code === 0, output: out.slice(-4000) };
 }
 
@@ -456,7 +570,23 @@ async function scanStagedDiff(run, ws) {
 }
 
 // ── the pipeline ─────────────────────────────────────────────────────────────
+/**
+ * Two conversations on the SAME repository must not share a checkout mid-run, so the second
+ * waits for the first. The key is the folder, not the tenant: unrelated repositories still run
+ * side by side, which is what the concurrency ceiling is for.
+ *
+ * The run is read here, before the lock, only to learn which folder it needs — a read cannot
+ * corrupt a checkout, and taking a global lock to find out would serialise everything.
+ */
 async function execute(runId, onRegistered) {
+  let key = 'run-' + runId;
+  try {
+    const row = await models.CcRun.findByPk(runId);
+    if (row) key = repoDirFor(row.tenant_id, row.repo_full_name);
+  } catch (e) { /* the locked body re-reads it and handles a missing row */ }
+  return withFolder(key, () => executeLocked(runId, onRegistered));
+}
+async function executeLocked(runId, onRegistered) {
   const run = await models.CcRun.findByPk(runId);
   if (!run) { if (onRegistered) onRegistered(); return; }
   if (run.status !== 'queued') { if (onRegistered) onRegistered(); return; }
@@ -471,7 +601,8 @@ async function execute(runId, onRegistered) {
   // The request's reservation becomes this run's slot: counted as active from here, so the
   // reservation is handed back in the same breath and the ceiling never double-counts.
   if (onRegistered) onRegistered();
-  const ws = path.join(WORKSPACE_ROOT, 'run-' + run.id);
+  // The folder is the repository's, not the run's: that is what makes the second turn fast.
+  const ws = repoDirFor(run.tenant_id, run.repo_full_name);
   // null until the SDK says otherwise: 0 is a measurement, absent is not.
   const totals = { cost_usd: null, turns: null, tokens_in: null, tokens_out: null, capped: false };
   let cancelled = false;
@@ -494,32 +625,15 @@ async function execute(runId, onRegistered) {
     github.assertAllowed(run.repo_full_name);
     if (!github.configured()) throw new Error('GITHUB_TOKEN is not set — cloning is closed, not open.');
 
-    // 1. clone + branch
+    // 1. the working folder, at the right branch
     await step('cloning');
-    await fsp.rm(ws, { recursive: true, force: true });
-    await fsp.mkdir(path.dirname(ws), { recursive: true });
-    const clone = await sh('git', ['clone', '--depth', '50', '--branch', run.base_branch, github.cloneUrl(run.repo_full_name), ws],
-      { runId: run.id, timeoutMs: 10 * 60 * 1000 });
-    if (clone.code !== 0) throw new Error('clone failed: ' + redactText((clone.err || clone.out)).slice(0, 400));
-    // THE CLONE URL CARRIES THE TOKEN AND git WRITES IT INTO .git/config VERBATIM. The agent
-    // has Bash in this directory, so one `cat .git/config` would hand it an org-wide write
-    // token — no environment access needed, which is why this survives the env allow-list.
-    // The push supplies the credentialed URL explicitly, so nothing needs it in the tree.
+    const branch = (thread && thread.work_branch) || ('cc/' + run.id + '-' + slug(run.brief));
+    const how = await prepareFolder(run, ws, branch, !(thread && thread.work_branch));
+    // THE CLONE URL CARRIES THE TOKEN AND git WRITES IT INTO .git/config VERBATIM. The agent has
+    // Bash in this directory, so one `cat .git/config` would hand it an org-wide write token —
+    // no environment access needed, which is why this survives the env allow-list. The push
+    // supplies the credentialed URL explicitly, so nothing needs it in the tree.
     await git(ws, ['remote', 'set-url', 'origin', 'https://github.com/' + run.repo_full_name + '.git']);
-    await store.log(run.id, 'Cloned ' + run.repo_full_name + ' at ' + run.base_branch + ' (shallow, 50 commits). The push credential is not left in the workspace.');
-
-    // A THREAD KEEPS ITS BRANCH. The first turn creates it; every later turn checks the same one
-    // out, so the conversation accumulates on one branch behind one pull request instead of
-    // scattering a branch per message.
-    let branch = thread && thread.work_branch;
-    if (branch) {
-      const fetched = await git(ws, ['fetch', '--depth', '50', github.cloneUrl(run.repo_full_name), branch], run.id, 'fetch');
-      if (fetched.code === 0) await git(ws, ['checkout', '-B', branch, 'FETCH_HEAD'], run.id, 'branch');
-      else { await store.log(run.id, 'The conversation branch was not on GitHub any more; starting it again from ' + run.base_branch + '.'); await git(ws, ['checkout', '-B', branch], run.id, 'branch'); }
-    } else {
-      branch = 'cc/' + run.id + '-' + slug(run.brief);
-      await git(ws, ['checkout', '-b', branch], run.id, 'branch');
-    }
     await git(ws, ['config', 'user.name', 'AutoDev Claude Code']);
     await git(ws, ['config', 'user.email', 'autodev@digit2ai.com']);
     await run.update({ work_branch: branch });
@@ -669,10 +783,11 @@ async function execute(runId, onRegistered) {
       }
     }
   } finally {
-    // The slot is released AFTER the tree is gone: releasing it first let a cancel arriving in
-    // the gap start a second recursive remove of the same directory, which can throw ENOTEMPTY.
+    // THE REPOSITORY FOLDER STAYS — it is the whole point of the change. What does not stay is
+    // this run's private HOME, which holds the agent session and is per run. The folder carries
+    // nothing of value: every branch is on GitHub after its turn, and prepareFolder rebuilds it
+    // from scratch the moment git says it is not usable.
     children.delete(runId);
-    try { await fsp.rm(ws, { recursive: true, force: true }); } catch (e) { /* best effort */ }
     try { await fsp.rm(homeFor(runId), { recursive: true, force: true }); } catch (e) { /* best effort */ }
     active.delete(runId);
   }
@@ -740,10 +855,10 @@ async function cancel(run) {
   // Kill what is running right now. Without this a cancel during `npm test` returned at once
   // while the suite ran on to its twenty-minute timeout, holding the slot and the workspace.
   for (const kill of children.get(run.id) || []) { try { kill(); } catch (e) {} }
-  if (!entry) {
-    try { await fsp.rm(path.join(WORKSPACE_ROOT, 'run-' + run.id), { recursive: true, force: true }); } catch (e) {}
-    try { await fsp.rm(homeFor(run.id), { recursive: true, force: true }); } catch (e) {}
-  }
+  // Only this run's private HOME is removed. THE REPOSITORY FOLDER IS SHARED and must survive a
+  // cancel — another conversation may be waiting on it, and a cancelled turn can leave it dirty
+  // either way, which prepareFolder's reset and clean handle on the next turn.
+  try { await fsp.rm(homeFor(run.id), { recursive: true, force: true }); } catch (e) {}
   return true;
 }
 
@@ -763,7 +878,7 @@ async function sweepInterrupted() {
     for (const row of rows) {
       if (active.has(row.id)) continue;                       // this process owns it
       await store.forceStatus(row, 'failed', { error: 'Interrupted by a server restart. Nothing was merged; any branch already pushed is still on GitHub.' });
-      try { await fsp.rm(path.join(WORKSPACE_ROOT, 'run-' + row.id), { recursive: true, force: true }); } catch (e) {}
+      // The private HOME only: the repository folder is shared and is repaired, not deleted.
       try { await fsp.rm(homeFor(row.id), { recursive: true, force: true }); } catch (e) {}
       swept++;
     }

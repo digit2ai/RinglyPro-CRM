@@ -1264,6 +1264,30 @@ the answer appears under your message, you type again — and a follow-up contin
 and the SAME pull request. Behind each message: clone -> branch -> code -> install -> test ->
 commit -> push -> pull request, streamed live.
 
+**THE TAB BAR IS `Reuniones | Code`, AND THE INSTALLED APP OPENS ON CODE** (owner request
+2026-09-21). The Factory link is gone from every screen and the manifest's `start_url` moved;
+the console is still served at `/speakup/` and `test-console-flow.js` still drives it — a working
+subsystem is UNLINKED, never deleted. Removing the link broke four screens' language toggle,
+because each relabelled `$('tabFac').textContent` and a missing node threw, killing the whole
+relabel function: tabs are now set through a null-safe helper.
+
+**IT HAS A WORKING FOLDER, WHICH IS WHY IT USED TO FEEL NOTHING LIKE THE DESKTOP APP.** Claude
+Code on a Mac opens a directory that is already cloned and already installed; this cloned from
+scratch every turn and deleted the result, so every code change paid for a full clone and a full
+`npm ci` — minutes, on a repository this size. `repoDirFor()` gives each repository a folder that
+STAYS: `git fetch` + `reset --hard` + `clean` (excluding `node_modules`), and a `lockStamp()` that
+reinstalls only when the lockfile actually moved, stamped only after a SUCCESSFUL install. The
+folder is shared, so a cancel and the restart sweep remove only the run's private HOME and leave
+it to be repaired; `withFolder()` serialises turns per folder so two conversations on one
+repository cannot share a checkout, while unrelated repositories still run side by side.
+
+**IT TYPES.** `includePartialMessages: true` — without it the SDK only yields a FINISHED assistant
+message, so the screen sat on a moving bar and then printed two minutes of work at once, which was
+the single biggest reason this read as a batch job rather than a conversation. A delta is
+`store.push()`, which reaches the bus and never the table: persisting them would put thousands of
+rows in `cc_run_events` per run to rebuild a message the finished event already carries whole. The
+page grows the bubble from the deltas and the stored summary replaces it when the turn ends.
+
 **THE FIRST VERSION WAS A FORM, A CARD AND A SEPARATE RUN PAGE, AND THE OWNER COULD NOT USE IT**
 ("this should be like Claude, plain and simple" — 2026-09-21, after a run left them on a screen
 with no input box and a Back link). The unit is now the CONVERSATION, not the job: `cc_threads`
@@ -1444,7 +1468,7 @@ awaits before the runner registered the run, so a burst all saw an empty table a
 N clones on the shared instance's `/tmp` and N times the cost cap. `reserve()` runs before the
 first `await` and the runner hands the slot back as it registers.
 
-**SIT:** `node verticals/speakup/sit-claude-code.js` -> **279/279**, zero external keys and no
+**SIT:** `node verticals/speakup/sit-claude-code.js` -> **295/295**, zero external keys and no
 database: a fake `query()` stands in for the SDK, a fake GitHub answers REST, and the three tables
 are held in memory. It attacks the invariants — a secret in a tool result reaching an event, a
 repository outside the allow-list, a cost derived instead of copied, a test pass claimed without a

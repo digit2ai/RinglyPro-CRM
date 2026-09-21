@@ -45,8 +45,13 @@
     document.dispatchEvent(new CustomEvent('speakup:lang', { detail: l }));
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
     $('outBtn').textContent = L('Salir', 'Sign out');
-    $('tabMeet').textContent = L('Reuniones', 'Meetings');
-    $('tabFac').textContent = L('Fábrica', 'Factory');
+    // A tab the page does not carry is not an error: the Factory link was removed from the bar
+    // and reading .textContent off a missing node threw here, which killed the whole relabel —
+    // the language toggle silently stopped working on four screens.
+    var tab = function (id, es, en) { var el = $(id); if (el) el.textContent = L(es, en); };
+    tab('tabMeet', 'Reuniones', 'Meetings');
+    tab('tabFac', 'Fábrica', 'Factory');
+    tab('tabCC', 'Code', 'Code');
     $('hTitle').textContent = L('Historial', 'History');
     $('q').placeholder = L('Buscar por título o por lo que se dijo…', 'Search by title or by what was said…');
     $('moreBtn').textContent = L('Cargar más', 'Load more');

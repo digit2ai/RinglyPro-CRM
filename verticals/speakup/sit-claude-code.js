@@ -787,6 +787,35 @@ async function testReviewFixes() {
   ok('watchdog: interrupted runs are swept on boot', typeof runner.sweepInterrupted === 'function');
   ok('watchdog: and they are failed honestly, not silently reopened', /Interrupted by a server restart/.test(src));
 
+  // IT TYPES. The answer used to land in one lump after minutes of a moving bar.
+  ok('stream: partial messages are asked for', /includePartialMessages: true/.test(src));
+  ok('stream: a text fragment is pushed, never written down', /store\.push\(run\.id, 'delta'/.test(src));
+  ok('stream: and nothing persists a delta — thousands of rows per run',
+    !/emit\([^)]*'delta'/.test(src));
+  {
+    const st = strip(fs.readFileSync(path.join(__dirname, 'src/claudecode/store.js'), 'utf8'));
+    ok('stream: push reaches the bus and not the table', /function push\(/.test(st) && !/push[\s\S]{0,200}CcRunEvent\.create/.test(st));
+  }
+  {
+    const pg = fs.readFileSync(path.join(__dirname, 'public/claude-code.js'), 'utf8');
+    ok('stream: the page grows the bubble as the text arrives', /streaming \+=/.test(pg));
+    ok('stream: and the stored message replaces it when the turn ends', /turn\.summary \? esc\(turn\.summary\)/.test(pg));
+  }
+
+  // THE WORKING FOLDER: the reason this felt nothing like the desktop app.
+  ok('folder: a repository gets a folder that stays, keyed per tenant', /function repoDirFor/.test(src));
+  ok('folder: a later turn fetches instead of cloning', /Reused the working folder/.test(src));
+  ok('folder: a leftover from an interrupted turn is reset and cleaned before reuse',
+    /reset', '--hard', 'FETCH_HEAD'/.test(src) && /clean', '-fd'/.test(src));
+  ok('folder: node_modules survives the clean', /-e', 'node_modules'/.test(src));
+  ok('folder: it is NOT deleted at the end of a run — that was the whole cost',
+    !/rm\(ws, \{ recursive: true, force: true \}\)[\s\S]{0,120}finally/.test(src));
+  ok('folder: but the run\'s private HOME still is', /rm\(homeFor\(runId\)/.test(src));
+  ok('folder: two turns on one repository do not share a checkout', /withFolder\(key/.test(src));
+  ok('folder: and unrelated repositories still run side by side', /repoDirFor\(row\.tenant_id/.test(src));
+  ok('install: node_modules is reused unless the lockfile moved', /function lockStamp/.test(src));
+  ok('install: and the stamp is written only after a SUCCESSFUL install', /r\.code === 0 && want/.test(src));
+
   // corr-F5/F16: a cancel reaches the children, and a timer never outlives its child.
   ok('cancel: live children are tracked so a cancel can kill them', /const children = new Map\(\)/.test(src));
   ok('cancel: the whole process group is killed, not just the direct child', /process\.kill\(-p\.pid/.test(src));

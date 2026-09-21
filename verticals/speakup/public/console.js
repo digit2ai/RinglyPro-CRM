@@ -857,8 +857,13 @@
     $('langBtn').textContent = l === 'en' ? 'ES' : 'EN';
     setPlaceholder();
     $('outBtn').textContent = L('Salir', 'Sign out');
-    $('tabMeet').textContent = L('Reuniones', 'Meetings');
-    $('tabFac').textContent = L('Fábrica', 'Factory');
+    // A tab the page does not carry is not an error: the Factory link was removed from the bar
+    // and reading .textContent off a missing node threw here, which killed the whole relabel —
+    // the language toggle silently stopped working on four screens.
+    var tab = function (id, es, en) { var el = $(id); if (el) el.textContent = L(es, en); };
+    tab('tabMeet', 'Reuniones', 'Meetings');
+    tab('tabFac', 'Fábrica', 'Factory');
+    tab('tabCC', 'Code', 'Code');
     // THE WHOLE SCREEN FOLLOWS, NOT JUST THE HEADER. The pane repaints from the raw events,
     // the step bar redraws from the job it last showed, and a plan on screen gets its
     // instructions back in the new language.
