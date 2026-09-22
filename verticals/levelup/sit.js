@@ -35,6 +35,23 @@ function ok(c, name) { if (c) pass++; else { fail++; fails.push(name); console.l
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 
+// Width and height of a JPEG, straight from its SOF marker — no dependency, and
+// it reads the file that actually ships rather than a number typed beside it.
+function jpegSize(file) {
+  let b; try { b = require("fs").readFileSync(file); } catch (e) { return null; }
+  if (b[0] !== 0xFF || b[1] !== 0xD8) return null;
+  let i = 2;
+  while (i < b.length - 9) {
+    if (b[i] !== 0xFF) { i++; continue; }
+    const m = b[i + 1];
+    if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) {
+      return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) };
+    }
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
+}
+
 (async () => {
   console.log('LevelUp SIT — keyless path (ANTHROPIC_API_KEY unset); fake model injected where noted');
 
@@ -309,10 +326,44 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
     ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
-    ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /center\/contain no-repeat/.test(r.txt) && /aspect-ratio:1920\/1080/.test(r.txt), 'the WHOLE hero artwork is shown, never cropped, behind one wash');
+    // The declared ratio must match the ARTWORK, not a literal: a hero swap that
+    // letterboxes the band is exactly what this is here to catch.
+    const heroDim = jpegSize(path.join(__dirname, "public", "hero.jpg"));
+    const declared = (r.txt.match(/aspect-ratio:(\d+)\/(\d+)/) || []);
+    ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /center\/contain no-repeat/.test(r.txt),
+      "the WHOLE hero artwork is shown, never cropped, behind one wash");
+    ok(heroDim && declared.length === 3 && Number(declared[1]) === heroDim.w && Number(declared[2]) === heroDim.h,
+      "the band aspect-ratio equals the hero image dimensions (" + (heroDim ? heroDim.w + "x" + heroDim.h : "unreadable") + ")");
     const band = r.txt.slice(r.txt.indexOf('<section class="hero-band"'), r.txt.indexOf('<section id="flow"'));
     ok(band.includes('</section>') && /<\/section>\s*<div class="hero">/.test(band), 'the band holds the artwork alone and the copy follows it (no headline on top of the artwork)');
     ok(/\n\.hero\{[^}]*max-width:1320px/.test(r.txt), 'the hero copy keeps its centred column (the base .hero rule survives)');
+    // ── mobile menu + PWA + the orb colour ────────────────────────────────
+    ok((r.txt.match(/<nav[ >]/g) || []).length === 1 && /id="burger"/.test(r.txt) && /aria-controls="nav"/.test(r.txt),
+      "ONE nav serves both widths and the burger only shows or hides it");
+    ok(/\.burger\{display:none/.test(r.txt) && /@media\(max-width:820px\)\{\n?\s*\.burger\{display:flex\}/.test(r.txt.replace(/\n/g, "\n")),
+      "the burger is hidden on desktop and shown under 820px");
+    ok(/navigator\.serviceWorker\.register/.test(r.txt) && /window\.top === window\.self/.test(r.txt),
+      "the landing registers the worker, and only at the top level");
+    ok(/id="install"/.test(r.txt) && /beforeinstallprompt/.test(r.txt) && /Add to Home Screen/.test(r.txt),
+      "an install bar is offered, with the iPhone wording where no event fires");
+    ok(/footer\{padding-bottom:104px\}/.test(r.txt), "the footer clears the fixed voice orb");
+    ok(/data-accent="#FC4C02"/.test(r.txt) && !/data-accent="#22d3ee"/.test(r.txt),
+      "the orb ball carries the brand orange, not the default cyan");
+    {
+      const orb = require("fs").readFileSync(path.join(__dirname, "..", "..", "public", "embed", "voice-orb.js"), "utf8");
+      ok(/var accent2 = d\.accent2/.test(orb) && /--d2orb-accent2,#8b5cf6/.test(orb) && /--d2orb-glow,rgba\(34,211,238,\.45\)/.test(orb),
+        "the shared orb still DEFAULTS to cyan-violet, so no other product moved");
+    }
+    r = await call(null, "GET", "/manifest.webmanifest");
+    {
+      const m = JSON.parse(r.txt);
+      ok(m.scope.endsWith("/") && m.start_url.startsWith(m.scope), "start_url sits inside scope");
+      ok(/\/\?source=pwa$/.test(m.start_url), "installing from the landing opens the landing, not a login wall");
+    }
+    r = await call(null, "GET", "/sw.js");
+    ok(/SHELL=\[B\+'\/'/.test(r.txt) && !/\/api\//.test(r.txt.split("SHELL")[1].split(";")[0]),
+      "the landing is in the offline shell and the worker never caches the API");
+    r = await call(null, "GET", "/");
     ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
     ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
     const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';

@@ -45,12 +45,39 @@ section h2{font-size:30px;margin:0 0 8px}section .sub{color:var(--mut);margin:0 
 .honest li{margin-bottom:6px}
 footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
 @media(max-width:820px){.hero{grid-template-columns:1fr}.rules{grid-template-columns:1fr}}
+
+/* Mobile menu. ONE nav element serves both widths — a second copy of the
+   links is how a drawer and a bar end up offering different things. */
+header{position:relative}
+.burger{display:none;width:44px;height:44px;flex:none;align-items:center;justify-content:center;flex-direction:column;gap:5px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;padding:0}
+.burger span{display:block;width:20px;height:2px;background:var(--ink);border-radius:2px;transition:transform .18s,opacity .18s}
+.burger[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+@media(max-width:820px){
+  .burger{display:flex}
+  nav{position:absolute;top:100%;left:0;right:0;z-index:60;display:none;flex-direction:column;align-items:stretch;gap:10px;
+      background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 24px calc(14px + env(safe-area-inset-bottom))}
+  nav.open{display:flex}
+  nav .btn.small{min-height:48px;font-size:16px}
+  nav .theme-toggle,nav .lang-toggle{align-self:flex-start}
+}
+/* The voice orb is fixed at the bottom right; without this it sits on top
+   of the last line of the footer. */
+footer{padding-bottom:104px}
+/* Install bar (PWA). Hidden inside the installed app. */
+#install{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:70;display:none;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 14px 40px rgba(38,33,63,.18);font-size:14px}
+#install.show{display:flex}#install p{margin:0;flex:1}#install .btn{white-space:nowrap}
+@media(display-mode:standalone){#install{display:none!important}}
+@media(min-width:560px){#install{left:auto;max-width:420px}}
 </style>
 </head>
 <body>
 <header>
   <a class="logo" href="{{BASE}}/">LevelUp</a>
-  <nav>
+  <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+  <nav id="nav">
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <div class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="es" aria-pressed="false">ES</button></div>
     <a class="btn small" href="{{BASE}}/about" data-en="About us" data-es="Quiénes somos">About us</a>
@@ -196,7 +223,14 @@ footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
 
 <footer>LevelUp Media Marketing · <a href="{{BASE}}/about" data-en="Who we are" data-es="Quiénes somos">Who we are</a> · Digit2AI</footer>
 
-<div data-voice-orb data-agent="levelup" data-lang="en" data-label="Talk to Andrea"></div>
+<div data-voice-orb data-agent="levelup" data-lang="en" data-label="Talk to Andrea"
+     data-accent="#FC4C02" data-accent2="#C93D00" data-hi="#FFE3D2"
+     data-glow="rgba(252,76,2,.45)" data-ring="rgba(252,76,2,.40)"></div>
+<div id="install" role="region" aria-label="Install">
+  <p id="installTxt" data-en="Install LevelUp on your phone." data-es="Instala LevelUp en tu teléfono.">Install LevelUp on your phone.</p>
+  <button type="button" class="btn small primary" id="installGo" data-en="Install" data-es="Instalar">Install</button>
+  <button type="button" class="btn small" id="installNo" data-en="Not now" data-es="Ahora no">Not now</button>
+</div>
 <script type="application/json" id="luFacts">{{FACTS}}</script>
 <script src="{{BASE}}/flow.js?v={{VERSION}}" defer></script>
 <script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script>
@@ -217,6 +251,46 @@ footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
     b.addEventListener('click', function(){ lang = b.dataset.lang; try { localStorage.setItem('lu_lang', lang); } catch(e) {} apply(); });
   });
   apply();
+
+  // ── Mobile menu ────────────────────────────────────────────────────────
+  // ONE nav element at every width; the burger only shows or hides it.
+  var burger = document.getElementById("burger"), navEl = document.getElementById("nav");
+  function setMenu(open){ navEl.classList.toggle("open", open); burger.setAttribute("aria-expanded", String(open)); }
+  burger.addEventListener("click", function(){ setMenu(!navEl.classList.contains("open")); });
+  navEl.addEventListener("click", function(e){ if (e.target.closest("a")) setMenu(false); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") setMenu(false); });
+  document.addEventListener("click", function(e){
+    if (!navEl.classList.contains("open")) return;
+    if (!e.target.closest("#nav") && !e.target.closest("#burger")) setMenu(false);
+  });
+  // Without this an X-shaped burger is stranded on a desktop with nothing to close.
+  window.addEventListener("resize", function(){ if (window.innerWidth > 820) setMenu(false); });
+
+  // ── PWA ────────────────────────────────────────────────────────────────
+  // Registered only at the top level: inside a third-party frame a worker is
+  // refused or partitioned, so it would control nothing.
+  if ("serviceWorker" in navigator && window.top === window.self) {
+    navigator.serviceWorker.register("{{BASE}}/sw.js", { scope: "{{BASE}}/" }).catch(function(){});
+  }
+  var bar = document.getElementById("install"), deferred = null;
+  var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  function dismissed(){ try { return Number(localStorage.getItem("lu_install_no") || 0) > Date.now(); } catch (e) { return false; } }
+  function showBar(){ if (!standalone && !dismissed()) bar.classList.add("show"); }
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferred = e; showBar(); });
+  document.getElementById("installGo").addEventListener("click", function(){
+    if (deferred) { deferred.prompt(); deferred = null; bar.classList.remove("show"); return; }
+    // iPhone Safari fires no beforeinstallprompt, so it gets the wording instead.
+    var t = document.getElementById("installTxt");
+    t.removeAttribute("data-en"); t.removeAttribute("data-es");
+    t.textContent = lang === "es" ? "Toca Compartir y luego Agregar a inicio." : "Tap Share, then Add to Home Screen.";
+    this.hidden = true;
+  });
+  document.getElementById("installNo").addEventListener("click", function(){
+    bar.classList.remove("show");
+    try { localStorage.setItem("lu_install_no", String(Date.now() + 14 * 864e5)); } catch (e) {}
+  });
+  // iOS never fires the event, so offer it there on its own.
+  if (!standalone && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) setTimeout(showBar, 1200);
 
   // Andrea answers about the WHOLE platform, not only what is on screen: the
   // public About text travels with every turn, ahead of the page text.

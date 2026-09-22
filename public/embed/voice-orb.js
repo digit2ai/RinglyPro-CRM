@@ -81,8 +81,8 @@
     '.d2orb-launch{display:flex;align-items:center;gap:12px;background:rgba(12,16,28,.92);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:8px 18px 8px 8px;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.34);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .18s ease,box-shadow .18s ease}',
     '.d2orb-launch:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(0,0,0,.42)}',
     '.d2orb-launch:focus-visible{outline:2px solid var(--d2orb-accent,#22d3ee);outline-offset:3px}',
-    '.d2orb-ball{position:relative;width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:radial-gradient(circle at 34% 30%,#dffbff,var(--d2orb-accent,#22d3ee) 42%,#8b5cf6 100%);box-shadow:0 0 18px rgba(34,211,238,.45)}',
-    '.d2orb-ball::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(139,92,246,.4)}',
+    '.d2orb-ball{position:relative;width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:radial-gradient(circle at 34% 30%,var(--d2orb-hi,#dffbff),var(--d2orb-accent,#22d3ee) 42%,var(--d2orb-accent2,#8b5cf6) 100%);box-shadow:0 0 18px var(--d2orb-glow,rgba(34,211,238,.45))}',
+    '.d2orb-ball::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--d2orb-ring,rgba(139,92,246,.4))}',
     '.d2orb-txt{color:#fff;font-size:14px;font-weight:600;letter-spacing:.2px;white-space:nowrap}',
     '.d2orb-panel{width:min(360px,calc(100vw - 32px));background:rgba(12,16,28,.96);border:1px solid rgba(255,255,255,.16);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overflow:hidden;color:#fff;display:none}',
     '.d2orb-root.is-open .d2orb-panel{display:block}',
@@ -92,7 +92,7 @@
     '.d2orb-ball.is-speaking{animation:d2orb-pulse 1.15s ease-in-out infinite}',
     '.d2orb-ball.is-listening{animation:d2orb-breathe 2.2s ease-in-out infinite}',
     '.d2orb-ball.is-thinking{animation:d2orb-spin 1.1s linear infinite}',
-    '@keyframes d2orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 18px rgba(34,211,238,.45)}50%{transform:scale(1.1);box-shadow:0 0 34px rgba(139,92,246,.7)}}',
+    '@keyframes d2orb-pulse{0%,100%{transform:scale(1);box-shadow:0 0 18px var(--d2orb-glow,rgba(34,211,238,.45))}50%{transform:scale(1.1);box-shadow:0 0 34px var(--d2orb-glow2,rgba(139,92,246,.7))}}',
     '@keyframes d2orb-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}',
     '@keyframes d2orb-spin{to{transform:rotate(360deg)}}',
     '@media (prefers-reduced-motion:reduce){.d2orb-ball{animation:none!important}}',
@@ -167,6 +167,10 @@
     var API = (d.api || SCRIPT_ORIGIN || '').replace(/\/$/, '');
     var AGENT = d.agent || 'digit2ai';
     var accent = d.accent || '#22d3ee';
+    // Optional second colour of the ball, its ring and its glow. Unset keeps the
+    // original cyan-to-violet orb, so every product that does not pass them is
+    // pixel-identical to before.
+    var accent2 = d.accent2 || '', glow = d.glow || '', ring = d.ring || '', hi = d.hi || '';
     var pos = d.position === 'bottom-left' ? 'bottom-left' : 'bottom-right';
 
     var lang = (d.lang || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
@@ -181,6 +185,10 @@
     root.className = 'd2orb-root';
     root.setAttribute('data-pos', pos);
     root.style.setProperty('--d2orb-accent', accent);
+    if (accent2) { root.style.setProperty('--d2orb-accent2', accent2); }
+    if (hi) { root.style.setProperty('--d2orb-hi', hi); }
+    if (glow) { root.style.setProperty('--d2orb-glow', glow); root.style.setProperty('--d2orb-glow2', glow); }
+    if (ring) { root.style.setProperty('--d2orb-ring', ring); }
     root.innerHTML =
       '<div class="d2orb-panel" role="dialog" aria-live="polite">' +
         '<div class="d2orb-head">' +
