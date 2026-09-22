@@ -768,6 +768,9 @@
     else if(e.key.toLowerCase()==='f'){ if(document.fullscreenElement)document.exitFullscreen(); else (document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()); }
   });
   window.addEventListener('beforeunload', stopAudio);
+  // Render the cover in the boot language (?lang=es opens it in Spanish), since
+  // the static markup is English and setCover only ran on a toggle click before.
+  setCover();
 </script>
 </body>
 </html>
