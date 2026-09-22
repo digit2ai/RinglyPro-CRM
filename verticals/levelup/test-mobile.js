@@ -147,6 +147,70 @@ function ok(c, name) { if (c) pass++; else { fail++; fails.push(name); console.l
     ok(icons.heads.length > 0 && icons.heads.every(s => s === 200), 'every icon the manifest names actually exists');
     ok(icons.short === 'LevelUp', 'the installed app is named LevelUp');
 
+
+    // ── Install: what each platform can and cannot do ─────────────────────
+    // Android: the browser event is the real install, in one tap.
+    {
+      const pg = await browser.newPage();
+      await pg.setViewport({ width: 390, height: 800, isMobile: true, hasTouch: true });
+      await pg.goto(url, { waitUntil: 'networkidle0' });
+      const r = await pg.evaluate(() => {
+        let called = false;
+        const e = new Event('beforeinstallprompt');
+        e.prompt = () => { called = true; };
+        window.dispatchEvent(e);
+        document.getElementById('install').classList.add('show');
+        document.getElementById('installGo').click();
+        return { called, sheetOpen: !document.getElementById('iosSheet').hidden };
+      });
+      ok(r.called === true, 'Android: Install calls the browser prompt, the real one-tap install');
+      ok(r.sheetOpen === false, 'Android: it does not show the iPhone steps');
+      await pg.close();
+    }
+    // iPhone Safari: no install API exists, so the two taps are spelled out.
+    {
+      const pg = await browser.newPage();
+      await pg.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1');
+      await pg.setViewport({ width: 390, height: 800, isMobile: true, hasTouch: true });
+      await pg.goto(url, { waitUntil: 'networkidle0' });
+      const r = await pg.evaluate(() => {
+        document.getElementById('install').classList.add('show');
+        document.getElementById('installGo').click();
+        const sh = document.getElementById('iosSheet');
+        return {
+          open: !sh.hidden,
+          steps: sh.querySelectorAll('.ios-steps li').length,
+          title: document.getElementById('iosTitle').textContent,
+          arrow: !document.getElementById('iosPoint').hidden,
+          share: /Share/.test(sh.textContent), add: /Add to Home Screen/.test(sh.textContent)
+        };
+      });
+      ok(r.open && r.steps === 3, 'iPhone: tapping Install opens the three steps');
+      ok(/Home Screen/.test(r.title) && r.share && r.add, 'iPhone: the steps name Share and Add to Home Screen');
+      ok(r.arrow === true, 'iPhone: the arrow points at the Safari bar');
+      const closed = await pg.evaluate(() => { document.getElementById('iosOk').click(); return document.getElementById('iosSheet').hidden; });
+      ok(closed === true, 'iPhone: the sheet closes');
+      await pg.close();
+    }
+    // Inside WhatsApp's browser there is no Add to Home Screen at all.
+    {
+      const pg = await browser.newPage();
+      await pg.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 WhatsApp/2.24');
+      await pg.setViewport({ width: 390, height: 800, isMobile: true, hasTouch: true });
+      await pg.goto(url, { waitUntil: 'networkidle0' });
+      const r = await pg.evaluate(() => {
+        document.getElementById('install').classList.add('show');
+        document.getElementById('installGo').click();
+        return { title: document.getElementById('iosTitle').textContent,
+                 arrow: !document.getElementById('iosPoint').hidden,
+                 steps: document.querySelectorAll('.ios-steps li').length };
+      });
+      ok(/Safari/.test(r.title), 'in-app browser: it says to open in Safari first, not steps that are not there');
+      ok(r.arrow === false, 'in-app browser: no arrow, because that bar is not on screen');
+      ok(r.steps === 3, 'in-app browser: the whole path is still spelled out');
+      await pg.close();
+    }
+
     await page.close();
   } finally {
     await browser.close();

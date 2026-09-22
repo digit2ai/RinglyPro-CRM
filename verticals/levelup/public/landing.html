@@ -78,6 +78,25 @@ footer{padding-bottom:104px}
 #install.show{display:flex}#install p{margin:0;flex:1}#install .btn{white-space:nowrap}
 @media(display-mode:standalone){#install{display:none!important}}
 @media(min-width:560px){#install{left:auto;max-width:420px}}
+/* iOS install coach */
+#iosSheet{position:fixed;inset:0;z-index:2147483200;background:rgba(15,12,25,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+#iosSheet[hidden]{display:none!important}
+.ios-card{position:relative;background:var(--card);color:var(--ink);border-radius:22px;padding:22px 20px 20px;max-width:380px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.45);text-align:center}
+.ios-x{position:absolute;top:6px;right:6px;width:44px;height:44px;border:0;background:transparent;color:var(--mut);font-size:26px;line-height:1;cursor:pointer}
+.ios-icon img{border-radius:13px;display:block;margin:0 auto 10px}
+.ios-card h3{margin:0 0 14px;font-size:20px}
+.ios-steps{margin:0 0 18px;padding:0;list-style:none;text-align:left;counter-reset:s}
+.ios-steps li{counter-increment:s;position:relative;padding:10px 0 10px 40px;font-size:15px;border-top:1px solid var(--line)}
+.ios-steps li:first-child{border-top:0}
+.ios-steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;background:var(--pink-d);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ios-steps b{color:var(--pink-d)}
+.ios-steps .glyph{display:inline-flex;vertical-align:-5px;margin:0 2px}
+.ios-card .btn{width:100%}
+/* The arrow points at the Safari toolbar, which is at the BOTTOM on iPhone. */
+.ios-point{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);animation:ios-bob 1.1s ease-in-out infinite}
+.ios-point[hidden]{display:none}
+@keyframes ios-bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(9px)}}
+@media (prefers-reduced-motion:reduce){.ios-point{animation:none}}
 #install p{min-width:140px}
 </style>
 </head>
@@ -239,6 +258,21 @@ footer{padding-bottom:104px}
   <button type="button" class="btn small primary" id="installGo" data-en="Install" data-es="Instalar">Install</button>
   <button type="button" class="btn small" id="installNo" data-en="Not now" data-es="Ahora no">Not now</button>
 </div>
+<!-- iOS install coach. Apple exposes NO install API, so the honest maximum is
+     to make the two taps impossible to miss, and to say plainly when the page
+     is inside an app's browser, where Add to Home Screen does not exist. -->
+<div id="iosSheet" hidden>
+  <div class="ios-card" role="dialog" aria-modal="true" aria-labelledby="iosTitle">
+    <button type="button" class="ios-x" id="iosX" aria-label="Close">&times;</button>
+    <div class="ios-icon"><img src="{{BASE}}/icon-180.png?v={{VERSION}}" alt="" width="56" height="56"></div>
+    <h3 id="iosTitle" data-en="Add LevelUp to your Home Screen" data-es="Agrega LevelUp a tu pantalla de inicio">Add LevelUp to your Home Screen</h3>
+    <ol class="ios-steps" id="iosSteps"></ol>
+    <button type="button" class="btn primary" id="iosOk" data-en="Got it" data-es="Entendido">Got it</button>
+  </div>
+  <div class="ios-point" id="iosPoint" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="30" height="30"><path d="M12 3v13M7 8l5-5 5 5M5 20h14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+</div>
 <script type="application/json" id="luFacts">{{FACTS}}</script>
 <script src="{{BASE}}/flow.js?v={{VERSION}}" defer></script>
 <script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script>
@@ -285,24 +319,71 @@ footer{padding-bottom:104px}
   function dismissed(){ try { return Number(localStorage.getItem("lu_install_no") || 0) > Date.now(); } catch (e) { return false; } }
   function showBar(){ if (!standalone && !dismissed()) bar.classList.add("show"); }
   window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); deferred = e; showBar(); });
+  // ── Install ────────────────────────────────────────────────────────────
+  // Android/Chrome: one tap, the browser installs it. iPhone: Apple exposes NO
+  // install API to a web page, so nothing here can add the icon by itself —
+  // the honest maximum is to make the two taps impossible to miss. And inside
+  // an app's browser (WhatsApp, Instagram…) the option does not exist at all,
+  // which is why that case is detected and named instead of showing steps that
+  // are not there.
+  var ua = navigator.userAgent;
+  var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var inApp = /FBAN|FBAV|Instagram|WhatsApp|Line\/|WeChat|MicroMessenger|Snapchat|TikTok|Twitter|LinkedInApp|Pinterest/i.test(ua);
+  var sheet = document.getElementById("iosSheet");
+  var SHARE_GLYPH = '<svg class="glyph" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M12 3v12M8 7l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<path d="M5 12v8h14v-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function steps() {
+    var es = lang === "es";
+    if (inApp) {
+      return [
+        es ? 'Toca <b>&#8943;</b> arriba a la derecha y elige <b>Abrir en Safari</b>.'
+           : 'Tap <b>&#8943;</b> at the top right and choose <b>Open in Safari</b>.',
+        es ? 'En Safari, toca <b>Compartir</b> ' + SHARE_GLYPH + ' abajo.'
+           : 'In Safari, tap <b>Share</b> ' + SHARE_GLYPH + ' at the bottom.',
+        es ? 'Elige <b>Agregar a pantalla de inicio</b> y toca <b>Agregar</b>.'
+           : 'Choose <b>Add to Home Screen</b> and tap <b>Add</b>.'
+      ];
+    }
+    return [
+      es ? 'Toca <b>Compartir</b> ' + SHARE_GLYPH + ' en la barra de abajo.'
+         : 'Tap <b>Share</b> ' + SHARE_GLYPH + ' in the bar at the bottom.',
+      es ? 'Baja y elige <b>Agregar a pantalla de inicio</b>.'
+         : 'Scroll down and choose <b>Add to Home Screen</b>.',
+      es ? 'Toca <b>Agregar</b>. LevelUp queda con su icono y su nombre.'
+         : 'Tap <b>Add</b>. LevelUp lands with its icon and name.'
+    ];
+  }
+  function openSheet() {
+    document.getElementById("iosSteps").innerHTML = steps().map(function (t) { return "<li>" + t + "</li>"; }).join("");
+    var title = document.getElementById("iosTitle");
+    title.removeAttribute("data-en"); title.removeAttribute("data-es");
+    title.textContent = inApp
+      ? (lang === "es" ? "Ábrelo en Safari para instalarlo" : "Open it in Safari to install it")
+      : (lang === "es" ? "Agrega LevelUp a tu pantalla de inicio" : "Add LevelUp to your Home Screen");
+    // The arrow only helps where the Share button actually is: Safari's own bar.
+    document.getElementById("iosPoint").hidden = inApp;
+    sheet.hidden = false;
+  }
+  function closeSheet() { sheet.hidden = true; }
+  document.getElementById("iosX").addEventListener("click", closeSheet);
+  document.getElementById("iosOk").addEventListener("click", closeSheet);
+  sheet.addEventListener("click", function (e) { if (e.target === sheet) closeSheet(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+
   document.getElementById("installGo").addEventListener("click", function(){
+    // Android and desktop Chrome: this is the real install, in one tap.
     if (deferred) { deferred.prompt(); deferred = null; bar.classList.remove("show"); return; }
-    // iPhone Safari fires no beforeinstallprompt, so it gets the wording instead.
-    // iPhone Safari has NO install API: nothing in a page can put an icon on the
-    // home screen there, so it gets the exact taps instead of a button that lies.
-    var t = document.getElementById("installTxt");
-    t.removeAttribute("data-en"); t.removeAttribute("data-es");
-    t.innerHTML = lang === "es"
-      ? "Toca <b>Compartir</b> abajo, baja y elige <b>Agregar a pantalla de inicio</b>. Queda como LevelUp con su icono."
-      : "Tap <b>Share</b> below, scroll down and choose <b>Add to Home Screen</b>. It lands as LevelUp with its icon.";
-    this.hidden = true;
+    openSheet();
   });
   document.getElementById("installNo").addEventListener("click", function(){
     bar.classList.remove("show");
     try { localStorage.setItem("lu_install_no", String(Date.now() + 14 * 864e5)); } catch (e) {}
   });
   // iOS never fires the event, so offer it there on its own.
-  if (!standalone && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) setTimeout(showBar, 1200);
+  // iOS never fires the event, so the bar is offered there on its own.
+  if (!standalone && isIOS) setTimeout(showBar, 1200);
 
   // Andrea answers about the WHOLE platform, not only what is on screen: the
   // public About text travels with every turn, ahead of the page text.
