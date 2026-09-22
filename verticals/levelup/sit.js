@@ -357,9 +357,10 @@ function jpegSize(file) {
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
     // ── the marketing presentation ────────────────────────────────────────
     {
-      const d = await call(null, 'GET', '/presentation');
-      ok(d.status === 200 && !/\{\{BASE\}\}|\{\{VERSION\}\}/.test(d.txt), '/presentation renders with its tokens substituted');
-      ok((await call(null, 'GET', '/presentacion')).status === 200, '/presentacion is the same deck in Spanish reach');
+      const d = await call(null, 'GET', '/');
+      ok(d.status === 200 && !/\{\{BASE\}\}|\{\{VERSION\}\}|\{\{DECK\}\}/.test(d.txt), 'the landing IS the presentation, every token substituted (two passes)');
+      ok((await call(null, 'GET', '/presentation')).txt === d.txt, '/presentation serves the same page, never a second copy that could drift');
+      ok((await call(null, 'GET', '/presentacion')).status === 200, '/presentacion answers too');
       ok(/hero\.jpg/.test(d.txt) && /class="phone"/.test(d.txt), 'it carries the main artwork and a phone mock-up');
       ['Dashboard', 'Content Calendar', 'Content Pipeline', 'Creative Strategist', 'Ideas &amp; Scripts', 'Editing', 'Business Assistant', 'Top Picks', 'Train the agents', 'Andrea']
         .forEach((f) => ok(d.txt.includes(f), 'the deck walks through ' + f));
@@ -369,8 +370,9 @@ function jpegSize(file) {
       const noEs = (d.txt.match(/data-en="[^"]*"(?![^>]*data-es=)/g) || []);
       ok(!noEs.length, 'every line of the deck exists in English and Spanish');
       ok(!/[\u4e00-\u9fff]/.test(d.txt), 'no stray non-Latin characters slipped into the copy');
-      const land = await call(null, 'GET', '/');
-      ok(/\/presentation/.test(land.txt), 'the landing links to the presentation');
+      ok(/id="how"/.test(d.txt) && /href="#how"/.test(d.txt), 'the menu reaches the walkthrough on the same page');
+      ok(/id="flow"/.test(d.txt) && /data-voice-orb/.test(d.txt), 'the landing keeps the animated process band and Andrea\'s voice orb');
+      ok(!/\.hero-band::after|\.cover-art::after/.test(d.txt), 'no wash over the hero artwork, in either language');
     }
     ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');

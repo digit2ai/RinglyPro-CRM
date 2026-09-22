@@ -22,6 +22,7 @@
 <script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
 <link rel="stylesheet" href="{{BASE}}/flow.css?v={{VERSION}}">
+<link rel="stylesheet" href="{{BASE}}/deck.css?v={{VERSION}}">
 <style>
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1320px;margin:0 auto;gap:12px}
 .logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
@@ -31,8 +32,6 @@ nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
    with the artwork's own wordmark, so the copy lives underneath now. */
 .hero-band{position:relative;width:100%;aspect-ratio:1637/961;border-top:5px solid var(--pink);border-bottom:5px solid var(--pink);box-sizing:border-box;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912}
 html[lang="es"] .hero-band{background-image:url("{{BASE}}/hero-es.jpg?v={{VERSION}}")}
-.hero-band::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.12);pointer-events:none}
-:root[data-theme="dark"] .hero-band::after{background:rgba(11,9,18,.18)}
 .hero{max-width:1320px;margin:0 auto;padding:44px 24px 36px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
 .hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-1px}
 .hero h1 span{font-family:var(--script);color:var(--pink-d);font-weight:600}
@@ -108,7 +107,7 @@ footer{padding-bottom:104px}
   <nav id="nav">
     <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
     <div class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="es" aria-pressed="false">ES</button></div>
-    <a class="btn small" href="{{BASE}}/presentation" data-en="How it works" data-es="Cómo funciona">How it works</a>
+    <a class="btn small" href="#how" data-en="How it works" data-es="Cómo funciona">How it works</a>
     <a class="btn small" href="{{BASE}}/about" data-en="About us" data-es="Quiénes somos">About us</a>
     <a class="btn small" href="{{BASE}}/login" data-en="Sign in" data-es="Entrar">Sign in</a>
     <a class="btn small primary" href="{{BASE}}/login?mode=signup" data-en="Start free" data-es="Empieza gratis">Start free</a>
@@ -221,36 +220,9 @@ footer{padding-bottom:104px}
   </div>
 </section>
 
-<section id="agents">
-  <h2 data-en="Your AI team" data-es="Tu equipo de IA">Your AI team</h2>
-  <p class="sub" data-en="Andrea is the boss and your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Andrea es la jefa y tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">Andrea is the boss and your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
-  <div class="grid">
-    <div class="card c1"><b>Andrea</b><i class="who" data-en="The Boss" data-es="La Jefa">The Boss</i><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
-    <div class="card c2"><b>Marisol</b><i class="who" data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</i><small data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus palabras.">Niche, content pillars and offer, from your own words.</small></div>
-    <div class="card c3"><b>Mateo &amp; Valeria</b><i class="who" data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</i><small data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</small></div>
-    <div class="card c4"><b>Diego</b><i class="who" data-en="Calendar" data-es="Calendario">Calendar</i><small data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</small></div>
-    <div class="card c1"><b>Bruno</b><i class="who" data-en="Video Editor" data-es="Editor de video">Video Editor</i><small data-en="Nine editing rules plus yours. Descript connection in progress." data-es="Nueve reglas de edición más las tuyas. Conexión con Descript en progreso.">Nine editing rules plus yours. Descript connection in progress.</small></div>
-    <div class="card c2"><b>Javier</b><i class="who" data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</i><small data-en="Flags fake brand offers, drafts replies at your rates." data-es="Marca ofertas falsas y redacta respuestas con tus tarifas.">Flags fake brand offers, drafts replies at your rates.</small></div>
-    <div class="card c3"><b>Nico</b><i class="who" data-en="Top Picks" data-es="Top Picks">Top Picks</i><small data-en="Shoppable lists with your own public page." data-es="Listas comprables con tu propia página pública.">Shoppable lists with your own public page.</small></div>
-    <div class="card c4"><b>Elena</b><i class="who" data-en="Trainer" data-es="Entrenadora">Trainer</i><small data-en="Teach every agent your rules, rates and style." data-es="Enséñale a cada agente tus reglas, tarifas y estilo.">Teach every agent your rules, rates and style.</small></div>
-  </div>
-</section>
+{{DECK}}
 
-<section>
-  <h2 data-en="You stay in control" data-es="Tú tienes el control">You stay in control</h2>
-  <div class="rules">
-    <div class="card"><b data-en="Read only stays read only" data-es="Solo lectura es solo lectura">Read only stays read only</b><small data-en="Anything touching your inbox or accounts only reads and drafts. It never sends, closes a deal or acts for you without your approval." data-es="Todo lo que toca tu correo o tus cuentas solo lee y redacta. Nunca envía, cierra un trato ni actúa por ti sin tu aprobación.">Anything touching your inbox or accounts only reads and drafts. It never sends, closes a deal or acts for you without your approval.</small></div>
-    <div class="card"><b data-en="Posts default to drafts" data-es="Las publicaciones son borradores">Posts default to drafts</b><small data-en="Every video becomes a draft you review and publish yourself." data-es="Cada video queda como borrador que tú revisas y publicas.">Every video becomes a draft you review and publish yourself.</small></div>
-  </div>
-  <h3 style="margin-top:26px" data-en="What is not connected yet" data-es="Lo que aún no está conectado">What is not connected yet</h3>
-  <ul class="honest">
-    <li data-en="Descript, TikTok, Instagram, Facebook and inbox connections are being built through official APIs. Until then you paste, copy and post by hand." data-es="Las conexiones con Descript, TikTok, Instagram, Facebook y tu correo se están construyendo con APIs oficiales. Mientras tanto pegas, copias y publicas a mano.">Descript, TikTok, Instagram, Facebook and inbox connections are being built through official APIs. Until then you paste, copy and post by hand.</li>
-    <li data-en="Views, revenue and top posts show as not connected, never as sample numbers." data-es="Vistas, ingresos y mejores publicaciones aparecen como no conectados, nunca con números de ejemplo.">Views, revenue and top posts show as not connected, never as sample numbers.</li>
-    <li data-en="We never use workarounds that could put your accounts at risk." data-es="Nunca usamos trucos que pongan en riesgo tus cuentas.">We never use workarounds that could put your accounts at risk.</li>
-  </ul>
-</section>
-
-<footer>LevelUp Media Marketing · <a href="{{BASE}}/presentation" data-en="How it works" data-es="Cómo funciona">How it works</a> · <a href="{{BASE}}/about" data-en="Who we are" data-es="Quiénes somos">Who we are</a> · Digit2AI</footer>
+<footer>LevelUp Media Marketing · <a href="#how" data-en="How it works" data-es="Cómo funciona">How it works</a> · <a href="{{BASE}}/about" data-en="Who we are" data-es="Quiénes somos">Who we are</a> · Digit2AI</footer>
 
 <div data-voice-orb data-agent="levelup" data-lang="en" data-label="Talk to Andrea"
      data-accent="#FC4C02" data-accent2="#C93D00" data-hi="#FFE3D2"

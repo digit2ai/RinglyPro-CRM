@@ -31,6 +31,12 @@ const copilot = require('./copilot');
 // can answer about the whole platform and not only the section on screen.
 // JSON-escaped for a <script type="application/json"> block ('<' escaped so it
 // can never close the tag).
+let DECK = null;
+function deckHtml() {
+  if (DECK === null) DECK = fs.readFileSync(path.join(__dirname, '..', 'public', 'deck.html'), 'utf8');
+  return DECK;
+}
+
 let FACTS = null;
 function platformFacts() {
   if (FACTS) return FACTS;
@@ -48,7 +54,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-19';
+const VERSION = 'lu-2026-09-22-20';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -56,7 +62,9 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 function page(req, res, file, extra = {}) {
   let html = fs.readFileSync(path.join(PUB, file), 'utf8');
   const vars = Object.assign({ BASE: req.baseUrl || '', VERSION }, extra);
-  html = html.replace(/\{\{([A-Z_]+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
+  // TWO passes: an injected partial ({{DECK}}) carries its own {{BASE}} and
+  // {{VERSION}} tokens, and a single pass would ship them to the browser.
+  for (let i = 0; i < 2; i++) html = html.replace(/\{\{([A-Z_]+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
   res.set('Cache-Control', 'no-cache');
   res.type('html').send(html);
 }
@@ -88,7 +96,7 @@ function sameSite(req, res, next) {
 const ctxFor = (req) => ({ tenantId: req.user.tenant_id || req.user.id, actorId: req.user.id, channel: 'app', lang: req.user.lang, isPlatformAdmin: !!req.user.is_platform_admin });
 
 // ── Public pages ─────────────────────────────────────────────────────────────
-router.get('/', (req, res) => page(req, res, 'landing.html', { FACTS: platformFacts() }));
+router.get('/', (req, res) => page(req, res, 'landing.html', { FACTS: platformFacts(), DECK: deckHtml() }));
 router.get('/login', (req, res) => (req.user ? res.redirect((req.baseUrl || '') + '/app') : page(req, res, 'login.html')));
 router.get('/signup', (req, res) => res.redirect((req.baseUrl || '') + '/login?mode=signup'));
 // Public "who we are / what we do" page. REQUIREMENTS.md is the internal
@@ -100,7 +108,10 @@ function aboutPage(req, res) {
 router.get('/about', aboutPage);
 // The marketing walkthrough: what it is, who it is for, the benefits and the
 // dashboard screen by screen. Every screen is HTML, never a screenshot.
-const deck = (req, res) => page(req, res, 'presentation.html');
+// ONE page is the presentation: the landing carries the whole deck, so
+// /presentation and /presentacion serve it rather than a second copy that
+// could drift. public/deck.html is the single source of those sections.
+const deck = (req, res) => page(req, res, 'landing.html', { FACTS: platformFacts(), DECK: deckHtml() });
 router.get('/presentation', deck);
 router.get('/presentacion', deck);
 router.get('/requirements', aboutPage);

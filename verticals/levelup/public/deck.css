@@ -1,0 +1,73 @@
+/* The presentation deck: cards, mock-up screens and phone frames. One copy,
+   used by the landing page (which IS the presentation) and by /presentation. */
+/* The deck is one scrollable page: a marketing piece people can send, not a
+   keyboard slideshow. Every screen below is HTML, never a screenshot — a
+   screenshot blurs when projected, does not reflow on a phone, and ages the
+   day the product changes. */
+.deck-top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.deck-top .in{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.deck .logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
+.deck-top nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sec{max-width:1320px;margin:0 auto;padding:56px 24px;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:0}
+.eyebrow{font:800 .78rem/1.2 var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--pink-d);margin:0 0 10px}
+.deck h1{font-size:clamp(32px,5vw,54px);line-height:1.05;letter-spacing:-1px;margin:0 0 14px}
+.deck h1 .s{font-family:var(--script);color:var(--pink-d);font-weight:600}
+.sec h2{font-size:clamp(24px,3.2vw,36px);line-height:1.15;margin:0 0 10px}
+.sec h3{font-size:19px;margin:0 0 6px}
+.lede{font-size:18px;color:var(--mut);max-width:70ch;margin:0 0 20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card p{margin:0;color:var(--mut);font-size:15px}
+.c1{background:var(--blush)}.c2{background:var(--blue)}.c3{background:var(--mint)}.c4{background:var(--peach)}
+.cover-art{width:100%;aspect-ratio:1637/961;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912;border-top:5px solid var(--pink);border-bottom:5px solid var(--pink)}
+html[lang="es"] .cover-art{background-image:url("{{BASE}}/hero-es.jpg?v={{VERSION}}")}
+.cover-row{display:grid;grid-template-columns:1.35fr .65fr;gap:28px;align-items:center;margin-top:28px}
+.num{font:800 .8rem/1 var(--font);letter-spacing:.1em;color:var(--pink-d)}
+
+/* ── Mockups: a laptop frame and a phone frame, both drawn in CSS ───────── */
+.scr{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:0 18px 40px rgba(38,33,63,.10)}
+.scr-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--blue);border-bottom:1px solid var(--line)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.scr-ttl{margin-left:8px;font-size:12px;color:var(--mut)}
+.scr-body{display:grid;grid-template-columns:150px 1fr;min-height:250px}
+.scr-side{background:var(--bg);border-right:1px solid var(--line);padding:12px 10px;font-size:12px}
+.scr-side b{display:block;font-family:var(--script);color:var(--pink-d);font-size:20px;margin-bottom:8px}
+.scr-side span{display:block;padding:6px 8px;border-radius:8px;color:var(--mut)}
+.scr-side span.on{background:var(--blush);color:var(--ink);font-weight:700}
+.scr-main{padding:14px}
+.scr-h{font-weight:800;font-size:15px;margin:0 0 10px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat small{display:block;color:var(--mut);font-size:11px}
+.stat b{font-size:20px}
+.stat .nc{font-size:12px;color:var(--mut);font-weight:700}
+.row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:8px;font-size:13px}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--blush);border:1px solid var(--line);white-space:nowrap}
+.pill.b{background:var(--blue)}.pill.m{background:var(--mint)}.pill.p{background:var(--peach)}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.col{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px;font-size:12px}
+.col b{display:block;margin-bottom:6px;font-size:12px}
+.chip{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px;margin-bottom:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal i{display:block;min-height:42px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-style:normal;font-size:10px;color:var(--mut);padding:3px}
+.cal i.has{background:var(--blush);color:var(--ink)}
+.bubble{max-width:82%;padding:9px 11px;border-radius:14px;font-size:13px;margin-bottom:8px}
+.bubble.u{background:var(--blush);margin-left:auto}
+.bubble.a{background:var(--bg);border:1px solid var(--line)}
+.tiny{font-size:12px;color:var(--mut)}
+.phone{width:240px;max-width:100%;margin:0 auto;border:10px solid var(--ink);border-radius:32px;overflow:hidden;background:var(--card);box-shadow:0 22px 50px rgba(38,33,63,.18)}
+.phone .scr-body{grid-template-columns:1fr;min-height:0}
+.phone .scr-main{padding:12px}
+.phone .tabs{display:flex;border-top:1px solid var(--line);background:var(--bg)}
+.phone .tabs span{flex:1;text-align:center;padding:9px 0;font-size:10px;color:var(--mut)}
+.phone .tabs span.on{color:var(--pink-d);font-weight:800}
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;justify-items:center}
+.step{display:grid;grid-template-columns:1fr 1.1fr;gap:26px;align-items:center;margin-top:26px}
+.step:nth-child(even) .step-txt{order:2}
+.note{background:var(--blush);border-radius:14px;padding:14px 16px;font-size:15px}
+.deck-foot{max-width:1320px;margin:0 auto;padding:40px 24px 80px;color:var(--mut);font-size:14px;text-align:center}
+@media(max-width:900px){.cover-row,.step{grid-template-columns:1fr}.scr-body{grid-template-columns:1fr}.scr-side{display:none}.cols{grid-template-columns:repeat(2,1fr)}}
+@media print{header,.deck-top{display:none}.sec{break-inside:avoid}}
