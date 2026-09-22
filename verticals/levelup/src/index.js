@@ -25,9 +25,28 @@ const C = require('./corpus');
 const llm = require('./llm');
 const { renderMarkdown } = require('./markdown');
 
+// The public About text, as plain sentences, handed to the voice agent so she
+// can answer about the whole platform and not only the section on screen.
+// JSON-escaped for a <script type="application/json"> block ('<' escaped so it
+// can never close the tag).
+let FACTS = null;
+function platformFacts() {
+  if (FACTS) return FACTS;
+  const md = fs.readFileSync(path.join(__dirname, '..', 'ABOUT.md'), 'utf8');
+  const plain = md
+    .replace(/^\s*\|/gm, '')            // table rows become plain lines
+    .replace(/\|/g, ' — ')
+    .replace(/^[-\s|]+$/gm, '')
+    .replace(/[#*`>]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  FACTS = JSON.stringify(plain).replace(/</g, '\\u003c');
+  return FACTS;
+}
+
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-2';
+const VERSION = 'lu-2026-09-22-3';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -67,7 +86,7 @@ function sameSite(req, res, next) {
 const ctxFor = (req) => ({ tenantId: req.user.tenant_id || req.user.id, actorId: req.user.id, channel: 'app', lang: req.user.lang, isPlatformAdmin: !!req.user.is_platform_admin });
 
 // ── Public pages ─────────────────────────────────────────────────────────────
-router.get('/', (req, res) => page(req, res, 'landing.html'));
+router.get('/', (req, res) => page(req, res, 'landing.html', { FACTS: platformFacts() }));
 router.get('/login', (req, res) => (req.user ? res.redirect((req.baseUrl || '') + '/app') : page(req, res, 'login.html')));
 router.get('/signup', (req, res) => res.redirect((req.baseUrl || '') + '/login?mode=signup'));
 // Public "who we are / what we do" page. REQUIREMENTS.md is the internal

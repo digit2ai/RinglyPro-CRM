@@ -68,6 +68,9 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
   ok(pubs.every((f2) => !/(^|[^\/a-z.])\/levelupmediamarketing/.test(read('public/' + f2))), 'no page hardcodes the mount prefix');
   ['business.update_deal', 'picks.publish', 'strategist.save_business', 'editor.confirm_rule'].forEach((t) => ok(brain.TOOLS.get(t) && brain.TOOLS.get(t).human_only, t + ' is human_only'));
   ok(C.AGENTS.length === 11 && C.EDIT_RULES.length === 9 && C.REVIEW_ISSUES.length === 5, 'corpus: 11 agents, 9 editing rules, 5 review issues');
+  const persona = require('../../src/config/voice-agents').getAgent('levelup');
+  ok(persona.name.en === 'Andrea' && persona.name.es === 'Andrea' && persona.voice.en === 'ava', 'the voice agent is Andrea, Ava voice in English');
+  ok(!/prefers-color-scheme/.test(read('public/base.css')) && /:root\[data-theme="dark"\]/.test(read('public/base.css')), 'dark is an explicit choice, never the OS default');
   const req = read('REQUIREMENTS.md');
   ok(/Rule 1/.test(req) && /Rule 2/.test(req) && /Open questions/.test(req), 'internal requirements doc intact');
   const about = read('ABOUT.md');
@@ -225,7 +228,7 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     ok(r.status === 404, 'unpublished list is not public');
     await tool('a', 'picks.publish', { list_id: list.id, published: true });
     r = await call(null, 'GET', '/p/' + list.share_token);
-    ok(r.status === 200 && !/<script>|<img src=x/.test(r.txt) && /&lt;img/.test(r.txt), 'public page escapes creator text');
+    ok(r.status === 200 && !/<img src=x|Under \$25 <script/.test(r.txt) && /&lt;img/.test(r.txt) && /&lt;script&gt;/.test(r.txt), 'public page escapes creator text');
     r = await call(null, 'GET', '/go/' + item.id + '?l=' + list.share_token);
     ok(r.status === 302 && r.headers.get('location') === 'https://example.com/serum', 'click redirects');
     ok((await tool('a', 'picks.lists')).j.lists[0].items[0].clicks === 1, 'click counted');
@@ -260,7 +263,11 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     // pages
     r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|Andrea/.test(r.txt), '/requirements now shows who we are, no sources');
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
-    r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}/.test(r.txt), 'landing substitutes BASE');
+    r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
+    ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
+    ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
+    const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';
+    ok(facts.length > 1500 && !/<\/script/i.test(facts) && /Trainer|Business Assistant/.test(JSON.parse(facts)), 'Andrea gets the whole platform as facts, safely escaped');
     r = await call(null, 'GET', '/manifest.webmanifest'); ok(r.j && r.j.scope === '/levelupmediamarketing/' && r.j.start_url.startsWith('/levelupmediamarketing/'), 'manifest scope follows the mount');
     r = await call(null, 'GET', '/admin'); ok(r.status === 404 && /LevelUp/.test(r.txt), 'unowned path gets the branded 404');
     r = await call(null, 'GET', '/app'); ok(r.status === 302, 'app requires sign-in');

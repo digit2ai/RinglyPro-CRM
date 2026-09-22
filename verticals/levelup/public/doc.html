@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{TITLE}} — LevelUp Media Marketing</title>
 <link rel="icon" href="{{BASE}}/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
 <style>
 main{max-width:860px;margin:0 auto;padding:24px 16px 80px}
@@ -18,7 +19,7 @@ code{background:var(--blush);padding:1px 5px;border-radius:6px;font-size:.92em}
 </style>
 </head>
 <body><main>
-<div class="top"><a class="logo" href="{{BASE}}/">LevelUp</a><button class="btn small" onclick="print()">Print / PDF</button></div>
+<div class="top"><a class="logo" href="{{BASE}}/">LevelUp</a><button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button class="btn small" onclick="print()">Print / PDF</button></div>
 {{BODY}}
-</main></body>
+</main><script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script></body>
 </html>

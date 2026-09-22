@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LevelUp — your back office</title><meta name="robots" content="noindex">
-<link rel="icon" href="{{BASE}}/icon.svg"><link rel="manifest" href="{{BASE}}/manifest.webmanifest"><meta name="theme-color" content="#26213F">
+<link rel="icon" href="{{BASE}}/icon.svg"><link rel="manifest" href="{{BASE}}/manifest.webmanifest"><meta name="theme-color" content="#FFFFFF">
 <link rel="apple-touch-icon" href="{{BASE}}/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
 <link rel="stylesheet" href="{{BASE}}/app.css?v={{VERSION}}">
 </head>
@@ -20,7 +21,7 @@
     <header class="top">
       <div><h1 id="title">Dashboard</h1><div class="hello" id="hello"></div></div>
       <div class="topbtns">
-        <button class="btn small" id="langBtn" type="button">ES</button>
+        <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button><button class="btn small" id="langBtn" type="button">ES</button>
         <button class="btn small primary" id="liderBtn" type="button">Líder</button>
         <button class="btn small" id="outBtn" type="button">Sign out</button>
       </div>
@@ -36,6 +37,7 @@
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
 <script>window.LU_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script>
 <script src="{{BASE}}/app.js?v={{VERSION}}" defer></script>
 <script>if('serviceWorker' in navigator && window.top===window.self){navigator.serviceWorker.register('{{BASE}}/sw.js',{scope:'{{BASE}}/'}).catch(function(){});}</script>
 </body>

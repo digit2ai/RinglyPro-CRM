@@ -1,0 +1,150 @@
+/* LevelUp workflow circuit: adapted from the BuyersLine flow band (a dark signal band in both themes, fixed local colors). flow.js draws the path and moves the signal; readable without it. */
+.flow{--font-body:var(--font);--gutter:20px}
+.flow .wrap{max-width:1120px;margin:0 auto;padding:56px 20px}
+.flow .eyebrow{font:800 .78rem/1.2 var(--font);letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px}
+.flow h2{font-size:clamp(28px,4vw,42px);line-height:1.1;letter-spacing:-.5px;margin:0}
+main > section.flow, .flow { /* beats the alternating band rule on main > section */
+  --fx-bg: #120F24; --fx-bg-2: #1D1836; --fx-ink: #F4F3F8; --fx-muted: #B8B5C9; --fx-faint: rgba(244, 243, 248, .5);
+  --fx-line: rgba(244, 243, 248, .09); --fx-card: rgba(255, 255, 255, .035); --fx-card-hi: rgba(255, 255, 255, .07);
+  --fx-you: #E8E6F2; --fx-ai: #FF7A3D; --fx-agent: #4ADE9A;
+  --lane-h: 62px; --node: 50px; --lanes-w: 118px;
+  position: relative; overflow: hidden; color: var(--fx-ink);
+  background:
+    radial-gradient(900px 380px at 12% 0%, rgba(252, 76, 2, .16), transparent 60%),
+    radial-gradient(700px 360px at 100% 100%, rgba(74, 222, 154, .09), transparent 60%),
+    linear-gradient(180deg, var(--fx-bg-2), var(--fx-bg));
+}
+.flow::before { /* blueprint grid */
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .55;
+  background-image: linear-gradient(var(--fx-line) 1px, transparent 1px), linear-gradient(90deg, var(--fx-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 78%);
+}
+.flow .wrap { position: relative; }
+.flow-head { max-width: 720px; }
+.flow .eyebrow { color: var(--fx-ai); }
+.flow h2 { color: var(--fx-ink); margin-bottom: 8px; }
+.flow-sub { color: var(--fx-muted); margin: 0; max-width: 62ch; }
+
+.flow-scroll { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; margin: 20px calc(-1 * var(--gutter)) 0; padding: 8px var(--gutter) 14px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, .25) transparent; }
+.flow-track { position: relative; min-width: 1060px; padding-left: var(--lanes-w); }
+
+.flow-lanes { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--lane-h) * 3); display: grid; grid-template-rows: repeat(3, 1fr); }
+.flow-lane { position: relative; display: flex; align-items: center; border-top: 1px dashed var(--fx-line); }
+.flow-lane:last-child { border-bottom: 1px dashed var(--fx-line); }
+.flow-lane span { font: 800 .72rem/1.2 var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--fx-faint); width: calc(var(--lanes-w) - 14px); }
+.flow-lane[data-actor="ai"] span { color: rgba(255, 122, 61, .8); }
+.flow-lane[data-actor="agent"] span { color: rgba(74, 222, 154, .8); }
+
+.flow-circuit { position: absolute; left: 0; top: 0; width: 100%; height: calc(var(--lane-h) * 3); overflow: visible; pointer-events: none; z-index: 1; }
+.flow-circuit .c-base { fill: none; stroke: rgba(244, 243, 248, .16); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; }
+.flow-circuit .c-progress { fill: none; stroke-width: 3; stroke-linecap: round; }
+.flow-circuit .c-tail { fill: none; stroke-width: 5; stroke-linecap: round; opacity: .9; filter: blur(1.5px); }
+.flow-circuit .c-comet { fill: #fff; filter: drop-shadow(0 0 6px #FF7A3D) drop-shadow(0 0 14px rgba(252, 76, 2, .8)); }
+
+.flow-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; position: relative; z-index: 2; }
+.flow-step { position: relative; margin: 0; padding-top: calc(var(--lane-h) * 3 + 18px); scroll-snap-align: center; min-width: 0; }
+.flow-step[data-actor="you"] { --lane: 0; --tone: var(--fx-you); --tone-rgb: 232, 230, 242; }
+.flow-step[data-actor="ai"] { --lane: 1; --tone: var(--fx-ai); --tone-rgb: 255, 122, 61; }
+.flow-step[data-actor="agent"] { --lane: 2; --tone: var(--fx-agent); --tone-rgb: 74, 222, 154; }
+
+.flow-node {
+  position: absolute; left: 50%; top: calc(var(--lane) * var(--lane-h) + (var(--lane-h) - var(--node)) / 2); transform: translateX(-50%);
+  width: var(--node); height: var(--node); border-radius: 16px; display: grid; place-items: center;
+  color: var(--tone); background: #1A1531; border: 1px solid rgba(var(--tone-rgb), 0.45);
+  box-shadow: 0 0 0 4px rgba(18, 15, 36, .9), 0 8px 24px rgba(0, 0, 0, .35);
+  transition: background-color .4s, color .4s, box-shadow .4s, transform .4s, opacity .4s;
+}
+.flow-node svg { width: 24px; height: 24px; }
+.flow-num { position: absolute; top: -8px; right: -8px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: var(--fx-ink); color: #120F24; font: 900 .7rem/20px var(--font-body); text-align: center; }
+
+.flow-card {
+  display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 14px 14px 12px; border-radius: 16px;
+  background: var(--fx-card); border: 1px solid var(--fx-line); position: relative;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  transition: background-color .4s, border-color .4s, box-shadow .4s, opacity .4s, transform .4s;
+}
+.flow-card::before { /* the lane tick that ties a card to its node */
+  content: ""; position: absolute; left: 14px; right: 14px; top: -1px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--tone), transparent); opacity: .55;
+}
+.flow-actor { align-self: flex-start; font: 800 .68rem/1.2 var(--font-body); letter-spacing: .07em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; color: var(--tone); background: rgba(var(--tone-rgb), 0.13); }
+.flow-t { font-weight: 800; font-size: .98rem; line-height: 1.25; color: var(--fx-ink); }
+.flow-p { font-size: .86rem; color: var(--fx-muted); line-height: 1.4; }
+.flow-live { width: 100%; height: 34px; margin-top: auto; padding-top: 6px; overflow: visible; }
+
+/* Micro-demos: a finished still at rest; they play only on the active step. */
+.flow-live * { vector-effect: non-scaling-stroke; }
+.lv-track { fill: rgba(255, 255, 255, .06); }
+.lv-fill { fill: var(--tone); opacity: .8; transform-box: fill-box; transform-origin: left center; }
+.lv-caret { fill: var(--tone); opacity: 0; }
+.lv-arc-bg { fill: none; stroke: rgba(255, 255, 255, .1); stroke-width: 5; stroke-linecap: round; }
+.lv-arc { fill: none; stroke: var(--tone); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 30; }
+.lv-needle { stroke: var(--fx-ink); stroke-width: 2; stroke-linecap: round; transform-origin: 60px 31px; }
+.lv-hub { fill: var(--fx-ink); }
+.lv-ring { fill: none; stroke: rgba(var(--tone-rgb), 0.35); stroke-width: 1; }
+.lv-sweep { fill: rgba(var(--tone-rgb), 0.35); transform-origin: 60px 17px; }
+.lv-blip { fill: var(--tone); }
+.lv-doc { fill: rgba(255, 255, 255, .06); stroke: rgba(255, 255, 255, .18); stroke-width: 1; }
+.lv-lines { stroke: rgba(255, 255, 255, .28); stroke-width: 2; stroke-linecap: round; }
+.lv-seal { fill: rgba(var(--tone-rgb), 0.18); stroke: var(--tone); stroke-width: 1.5; }
+.lv-check { fill: none; stroke: var(--tone); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 0; }
+.lv-base { stroke: rgba(255, 255, 255, .2); stroke-width: 1; }
+.lv-bar { fill: var(--tone); transform-box: fill-box; transform-origin: center bottom; }
+.lv-bar.r1 { opacity: .55; } .lv-bar.r2 { opacity: .75; }
+.lv-bubble { fill: rgba(var(--tone-rgb), 0.14); stroke: var(--tone); stroke-width: 1.4; }
+.lv-dot { fill: var(--tone); }
+.lv-house { fill: rgba(var(--tone-rgb), 0.12); stroke: var(--tone); stroke-width: 1.6; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 0; }
+.lv-door { fill: var(--tone); opacity: .8; }
+.lv-spark { fill: var(--fx-ink); opacity: .7; }
+
+/* Animated state (only once flow.js runs): the pending steps dim, the signal lights the active one. */
+.flow.is-animated .flow-step .flow-node { opacity: .5; }
+.flow.is-animated .flow-step .flow-card { opacity: .55; }
+.flow.is-animated .flow-step.is-done .flow-node, .flow.is-animated .flow-step.is-active .flow-node,
+.flow.is-animated .flow-step.is-done .flow-card, .flow.is-animated .flow-step.is-active .flow-card { opacity: 1; }
+.flow-step.is-done .flow-node { background: #1A1531; background-image: linear-gradient(rgba(var(--tone-rgb), .16), rgba(var(--tone-rgb), .16)); }
+.flow-step.is-active .flow-node { background: var(--tone); color: #120F24; transform: translateX(-50%) scale(1.12); box-shadow: 0 0 0 4px rgba(18, 15, 36, .9), 0 0 0 9px rgba(var(--tone-rgb), 0.22), 0 0 34px rgba(var(--tone-rgb), 0.55); }
+.flow-step.is-active .flow-card { background: var(--fx-card-hi); border-color: rgba(var(--tone-rgb), 0.45); box-shadow: 0 18px 40px rgba(0, 0, 0, .35), inset 0 0 0 1px rgba(var(--tone-rgb), 0.12); transform: translateY(-4px); }
+.flow-step.is-active .flow-card::before { opacity: 1; }
+
+.flow-step.is-active .lv-fill { animation: lvGrow .9s cubic-bezier(.3, .7, .2, 1) both; }
+.flow-step.is-active .lv-fill.f2 { animation-delay: .25s; } .flow-step.is-active .lv-fill.f3 { animation-delay: .5s; }
+.flow-step.is-active .lv-caret { animation: lvBlink .8s steps(1) .9s infinite; }
+.flow-step.is-active .lv-arc { animation: lvArc 1.2s cubic-bezier(.3, .7, .2, 1) both; }
+.flow-step.is-active .lv-needle { animation: lvNeedle 1.2s cubic-bezier(.3, .7, .2, 1) both; }
+.flow-step.is-active .lv-sweep { animation: lvSpin 1.6s linear infinite; }
+.flow-step.is-active .lv-blip { animation: lvBlip 1.6s ease-out infinite; }
+.flow-step.is-active .lv-blip.b2 { animation-delay: .55s; } .flow-step.is-active .lv-blip.b3 { animation-delay: 1.05s; }
+.flow-step.is-active .lv-seal { animation: lvPop .5s .35s cubic-bezier(.3, 1.6, .5, 1) both; }
+.flow-step.is-active .lv-check { animation: lvDraw .5s .7s ease-out both; }
+.flow-step.is-active .lv-bar { animation: lvRise .7s cubic-bezier(.3, .7, .2, 1) both; }
+.flow-step.is-active .lv-bar.r2 { animation-delay: .18s; } .flow-step.is-active .lv-bar.r3 { animation-delay: .36s; }
+.flow-step.is-active .lv-dot { animation: lvBounce 1s ease-in-out infinite; }
+.flow-step.is-active .lv-dot.d2 { animation-delay: .15s; } .flow-step.is-active .lv-dot.d3 { animation-delay: .3s; }
+.flow-step.is-active .lv-house { animation: lvDrawHouse 1s ease-out both; }
+.flow-step.is-active .lv-door { animation: lvGlow 1.4s .8s ease-in-out infinite alternate; }
+.flow-step.is-active .lv-spark { animation: lvTwinkle 1.2s ease-in-out infinite; }
+.flow-step.is-active .lv-spark.s2 { animation-delay: .4s; } .flow-step.is-active .lv-spark.s3 { animation-delay: .8s; }
+
+@keyframes lvGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes lvBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes lvArc { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 30; } }
+@keyframes lvNeedle { from { transform: rotate(-95deg); } to { transform: rotate(0deg); } }
+@keyframes lvSpin { to { transform: rotate(360deg); } }
+@keyframes lvBlip { 0% { opacity: 0; r: 1; } 30% { opacity: 1; r: 2.6; } 100% { opacity: 0; r: 2; } }
+@keyframes lvPop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes lvDraw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes lvRise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes lvBounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+@keyframes lvDrawHouse { from { stroke-dashoffset: 100; fill-opacity: 0; } 70% { fill-opacity: 0; } to { stroke-dashoffset: 0; fill-opacity: 1; } }
+@keyframes lvGlow { from { opacity: .45; } to { opacity: 1; } }
+@keyframes lvTwinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
+.lv-seal, .lv-check { transform-box: fill-box; transform-origin: center; }
+
+@media (min-width: 1140px) { .flow-scroll { overflow: visible; margin: 20px 0 0; padding: 8px 0 0; } .flow-track { min-width: 0; } }
+@media (max-width: 480px) { .flow { --lanes-w: 92px; } .flow-track { min-width: 1180px; } }
+@media (prefers-reduced-motion: reduce) {
+  .flow-node, .flow-card { transition: none; }
+  .flow-step.is-active .flow-live * { animation: none !important; }
+}

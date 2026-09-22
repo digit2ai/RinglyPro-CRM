@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Sign in — LevelUp</title><meta name="robots" content="noindex">
-<link rel="icon" href="{{BASE}}/icon.svg"><meta name="theme-color" content="#26213F">
+<link rel="icon" href="{{BASE}}/icon.svg"><meta name="theme-color" content="#FFFFFF">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
 <style>
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -19,6 +20,7 @@ small{color:var(--mut)}
 </head>
 <body>
 <form class="box" id="f" novalidate>
+  <div style="display:flex;justify-content:flex-end"><button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>
   <p class="logo">LevelUp</p>
   <div class="tabs"><button class="btn small on" type="button" id="tIn">Sign in</button><button class="btn small" type="button" id="tUp">Create account</button></div>
   <div id="nameRow" hidden><label for="name">Your name</label><input id="name" autocomplete="name"></div>
@@ -29,6 +31,7 @@ small{color:var(--mut)}
   <div class="err" id="err" role="alert"></div>
   <p style="text-align:center"><a href="{{BASE}}/">Back to home</a></p>
 </form>
+<script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script>
 <script>
 (function(){
   var B='{{BASE}}', mode=new URLSearchParams(location.search).get('mode')==='signup'?'up':'in';
