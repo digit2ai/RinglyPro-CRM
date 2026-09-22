@@ -360,6 +360,14 @@ function jpegSize(file) {
     // The declared ratio must match the ARTWORK, not a literal: a hero swap that
     // letterboxes the band is exactly what this is here to catch.
     const heroDim = jpegSize(path.join(__dirname, "public", "hero.jpg"));
+    // Spanish has its own artwork, because the headline is inside the image.
+    // Both must share the ratio or the band letterboxes in one language only.
+    const heroEs = jpegSize(path.join(__dirname, "public", "hero-es.jpg"));
+    ok(!!heroEs, "the Spanish hero artwork ships");
+    ok(heroEs && heroDim && heroEs.w === heroDim.w && heroEs.h === heroDim.h,
+      "both heroes are the same size, so the band never letterboxes in one language");
+    ok(/html\[lang="es"\] \.hero-band\{background-image:url\("[^"]*hero-es\.jpg/.test(r.txt),
+      "the Spanish page paints the Spanish artwork, selected by <html lang>");
     const declared = (r.txt.match(/aspect-ratio:(\d+)\/(\d+)/) || []);
     ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /center\/contain no-repeat/.test(r.txt),
       "the WHOLE hero artwork is shown, never cropped, behind one wash");

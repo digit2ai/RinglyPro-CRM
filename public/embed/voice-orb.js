@@ -512,7 +512,7 @@
       T = STRINGS[cfg.lang] || T;
       $('name').textContent = cfg.name;
       $('role').textContent = cfg.role;
-      if (!d.label) $('launchTxt').textContent = T.idle;
+      $('launchTxt').textContent = d.label || T.idle;
       input.placeholder = T.typed; sendBtn.textContent = T.send; endBtn.textContent = T.hangup;
       setState('idle');
     }
@@ -540,6 +540,11 @@
       setLang: function (l) {
         l = (l || '').slice(0, 2).toLowerCase(); if (l !== 'es') l = 'en';
         endCall();
+        // Relabel at once. The persona fetch below may be slow or fail, and a
+        // button left in the previous language reads as a broken page.
+        cfg.lang = l; T = STRINGS[l] || T;
+        $('launchTxt').textContent = d.label || T.idle;
+        input.placeholder = T.typed; sendBtn.textContent = T.send; endBtn.textContent = T.hangup;
         fetch(API + '/api/voice-agent/config?agent=' + encodeURIComponent(AGENT) + '&lang=' + l)
           .then(function (r) { return r.json(); }).then(applyCfg).catch(function () {});
       }

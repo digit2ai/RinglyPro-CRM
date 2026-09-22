@@ -211,6 +211,38 @@ function ok(c, name) { if (c) pass++; else { fail++; fails.push(name); console.l
       await pg.close();
     }
 
+
+    // The hero artwork follows the language toggle, and only a CSS rule decides
+    // it — grep cannot tell whether that rule actually WON.
+    {
+      const pg = await browser.newPage();
+      await pg.setViewport({ width: 1280, height: 900 });
+      await pg.goto(url, { waitUntil: 'networkidle0' });
+      const bg = () => pg.evaluate(() => getComputedStyle(document.querySelector('.hero-band')).backgroundImage);
+      await pg.evaluate(() => document.querySelector('.lang-toggle button[data-lang="en"]').click());
+      const en = await bg();
+      await pg.evaluate(() => document.querySelector('.lang-toggle button[data-lang="es"]').click());
+      const es = await bg();
+      const label = await pg.evaluate(() => document.querySelector('.hero-band').getAttribute('aria-label'));
+      await pg.evaluate(() => document.querySelector('.lang-toggle button[data-lang="en"]').click());
+      const back = await bg();
+      ok(/hero\.jpg/.test(en) && !/hero-es/.test(en), 'English shows the English artwork');
+      ok(/hero-es\.jpg/.test(es), 'Spanish shows the Spanish artwork');
+      ok(/hero\.jpg/.test(back) && !/hero-es/.test(back), 'switching back returns the English artwork');
+      ok(/creadora|equipo de IA/.test(label || ''), 'its screen-reader label follows the language too');
+      const shots = await pg.evaluate(async () => {
+        const r = await Promise.all(['hero.jpg', 'hero-es.jpg'].map(f => fetch(f).then(x => x.status)));
+        return r;
+      });
+      ok(shots.every(x => x === 200), 'both hero files are served');
+      // The orb's own button must change with the page, not stay in English.
+      await pg.evaluate(() => document.querySelector('.lang-toggle button[data-lang="es"]').click());
+      await new Promise(r => setTimeout(r, 900));
+      const orbLabel = await pg.evaluate(() => { const e = document.querySelector('.d2orb-txt'); return e ? e.textContent : ''; });
+      ok(/Habla con Andrea/.test(orbLabel), 'the voice button is relabelled in Spanish too (was: ' + orbLabel + ')');
+      await pg.close();
+    }
+
     await page.close();
   } finally {
     await browser.close();

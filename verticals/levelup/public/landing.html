@@ -30,6 +30,7 @@ nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
    background-size contain). The headline used to sit on top of it and collided
    with the artwork's own wordmark, so the copy lives underneath now. */
 .hero-band{position:relative;width:100%;aspect-ratio:1637/961;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912}
+html[lang="es"] .hero-band{background-image:url("{{BASE}}/hero-es.jpg?v={{VERSION}}")}
 .hero-band::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.12);pointer-events:none}
 :root[data-theme="dark"] .hero-band::after{background:rgba(11,9,18,.18)}
 .hero{max-width:1320px;margin:0 auto;padding:44px 24px 36px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
@@ -283,6 +284,8 @@ footer{padding-bottom:104px}
   try { lang = localStorage.getItem('lu_lang') || ((navigator.language || '').slice(0,2) === 'es' ? 'es' : 'en'); } catch(e) {}
   function apply(){
     document.documentElement.lang = lang;
+    var band = document.querySelector(".hero-band");
+    if (band) band.setAttribute("aria-label", lang === "es" ? "El equipo de IA de LevelUp alrededor del escritorio de una creadora" : "The LevelUp AI content team around a creator's desk");
     document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent = el.getAttribute('data-' + lang); });
     document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
     var orb = document.querySelector('[data-voice-orb]');
