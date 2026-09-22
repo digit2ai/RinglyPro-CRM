@@ -70,10 +70,14 @@ const ctxFor = (req) => ({ tenantId: req.user.tenant_id || req.user.id, actorId:
 router.get('/', (req, res) => page(req, res, 'landing.html'));
 router.get('/login', (req, res) => (req.user ? res.redirect((req.baseUrl || '') + '/app') : page(req, res, 'login.html')));
 router.get('/signup', (req, res) => res.redirect((req.baseUrl || '') + '/login?mode=signup'));
-router.get('/requirements', (req, res) => {
-  const md = fs.readFileSync(path.join(__dirname, '..', 'REQUIREMENTS.md'), 'utf8');
-  page(req, res, 'doc.html', { BODY: renderMarkdown(md), TITLE: 'Unified Requirements' });
-});
+// Public "who we are / what we do" page. REQUIREMENTS.md is the internal
+// build spec and is deliberately NOT served.
+function aboutPage(req, res) {
+  const md = fs.readFileSync(path.join(__dirname, '..', 'ABOUT.md'), 'utf8');
+  page(req, res, 'doc.html', { BODY: renderMarkdown(md), TITLE: 'Who we are' });
+}
+router.get('/about', aboutPage);
+router.get('/requirements', aboutPage);
 router.get('/app', needUser, (req, res) => page(req, res, 'app.html'));
 
 router.get('/health', async (req, res) => {

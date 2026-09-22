@@ -69,7 +69,10 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
   ['business.update_deal', 'picks.publish', 'strategist.save_business', 'editor.confirm_rule'].forEach((t) => ok(brain.TOOLS.get(t) && brain.TOOLS.get(t).human_only, t + ' is human_only'));
   ok(C.AGENTS.length === 11 && C.EDIT_RULES.length === 9 && C.REVIEW_ISSUES.length === 5, 'corpus: 11 agents, 9 editing rules, 5 review issues');
   const req = read('REQUIREMENTS.md');
-  ok(/Rule 1/.test(req) && /Rule 2/.test(req) && /Open questions/.test(req) && /Creator Agent Workforce/.test(req) && /Project Brief/.test(req), 'requirements doc merges both sources');
+  ok(/Rule 1/.test(req) && /Rule 2/.test(req) && /Open questions/.test(req), 'internal requirements doc intact');
+  const about = read('ABOUT.md');
+  ok(/Who we are/.test(about) && /What we do/.test(about), 'public page says who we are and what we do');
+  ok(!/grokbot|artillery|andrea|transcript|recorded|training call|project brief|source document|mauro|vanessa/i.test(about), 'public page names no source');
 
   // ── 3. HTTP + DB ──────────────────────────────────────────────────────────
   try { await db.ensureSchema(); } catch (e) {
@@ -255,7 +258,8 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     ok(audit.some((c) => c.outcome === 'denied') && audit.some((c) => c.outcome === 'ok'), 'audit holds denials and successes');
 
     // pages
-    r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Unified Requirements/.test(r.txt), 'requirements page renders');
+    r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|Andrea/.test(r.txt), '/requirements now shows who we are, no sources');
+    r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}/.test(r.txt), 'landing substitutes BASE');
     r = await call(null, 'GET', '/manifest.webmanifest'); ok(r.j && r.j.scope === '/levelupmediamarketing/' && r.j.start_url.startsWith('/levelupmediamarketing/'), 'manifest scope follows the mount');
     r = await call(null, 'GET', '/admin'); ok(r.status === 404 && /LevelUp/.test(r.txt), 'unowned path gets the branded 404');
