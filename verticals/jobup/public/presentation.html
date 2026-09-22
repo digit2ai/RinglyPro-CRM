@@ -272,7 +272,9 @@
 
 <script>
   var TTS_URL='/api/tts/edge';
-  var LANG='en';
+  // Default English, but ?lang=es opens the whole deck in Spanish (Dalia voice)
+  // so a link can be shared that starts in Spanish without a click.
+  var LANG=(function(){ try{ return new URLSearchParams(location.search).get('lang')==='es'?'es':'en'; }catch(e){ return 'en'; } })();
   // Stamped by the server. HERO_QR is which hero this brand actually ships —
   // the deck DEPICTS the hero, and drawing an orb over a site showing a QR
   // depicts a different product. BASE is the mount root, because the deck is
