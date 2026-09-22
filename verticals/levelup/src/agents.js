@@ -627,7 +627,7 @@ brain.define('picks', 'publish', {
 // ─── Trainer ────────────────────────────────────────────────────────────────
 brain.define('trainer', 'list', {
   description: 'Everything the agents have been taught: platform knowledge plus this creator\'s documents and rules.',
-  handler: async ({ include_inactive }, ctx) => ({ entries: await kb.list(ctx.tenantId, { includeInactive: !!include_inactive }), agents: C.AGENTS.map((a) => ({ id: a.id, name: a.name })) })
+  handler: async ({ include_inactive }, ctx) => ({ entries: await kb.list(ctx.tenantId, { includeInactive: !!include_inactive }), agents: C.AGENTS.map((a) => ({ id: a.id, name: a.name, person: a.person })) })
 });
 brain.define('trainer', 'add', {
   description: 'Teach the agents: add a knowledge document or a rule, for all agents or one. Same title = a new version.',

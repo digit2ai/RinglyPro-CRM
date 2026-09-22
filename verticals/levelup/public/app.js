@@ -341,7 +341,7 @@
   function viewTrain() {
     tool('trainer.list', { include_inactive: true }).then(function (r) {
       var agents = r.agents.filter(function (a) { return a.id !== 'trainer'; });
-      var opts = '<option value="all">' + L('All agents', 'Todos los agentes') + '</option>' + agents.map(function (a) { return '<option value="' + a.id + '">' + esc(a.name) + '</option>'; }).join('');
+      var opts = '<option value="all">' + L('All agents', 'Todos los agentes') + '</option>' + agents.map(function (a) { return '<option value="' + a.id + '">' + esc(a.person ? a.person + ' · ' + a.name : a.name) + '</option>'; }).join('');
       var active = r.entries.filter(function (e) { return e.active; }), old = r.entries.filter(function (e) { return !e.active; });
       function entry(e) {
         var mine = e.tenant_id !== 0;
@@ -355,7 +355,7 @@
         '<label><input type="file" id="kFile" accept=".md,.txt,text/plain,text/markdown" style="width:auto"> ' + L('or load a .md / .txt file', 'o carga un archivo .md / .txt') + '</label>' +
         (ME && ME.platform_admin ? '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="kPlat" style="width:auto"> ' + L('Platform knowledge (every creator on LevelUp)', 'Conocimiento de plataforma (toda creadora en LevelUp)') + '</label>' : '') +
         '<div class="acts"><button class="btn primary" id="kGo">' + L('Teach', 'Enseñar') + '</button></div></div>' +
-        '<div class="panel"><h2>' + L('Test the training', 'Prueba el entrenamiento') + '</h2><label>' + L('Agent', 'Agente') + '</label><select id="tAgent">' + agents.map(function (a) { return '<option value="' + a.id + '">' + esc(a.name) + '</option>'; }).join('') + '</select><label>' + L('Question', 'Pregunta') + '</label><textarea id="tQ" style="min-height:70px"></textarea><div class="acts"><button class="btn" id="tGo">' + L('Compare with and without training', 'Comparar con y sin entrenamiento') + '</button></div><div id="tOut"></div></div></div>' +
+        '<div class="panel"><h2>' + L('Test the training', 'Prueba el entrenamiento') + '</h2><label>' + L('Agent', 'Agente') + '</label><select id="tAgent">' + agents.map(function (a) { return '<option value="' + a.id + '">' + esc(a.person ? a.person + ' · ' + a.name : a.name) + '</option>'; }).join('') + '</select><label>' + L('Question', 'Pregunta') + '</label><textarea id="tQ" style="min-height:70px"></textarea><div class="acts"><button class="btn" id="tGo">' + L('Compare with and without training', 'Comparar con y sin entrenamiento') + '</button></div><div id="tOut"></div></div></div>' +
         '<div class="panel"><h2>' + L('What the agents know', 'Lo que saben los agentes') + ' <span class="pill">' + active.length + '</span></h2>' + (active.map(entry).join('') || '<p class="muted">' + L('Nothing yet.', 'Nada aún.') + '</p>') + '</div>' +
         (old.length ? '<div class="panel"><h2>' + L('History', 'Historial') + '</h2>' + old.map(entry).join('') + '</div>' : '');
       $('kFile').onchange = function () { var f = this.files[0]; if (!f) return; if (f.size > 500000) { toast(L('File too large', 'Archivo muy grande')); return; } f.text().then(function (txt) { $('kBody').value = txt; if (!val('kTitle')) $('kTitle').value = f.name.replace(/\.(md|txt)$/i, ''); $('kKind').value = 'doc'; }); };

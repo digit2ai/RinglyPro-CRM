@@ -11,6 +11,12 @@
 <meta name="theme-color" content="#FFFFFF">
 <link rel="icon" href="{{BASE}}/icon.svg">
 <link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<!-- iOS ignores the manifest icons and an SVG apple-touch-icon: without these a
+     home-screen tile is a blank page shot and the name is the page title. -->
+<link rel="apple-touch-icon" sizes="180x180" href="{{BASE}}/icon-180.png?v={{VERSION}}">
+<meta name="apple-mobile-web-app-title" content="LevelUp">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
@@ -39,7 +45,8 @@ section{max-width:1320px;margin:0 auto;padding:44px 24px}
 section h2{font-size:30px;margin:0 0 8px}section .sub{color:var(--mut);margin:0 0 22px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
-.card b{display:block;margin-bottom:4px}.card small{color:var(--mut)}
+.card b{display:block;margin-bottom:2px}
+.card .who{display:block;font-style:normal;font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--pink-d);margin-bottom:6px}.card small{color:var(--mut)}
 .c1{background:var(--blush)}.c2{background:var(--blue)}.c3{background:var(--mint)}.c4{background:var(--peach)}
 .rules{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .honest li{margin-bottom:6px}
@@ -66,11 +73,12 @@ header{position:relative}
    of the last line of the footer. */
 footer{padding-bottom:104px}
 /* Install bar (PWA). Hidden inside the installed app. */
-#install{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:70;display:none;align-items:center;gap:10px;
+#install{position:fixed;left:12px;right:12px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:2147483100;display:none;align-items:center;gap:10px;flex-wrap:wrap;
   background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 14px 40px rgba(38,33,63,.18);font-size:14px}
 #install.show{display:flex}#install p{margin:0;flex:1}#install .btn{white-space:nowrap}
 @media(display-mode:standalone){#install{display:none!important}}
 @media(min-width:560px){#install{left:auto;max-width:420px}}
+#install p{min-width:140px}
 </style>
 </head>
 <body>
@@ -194,16 +202,16 @@ footer{padding-bottom:104px}
 
 <section id="agents">
   <h2 data-en="Your AI team" data-es="Tu equipo de IA">Your AI team</h2>
-  <p class="sub" data-en="One manager, Andrea, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Una gerente, Andrea, es tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">One manager, Andrea, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
+  <p class="sub" data-en="Andrea is the boss and your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Andrea es la jefa y tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">Andrea is the boss and your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
   <div class="grid">
-    <div class="card c1"><b>Andrea</b><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
-    <div class="card c2"><b data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</b><small data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus palabras.">Niche, content pillars and offer, from your own words.</small></div>
-    <div class="card c3"><b data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</b><small data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</small></div>
-    <div class="card c4"><b data-en="Calendar" data-es="Calendario">Calendar</b><small data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</small></div>
-    <div class="card c1"><b data-en="Video Editor" data-es="Editor de video">Video Editor</b><small data-en="Nine editing rules plus yours. Descript connection in progress." data-es="Nueve reglas de edición más las tuyas. Conexión con Descript en progreso.">Nine editing rules plus yours. Descript connection in progress.</small></div>
-    <div class="card c2"><b data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</b><small data-en="Flags fake brand offers, drafts replies at your rates." data-es="Marca ofertas falsas y redacta respuestas con tus tarifas.">Flags fake brand offers, drafts replies at your rates.</small></div>
-    <div class="card c3"><b>Top Picks</b><small data-en="Shoppable lists with your own public page." data-es="Listas comprables con tu propia página pública.">Shoppable lists with your own public page.</small></div>
-    <div class="card c4"><b data-en="Trainer" data-es="Entrenadora">Trainer</b><small data-en="Teach every agent your rules, rates and style." data-es="Enséñale a cada agente tus reglas, tarifas y estilo.">Teach every agent your rules, rates and style.</small></div>
+    <div class="card c1"><b>Andrea</b><i class="who" data-en="The Boss" data-es="La Jefa">The Boss</i><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
+    <div class="card c2"><b>Marisol</b><i class="who" data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</i><small data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus palabras.">Niche, content pillars and offer, from your own words.</small></div>
+    <div class="card c3"><b>Mateo &amp; Valeria</b><i class="who" data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</i><small data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</small></div>
+    <div class="card c4"><b>Diego</b><i class="who" data-en="Calendar" data-es="Calendario">Calendar</i><small data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</small></div>
+    <div class="card c1"><b>Bruno</b><i class="who" data-en="Video Editor" data-es="Editor de video">Video Editor</i><small data-en="Nine editing rules plus yours. Descript connection in progress." data-es="Nueve reglas de edición más las tuyas. Conexión con Descript en progreso.">Nine editing rules plus yours. Descript connection in progress.</small></div>
+    <div class="card c2"><b>Javier</b><i class="who" data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</i><small data-en="Flags fake brand offers, drafts replies at your rates." data-es="Marca ofertas falsas y redacta respuestas con tus tarifas.">Flags fake brand offers, drafts replies at your rates.</small></div>
+    <div class="card c3"><b>Nico</b><i class="who" data-en="Top Picks" data-es="Top Picks">Top Picks</i><small data-en="Shoppable lists with your own public page." data-es="Listas comprables con tu propia página pública.">Shoppable lists with your own public page.</small></div>
+    <div class="card c4"><b>Elena</b><i class="who" data-en="Trainer" data-es="Entrenadora">Trainer</i><small data-en="Teach every agent your rules, rates and style." data-es="Enséñale a cada agente tus reglas, tarifas y estilo.">Teach every agent your rules, rates and style.</small></div>
   </div>
 </section>
 
@@ -280,9 +288,13 @@ footer{padding-bottom:104px}
   document.getElementById("installGo").addEventListener("click", function(){
     if (deferred) { deferred.prompt(); deferred = null; bar.classList.remove("show"); return; }
     // iPhone Safari fires no beforeinstallprompt, so it gets the wording instead.
+    // iPhone Safari has NO install API: nothing in a page can put an icon on the
+    // home screen there, so it gets the exact taps instead of a button that lies.
     var t = document.getElementById("installTxt");
     t.removeAttribute("data-en"); t.removeAttribute("data-es");
-    t.textContent = lang === "es" ? "Toca Compartir y luego Agregar a inicio." : "Tap Share, then Add to Home Screen.";
+    t.innerHTML = lang === "es"
+      ? "Toca <b>Compartir</b> abajo, baja y elige <b>Agregar a pantalla de inicio</b>. Queda como LevelUp con su icono."
+      : "Tap <b>Share</b> below, scroll down and choose <b>Add to Home Screen</b>. It lands as LevelUp with its icon.";
     this.hidden = true;
   });
   document.getElementById("installNo").addEventListener("click", function(){

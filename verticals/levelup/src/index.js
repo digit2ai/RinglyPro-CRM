@@ -47,7 +47,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-12';
+const VERSION = 'lu-2026-09-22-13';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -238,14 +238,19 @@ router.get('/manifest.webmanifest', (req, res) => {
   res.type('application/manifest+json').json({
     id: b + '/app', name: 'LevelUp Media Marketing', short_name: 'LevelUp', start_url: b + '/?source=pwa', scope: b + '/',
     display: 'standalone', background_color: '#FFFFFF', theme_color: '#FFFFFF', orientation: 'any',
-    icons: [{ src: b + '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
+    icons: [
+      { src: b + '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: b + '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: b + '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: b + '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
+    ],
     shortcuts: [{ name: 'Today', url: b + '/app#today' }, { name: 'Calendar', url: b + '/app#calendar' }, { name: 'Train the agents', url: b + '/app#train' }]
   });
 });
 router.get('/sw.js', (req, res) => {
   const b = req.baseUrl || '';
   res.type('application/javascript').set('Cache-Control', 'no-cache').send(`const C='${VERSION}',B='${b}';
-const SHELL=[B+'/',B+'/app',B+'/icon.svg',B+'/app.css',B+'/app.js',B+'/base.css',B+'/flow.css',B+'/flow.js',B+'/theme.js'];
+const SHELL=[B+'/',B+'/icon-180.png',B+'/icon-192.png',B+'/app',B+'/icon.svg',B+'/app.css',B+'/app.js',B+'/base.css',B+'/flow.css',B+'/flow.js',B+'/theme.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>Promise.all(SHELL.map(u=>c.add(u).catch(()=>{})))));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||!u.pathname.startsWith(B+'/')||u.pathname.includes('/api/')||u.pathname.endsWith('/mcp'))return;

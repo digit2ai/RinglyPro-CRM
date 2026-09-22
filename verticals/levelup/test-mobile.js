@@ -71,6 +71,23 @@ function ok(c, name) { if (c) pass++; else { fail++; fails.push(name); console.l
       });
       ok(small.length === 0, w + ': no control under 44px' + (small.length ? ' — ' + small.join(', ') : ''));
 
+      // The install bar must clear the voice orb AND actually receive the tap:
+      // it shipped overlapping the orb, so Install could not be pressed at all.
+      await page.evaluate(() => { document.getElementById('nav').classList.remove('open'); document.getElementById('install').classList.add('show'); });
+      const hit = await page.evaluate(() => {
+        const bar = document.getElementById('install').getBoundingClientRect();
+        const orbEl = document.querySelector('.d2orb-root');
+        const orb = orbEl ? orbEl.getBoundingClientRect() : null;
+        const overlap = orb ? !(bar.bottom <= orb.top || bar.top >= orb.bottom || bar.right <= orb.left || bar.left >= orb.right) : false;
+        const go = document.getElementById('installGo').getBoundingClientRect();
+        const top = document.elementFromPoint(go.left + go.width / 2, go.top + go.height / 2);
+        return { overlap, onScreen: bar.top >= 0 && bar.bottom <= innerHeight + 1, tappable: !!top && top.closest('#installGo') !== null };
+      });
+      ok(hit.overlap === false, w + ': the install bar does not overlap the voice orb');
+      ok(hit.onScreen, w + ': the install bar is fully on screen');
+      ok(hit.tappable, w + ': the Install button receives the tap (nothing sits on top of it)');
+      await page.evaluate(() => document.getElementById('install').classList.remove('show'));
+
       await page.keyboard.press('Escape');
       ok(await page.evaluate(() => document.getElementById('nav').classList.contains('open')) === false, w + ': Escape closes it');
 
@@ -108,6 +125,28 @@ function ok(c, name) { if (c) pass++; else { fail++; fails.push(name); console.l
       return !(a.bottom > b.top && a.left < b.right && a.right > b.left && a.top < b.bottom);
     });
     ok(clear !== false, 'the footer text is not covered by the orb');
+
+    // The home-screen tile: iOS reads none of the manifest icons.
+    const head = await page.evaluate(() => ({
+      apple: (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '',
+      title: (document.querySelector('meta[name="apple-mobile-web-app-title"]') || {}).content || ''
+    }));
+    ok(/icon-180\.png/.test(head.apple), 'iOS gets a PNG apple-touch-icon, not an SVG it cannot read');
+    ok(head.title === 'LevelUp', 'the home-screen name is LevelUp, not the page title');
+    const icons = await page.evaluate(async () => {
+      const m = await (await fetch('manifest.webmanifest')).json();
+      const png = m.icons.filter(i => i.type === 'image/png');
+      const heads = await Promise.all(png.map(i => fetch(i.src).then(r => r.status)));
+      return {
+        ok192: png.some(i => i.sizes === '192x192'), ok512: png.some(i => i.sizes === '512x512'),
+        mask: m.icons.some(i => (i.purpose || '').split(' ').includes('maskable')),
+        heads, short: m.short_name
+      };
+    });
+    ok(icons.ok192 && icons.ok512 && icons.mask, 'Android gets 192 and 512 PNGs plus a maskable one');
+    ok(icons.heads.length > 0 && icons.heads.every(s => s === 200), 'every icon the manifest names actually exists');
+    ok(icons.short === 'LevelUp', 'the installed app is named LevelUp');
+
     await page.close();
   } finally {
     await browser.close();

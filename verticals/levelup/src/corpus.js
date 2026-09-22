@@ -9,18 +9,20 @@
  * read this one file, so they cannot disagree.
  */
 
+// Every agent has a PERSON name the creator speaks to, and a role (`name`).
+// Andrea is the manager; her title is The Boss.
 const AGENTS = [
-  { id: 'lider', name: 'Andrea', team: 'management', job: { en: 'Your single point of contact. Routes your request to the right specialist and reports back.', es: 'Tu único punto de contacto. Envía cada pedido al especialista correcto y te reporta.' } },
-  { id: 'strategist', name: 'Creative Strategist', team: 'core', job: { en: 'Finds your niche, content pillars and offer from your own words.', es: 'Encuentra tu nicho, pilares de contenido y oferta a partir de tus palabras.' } },
-  { id: 'ideas', name: 'Ideas', team: 'core', job: { en: 'Ideas built around your pillars, or from your own thoughts.', es: 'Ideas alrededor de tus pilares o de tus propias notas.' } },
-  { id: 'scripts', name: 'Scripts', team: 'core', job: { en: 'Scripts from proven structures, written fresh in your voice.', es: 'Guiones con estructuras probadas, escritos desde cero con tu voz.' } },
-  { id: 'calendar', name: 'Calendar', team: 'core', job: { en: 'Your plan, statuses and batching suggestions.', es: 'Tu plan, estados y sugerencias para grabar en lote.' } },
-  { id: 'editor', name: 'Video Editor', team: 'core', job: { en: 'Base cleanup and style layer in Descript, by your editing rules.', es: 'Limpieza base y capa de estilo en Descript, con tus reglas de edición.' } },
-  { id: 'publisher', name: 'Publisher', team: 'core', job: { en: 'Prepares a platform-ready draft for each post. You publish.', es: 'Prepara un borrador listo para cada red. Tú publicas.' } },
-  { id: 'business', name: 'Business Assistant', team: 'addon', job: { en: 'Reads brand emails, flags fake leads, drafts rate replies you approve.', es: 'Lee correos de marcas, marca contactos falsos y redacta respuestas que tú apruebas.' } },
-  { id: 'research', name: 'Product Research', team: 'addon', job: { en: 'Breaks down the structure of top-selling videos.', es: 'Desarma la estructura de los videos que más venden.' } },
-  { id: 'picks', name: 'Top Picks', team: 'addon', job: { en: 'Shoppable lists of your favorite products with a public page.', es: 'Listas comprables de tus productos favoritos con una página pública.' } },
-  { id: 'trainer', name: 'Trainer', team: 'platform', job: { en: 'Holds the knowledge and rules every agent reads.', es: 'Guarda el conocimiento y las reglas que lee cada agente.' } }
+  { id: 'lider', person: 'Andrea', title: { en: 'The Boss', es: 'La Jefa' }, name: 'Andrea', team: 'management', job: { en: 'Your single point of contact. Routes your request to the right specialist and reports back.', es: 'Tu único punto de contacto. Envía cada pedido al especialista correcto y te reporta.' } },
+  { id: 'strategist', person: 'Marisol', name: 'Creative Strategist', team: 'core', job: { en: 'Finds your niche, content pillars and offer from your own words.', es: 'Encuentra tu nicho, pilares de contenido y oferta a partir de tus palabras.' } },
+  { id: 'ideas', person: 'Mateo', name: 'Ideas', team: 'core', job: { en: 'Ideas built around your pillars, or from your own thoughts.', es: 'Ideas alrededor de tus pilares o de tus propias notas.' } },
+  { id: 'scripts', person: 'Valeria', name: 'Scripts', team: 'core', job: { en: 'Scripts from proven structures, written fresh in your voice.', es: 'Guiones con estructuras probadas, escritos desde cero con tu voz.' } },
+  { id: 'calendar', person: 'Diego', name: 'Calendar', team: 'core', job: { en: 'Your plan, statuses and batching suggestions.', es: 'Tu plan, estados y sugerencias para grabar en lote.' } },
+  { id: 'editor', person: 'Bruno', name: 'Video Editor', team: 'core', job: { en: 'Base cleanup and style layer in Descript, by your editing rules.', es: 'Limpieza base y capa de estilo en Descript, con tus reglas de edición.' } },
+  { id: 'publisher', person: 'Camila', name: 'Publisher', team: 'core', job: { en: 'Prepares a platform-ready draft for each post. You publish.', es: 'Prepara un borrador listo para cada red. Tú publicas.' } },
+  { id: 'business', person: 'Javier', name: 'Business Assistant', team: 'addon', job: { en: 'Reads brand emails, flags fake leads, drafts rate replies you approve.', es: 'Lee correos de marcas, marca contactos falsos y redacta respuestas que tú apruebas.' } },
+  { id: 'research', person: 'Paula', name: 'Product Research', team: 'addon', job: { en: 'Breaks down the structure of top-selling videos.', es: 'Desarma la estructura de los videos que más venden.' } },
+  { id: 'picks', person: 'Nico', name: 'Top Picks', team: 'addon', job: { en: 'Shoppable lists of your favorite products with a public page.', es: 'Listas comprables de tus productos favoritos con una página pública.' } },
+  { id: 'trainer', person: 'Elena', name: 'Trainer', team: 'platform', job: { en: 'Holds the knowledge and rules every agent reads.', es: 'Guarda el conocimiento y las reglas que lee cada agente.' } }
 ];
 const AGENT_IDS = AGENTS.map((a) => a.id);
 

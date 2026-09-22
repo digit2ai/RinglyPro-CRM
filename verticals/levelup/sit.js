@@ -337,6 +337,19 @@ function jpegSize(file) {
     const band = r.txt.slice(r.txt.indexOf('<section class="hero-band"'), r.txt.indexOf('<section id="flow"'));
     ok(band.includes('</section>') && /<\/section>\s*<div class="hero">/.test(band), 'the band holds the artwork alone and the copy follows it (no headline on top of the artwork)');
     ok(/\n\.hero\{[^}]*max-width:1320px/.test(r.txt), 'the hero copy keeps its centred column (the base .hero rule survives)');
+    // ── the team has human names ───────────────────────────────────────────
+    ok(C.AGENTS.every((x) => x.person && /^[A-Z][a-zá-ú]+$/.test(x.person)), "every agent has a person name");
+    ok(new Set(C.AGENTS.map((x) => x.person)).size === C.AGENTS.length, "no two agents answer to the same name");
+    {
+      const boss = C.AGENTS.find((x) => x.id === "lider");
+      ok(boss.person === "Andrea" && boss.title && boss.title.en === "The Boss" && boss.title.es === "La Jefa",
+        "Andrea is the boss, in both languages");
+    }
+    ok(["Marisol", "Mateo", "Valeria", "Diego", "Bruno", "Javier", "Nico", "Elena"].every((n) => r.txt.includes(n)),
+      "the landing introduces the team by name");
+    ok(/\*\*Marisol\*\* — Creative Strategist/.test(read("ABOUT.md")) && /\*\*Andrea\*\* — The Boss/.test(read("ABOUT.md")),
+      "the public About text names them too, so Andrea can answer who is who");
+    ok(read("public/app.js").includes("a.person ? a.person"), "the dashboard pickers show the person and the role");
     // ── mobile menu + PWA + the orb colour ────────────────────────────────
     ok((r.txt.match(/<nav[ >]/g) || []).length === 1 && /id="burger"/.test(r.txt) && /aria-controls="nav"/.test(r.txt),
       "ONE nav serves both widths and the burger only shows or hides it");

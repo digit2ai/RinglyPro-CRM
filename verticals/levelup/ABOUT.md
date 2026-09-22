@@ -20,17 +20,17 @@ LevelUp works like a small, dedicated team that never sleeps. You talk to one ma
 
 | Your AI team member | What they do for you |
 |---|---|
-| **Andrea** | Your single point of contact. Takes your requests, sends them to the right specialist and tells you what happened. |
-| **Creative Strategist** | Helps you find your niche, your content pillars and your offer, using your own words. |
-| **Ideas** | Brings you fresh video ideas around your pillars, or builds on the thoughts you share. |
-| **Scripts** | Writes scripts with proven structure (hook, story, proof, objection, call to action), every word fresh and in your voice. |
-| **Calendar** | Keeps your plan: what to film today, what is coming up, and which posts to film together. |
-| **Video Editor** | Cleans up your raw footage by your editing rules: starts on the hook, trims silences and filler words, keeps your best take. |
-| **Publisher** | Prepares a ready-to-post draft for each platform. You publish. |
-| **Business Assistant** | Reads brand offers, flags the fake ones, and drafts replies at your own rates for you to approve. |
-| **Product Research** | Breaks down what makes top-selling videos work, so you can reuse the structure, never the words. |
-| **Top Picks** | Turns your favorite products into a beautiful shoppable page for your link in bio, and counts the clicks. |
-| **Trainer** | Holds everything you teach your team, so every agent works the way you do. |
+| **Andrea** — The Boss | Your single point of contact. Takes your requests, sends them to the right specialist and tells you what happened. |
+| **Marisol** — Creative Strategist | Helps you find your niche, your content pillars and your offer, using your own words. |
+| **Mateo** — Ideas | Brings you fresh video ideas around your pillars, or builds on the thoughts you share. |
+| **Valeria** — Scripts | Writes scripts with proven structure (hook, story, proof, objection, call to action), every word fresh and in your voice. |
+| **Diego** — Calendar | Keeps your plan: what to film today, what is coming up, and which posts to film together. |
+| **Bruno** — Video Editor | Cleans up your raw footage by your editing rules: starts on the hook, trims silences and filler words, keeps your best take. |
+| **Camila** — Publisher | Prepares a ready-to-post draft for each platform. You publish. |
+| **Javier** — Business Assistant | Reads brand offers, flags the fake ones, and drafts replies at your own rates for you to approve. |
+| **Paula** — Product Research | Breaks down what makes top-selling videos work, so you can reuse the structure, never the words. |
+| **Nico** — Top Picks | Turns your favorite products into a beautiful shoppable page for your link in bio, and counts the clicks. |
+| **Elena** — Trainer | Holds everything you teach your team, so every agent works the way you do. |
 
 ## Your team learns you
 
