@@ -27,7 +27,7 @@ const { renderMarkdown } = require('./markdown');
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-1';
+const VERSION = 'lu-2026-09-22-2';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -204,7 +204,7 @@ router.get('/manifest.webmanifest', (req, res) => {
   const b = req.baseUrl || '';
   res.type('application/manifest+json').json({
     id: b + '/app', name: 'LevelUp Media Marketing', short_name: 'LevelUp', start_url: b + '/app?source=pwa', scope: b + '/',
-    display: 'standalone', background_color: '#fff8f7', theme_color: '#c2587a', orientation: 'any',
+    display: 'standalone', background_color: '#FFFFFF', theme_color: '#26213F', orientation: 'any',
     icons: [{ src: b + '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' }],
     shortcuts: [{ name: 'Today', url: b + '/app#today' }, { name: 'Calendar', url: b + '/app#calendar' }, { name: 'Train the agents', url: b + '/app#train' }]
   });
@@ -225,7 +225,7 @@ router.use(express.static(PUB, { index: false, maxAge: '1h' }));
 function notFound(req) {
   const b = req.baseUrl || '';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found — LevelUp</title>
-<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff8f7;color:#4a2b36;font-family:system-ui,sans-serif;text-align:center;padding:24px}a{color:#a3405f}</style></head>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#FFFFFF;color:#26213F;font-family:system-ui,sans-serif;text-align:center;padding:24px}a{color:#C93D00}</style></head>
 <body><div><h1>Page not found</h1><p>This page does not exist on LevelUp Media Marketing.</p><p><a href="${b}/">Go home</a></p></div></body></html>`;
 }
 router.use((req, res) => {
