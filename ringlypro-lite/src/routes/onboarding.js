@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { Tenant, Number } = require('../models');
-const { getProvider } = require('../telephony');
+const { getProvider, getNumberProvider } = require('../telephony');
 const { codesFor, carriers } = require('../services/forwardingCodes');
 const { canProvisionNumber } = require('../services/entitlement');
 const { Op } = require('sequelize');
@@ -48,7 +48,7 @@ router.post('/provision-number', requireAuth, async (req, res) => {
 
     // Isolation guard: DID country MUST match tenant country.
     const country = tenant.country || 'US';
-    const provider = getProvider();
+    const provider = getNumberProvider();
 
     // Colombia regulatory blocker: local DIDs require an in-country address
     // bundle (see docs/telephony-costs.md). Gate provisioning behind a flag.
@@ -72,12 +72,13 @@ router.post('/provision-number', requireAuth, async (req, res) => {
         message: 'We have paused new number activations for today. Please try again tomorrow or contact support.' });
     }
 
-    const bought = await provider.buyNumber({ country, areaCode: req.body && req.body.area_code, tenantId: tenant.id });
+    const bought = await provider.buyNumber({ country, areaCode: req.body && req.body.area_code, tenantId: tenant.id, tenant });
     num = await Number.create({
       tenant_id: tenant.id, did: bought.did, country, provider: bought.provider,
       provider_sid: bought.providerSid, status: 'active', monthly_cost_usd: bought.monthlyCostUsd
     });
-    res.status(201).json({ success: true, number: num });
+    res.status(201).json({ success: true, number: num, provider: bought.provider,
+      agent_ready: bought.provider === 'ghl' ? !!bought.agent : undefined });
   } catch (e) {
     console.error('[lite:onboarding] provision error:', e.message);
     res.status(500).json({ error: e.message });
