@@ -312,6 +312,7 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /center\/contain no-repeat/.test(r.txt) && /aspect-ratio:1920\/1080/.test(r.txt), 'the WHOLE hero artwork is shown, never cropped, behind one wash');
     const band = r.txt.slice(r.txt.indexOf('<section class="hero-band"'), r.txt.indexOf('<section id="flow"'));
     ok(band.includes('</section>') && /<\/section>\s*<div class="hero">/.test(band), 'the band holds the artwork alone and the copy follows it (no headline on top of the artwork)');
+    ok(/\n\.hero\{[^}]*max-width:1320px/.test(r.txt), 'the hero copy keeps its centred column (the base .hero rule survives)');
     ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
     ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
     const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';
