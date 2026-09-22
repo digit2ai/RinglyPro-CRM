@@ -49,7 +49,15 @@ body{display:flex;flex-direction:column}
 .tile h3{font-size:19px;margin:0 0 8px;color:#fff;font-weight:800}
 .tile p{font-size:15px;line-height:1.45;color:var(--on-2);margin:0}
 .tile .n{font-size:12px;font-weight:800;color:#FF7A3D;letter-spacing:.12em;margin-bottom:8px}
+/* The stage is dark and the mock-ups are light panels, so they must carry the
+   app's own ink: without this they inherit the stage's near-white text and the
+   screens render white-on-white, which is how they first shipped. */
 .shot{margin-top:6px;max-height:430px;overflow:hidden;border-radius:16px}
+.shot .scr, .phones3 .phone{color:var(--ink)}
+.shot .scr .scr-h, .shot .scr .stat b, .shot .scr .col b, .phones3 .phone .scr-h{color:var(--ink)}
+.shot .scr .scr-ttl, .shot .scr .tiny, .shot .scr .stat small, .shot .scr .stat .nc, .shot .scr .scr-side span, .phones3 .phone .scr-ttl{color:var(--mut)}
+.shot .scr .row, .shot .scr .chip, .shot .scr .bubble.a, .phones3 .phone .row{color:var(--ink)}
+.shot .scr .pill, .phones3 .phone .pill{color:var(--ink)}
 .screen .shot .scr{box-shadow:0 18px 40px rgba(0,0,0,.45)}
 .phones3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;justify-items:center;margin-top:8px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
