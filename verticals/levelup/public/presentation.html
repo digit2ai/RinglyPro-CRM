@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LevelUp Media Marketing — walkthrough</title>
+<meta name="description" content="A narrated walkthrough of LevelUp Media Marketing: what it is, who it is for, the benefits, and every dashboard screen.">
+<meta name="theme-color" content="#1B1730">
+<link rel="icon" href="{{BASE}}/icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<link rel="stylesheet" href="{{BASE}}/deck.css?v={{VERSION}}">
+<!--
+  LevelUp narrated walkthrough. One 1280x720 stage scaled to the window, one
+  narration per slide read by ANDREA through the shared zero-key /api/tts/edge
+  route (Ava in English, Dalia in Spanish — no second TTS backend), the caption
+  shows what is being said, and the deck advances when the voice ends.
+
+  THE TEN DASHBOARD SCREENS ARE BUILT FROM public/deck.html (src/presentation.js),
+  the same mock-ups the landing page shows, so the deck cannot drift from the
+  product. Their figures are SAMPLE DATA and every slide says so.
+-->
+<style>
+:root{--stage:#1B1730;--stage-2:#241E42;--on:#F4F3F8;--on-2:#B9B4D6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;height:100dvh;background:#0E0C1F;color:var(--on);font-family:var(--font);overflow:hidden}
+body{display:flex;flex-direction:column}
+#viewport{flex:1;position:relative;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:0 0;overflow:hidden;border-radius:14px;
+  background:radial-gradient(900px 520px at 88% -10%,rgba(252,76,2,.16),transparent 70%),radial-gradient(700px 520px at -5% 110%,rgba(120,110,210,.18),transparent 70%),var(--stage);
+  box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.slide{position:absolute;inset:0;padding:46px 56px 54px;display:none;flex-direction:column;justify-content:center;overflow:auto}
+.slide.on{display:flex;animation:fade .45s ease both}
+.slide:not(.on){display:none!important}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide .eyebrow{font-size:13px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#FF7A3D;margin:0 0 10px}
+.slide h1{font-size:58px;line-height:1.03;font-weight:800;letter-spacing:-1.4px;margin:0 0 16px;color:#fff}
+.slide h1 .s{font-family:var(--script);color:#FF7A3D;font-weight:600}
+.slide h2{font-size:38px;line-height:1.1;font-weight:800;letter-spacing:-.8px;margin:0 0 12px;color:#fff}
+.slide .lede{font-size:19px;line-height:1.5;color:var(--on-2);margin:0 0 18px;max-width:62ch}
+.slide .sample{font-size:12px;color:var(--on-2);margin:10px 0 0;letter-spacing:.04em}
+.cover{justify-content:flex-start}
+.cover-img{width:100%;flex:1;min-height:0;border-radius:14px;background:url("{{BASE}}/deck-cover.jpg?v={{VERSION}}") center/contain no-repeat;border-top:4px solid var(--pink);border-bottom:4px solid var(--pink);margin:12px 0 0}
+.start{margin-top:16px;align-self:flex-start;display:inline-flex;align-items:center;gap:10px;background:var(--pink);color:#fff;border:0;border-radius:999px;padding:15px 26px;font:800 18px var(--font);cursor:pointer;box-shadow:0 12px 30px rgba(252,76,2,.35)}
+.start svg{width:18px;height:18px}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:6px}
+.quad{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:6px}
+.tile{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px}
+.tile h3{font-size:19px;margin:0 0 8px;color:#fff;font-weight:800}
+.tile p{font-size:15px;line-height:1.45;color:var(--on-2);margin:0}
+.tile .n{font-size:12px;font-weight:800;color:#FF7A3D;letter-spacing:.12em;margin-bottom:8px}
+.shot{margin-top:6px;max-height:430px;overflow:hidden;border-radius:16px}
+.screen .shot .scr{box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.phones3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;justify-items:center;margin-top:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+#dock{flex:none;display:flex;align-items:center;gap:14px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:#120F24;border-top:1px solid rgba(255,255,255,.08)}
+#dock button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:transparent;color:#fff;cursor:pointer;display:grid;place-items:center}
+#dock button.pp{background:var(--pink);border-color:var(--pink)}
+#dock svg{width:20px;height:20px}
+#cap{flex:1;font-size:14px;line-height:1.45;color:var(--on-2);max-height:62px;overflow:auto}
+#count{font-size:13px;color:var(--on-2);white-space:nowrap}
+#bar{position:absolute;left:0;bottom:0;height:3px;background:var(--pink);width:0;transition:width .4s}
+.dock-lang{display:inline-flex;border:1px solid rgba(255,255,255,.18);border-radius:999px;overflow:hidden}
+.dock-lang button{width:auto;height:36px;padding:0 12px;border:0;border-radius:0;font-weight:700;font-size:13px}
+.dock-lang button[aria-pressed="true"]{background:#fff;color:#1B1730}
+@media(max-width:900px){
+  html,body{overflow:auto;height:auto}
+  #viewport{position:static;overflow:visible}
+  #stage{position:static;width:100%;height:auto;transform:none!important;border-radius:0;box-shadow:none}
+  .slide{position:static;padding:26px 18px 30px;min-height:auto}
+  .slide h1{font-size:34px}.slide h2{font-size:26px}.slide .lede{font-size:16px}
+  .trio,.quad,.two,.phones3{grid-template-columns:1fr}
+  .cover-img{aspect-ratio:1600/939;flex:none}
+  .shot{max-height:none}
+  #dock{position:sticky;bottom:0}
+}
+</style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="stage">
+
+    <!-- 1 Cover -->
+    <section class="slide cover" data-n="Hi, I am Andrea, the manager of your AI content team at LevelUp Media Marketing. In the next few minutes I will show you what this is, who it is for, what it changes in your week, and then every screen of the dashboard, one by one. Press start whenever you are ready." data-n-es="Hola, soy Andrea, la gerente de tu equipo de contenido con inteligencia artificial en LevelUp Media Marketing. En los próximos minutos te voy a mostrar qué es esto, para quién es, qué cambia en tu semana y después cada pantalla del panel, una por una. Pulsa empezar cuando quieras.">
+      <p class="eyebrow" data-en="A walkthrough with Andrea" data-es="Un recorrido con Andrea">A walkthrough with Andrea</p>
+      <h1><span class="s" data-en="Same you." data-es="La misma tú.">Same you.</span> <span data-en="Bigger things." data-es="Cosas más grandes.">Bigger things.</span></h1>
+      <button class="start" id="startBtn" type="button"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span data-en="Start the walkthrough" data-es="Empezar el recorrido">Start the walkthrough</span></button>
+      <div class="cover-img" role="img" aria-label="Andrea and the LevelUp AI content team"></div>
+    </section>
+
+    <!-- 2 What it is -->
+    <section class="slide" data-n="LevelUp Media Marketing is the back office of a content creator, staffed by AI. You talk to me, and I hand each job to the specialist who does it: strategy, ideas, scripts, the calendar, the edit, the brand emails. You stay in control of everything that goes out." data-n-es="LevelUp Media Marketing es la oficina de una creadora de contenido, atendida por inteligencia artificial. Tú hablas conmigo y yo le paso cada trabajo al especialista que lo hace: estrategia, ideas, guiones, el calendario, la edición, los correos de marcas. Tú mantienes el control de todo lo que sale.">
+      <p class="eyebrow" data-en="What it is" data-es="Qué es">What it is</p>
+      <h2 data-en="A team, not a tool" data-es="Un equipo, no una herramienta">A team, not a tool</h2>
+      <div class="trio">
+        <div class="tile"><div class="n">01</div><h3 data-en="One manager" data-es="Una gerente">One manager</h3><p data-en="You ask Andrea. She routes the work and reports back, so you never learn ten screens at once." data-es="Le pides a Andrea. Ella reparte el trabajo y te reporta, así no aprendes diez pantallas de golpe.">You ask Andrea. She routes the work and reports back.</p></div>
+        <div class="tile"><div class="n">02</div><h3 data-en="Ten specialists" data-es="Diez especialistas">Ten specialists</h3><p data-en="Strategy, ideas, scripts, calendar, editing, publishing, brand deals, research, picks and training." data-es="Estrategia, ideas, guiones, calendario, edición, publicación, marcas, investigación, favoritos y entrenamiento.">Strategy, ideas, scripts, calendar, editing, publishing, brand deals, research, picks and training.</p></div>
+        <div class="tile"><div class="n">03</div><h3 data-en="Trained by you" data-es="Entrenado por ti">Trained by you</h3><p data-en="Everything you teach the team travels with every job it does, so the work sounds like you." data-es="Todo lo que le enseñas al equipo viaja con cada trabajo, para que suene a ti.">Everything you teach travels with every job it does.</p></div>
+      </div>
+    </section>
+
+    <!-- 3 Who it is for -->
+    <section class="slide" data-n="It is for creators at any stage. If you are just starting, the strategist finds your niche with you. If you already post, editing stops eating your week. If brands write to you, the assistant reads the offer and drafts your reply. And if you sell products, your scripts and your shoppable page are built for that." data-n-es="Es para creadoras en cualquier etapa. Si apenas empiezas, la estratega encuentra tu nicho contigo. Si ya publicas, la edición deja de comerse tu semana. Si te escriben marcas, la asistente lee la oferta y redacta tu respuesta. Y si vendes productos, tus guiones y tu página comprable están hechos para eso.">
+      <p class="eyebrow" data-en="Who it is for" data-es="Para quién es">Who it is for</p>
+      <h2 data-en="Creators who want their time back" data-es="Creadoras que quieren recuperar su tiempo">Creators who want their time back</h2>
+      <div class="quad">
+        <div class="tile"><h3 data-en="Just starting" data-es="Apenas empiezas">Just starting</h3><p data-en="No niche yet. We find it in your own words." data-es="Aún sin nicho. Lo encontramos con tus palabras.">No niche yet. We find it in your own words.</p></div>
+        <div class="tile"><h3 data-en="Posting already" data-es="Ya publicas">Posting already</h3><p data-en="Send the footage, review a first cut." data-es="Manda el material, revisa un primer corte.">Send the footage, review a first cut.</p></div>
+        <div class="tile"><h3 data-en="Working with brands" data-es="Trabajas con marcas">Working with brands</h3><p data-en="Know who is real and what to charge." data-es="Sabe quién es real y cuánto cobrar.">Know who is real and what to charge.</p></div>
+        <div class="tile"><h3 data-en="Selling products" data-es="Vendes productos">Selling products</h3><p data-en="Scripts that sell and a shoppable page." data-es="Guiones que venden y una página comprable.">Scripts that sell and a shoppable page.</p></div>
+      </div>
+    </section>
+
+    <!-- 4 Benefits -->
+    <section class="slide" data-n="Here is what changes in your week. You never start from a blank page, because ideas and scripts are waiting. Editing becomes a review of five things instead of an evening in a timeline. You always know what to charge, because replies quote your own rate card. Fake offers get caught before you answer. And nothing is ever sent or published without your tap." data-n-es="Esto es lo que cambia en tu semana. Nunca empiezas en blanco, porque las ideas y los guiones ya te esperan. Editar se vuelve revisar cinco cosas en vez de pasar la noche en la línea de tiempo. Siempre sabes cuánto cobrar, porque las respuestas citan tu propia tabla de tarifas. Las ofertas falsas se detectan antes de responder. Y nada se envía ni se publica sin que tú lo toques.">
+      <p class="eyebrow" data-en="The benefits" data-es="Los beneficios">The benefits</p>
+      <h2 data-en="What changes in your week" data-es="Qué cambia en tu semana">What changes in your week</h2>
+      <div class="trio">
+        <div class="tile"><h3 data-en="No blank page" data-es="Sin página en blanco">No blank page</h3><p data-en="Ideas and scripts, built on your pillars, waiting for you." data-es="Ideas y guiones sobre tus pilares, esperándote.">Ideas and scripts, built on your pillars.</p></div>
+        <div class="tile"><h3 data-en="Editing is a review" data-es="Editar es revisar">Editing is a review</h3><p data-en="Five checks, then approve. Your rules run on every cut." data-es="Cinco revisiones y apruebas. Tus reglas corren en cada corte.">Five checks, then approve.</p></div>
+        <div class="tile"><h3 data-en="Your price, your call" data-es="Tu precio, tu decisión">Your price, your call</h3><p data-en="Replies quote your rate card. Fake offers are flagged." data-es="Las respuestas citan tu tabla. Las ofertas falsas se marcan.">Replies quote your rate card.</p></div>
+      </div>
+    </section>
+
+    <!-- 5 The flow -->
+    <section class="slide" data-n="The work moves in three lanes. You tell us about you and film. Your AI team builds the strategy, the ideas, the scripts and the edit. And your approval is the third lane: you review, you publish. Nothing crosses that lane without you." data-n-es="El trabajo se mueve en tres carriles. Tú nos cuentas de ti y grabas. Tu equipo de inteligencia artificial arma la estrategia, las ideas, los guiones y la edición. Y tu aprobación es el tercer carril: tú revisas, tú publicas. Nada cruza ese carril sin ti.">
+      <p class="eyebrow" data-en="The whole process" data-es="Todo el proceso">The whole process</p>
+      <h2 data-en="From an idea to a posted video" data-es="De una idea a un video publicado">From an idea to a posted video</h2>
+      <div class="quad">
+        <div class="tile"><div class="n">1 · 4</div><h3 data-en="You" data-es="Tú">You</h3><p data-en="Tell us about you. Film and send to editing in one tap." data-es="Cuéntanos de ti. Graba y envía a edición con un toque.">Tell us about you. Film and send to editing.</p></div>
+        <div class="tile"><div class="n">2 · 3</div><h3 data-en="LevelUp AI" data-es="IA de LevelUp">LevelUp AI</h3><p data-en="Your niche and pillars, then ideas and scripts in your voice." data-es="Tu nicho y pilares, luego ideas y guiones con tu voz.">Your niche and pillars, then ideas and scripts.</p></div>
+        <div class="tile"><div class="n">5</div><h3 data-en="The cut is cleaned" data-es="Se limpia el corte">The cut is cleaned</h3><p data-en="Starts on the hook, fillers out, best take kept." data-es="Empieza en el gancho, sin muletillas, mejor toma.">Starts on the hook, fillers out, best take kept.</p></div>
+        <div class="tile"><div class="n">6 · 7</div><h3 data-en="Your approval" data-es="Tu aprobación">Your approval</h3><p data-en="You review in seconds, then you publish. Always your tap." data-es="Revisas en segundos y publicas. Siempre lo haces tú.">You review, then you publish.</p></div>
+      </div>
+    </section>
+
+    <!-- 6..15 the dashboard, built from the same mock-ups the site shows -->
+    {{SCREENSLIDES}}
+
+    <!-- On a phone -->
+    <section class="slide" data-n="The same back office fits in your pocket. Install it to your home screen, and today's plan, the calendar and the pipeline are one tap away while you are filming. You can write to me from there too." data-n-es="La misma oficina cabe en tu bolsillo. Instálala en tu pantalla de inicio y el plan de hoy, el calendario y el flujo quedan a un toque mientras grabas. Desde ahí también puedes escribirme.">
+      <p class="eyebrow" data-en="On your phone" data-es="En tu teléfono">On your phone</p>
+      <h2 data-en="The same back office, in your pocket" data-es="La misma oficina, en tu bolsillo">The same back office, in your pocket</h2>
+      <div class="phones3">
+        <div class="phone"><div class="scr-bar"><span class="dot"></span><span class="scr-ttl" data-en="Today" data-es="Hoy">Today</span></div><div class="scr-main"><p class="scr-h" data-en="Today" data-es="Hoy">Today</p><div class="row"><span class="pill" data-en="Film" data-es="Grabar">Film</span> <span data-en="Morning routine" data-es="Rutina de mañana">Morning routine</span></div><div class="row"><span class="pill b" data-en="Approve" data-es="Aprobar">Approve</span> <span data-en="Brand reply" data-es="Respuesta a marca">Brand reply</span></div></div><div class="tabs"><span class="on" data-en="Today" data-es="Hoy">Today</span><span data-en="Calendar" data-es="Calendario">Calendar</span><span data-en="Pipeline" data-es="Flujo">Pipeline</span></div></div>
+        <div class="phone"><div class="scr-bar"><span class="dot"></span><span class="scr-ttl" data-en="Calendar" data-es="Calendario">Calendar</span></div><div class="scr-main"><p class="scr-h" data-en="This week" data-es="Esta semana">This week</p><div class="cal" style="grid-template-columns:repeat(4,1fr)"><i class="has">Mon</i><i>Tue</i><i class="has">Wed</i><i>Thu</i></div></div><div class="tabs"><span data-en="Today" data-es="Hoy">Today</span><span class="on" data-en="Calendar" data-es="Calendario">Calendar</span><span data-en="Pipeline" data-es="Flujo">Pipeline</span></div></div>
+        <div class="phone"><div class="scr-bar"><span class="dot"></span><span class="scr-ttl">Andrea</span></div><div class="scr-main"><div class="bubble u" data-en="What is waiting on me?" data-es="¿Qué espera por mí?">What is waiting on me?</div><div class="bubble a" data-en="Two brand replies and one video to review." data-es="Dos respuestas a marcas y un video por revisar.">Two brand replies and one video to review.</div></div><div class="tabs"><span data-en="Today" data-es="Hoy">Today</span><span data-en="Calendar" data-es="Calendario">Calendar</span><span class="on">Andrea</span></div></div>
+      </div>
+      <p class="sample" data-en="Sample data." data-es="Datos de ejemplo.">Sample data.</p>
+    </section>
+
+    <!-- Straight talk -->
+    <section class="slide" data-n="Now the honest part. Strategy, ideas, scripts, the calendar, the editing queue, brand replies, Top Picks and training all work today. Automatic editing in Descript, posting straight to TikTok, Instagram and Facebook, reading your inbox and live product data are still being connected through the official programs. Until each one is ready, LevelUp prepares the work and you copy, paste or post it yourself, and every screen says so." data-n-es="Ahora la parte honesta. La estrategia, las ideas, los guiones, el calendario, la cola de edición, las respuestas a marcas, Top Picks y el entrenamiento funcionan hoy. La edición automática en Descript, publicar directo en TikTok, Instagram y Facebook, leer tu correo y los datos de productos en vivo todavía se están conectando por los programas oficiales. Hasta que cada uno esté listo, LevelUp prepara el trabajo y tú copias, pegas o publicas, y cada pantalla lo dice.">
+      <p class="eyebrow" data-en="Straight talk" data-es="Con franqueza">Straight talk</p>
+      <h2 data-en="What works today, and what is being connected" data-es="Qué funciona hoy y qué se está conectando">What works today, and what is being connected</h2>
+      <div class="two">
+        <div class="tile"><h3 data-en="Working now" data-es="Funcionando hoy">Working now</h3><p data-en="Strategy, ideas, scripts, calendar and pipeline, the editing queue with your rules, brand-offer analysis and replies, Top Picks with a public page, training every agent, and Andrea running it all by chat." data-es="Estrategia, ideas, guiones, calendario y flujo, la cola de edición con tus reglas, análisis de ofertas y respuestas, Top Picks con página pública, entrenamiento de cada agente y Andrea ejecutando todo por chat.">Strategy, ideas, scripts, calendar, pipeline, editing queue, brand replies, Top Picks, training.</p></div>
+        <div class="tile"><h3 data-en="Being connected" data-es="En conexión">Being connected</h3><p data-en="Descript, posting to TikTok, Instagram and Facebook, inbox access, and live product and sales data. We use official programs only, never workarounds that could risk your accounts." data-es="Descript, publicar en TikTok, Instagram y Facebook, acceso al correo y datos de productos y ventas en vivo. Solo usamos programas oficiales, nunca trucos que arriesguen tus cuentas.">Descript, platform posting, inbox access, live product data — official programs only.</p></div>
+      </div>
+    </section>
+
+    <!-- Close -->
+    <section class="slide" data-n="That is the whole product. Creating your back office is free: you answer a few questions, meet your team, and teach them how you sound. I will be there, in the dashboard, waiting for your first request. Thank you for watching." data-n-es="Eso es todo el producto. Crear tu oficina es gratis: respondes unas preguntas, conoces a tu equipo y les enseñas cómo suenas. Yo voy a estar ahí, en el panel, esperando tu primer pedido. Gracias por acompañarme.">
+      <p class="eyebrow" data-en="Start" data-es="Empieza">Start</p>
+      <h2 data-en="Create your back office" data-es="Crea tu oficina">Create your back office</h2>
+      <p class="lede" data-en="Free to start. Answer a few questions, meet your team, and teach them how you sound." data-es="Empiezas gratis. Responde unas preguntas, conoce a tu equipo y enséñales cómo suenas.">Free to start.</p>
+      <p><a class="btn primary" href="{{BASE}}/login?mode=signup" data-en="Start free" data-es="Empieza gratis">Start free</a> <a class="btn" href="{{BASE}}/" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.35)" data-en="Back to the site" data-es="Volver al sitio">Back to the site</a></p>
+      <p class="sample">levelupmediamarketing.com</p>
+    </section>
+
+    <div id="bar"></div>
+  </div>
+</div>
+
+<div id="dock">
+  <div class="dock-lang" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="es" aria-pressed="false">ES</button></div>
+  <button id="prev" type="button" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <button id="play" class="pp" type="button" aria-label="Play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  <button id="next" type="button" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  <div id="cap" aria-live="polite">Press start. Andrea narrates each screen and the walkthrough moves on by itself.</div>
+  <div id="count">1 / 1</div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), vp = document.getElementById('viewport');
+  var cap = document.getElementById('cap'), count = document.getElementById('count'), bar = document.getElementById('bar');
+  var playBtn = document.getElementById('play');
+  var idx = 0, playing = false, audio = new Audio(), cache = {}, token = 0;
+  var PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  var lang = 'en';
+  try { lang = localStorage.getItem('lu_lang') || ((navigator.language || '').slice(0, 2) === 'es' ? 'es' : 'en'); } catch (e) {}
+
+  // Andrea's voice: the shared zero-key Edge route. Ava reads English, Dalia
+  // reads Spanish — a voice cannot read the other language convincingly, and a
+  // deck is the one place where that is obvious to everybody in the room.
+  var VOICE = { en: 'ava', es: 'lina' };
+  function narration(i) { return slides[i].getAttribute(lang === 'es' ? 'data-n-es' : 'data-n') || slides[i].getAttribute('data-n'); }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-en]').forEach(function (el) { var v = el.getAttribute('data-' + lang); if (v) el.textContent = v; });
+    document.querySelectorAll('.dock-lang button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+    cap.textContent = narration(idx);
+  }
+  document.querySelectorAll('.dock-lang button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.lang === lang) return;
+      lang = b.dataset.lang;
+      try { localStorage.setItem('lu_lang', lang); } catch (e) {}
+      cache = {}; token++; audio.pause(); audio.removeAttribute('src');   // the cached voice is in the old language
+      applyLang();
+      if (playing) speak();
+    });
+  });
+
+  var mobile = window.matchMedia('(max-width:900px), (orientation:portrait) and (max-width:1024px)');
+  function fit() {
+    if (mobile.matches) { stage.style.transform = ''; return; }
+    var s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 720) * 0.96;
+    stage.style.transform = 'translate(' + (-640 * s) + 'px,' + (-360 * s) + 'px) scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit);
+  if (mobile.addEventListener) mobile.addEventListener('change', fit);
+
+  var tx = 0, ty = 0;
+  stage.addEventListener('touchstart', function (e) { var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+  stage.addEventListener('touchend', function (e) {
+    var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { audio.removeAttribute('src'); show(idx + (dx < 0 ? 1 : -1)); }
+  }, { passive: true });
+
+  function tts(i) {
+    var key = lang + ':' + i;
+    if (cache[key]) return cache[key];
+    cache[key] = fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: narration(i), voice: VOICE[lang], rate: '-2%' }) })
+      .then(function (r) { if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+      .then(function (b) { return URL.createObjectURL(b); })
+      .catch(function (e) { delete cache[key]; throw e; });
+    return cache[key];
+  }
+
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === idx); });
+    count.textContent = (idx + 1) + ' / ' + slides.length;
+    cap.textContent = narration(idx);
+    bar.style.width = ((idx + 1) / slides.length * 100) + '%';
+    slides[idx].scrollTop = 0; fit();
+    if (mobile.matches) slides[idx].scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (playing) speak();
+  }
+
+  function speak() {
+    var my = ++token;
+    audio.pause();
+    tts(idx).then(function (url) {
+      if (my !== token || !playing) return;
+      audio.src = url; audio.play().catch(function () { setPlaying(false); });
+      if (idx + 1 < slides.length) tts(idx + 1).catch(function () {});
+    }).catch(function () {
+      // No voice available: the caption stays on screen and the deck moves on
+      // after a reading pause, rather than stopping dead.
+      if (my !== token || !playing) return;
+      var ms = Math.max(6000, narration(idx).length * 60);
+      setTimeout(function () { if (my === token && playing) advance(); }, ms);
+    });
+  }
+  function advance() { if (idx < slides.length - 1) show(idx + 1); else setPlaying(false); }
+  audio.addEventListener('ended', function () { if (playing) setTimeout(function () { if (playing) advance(); }, 600); });
+
+  function setPlaying(v) {
+    playing = v;
+    playBtn.innerHTML = v ? PAUSE : PLAY;
+    playBtn.setAttribute('aria-label', v ? 'Pause' : 'Play');
+    if (v) { if (audio.src && audio.paused && audio.currentTime > 0 && !audio.ended) audio.play(); else speak(); }
+    else { token++; audio.pause(); }
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function () { setPlaying(true); });
+  playBtn.addEventListener('click', function () { setPlaying(!playing); });
+  document.getElementById('prev').addEventListener('click', function () { audio.removeAttribute('src'); show(idx - 1); });
+  document.getElementById('next').addEventListener('click', function () { audio.removeAttribute('src'); show(idx + 1); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); audio.removeAttribute('src'); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); audio.removeAttribute('src'); show(idx - 1); }
+    else if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'Home') { show(0); } else if (e.key === 'End') { show(slides.length - 1); }
+  });
+  applyLang(); show(0);
+})();
+</script>
+</body>
+</html>

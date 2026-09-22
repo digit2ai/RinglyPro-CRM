@@ -355,26 +355,40 @@ function jpegSize(file) {
     // pages
     r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|prepared for/i.test(r.txt), '/requirements now shows who we are, no sources');
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
-    // ── the marketing presentation ────────────────────────────────────────
+    // ── the landing deck and the narrated walkthrough ─────────────────────
     {
       const d = await call(null, 'GET', '/');
       ok(d.status === 200 && !/\{\{BASE\}\}|\{\{VERSION\}\}|\{\{DECK\}\}/.test(d.txt), 'the landing IS the presentation, every token substituted (two passes)');
-      ok((await call(null, 'GET', '/presentation')).txt === d.txt, '/presentation serves the same page, never a second copy that could drift');
-      ok((await call(null, 'GET', '/presentacion')).status === 200, '/presentacion answers too');
       ok(/hero\.jpg/.test(d.txt) && /class="phone"/.test(d.txt), 'it carries the main artwork and a phone mock-up');
       ['Dashboard', 'Content Calendar', 'Content Pipeline', 'Creative Strategist', 'Ideas &amp; Scripts', 'Editing', 'Business Assistant', 'Top Picks', 'Train the agents', 'Andrea']
         .forEach((f) => ok(d.txt.includes(f), 'the deck walks through ' + f));
       ok((d.txt.match(/class="scr"/g) || []).length >= 9, 'every dashboard function has its own screen mock-up');
       ok(/Who it is for/.test(d.txt) && /benefits/i.test(d.txt) && /What it is/.test(d.txt), 'it says what it is, who it is for and the benefits');
       ok(/Not connected|not connected/.test(d.txt) && /never show a number we cannot measure/i.test(d.txt), 'the deck states what is not connected instead of faking a metric');
-      const noEs = (d.txt.match(/data-en="[^"]*"(?![^>]*data-es=)/g) || []);
-      ok(!noEs.length, 'every line of the deck exists in English and Spanish');
+      ok(!(d.txt.match(/data-en="[^"]*"(?![^>]*data-es=)/g) || []).length, 'every line of the deck exists in English and Spanish');
       ok(!/[\u4e00-\u9fff]/.test(d.txt), 'no stray non-Latin characters slipped into the copy');
-      ok(/id="how"/.test(d.txt) && /href="#how"/.test(d.txt), 'the menu reaches the walkthrough on the same page');
       ok(/id="flow"/.test(d.txt) && /data-voice-orb/.test(d.txt), 'the landing keeps the animated process band and Andrea\'s voice orb');
       ok(!/\.hero-band::after|\.cover-art::after/.test(d.txt), 'no wash over the hero artwork, in either language');
-    }
-    ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
+
+      // the narrated slideshow
+      const w = await call(null, 'GET', '/presentation');
+      ok(w.status === 200 && !/\{\{[A-Z_]+\}\}/.test(w.txt), '/presentation is the narrated walkthrough, tokens substituted');
+      ok((await call(null, 'GET', '/presentacion')).status === 200, '/presentacion answers too');
+      const slides = (w.txt.match(/class="slide/g) || []).length;
+      ok(slides >= 18, 'the walkthrough has every slide (' + slides + ')');
+      ok((w.txt.match(/class="slide screen"/g) || []).length === 10, 'ten dashboard slides, one per function');
+      ok(/deck-cover\.jpg/.test(w.txt) && /id="startBtn"/.test(w.txt), 'it opens on the cover image with a start button');
+      ok(/api\/tts\/edge/.test(w.txt) && /voice: VOICE\[lang\]/.test(w.txt) && /ava/.test(w.txt) && /lina/.test(w.txt),
+        'Andrea narrates through the shared zero-key TTS route, a voice per language');
+      const noEsN = (w.txt.match(/data-n="[^"]*"(?![^>]*data-n-es=)/g) || []);
+      ok(!noEsN.length, 'every slide is narrated in both languages');
+      ok(/Sample data|Datos de ejemplo/.test(w.txt), 'the mock-up figures are labelled sample data');
+      ok(!/\b(\d+x|\d+%\s*(more|faster|growth))\b/i.test(w.txt), 'the deck promises no multiplier or growth figure');
+      // the screens come from deck.html, so they cannot drift from the site
+      const sc = require('./src/presentation').screens();
+      ok(sc.length === 10 && sc.every((x) => x.scr.startsWith('<div class="scr">') && x.scr.trim().endsWith('</div>')), 'the ten screens are lifted whole from deck.html');
+      ok(w.txt.includes(sc[0].scr.slice(0, 120)), 'the walkthrough renders the very same mock-up markup as the site');
+    }    ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
     // The declared ratio must match the ARTWORK, not a literal: a hero swap that
     // letterboxes the band is exactly what this is here to catch.

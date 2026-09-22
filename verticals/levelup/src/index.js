@@ -54,7 +54,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-20';
+const VERSION = 'lu-2026-09-22-21';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -111,7 +111,11 @@ router.get('/about', aboutPage);
 // ONE page is the presentation: the landing carries the whole deck, so
 // /presentation and /presentacion serve it rather than a second copy that
 // could drift. public/deck.html is the single source of those sections.
-const deck = (req, res) => page(req, res, 'landing.html', { FACTS: platformFacts(), DECK: deckHtml() });
+// The narrated walkthrough: its ten dashboard slides are BUILT from the same
+// deck.html mock-ups the landing shows (src/presentation.js), so one change
+// moves both.
+const walkthrough = require('./presentation');
+const deck = (req, res) => page(req, res, 'presentation.html', { SCREENSLIDES: walkthrough.screenSlides() });
 router.get('/presentation', deck);
 router.get('/presentacion', deck);
 router.get('/requirements', aboutPage);
