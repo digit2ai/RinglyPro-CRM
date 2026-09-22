@@ -17,10 +17,16 @@
 <link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
 <link rel="stylesheet" href="{{BASE}}/flow.css?v={{VERSION}}">
 <style>
-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1120px;margin:0 auto;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1320px;margin:0 auto;gap:12px}
 .logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
 nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.hero{max-width:1120px;margin:0 auto;padding:40px 20px 30px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
+/* Full-width hero band. The artwork sits at 30% (70% transparent) behind a
+   scrim, so the headline keeps its contrast in both themes. */
+.hero-band{position:relative;isolation:isolate;overflow:hidden}
+.hero-band::before{content:"";position:absolute;inset:0;z-index:-2;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/cover no-repeat;opacity:.3}
+.hero-band::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.7) 45%,rgba(255,255,255,.55) 100%)}
+:root[data-theme="dark"] .hero-band::after{background:linear-gradient(90deg,rgba(27,23,48,.9) 0%,rgba(27,23,48,.74) 45%,rgba(27,23,48,.6) 100%)}
+.hero{max-width:1320px;margin:0 auto;padding:56px 24px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
 .hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-1px}
 .hero h1 span{font-family:var(--script);color:var(--pink-d);font-weight:600}
 .hero p{font-size:18px;color:var(--mut);margin:0 0 22px}
@@ -28,7 +34,8 @@ nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mock{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:0 20px 60px rgba(38,33,63,.10)}
 .mock h3{margin:0 0 10px;font-size:15px}.row{display:flex;gap:8px;align-items:center;padding:10px;border-radius:14px;background:var(--blush);margin-bottom:8px;font-size:14px}
 .tag{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
-section{max-width:1120px;margin:0 auto;padding:36px 20px}
+section{max-width:1320px;margin:0 auto;padding:44px 24px}
+.hero-band,#flow{max-width:none;padding:0}
 section h2{font-size:30px;margin:0 0 8px}section .sub{color:var(--mut);margin:0 0 22px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
@@ -52,6 +59,7 @@ footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
   </nav>
 </header>
 
+<section class="hero-band">
 <div class="hero">
   <div>
     <h1><span data-en="Same you." data-es="La misma tú.">Same you.</span><br><b data-en="Bigger things." data-es="Cosas más grandes.">Bigger things.</b></h1>

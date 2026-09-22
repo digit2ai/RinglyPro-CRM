@@ -264,6 +264,7 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|Andrea/.test(r.txt), '/requirements now shows who we are, no sources');
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
+    ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /opacity:\.3/.test(r.txt), 'the hero artwork is full width at 30% behind a scrim');
     ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
     ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
     const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';

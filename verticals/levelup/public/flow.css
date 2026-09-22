@@ -1,6 +1,6 @@
 /* LevelUp workflow circuit: adapted from the BuyersLine flow band (a dark signal band in both themes, fixed local colors). flow.js draws the path and moves the signal; readable without it. */
 .flow{--font-body:var(--font);--gutter:20px}
-.flow .wrap{max-width:1120px;margin:0 auto;padding:56px 20px}
+.flow .wrap{max-width:1320px;margin:0 auto;padding:56px 24px}
 .flow .eyebrow{font:800 .78rem/1.2 var(--font);letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px}
 .flow h2{font-size:clamp(28px,4vw,42px);line-height:1.1;letter-spacing:-.5px;margin:0}
 main > section.flow, .flow { /* beats the alternating band rule on main > section */
@@ -142,7 +142,7 @@ main > section.flow, .flow { /* beats the alternating band rule on main > sectio
 @keyframes lvTwinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
 .lv-seal, .lv-check { transform-box: fill-box; transform-origin: center; }
 
-@media (min-width: 1140px) { .flow-scroll { overflow: visible; margin: 20px 0 0; padding: 8px 0 0; } .flow-track { min-width: 0; } }
+@media (min-width: 1340px) { .flow-scroll { overflow: visible; margin: 20px 0 0; padding: 8px 0 0; } .flow-track { min-width: 0; } }
 @media (max-width: 480px) { .flow { --lanes-w: 92px; } .flow-track { min-width: 1180px; } }
 @media (prefers-reduced-motion: reduce) {
   .flow-node, .flow-card { transition: none; }
