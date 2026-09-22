@@ -113,6 +113,11 @@ router.get('/health', async (req, res) => {
   };
   // ?check=twilio actively verifies credentials by making the same class of API
   // call number-provisioning uses. Reveals no secrets, only auth pass/fail.
+  // ?check=ghl probes the HighLevel pilot token (read-only; statuses and counts only).
+  if (req.query.check === 'ghl') {
+    try { out.ghl = await require('../telephony/ghl').probe(); }
+    catch (e) { out.ghl = { error: e.message }; }
+  }
   if (req.query.check === 'twilio') {
     try {
       const { getProvider } = require('../telephony');
