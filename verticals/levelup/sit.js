@@ -310,6 +310,7 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
     ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /center\/contain no-repeat/.test(r.txt) && /aspect-ratio:1920\/1080/.test(r.txt), 'the WHOLE hero artwork is shown, never cropped, behind one wash');
+    ok(r.txt.slice(r.txt.indexOf('<section class="hero-band">'), r.txt.indexOf('<section id="flow"')).includes('</section>'), 'the hero band CLOSES before the next section (it once wrapped the whole page)');
     ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
     ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
     const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';
