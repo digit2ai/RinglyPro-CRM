@@ -19,7 +19,9 @@
 
 const { run, one } = require('./db');
 
-const CHANNELS = ['app', 'mcp', 'voice', 'system'];
+// 'copilot' is the in-app natural-language agent: it may do everything the app
+// can do EXCEPT the human_only actions, which stay the creator's own tap.
+const CHANNELS = ['app', 'copilot', 'mcp', 'voice', 'system'];
 const TOOLS = new Map(); // name -> def
 
 function define(agentId, name, def) {

@@ -57,4 +57,26 @@ async function json(opts) {
   try { return { data: JSON.parse(m[0]), model: r.model }; } catch (e) { return null; }
 }
 
-module.exports = { text, json, configured, _inject, MODEL_FAST, MODEL_DEEP };
+/**
+ * toolTurn — one model turn that may ask for tools. The LOOP lives in
+ * copilot.js; this file stays the only one that reaches a model.
+ * Returns { content, stop_reason, model } or null (no model / failure).
+ */
+async function toolTurn({ system, messages, tools, deep = false, max_tokens = 1200 }) {
+  const c = getClient();
+  if (!c) return null;
+  const model = deep ? MODEL_DEEP() : MODEL_FAST();
+  try {
+    const r = await c.messages.create({
+      model, max_tokens, tools,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+      messages
+    });
+    return { content: r.content || [], stop_reason: r.stop_reason, model };
+  } catch (e) {
+    console.error('[levelup] copilot model error:', e.message);
+    return null;
+  }
+}
+
+module.exports = { text, json, configured, _inject, toolTurn, MODEL_FAST, MODEL_DEEP };

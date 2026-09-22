@@ -67,6 +67,9 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
   const pubs = fs.readdirSync(path.join(ROOT, 'public')).filter((f2) => /\.(html|js|css)$/.test(f2));
   ok(pubs.every((f2) => !/(^|[^\/a-z.])\/levelupmediamarketing/.test(read('public/' + f2))), 'no page hardcodes the mount prefix');
   ['business.update_deal', 'picks.publish', 'strategist.save_business', 'editor.confirm_rule'].forEach((t) => ok(brain.TOOLS.get(t) && brain.TOOLS.get(t).human_only, t + ' is human_only'));
+  const cop = require('./src/copilot');
+  ok(cop.toolsFor({}).length === brain.TOOLS.size && cop.toolsFor({}).every((t) => /^[a-zA-Z0-9_-]{1,64}$/.test(t.name)), 'the copilot offers every tool under a wire-safe name');
+  ok(brain.listTools({ tenantId: 1, channel: 'copilot' }).every((t) => !brain.TOOLS.get(t.name).human_only), 'the copilot channel can never list a human_only tool');
   ok(C.AGENTS.length === 11 && C.EDIT_RULES.length === 9 && C.REVIEW_ISSUES.length === 5, 'corpus: 11 agents, 9 editing rules, 5 review issues');
   const persona = require('../../src/config/voice-agents').getAgent('levelup');
   ok(persona.name.en === 'Andrea' && persona.name.es === 'Andrea' && persona.voice.en === 'ava', 'the voice agent is Andrea, Ava voice in English');
@@ -251,6 +254,46 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     await call('a', 'DELETE', '/api/v1/keys/' + keyId);
     m = await mcp(secret, { jsonrpc: '2.0', id: 5, method: 'tools/list' });
     ok(m.status === 401, 'revoked key refused');
+
+    // ── The dashboard copilot (plain language -> real tool calls) ─────────
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'add two ideas about budgeting' });
+    ok(r.status === 200 && r.j.no_model === true && !r.j.actions.length, 'keyless copilot says there is no model and does nothing');
+
+    process.env.ANTHROPIC_API_KEY = 'fake';
+    function fakeModel(script) {
+      let i = 0;
+      llm._inject({ messages: { create: async (o) => { const step = script[Math.min(i++, script.length - 1)]; return typeof step === 'function' ? step(o) : step; } } });
+    }
+    const say = (t) => ({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn' });
+    const use = (name, input) => ({ content: [{ type: 'tool_use', id: 'u' + Math.random(), name, input }], stop_reason: 'tool_use' });
+
+    const before = (await tool('a', 'calendar.list', {})).j.posts.length;
+    fakeModel([use('ideas__generate', { pillar: 'budgeting', count: 2 }), say('Added two ideas about budgeting.')]);
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'add two ideas about budgeting' });
+    ok(r.status === 200 && /two ideas/i.test(r.j.reply) && r.j.actions.length === 1 && r.j.actions[0].tool === 'ideas.generate', 'the copilot runs a real Brain tool and reports it');
+    ok((await tool('a', 'calendar.list', {})).j.posts.length === before + 2, 'the work actually happened in the database');
+
+    fakeModel([use('picks__publish', { list_id: list.id, published: true }), say('That one is yours to confirm.')]);
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'publish my Under $25 list' });
+    ok(r.j.proposals.length === 1 && r.j.proposals[0].tool === 'picks.publish' && !r.j.actions.length, 'a human_only action comes back as a proposal, never performed');
+    await tool('a', 'picks.publish', { list_id: list.id, published: false });
+    ok((await tool('a', 'picks.lists')).j.lists[0].published === false, 'the copilot did not publish anything');
+
+    fakeModel([use('calendar__list', { tenant_id: meB.id }), say('Here is your calendar.')]);
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'show my posts' });
+    ok(r.j.actions.length === 1 && r.j.actions[0].ok, 'a tenant_id in the model\'s tool input is ignored, not honoured');
+
+    fakeModel([use('ideas__generate', { pillar: 'loop', count: 1 })]); // never stops asking
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'keep going forever' });
+    ok(r.j.actions.length <= Number(process.env.LEVELUP_COPILOT_CALLS || 10), 'the copilot stops at the action cap instead of looping');
+
+    fakeModel([use('business__update_deal', { id: dealId, action: 'approve' }), say('You approve that one.')]);
+    r = await call('a', 'POST', '/api/v1/copilot', { message: 'approve the Glowly reply' });
+    ok(r.j.proposals.length === 1 && r.j.proposals[0].tool === 'business.update_deal', 'approving a brand reply is offered, never done by the copilot');
+
+    const copilotCalls = (await call('a', 'GET', '/api/v1/audit')).j.calls.filter((c) => c.channel === 'copilot');
+    ok(copilotCalls.length >= 3 && copilotCalls.some((c) => c.outcome === 'denied'), 'every copilot call is audited on its own channel, denials included');
+    llm._inject(null); delete process.env.ANTHROPIC_API_KEY;
 
     // Líder, audit, cap
     r = await tool('a', 'lider.chat', { message: 'give me ideas about budgeting' });

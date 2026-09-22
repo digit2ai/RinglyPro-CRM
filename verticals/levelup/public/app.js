@@ -9,10 +9,10 @@
 
   var T = {
     en: { today: 'Dashboard', calendar: 'Content Calendar', pipeline: 'Content Pipeline', batch: 'Batch Planning', strategy: 'Creative Strategist', ideas: 'Ideas & Scripts', editing: 'Editing', business: 'Business Assistant', picks: 'Top Picks', research: 'Product Research', train: 'Train the agents', settings: 'Settings',
-      core: 'Core', addons: 'Add-ons', platform: 'Your AI team', signout: 'Sign out', close: 'Close', send: 'Send', save: 'Save', ask: 'Ask Líder anything', notConnected: 'Not connected',
+      core: 'Core', addons: 'Add-ons', platform: 'Your AI team', signout: 'Sign out', close: 'Close', send: 'Send', save: 'Save', ask: 'Tell Líder what to do', notConnected: 'Not connected',
       cheer: 'A little more consistency, a lot more you.', hello: 'You are doing amazing.', more: 'More', noModel: 'No model: written from your own words', model: 'Written by AI, checked by LevelUp' },
     es: { today: 'Inicio', calendar: 'Calendario', pipeline: 'Flujo de contenido', batch: 'Grabar en lote', strategy: 'Estratega creativa', ideas: 'Ideas y guiones', editing: 'Edición', business: 'Asistente de negocios', picks: 'Top Picks', research: 'Investigación de productos', train: 'Entrenar a los agentes', settings: 'Ajustes',
-      core: 'Básico', addons: 'Complementos', platform: 'Tu equipo de IA', signout: 'Salir', close: 'Cerrar', send: 'Enviar', save: 'Guardar', ask: 'Pregúntale a Líder', notConnected: 'No conectado',
+      core: 'Básico', addons: 'Complementos', platform: 'Tu equipo de IA', signout: 'Salir', close: 'Cerrar', send: 'Enviar', save: 'Guardar', ask: 'Dile a Líder qué hacer', notConnected: 'No conectado',
       cheer: 'Un poco más de constancia, mucho más tú.', hello: 'Lo estás haciendo increíble.', more: 'Más', noModel: 'Sin modelo: escrito con tus propias palabras', model: 'Escrito por IA, verificado por LevelUp' }
   };
   function t(k) { return (T[LANG] && T[LANG][k]) || T.en[k] || k; }
@@ -52,6 +52,7 @@
     $('langBtn').textContent = LANG === 'es' ? 'EN' : 'ES';
     $('outBtn').textContent = t('signout');
     $('dIn').placeholder = t('ask');
+    $('liderBtn').textContent = L('Ask Líder', 'Pídele a Líder');
   }
 
   function statusPill(s) { return '<span class="pill s-' + esc(s) + '">' + esc(s) + '</span>'; }
@@ -387,12 +388,40 @@
 
   // ── Líder drawer ──────────────────────────────────────────────────────────
   function addMsg(role, text) { var m = document.createElement('div'); m.className = 'm ' + role; m.textContent = text; $('msgs').appendChild(m); $('msgs').scrollTop = 1e9; }
-  $('liderBtn').onclick = function () { $('drawer').hidden = false; if (!$('msgs').children.length) addMsg('a', L('Hi, I am Líder. Tell me what you need: ideas, today\'s plan, a brand email, editing…', 'Hola, soy Líder. Dime qué necesitas: ideas, el plan de hoy, un correo de marca, edición…')); $('dIn').focus(); };
+  var CHAT = [];
+  $('liderBtn').onclick = function () { $('drawer').hidden = false; if (!$('msgs').children.length) addMsg('a', L('Hi, I am Líder. Write what you want done and I will do it: add ideas, write a script, schedule a post, queue an edit, analyse a brand email, teach an agent a rule. Approving, sending and publishing stay your tap.', 'Hola, soy Líder. Escribe lo que quieres y lo hago: agregar ideas, escribir un guion, programar una publicación, poner un video en cola, analizar un correo de marca, enseñarle una regla a un agente. Aprobar, enviar y publicar siguen siendo tu decisión.')); $('dIn').focus(); };
   $('dClose').onclick = function () { $('drawer').hidden = true; };
   $('dForm').onsubmit = function (e) {
     e.preventDefault(); var m = val('dIn').trim(); if (!m) return; $('dIn').value = ''; addMsg('u', m);
-    tool('lider.chat', { message: m }).then(function (r) { addMsg('a', r.reply); if (r.ideas) route(); }).catch(function (x) { addMsg('a', x.message); });
+    CHAT.push({ role: 'user', content: m });
+    var wait = document.createElement('div'); wait.className = 'm a'; wait.textContent = L('Working…', 'Trabajando…'); $('msgs').appendChild(wait); $('msgs').scrollTop = 1e9;
+    api('/api/v1/copilot', { method: 'POST', body: { message: m, history: CHAT.slice(-8) } }).then(function (r) {
+      wait.remove(); addMsg('a', r.reply); CHAT.push({ role: 'assistant', content: r.reply });
+      if (r.actions && r.actions.length) {
+        var did = document.createElement('div'); did.className = 'm a'; did.style.fontSize = '13px'; did.style.opacity = '.85';
+        did.textContent = L('Ran: ', 'Ejecutó: ') + r.actions.map(function (a) { return a.tool + (a.ok ? '' : ' (' + L('failed', 'falló') + ')'); }).join(', ');
+        $('msgs').appendChild(did);
+      }
+      (r.proposals || []).forEach(function (p) { addProposal(p); });
+      if (r.no_model) addMsg('a', L('Tip: the buttons in the dashboard do the same work.', 'Consejo: los botones del panel hacen el mismo trabajo.'));
+      $('msgs').scrollTop = 1e9;
+      if (r.actions && r.actions.some(function (a) { return a.ok; })) route();
+    }).catch(function (x) { wait.remove(); addMsg('a', x.message); });
   };
+  // A human_only action is never performed by the copilot: it comes back as a
+  // button, and the creator's tap is what runs it (through the app channel).
+  function addProposal(p) {
+    var box = document.createElement('div'); box.className = 'm a';
+    var label = document.createElement('div'); label.style.marginBottom = '6px';
+    label.textContent = L('This one is yours to confirm:', 'Esto lo confirmas tú:') + ' ' + p.tool;
+    var b = document.createElement('button'); b.className = 'btn small primary'; b.textContent = L('Do it', 'Hazlo');
+    b.onclick = function () {
+      b.disabled = true;
+      tool(p.tool, p.args || {}).then(function () { b.textContent = L('Done', 'Hecho'); route(); })
+        .catch(function (e) { b.disabled = false; toast(e.message); });
+    };
+    box.appendChild(label); box.appendChild(b); $('msgs').appendChild(box); $('msgs').scrollTop = 1e9;
+  }
   $('langBtn').onclick = function () { LANG = LANG === 'es' ? 'en' : 'es'; document.documentElement.lang = LANG; api('/api/v1/me/lang', { method: 'POST', body: { lang: LANG } }).catch(function () {}); renderNav(); route(); };
   $('outBtn').onclick = function () { api('/api/v1/auth/logout', { method: 'POST' }).finally(function () { location.href = B + '/'; }); };
 

@@ -24,6 +24,7 @@ require('./agents');
 const C = require('./corpus');
 const llm = require('./llm');
 const { renderMarkdown } = require('./markdown');
+const copilot = require('./copilot');
 
 // The public About text, as plain sentences, handed to the voice agent so she
 // can answer about the whole platform and not only the section on screen.
@@ -46,7 +47,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-4';
+const VERSION = 'lu-2026-09-22-5';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -153,6 +154,19 @@ router.post('/api/v1/tools/:name', needUser, sameSite, async (req, res) => {
   if (!r.ok) return res.status(r.status || 500).json({ error: r.error });
   res.json(r.result);
 });
+// The dashboard copilot: plain language in, real Brain tool calls out.
+router.post('/api/v1/copilot', needUser, sameSite, async (req, res) => {
+  if (auth.limited('cp:' + req.user.id, 30, 600e3)) return res.status(429).json({ error: 'Too many requests. Wait a moment.' });
+  try {
+    const out = await copilot.run({
+      message: (req.body || {}).message,
+      history: Array.isArray((req.body || {}).history) ? (req.body || {}).history : [],
+      ctx: ctxFor(req)
+    });
+    res.json(out);
+  } catch (e) { res.status(e.status || 500).json({ error: e.message }); }
+});
+
 router.get('/api/v1/audit', needUser, async (req, res) => {
   res.json({ calls: await db.q('SELECT tool, channel, outcome, reason, model_calls, composed_by, ms, created_at FROM lu_calls WHERE tenant_id = :t ORDER BY id DESC LIMIT 100', { t: req.user.tenant_id }) });
 });
