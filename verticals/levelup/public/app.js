@@ -372,16 +372,68 @@
     }).catch(function (e) { view.innerHTML = '<p class="warn">' + esc(e.message) + '</p>'; });
   }
 
+  // ── Connections ────────────────────────────────────────────────────────────
+  // Saved, not connected: the copy says so on every card, because a vault that
+  // looks connected is worse than no vault at all.
+  function connName(p) { return typeof p.name === 'string' ? p.name : L(p.name.en, p.name.es); }
+  function renderConns(d) {
+    var box = $('connBox'); if (!box) return;
+    var head = '<p class="muted">' + L(
+      'Descript, TikTok, Instagram, Facebook and inbox connections are being built through official APIs. Save your details here now and they are ready the day each connector ships. Until then you still paste, copy and post by hand.',
+      'Las conexiones con Descript, TikTok, Instagram, Facebook y tu correo se están construyendo con APIs oficiales. Guarda tus datos aquí y quedan listos el día que cada conexión salga. Mientras tanto sigues pegando, copiando y publicando a mano.'
+    ) + '</p><p class="muted">' + L(
+      'Your secrets are encrypted and never shown again, only the last four characters. Nothing here posts or sends by itself.',
+      'Tus claves se guardan cifradas y no se vuelven a mostrar, solo los últimos cuatro caracteres. Nada de esto publica ni envía por su cuenta.'
+    ) + '</p>';
+    if (!d.encryption_configured) {
+      head += '<p class="warn">' + L('Saving is closed until the server has an encryption secret set.', 'Guardar está cerrado hasta que el servidor tenga una clave de cifrado.') + '</p>';
+    }
+    box.innerHTML = head + d.providers.map(function (p) {
+      var chip = p.unreadable
+        ? '<span class="tag warn">' + L('Key rotated — save them again', 'Clave rotada — vuelve a guardarlas') + '</span>'
+        : (p.saved ? '<span class="tag">' + L('Saved · not connected yet', 'Guardado · aún no conectado') + '</span>'
+                   : '<span class="tag muted">' + L('Not saved', 'Sin guardar') + '</span>');
+      var fields = p.fields.map(function (f) {
+        var ph = f.secret ? (f.set ? f.hint + ' — ' + L('leave blank to keep', 'déjalo vacío para conservarla') : '') : '';
+        return '<div><label>' + L(f.label.en, f.label.es) + '</label>' +
+          '<input data-conn="' + p.id + '" data-field="' + f.key + '"' +
+          (f.secret ? ' type="password" autocomplete="new-password"' : '') +
+          ' placeholder="' + esc(ph) + '" value="' + esc(f.value || '') + '"></div>';
+      }).join('');
+      return '<div class="card conn"><div class="conn-h"><b>' + esc(connName(p)) + '</b>' + chip + '</div>' +
+        '<small class="muted">' + L(p.what.en, p.what.es) + '</small>' +
+        '<div class="grid2">' + fields + '</div>' +
+        '<div class="acts"><button class="btn small" data-csave="' + p.id + '"' + (d.encryption_configured ? '' : ' disabled') + '>' + L('Save', 'Guardar') + '</button>' +
+        (p.saved ? '<button class="btn small" data-cdel="' + p.id + '">' + L('Remove', 'Borrar') + '</button>' : '') + '</div></div>';
+    }).join('');
+    box.querySelectorAll('[data-csave]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.dataset.csave, body = {};
+        box.querySelectorAll('[data-conn="' + id + '"]').forEach(function (i) { body[i.dataset.field] = i.value; });
+        api('/api/v1/connections/' + id, { method: 'PUT', body: body })
+          .then(function (d2) { renderConns(d2); toast(L('Saved. Not connected yet.', 'Guardado. Aún no conectado.')); })
+          .catch(function (e) { toast(e.message); });
+      };
+    });
+    box.querySelectorAll('[data-cdel]').forEach(function (b) {
+      b.onclick = function () {
+        api('/api/v1/connections/' + b.dataset.cdel, { method: 'DELETE' }).then(renderConns).catch(function (e) { toast(e.message); });
+      };
+    });
+  }
+
   // ── Settings ───────────────────────────────────────────────────────────────
   function viewSettings() {
-    Promise.all([api('/api/v1/keys'), api('/api/v1/audit')]).then(function (r) {
+    Promise.all([api('/api/v1/keys'), api('/api/v1/audit'), api('/api/v1/connections')]).then(function (r) {
       var mcp = location.origin + B + '/mcp';
       view.innerHTML = '<div class="panel"><h2>' + L('More', 'Más') + '</h2><div class="acts">' + ['strategy', 'ideas', 'editing', 'business', 'picks', 'research'].map(function (k) { return '<a class="btn small" href="#' + k + '">' + t(k) + '</a>'; }).join('') + '<a class="btn small" href="' + B + '/about">' + L('About us', 'Quiénes somos') + '</a></div></div>' +
         '<div class="panel"><h2>' + L('Connect your own AI (MCP)', 'Conecta tu propia IA (MCP)') + '</h2><p class="muted">' + L('Endpoint', 'Endpoint') + ': <code>' + esc(mcp) + '</code>. ' + L('Keys can call your agents. Approving, marking sent and marking posted stay yours: no key can do them.', 'Las llaves pueden llamar a tus agentes. Aprobar, marcar enviado y marcar publicado siguen siendo tuyos: ninguna llave puede hacerlo.') + '</p>' +
         '<div class="grid2"><div><label>' + L('Label', 'Nombre') + '</label><input id="kLabel" value="My assistant"></div><div><label style="display:flex;gap:6px;align-items:center;margin-top:36px"><input type="checkbox" id="kTrain" style="width:auto"> ' + L('Allow training (train scope)', 'Permitir entrenar (alcance train)') + '</label></div></div><div class="acts"><button class="btn" id="kNew">' + L('Create key', 'Crear llave') + '</button></div><div id="kOut"></div>' +
         '<table class="t">' + r[0].keys.map(function (k) { return '<tr><td>' + esc(k.label) + '<br><small class="muted">' + esc(k.prefix) + '… · ' + esc((k.scopes || []).join(', ')) + '</small></td><td>' + (k.revoked ? L('revoked', 'revocada') : '<button class="btn small" data-rev="' + k.id + '">' + L('Revoke', 'Revocar') + '</button>') + '</td></tr>'; }).join('') + '</table></div>' +
+        '<div class="panel"><h2>' + L('Connections', 'Conexiones') + '</h2><div id="connBox"></div></div>' +
         '<div class="panel"><h2>' + L('Brain audit (last 100 calls)', 'Auditoría del cerebro (últimas 100)') + '</h2><table class="t">' + r[1].calls.map(function (c) { return '<tr><td>' + esc(c.tool) + '</td><td>' + esc(c.channel) + '</td><td>' + esc(c.outcome) + (c.reason ? '<br><small class="muted">' + esc(c.reason) + '</small>' : '') + '</td><td><small class="muted">' + esc(new Date(c.created_at).toLocaleString()) + '</small></td></tr>'; }).join('') + '</table></div>';
       $('kNew').onclick = function () { api('/api/v1/keys', { method: 'POST', body: { label: val('kLabel'), scopes: $('kTrain').checked ? ['agent', 'train'] : ['agent'] } }).then(function (x) { $('kOut').innerHTML = '<p class="warn">' + L('Copy it now, it is shown once: ', 'Cópiala ahora, solo se muestra una vez: ') + '<code>' + esc(x.secret) + '</code></p>'; }).catch(function (e) { toast(e.message); }); };
+      renderConns(r[2]);
       view.querySelectorAll('[data-rev]').forEach(function (b) { b.onclick = function () { api('/api/v1/keys/' + b.dataset.rev, { method: 'DELETE' }).then(viewSettings); }; });
     }).catch(function (e) { view.innerHTML = '<p class="warn">' + esc(e.message) + '</p>'; });
   }

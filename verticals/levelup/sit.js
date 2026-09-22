@@ -156,6 +156,37 @@ function jpegSize(file) {
     r = await tool('b', 'calendar.list', { tenant_id: me.id });
     ok(r.status === 200 && r.j.posts.length === 0, 'tenant_id in arguments is ignored');
 
+    // ── connections: a real save, and what a read may never contain ───────
+    r = await call("a", "PUT", "/api/v1/connections/facebook", { page_id: "123456789", page_access_token: "EAA-secret-token-4821" });
+    ok(r.status === 200, "a creator can save their own Facebook details");
+    {
+      const fb = r.j.providers.find((x) => x.id === "facebook");
+      const tok = fb.fields.find((f) => f.key === "page_access_token");
+      ok(tok.set === true && tok.value === null && tok.hint === "••••4821", "the token comes back as a hint, never as itself");
+      ok(!JSON.stringify(r.j).includes("EAA-secret-token-4821"), "the secret appears nowhere in the response");
+      ok(r.j.note === "saved_not_connected", "every read states that saving is not connecting");
+      ok(fb.fields.find((f) => f.key === "page_id").value === "123456789", "a non-secret field is readable, so it can be checked");
+    }
+    // It is stored encrypted: the raw row must not contain the token.
+    {
+      const row = await db.one("SELECT secrets_enc FROM lu_connections WHERE tenant_id = :t AND provider = :p", { t: me.id, p: "facebook" });
+      ok(row && row.secrets_enc && !row.secrets_enc.includes("EAA-secret-token-4821"), "the database row holds ciphertext, not the token");
+    }
+    // A blank secret keeps the stored one, as everywhere else in the estate.
+    r = await call("a", "PUT", "/api/v1/connections/facebook", { page_id: "999", page_access_token: "" });
+    {
+      const fb = r.j.providers.find((x) => x.id === "facebook");
+      ok(fb.fields.find((f) => f.key === "page_access_token").hint === "••••4821", "a blank secret keeps the stored one");
+      ok(fb.fields.find((f) => f.key === "page_id").value === "999", "a plain field still updates");
+    }
+    r = await call("b", "GET", "/api/v1/connections");
+    ok(r.status === 200 && r.j.providers.every((x) => !x.saved), "another creator sees none of it");
+    r = await call("a", "PUT", "/api/v1/connections/not-a-platform", { x: 1 });
+    ok(r.status === 400, "an unknown provider is refused");
+    r = await call(null, "GET", "/api/v1/connections");
+    ok(r.status === 401 || r.status === 403, "signed out, the vault is closed");
+    r = await call("a", "DELETE", "/api/v1/connections/facebook");
+    ok(r.status === 200 && r.j.providers.find((x) => x.id === "facebook").saved === false, "a creator can remove their own credentials");
     // scripts: keyless, then fake model guards
     r = await tool('a', 'scripts.write', { post_id: postA.id });
     ok(r.status === 200 && r.j.composed_by === 'heuristic' && /HOOK/.test(r.j.post.script) && r.j.post.status === 'script', 'keyless script template, labelled');
@@ -337,6 +368,27 @@ function jpegSize(file) {
     const band = r.txt.slice(r.txt.indexOf('<section class="hero-band"'), r.txt.indexOf('<section id="flow"'));
     ok(band.includes('</section>') && /<\/section>\s*<div class="hero">/.test(band), 'the band holds the artwork alone and the copy follows it (no headline on top of the artwork)');
     ok(/\n\.hero\{[^}]*max-width:1320px/.test(r.txt), 'the hero copy keeps its centred column (the base .hero rule survives)');
+    // ── connections: a vault that never claims to be connected ────────────
+    {
+      const conn = require("./src/connections");
+      const ids = conn.PROVIDERS.map((x) => x.id);
+      ok(["descript", "tiktok", "instagram", "facebook", "inbox"].every((x) => ids.indexOf(x) >= 0),
+        "every platform the page names has a card");
+      ok(conn.PROVIDERS.every((x) => x.fields.some((f) => f.secret)), "every provider has at least one secret field");
+      const src = read("src/connections.js");
+      ok(/aes-256-gcm/.test(src), "secrets are encrypted at rest");
+      ok(!/connected\s*:/.test(src) && !/status.*connected/i.test(strip(src).replace(/not_connected/g, "")),
+        "nothing in the vault can record a connection it cannot make");
+      // No agent, tool or copilot path may reach a page token.
+      const reach = ["src/agents.js", "src/brain.js", "src/copilot.js"].filter((f) => /connections/.test(read(f)));
+      ok(reach.length === 0, "no agent, brain or copilot file can read a stored credential" + (reach.length ? " — " + reach.join(", ") : ""));
+      ok(!/reveal|secrets_enc.*res\.json|res\.json\(.*secrets/.test(read("src/index.js")), "no route returns a stored secret");
+      const migration = read("migrations/20260922_levelup_connections.sql");
+      ok(/tenant_id\s+INTEGER NOT NULL/.test(migration) && /UNIQUE INDEX/.test(migration), "the table is tenant-scoped with one row per provider");
+      ok(!/\bconnected\b/.test(migration.replace(/--.*$/gm, "")), "the schema has no connected column");
+    }
+    ok(/Saved · not connected yet|Saved &middot; not connected yet/.test(read("public/app.js")),
+      "the settings card says saved, not connected");
     // ── the team has human names ───────────────────────────────────────────
     ok(C.AGENTS.every((x) => x.person && /^[A-Z][a-zá-ú]+$/.test(x.person)), "every agent has a person name");
     ok(new Set(C.AGENTS.map((x) => x.person)).size === C.AGENTS.length, "no two agents answer to the same name");
@@ -390,7 +442,7 @@ function jpegSize(file) {
     llm._inject(null);
     const ids = (await db.q('SELECT id FROM lu_users WHERE email LIKE :p', { p: 'sit-lu-%' })).map((x) => x.id);
     if (ids.length) {
-      for (const tbl of ['lu_profiles', 'lu_knowledge', 'lu_posts', 'lu_edit_jobs', 'lu_edit_issues', 'lu_deals', 'lu_retainers', 'lu_pick_items', 'lu_pick_lists', 'lu_api_keys', 'lu_calls']) {
+      for (const tbl of ['lu_profiles', 'lu_knowledge', 'lu_posts', 'lu_edit_jobs', 'lu_edit_issues', 'lu_deals', 'lu_retainers', 'lu_pick_items', 'lu_pick_lists', 'lu_api_keys', 'lu_calls', 'lu_connections']) {
         await db.run(`DELETE FROM ${tbl} WHERE tenant_id IN (:ids)`, { ids });
       }
       await db.run('DELETE FROM lu_users WHERE id IN (:ids)', { ids });

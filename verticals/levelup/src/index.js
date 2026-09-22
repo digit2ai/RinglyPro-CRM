@@ -18,6 +18,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const db = require('./db');
+const connections = require('./connections');
 const auth = require('./auth');
 const brain = require('./brain');
 require('./agents');
@@ -47,7 +48,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-15';
+const VERSION = 'lu-2026-09-22-16';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -172,6 +173,23 @@ router.get('/api/v1/audit', needUser, async (req, res) => {
 });
 
 // ── API keys for the MCP endpoint (hash at rest, plaintext shown once) ──────
+// ── Connections: the creator's own credentials for connectors being built ──
+// Deliberately plain routes, NOT Brain tools: no agent, tool or copilot path
+// may reach a page token. Secrets are never returned by any of them.
+router.get('/api/v1/connections', needUser, async (req, res) => {
+  try { res.json(await connections.list(req.user.tenant_id)); }
+  catch (e) { res.status(500).json({ error: 'could not read connections' }); }
+});
+router.put('/api/v1/connections/:provider', needUser, sameSite, async (req, res) => {
+  const r = await connections.save(req.user.tenant_id, String(req.params.provider), req.body || {});
+  if (r.error) return res.status(400).json(r);
+  res.json(await connections.list(req.user.tenant_id));
+});
+router.delete('/api/v1/connections/:provider', needUser, sameSite, async (req, res) => {
+  const r = await connections.remove(req.user.tenant_id, String(req.params.provider));
+  if (r.error) return res.status(400).json(r);
+  res.json(await connections.list(req.user.tenant_id));
+});
 router.get('/api/v1/keys', needUser, async (req, res) => {
   res.json({ keys: await db.q('SELECT id, label, prefix, scopes, revoked, last_used_at, created_at FROM lu_api_keys WHERE tenant_id = :t ORDER BY id DESC', { t: req.user.tenant_id }) });
 });

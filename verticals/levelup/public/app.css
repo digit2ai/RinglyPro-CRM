@@ -53,3 +53,12 @@ table.t{width:100%;border-collapse:collapse;font-size:14px}table.t td,table.t th
  .tabbar a.on{color:var(--pink-d);font-weight:700}
  .cal .d{min-height:54px}
 }
+
+/* Connections (Settings) — a card per platform we are connecting to. */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg);white-space:nowrap}
+.card.conn{margin-bottom:12px}
+.conn-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+.card.conn .grid2{margin-top:10px}
+.tag.muted{color:var(--mut)}
+.tag.warn{color:var(--bad);border-color:var(--bad)}
