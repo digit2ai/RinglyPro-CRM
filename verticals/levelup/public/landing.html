@@ -20,13 +20,15 @@
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1320px;margin:0 auto;gap:12px}
 .logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
 nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-/* Full-width hero band. The artwork sits at 30% (70% transparent) behind a
-   scrim, so the headline keeps its contrast in both themes. */
-.hero-band{position:relative;isolation:isolate;overflow:hidden}
-.hero-band::before{content:"";position:absolute;inset:0;z-index:-2;min-height:420px;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/cover no-repeat}
-.hero-band::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,.86) 0%,rgba(255,255,255,.72) 42%,rgba(255,255,255,.62) 100%)}
-:root[data-theme="dark"] .hero-band::after{background:linear-gradient(90deg,rgba(27,23,48,.88) 0%,rgba(27,23,48,.74) 42%,rgba(27,23,48,.62) 100%)}
-.hero{max-width:1320px;margin:0 auto;padding:56px 24px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
+/* Full-width hero band. THE WHOLE ARTWORK IS SHOWN, never cropped: the band
+   carries the image's own 16:9 ratio and paints it with background-size
+   contain, so nothing is cut off at any width. One light wash over it (the
+   intended 70% transparency) keeps the headline readable. */
+.hero-band{position:relative;isolation:isolate;overflow:hidden;display:grid;align-content:center;aspect-ratio:1920/1080;min-height:520px}
+.hero-band::before{content:"";position:absolute;inset:0;z-index:-2;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat}
+.hero-band::after{content:"";position:absolute;inset:0;z-index:-1;background:rgba(255,255,255,.7)}
+:root[data-theme="dark"] .hero-band::after{background:rgba(27,23,48,.72)}
+:root[data-theme="dark"] .hero-band{background:#0b0912}
 .hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-1px}
 .hero h1 span{font-family:var(--script);color:var(--pink-d);font-weight:600}
 .hero p{font-size:18px;color:var(--mut);margin:0 0 22px}
@@ -44,6 +46,7 @@ section h2{font-size:30px;margin:0 0 8px}section .sub{color:var(--mut);margin:0 
 .rules{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .honest li{margin-bottom:6px}
 footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
+@media(max-width:1000px){.hero-band{aspect-ratio:auto;padding:24px 0}.hero-band::before{background-size:100% auto;background-position:center top;opacity:.85}}
 @media(max-width:820px){.hero{grid-template-columns:1fr}.rules{grid-template-columns:1fr}}
 </style>
 </head>
