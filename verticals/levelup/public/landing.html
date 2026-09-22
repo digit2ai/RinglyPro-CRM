@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LevelUp Media Marketing</title>
+<meta name="description" content="The AI back office for content creators: strategy, ideas, scripts, calendar, editing, brand deals and top picks, run by a team of AI agents you train and approve.">
+<link rel="canonical" href="https://levelupmediamarketing.com/">
+<meta property="og:title" content="LevelUp Media Marketing">
+<meta property="og:description" content="Your AI back office. Same you, bigger things.">
+<meta name="theme-color" content="#c2587a">
+<link rel="icon" href="{{BASE}}/icon.svg">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<style>
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;max-width:1120px;margin:0 auto;gap:12px}
+.logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
+nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hero{max-width:1120px;margin:0 auto;padding:40px 20px 30px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
+.hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-1px}
+.hero h1 span{font-family:var(--script);color:var(--pink-d);font-weight:600}
+.hero p{font-size:18px;color:var(--mut);margin:0 0 22px}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.mock{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:0 20px 60px rgba(163,64,95,.12)}
+.mock h3{margin:0 0 10px;font-size:15px}.row{display:flex;gap:8px;align-items:center;padding:10px;border-radius:14px;background:var(--blush);margin-bottom:8px;font-size:14px}
+.tag{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+section{max-width:1120px;margin:0 auto;padding:36px 20px}
+section h2{font-size:30px;margin:0 0 8px}section .sub{color:var(--mut);margin:0 0 22px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card b{display:block;margin-bottom:4px}.card small{color:var(--mut)}
+.c1{background:var(--blush)}.c2{background:var(--blue)}.c3{background:var(--mint)}.c4{background:var(--peach)}
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.honest li{margin-bottom:6px}
+footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
+@media(max-width:820px){.hero{grid-template-columns:1fr}.rules{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="{{BASE}}/">LevelUp</a>
+  <nav>
+    <button class="btn small" id="langBtn" type="button">ES</button>
+    <a class="btn small" href="{{BASE}}/requirements" data-en="Requirements" data-es="Requisitos">Requirements</a>
+    <a class="btn small" href="{{BASE}}/login" data-en="Sign in" data-es="Entrar">Sign in</a>
+    <a class="btn small primary" href="{{BASE}}/login?mode=signup" data-en="Start free" data-es="Empieza gratis">Start free</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <div>
+    <h1><span data-en="Same you." data-es="La misma tú.">Same you.</span><br><b data-en="Bigger things." data-es="Cosas más grandes.">Bigger things.</b></h1>
+    <p data-en="LevelUp Media Marketing is the AI back office for content creators. A team of AI agents plans your content, writes your scripts, queues your edits and handles brand emails, and you train them to sound like you. Nothing is posted or sent without your OK." data-es="LevelUp Media Marketing es la oficina de IA para creadoras de contenido. Un equipo de agentes planea tu contenido, escribe tus guiones, prepara tus ediciones y atiende correos de marcas, y tú los entrenas para que suenen como tú. Nada se publica ni se envía sin tu aprobación.">LevelUp Media Marketing is the AI back office for content creators. A team of AI agents plans your content, writes your scripts, queues your edits and handles brand emails, and you train them to sound like you. Nothing is posted or sent without your OK.</p>
+    <div class="cta">
+      <a class="btn primary" href="{{BASE}}/login?mode=signup" data-en="Create my back office" data-es="Crear mi oficina">Create my back office</a>
+      <a class="btn" href="#agents" data-en="Meet the team" data-es="Conoce al equipo">Meet the team</a>
+    </div>
+  </div>
+  <div class="mock" aria-hidden="true">
+    <h3 data-en="Today's plan (example)" data-es="Plan de hoy (ejemplo)">Today's plan (example)</h3>
+    <div class="row"><span class="tag" data-en="Idea" data-es="Idea">Idea</span> <span data-en="3 things I wish I knew about batching" data-es="3 cosas que ojalá hubiera sabido de grabar en lote">3 things I wish I knew about batching</span></div>
+    <div class="row" style="background:var(--blue)"><span class="tag" data-en="Script" data-es="Guion">Script</span> <span data-en="My honest morning routine" data-es="Mi rutina real de mañana">My honest morning routine</span></div>
+    <div class="row" style="background:var(--mint)"><span class="tag" data-en="Editing" data-es="Edición">Editing</span> <span data-en="Starting over at 30" data-es="Empezar de nuevo a los 30">Starting over at 30</span></div>
+    <div class="row" style="background:var(--peach)"><span class="tag" data-en="Approve" data-es="Aprobar">Approve</span> <span data-en="Reply to a brand offer" data-es="Respuesta a una marca">Reply to a brand offer</span></div>
+    <p class="script" style="font-size:22px;color:var(--pink-d);margin:10px 0 0" data-en="Progress over perfection." data-es="Progreso, no perfección.">Progress over perfection.</p>
+  </div>
+</div>
+
+<section id="agents">
+  <h2 data-en="Your AI team" data-es="Tu equipo de IA">Your AI team</h2>
+  <p class="sub" data-en="One manager, Líder, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Una gerente, Líder, es tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">One manager, Líder, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
+  <div class="grid">
+    <div class="card c1"><b>Líder</b><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
+    <div class="card c2"><b data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</b><small data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus palabras.">Niche, content pillars and offer, from your own words.</small></div>
+    <div class="card c3"><b data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</b><small data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</small></div>
+    <div class="card c4"><b data-en="Calendar" data-es="Calendario">Calendar</b><small data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</small></div>
+    <div class="card c1"><b data-en="Video Editor" data-es="Editor de video">Video Editor</b><small data-en="Nine editing rules plus yours. Descript connection in progress." data-es="Nueve reglas de edición más las tuyas. Conexión con Descript en progreso.">Nine editing rules plus yours. Descript connection in progress.</small></div>
+    <div class="card c2"><b data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</b><small data-en="Flags fake brand offers, drafts replies at your rates." data-es="Marca ofertas falsas y redacta respuestas con tus tarifas.">Flags fake brand offers, drafts replies at your rates.</small></div>
+    <div class="card c3"><b>Top Picks</b><small data-en="Shoppable lists with your own public page." data-es="Listas comprables con tu propia página pública.">Shoppable lists with your own public page.</small></div>
+    <div class="card c4"><b data-en="Trainer" data-es="Entrenadora">Trainer</b><small data-en="Teach every agent your rules, rates and style." data-es="Enséñale a cada agente tus reglas, tarifas y estilo.">Teach every agent your rules, rates and style.</small></div>
+  </div>
+</section>
+
+<section>
+  <h2 data-en="You stay in control" data-es="Tú tienes el control">You stay in control</h2>
+  <div class="rules">
+    <div class="card"><b data-en="Read only stays read only" data-es="Solo lectura es solo lectura">Read only stays read only</b><small data-en="Anything touching your inbox or accounts only reads and drafts. It never sends, closes a deal or acts for you without your approval." data-es="Todo lo que toca tu correo o tus cuentas solo lee y redacta. Nunca envía, cierra un trato ni actúa por ti sin tu aprobación.">Anything touching your inbox or accounts only reads and drafts. It never sends, closes a deal or acts for you without your approval.</small></div>
+    <div class="card"><b data-en="Posts default to drafts" data-es="Las publicaciones son borradores">Posts default to drafts</b><small data-en="Every video becomes a draft you review and publish yourself." data-es="Cada video queda como borrador que tú revisas y publicas.">Every video becomes a draft you review and publish yourself.</small></div>
+  </div>
+  <h3 style="margin-top:26px" data-en="What is not connected yet" data-es="Lo que aún no está conectado">What is not connected yet</h3>
+  <ul class="honest">
+    <li data-en="Descript, TikTok, Instagram, Facebook and inbox connections are being built through official APIs. Until then you paste, copy and post by hand." data-es="Las conexiones con Descript, TikTok, Instagram, Facebook y tu correo se están construyendo con APIs oficiales. Mientras tanto pegas, copias y publicas a mano.">Descript, TikTok, Instagram, Facebook and inbox connections are being built through official APIs. Until then you paste, copy and post by hand.</li>
+    <li data-en="Views, revenue and top posts show as not connected, never as sample numbers." data-es="Vistas, ingresos y mejores publicaciones aparecen como no conectados, nunca con números de ejemplo.">Views, revenue and top posts show as not connected, never as sample numbers.</li>
+    <li data-en="We never use workarounds that could put your accounts at risk." data-es="Nunca usamos trucos que pongan en riesgo tus cuentas.">We never use workarounds that could put your accounts at risk.</li>
+  </ul>
+</section>
+
+<footer>LevelUp Media Marketing · <a href="{{BASE}}/requirements" data-en="Unified requirements" data-es="Requisitos unificados">Unified requirements</a> · Digit2AI</footer>
+
+<div data-voice-orb data-agent="levelup" data-lang="en" data-label="Talk to Líder"></div>
+<script src="/embed/voice-orb.js" defer></script>
+<script>
+(function(){
+  var lang = 'en';
+  try { lang = localStorage.getItem('lu_lang') || (navigator.language || '').slice(0,2) === 'es' && 'es' || 'en'; } catch(e) {}
+  function apply(){
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent = el.getAttribute('data-' + lang); });
+    document.getElementById('langBtn').textContent = lang === 'es' ? 'EN' : 'ES';
+    var orb = document.querySelector('[data-voice-orb]'); if (orb) { orb.setAttribute('data-lang', lang); orb.setAttribute('data-label', lang === 'es' ? 'Habla con Líder' : 'Talk to Líder'); }
+  }
+  document.getElementById('langBtn').addEventListener('click', function(){ lang = lang === 'es' ? 'en' : 'es'; try { localStorage.setItem('lu_lang', lang); } catch(e) {} apply(); });
+  apply();
+})();
+</script>
+</body>
+</html>

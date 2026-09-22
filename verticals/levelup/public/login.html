@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sign in — LevelUp</title><meta name="robots" content="noindex">
+<link rel="icon" href="{{BASE}}/icon.svg"><meta name="theme-color" content="#c2587a">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<style>
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px}
+.logo{font-family:var(--script);font-size:38px;color:var(--pink-d);text-align:center;margin:0}
+.tabs{display:flex;gap:6px;margin:18px 0 6px}.tabs button{flex:1}
+.tabs .on{background:var(--blush);border-color:var(--pink)}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
+.btn.primary{width:100%;margin-top:16px}
+small{color:var(--mut)}
+</style>
+</head>
+<body>
+<form class="box" id="f" novalidate>
+  <p class="logo">LevelUp</p>
+  <div class="tabs"><button class="btn small on" type="button" id="tIn">Sign in</button><button class="btn small" type="button" id="tUp">Create account</button></div>
+  <div id="nameRow" hidden><label for="name">Your name</label><input id="name" autocomplete="name"></div>
+  <label for="email">Email</label><input id="email" type="email" autocomplete="email" required>
+  <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+  <small id="pwHint" hidden>At least 10 characters.</small>
+  <button class="btn primary" type="submit" id="go">Sign in</button>
+  <div class="err" id="err" role="alert"></div>
+  <p style="text-align:center"><a href="{{BASE}}/">Back to home</a></p>
+</form>
+<script>
+(function(){
+  var B='{{BASE}}', mode=new URLSearchParams(location.search).get('mode')==='signup'?'up':'in';
+  function set(m){mode=m;document.getElementById('tIn').classList.toggle('on',m==='in');document.getElementById('tUp').classList.toggle('on',m==='up');
+    document.getElementById('nameRow').hidden=m!=='up';document.getElementById('pwHint').hidden=m!=='up';
+    document.getElementById('go').textContent=m==='up'?'Create my back office':'Sign in';
+    document.getElementById('pw').setAttribute('autocomplete',m==='up'?'new-password':'current-password');}
+  document.getElementById('tIn').onclick=function(){set('in')};document.getElementById('tUp').onclick=function(){set('up')};set(mode);
+  document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();var err=document.getElementById('err');err.textContent='';
+    var body={email:document.getElementById('email').value,password:document.getElementById('pw').value,name:document.getElementById('name').value,lang:(navigator.language||'').slice(0,2)==='es'?'es':'en'};
+    fetch(B+'/api/v1/auth/'+(mode==='up'?'signup':'login'),{method:'POST',headers:{'Content-Type':'application/json','X-LevelUp':'1'},body:JSON.stringify(body),credentials:'same-origin'})
+    .then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'Something went wrong');location.href=B+'/app';});})
+    .catch(function(x){err.textContent=x.message;});});
+})();
+</script>
+</body>
+</html>

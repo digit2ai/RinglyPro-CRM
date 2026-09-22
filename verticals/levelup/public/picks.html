@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title><meta property="og:title" content="{{TITLE}}">
+<link rel="icon" href="{{BASE}}/icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<style>
+main{max-width:620px;margin:0 auto;padding:28px 16px 60px}
+h1{font-family:var(--script);color:var(--pink-d);font-size:42px;margin:0;text-align:center}
+.intro{text-align:center;color:var(--mut)}
+.pk{display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;margin:12px 0;text-decoration:none;color:var(--ink)}
+.pk img,.pk .ph{width:84px;height:84px;border-radius:12px;object-fit:cover;background:var(--blush);flex:0 0 84px}
+.pk b{display:block}.pr{color:var(--pink-d);font-weight:700;margin-right:8px}.pk small{color:var(--mut)}.pk p{margin:4px 0 0;font-size:14px;color:var(--mut)}
+footer{text-align:center;color:var(--mut);font-size:13px;margin-top:30px}
+</style>
+</head>
+<body><main>
+<h1>{{TITLE}}</h1><p class="intro">{{INTRO}}</p>
+{{CARDS}}
+<footer>Some links may earn a commission. Made with LevelUp Media Marketing.</footer>
+</main></body>
+</html>

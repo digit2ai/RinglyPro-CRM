@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}} — LevelUp Media Marketing</title>
+<link rel="icon" href="{{BASE}}/icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<style>
+main{max-width:860px;margin:0 auto;padding:24px 16px 80px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
+h1{font-size:34px;line-height:1.15}h2{margin-top:36px;border-bottom:2px solid var(--blush);padding-bottom:6px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;margin:12px 0}
+th{background:var(--blush);text-align:left}th,td{border:1px solid var(--line);padding:8px;vertical-align:top}
+code{background:var(--blush);padding:1px 5px;border-radius:6px;font-size:.92em}
+@media print{.top{display:none}}
+</style>
+</head>
+<body><main>
+<div class="top"><a class="logo" href="{{BASE}}/">LevelUp</a><button class="btn small" onclick="print()">Print / PDF</button></div>
+{{BODY}}
+</main></body>
+</html>

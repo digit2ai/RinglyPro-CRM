@@ -340,6 +340,39 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// LEVELUP MEDIA MARKETING DOMAIN: levelupmediamarketing.com serves the
+// verticals/levelup router at its ROOT (baseUrl ''), so every {{BASE}} in its
+// pages, manifest and worker resolves to the root. www 301s to the apex.
+// The voice orb's script, brain and voice pass through to the main app;
+// /levelupmediamarketing/... on this host 301s to the root path. Anything else
+// ends in LevelUp's own branded 404, never the CRM (the jobmd.io/admin lesson).
+// ═════════════════════════════════════════════════════════════════════════
+const LEVELUP_HOSTS = new Set(['levelupmediamarketing.com', 'www.levelupmediamarketing.com']);
+const LEVELUP_PASS_THROUGH = ['/embed/', '/api/voice-agent/', '/api/tts/'];
+let levelupRootApp = null;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!LEVELUP_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://levelupmediamarketing.com' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  const query = cut === -1 ? '' : req.url.slice(cut);
+  if (LEVELUP_PASS_THROUGH.some((pre) => path.startsWith(pre))) return next();
+  const legacy = /^\/levelupmediamarketing(\/.*)?$/.exec(path);
+  if (legacy) return res.redirect(301, (legacy[1] || '/') + query);
+  try {
+    if (!levelupRootApp) levelupRootApp = require('../verticals/levelup/src/index');
+  } catch (e) {
+    console.error('[levelupmediamarketing.com] vertical failed to load:', e.message);
+    return res.status(503).type('text').send('LevelUp Media Marketing is temporarily unavailable.');
+  }
+  return levelupRootApp(req, res, (err) => {
+    if (err) return next(err);
+    res.status(404).type('text').send('Not found');
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // THE ARCHITECT DISPATCH BOARD — /architect, password-gated
 //
 // The /ringlypro-architect reference: its modes, the seven build phases, the
@@ -2904,6 +2937,22 @@ app.get('/debug/buyersline-error', (req, res) => {
     available: !buyerslineError,
     error: buyerslineError ? { message: buyerslineError.message } : null
   });
+});
+
+// =====================================================
+// LEVELUP MEDIA MARKETING — MCP-driven creator back office (served at /levelupmediamarketing/)
+// =====================================================
+let levelupError = null;
+try {
+  const levelupApp = require('../verticals/levelup/src/index');
+  app.use('/levelupmediamarketing', levelupApp);
+  console.log('LevelUp Media Marketing mounted at /levelupmediamarketing (also levelupmediamarketing.com)');
+} catch (error) {
+  levelupError = error;
+  console.log('⚠️ LevelUp Media Marketing not available:', error.message);
+}
+app.get('/debug/levelup-error', (req, res) => {
+  res.json({ service: 'LevelUp Media Marketing', available: !levelupError, error: levelupError ? { message: levelupError.message } : null });
 });
 
 // =====================================================
