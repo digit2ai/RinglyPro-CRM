@@ -621,7 +621,8 @@ app.use((req, res, next) => {
     const vanity = {
       '/modules': '/Torna_Idioma/modules',
       '/orientation': '/Torna_Idioma/orientation',
-      '/presentation': '/Torna_Idioma/presentation'
+      '/presentation': '/Torna_Idioma/presentation',
+      '/presentacion': '/Torna_Idioma/presentacion'   // Spanish copy, narrated by Dalia
     };
     const target = vanity[p] || vanity[p.replace(/\/$/, '')];
     if (target) {

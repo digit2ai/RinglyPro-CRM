@@ -86,6 +86,8 @@ router.get('/orientation', (req, res) => res.sendFile(path.join(distPath, 'orien
 // Animated explainer — public, shareable. Ten scenes narrated by Ava through the
 // zero-key /api/tts/edge route. Also reachable at tornaidioma.com/presentation.
 router.get('/presentation', (req, res) => res.sendFile(path.join(distPath, 'presentation.html')));
+// Spanish copy of the same explainer, narrated by Dalia. tornaidioma.com/presentacion.
+router.get('/presentacion', (req, res) => res.sendFile(path.join(distPath, 'presentacion.html')));
 
 // Serve React frontend
 router.use(express.static(distPath));
