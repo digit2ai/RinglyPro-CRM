@@ -355,6 +355,23 @@ function jpegSize(file) {
     // pages
     r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|prepared for/i.test(r.txt), '/requirements now shows who we are, no sources');
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
+    // ── the marketing presentation ────────────────────────────────────────
+    {
+      const d = await call(null, 'GET', '/presentation');
+      ok(d.status === 200 && !/\{\{BASE\}\}|\{\{VERSION\}\}/.test(d.txt), '/presentation renders with its tokens substituted');
+      ok((await call(null, 'GET', '/presentacion')).status === 200, '/presentacion is the same deck in Spanish reach');
+      ok(/hero\.jpg/.test(d.txt) && /class="phone"/.test(d.txt), 'it carries the main artwork and a phone mock-up');
+      ['Dashboard', 'Content Calendar', 'Content Pipeline', 'Creative Strategist', 'Ideas &amp; Scripts', 'Editing', 'Business Assistant', 'Top Picks', 'Train the agents', 'Andrea']
+        .forEach((f) => ok(d.txt.includes(f), 'the deck walks through ' + f));
+      ok((d.txt.match(/class="scr"/g) || []).length >= 9, 'every dashboard function has its own screen mock-up');
+      ok(/Who it is for/.test(d.txt) && /benefits/i.test(d.txt) && /What it is/.test(d.txt), 'it says what it is, who it is for and the benefits');
+      ok(/Not connected|not connected/.test(d.txt) && /never show a number we cannot measure/i.test(d.txt), 'the deck states what is not connected instead of faking a metric');
+      const noEs = (d.txt.match(/data-en="[^"]*"(?![^>]*data-es=)/g) || []);
+      ok(!noEs.length, 'every line of the deck exists in English and Spanish');
+      ok(!/[\u4e00-\u9fff]/.test(d.txt), 'no stray non-Latin characters slipped into the copy');
+      const land = await call(null, 'GET', '/');
+      ok(/\/presentation/.test(land.txt), 'the landing links to the presentation');
+    }
     ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
     // The declared ratio must match the ARTWORK, not a literal: a hero swap that

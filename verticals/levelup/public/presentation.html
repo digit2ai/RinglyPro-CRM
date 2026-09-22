@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LevelUp Media Marketing — the presentation</title>
+<meta name="description" content="What LevelUp Media Marketing is, who it is for, what it gives you, and a walk through the dashboard screen by screen.">
+<link rel="canonical" href="https://levelupmediamarketing.com/presentation">
+<meta property="og:title" content="LevelUp Media Marketing — the presentation">
+<meta property="og:description" content="Your AI back office for content: what it is, who it is for, and how the dashboard works.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="{{BASE}}/icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("lu_theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<link rel="stylesheet" href="{{BASE}}/base.css?v={{VERSION}}">
+<style>
+/* The deck is one scrollable page: a marketing piece people can send, not a
+   keyboard slideshow. Every screen below is HTML, never a screenshot — a
+   screenshot blurs when projected, does not reflow on a phone, and ages the
+   day the product changes. */
+body{background:var(--bg)}
+.top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.top .in{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{font-family:var(--script);font-size:30px;color:var(--pink-d);text-decoration:none}
+.top nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sec{max-width:1320px;margin:0 auto;padding:56px 24px;border-top:1px solid var(--line)}
+.sec:first-of-type{border-top:0}
+.eyebrow{font:800 .78rem/1.2 var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--pink-d);margin:0 0 10px}
+h1{font-size:clamp(32px,5vw,54px);line-height:1.05;letter-spacing:-1px;margin:0 0 14px}
+h1 .s{font-family:var(--script);color:var(--pink-d);font-weight:600}
+h2{font-size:clamp(24px,3.2vw,36px);line-height:1.15;margin:0 0 10px}
+h3{font-size:19px;margin:0 0 6px}
+.lede{font-size:18px;color:var(--mut);max-width:70ch;margin:0 0 20px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card p{margin:0;color:var(--mut);font-size:15px}
+.c1{background:var(--blush)}.c2{background:var(--blue)}.c3{background:var(--mint)}.c4{background:var(--peach)}
+.cover{padding-top:26px}
+.cover-art{width:100%;aspect-ratio:1637/961;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912;border-top:5px solid var(--pink);border-bottom:5px solid var(--pink)}
+html[lang="es"] .cover-art{background-image:url("{{BASE}}/hero-es.jpg?v={{VERSION}}")}
+.cover-row{display:grid;grid-template-columns:1.35fr .65fr;gap:28px;align-items:center;margin-top:28px}
+.num{font:800 .8rem/1 var(--font);letter-spacing:.1em;color:var(--pink-d)}
+
+/* ── Mockups: a laptop frame and a phone frame, both drawn in CSS ───────── */
+.scr{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);box-shadow:0 18px 40px rgba(38,33,63,.10)}
+.scr-bar{display:flex;align-items:center;gap:6px;padding:9px 12px;background:var(--blue);border-bottom:1px solid var(--line)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.scr-ttl{margin-left:8px;font-size:12px;color:var(--mut)}
+.scr-body{display:grid;grid-template-columns:150px 1fr;min-height:250px}
+.scr-side{background:var(--bg);border-right:1px solid var(--line);padding:12px 10px;font-size:12px}
+.scr-side b{display:block;font-family:var(--script);color:var(--pink-d);font-size:20px;margin-bottom:8px}
+.scr-side span{display:block;padding:6px 8px;border-radius:8px;color:var(--mut)}
+.scr-side span.on{background:var(--blush);color:var(--ink);font-weight:700}
+.scr-main{padding:14px}
+.scr-h{font-weight:800;font-size:15px;margin:0 0 10px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat small{display:block;color:var(--mut);font-size:11px}
+.stat b{font-size:20px}
+.stat .nc{font-size:12px;color:var(--mut);font-weight:700}
+.row{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 10px;margin-bottom:8px;font-size:13px}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--blush);border:1px solid var(--line);white-space:nowrap}
+.pill.b{background:var(--blue)}.pill.m{background:var(--mint)}.pill.p{background:var(--peach)}
+.cols{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.col{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px;font-size:12px}
+.col b{display:block;margin-bottom:6px;font-size:12px}
+.chip{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px;margin-bottom:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal i{display:block;min-height:42px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-style:normal;font-size:10px;color:var(--mut);padding:3px}
+.cal i.has{background:var(--blush);color:var(--ink)}
+.bubble{max-width:82%;padding:9px 11px;border-radius:14px;font-size:13px;margin-bottom:8px}
+.bubble.u{background:var(--blush);margin-left:auto}
+.bubble.a{background:var(--bg);border:1px solid var(--line)}
+.tiny{font-size:12px;color:var(--mut)}
+.phone{width:240px;max-width:100%;margin:0 auto;border:10px solid var(--ink);border-radius:32px;overflow:hidden;background:var(--card);box-shadow:0 22px 50px rgba(38,33,63,.18)}
+.phone .scr-body{grid-template-columns:1fr;min-height:0}
+.phone .scr-main{padding:12px}
+.phone .tabs{display:flex;border-top:1px solid var(--line);background:var(--bg)}
+.phone .tabs span{flex:1;text-align:center;padding:9px 0;font-size:10px;color:var(--mut)}
+.phone .tabs span.on{color:var(--pink-d);font-weight:800}
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;justify-items:center}
+.step{display:grid;grid-template-columns:1fr 1.1fr;gap:26px;align-items:center;margin-top:26px}
+.step:nth-child(even) .step-txt{order:2}
+.note{background:var(--blush);border-radius:14px;padding:14px 16px;font-size:15px}
+footer{max-width:1320px;margin:0 auto;padding:40px 24px 80px;color:var(--mut);font-size:14px;text-align:center}
+@media(max-width:900px){.cover-row,.step{grid-template-columns:1fr}.scr-body{grid-template-columns:1fr}.scr-side{display:none}.cols{grid-template-columns:repeat(2,1fr)}}
+@media print{.top{display:none}.sec{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <a class="logo" href="{{BASE}}/">LevelUp</a>
+    <nav>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch to dark mode"><svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <div class="lang-toggle" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="es" aria-pressed="false">ES</button></div>
+      <a class="btn small" href="{{BASE}}/about" data-en="About us" data-es="Quiénes somos">About us</a>
+      <a class="btn small primary" href="{{BASE}}/login?mode=signup" data-en="Start free" data-es="Empieza gratis">Start free</a>
+    </nav>
+  </div>
+</header>
+
+<!-- 01 Cover -->
+<section class="sec cover">
+  <p class="eyebrow"><span class="num">01</span> · <span data-en="The presentation" data-es="La presentación">The presentation</span></p>
+  <h1><span class="s" data-en="Same you." data-es="La misma tú.">Same you.</span> <span data-en="Bigger things." data-es="Cosas más grandes.">Bigger things.</span></h1>
+  <p class="lede" data-en="LevelUp Media Marketing is the AI back office for content creators: a team of AI agents that plans your content, writes your scripts, prepares your edits and handles the business side, while you stay in control of everything that goes out." data-es="LevelUp Media Marketing es la oficina de IA para creadoras de contenido: un equipo de agentes que planea tu contenido, escribe tus guiones, prepara tus ediciones y atiende la parte de negocio, mientras tú mantienes el control de todo lo que sale.">LevelUp Media Marketing is the AI back office for content creators: a team of AI agents that plans your content, writes your scripts, prepares your edits and handles the business side, while you stay in control of everything that goes out.</p>
+</section>
+<div class="cover-art" role="img" aria-label="Andrea and the LevelUp AI content team" data-en-label="Andrea and the LevelUp AI content team" data-es-label="Andrea y el equipo de contenido de IA de LevelUp"></div>
+<section class="sec">
+  <div class="cover-row">
+    <div>
+      <h2 data-en="One home for everything you do" data-es="Un solo lugar para todo lo que haces">One home for everything you do</h2>
+      <p class="lede" data-en="Plan, script, film, edit, review, publish, and handle brand offers — in one place, on your laptop and on your phone." data-es="Planea, escribe, graba, edita, revisa, publica y atiende ofertas de marcas, todo en un solo lugar, en tu computadora y en tu teléfono.">Plan, script, film, edit, review, publish, and handle brand offers — in one place, on your laptop and on your phone.</p>
+      <div class="grid g3">
+        <div class="card c1"><h3 data-en="Free to start" data-es="Empiezas gratis">Free to start</h3><p data-en="Create your back office and meet your team in minutes." data-es="Crea tu oficina y conoce a tu equipo en minutos.">Create your back office and meet your team in minutes.</p></div>
+        <div class="card c2"><h3 data-en="Works on your phone" data-es="Funciona en tu teléfono">Works on your phone</h3><p data-en="Install it to your home screen and check today's plan anywhere." data-es="Instálala en tu pantalla de inicio y mira el plan de hoy donde estés.">Install it to your home screen and check today's plan anywhere.</p></div>
+        <div class="card c3"><h3 data-en="English and Spanish" data-es="Inglés y español">English and Spanish</h3><p data-en="The whole product, both languages, one switch." data-es="Todo el producto, en dos idiomas, con un solo botón.">The whole product, both languages, one switch.</p></div>
+      </div>
+    </div>
+    <!-- phone thumbnail -->
+    <div class="phone">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Today" data-es="Hoy">Today</span></div>
+      <div class="scr-main">
+        <p class="scr-h" data-en="Today's plan" data-es="Plan de hoy">Today's plan</p>
+        <div class="row"><span class="pill" data-en="Idea" data-es="Idea">Idea</span> <span data-en="3 things I wish I knew" data-es="3 cosas que ojalá supiera">3 things I wish I knew</span></div>
+        <div class="row"><span class="pill b" data-en="Script" data-es="Guion">Script</span> <span data-en="My honest routine" data-es="Mi rutina real">My honest routine</span></div>
+        <div class="row"><span class="pill m" data-en="Editing" data-es="Edición">Editing</span> <span data-en="Starting over at 30" data-es="Empezar a los 30">Starting over at 30</span></div>
+        <p class="tiny" data-en="Tap a card to open it." data-es="Toca una tarjeta para abrirla.">Tap a card to open it.</p>
+      </div>
+      <div class="tabs"><span class="on" data-en="Today" data-es="Hoy">Today</span><span data-en="Calendar" data-es="Calendario">Calendar</span><span data-en="Pipeline" data-es="Flujo">Pipeline</span><span data-en="More" data-es="Más">More</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 What it is -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">02</span> · <span data-en="What it is" data-es="Qué es">What it is</span></p>
+  <h2 data-en="A team, not a tool" data-es="Un equipo, no una herramienta">A team, not a tool</h2>
+  <p class="lede" data-en="You talk to one manager, Andrea. She hands each request to the specialist who does that job, and tells you what happened. Every agent reads what you teach it, so the work sounds like you." data-es="Hablas con una sola gerente, Andrea. Ella pasa cada pedido al especialista que hace ese trabajo y te cuenta el resultado. Cada agente lee lo que tú le enseñas, para que el trabajo suene a ti.">You talk to one manager, Andrea. She hands each request to the specialist who does that job, and tells you what happened. Every agent reads what you teach it, so the work sounds like you.</p>
+  <div class="grid g4">
+    <div class="card"><h3>Andrea</h3><p data-en="Your manager. Routes your requests and reports back." data-es="Tu gerente. Envía tus pedidos y te reporta.">Your manager. Routes your requests and reports back.</p></div>
+    <div class="card"><h3 data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</h3><p data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus propias palabras.">Niche, content pillars and offer, from your own words.</p></div>
+    <div class="card"><h3 data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</h3><p data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</p></div>
+    <div class="card"><h3 data-en="Calendar" data-es="Calendario">Calendar</h3><p data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</p></div>
+    <div class="card"><h3 data-en="Video Editor" data-es="Editor de video">Video Editor</h3><p data-en="Nine editing rules plus the ones you add." data-es="Nueve reglas de edición más las que tú agregues.">Nine editing rules plus the ones you add.</p></div>
+    <div class="card"><h3 data-en="Publisher" data-es="Publicador">Publisher</h3><p data-en="A ready caption per platform. You publish." data-es="Un texto listo por red. Tú publicas.">A ready caption per platform. You publish.</p></div>
+    <div class="card"><h3 data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</h3><p data-en="Flags fake brand offers, drafts replies at your rates." data-es="Marca ofertas falsas y redacta respuestas con tus tarifas.">Flags fake brand offers, drafts replies at your rates.</p></div>
+    <div class="card"><h3 data-en="Top Picks and Trainer" data-es="Top Picks y Entrenadora">Top Picks and Trainer</h3><p data-en="Your shoppable page, and the memory of everything you teach." data-es="Tu página comprable y la memoria de todo lo que enseñas.">Your shoppable page, and the memory of everything you teach.</p></div>
+  </div>
+</section>
+
+<!-- 03 Who it is for -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">03</span> · <span data-en="Who it is for" data-es="Para quién es">Who it is for</span></p>
+  <h2 data-en="Creators who want their time back" data-es="Creadoras que quieren recuperar su tiempo">Creators who want their time back</h2>
+  <div class="grid g4">
+    <div class="card c1"><h3 data-en="Just starting" data-es="Apenas empiezas">Just starting</h3><p data-en="You do not know your niche yet. The strategist finds it with you, from what you already love talking about." data-es="Aún no sabes tu nicho. La estratega lo encuentra contigo, con lo que ya te gusta contar.">You do not know your niche yet. The strategist finds it with you, from what you already love talking about.</p></div>
+    <div class="card c2"><h3 data-en="Posting already" data-es="Ya publicas">Posting already</h3><p data-en="You post but editing eats your week. Send the footage and review a first cut instead." data-es="Publicas, pero editar te consume la semana. Manda el material y revisa un primer corte.">You post but editing eats your week. Send the footage and review a first cut instead.</p></div>
+    <div class="card c3"><h3 data-en="Working with brands" data-es="Trabajas con marcas">Working with brands</h3><p data-en="Offers arrive and you never know what to charge or who is real. The assistant reads them and drafts your reply." data-es="Llegan ofertas y no sabes cuánto cobrar ni quién es real. La asistente las lee y redacta tu respuesta.">Offers arrive and you never know what to charge or who is real. The assistant reads them and drafts your reply.</p></div>
+    <div class="card c4"><h3 data-en="Selling products" data-es="Vendes productos">Selling products</h3><p data-en="TikTok Shop and Amazon creators: scripts built on structures that sell, and a shoppable page of your picks." data-es="Creadoras de TikTok Shop y Amazon: guiones con estructuras que venden y una página comprable con tus favoritos.">TikTok Shop and Amazon creators: scripts built on structures that sell, and a shoppable page of your picks.</p></div>
+  </div>
+</section>
+
+<!-- 04 Benefits -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">04</span> · <span data-en="The benefits" data-es="Los beneficios">The benefits</span></p>
+  <h2 data-en="What changes in your week" data-es="Qué cambia en tu semana">What changes in your week</h2>
+  <div class="grid g3">
+    <div class="card"><h3 data-en="You never start from a blank page" data-es="Nunca empiezas en blanco">You never start from a blank page</h3><p data-en="Ideas and scripts wait for you, built around your pillars." data-es="Las ideas y los guiones te esperan, hechos sobre tus pilares.">Ideas and scripts wait for you, built around your pillars.</p></div>
+    <div class="card"><h3 data-en="Editing becomes a review" data-es="Editar se vuelve revisar">Editing becomes a review</h3><p data-en="Five checks instead of an evening in a timeline." data-es="Cinco revisiones en vez de una noche en la línea de tiempo.">Five checks instead of an evening in a timeline.</p></div>
+    <div class="card"><h3 data-en="You know what to charge" data-es="Sabes cuánto cobrar">You know what to charge</h3><p data-en="Replies quote your own rate card, never a made-up price." data-es="Las respuestas citan tu tabla de tarifas, nunca un precio inventado.">Replies quote your own rate card, never a made-up price.</p></div>
+    <div class="card"><h3 data-en="Fake offers get caught" data-es="Las ofertas falsas se detectan">Fake offers get caught</h3><p data-en="Free-mail senders, vague briefs and upfront-payment asks are flagged before you answer." data-es="Correos gratuitos, propuestas vagas y pagos por adelantado se marcan antes de responder.">Free-mail senders, vague briefs and upfront-payment asks are flagged before you answer.</p></div>
+    <div class="card"><h3 data-en="It sounds like you" data-es="Suena a ti">It sounds like you</h3><p data-en="Everything you teach the team travels with every job it does." data-es="Todo lo que le enseñas al equipo viaja con cada trabajo que hace.">Everything you teach the team travels with every job it does.</p></div>
+    <div class="card"><h3 data-en="Nothing goes out without you" data-es="Nada sale sin ti">Nothing goes out without you</h3><p data-en="Approving, sending and publishing are always your tap." data-es="Aprobar, enviar y publicar siempre los haces tú.">Approving, sending and publishing are always your tap.</p></div>
+  </div>
+</section>
+
+<!-- 05 The dashboard, screen by screen -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">05</span> · <span data-en="The dashboard" data-es="El panel">The dashboard</span></p>
+  <h2 data-en="How you use it, screen by screen" data-es="Cómo se usa, pantalla por pantalla">How you use it, screen by screen</h2>
+  <p class="lede" data-en="Every screen below is the real layout of the product. You can also write to Andrea instead of hunting for a button: she runs the same functions." data-es="Cada pantalla de abajo es la disposición real del producto. También puedes escribirle a Andrea en vez de buscar un botón: ella ejecuta las mismas funciones.">Every screen below is the real layout of the product. You can also write to Andrea instead of hunting for a button: she runs the same functions.</p>
+
+  <!-- Dashboard -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="1. Dashboard: what today needs" data-es="1. Inicio: qué necesita hoy">1. Dashboard: what today needs</h3>
+      <p class="tiny" data-en="Counts of your real rows, today's posts, the pipeline and what is waiting on you. Numbers we cannot measure yet say Not connected instead of showing a sample." data-es="Cuentas reales de tus filas, las publicaciones de hoy, el flujo y lo que espera por ti. Lo que aún no podemos medir dice No conectado en vez de mostrar un ejemplo.">Counts of your real rows, today's posts, the pipeline and what is waiting on you.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl">levelupmediamarketing.com/app</span></div>
+      <div class="scr-body">
+        <div class="scr-side"><b>LevelUp</b><span class="on" data-en="Dashboard" data-es="Inicio">Dashboard</span><span data-en="Content Calendar" data-es="Calendario">Content Calendar</span><span data-en="Content Pipeline" data-es="Flujo">Content Pipeline</span><span data-en="Ideas & Scripts" data-es="Ideas y guiones">Ideas &amp; Scripts</span><span data-en="Editing" data-es="Edición">Editing</span><span data-en="Train the agents" data-es="Entrenar">Train the agents</span></div>
+        <div class="scr-main">
+          <div class="grid g4" style="margin-bottom:10px">
+            <div class="stat"><small data-en="Total posts" data-es="Publicaciones">Total posts</small><b>18</b></div>
+            <div class="stat"><small data-en="Posted" data-es="Publicadas">Posted</small><b>6</b></div>
+            <div class="stat"><small data-en="Replies to approve" data-es="Respuestas por aprobar">Replies to approve</small><b>2</b></div>
+            <div class="stat"><small data-en="Views" data-es="Vistas">Views</small><span class="nc" data-en="Not connected" data-es="No conectado">Not connected</span></div>
+          </div>
+          <p class="scr-h" data-en="Today's plan" data-es="Plan de hoy">Today's plan</p>
+          <div class="row"><span class="pill" data-en="Idea" data-es="Idea">Idea</span> <span data-en="3 things I wish I knew about batching" data-es="3 cosas que ojalá hubiera sabido de grabar en lote">3 things I wish I knew about batching</span></div>
+          <div class="row"><span class="pill b" data-en="Script" data-es="Guion">Script</span> <span data-en="My honest morning routine" data-es="Mi rutina real de mañana">My honest morning routine</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="2. Content Calendar: your month" data-es="2. Calendario: tu mes">2. Content Calendar: your month</h3>
+      <p class="tiny" data-en="Each post carries its pillar, purpose, format, effort and what you need to film it. Drop it on a day and it appears in Today when that day comes." data-es="Cada publicación lleva su pilar, propósito, formato, esfuerzo y lo que necesitas para grabarla. Ponla en un día y aparecerá en Hoy cuando llegue.">Each post carries its pillar, purpose, format, effort and what you need to film it.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Content Calendar" data-es="Calendario">Content Calendar</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span data-en="Dashboard" data-es="Inicio">Dashboard</span><span class="on" data-en="Content Calendar" data-es="Calendario">Content Calendar</span><span data-en="Content Pipeline" data-es="Flujo">Content Pipeline</span></div>
+        <div class="scr-main">
+          <p class="scr-h" data-en="September" data-es="Septiembre">September</p>
+          <div class="cal"><i>1</i><i class="has">2<br><span data-en="Idea" data-es="Idea">Idea</span></i><i>3</i><i class="has">4<br><span data-en="Film" data-es="Grabar">Film</span></i><i>5</i><i>6</i><i class="has">7<br><span data-en="Post" data-es="Publicar">Post</span></i><i>8</i><i class="has">9<br><span data-en="Script" data-es="Guion">Script</span></i><i>10</i><i>11</i><i class="has">12<br><span data-en="Edit" data-es="Editar">Edit</span></i><i>13</i><i>14</i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="3. Content Pipeline: nothing gets lost" data-es="3. Flujo: nada se pierde">3. Content Pipeline: nothing gets lost</h3>
+      <p class="tiny" data-en="Planned, Filmed, Editing, Ready to post. One look tells you where every video is." data-es="Planeado, Grabado, En edición, Listo para publicar. De una mirada sabes dónde está cada video.">Planned, Filmed, Editing, Ready to post.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Content Pipeline" data-es="Flujo de contenido">Content Pipeline</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span data-en="Dashboard" data-es="Inicio">Dashboard</span><span class="on" data-en="Content Pipeline" data-es="Flujo">Content Pipeline</span></div>
+        <div class="scr-main"><div class="cols">
+          <div class="col"><b data-en="Planned" data-es="Planeado">Planned</b><span class="chip" data-en="Budget haul" data-es="Compras económicas">Budget haul</span><span class="chip" data-en="Morning routine" data-es="Rutina de mañana">Morning routine</span></div>
+          <div class="col"><b data-en="Filmed" data-es="Grabado">Filmed</b><span class="chip" data-en="Starting over at 30" data-es="Empezar a los 30">Starting over at 30</span></div>
+          <div class="col"><b data-en="Editing" data-es="En edición">Editing</b><span class="chip">IMG_4821.MOV</span></div>
+          <div class="col"><b data-en="Ready to post" data-es="Listo">Ready to post</b><span class="chip" data-en="3 things I wish I knew" data-es="3 cosas que ojalá supiera">3 things I wish I knew</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategist -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="4. Creative Strategist: your niche and pillars" data-es="4. Estratega creativa: tu nicho y pilares">4. Creative Strategist: your niche and pillars</h3>
+      <p class="tiny" data-en="You answer seven questions in your own words. It returns a niche, three to five pillars, your offer and a realistic plan. Change an answer and it rebuilds." data-es="Respondes siete preguntas con tus palabras. Devuelve un nicho, de tres a cinco pilares, tu oferta y un plan realista. Cambias una respuesta y se rehace.">You answer seven questions in your own words; it returns a niche, pillars, your offer and a plan.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on" data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</span><span data-en="Ideas & Scripts" data-es="Ideas y guiones">Ideas &amp; Scripts</span></div>
+        <div class="scr-main">
+          <p class="scr-h" data-en="Your profile" data-es="Tu perfil">Your profile</p>
+          <div class="row"><span class="pill" data-en="Niche" data-es="Nicho">Niche</span> <span data-en="Budget beauty for busy moms" data-es="Belleza económica para mamás ocupadas">Budget beauty for busy moms</span></div>
+          <div class="row"><span class="pill m" data-en="Pillars" data-es="Pilares">Pillars</span> <span data-en="Skincare · Motherhood · Budgeting" data-es="Cuidado de la piel · Maternidad · Presupuesto">Skincare · Motherhood · Budgeting</span></div>
+          <div class="row"><span class="pill p" data-en="Offer" data-es="Oferta">Offer</span> <span data-en="Affiliate picks under $25" data-es="Favoritos de afiliados bajo $25">Affiliate picks under $25</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ideas & scripts -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="5. Ideas and Scripts: a full script in a tap" data-es="5. Ideas y guiones: un guion completo con un toque">5. Ideas and Scripts: a full script in a tap</h3>
+      <p class="tiny" data-en="Hook, story, proof, objection, call to action. Paste a video that worked and the structure is reused, never its words. Any number you did not give is flagged for you to confirm." data-es="Gancho, historia, prueba, objeción y llamado a la acción. Pega un video que funcionó y se reutiliza su estructura, nunca sus palabras. Cualquier número que no diste queda marcado para que lo confirmes.">Hook, story, proof, objection, call to action — the structure is reused, never someone else's words.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Ideas & Scripts" data-es="Ideas y guiones">Ideas &amp; Scripts</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on" data-en="Ideas & Scripts" data-es="Ideas y guiones">Ideas &amp; Scripts</span><span data-en="Editing" data-es="Edición">Editing</span></div>
+        <div class="scr-main">
+          <div class="row"><span class="pill" data-en="Hook" data-es="Gancho">Hook</span> <span data-en="Stop buying expensive serums." data-es="Deja de comprar sueros caros.">Stop buying expensive serums.</span></div>
+          <div class="row"><span class="pill b" data-en="Story" data-es="Historia">Story</span> <span data-en="[Your real experience, 2-3 sentences]" data-es="[Tu experiencia real, 2 o 3 frases]">[Your real experience, 2-3 sentences]</span></div>
+          <div class="row"><span class="pill m" data-en="Call to action" data-es="Llamado">Call to action</span> <span data-en="Save this for your next shop." data-es="Guarda esto para tu próxima compra.">Save this for your next shop.</span></div>
+          <p class="tiny" data-en="Confirm before filming: no invented numbers in this script." data-es="Confirma antes de grabar: no hay números inventados en este guion.">Confirm before filming: no invented numbers in this script.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editing -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="6. Editing: send the footage, review the cut" data-es="6. Edición: manda el material, revisa el corte">6. Editing: send the footage, review the cut</h3>
+      <p class="tiny" data-en="Nine rules run on every video: start on the hook, keep the best take, remove fillers, never cut a word. Add your own rules any time. When the same problem happens three times, LevelUp offers to make it a rule." data-es="Nueve reglas corren en cada video: empezar en el gancho, dejar la mejor toma, quitar muletillas, nunca cortar una palabra. Agrega tus reglas cuando quieras. Si el mismo problema pasa tres veces, LevelUp te propone convertirlo en regla.">Nine rules run on every video, plus the ones you add.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Editing" data-es="Edición">Editing</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on" data-en="Editing" data-es="Edición">Editing</span><span data-en="Business Assistant" data-es="Negocios">Business Assistant</span></div>
+        <div class="scr-main">
+          <div class="row"><span class="pill p" data-en="In queue" data-es="En cola">In queue</span> <span>IMG_4821.MOV → IMG_4821_EDITED.mp4</span></div>
+          <p class="scr-h" data-en="Your review, in seconds" data-es="Tu revisión, en segundos">Your review, in seconds</p>
+          <div class="row"><span data-en="Hook starts immediately" data-es="El gancho empieza de inmediato">Hook starts immediately</span></div>
+          <div class="row"><span data-en="Best take kept · no filler left · cuts feel natural" data-es="Mejor toma · sin muletillas · cortes naturales">Best take kept · no filler left · cuts feel natural</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="7. Business Assistant: brand offers, handled" data-es="7. Asistente de negocios: ofertas de marcas">7. Business Assistant: brand offers, handled</h3>
+      <p class="tiny" data-en="Paste the email. You get the red flags, which of your accounts it is for, the rate from your own card, and a reply draft. You approve it, send it from your own email, then mark it sent." data-es="Pega el correo. Recibes las señales de alerta, para qué cuenta es, la tarifa de tu propia tabla y un borrador de respuesta. Tú lo apruebas, lo envías desde tu correo y lo marcas como enviado.">Paste the email; get the red flags, your rate and a reply draft to approve.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Business Assistant" data-es="Asistente de negocios">Business Assistant</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on" data-en="Business Assistant" data-es="Negocios">Business Assistant</span><span data-en="Top Picks" data-es="Top Picks">Top Picks</span></div>
+        <div class="scr-main">
+          <div class="row"><span class="pill p" data-en="Check before replying" data-es="Revisa antes de responder">Check before replying</span> <span data-en="Sender uses a free email address" data-es="El remitente usa un correo gratuito">Sender uses a free email address</span></div>
+          <div class="row"><span class="pill" data-en="Your rate card" data-es="Tu tarifa">Your rate card</span> <span data-en="1 TikTok video · $450" data-es="1 video de TikTok · $450">1 TikTok video · $450</span></div>
+          <div class="row"><span class="pill m" data-en="Draft reply" data-es="Borrador">Draft reply</span> <span data-en="Thank you for thinking of me…" data-es="Gracias por pensar en mí…">Thank you for thinking of me…</span></div>
+          <p class="tiny" data-en="LevelUp never sends mail. You approve, you send." data-es="LevelUp nunca envía correos. Tú apruebas, tú envías.">LevelUp never sends mail. You approve, you send.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Picks -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="8. Top Picks: your shoppable page" data-es="8. Top Picks: tu página comprable">8. Top Picks: your shoppable page</h3>
+      <p class="tiny" data-en="Build lists of the products you actually use, publish a clean page for your link in bio, and see the clicks per product." data-es="Arma listas con los productos que de verdad usas, publica una página limpia para tu enlace en la biografía y mira los clics por producto.">Lists of what you actually use, a clean public page, and clicks per product.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl">Top Picks</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on">Top Picks</span><span data-en="Product Research" data-es="Investigación">Product Research</span></div>
+        <div class="scr-main">
+          <p class="scr-h" data-en="Under $25 finds" data-es="Hallazgos bajo $25">Under $25 finds</p>
+          <div class="row"><span class="pill" data-en="Clicks" data-es="Clics">Clicks</span> <span data-en="Gentle cleanser · 128" data-es="Limpiador suave · 128">Gentle cleanser · 128</span></div>
+          <div class="row"><span class="pill" data-en="Clicks" data-es="Clics">Clicks</span> <span data-en="Cotton tee · 74" data-es="Camiseta de algodón · 74">Cotton tee · 74</span></div>
+          <p class="tiny" data-en="Orders and earnings need each affiliate program connected." data-es="Pedidos y ganancias requieren conectar cada programa de afiliados.">Orders and earnings need each affiliate program connected.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="9. Train the agents: teach it once" data-es="9. Entrenar a los agentes: enséñalo una vez">9. Train the agents: teach it once</h3>
+      <p class="tiny" data-en="Write a rule (never use the word hack) or upload a document (your brand story). Choose the whole team or one agent. Test it: the same question answered with and without your training, side by side." data-es="Escribe una regla (nunca uses la palabra truco) o sube un documento (la historia de tu marca). Elige a todo el equipo o a un agente. Pruébalo: la misma pregunta con y sin tu entrenamiento, lado a lado.">Write a rule or upload a document, choose who learns it, and test the difference.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl" data-en="Train the agents" data-es="Entrenar a los agentes">Train the agents</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on" data-en="Train the agents" data-es="Entrenar">Train the agents</span><span data-en="Settings" data-es="Ajustes">Settings</span></div>
+        <div class="scr-main">
+          <div class="row"><span class="pill" data-en="Rule" data-es="Regla">Rule</span> <span data-en="Never use the word hack." data-es="Nunca uses la palabra truco.">Never use the word hack.</span> <span class="pill b" data-en="Scripts" data-es="Guiones">Scripts</span></div>
+          <div class="row"><span class="pill m" data-en="Document" data-es="Documento">Document</span> <span data-en="My brand story" data-es="La historia de mi marca">My brand story</span> <span class="pill" data-en="All agents" data-es="Todos">All agents</span></div>
+          <p class="tiny" data-en="This is context the agents read, not model retraining. Nothing is deleted: editing makes a new version." data-es="Esto es contexto que los agentes leen, no reentrenamiento del modelo. Nada se borra: editar crea una nueva versión.">This is context the agents read, not model retraining.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Andrea copilot -->
+  <div class="step">
+    <div class="step-txt">
+      <h3 data-en="10. Or just write to Andrea" data-es="10. O simplemente escríbele a Andrea">10. Or just write to Andrea</h3>
+      <p class="tiny" data-en="Instead of looking for the right button, type what you want. Andrea runs the same functions and tells you what she did. Approving, sending and publishing still come back to you as a button." data-es="En vez de buscar el botón correcto, escribe lo que quieres. Andrea ejecuta las mismas funciones y te dice qué hizo. Aprobar, enviar y publicar siguen volviendo a ti como un botón.">Type what you want; Andrea runs the same functions and reports back.</p>
+    </div>
+    <div class="scr">
+      <div class="scr-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="scr-ttl">Andrea</span></div>
+      <div class="scr-body"><div class="scr-side"><b>LevelUp</b><span class="on">Andrea</span></div>
+        <div class="scr-main">
+          <div class="bubble u" data-en="Add three ideas about budgeting and schedule the first for Friday" data-es="Agrega tres ideas sobre presupuesto y programa la primera para el viernes">Add three ideas about budgeting and schedule the first for Friday</div>
+          <div class="bubble a" data-en="Done: three ideas added to your calendar and the first one is on Friday." data-es="Listo: tres ideas agregadas a tu calendario y la primera queda el viernes.">Done: three ideas added to your calendar and the first one is on Friday.</div>
+          <div class="bubble u" data-en="Approve the Glowly reply" data-es="Aprueba la respuesta de Glowly">Approve the Glowly reply</div>
+          <div class="bubble a" data-en="That one is yours to confirm. [Do it]" data-es="Esa la confirmas tú. [Hazlo]">That one is yours to confirm. [Do it]</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 On your phone -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">06</span> · <span data-en="On your phone" data-es="En tu teléfono">On your phone</span></p>
+  <h2 data-en="The same back office, in your pocket" data-es="La misma oficina, en tu bolsillo">The same back office, in your pocket</h2>
+  <p class="lede" data-en="Install it to your home screen. Today's plan, the calendar and the pipeline are one tap away while you are filming." data-es="Instálala en tu pantalla de inicio. El plan de hoy, el calendario y el flujo quedan a un toque mientras grabas.">Install it to your home screen: today's plan, the calendar and the pipeline are one tap away.</p>
+  <div class="phones">
+    <div class="phone">
+      <div class="scr-bar"><span class="dot"></span><span class="scr-ttl" data-en="Today" data-es="Hoy">Today</span></div>
+      <div class="scr-main"><p class="scr-h" data-en="Today" data-es="Hoy">Today</p><div class="row"><span class="pill" data-en="Film" data-es="Grabar">Film</span> <span data-en="Morning routine" data-es="Rutina de mañana">Morning routine</span></div><div class="row"><span class="pill b" data-en="Approve" data-es="Aprobar">Approve</span> <span data-en="Brand reply" data-es="Respuesta a marca">Brand reply</span></div></div>
+      <div class="tabs"><span class="on" data-en="Today" data-es="Hoy">Today</span><span data-en="Calendar" data-es="Calendario">Calendar</span><span data-en="Pipeline" data-es="Flujo">Pipeline</span></div>
+    </div>
+    <div class="phone">
+      <div class="scr-bar"><span class="dot"></span><span class="scr-ttl" data-en="Calendar" data-es="Calendario">Calendar</span></div>
+      <div class="scr-main"><p class="scr-h" data-en="This week" data-es="Esta semana">This week</p><div class="cal" style="grid-template-columns:repeat(4,1fr)"><i class="has">Mon</i><i>Tue</i><i class="has">Wed</i><i>Thu</i></div></div>
+      <div class="tabs"><span data-en="Today" data-es="Hoy">Today</span><span class="on" data-en="Calendar" data-es="Calendario">Calendar</span><span data-en="Pipeline" data-es="Flujo">Pipeline</span></div>
+    </div>
+    <div class="phone">
+      <div class="scr-bar"><span class="dot"></span><span class="scr-ttl">Andrea</span></div>
+      <div class="scr-main"><div class="bubble u" data-en="What is waiting on me?" data-es="¿Qué espera por mí?">What is waiting on me?</div><div class="bubble a" data-en="Two brand replies and one video to review." data-es="Dos respuestas a marcas y un video por revisar.">Two brand replies and one video to review.</div></div>
+      <div class="tabs"><span data-en="Today" data-es="Hoy">Today</span><span data-en="Calendar" data-es="Calendario">Calendar</span><span class="on">Andrea</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 Honesty -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">07</span> · <span data-en="Straight talk" data-es="Con franqueza">Straight talk</span></p>
+  <h2 data-en="What is working today, and what is not connected yet" data-es="Qué funciona hoy y qué aún no está conectado">What is working today, and what is not connected yet</h2>
+  <div class="grid g2">
+    <div class="card c3"><h3 data-en="Working now" data-es="Funcionando hoy">Working now</h3><p data-en="Strategy, ideas, scripts, the calendar and pipeline, the editing queue with your rules, brand-offer analysis and replies, Top Picks with a public page, training every agent, and Andrea running it all by chat." data-es="Estrategia, ideas, guiones, calendario y flujo, la cola de edición con tus reglas, análisis de ofertas y respuestas, Top Picks con página pública, entrenamiento de cada agente y Andrea ejecutando todo por chat.">Strategy, ideas, scripts, calendar, pipeline, the editing queue, brand replies, Top Picks and training.</p></div>
+    <div class="card c4"><h3 data-en="Being connected" data-es="En conexión">Being connected</h3><p data-en="Automatic editing in Descript, posting drafts straight to TikTok, Instagram and Facebook, reading your inbox directly, and live product and sales data. Until each one is ready you copy, paste or post yourself, and every screen says so." data-es="Edición automática en Descript, publicar borradores directo en TikTok, Instagram y Facebook, leer tu correo y datos de productos y ventas en vivo. Hasta que cada uno esté listo, copias, pegas o publicas tú, y cada pantalla lo dice.">Descript, platform posting, inbox access and live product data. Until then you copy, paste or post yourself.</p></div>
+  </div>
+  <div class="note" style="margin-top:16px" data-en="We never show a number we cannot measure. Where a metric needs a platform connection, the screen says Not connected instead of showing an example as if it were yours." data-es="Nunca mostramos un número que no podemos medir. Donde una métrica necesita conexión, la pantalla dice No conectado en vez de enseñar un ejemplo como si fuera tuyo.">We never show a number we cannot measure.</div>
+</section>
+
+<!-- 08 CTA -->
+<section class="sec">
+  <p class="eyebrow"><span class="num">08</span> · <span data-en="Start" data-es="Empieza">Start</span></p>
+  <h2 data-en="Create your back office" data-es="Crea tu oficina">Create your back office</h2>
+  <p class="lede" data-en="Free to start. Tell the Creative Strategist about you, and meet your team." data-es="Empiezas gratis. Cuéntale a la Estratega creativa sobre ti y conoce a tu equipo.">Free to start. Tell the Creative Strategist about you, and meet your team.</p>
+  <p><a class="btn primary" href="{{BASE}}/login?mode=signup" data-en="Start free" data-es="Empieza gratis">Start free</a> <a class="btn" href="{{BASE}}/" data-en="Back to the site" data-es="Volver al sitio">Back to the site</a></p>
+</section>
+
+<footer>LevelUp Media Marketing · <a href="{{BASE}}/about" data-en="Who we are" data-es="Quiénes somos">Who we are</a> · Digit2AI</footer>
+
+<script src="{{BASE}}/theme.js?v={{VERSION}}" defer></script>
+<script>
+(function(){
+  var lang = 'en';
+  try { lang = localStorage.getItem('lu_lang') || ((navigator.language || '').slice(0,2) === 'es' ? 'es' : 'en'); } catch(e) {}
+  function apply(){
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent = el.getAttribute('data-' + lang); });
+    document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
+    var art = document.querySelector('.cover-art');
+    if (art) art.setAttribute('aria-label', art.getAttribute('data-' + lang + '-label') || art.getAttribute('aria-label'));
+  }
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){ lang = b.dataset.lang; try { localStorage.setItem('lu_lang', lang); } catch(e) {} apply(); });
+  });
+  apply();
+})();
+</script>
+</body>
+</html>

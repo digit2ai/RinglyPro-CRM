@@ -48,7 +48,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-18';
+const VERSION = 'lu-2026-09-22-19';
 
 router.use(express.json({ limit: '1mb' }));
 
@@ -98,6 +98,11 @@ function aboutPage(req, res) {
   page(req, res, 'doc.html', { BODY: renderMarkdown(md), TITLE: 'Who we are' });
 }
 router.get('/about', aboutPage);
+// The marketing walkthrough: what it is, who it is for, the benefits and the
+// dashboard screen by screen. Every screen is HTML, never a screenshot.
+const deck = (req, res) => page(req, res, 'presentation.html');
+router.get('/presentation', deck);
+router.get('/presentacion', deck);
 router.get('/requirements', aboutPage);
 router.get('/app', needUser, (req, res) => page(req, res, 'app.html'));
 
