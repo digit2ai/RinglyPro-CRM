@@ -54,7 +54,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-22';
+const VERSION = 'lu-2026-09-22-23';
 
 router.use(express.json({ limit: '1mb' }));
 

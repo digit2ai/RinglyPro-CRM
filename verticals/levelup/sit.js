@@ -383,6 +383,8 @@ function jpegSize(file) {
       const noEsN = (w.txt.match(/data-n="[^"]*"(?![^>]*data-n-es=)/g) || []);
       ok(!noEsN.length, 'every slide is narrated in both languages');
       ok(/Sample data|Datos de ejemplo/.test(w.txt), 'the mock-up figures are labelled sample data');
+      ok(/Your keys, in Settings/.test(w.txt) && /upload and post by hand/.test(w.txt),
+        'the deck says the keys live in Settings and that manual upload keeps working until a connector ships');
       ok(/\.shot \.scr, \.phones3 \.phone\{color:var\(--ink\)\}/.test(w.txt),
         'the light mock-ups carry the app ink on the dark stage (they inherited near-white and vanished)');
       ok(!/\b(\d+x|\d+%\s*(more|faster|growth))\b/i.test(w.txt), 'the deck promises no multiplier or growth figure');
