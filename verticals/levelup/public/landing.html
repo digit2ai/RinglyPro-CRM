@@ -29,7 +29,7 @@ nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 /* Full-width hero band: the WHOLE artwork, never cropped (its own 16:9 ratio,
    background-size contain). The headline used to sit on top of it and collided
    with the artwork's own wordmark, so the copy lives underneath now. */
-.hero-band{position:relative;width:100%;aspect-ratio:1637/961;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912}
+.hero-band{position:relative;width:100%;aspect-ratio:1637/961;border-top:5px solid var(--pink);border-bottom:5px solid var(--pink);box-sizing:border-box;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/contain no-repeat;background-color:#0b0912}
 html[lang="es"] .hero-band{background-image:url("{{BASE}}/hero-es.jpg?v={{VERSION}}")}
 .hero-band::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.12);pointer-events:none}
 :root[data-theme="dark"] .hero-band::after{background:rgba(11,9,18,.18)}
@@ -114,7 +114,7 @@ footer{padding-bottom:104px}
   </nav>
 </header>
 
-<section class="hero-band" role="img" aria-label="The LevelUp AI content team around a creator's desk"></section>
+<section class="hero-band" role="img" aria-label="Andrea and the LevelUp AI content team around a creator's desk" data-en-label="Andrea and the LevelUp AI content team around a creator's desk" data-es-label="Andrea y el equipo de contenido de IA de LevelUp junto al escritorio de una creadora"></section>
 
 <div class="hero">
   <div>
@@ -287,6 +287,8 @@ footer{padding-bottom:104px}
     var band = document.querySelector(".hero-band");
     if (band) band.setAttribute("aria-label", lang === "es" ? "El equipo de IA de LevelUp alrededor del escritorio de una creadora" : "The LevelUp AI content team around a creator's desk");
     document.querySelectorAll('[data-en]').forEach(function(el){ el.textContent = el.getAttribute('data-' + lang); });
+    var band = document.querySelector('.hero-band');
+    if (band) band.setAttribute('aria-label', band.getAttribute('data-' + lang + '-label') || band.getAttribute('aria-label'));
     document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === lang)); });
     var orb = document.querySelector('[data-voice-orb]');
     if (orb) { orb.setAttribute('data-lang', lang); orb.setAttribute('data-label', lang === 'es' ? 'Habla con Andrea' : 'Talk to Andrea'); }

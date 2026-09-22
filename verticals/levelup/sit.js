@@ -373,6 +373,8 @@ function jpegSize(file) {
       "the WHOLE hero artwork is shown, never cropped, behind one wash");
     ok(heroDim && declared.length === 3 && Number(declared[1]) === heroDim.w && Number(declared[2]) === heroDim.h,
       "the band aspect-ratio equals the hero image dimensions (" + (heroDim ? heroDim.w + "x" + heroDim.h : "unreadable") + ")");
+    ok(/\.hero-band\{[^}]*border-top:5px solid var\(--pink\)[^}]*border-bottom:5px solid var\(--pink\)/.test(r.txt),
+      'the artwork carries an orange rule above and below, in both languages (one band, one rule)');
     const band = r.txt.slice(r.txt.indexOf('<section class="hero-band"'), r.txt.indexOf('<section id="flow"'));
     ok(band.includes('</section>') && /<\/section>\s*<div class="hero">/.test(band), 'the band holds the artwork alone and the copy follows it (no headline on top of the artwork)');
     ok(/\n\.hero\{[^}]*max-width:1320px/.test(r.txt), 'the hero copy keeps its centred column (the base .hero rule survives)');
