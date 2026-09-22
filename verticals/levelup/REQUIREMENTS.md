@@ -28,7 +28,7 @@ Guiding principles:
 **[DECISION]** The writeup describes one creator's back office on a third-party platform; the brief requires a product many creators sign up for. LevelUp therefore takes the writeup's *pattern* — a manager agent that hands work to single-job specialist agents — and builds it as **our own multi-tenant MCP ecosystem**, not on GrokBot. Reasons (from both sources): third-party infrastructure, pricing and rules; not built to serve many creators; credentials held by a vendor; self-hosted laptop agents were unstable (the "Open Claw" Mac Mini attempt failed after a week).
 
 - **One MCP Brain** is the only door to every agent. It enforces, in code: tenant isolation (the tenant comes from the session or API key, never from a tool argument), channel rules, human-only actions, a per-tenant daily model-call cap, and an audit row for every call including denials.
-- **Líder**, the manager agent, is the creator's single point of contact. Every specialist reports through it; the creator may still open any agent directly.
+- **Andrea**, the manager agent, is the creator's single point of contact. Every specialist reports through it; the creator may still open any agent directly.
 - Runs **in the cloud, always on**, so work continues when the creator's laptop is closed.
 - An **MCP endpoint** lets the creator's own AI tools call the same agents with a scoped API key.
 
@@ -36,7 +36,7 @@ Guiding principles:
 
 | Agent | Team | Job | Status in v1 |
 |---|---|---|---|
-| Líder | Management | Takes instructions, routes to the right specialist, reports, asks for approval | Built |
+| Andrea | Management | Takes instructions, routes to the right specialist, reports, asks for approval | Built |
 | Creative Strategist | Core | Finds niche, content pillars, offer and a realistic plan from the creator's own words | Built |
 | Ideas | Core | Ideas per pillar, or built from the creator's own thoughts | Built |
 | Scripts | Core | Scripts from proven structures, written fresh in the creator's voice | Built |

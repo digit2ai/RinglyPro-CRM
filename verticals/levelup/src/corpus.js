@@ -10,7 +10,7 @@
  */
 
 const AGENTS = [
-  { id: 'lider', name: 'Líder', team: 'management', job: { en: 'Your single point of contact. Routes your request to the right specialist and reports back.', es: 'Tu único punto de contacto. Envía cada pedido al especialista correcto y te reporta.' } },
+  { id: 'lider', name: 'Andrea', team: 'management', job: { en: 'Your single point of contact. Routes your request to the right specialist and reports back.', es: 'Tu único punto de contacto. Envía cada pedido al especialista correcto y te reporta.' } },
   { id: 'strategist', name: 'Creative Strategist', team: 'core', job: { en: 'Finds your niche, content pillars and offer from your own words.', es: 'Encuentra tu nicho, pilares de contenido y oferta a partir de tus palabras.' } },
   { id: 'ideas', name: 'Ideas', team: 'core', job: { en: 'Ideas built around your pillars, or from your own thoughts.', es: 'Ideas alrededor de tus pilares o de tus propias notas.' } },
   { id: 'scripts', name: 'Scripts', team: 'core', job: { en: 'Scripts from proven structures, written fresh in your voice.', es: 'Guiones con estructuras probadas, escritos desde cero con tu voz.' } },

@@ -16,11 +16,11 @@ Three beliefs guide everything we build:
 
 ## What we do
 
-LevelUp works like a small, dedicated team that never sleeps. You talk to one manager, **Líder**, and Líder hands the work to the right specialist, then reports back to you.
+LevelUp works like a small, dedicated team that never sleeps. You talk to one manager, **Andrea**, and Andrea hands the work to the right specialist, then reports back to you.
 
 | Your AI team member | What they do for you |
 |---|---|
-| **Líder** | Your single point of contact. Takes your requests, sends them to the right specialist and tells you what happened. |
+| **Andrea** | Your single point of contact. Takes your requests, sends them to the right specialist and tells you what happened. |
 | **Creative Strategist** | Helps you find your niche, your content pillars and your offer, using your own words. |
 | **Ideas** | Brings you fresh video ideas around your pillars, or builds on the thoughts you share. |
 | **Scripts** | Writes scripts with proven structure (hook, story, proof, objection, call to action), every word fresh and in your voice. |

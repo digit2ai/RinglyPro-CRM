@@ -9,10 +9,10 @@
 
   var T = {
     en: { today: 'Dashboard', calendar: 'Content Calendar', pipeline: 'Content Pipeline', batch: 'Batch Planning', strategy: 'Creative Strategist', ideas: 'Ideas & Scripts', editing: 'Editing', business: 'Business Assistant', picks: 'Top Picks', research: 'Product Research', train: 'Train the agents', settings: 'Settings',
-      core: 'Core', addons: 'Add-ons', platform: 'Your AI team', signout: 'Sign out', close: 'Close', send: 'Send', save: 'Save', ask: 'Tell Líder what to do', notConnected: 'Not connected',
+      core: 'Core', addons: 'Add-ons', platform: 'Your AI team', signout: 'Sign out', close: 'Close', send: 'Send', save: 'Save', ask: 'Tell Andrea what to do', notConnected: 'Not connected',
       cheer: 'A little more consistency, a lot more you.', hello: 'You are doing amazing.', more: 'More', noModel: 'No model: written from your own words', model: 'Written by AI, checked by LevelUp' },
     es: { today: 'Inicio', calendar: 'Calendario', pipeline: 'Flujo de contenido', batch: 'Grabar en lote', strategy: 'Estratega creativa', ideas: 'Ideas y guiones', editing: 'Edición', business: 'Asistente de negocios', picks: 'Top Picks', research: 'Investigación de productos', train: 'Entrenar a los agentes', settings: 'Ajustes',
-      core: 'Básico', addons: 'Complementos', platform: 'Tu equipo de IA', signout: 'Salir', close: 'Cerrar', send: 'Enviar', save: 'Guardar', ask: 'Dile a Líder qué hacer', notConnected: 'No conectado',
+      core: 'Básico', addons: 'Complementos', platform: 'Tu equipo de IA', signout: 'Salir', close: 'Cerrar', send: 'Enviar', save: 'Guardar', ask: 'Dile a Andrea qué hacer', notConnected: 'No conectado',
       cheer: 'Un poco más de constancia, mucho más tú.', hello: 'Lo estás haciendo increíble.', more: 'Más', noModel: 'Sin modelo: escrito con tus propias palabras', model: 'Escrito por IA, verificado por LevelUp' }
   };
   function t(k) { return (T[LANG] && T[LANG][k]) || T.en[k] || k; }
@@ -52,7 +52,7 @@
     $('langBtn').textContent = LANG === 'es' ? 'EN' : 'ES';
     $('outBtn').textContent = t('signout');
     $('dIn').placeholder = t('ask');
-    $('liderBtn').textContent = L('Ask Líder', 'Pídele a Líder');
+    $('liderBtn').textContent = 'Andrea';
   }
 
   function statusPill(s) { return '<span class="pill s-' + esc(s) + '">' + esc(s) + '</span>'; }
@@ -386,10 +386,10 @@
     }).catch(function (e) { view.innerHTML = '<p class="warn">' + esc(e.message) + '</p>'; });
   }
 
-  // ── Líder drawer ──────────────────────────────────────────────────────────
+  // ── Andrea drawer ──────────────────────────────────────────────────────────
   function addMsg(role, text) { var m = document.createElement('div'); m.className = 'm ' + role; m.textContent = text; $('msgs').appendChild(m); $('msgs').scrollTop = 1e9; }
   var CHAT = [];
-  $('liderBtn').onclick = function () { $('drawer').hidden = false; if (!$('msgs').children.length) addMsg('a', L('Hi, I am Líder. Write what you want done and I will do it: add ideas, write a script, schedule a post, queue an edit, analyse a brand email, teach an agent a rule. Approving, sending and publishing stay your tap.', 'Hola, soy Líder. Escribe lo que quieres y lo hago: agregar ideas, escribir un guion, programar una publicación, poner un video en cola, analizar un correo de marca, enseñarle una regla a un agente. Aprobar, enviar y publicar siguen siendo tu decisión.')); $('dIn').focus(); };
+  $('liderBtn').onclick = function () { $('drawer').hidden = false; if (!$('msgs').children.length) addMsg('a', L('Hi, I am Andrea. Write what you want done and I will do it: add ideas, write a script, schedule a post, queue an edit, analyse a brand email, teach an agent a rule. Approving, sending and publishing stay your tap.', 'Hola, soy Andrea. Escribe lo que quieres y lo hago: agregar ideas, escribir un guion, programar una publicación, poner un video en cola, analizar un correo de marca, enseñarle una regla a un agente. Aprobar, enviar y publicar siguen siendo tu decisión.')); $('dIn').focus(); };
   $('dClose').onclick = function () { $('drawer').hidden = true; };
   $('dForm').onsubmit = function (e) {
     e.preventDefault(); var m = val('dIn').trim(); if (!m) return; $('dIn').value = ''; addMsg('u', m);

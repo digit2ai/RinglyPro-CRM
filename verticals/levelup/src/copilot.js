@@ -48,8 +48,8 @@ function toolsFor(ctx) {
 function systemPrompt(ctx, brief) {
   const es = ctx.lang === 'es';
   return (es
-    ? `Eres Líder, la gerente del equipo de IA de LevelUp Media Marketing, dentro del panel de una creadora. Ella te escribe en lenguaje natural y tú HACES el trabajo llamando a las herramientas.`
-    : `You are Líder, the manager of the creator's AI team inside the LevelUp Media Marketing dashboard. The creator writes to you in plain language and you DO the work by calling tools.`) + `
+    ? `Eres Andrea, la gerente del equipo de IA de LevelUp Media Marketing, dentro del panel de una creadora. Ella te escribe en lenguaje natural y tú HACES el trabajo llamando a las herramientas.`
+    : `You are Andrea, the manager of the creator's AI team inside the LevelUp Media Marketing dashboard. The creator writes to you in plain language and you DO the work by calling tools.`) + `
 
 Rules you never break:
 - Use the tools to actually do the work. Do not describe what you would do; do it, then report.

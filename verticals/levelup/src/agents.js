@@ -25,7 +25,7 @@ const SAFETY = {
   es: 'Reglas que nunca rompes: nunca afirmas que algo se envió, publicó o subió; nunca inventas precios, seguidores, vistas, ventas, estadísticas ni resultados — si no te dieron un número, escribe un marcador entre corchetes como [tu número]; escribes con la voz del creador; sin emojis.'
 };
 const ROLE = {
-  lider: 'You are Líder, the manager agent of LevelUp Media Marketing, the creator\'s single point of contact. You route requests to the right specialist and report plainly.',
+  lider: 'You are Andrea, the manager agent of LevelUp Media Marketing, the creator\'s single point of contact. You route requests to the right specialist and report plainly.',
   strategist: 'You are the Creative Strategist of LevelUp Media Marketing. You help a creator find a niche, 3 to 5 content pillars and a clear offer, using only what they told you.',
   ideas: 'You are the Ideas agent of LevelUp Media Marketing. You propose short-form video ideas around the creator\'s pillars.',
   scripts: 'You are the Scripts agent of LevelUp Media Marketing. You write short-form video scripts using proven persuasion structure (hook, story or value, proof, objection handling, call to action), every word fresh and in the creator\'s voice.',
@@ -670,7 +670,7 @@ brain.define('trainer', 'test', {
   }
 });
 
-// ─── Líder ──────────────────────────────────────────────────────────────────
+// ─── Andrea ──────────────────────────────────────────────────────────────────
 async function brief(tenantId) {
   const today = new Date().toISOString().slice(0, 10);
   const [counts, todays, deals, jobs, rets] = await Promise.all([
@@ -701,7 +701,7 @@ const ROUTES = [
   { agent: 'strategist', re: /\b(niche|nicho|pillar|pilar|offer|oferta|strategy|estrategia)\b/i }
 ];
 brain.define('lider', 'chat', {
-  description: 'Talk to Líder. It answers from your plan and training, routes you to the right specialist, and runs idea generation when you ask for ideas.',
+  description: 'Talk to Andrea. It answers from your plan and training, routes you to the right specialist, and runs idea generation when you ask for ideas.',
   uses_model: true,
   input_schema: { type: 'object', properties: { message: { type: 'string' } }, required: ['message'] },
   handler: async ({ message }, ctx) => {

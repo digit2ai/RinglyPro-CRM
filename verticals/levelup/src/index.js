@@ -9,7 +9,7 @@
  * Every page carries {{BASE}}, substituted at serve time from req.baseUrl.
  *
  * One MCP Brain (brain.js) is the only door to eleven agents (agents.js);
- * the app, the MCP endpoint and Líder all call the same tools. Every agent
+ * the app, the MCP endpoint and Andrea all call the same tools. Every agent
  * reads the creator's training (knowledge.js) on every model call.
  */
 
@@ -47,7 +47,7 @@ function platformFacts() {
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'lu-2026-09-22-5';
+const VERSION = 'lu-2026-09-22-6';
 
 router.use(express.json({ limit: '1mb' }));
 

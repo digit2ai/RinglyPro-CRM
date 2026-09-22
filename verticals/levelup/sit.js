@@ -72,13 +72,14 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
   ok(brain.listTools({ tenantId: 1, channel: 'copilot' }).every((t) => !brain.TOOLS.get(t.name).human_only), 'the copilot channel can never list a human_only tool');
   ok(C.AGENTS.length === 11 && C.EDIT_RULES.length === 9 && C.REVIEW_ISSUES.length === 5, 'corpus: 11 agents, 9 editing rules, 5 review issues');
   const persona = require('../../src/config/voice-agents').getAgent('levelup');
+  ok(!/Líder|Lider/.test(read('public/app.html') + read('public/app.js') + read('ABOUT.md')), 'the dashboard and the About page name Andrea, never the old name');
   ok(persona.name.en === 'Andrea' && persona.name.es === 'Andrea' && persona.voice.en === 'ava', 'the voice agent is Andrea, Ava voice in English');
   ok(!/prefers-color-scheme/.test(read('public/base.css')) && /:root\[data-theme="dark"\]/.test(read('public/base.css')), 'dark is an explicit choice, never the OS default');
   const req = read('REQUIREMENTS.md');
   ok(/Rule 1/.test(req) && /Rule 2/.test(req) && /Open questions/.test(req), 'internal requirements doc intact');
   const about = read('ABOUT.md');
   ok(/Who we are/.test(about) && /What we do/.test(about), 'public page says who we are and what we do');
-  ok(!/grokbot|artillery|andrea|transcript|recorded|training call|project brief|source document|mauro|vanessa/i.test(about), 'public page names no source');
+  ok(!/grokbot|artillery|transcript|recorded|training call|prepared for|project brief|source document|mauro|vanessa/i.test(about), 'public page names no source');
 
   // ── 3. HTTP + DB ──────────────────────────────────────────────────────────
   try { await db.ensureSchema(); } catch (e) {
@@ -304,10 +305,11 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$
     ok(audit.some((c) => c.outcome === 'denied') && audit.some((c) => c.outcome === 'ok'), 'audit holds denials and successes');
 
     // pages
-    r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|Andrea/.test(r.txt), '/requirements now shows who we are, no sources');
+    r = await call(null, 'GET', '/requirements'); ok(r.status === 200 && /Who we are/.test(r.txt) && !/GrokBot|prepared for/i.test(r.txt), '/requirements now shows who we are, no sources');
     r = await call(null, 'GET', '/about'); ok(r.status === 200 && /What we do/.test(r.txt), '/about renders');
+    ok(/Andrea/.test((await call(null, 'GET', '/')).txt) && !/Líder|Lider/.test((await call(null, 'GET', '/')).txt), 'the manager is Andrea everywhere on the landing');
     r = await call(null, 'GET', '/'); ok(r.status === 200 && /\/levelupmediamarketing\/login/.test(r.txt) && !/\{\{BASE\}\}|\{\{FACTS\}\}/.test(r.txt), 'landing substitutes BASE and FACTS');
-    ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /opacity:\.3/.test(r.txt), 'the hero artwork is full width at 30% behind a scrim');
+    ok(/class="hero-band"/.test(r.txt) && /hero\.jpg/.test(r.txt) && /hero-band::after\{[^}]*rgba\(255,255,255,\.86\)/.test(r.txt), 'the hero artwork is full width behind one scrim (dimmed once, not twice)');
     ok(/id="flow"/.test(r.txt) && (r.txt.match(/class="flow-step"/g) || []).length === 7, 'the animated workflow band ships all 7 steps in the markup');
     ok(/data-theme="light"/.test(r.txt) && /data-theme-toggle/.test(r.txt) && /lang-toggle/.test(r.txt), 'light by default, with theme and EN/ES toggles');
     const facts = (r.txt.match(/<script type="application\/json" id="luFacts">([\s\S]*?)<\/script>/) || [])[1] || '';

@@ -23,9 +23,9 @@ nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 /* Full-width hero band. The artwork sits at 30% (70% transparent) behind a
    scrim, so the headline keeps its contrast in both themes. */
 .hero-band{position:relative;isolation:isolate;overflow:hidden}
-.hero-band::before{content:"";position:absolute;inset:0;z-index:-2;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/cover no-repeat;opacity:.3}
-.hero-band::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.7) 45%,rgba(255,255,255,.55) 100%)}
-:root[data-theme="dark"] .hero-band::after{background:linear-gradient(90deg,rgba(27,23,48,.9) 0%,rgba(27,23,48,.74) 45%,rgba(27,23,48,.6) 100%)}
+.hero-band::before{content:"";position:absolute;inset:0;z-index:-2;min-height:420px;background:url("{{BASE}}/hero.jpg?v={{VERSION}}") center/cover no-repeat}
+.hero-band::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,.86) 0%,rgba(255,255,255,.72) 42%,rgba(255,255,255,.62) 100%)}
+:root[data-theme="dark"] .hero-band::after{background:linear-gradient(90deg,rgba(27,23,48,.88) 0%,rgba(27,23,48,.74) 42%,rgba(27,23,48,.62) 100%)}
 .hero{max-width:1320px;margin:0 auto;padding:56px 24px 48px;display:grid;grid-template-columns:1.2fr 1fr;gap:36px;align-items:center}
 .hero h1{font-size:clamp(34px,5vw,56px);line-height:1.05;margin:0 0 14px;letter-spacing:-1px}
 .hero h1 span{font-family:var(--script);color:var(--pink-d);font-weight:600}
@@ -167,9 +167,9 @@ footer{text-align:center;color:var(--mut);padding:30px 20px 60px;font-size:14px}
 
 <section id="agents">
   <h2 data-en="Your AI team" data-es="Tu equipo de IA">Your AI team</h2>
-  <p class="sub" data-en="One manager, Líder, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Una gerente, Líder, es tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">One manager, Líder, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
+  <p class="sub" data-en="One manager, Andrea, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it." data-es="Una gerente, Andrea, es tu único punto de contacto. Detrás, especialistas con una sola tarea cada uno. Todos leen lo que tú les enseñas.">One manager, Andrea, is your single point of contact. Behind it, specialists with one job each. Every one of them reads what you teach it.</p>
   <div class="grid">
-    <div class="card c1"><b>Líder</b><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
+    <div class="card c1"><b>Andrea</b><small data-en="Routes your requests and reports back." data-es="Envía tus pedidos al especialista y te reporta.">Routes your requests and reports back.</small></div>
     <div class="card c2"><b data-en="Creative Strategist" data-es="Estratega creativa">Creative Strategist</b><small data-en="Niche, content pillars and offer, from your own words." data-es="Nicho, pilares y oferta, con tus palabras.">Niche, content pillars and offer, from your own words.</small></div>
     <div class="card c3"><b data-en="Ideas and Scripts" data-es="Ideas y guiones">Ideas and Scripts</b><small data-en="Proven structures, every word fresh in your voice." data-es="Estructuras probadas, cada palabra nueva con tu voz.">Proven structures, every word fresh in your voice.</small></div>
     <div class="card c4"><b data-en="Calendar" data-es="Calendario">Calendar</b><small data-en="Today view, pipeline and batching suggestions." data-es="Vista de hoy, flujo y sugerencias para grabar en lote.">Today view, pipeline and batching suggestions.</small></div>
