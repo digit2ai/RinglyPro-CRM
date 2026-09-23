@@ -7,23 +7,29 @@
 <title>Hispanotec Digital — Estructura</title>
 <style>
 /* ===========================================================================
-   Estructura de Hispanotec Digital, por capas. Un solo archivo, sin recursos
-   externos. Pensado para proyectar Y para exportar a PNG/PDF y pegarlo en un
-   documento, por eso el ancho es fijo y la tipografía del sistema.
-   Cada caja lleva su estado real: producción, sin estrenar o no construido.
+   Estructura de Hispanotec Digital — constelación animada.
+
+   Mismo lenguaje visual que el diagrama del cerebro MCP de Digit2AI: anillos
+   concéntricos girando despacio en direcciones alternas, enlaces de guiones
+   que fluyen del cerebro hacia fuera, cajas rectangulares en monoespaciada y
+   encendido por secuencia. Debajo queda el detalle por capas, que es lo que
+   se puede imprimir.
+
+   Un solo archivo, sin recursos externos.
    =========================================================================== */
 :root{
   --navy:#07345B; --deep:#04182b; --accent:#509BCD; --accent-lt:#7db8de;
   --ink:#eaf2f8; --mut:rgba(234,242,248,.70); --faint:rgba(234,242,248,.46);
   --line:rgba(125,184,222,.22); --card:rgba(255,255,255,.05);
-  --ok:#3ecf7a; --warn:#f0b849; --no:#e8836f;
+  --wire:125,184,222; --ok:#3ecf7a; --warn:#f0b849; --no:#e8836f;
   --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-.page{width:1600px;margin:0 auto;padding:40px 44px 34px}
+.page{width:1600px;margin:0 auto;padding:36px 44px 34px}
 
-.head{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.head{display:flex;align-items:center;gap:16px;margin-bottom:18px}
 .head img{width:46px;height:46px;border-radius:11px;background:#fff;padding:4px}
 .head h1{font-size:27px;font-weight:800;letter-spacing:-.5px}
 .head .s{font-size:13.5px;color:var(--faint);margin-top:3px}
@@ -33,65 +39,84 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
 .key b{width:9px;height:9px;border-radius:50%;display:inline-block}
 .k1{background:var(--ok)} .k2{background:var(--warn)} .k3{background:var(--no)}
 
-/* una capa */
-.layer{
-  position:relative;border:1px solid var(--line);border-radius:14px;
-  background:var(--card);padding:16px 18px 18px;margin-bottom:0;
+/* ── la constelación ────────────────────────────────────────────────── */
+.cstwrap{
+  background:radial-gradient(ellipse 70% 70% at 50% 46%, rgba(80,155,205,.09), transparent 70%),
+             linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:18px;overflow:hidden;position:relative;
 }
-.layer > .lt{
-  display:flex;align-items:baseline;gap:12px;margin-bottom:13px;
-}
-.layer > .lt b{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent-lt)}
-.layer > .lt span{font-size:12.5px;color:var(--faint)}
-.layer.hl{border-color:rgba(80,155,205,.5);background:rgba(80,155,205,.08)}
+.cst{display:block;width:100%;height:auto;font-family:var(--mono)}
+.cstcap{padding:0 30px 20px;text-align:center;color:var(--mut);font-size:13.5px;min-height:52px;line-height:1.55}
+.cstcap b{color:var(--accent-lt)}
+.cstcap code{font-family:var(--mono);font-size:12.5px;color:var(--accent-lt);
+  background:rgba(80,155,205,.12);border-radius:4px;padding:1px 5px}
 
-/* la flecha entre capas */
-.arrow{height:30px;display:flex;align-items:center;justify-content:center;position:relative}
-.arrow::before{content:"";width:2px;height:100%;background:linear-gradient(180deg,rgba(125,184,222,.12),rgba(125,184,222,.5))}
-.arrow::after{content:"";position:absolute;bottom:2px;width:0;height:0;
-  border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--accent)}
-.arrow em{position:absolute;left:50%;transform:translateX(18px);font-style:normal;
-  font-size:11px;color:var(--faint);white-space:nowrap}
+/* anillos: giran despacio y en direcciones alternas */
+.cst .rings circle{fill:none;stroke:rgba(var(--wire),.13);stroke-width:1;
+  transform-origin:800px 430px;animation:cstspin 90s linear infinite}
+.cst .rings circle:nth-child(even){animation-direction:reverse;animation-duration:130s}
+@keyframes cstspin{to{transform:rotate(360deg)}}
+
+/* enlaces: guiones viajando del cerebro hacia fuera */
+.cst .lk{fill:none;stroke:rgba(var(--wire),.28);stroke-width:1.4;stroke-dasharray:5 13;
+  animation:cstflow 2.6s linear infinite}
+.cst .lk.inb{stroke:rgba(240,184,73,.42);animation-direction:reverse}
+@keyframes cstflow{to{stroke-dashoffset:-36}}
 
 /* cajas */
-.row{display:flex;gap:12px}
-.box{
-  flex:1;background:rgba(255,255,255,.045);border:1px solid var(--line);
-  border-radius:11px;padding:13px 15px;position:relative;
+.cst .slot rect{fill:rgba(255,255,255,.05);stroke:rgba(var(--wire),.22);stroke-width:1.2;
+  transition:fill .5s,stroke .5s}
+.cst .slot text{fill:var(--faint);font-size:13px;letter-spacing:.06em;text-anchor:middle;transition:fill .5s}
+.cst .slot .sub{fill:rgba(234,242,248,.34);font-size:11px;letter-spacing:.02em}
+.cst .slot.on rect{fill:rgba(80,155,205,.20);stroke:var(--accent);stroke-width:2}
+.cst .slot.on text{fill:#fff}
+.cst .slot.wp rect{stroke:rgba(240,184,73,.45)}
+.cst .slot.wp.on rect{fill:rgba(240,184,73,.18);stroke:var(--warn)}
+.cst .slot.gap rect{stroke:rgba(232,131,111,.45);stroke-dasharray:5 4}
+.cst .slot.gap.on rect{fill:rgba(232,131,111,.14);stroke:var(--no)}
+
+/* el cerebro */
+.cst .brain rect.shell{fill:rgba(10,43,71,.92);stroke:rgba(var(--wire),.34);stroke-width:1.5}
+.cst .brain rect.core{fill:rgba(80,155,205,.12);stroke:rgba(80,155,205,.6);stroke-width:1.6}
+.cst .brain .top{fill:var(--accent);font-size:12px;letter-spacing:.24em;text-anchor:middle}
+.cst .brain .big{fill:#fff;font-size:27px;font-weight:700;letter-spacing:.12em;text-anchor:middle}
+.cst .brain .slotlbl{fill:var(--faint);font-size:11px;letter-spacing:.11em;text-anchor:middle}
+.cst .brain rect.chip{fill:rgba(255,255,255,.05);stroke:rgba(var(--wire),.2);stroke-width:1}
+.cst .pulse{fill:none;stroke:rgba(80,155,205,.5);stroke-width:1.5;opacity:0;
+  animation:cstpulse 3.4s ease-out infinite}
+.cst .pulse.b{animation-delay:1.7s}
+@keyframes cstpulse{0%{r:120px;opacity:.5}100%{r:230px;opacity:0}}
+
+.cst .blink{animation:cstblink 2s ease-in-out infinite}
+@keyframes cstblink{0%,100%{opacity:1}50%{opacity:.25}}
+.cst .tag{font-size:10.5px;letter-spacing:.14em;text-anchor:middle}
+
+@media(prefers-reduced-motion:reduce){
+  .cst .rings circle,.cst .lk,.cst .pulse,.cst .blink{animation:none}
+  .cst .pulse{opacity:.22}
 }
-.box h4{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
-.box p{font-size:12.2px;color:var(--mut);line-height:1.52}
-.box code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
-  color:var(--accent-lt);background:rgba(80,155,205,.12);border-radius:4px;padding:1px 5px}
+
+/* ── detalle por capas, debajo ──────────────────────────────────────── */
+.layers{margin-top:22px}
+.layer{border:1px solid var(--line);border-radius:13px;background:var(--card);padding:14px 17px 16px;margin-bottom:11px}
+.layer .lt{display:flex;align-items:baseline;gap:12px;margin-bottom:11px}
+.layer .lt b{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent-lt)}
+.layer .lt span{font-size:12.5px;color:var(--faint)}
+.row{display:flex;gap:11px}
+.box{flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.box h4{font-size:13.5px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.box p{font-size:12px;color:var(--mut);line-height:1.5}
+.box code{font-family:var(--mono);font-size:11px;color:var(--accent-lt);
+  background:rgba(80,155,205,.12);border-radius:4px;padding:1px 5px}
 .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
 .d-ok{background:var(--ok)} .d-w{background:var(--warn)} .d-n{background:var(--no)}
-
-.mods{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
-.mod{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;
-  padding:10px 11px;font-size:12.3px;font-weight:600;text-align:center;line-height:1.35}
-.mod small{display:block;font-size:10.5px;color:var(--faint);font-weight:400;margin-top:3px}
-.mod.adm{border-color:rgba(240,184,73,.4);background:rgba(240,184,73,.08)}
-
-.wp{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:12px}
-.chan{border-left:3px solid var(--accent)}
-.chan h4 span{font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:var(--accent-lt);
-  border:1px solid rgba(80,155,205,.4);border-radius:12px;padding:2px 8px}
-
-.tenants{display:flex;gap:10px;align-items:stretch}
-.tn{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
-  padding:11px 13px;font-size:12.5px}
-.tn b{display:block;font-weight:700;margin-bottom:2px}
-.tn span{font-size:11px;color:var(--faint)}
-.tn.on{border-color:var(--accent);background:rgba(80,155,205,.13)}
-.tn.on span{color:var(--accent-lt)}
-.tn.ghost{opacity:.42;border-style:dashed}
-
-.rule{font-size:11.8px;color:var(--faint);margin-top:11px;padding-top:10px;border-top:1px solid var(--line);line-height:1.55}
+.rule{font-size:11.6px;color:var(--faint);margin-top:10px;padding-top:9px;border-top:1px solid var(--line);line-height:1.55}
 .rule b{color:var(--accent-lt)}
 
-.foot{margin-top:18px;display:flex;align-items:baseline;gap:14px;font-size:11.5px;color:var(--faint)}
+.foot{margin-top:16px;display:flex;align-items:baseline;gap:14px;font-size:11.5px;color:var(--faint)}
 .foot .sp{flex:1}
 .foot a{color:var(--accent-lt);font-weight:700;border-bottom:1px solid rgba(125,184,222,.4)}
+.foot code{font-family:var(--mono);color:var(--accent-lt)}
 @media print{ body{background:#fff} .page{width:auto} }
 </style>
 </head>
@@ -111,7 +136,14 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
     </div>
   </div>
 
-  <!-- 1 ─ identidad ───────────────────────────────────────────────────── -->
+  <figure class="cstwrap">
+    <svg class="cst" id="cst" viewBox="0 0 1600 880" role="img"
+         aria-label="Constelación de la estructura de Hispanotec Digital"></svg>
+    <figcaption class="cstcap" id="cstcap"></figcaption>
+  </figure>
+
+  <div class="layers">
+<!-- 1 ─ identidad ───────────────────────────────────────────────────── -->
   <div class="layer" style="margin-top:20px">
     <div class="lt"><b>1 · Identidad</b><span>WordPress es el dueño de las cuentas. La plataforma no guarda contraseñas ni crea una segunda cuenta.</span></div>
     <div class="wp">
@@ -134,8 +166,7 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
       Todavía no ha entrado nadie por ahí: <b>cero miembros vinculados</b>, porque el lado WordPress aún no emite un token real.</div>
   </div>
 
-  <div class="arrow"><em>token firmado + eventos de alta, baja y cambio de rol</em></div>
-
+  
   <!-- 2 ─ la puerta ───────────────────────────────────────────────────── -->
   <div class="layer hl">
     <div class="lt"><b>2 · La puerta</b><span>Cada petición pasa por aquí. Es el único sitio donde se decide quién eres y a qué organización perteneces.</span></div>
@@ -160,8 +191,7 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
     <div class="rule"><b>El estado del usuario es autoridad del webhook, no del SSO:</b> entrar no reactiva a nadie. Una baja en WordPress bloquea el acceso hasta que llegue un <code>user.updated</code> con <code>status: "active"</code>.</div>
   </div>
 
-  <div class="arrow"><em>sesión propia, con el inquilino ya resuelto</em></div>
-
+  
   <!-- 3 ─ instancias ──────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>3 · Instancias</b><span>Una plataforma, una organización por instancia. Cada una con su secreto, su mapa de roles y su fila de configuración.</span></div>
@@ -175,8 +205,7 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
     <div class="rule">Dar de alta otra organización <b>no requiere cambios de código</b>. Ninguna consulta cruza de una instancia a otra: todas filtran por <code>chamber_id</code>, y un miembro de cv-105 no es resoluble desde una petición de cv-106.</div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 4 ─ módulos ─────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>4 · Módulos</b><span>Catorce entradas de menú, un solo acceso, dos idiomas. Nada que instalar.</span></div>
@@ -198,8 +227,7 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
     </div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 5 ─ motores ─────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>5 · Motores</b><span>Donde está la ingeniería. Aritmética que se puede defender ante una junta, no una caja negra.</span></div>
@@ -223,8 +251,7 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
     </div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 6 ─ datos ───────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>6 · Datos</b><span>Qué se guarda, dónde y con qué base legal.</span></div>
@@ -247,13 +274,153 @@ body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-fon
       </div>
     </div>
   </div>
+  </div>
 
   <div class="foot">
     <span>Hispanotec Digital · Instancia HISPANOTEC (cv-105) · Septiembre de 2026</span>
     <span class="sp"></span>
-    <span>Contrato de integración: <code style="color:var(--accent-lt)">docs/wordpress-integration.md</code></span>
+    <span>Contrato de integración: <code>docs/wordpress-integration.md</code></span>
     <span>Creado por: <a href="https://manuelstagg.com/" target="_blank" rel="noopener">Manuel Stagg</a></span>
   </div>
 </div>
+
+<script>
+/* ===========================================================================
+   La constelación se dibuja desde datos, no a mano: así el diagrama y el
+   detalle de abajo no pueden contradecirse, y añadir un módulo es una fila.
+   =========================================================================== */
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(n, a, t) {
+    var e = document.createElementNS(NS, n);
+    for (var k in a) e.setAttribute(k, a[k]);
+    if (t != null) e.textContent = t;
+    return e;
+  }
+  var CX = 800, CY = 430, R = 300;
+
+  // Los doce módulos en anillo. El ángulo se reparte solo.
+  var MODS = [
+    ['Panel', 'estado de la red'], ['Mensajes', 'directos y grupo'],
+    ['Mi Perfil', 'el motor de todo'], ['Directorio', 'sector y región'],
+    ['Matching IA', 'lenguaje natural'], ['Mis Búsquedas', 'siguen corriendo'],
+    ['Proyectos', 'validados'], ['Invitaciones', 'rol y motivo'],
+    ['Intercambio', 'RFQ y ofertas'], ['Pagos', 'cuotas y facturas'],
+    ['M. Directorio', 'solo dirección'], ['Gobernanza', 'junta y auditoría']
+  ];
+  // Los de fuera del anillo: identidad a la izquierda, motores y datos abajo.
+  var OUT = [
+    { id:'wp',   x:150,  y:430, w:210, h:74, t:'hispanotec.org', s:'WordPress · las cuentas', cls:'wp' },
+    { id:'mot',  x:1450, y:256, w:210, h:74, t:'Motores',        s:'Gini · Monte Carlo' },
+    { id:'dat',  x:1450, y:604, w:210, h:74, t:'Datos',          s:'chamber_id · Stripe' },
+    { id:'cap',  x:800,  y:830, w:250, h:64, t:'Capacidad empresarial', s:'no construido', cls:'gap' }
+  ];
+
+  var DESC = {
+    brain: '<b>El cerebro.</b> Cada petición pasa por aquí antes que por nada: comprueba la firma y el permiso, <b>inyecta a qué organización pertenece</b> —nunca lo envía el navegador— y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
+    wp:    '<b>WordPress es el dueño de las cuentas.</b> Los socios entran en hispanotec.org y llegan ya autenticados; la plataforma no guarda contraseñas. Dos canales: <code>A</code> el handoff SSO, que hace el login, y <code>B</code> el webhook de altas y bajas, que <b>no es opcional</b>. Desplegados y respondiendo, pero todavía con cero miembros vinculados.',
+    mot:   '<b>Los motores.</b> Emparejamiento por afinidad × TrustRank con corrección Gini; validación de proyectos con Monte Carlo de diez mil iteraciones; y el Motor de Directorio, que nunca mezcla un dato verificado con uno estimado.',
+    dat:   '<b>Los datos.</b> Toda tabla lleva <code>chamber_id</code> y filtra por él. Las tarjetas las guarda Stripe, no nosotros. Cada ficha traída de una fuente pública activa la base legal del artículo 14 del RGPD.',
+    cap:   '<b>Lo que no está construido.</b> Hoy el motor empareja personas. La empresa como entidad, quién puede representarla y combinar varias empresas complementarias en una sola oferta son la decisión de producto que sigue sobre la mesa.'
+  };
+  MODS.forEach(function (m) { DESC['m' + m[0]] = '<b>' + m[0] + '.</b> ' + m[1] + '.'; });
+
+  function build() {
+    var svg = document.getElementById('cst');
+    if (!svg) return;
+
+    var rings = el('g', { class: 'rings' });
+    [200, 300, 386].forEach(function (r) {
+      rings.appendChild(el('circle', { cx: CX, cy: CY, r: r, 'stroke-dasharray': r === 300 ? '3 9' : '' }));
+    });
+    svg.appendChild(rings);
+
+    var nodes = [];
+    MODS.forEach(function (m, i) {
+      // Desfasado medio paso a propósito: con doce módulos a 30 grados, uno cae
+      // exactamente a 180 y se sienta encima del corredor horizontal por el que
+      // entra WordPress. Con el desfase ningún módulo pisa ese enlace.
+      var paso = 360 / MODS.length;
+      var a = (-90 + paso / 2 + i * paso) * Math.PI / 180;
+      nodes.push({ id: 'm' + m[0], x: CX + R * Math.cos(a), y: CY + R * Math.sin(a),
+                   w: 138, h: 50, t: m[0], s: m[1] });
+    });
+    OUT.forEach(function (o) { nodes.push(o); });
+
+    // enlaces: del borde del cerebro al borde de cada caja
+    nodes.forEach(function (n) {
+      var dx = n.x - CX, dy = n.y - CY, d = Math.hypot(dx, dy) || 1;
+      var x1 = CX + dx / d * 118, y1 = CY + dy / d * 88;
+      var x2 = n.x - dx / d * (n.w / 2 + 4), y2 = n.y - dy / d * (n.h / 2 + 4);
+      svg.appendChild(el('path', { d: 'M' + x1 + ' ' + y1 + 'L' + x2 + ' ' + y2,
+        class: 'lk' + (n.id === 'wp' ? ' inb' : ''), 'data-lk': n.id }));
+    });
+
+    // las dos etiquetas de canal, sobre el enlace de WordPress
+    svg.appendChild(el('text', { x: 430, y: 404, class: 'tag', fill: 'rgba(240,184,73,.9)' }, 'A · SSO'));
+    svg.appendChild(el('text', { x: 430, y: 470, class: 'tag', fill: 'rgba(240,184,73,.9)' }, 'B · WEBHOOK'));
+
+    nodes.forEach(function (n) {
+      var g = el('g', { class: 'slot ' + (n.cls || ''), 'data-id': n.id, tabindex: '0',
+                        role: 'button', 'aria-label': n.t });
+      g.appendChild(el('rect', { x: n.x - n.w / 2, y: n.y - n.h / 2, width: n.w, height: n.h, rx: 9 }));
+      g.appendChild(el('text', { x: n.x, y: n.y - 2 }, n.t));
+      g.appendChild(el('text', { x: n.x, y: n.y + 15, class: 'sub' }, n.s));
+      svg.appendChild(g);
+    });
+
+    // el cerebro
+    var b = el('g', { class: 'brain slot', 'data-id': 'brain', tabindex: '0', role: 'button', 'aria-label': 'El cerebro' });
+    b.appendChild(el('circle', { cx: CX, cy: CY, r: 120, class: 'pulse' }));
+    b.appendChild(el('circle', { cx: CX, cy: CY, r: 120, class: 'pulse b' }));
+    b.appendChild(el('rect', { x: CX - 200, y: CY - 86, width: 400, height: 172, rx: 16, class: 'shell' }));
+    b.appendChild(el('rect', { x: CX - 176, y: CY - 64, width: 352, height: 76, rx: 10, class: 'core' }));
+    b.appendChild(el('text', { x: CX, y: CY - 42, class: 'top' }, 'HISPANOTEC DIGITAL'));
+    b.appendChild(el('text', { x: CX, y: CY - 8, class: 'big' }, 'EL CEREBRO'));
+    ['PERMISO', 'ORGANIZACIÓN', 'REGISTRO'].forEach(function (s, i) {
+      var w = 112, gap = 8, tot = 3 * w + 2 * gap, x = CX - tot / 2 + i * (w + gap);
+      b.appendChild(el('rect', { x: x, y: CY + 26, width: w, height: 38, rx: 8, class: 'chip' }));
+      b.appendChild(el('text', { x: x + w / 2, y: CY + 50, class: 'slotlbl' }, s));
+    });
+    svg.appendChild(b);
+
+    svg.addEventListener('click', pick);
+    svg.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e); }
+    });
+    function pick(e) {
+      var g = e.target.closest('.slot');
+      if (g) { stop(); light(g.getAttribute('data-id')); }
+    }
+    return nodes;
+  }
+
+  function light(id) {
+    [].forEach.call(document.querySelectorAll('#cst .slot'), function (g) {
+      g.classList.toggle('on', g.getAttribute('data-id') === id);
+    });
+    [].forEach.call(document.querySelectorAll('#cst .lk'), function (p) {
+      p.classList.toggle('blink', id === 'brain' || p.getAttribute('data-lk') === id);
+    });
+    var c = document.getElementById('cstcap');
+    if (c) c.innerHTML = DESC[id] || '';
+  }
+
+  var SEQ = ['brain', 'wp', 'mDirectorio', 'mMatching IA', 'mProyectos', 'mIntercambio',
+             'mM. Directorio', 'mGobernanza', 'mot', 'dat', 'cap'];
+  var t = null, i = 0;
+  function stop() { clearInterval(t); t = null; }
+  function start() {
+    if (reduce) { light('brain'); return; }
+    light(SEQ[i]);
+    t = setInterval(function () { i = (i + 1) % SEQ.length; light(SEQ[i]); }, 2800);
+  }
+
+  build();
+  start();
+})();
+</script>
 </body>
 </html>

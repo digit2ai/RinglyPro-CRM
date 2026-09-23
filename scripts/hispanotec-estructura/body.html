@@ -12,7 +12,14 @@
     </div>
   </div>
 
-  <!-- 1 ─ identidad ───────────────────────────────────────────────────── -->
+  <figure class="cstwrap">
+    <svg class="cst" id="cst" viewBox="0 0 1600 880" role="img"
+         aria-label="Constelación de la estructura de Hispanotec Digital"></svg>
+    <figcaption class="cstcap" id="cstcap"></figcaption>
+  </figure>
+
+  <div class="layers">
+<!-- 1 ─ identidad ───────────────────────────────────────────────────── -->
   <div class="layer" style="margin-top:20px">
     <div class="lt"><b>1 · Identidad</b><span>WordPress es el dueño de las cuentas. La plataforma no guarda contraseñas ni crea una segunda cuenta.</span></div>
     <div class="wp">
@@ -35,8 +42,7 @@
       Todavía no ha entrado nadie por ahí: <b>cero miembros vinculados</b>, porque el lado WordPress aún no emite un token real.</div>
   </div>
 
-  <div class="arrow"><em>token firmado + eventos de alta, baja y cambio de rol</em></div>
-
+  
   <!-- 2 ─ la puerta ───────────────────────────────────────────────────── -->
   <div class="layer hl">
     <div class="lt"><b>2 · La puerta</b><span>Cada petición pasa por aquí. Es el único sitio donde se decide quién eres y a qué organización perteneces.</span></div>
@@ -61,8 +67,7 @@
     <div class="rule"><b>El estado del usuario es autoridad del webhook, no del SSO:</b> entrar no reactiva a nadie. Una baja en WordPress bloquea el acceso hasta que llegue un <code>user.updated</code> con <code>status: "active"</code>.</div>
   </div>
 
-  <div class="arrow"><em>sesión propia, con el inquilino ya resuelto</em></div>
-
+  
   <!-- 3 ─ instancias ──────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>3 · Instancias</b><span>Una plataforma, una organización por instancia. Cada una con su secreto, su mapa de roles y su fila de configuración.</span></div>
@@ -76,8 +81,7 @@
     <div class="rule">Dar de alta otra organización <b>no requiere cambios de código</b>. Ninguna consulta cruza de una instancia a otra: todas filtran por <code>chamber_id</code>, y un miembro de cv-105 no es resoluble desde una petición de cv-106.</div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 4 ─ módulos ─────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>4 · Módulos</b><span>Catorce entradas de menú, un solo acceso, dos idiomas. Nada que instalar.</span></div>
@@ -99,8 +103,7 @@
     </div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 5 ─ motores ─────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>5 · Motores</b><span>Donde está la ingeniería. Aritmética que se puede defender ante una junta, no una caja negra.</span></div>
@@ -124,8 +127,7 @@
     </div>
   </div>
 
-  <div class="arrow"></div>
-
+  
   <!-- 6 ─ datos ───────────────────────────────────────────────────────── -->
   <div class="layer">
     <div class="lt"><b>6 · Datos</b><span>Qué se guarda, dónde y con qué base legal.</span></div>
@@ -148,13 +150,153 @@
       </div>
     </div>
   </div>
+  </div>
 
   <div class="foot">
     <span>Hispanotec Digital · Instancia HISPANOTEC (cv-105) · Septiembre de 2026</span>
     <span class="sp"></span>
-    <span>Contrato de integración: <code style="color:var(--accent-lt)">docs/wordpress-integration.md</code></span>
+    <span>Contrato de integración: <code>docs/wordpress-integration.md</code></span>
     <span>Creado por: <a href="https://manuelstagg.com/" target="_blank" rel="noopener">Manuel Stagg</a></span>
   </div>
 </div>
+
+<script>
+/* ===========================================================================
+   La constelación se dibuja desde datos, no a mano: así el diagrama y el
+   detalle de abajo no pueden contradecirse, y añadir un módulo es una fila.
+   =========================================================================== */
+(function () {
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(n, a, t) {
+    var e = document.createElementNS(NS, n);
+    for (var k in a) e.setAttribute(k, a[k]);
+    if (t != null) e.textContent = t;
+    return e;
+  }
+  var CX = 800, CY = 430, R = 300;
+
+  // Los doce módulos en anillo. El ángulo se reparte solo.
+  var MODS = [
+    ['Panel', 'estado de la red'], ['Mensajes', 'directos y grupo'],
+    ['Mi Perfil', 'el motor de todo'], ['Directorio', 'sector y región'],
+    ['Matching IA', 'lenguaje natural'], ['Mis Búsquedas', 'siguen corriendo'],
+    ['Proyectos', 'validados'], ['Invitaciones', 'rol y motivo'],
+    ['Intercambio', 'RFQ y ofertas'], ['Pagos', 'cuotas y facturas'],
+    ['M. Directorio', 'solo dirección'], ['Gobernanza', 'junta y auditoría']
+  ];
+  // Los de fuera del anillo: identidad a la izquierda, motores y datos abajo.
+  var OUT = [
+    { id:'wp',   x:150,  y:430, w:210, h:74, t:'hispanotec.org', s:'WordPress · las cuentas', cls:'wp' },
+    { id:'mot',  x:1450, y:256, w:210, h:74, t:'Motores',        s:'Gini · Monte Carlo' },
+    { id:'dat',  x:1450, y:604, w:210, h:74, t:'Datos',          s:'chamber_id · Stripe' },
+    { id:'cap',  x:800,  y:830, w:250, h:64, t:'Capacidad empresarial', s:'no construido', cls:'gap' }
+  ];
+
+  var DESC = {
+    brain: '<b>El cerebro.</b> Cada petición pasa por aquí antes que por nada: comprueba la firma y el permiso, <b>inyecta a qué organización pertenece</b> —nunca lo envía el navegador— y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
+    wp:    '<b>WordPress es el dueño de las cuentas.</b> Los socios entran en hispanotec.org y llegan ya autenticados; la plataforma no guarda contraseñas. Dos canales: <code>A</code> el handoff SSO, que hace el login, y <code>B</code> el webhook de altas y bajas, que <b>no es opcional</b>. Desplegados y respondiendo, pero todavía con cero miembros vinculados.',
+    mot:   '<b>Los motores.</b> Emparejamiento por afinidad × TrustRank con corrección Gini; validación de proyectos con Monte Carlo de diez mil iteraciones; y el Motor de Directorio, que nunca mezcla un dato verificado con uno estimado.',
+    dat:   '<b>Los datos.</b> Toda tabla lleva <code>chamber_id</code> y filtra por él. Las tarjetas las guarda Stripe, no nosotros. Cada ficha traída de una fuente pública activa la base legal del artículo 14 del RGPD.',
+    cap:   '<b>Lo que no está construido.</b> Hoy el motor empareja personas. La empresa como entidad, quién puede representarla y combinar varias empresas complementarias en una sola oferta son la decisión de producto que sigue sobre la mesa.'
+  };
+  MODS.forEach(function (m) { DESC['m' + m[0]] = '<b>' + m[0] + '.</b> ' + m[1] + '.'; });
+
+  function build() {
+    var svg = document.getElementById('cst');
+    if (!svg) return;
+
+    var rings = el('g', { class: 'rings' });
+    [200, 300, 386].forEach(function (r) {
+      rings.appendChild(el('circle', { cx: CX, cy: CY, r: r, 'stroke-dasharray': r === 300 ? '3 9' : '' }));
+    });
+    svg.appendChild(rings);
+
+    var nodes = [];
+    MODS.forEach(function (m, i) {
+      // Desfasado medio paso a propósito: con doce módulos a 30 grados, uno cae
+      // exactamente a 180 y se sienta encima del corredor horizontal por el que
+      // entra WordPress. Con el desfase ningún módulo pisa ese enlace.
+      var paso = 360 / MODS.length;
+      var a = (-90 + paso / 2 + i * paso) * Math.PI / 180;
+      nodes.push({ id: 'm' + m[0], x: CX + R * Math.cos(a), y: CY + R * Math.sin(a),
+                   w: 138, h: 50, t: m[0], s: m[1] });
+    });
+    OUT.forEach(function (o) { nodes.push(o); });
+
+    // enlaces: del borde del cerebro al borde de cada caja
+    nodes.forEach(function (n) {
+      var dx = n.x - CX, dy = n.y - CY, d = Math.hypot(dx, dy) || 1;
+      var x1 = CX + dx / d * 118, y1 = CY + dy / d * 88;
+      var x2 = n.x - dx / d * (n.w / 2 + 4), y2 = n.y - dy / d * (n.h / 2 + 4);
+      svg.appendChild(el('path', { d: 'M' + x1 + ' ' + y1 + 'L' + x2 + ' ' + y2,
+        class: 'lk' + (n.id === 'wp' ? ' inb' : ''), 'data-lk': n.id }));
+    });
+
+    // las dos etiquetas de canal, sobre el enlace de WordPress
+    svg.appendChild(el('text', { x: 430, y: 404, class: 'tag', fill: 'rgba(240,184,73,.9)' }, 'A · SSO'));
+    svg.appendChild(el('text', { x: 430, y: 470, class: 'tag', fill: 'rgba(240,184,73,.9)' }, 'B · WEBHOOK'));
+
+    nodes.forEach(function (n) {
+      var g = el('g', { class: 'slot ' + (n.cls || ''), 'data-id': n.id, tabindex: '0',
+                        role: 'button', 'aria-label': n.t });
+      g.appendChild(el('rect', { x: n.x - n.w / 2, y: n.y - n.h / 2, width: n.w, height: n.h, rx: 9 }));
+      g.appendChild(el('text', { x: n.x, y: n.y - 2 }, n.t));
+      g.appendChild(el('text', { x: n.x, y: n.y + 15, class: 'sub' }, n.s));
+      svg.appendChild(g);
+    });
+
+    // el cerebro
+    var b = el('g', { class: 'brain slot', 'data-id': 'brain', tabindex: '0', role: 'button', 'aria-label': 'El cerebro' });
+    b.appendChild(el('circle', { cx: CX, cy: CY, r: 120, class: 'pulse' }));
+    b.appendChild(el('circle', { cx: CX, cy: CY, r: 120, class: 'pulse b' }));
+    b.appendChild(el('rect', { x: CX - 200, y: CY - 86, width: 400, height: 172, rx: 16, class: 'shell' }));
+    b.appendChild(el('rect', { x: CX - 176, y: CY - 64, width: 352, height: 76, rx: 10, class: 'core' }));
+    b.appendChild(el('text', { x: CX, y: CY - 42, class: 'top' }, 'HISPANOTEC DIGITAL'));
+    b.appendChild(el('text', { x: CX, y: CY - 8, class: 'big' }, 'EL CEREBRO'));
+    ['PERMISO', 'ORGANIZACIÓN', 'REGISTRO'].forEach(function (s, i) {
+      var w = 112, gap = 8, tot = 3 * w + 2 * gap, x = CX - tot / 2 + i * (w + gap);
+      b.appendChild(el('rect', { x: x, y: CY + 26, width: w, height: 38, rx: 8, class: 'chip' }));
+      b.appendChild(el('text', { x: x + w / 2, y: CY + 50, class: 'slotlbl' }, s));
+    });
+    svg.appendChild(b);
+
+    svg.addEventListener('click', pick);
+    svg.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e); }
+    });
+    function pick(e) {
+      var g = e.target.closest('.slot');
+      if (g) { stop(); light(g.getAttribute('data-id')); }
+    }
+    return nodes;
+  }
+
+  function light(id) {
+    [].forEach.call(document.querySelectorAll('#cst .slot'), function (g) {
+      g.classList.toggle('on', g.getAttribute('data-id') === id);
+    });
+    [].forEach.call(document.querySelectorAll('#cst .lk'), function (p) {
+      p.classList.toggle('blink', id === 'brain' || p.getAttribute('data-lk') === id);
+    });
+    var c = document.getElementById('cstcap');
+    if (c) c.innerHTML = DESC[id] || '';
+  }
+
+  var SEQ = ['brain', 'wp', 'mDirectorio', 'mMatching IA', 'mProyectos', 'mIntercambio',
+             'mM. Directorio', 'mGobernanza', 'mot', 'dat', 'cap'];
+  var t = null, i = 0;
+  function stop() { clearInterval(t); t = null; }
+  function start() {
+    if (reduce) { light('brain'); return; }
+    light(SEQ[i]);
+    t = setInterval(function () { i = (i + 1) % SEQ.length; light(SEQ[i]); }, 2800);
+  }
+
+  build();
+  start();
+})();
+</script>
 </body>
 </html>
