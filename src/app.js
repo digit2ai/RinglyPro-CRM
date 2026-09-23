@@ -268,7 +268,15 @@ app.use((req, res, next) => {
 const HISPANOTEC_HOSTS = new Set(['hispanotec.digit2ai.com', 'www.hispanotec.digit2ai.com']);
 // Servido por la app principal: los archivos del recorrido, el logo de la
 // cámara y la voz que lo narra.
-const HISPANOTEC_PASA_DERECHO = ['/hispanotec/', '/hispatec/', '/embed/', '/api/voice-agent/', '/api/tts/'];
+//
+// EL LOGO ES UN ARCHIVO EXACTO, NO EL PREFIJO /hispatec/. Bajo ese prefijo vive
+// la plataforma HISPATEC entera — su portada, su whitepaper, su documento
+// técnico y su tablero —, y dejar pasar el prefijo la serviría en el dominio de
+// marca de la cámara. Es la lección de jobmd.io/admin en pequeño: un producto
+// ajeno respondiendo en la dirección de otro. Las cinco referencias de las
+// páginas apuntan a este único archivo.
+const HISPANOTEC_LOGO = '/hispatec/logo-hispanotec.svg';
+const HISPANOTEC_PASA_DERECHO = ['/hispanotec/', '/embed/', '/api/voice-agent/', '/api/tts/'];
 
 function hispanotec404(res) {
   res.status(404).type('html').send('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
@@ -295,6 +303,7 @@ app.use((req, res, next) => {
 
   if (ruta === '/' || ruta === '') { req.url = '/hispanotec/ecosystem/' + cola; return next(); }
   if (ruta === '/ecosystem' || ruta === '/ecosystem/') { req.url = '/hispanotec/ecosystem/' + cola; return next(); }
+  if (ruta === HISPANOTEC_LOGO) return next();
   if (HISPANOTEC_PASA_DERECHO.some((pre) => ruta.startsWith(pre))) return next();
   if (ruta === '/favicon.ico' || ruta === '/apple-touch-icon.png') return next();
 
