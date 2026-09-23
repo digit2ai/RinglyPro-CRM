@@ -111,4 +111,71 @@ router.get('/users', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+/**
+ * GET /internal/security/ghl-probe — READ-ONLY structural probe of the
+ * HighLevel Voice AI surface, so a plan decision is made against what the API
+ * actually exposes rather than what the docs are remembered to say.
+ *
+ * It answers one question: can a HighLevel agent call OUR API during a call
+ * (a custom/webhook action), which is what would let bookings land in the
+ * client's own RinglyPro calendar instead of a HighLevel one.
+ *
+ * It returns SHAPE ONLY — ids, names, action types and the field names each
+ * object carries. Never a prompt, never a phone number, never the token.
+ */
+router.get('/ghl-probe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  if (!ghl.configured()) return res.json({ configured: false });
+  const out = { configured: true, location_id: ghl.locationId(), steps: {} };
+  const step = async (name, fn) => {
+    try { out.steps[name] = { ok: true, data: await fn() }; }
+    catch (e) { out.steps[name] = { ok: false, status: e.status || null, error: e.message }; }
+  };
+  const arr = (d) => (Array.isArray(d) ? d : (d && typeof d === 'object'
+    ? (Object.values(d).find((v) => Array.isArray(v)) || []) : []));
+
+  let agents = [];
+  await step('agents', async () => {
+    agents = arr(await ghl.listVoiceAgents());
+    return agents.map((a) => ({
+      id: a.id || a._id || null,
+      name: a.agentName || a.name || null,
+      on_number: !!a.inboundNumber,
+      fields: Object.keys(a).sort(),
+    }));
+  });
+
+  // Every action on every agent, by type. This is the list that decides it.
+  await step('actions', async () => {
+    const seen = [];
+    for (const a of agents.slice(0, 5)) {
+      const id = a.id || a._id;
+      if (!id) continue;
+      try {
+        const d = await ghl.call('GET', '/voice-ai/actions', { query: { agentId: id, locationId: ghl.locationId() } });
+        for (const x of arr(d)) seen.push({ agent: id, type: x.actionType || x.type || null,
+          name: x.name || null, fields: Object.keys(x).sort() });
+      } catch (e) { seen.push({ agent: id, error: `${e.status || ''} ${e.message}`.trim() }); }
+    }
+    return seen;
+  });
+
+  // Does this token reach calendars at all (the HighLevel-side booking path)?
+  await step('calendars', async () => {
+    const d = await ghl.call('GET', '/calendars/', { query: { locationId: ghl.locationId() } });
+    return arr(d).map((c) => ({ id: c.id || null, name: c.name || null }));
+  });
+
+  // Can we CREATE a calendar per tenant (unattended signup) on this plan?
+  await step('calendars_writable_check', async () => {
+    // Deliberately a malformed create: a 4xx validation error proves the route
+    // is reachable and permitted; a 401/403 proves it is not. Nothing is made.
+    try { await ghl.call('POST', '/calendars/', { body: { locationId: ghl.locationId() } }); return 'created_unexpectedly'; }
+    catch (e) { return { status: e.status, meaning: e.status === 401 || e.status === 403 ? 'NOT PERMITTED' : 'reachable (validation error)', error: e.message }; }
+  });
+
+  return res.json(out);
+});
+
 module.exports = router;
