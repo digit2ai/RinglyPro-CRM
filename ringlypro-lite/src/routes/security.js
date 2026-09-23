@@ -78,7 +78,7 @@ router.get('/users', async (req, res) => {
         'country', 'locale', 'timezone', 'subscription_status', 'trial_ends_at', 'suspended_at',
         'active', 'created_at'], order: [['id', 'ASC']] }),
       User.findAll({ attributes: ['id', 'tenant_id', 'email', 'name', 'created_at'], order: [['id', 'ASC']] }),
-      Number.findAll({ attributes: ['tenant_id', 'did', 'active'] })
+      Number.findAll({ attributes: ['tenant_id', 'did', 'status'] })
     ]);
     const byTenant = new Map();
     for (const t of tenants) byTenant.set(t.id, { tenant_id: t.id, business_name: t.business_name,
@@ -90,7 +90,7 @@ router.get('/users', async (req, res) => {
       numbers: [], logins: [] });
     for (const n of numbers) {
       const row = byTenant.get(n.tenant_id);
-      if (row) row.numbers.push({ did: n.did ? tollFraud.mask(n.did) : null, active: n.active });
+      if (row) row.numbers.push({ did: n.did ? tollFraud.mask(n.did) : null, status: n.status });
     }
     const orphans = [];
     for (const u of users) {
