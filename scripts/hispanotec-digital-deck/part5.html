@@ -76,7 +76,7 @@
     { id:'matching',    a:-22.5, t:'Matching con IA',     s:'afinidad · confianza · equidad' },
     { id:'proyectos',   a: 22.5, t:'Proyectos',           s:'validados antes de financiarse' },
     { id:'intercambio', a: 67.5, t:'Intercambio',         s:'cotizaciones entre miembros' },
-    { id:'mensajeria',  a:112.5, t:'Mensajería',          s:'dentro de la cámara' },
+    { id:'mensajeria',  a:112.5, t:'Mensajería',          s:'dentro de la organización' },
     { id:'pagos',       a:157.5, t:'Pagos',               s:'cuotas y facturas' },
     { id:'motor',       a:202.5, t:'Motor de Directorio', s:'fuentes públicas · RGPD' },
     { id:'gobernanza',  a:247.5, t:'Gobernanza',          s:'junta y delegaciones' }
@@ -86,15 +86,15 @@
     { id:'junta',   x:1092,y:CY, t:'La dirección', s:'ve lo que pasa y responde de ello', ic:'junta' }
   ];
   var DESC = {
-    brain: '<b>El cerebro.</b> Cada petición pasa por aquí: comprueba el permiso, inyecta a qué cámara pertenece —nunca lo envía el navegador—, llama al módulo que corresponde y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
+    brain: '<b>El cerebro.</b> Cada petición pasa por aquí: comprueba el permiso, inyecta a qué organización pertenece —nunca lo envía el navegador—, llama al módulo que corresponde y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
     directorio: '<b>Directorio.</b> Todos los miembros activos, filtrables por sector y región, con mensaje directo a cualquiera. No es un listado impreso que envejece: es el padrón vivo del que se alimenta todo lo demás.',
     matching: '<b>Matching con IA.</b> Describes la necesidad en lenguaje natural y el motor puntúa toda la red por afinidad, la pondera por confianza y reserva dos puestos por equidad. Devuelve una lista corta en segundos.',
     proyectos: '<b>Proyectos.</b> Una conexión se convierte en negocio: se arma el equipo por roles y, antes de mover un euro, se corre una simulación Monte Carlo diez mil veces. El puntaje IRS resume la preparación en un número.',
-    intercambio: '<b>Intercambio.</b> El mercado interno de la cámara. Publicas una solicitud de cotización y la ve toda la red, o presentas una oferta a la de otro, siempre entre miembros identificados.',
-    mensajeria: '<b>Mensajería.</b> Las conversaciones viven dentro de la cámara, no dispersas en teléfonos personales. Mensajes directos, hilos de equipo y anuncios a toda la red.',
+    intercambio: '<b>Intercambio.</b> El mercado interno de la organización. Publicas una solicitud de cotización y la ve toda la red, o presentas una oferta a la de otro, siempre entre miembros identificados.',
+    mensajeria: '<b>Mensajería.</b> Las conversaciones viven dentro de la organización, no dispersas en teléfonos personales. Mensajes directos, hilos de equipo y anuncios a toda la red.',
     pagos: '<b>Pagos.</b> Cuotas y facturas en un solo lugar con su historial. Los datos de la tarjeta nunca tocan nuestros servidores: los guarda Stripe, y nosotros solo el identificador y los cuatro últimos dígitos.',
     motor: '<b>Motor de Directorio Inteligente.</b> Reservado a la dirección. Incorpora fundaciones y terceros desde fuentes públicas separando siempre el dato verificado del estimado, con la base legal del RGPD activada en cada ficha.',
-    gobernanza: '<b>Gobernanza.</b> Gestión de miembros, puestos de la junta y delegaciones regionales. Una cámara que pide confianza a sus socios tiene que ser lo primero que se pueda auditar.',
+    gobernanza: '<b>Gobernanza.</b> Gestión de miembros, puestos de la junta y delegaciones regionales. Una organización que pide confianza a sus socios tiene que ser lo primero que se pueda auditar.',
     miembro: '<b>El miembro.</b> Entra desde la página de su asociación, en el móvil o en el ordenador, sin descargar nada. Su cuenta está siempre activa y la plataforma habla su idioma.',
     junta: '<b>La dirección.</b> Ve el estado real de la red y responde de ella. Los cambios de gobernanza quedan registrados, porque una junta que no puede enseñar lo que hizo no puede pedir confianza.'
   };
@@ -149,7 +149,7 @@
     b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'pulse b' }));
     b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'core' }));
     var t1 = el('text', { x:CX, y:CY - 4, class:'t' }); t1.textContent = 'CEREBRO';
-    var t2 = el('text', { x:CX, y:CY + 16, class:'s' }); t2.textContent = 'PERMISO · CÁMARA · REGISTRO';
+    var t2 = el('text', { x:CX, y:CY + 16, class:'s' }); t2.textContent = 'PERMISO · ORGANIZACIÓN · REGISTRO';
     b.appendChild(t1); b.appendChild(t2); svg.appendChild(b);
 
     svg.addEventListener('click', function (e) {
@@ -192,7 +192,7 @@
     ['pagos','Pagos','Cuotas, facturas e historial'],
     ['motor','Motor de Directorio','Solo para la dirección'],
     ['guia','Guía del Miembro','Cada módulo explicado dentro'],
-    ['jobup','Perfil global','El miembro, más allá de la cámara']
+    ['jobup','Perfil global','El miembro, más allá de la organización']
   ];
   var mg = $('modGrid');
   if (mg) mg.innerHTML = MODS.map(function (m) {

@@ -41,13 +41,30 @@ if (simJs.indexOf(LOGO_LINE) === -1) {
 }
 simJs = simJs.replace(LOGO_LINE, "var LOGO = '" + LOGO + "';");
 
+// 'Cámara' -> 'Organización' SOLO en la copia que viaja dentro del deck. El
+// recorrido de HISPANOTEC en /hispanotec/ecosystem/ sigue diciendo cámara,
+// que es lo correcto allí: aquello es el tour de una cámara concreta y esto
+// es la plataforma ofrecida a cualquier organización. Los dos sustantivos son
+// femeninos, así que artículos y concordancia se mantienen solos.
+function organiza(txt) {
+  return txt.split('cámaras').join('organizaciones')
+            .split('Cámaras').join('Organizaciones')
+            .split('cámara').join('organización')
+            .split('Cámara').join('Organización');
+}
+const antes = (simJs + simData).split(/[cC]ámara/).length - 1;
+if (antes === 0) throw new Error('el simulador ya no dice cámara; revisa antes de generar');
+simJs = organiza(simJs);
+const simDataOrg = organiza(simData);
+if (/[cC]ámara/.test(simJs + simDataOrg)) throw new Error('quedó alguna cámara sin sustituir');
+
 // Las partes, en orden.
 const html = ['part1.html', 'part2.html', 'part3.html', 'part4.html', 'part5.html']
   .map(f => read(path.join(PARTS, f)))
   .join('')
   .split('__LOGO_URI__').join(LOGO)
   .replace('__SIM_CSS__', () => simCss)
-  .replace('__SIM_DATA__', () => simData)
+  .replace('__SIM_DATA__', () => simDataOrg)
   .replace('__SIM_JS__', () => simJs);
 
 ['__LOGO_URI__', '__SIM_CSS__', '__SIM_DATA__', '__SIM_JS__'].forEach(tok => {

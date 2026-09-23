@@ -130,7 +130,7 @@ p{line-height:1.62}
 .n-node.human.on circle{stroke:var(--ok);fill:#1b4430}
 .brain circle.core{fill:url(#bg1);stroke:var(--accent);stroke-width:2}
 .brain text.t{fill:#fff;font:800 15px var(--sans);text-anchor:middle;letter-spacing:1.4px}
-.brain text.s{fill:var(--accent-lt);font:600 10.5px var(--sans);text-anchor:middle;letter-spacing:1.6px}
+.brain text.s{fill:var(--accent-lt);font:600 10px var(--sans);text-anchor:middle;letter-spacing:1px}
 .pulse{fill:none;stroke:var(--accent);stroke-width:1.5;opacity:0}
 @keyframes pr{0%{r:62px;opacity:.55}100%{r:118px;opacity:0}}
 @keyframes fl{to{stroke-dashoffset:-160}}
@@ -658,28 +658,47 @@ p{line-height:1.62}
 
 
 /* ── ajustes de encaje, DESPUÉS del CSS del simulador ─────────────────
-   Dos secciones no cabían en 900 px de alto: el diagrama dejaba su leyenda
-   —que es el premio de tocar un nodo— fuera de pantalla, y el simulador se
-   salía 219 px. El alto de .vc-app solo se puede corregir aquí, después de
-   demo.css, porque allí vale 660 px. Medido en Chrome, no a ojo. */
-#s2 .lede{margin-bottom:10px}
-#ecoSvg{max-height:52vh}
-.eco-cap{min-height:52px;margin-top:8px}
+   Tres láminas necesitan reglas propias, y el alto de .vc-app solo se puede
+   corregir aquí, después de demo.css, donde vale 660 px. Todo medido en
+   Chrome a 1440x900, 1920x1080 y 1366x768, nunca a ojo. */
 
-#s7 .lede{margin-bottom:14px}
-#s7 .note{margin-top:12px}
-/* Se adapta al alto real de la pantalla en vez de a tres saltos fijos: el
-   descargo de "todo esto es inventado" tiene que quedar dentro de la
-   pantalla, no debajo del pliegue. */
-#s7 .vc-app{height:clamp(330px, calc(100vh - 445px), 620px)}
-#s7 .vc-main{padding:18px 20px 26px}
+/* El diagrama ya lleva el viewBox recortado a su contenido real, así que
+   aquí solo se le da todo el alto que la lámina puede pagar. */
+#s2 h2{font-size:clamp(24px,3vw,36px);margin-bottom:8px}
+#s2 .lede{font-size:15px;margin-bottom:8px}
+#ecoSvg{max-height:60vh}
+.eco-cap{min-height:50px;margin-top:6px}
 
-/* En pantallas bajas (portátil conectado a un proyector) se aprieta más. */
+/* El simulador es la lámina donde se hace clic: la aplicación se queda con
+   el espacio y el texto de alrededor baja al mínimo. */
+#s7{max-width:1500px}
+#s7 .kicker{display:none}
+#s7 h2{font-size:clamp(23px,2.8vw,34px);margin-bottom:8px}
+#s7 .lede{font-size:14.5px;margin-bottom:10px;max-width:none}
+#s7 .jump{margin-bottom:10px}
+#s7 .note{margin-top:9px;font-size:12.5px}
+#s7 .vc-app{height:clamp(380px, calc(100vh - 350px), 820px)}
+#s7 .vc-main{padding:18px 22px 26px}
+
+/* La lámina del estado ocupaba media pantalla y el resto era vacío. Las tres
+   columnas crecen hasta llenarla en vez de quedar flotando arriba. */
+.three.tall{align-items:stretch}
+.three.tall > div{display:flex;flex-direction:column;padding:26px}
+.three.tall h4{font-size:12.5px;margin-bottom:16px}
+.three.tall ul{font-size:14.5px;line-height:1.95}
+.three.tall li{padding-left:17px}
+@media(min-height:860px){
+  .three.tall > div{min-height:50vh}
+  .three.tall ul{font-size:15.5px;line-height:2.1}
+}
+
 @media(max-height:820px){
-  #ecoSvg{max-height:46vh}
-  .sec{padding:calc(var(--nav-h) + 30px) 28px 44px}
+  #ecoSvg{max-height:52vh}
+  .sec{padding:calc(var(--nav-h) + 26px) 28px 40px}
   h2{margin-bottom:10px}
-  .lede{margin-bottom:18px}
+  .lede{margin-bottom:16px}
+  .three.tall > div{padding:20px}
+  .three.tall ul{font-size:13.5px;line-height:1.8}
 }
 
 </style>
@@ -700,7 +719,7 @@ p{line-height:1.62}
 <section class="sec cover" id="s0" data-t="Portada">
   <div class="in">
     <img class="mark" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4gPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDg5NSA4OTUiIHdpZHRoPSI4OTUiIGhlaWdodD0iODk1Ij48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODAsMjQ3KSIgZD0ibTAgMGg4Mmw0IDkgMTggNDggMTAgMjYgNiAxNiA3IDE4IDYgMTYgMTIgMzEgOCAyMXYzbDIzLTUgMzgtNiAzNS00IDI3LTIgMjQtMWgyNGwtMS0xMzgtMy0xMC02LTktMTAtNS0xNC0zdi01aDEyOHY1bC0xOCA0LTkgNi02IDEwLTIgMTYtMSAxMzAgMjQgMSA0MiA0IDQyIDYgNDIgOCAxNCAzLTEtMTYyLTQtMTEtNC02LTgtNS0xMC0zLTctMXYtNWgxMjh2NWwtMTQgMy0xMCA1LTYgNy0zIDctMSA2djE3NmwyNyA5djEwbC0xMC0yLTE4LTUgMSAxMzUgMiAxMSA1IDh2MmwxNCA3IDEzIDN2NWgtMTI4di01bDEzLTMgOC00IDUtNCA2LTEyIDEtNCAxLTE1My0xMS0xLTQwLTYtMzQtNC0zOS0zLTQwLTIgMSAxNTcgMiAxNyA2IDExIDkgNiAxMCAzIDggMnY1aC0xMjh2LTVsMTUtNCA5LTYgNC01IDQtMTAgMS01IDEtMTY2LTU3IDQtNDYgNS00NyA4LTExIDIgNiAxNSA2IDE2IDggMjAgNSAxMyAxMyAzMyAxMCAyNiAxMCAyNSA2IDExIDUgNXYybDE0IDcgMTMgMyAxIDZoLTEyM3YtNWwxNS01IDYtNSAzLTd2LThsLTYtMTktMzEtODAtNS0xMy03LTE4LTMtOC0xMCAyLTM2IDEyLTIxIDgtMzMgMTUtMTggMTAtMTggMTEtOCA2LTExIDgtMTUgMTMtOCA5aC0ybC0yIDUtOSAyNC0xIDV2MTRsNSAxMCA4IDYgOSAzIDggMnY1aC05N3YtNWwxOS01IDExLTcgOC05IDgtMTYgNi0xNCA5LTIyIDExLTI3IDEzLTMyIDE4LTQ0IDE0LTM0IDEwLTI0IDgtMjAgOC0xOSAxMS0yNyAxNS0zNyA3LTE4di0xMmwtMy01LTYtNS0xMS00LTYtMnptMzggNDctNSAxMS05IDIyLTEzIDMyLTYgMTUtMTEgMjctNiAxNS0xMiAyOS0yNiA2NS05IDIyLTEgNSA1LTIgMTUtMTUgMTQtMTEgMTUtMTAgMTUtOSAyMC0xMSAyOS0xMyAyOS0xMSAxOC02LTEtNy0xMC0yNi0yMC01MC03LTE3LTUtMTQtOS0yMi01LTEzLTMtNnoiIGZpbGw9IiM1MDlCQ0QiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODAsMjQ3KSIgZD0ibTAgMGg4Mmw0IDkgMTggNDggMTAgMjYgNiAxNiA3IDE4IDYgMTYgMTIgMzEgOCAyMXYzbC0zMyA4LTE4IDVoLTJsLTYtMTctMjYtNjUtNy0xNy01LTE0LTktMjItNS0xMy0yLTVoLTJsLTExIDI4LTkgMjEtOSAyMy03IDE3LTEwIDI0LTggMjAtMTEgMjctMjYgNjUtNiAxNi0xMiAzMS00IDgtNyAxOS0xIDV2MTRsNSAxMCA4IDYgOSAzIDggMnY1aC05N3YtNWwxOS01IDExLTcgOC05IDgtMTYgNi0xNCA5LTIyIDExLTI3IDEzLTMyIDE4LTQ0IDE0LTM0IDEwLTI0IDgtMjAgOC0xOSAxMS0yNyAxNS0zNyA3LTE4di0xMmwtMy01LTYtNS0xMS00LTYtMnoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2OTIsMjQ3KSIgZD0ibTAgMGgxMjh2NWwtMTQgMy0xMCA1LTYgNy0zIDctMSA2LTEgMTc1LTctMS01Mi0xNC0xLTE2Mi00LTExLTQtNi04LTUtMTAtMy03LTF6IiBmaWxsPSIjMDczNTVDIj48L3BhdGg+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTA4LDQzOCkiIGQ9Im0wIDBoNTRsMSAxNTcgMiAxNyA2IDExIDkgNiAxMCAzIDggMnY1aC0xMjh2LTVsMTUtNCA5LTYgNC01IDQtMTAgMi0xMyAxLTE1N3oiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3MjcsNDU2KSIgZD0ibTAgMCAxMSAxIDQ0IDEwIDMgMSAxIDEzNSAyIDExIDUgOHYybDE0IDcgMTMgM3Y1aC0xMjh2LTVsMTMtMyA4LTQgNS00IDYtMTIgMi0xMnoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMzgsNDU4KSIgZD0ibTAgMGg1bDYgMTQgNiAxNiA4IDIwIDUgMTMgMTMgMzMgMTAgMjYgMTAgMjUgNiAxMSA1IDV2MmwxNCA3IDEzIDMgMSA2aC0xMjN2LTVsMTUtNSA2LTUgMy03di04bC02LTE5LTMxLTgwLTUtMTMtNy0xOC0zLTkgMzUtOXoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NzAsMjQ3KSIgZD0ibTAgMGgxMjh2NWwtMTggNC05IDYtNiAxMC0yIDE2LTEgMTI5aC0yNmwtMzEtMS0xLTEzMC0zLTE1LTYtMTAtOC01LTExLTMtNi0xeiIgZmlsbD0iIzA3MzQ1QiI+PC9wYXRoPjwvc3ZnPg==" alt="">
-    <h1>La red no sirve para conocerse.<br>Sirve para hacer negocio.</h1>
+    <h1>Una red que hace negocio.</h1>
     <div class="sub">Hispanotec Digital — la plataforma de emparejamiento empresarial</div>
     <div class="to">Instancia <b>HISPANOTEC</b> · cv-105 · Desarrollado por <b>DIGIT2AI</b></div>
   </div>
@@ -711,7 +730,7 @@ p{line-height:1.62}
 <section class="sec" id="s1" data-t="El problema">
   <div class="in">
     <div class="kicker">El problema</div>
-    <h2>La red ya existe.<br>Lo que no existe es el mercado.</h2>
+    <h2>De conocerse a comerciar</h2>
     <p class="lede">Una red internacional de profesionales y empresas es, en potencia, el mayor
       directorio de capacidad técnica de la Hispanidad. En la práctica, sus miembros se
       encuentran en los encuentros, intercambian tarjetas y <b>vuelven a casa a trabajar
@@ -747,12 +766,15 @@ p{line-height:1.62}
 <section class="sec" id="s2" data-t="El ecosistema">
   <div class="in">
     <div class="kicker">La arquitectura</div>
-    <h2>Un cerebro, y la cámara alrededor</h2>
+    <h2>Un cerebro, y la organización alrededor</h2>
     <p class="lede">No son once productos conectados con cables. Es <b>un solo cerebro</b> que
-      recibe cada petición, decide qué módulo la atiende, inyecta a qué cámara pertenece y
+      recibe cada petición, decide qué módulo la atiende, inyecta a qué organización pertenece y
       registra lo que pasó. Toca cualquier nodo para ver qué hace.</p>
     <div class="eco">
-      <svg id="ecoSvg" viewBox="0 0 1200 780" role="img" aria-label="Diagrama del ecosistema HISPANOTEC"></svg>
+      <!-- viewBox recortado al contenido real medido con getBBox(): el original
+     1200x780 dejaba 134 unidades muertas arriba y 118 abajo, y el dibujo se
+     veía un tercio más pequeño de lo que daba el espacio. -->
+      <svg id="ecoSvg" viewBox="8 126 1184 546" role="img" aria-label="Diagrama del ecosistema HISPANOTEC"></svg>
       <div class="eco-cap" id="ecoCap"></div>
     </div>
   </div>
@@ -765,7 +787,7 @@ p{line-height:1.62}
     <h2>Una plataforma. Una instancia por asociación.</h2>
     <div class="split">
       <div>
-        <p class="lede">Cada cámara vive aislada: sus miembros, sus proyectos, sus pagos y su
+        <p class="lede">Cada organización vive aislada: sus miembros, sus proyectos, sus pagos y su
           junta. Ninguna consulta puede cruzar de una a otra, porque la pertenencia
           <b>no la envía el navegador, la inyecta el servidor</b> en cada petición.</p>
         <p class="lede">Lo que sí se comparte es la ingeniería: el motor de emparejamiento, la
@@ -795,7 +817,7 @@ p{line-height:1.62}
     <div class="kicker">Qué recibe el miembro</div>
     <h2>Trece módulos, un solo acceso</h2>
     <p class="lede">Sin tienda de aplicaciones y sin nada que instalar. El miembro entra desde
-      la página de su asociación, en el móvil o en el ordenador, y toda la plataforma habla
+      la página de su organización, en el móvil o en el ordenador, y toda la plataforma habla
       su idioma.</p>
     <div class="grid g4" id="modGrid"></div>
   </div>
@@ -887,7 +909,7 @@ p{line-height:1.62}
     </div>
     <p class="note"><b>Todo lo que ves aquí es inventado.</b> Ningún miembro, empresa ni proyecto
       de esta demostración corresponde a una persona real, y las cifras no son resultados de
-      HISPANOTEC. La cámara real está en sus primeros miembros.</p>
+      HISPANOTEC. La organización real está en sus primeros miembros.</p>
   </div>
 </section>
 
@@ -896,7 +918,7 @@ p{line-height:1.62}
   <div class="in">
     <div class="kicker">La capa de datos</div>
     <h2>Motor de Directorio Inteligente</h2>
-    <p class="lede">El módulo que usa la dirección de la asociación, no el socio. Incorpora
+    <p class="lede">El módulo que usa la dirección de la organización, no el socio. Incorpora
       fundaciones, patronos y terceros desde fuentes públicas, y lo hace con las garantías
       escritas en el código, no pedidas en un prompt.</p>
     <div class="grid g3">
@@ -954,7 +976,7 @@ p{line-height:1.62}
     <p class="lede">Ante una sala de ingenieros, la diapositiva más útil es esta.
       <b>«La interfaz funciona» no es «el proceso está listo para producción»</b>, y conviene
       decirlo antes de que lo pregunten.</p>
-    <div class="three">
+    <div class="three tall">
       <div class="t-ok">
         <h4>Funciona de verdad</h4>
         <ul>
@@ -972,7 +994,7 @@ p{line-height:1.62}
         <h4>Demostración con datos de muestra</h4>
         <ul>
           <li>Todas las cifras del simulador</li>
-          <li>Los 1.042 miembros, los 31 proyectos y los 9,8 M €</li>
+          <li>Los 1.042 miembros, los 31 proyectos y los 9,8&nbsp;M&nbsp;€</li>
           <li>Los nombres, empresas y conversaciones</li>
         </ul>
         <p style="font-size:12.5px;color:var(--mut);margin-top:12px;line-height:1.55">
@@ -1042,7 +1064,7 @@ p{line-height:1.62}
    llevar el nombre, el correo o la empresa de un miembro real: eso ataría
    sectores, índices de confianza e historial de negocios fabricados a una
    persona identificable. Los nombres de abajo se generan a partir de listas
-   y no coinciden con ningún registro de la cámara. La app va rotulada
+   y no coinciden con ningún registro de la organización. La app va rotulada
    DEMO / datos de muestra por la misma razón.
 
    Los miembros se construyen con un PRNG sembrado, de modo que el directorio,
@@ -1062,7 +1084,7 @@ p{line-height:1.62}
     };
   }
 
-  // Taxonomía alineada con la cámara real cv-105: comercio exterior,
+  // Taxonomía alineada con la organización real cv-105: comercio exterior,
   // consultoría, servicios profesionales, construcción y tecnología existen
   // hoy en el directorio; el resto son los sectores hacia los que crece.
   var SECTORS = [
@@ -1083,7 +1105,7 @@ p{line-height:1.62}
     { id: 'turismo',      es: 'Turismo y Hotelería',     en: 'Tourism & Hospitality' }
   ];
 
-  // Hispanotec es una cámara transatlántica: España, América Latina y el
+  // Hispanotec es una organización transatlántica: España, América Latina y el
   // mercado hispano de Estados Unidos.
   var REGIONS = [
     { id: 'espana',   es: 'España',                 en: 'Spain',                  n: 268 },
@@ -1253,7 +1275,7 @@ p{line-height:1.62}
     { who: 'Rodrigo Salcedo', co: 'Ribera Agro', when: 'Lun', group: false, unread: 0,
       es: 'Hoy publicamos la RFQ de cadena de frío. Tu lista corta con corrección Gini fue exacta.',
       en: 'We post the cold-chain RFQ today. Your Gini-corrected shortlist was spot on.' },
-    { who: 'Anuncios de la Cámara', co: '1.042 miembros', when: '12 ago', group: true, unread: 0,
+    { who: 'Anuncios de la Organización', co: '1.042 miembros', when: '12 ago', group: true, unread: 0,
       es: 'Cumbre Hispanotec Madrid-Ciudad de México: la inscripción abre el viernes para miembros fundadores.',
       en: 'Hispanotec Madrid-Mexico City Summit — registration opens Friday for founding members.' }
   ];
@@ -1401,7 +1423,7 @@ p{line-height:1.62}
 
    Bilingüe: cada cadena vive en T y se vuelve a pintar cuando el selector de
    idioma cambia document.documentElement.lang. El español es el idioma por
-   defecto de la cámara.
+   defecto de la organización.
    ========================================================================== */
 (function () {
   'use strict';
@@ -1438,7 +1460,7 @@ p{line-height:1.62}
     by_sector:      ['Top sectors', 'Sectores principales'],
     growth:         ['+18% vs. last year', '+18% vs. el año pasado'],
 
-    inbox_lede:     ['Direct messages and group chats with chamber members.', 'Mensajes directos y chats grupales con miembros de la cámara.'],
+    inbox_lede:     ['Direct messages and group chats with chamber members.', 'Mensajes directos y chats grupales con miembros de la organización.'],
     new_msg:        ['+ New message', '+ Nuevo mensaje'],
     new_group:      ['+ New group', '+ Nuevo grupo'],
 
@@ -1529,24 +1551,24 @@ p{line-height:1.62}
     closes_in:      ['closes in {n} days', 'cierra en {n} días'],
     submit_bid:     ['Submit bid', 'Enviar oferta'],
 
-    pay_lede:       ['Membership dues, project escrow and chamber invoices in one place. Card details never touch our servers — Stripe holds them.', 'Cuotas de membresía, fideicomiso de proyectos y facturas de la cámara en un solo lugar. Los datos de tarjeta nunca tocan nuestros servidores: los guarda Stripe.'],
+    pay_lede:       ['Membership dues, project escrow and chamber invoices in one place. Card details never touch our servers — Stripe holds them.', 'Cuotas de membresía, fideicomiso de proyectos y facturas de la organización en un solo lugar. Los datos de tarjeta nunca tocan nuestros servidores: los guarda Stripe.'],
     pay_plan:       ['Current plan', 'Plan actual'],
     pay_next:       ['Next renewal', 'Próxima renovación'],
     pay_method:     ['Payment method', 'Método de pago'],
     pay_hist:       ['Recent invoices', 'Facturas recientes'],
     paid:           ['Paid', 'Pagada'],
 
-    guide_lede:     ['How to get the most out of your digital chamber.', 'Cómo aprovechar al máximo tu cámara digital.'],
+    guide_lede:     ['How to get the most out of your digital chamber.', 'Cómo aprovechar al máximo tu organización digital.'],
     contents:       ['Contents', 'Contenido'],
 
-    jobup_h:        ['Your professional profile, beyond the chamber', 'Tu perfil profesional, más allá de la cámara'],
+    jobup_h:        ['Your professional profile, beyond the chamber', 'Tu perfil profesional, más allá de la organización'],
     jobup_p:        ['JobUp turns your resume into a living profile: real openings scored against what you have actually done, a public CV site recruiters and their AI can read, and outreach drafted for you to approve.', 'JobUp convierte tu currículum en un perfil vivo: vacantes reales evaluadas contra lo que realmente has hecho, un sitio de CV público que los reclutadores y su IA pueden leer, y mensajes redactados para que los apruebes.'],
     jobup_cta:      ['Open JobUp', 'Abrir JobUp'],
 
     adm_members:    ['Member management', 'Gestión de miembros'],
     adm_board:      ['Board of directors', 'Junta directiva'],
     adm_regions:    ['Regional delegations', 'Delegaciones regionales'],
-    adm_settings:   ['Chamber settings', 'Ajustes de la cámara'],
+    adm_settings:   ['Chamber settings', 'Ajustes de la organización'],
     adm_ph:         ['Search member...', 'Buscar miembro...'],
     th_id:          ['ID', 'ID'],
     th_name:        ['Name', 'Nombre'],
@@ -1595,7 +1617,7 @@ p{line-height:1.62}
     mo_mat_note:    ['<b>The score is arithmetic, not a model.</b> Thematic match 40, nature 15, location 15, typology 15, capacity 15 — every point comes from a written rule, so the same query gives the same list and a coordinator can defend it to the Board. <b>Level 1</b> (foundations, patrons, major donors) is excluded by design from every automated send: that contact is always opened by a person.', '<b>El score es aritmética, no un modelo.</b> Temática 40, naturaleza 15, localización 15, tipología 15, capacidad 15: cada punto sale de una regla escrita, así que la misma consulta da la misma lista y un coordinador puede defenderla ante la Junta. El <b>Nivel 1</b> (fundaciones, patronos y mecenas de alto valor) está excluido por diseño de todo envío automatizado: ese contacto lo inicia siempre una persona.'],
     mo_imp_h:       ['Import CSV or Excel', 'Importar CSV o Excel'],
     mo_imp_lede:    ['It analyses first and shows the errors row by row. Nothing is written until you confirm.', 'Primero se analiza y se muestran los errores fila a fila. Nada se escribe hasta que lo confirmas.'],
-    mo_origen_pub:  ['Public source (register, chamber, press)', 'Fuente pública (registro, cámara, prensa)'],
+    mo_origen_pub:  ['Public source (register, chamber, press)', 'Fuente pública (registro, organización, prensa)'],
     mo_analizar:    ['Analyse file', 'Analizar fichero'],
     mo_k_filas:     ['Rows read', 'Filas leídas'],
     mo_k_listas:    ['Ready to load', 'Listas para cargar'],
@@ -2026,7 +2048,7 @@ p{line-height:1.62}
 
   var GUIDE = [
     { es: 'Bienvenida', en: 'Welcome',
-      bEs: 'Tu cuenta siempre está activa. Inicia sesión desde cualquier dispositivo en la página de tu cámara. Esta guía explica cada módulo y cómo obtener valor desde el primer día.',
+      bEs: 'Tu cuenta siempre está activa. Inicia sesión desde cualquier dispositivo en la página de tu organización. Esta guía explica cada módulo y cómo obtener valor desde el primer día.',
       bEn: 'Your account is always on. Sign in from any device on your chamber landing page. This guide explains every module and how to extract value from day one.' },
     { es: 'Mi Perfil', en: 'My Profile',
       bEs: 'El sector y la subespecialidad determinan con quién te empareja la IA. País y región habilitan los filtros geográficos. Un registro mercantil verificado es la señal de confianza más fuerte que puedes añadir.',
@@ -2041,10 +2063,10 @@ p{line-height:1.62}
       bEs: 'Propón un proyecto, arma un equipo por roles y ejecuta una simulación Monte Carlo de 10.000 iteraciones antes de comprometer un euro. El puntaje IRS resume la preparación.',
       bEn: 'Propose a project, assemble a team by role, and run a 10,000-iteration Monte Carlo viability simulation before committing a euro. The IRS score summarises readiness.' },
     { es: 'Intercambio (RFQ)', en: 'Exchange (RFQs)',
-      bEs: 'Publica una solicitud de cotización a toda la red, o presenta una oferta a la de otro. Las ofertas quedan dentro de la cámara, entre miembros con identidad verificada.',
+      bEs: 'Publica una solicitud de cotización a toda la red, o presenta una oferta a la de otro. Las ofertas quedan dentro de la organización, entre miembros con identidad verificada.',
       bEn: 'Post a request for quotation to the whole network, or bid on someone else\'s. Bids stay inside the chamber, between members whose identity has been verified.' },
     { es: 'Métricas y HCI', en: 'Metrics & HCI',
-      bEs: 'El índice de cooperación HCI mide cuánto de la red realmente comercia entre sí, no solo cuánta gente se inscribió. Es la cifra que le dice a la junta si la cámara está funcionando.',
+      bEs: 'El índice de cooperación HCI mide cuánto de la red realmente comercia entre sí, no solo cuánta gente se inscribió. Es la cifra que le dice a la junta si la organización está funcionando.',
       bEn: 'The HCI cooperation index measures how much of the network is actually trading with each other, not just how many people joined. It is the number that tells the board whether the chamber is working.' }
   ];
   function scGuide() {
@@ -2107,7 +2129,7 @@ p{line-height:1.62}
         ['Hispanotec', 'cv-105', 'camaravirtual.app/cv-105', 'Español · English'].map(function (v, i) {
           var lbls = lang() === 'en'
             ? ['Chamber name', 'Slug', 'Public URL', 'Languages']
-            : ['Nombre de la cámara', 'Slug', 'URL pública', 'Idiomas'];
+            : ['Nombre de la organización', 'Slug', 'URL pública', 'Idiomas'];
           return '<div><small style="display:block;font-size:10.5px;letter-spacing:1px;color:#7a8497;text-transform:uppercase;font-weight:600;margin-bottom:5px">' +
             lbls[i] + '</small><div class="vc-in" style="background:#fbfcfe">' + v + '</div></div>';
         }).join('') + '</div></div>';
@@ -2494,7 +2516,7 @@ p{line-height:1.62}
     { id:'matching',    a:-22.5, t:'Matching con IA',     s:'afinidad · confianza · equidad' },
     { id:'proyectos',   a: 22.5, t:'Proyectos',           s:'validados antes de financiarse' },
     { id:'intercambio', a: 67.5, t:'Intercambio',         s:'cotizaciones entre miembros' },
-    { id:'mensajeria',  a:112.5, t:'Mensajería',          s:'dentro de la cámara' },
+    { id:'mensajeria',  a:112.5, t:'Mensajería',          s:'dentro de la organización' },
     { id:'pagos',       a:157.5, t:'Pagos',               s:'cuotas y facturas' },
     { id:'motor',       a:202.5, t:'Motor de Directorio', s:'fuentes públicas · RGPD' },
     { id:'gobernanza',  a:247.5, t:'Gobernanza',          s:'junta y delegaciones' }
@@ -2504,15 +2526,15 @@ p{line-height:1.62}
     { id:'junta',   x:1092,y:CY, t:'La dirección', s:'ve lo que pasa y responde de ello', ic:'junta' }
   ];
   var DESC = {
-    brain: '<b>El cerebro.</b> Cada petición pasa por aquí: comprueba el permiso, inyecta a qué cámara pertenece —nunca lo envía el navegador—, llama al módulo que corresponde y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
+    brain: '<b>El cerebro.</b> Cada petición pasa por aquí: comprueba el permiso, inyecta a qué organización pertenece —nunca lo envía el navegador—, llama al módulo que corresponde y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
     directorio: '<b>Directorio.</b> Todos los miembros activos, filtrables por sector y región, con mensaje directo a cualquiera. No es un listado impreso que envejece: es el padrón vivo del que se alimenta todo lo demás.',
     matching: '<b>Matching con IA.</b> Describes la necesidad en lenguaje natural y el motor puntúa toda la red por afinidad, la pondera por confianza y reserva dos puestos por equidad. Devuelve una lista corta en segundos.',
     proyectos: '<b>Proyectos.</b> Una conexión se convierte en negocio: se arma el equipo por roles y, antes de mover un euro, se corre una simulación Monte Carlo diez mil veces. El puntaje IRS resume la preparación en un número.',
-    intercambio: '<b>Intercambio.</b> El mercado interno de la cámara. Publicas una solicitud de cotización y la ve toda la red, o presentas una oferta a la de otro, siempre entre miembros identificados.',
-    mensajeria: '<b>Mensajería.</b> Las conversaciones viven dentro de la cámara, no dispersas en teléfonos personales. Mensajes directos, hilos de equipo y anuncios a toda la red.',
+    intercambio: '<b>Intercambio.</b> El mercado interno de la organización. Publicas una solicitud de cotización y la ve toda la red, o presentas una oferta a la de otro, siempre entre miembros identificados.',
+    mensajeria: '<b>Mensajería.</b> Las conversaciones viven dentro de la organización, no dispersas en teléfonos personales. Mensajes directos, hilos de equipo y anuncios a toda la red.',
     pagos: '<b>Pagos.</b> Cuotas y facturas en un solo lugar con su historial. Los datos de la tarjeta nunca tocan nuestros servidores: los guarda Stripe, y nosotros solo el identificador y los cuatro últimos dígitos.',
     motor: '<b>Motor de Directorio Inteligente.</b> Reservado a la dirección. Incorpora fundaciones y terceros desde fuentes públicas separando siempre el dato verificado del estimado, con la base legal del RGPD activada en cada ficha.',
-    gobernanza: '<b>Gobernanza.</b> Gestión de miembros, puestos de la junta y delegaciones regionales. Una cámara que pide confianza a sus socios tiene que ser lo primero que se pueda auditar.',
+    gobernanza: '<b>Gobernanza.</b> Gestión de miembros, puestos de la junta y delegaciones regionales. Una organización que pide confianza a sus socios tiene que ser lo primero que se pueda auditar.',
     miembro: '<b>El miembro.</b> Entra desde la página de su asociación, en el móvil o en el ordenador, sin descargar nada. Su cuenta está siempre activa y la plataforma habla su idioma.',
     junta: '<b>La dirección.</b> Ve el estado real de la red y responde de ella. Los cambios de gobernanza quedan registrados, porque una junta que no puede enseñar lo que hizo no puede pedir confianza.'
   };
@@ -2567,7 +2589,7 @@ p{line-height:1.62}
     b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'pulse b' }));
     b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'core' }));
     var t1 = el('text', { x:CX, y:CY - 4, class:'t' }); t1.textContent = 'CEREBRO';
-    var t2 = el('text', { x:CX, y:CY + 16, class:'s' }); t2.textContent = 'PERMISO · CÁMARA · REGISTRO';
+    var t2 = el('text', { x:CX, y:CY + 16, class:'s' }); t2.textContent = 'PERMISO · ORGANIZACIÓN · REGISTRO';
     b.appendChild(t1); b.appendChild(t2); svg.appendChild(b);
 
     svg.addEventListener('click', function (e) {
@@ -2610,7 +2632,7 @@ p{line-height:1.62}
     ['pagos','Pagos','Cuotas, facturas e historial'],
     ['motor','Motor de Directorio','Solo para la dirección'],
     ['guia','Guía del Miembro','Cada módulo explicado dentro'],
-    ['jobup','Perfil global','El miembro, más allá de la cámara']
+    ['jobup','Perfil global','El miembro, más allá de la organización']
   ];
   var mg = $('modGrid');
   if (mg) mg.innerHTML = MODS.map(function (m) {

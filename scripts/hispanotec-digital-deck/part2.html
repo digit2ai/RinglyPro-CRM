@@ -108,28 +108,47 @@
 __SIM_CSS__
 
 /* ── ajustes de encaje, DESPUÉS del CSS del simulador ─────────────────
-   Dos secciones no cabían en 900 px de alto: el diagrama dejaba su leyenda
-   —que es el premio de tocar un nodo— fuera de pantalla, y el simulador se
-   salía 219 px. El alto de .vc-app solo se puede corregir aquí, después de
-   demo.css, porque allí vale 660 px. Medido en Chrome, no a ojo. */
-#s2 .lede{margin-bottom:10px}
-#ecoSvg{max-height:52vh}
-.eco-cap{min-height:52px;margin-top:8px}
+   Tres láminas necesitan reglas propias, y el alto de .vc-app solo se puede
+   corregir aquí, después de demo.css, donde vale 660 px. Todo medido en
+   Chrome a 1440x900, 1920x1080 y 1366x768, nunca a ojo. */
 
-#s7 .lede{margin-bottom:14px}
-#s7 .note{margin-top:12px}
-/* Se adapta al alto real de la pantalla en vez de a tres saltos fijos: el
-   descargo de "todo esto es inventado" tiene que quedar dentro de la
-   pantalla, no debajo del pliegue. */
-#s7 .vc-app{height:clamp(330px, calc(100vh - 445px), 620px)}
-#s7 .vc-main{padding:18px 20px 26px}
+/* El diagrama ya lleva el viewBox recortado a su contenido real, así que
+   aquí solo se le da todo el alto que la lámina puede pagar. */
+#s2 h2{font-size:clamp(24px,3vw,36px);margin-bottom:8px}
+#s2 .lede{font-size:15px;margin-bottom:8px}
+#ecoSvg{max-height:60vh}
+.eco-cap{min-height:50px;margin-top:6px}
 
-/* En pantallas bajas (portátil conectado a un proyector) se aprieta más. */
+/* El simulador es la lámina donde se hace clic: la aplicación se queda con
+   el espacio y el texto de alrededor baja al mínimo. */
+#s7{max-width:1500px}
+#s7 .kicker{display:none}
+#s7 h2{font-size:clamp(23px,2.8vw,34px);margin-bottom:8px}
+#s7 .lede{font-size:14.5px;margin-bottom:10px;max-width:none}
+#s7 .jump{margin-bottom:10px}
+#s7 .note{margin-top:9px;font-size:12.5px}
+#s7 .vc-app{height:clamp(380px, calc(100vh - 350px), 820px)}
+#s7 .vc-main{padding:18px 22px 26px}
+
+/* La lámina del estado ocupaba media pantalla y el resto era vacío. Las tres
+   columnas crecen hasta llenarla en vez de quedar flotando arriba. */
+.three.tall{align-items:stretch}
+.three.tall > div{display:flex;flex-direction:column;padding:26px}
+.three.tall h4{font-size:12.5px;margin-bottom:16px}
+.three.tall ul{font-size:14.5px;line-height:1.95}
+.three.tall li{padding-left:17px}
+@media(min-height:860px){
+  .three.tall > div{min-height:50vh}
+  .three.tall ul{font-size:15.5px;line-height:2.1}
+}
+
 @media(max-height:820px){
-  #ecoSvg{max-height:46vh}
-  .sec{padding:calc(var(--nav-h) + 30px) 28px 44px}
+  #ecoSvg{max-height:52vh}
+  .sec{padding:calc(var(--nav-h) + 26px) 28px 40px}
   h2{margin-bottom:10px}
-  .lede{margin-bottom:18px}
+  .lede{margin-bottom:16px}
+  .three.tall > div{padding:20px}
+  .three.tall ul{font-size:13.5px;line-height:1.8}
 }
 
 </style>
