@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Hispanotec Digital — Estructura</title>
+<style>
+/* ===========================================================================
+   Estructura de Hispanotec Digital, por capas. Un solo archivo, sin recursos
+   externos. Pensado para proyectar Y para exportar a PNG/PDF y pegarlo en un
+   documento, por eso el ancho es fijo y la tipografía del sistema.
+   Cada caja lleva su estado real: producción, sin estrenar o no construido.
+   =========================================================================== */
+:root{
+  --navy:#07345B; --deep:#04182b; --accent:#509BCD; --accent-lt:#7db8de;
+  --ink:#eaf2f8; --mut:rgba(234,242,248,.70); --faint:rgba(234,242,248,.46);
+  --line:rgba(125,184,222,.22); --card:rgba(255,255,255,.05);
+  --ok:#3ecf7a; --warn:#f0b849; --no:#e8836f;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.page{width:1600px;margin:0 auto;padding:40px 44px 34px}
+
+.head{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.head img{width:46px;height:46px;border-radius:11px;background:#fff;padding:4px}
+.head h1{font-size:27px;font-weight:800;letter-spacing:-.5px}
+.head .s{font-size:13.5px;color:var(--faint);margin-top:3px}
+.head .sp{flex:1}
+.key{display:flex;gap:16px;font-size:11px;color:var(--mut)}
+.key i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.key b{width:9px;height:9px;border-radius:50%;display:inline-block}
+.k1{background:var(--ok)} .k2{background:var(--warn)} .k3{background:var(--no)}
+
+/* una capa */
+.layer{
+  position:relative;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);padding:16px 18px 18px;margin-bottom:0;
+}
+.layer > .lt{
+  display:flex;align-items:baseline;gap:12px;margin-bottom:13px;
+}
+.layer > .lt b{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent-lt)}
+.layer > .lt span{font-size:12.5px;color:var(--faint)}
+.layer.hl{border-color:rgba(80,155,205,.5);background:rgba(80,155,205,.08)}
+
+/* la flecha entre capas */
+.arrow{height:30px;display:flex;align-items:center;justify-content:center;position:relative}
+.arrow::before{content:"";width:2px;height:100%;background:linear-gradient(180deg,rgba(125,184,222,.12),rgba(125,184,222,.5))}
+.arrow::after{content:"";position:absolute;bottom:2px;width:0;height:0;
+  border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--accent)}
+.arrow em{position:absolute;left:50%;transform:translateX(18px);font-style:normal;
+  font-size:11px;color:var(--faint);white-space:nowrap}
+
+/* cajas */
+.row{display:flex;gap:12px}
+.box{
+  flex:1;background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:11px;padding:13px 15px;position:relative;
+}
+.box h4{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.box p{font-size:12.2px;color:var(--mut);line-height:1.52}
+.box code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+  color:var(--accent-lt);background:rgba(80,155,205,.12);border-radius:4px;padding:1px 5px}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.d-ok{background:var(--ok)} .d-w{background:var(--warn)} .d-n{background:var(--no)}
+
+.mods{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+.mod{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;
+  padding:10px 11px;font-size:12.3px;font-weight:600;text-align:center;line-height:1.35}
+.mod small{display:block;font-size:10.5px;color:var(--faint);font-weight:400;margin-top:3px}
+.mod.adm{border-color:rgba(240,184,73,.4);background:rgba(240,184,73,.08)}
+
+.wp{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:12px}
+.chan{border-left:3px solid var(--accent)}
+.chan h4 span{font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:var(--accent-lt);
+  border:1px solid rgba(80,155,205,.4);border-radius:12px;padding:2px 8px}
+
+.tenants{display:flex;gap:10px;align-items:stretch}
+.tn{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;font-size:12.5px}
+.tn b{display:block;font-weight:700;margin-bottom:2px}
+.tn span{font-size:11px;color:var(--faint)}
+.tn.on{border-color:var(--accent);background:rgba(80,155,205,.13)}
+.tn.on span{color:var(--accent-lt)}
+.tn.ghost{opacity:.42;border-style:dashed}
+
+.rule{font-size:11.8px;color:var(--faint);margin-top:11px;padding-top:10px;border-top:1px solid var(--line);line-height:1.55}
+.rule b{color:var(--accent-lt)}
+
+.foot{margin-top:18px;display:flex;align-items:baseline;gap:14px;font-size:11.5px;color:var(--faint)}
+.foot .sp{flex:1}
+.foot a{color:var(--accent-lt);font-weight:700;border-bottom:1px solid rgba(125,184,222,.4)}
+@media print{ body{background:#fff} .page{width:auto} }
+</style>
+</head>
+<body>
+<div class="page">
