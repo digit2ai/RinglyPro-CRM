@@ -1,0 +1,137 @@
+
+/* ── banda de flujo ─────────────────────────────────────────────────── */
+.flow{position:relative;padding:8px 0}
+.lanes{display:grid;grid-template-columns:132px 1fr;gap:0 18px}
+.lane-l{display:flex;flex-direction:column;justify-content:space-around;
+  font-size:11px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;color:var(--faint);padding:10px 0}
+.lane-l i{font-style:normal;display:block;padding:8px 0}
+.lane-l i.a{color:var(--ok)} .lane-l i.b{color:var(--accent-lt)} .lane-l i.c{color:var(--warn)}
+.track{position:relative;min-height:230px}
+#flowSvg{width:100%;height:230px;display:block}
+.f-path{fill:none;stroke:rgba(125,184,222,.22);stroke-width:2}
+.f-live{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:6 10;opacity:0}
+.anim .f-live{opacity:.9;animation:fl 1.2s linear infinite}
+.f-node circle{fill:#0b2740;stroke:rgba(125,184,222,.4);stroke-width:1.5;transition:all .4s}
+.f-node text{fill:var(--faint);font:700 12px var(--sans);text-anchor:middle;transition:fill .4s}
+.f-node.on circle{fill:var(--accent);stroke:#fff;stroke-width:2}
+.f-node.on text{fill:#fff}
+.f-node.a circle{stroke:rgba(62,207,122,.45)} .f-node.c circle{stroke:rgba(240,184,73,.45)}
+.f-node.a.on circle{fill:var(--ok)} .f-node.c.on circle{fill:var(--warn)}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-top:16px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 15px;transition:all .4s}
+.step.on{border-color:var(--accent);background:rgba(80,155,205,.13)}
+.step b{display:block;font-size:13.5px;margin-bottom:5px}
+.step span{font-size:12px;color:var(--mut);line-height:1.5}
+.step em{font-style:normal;display:block;font-size:10px;letter-spacing:1.3px;text-transform:uppercase;
+  color:var(--faint);font-weight:700;margin-bottom:6px}
+
+/* ── matchmaking ────────────────────────────────────────────────────── */
+.formula{display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin:6px 0 22px}
+.fx{flex:1 1 210px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.fx .w{font-size:26px;font-weight:800;color:var(--accent-lt);letter-spacing:-1px}
+.fx b{display:block;font-size:14.5px;margin:6px 0 6px}
+.fx p{font-size:12.6px;color:var(--mut)}
+.op{display:flex;align-items:center;font-size:26px;color:var(--faint);font-weight:300;padding:0 2px}
+.bars{margin-top:6px}
+.brow{display:grid;grid-template-columns:150px 1fr 54px;align-items:center;gap:12px;margin-bottom:9px;font-size:13px}
+.brow .t{color:var(--mut);text-align:right}
+.brow .tr{height:20px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden}
+.brow .tr i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent-dk),var(--accent));width:0;transition:width 1.1s cubic-bezier(.2,.7,.3,1)}
+.brow.eq .tr i{background:linear-gradient(90deg,#8a6d1f,var(--warn))}
+.brow .v{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.brow .t small{display:block;font-size:10.5px;color:var(--faint)}
+
+/* ── simulador ──────────────────────────────────────────────────────── */
+.simwrap{border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);border:1px solid var(--line)}
+.simbar{display:flex;align-items:center;gap:12px;padding:9px 14px;background:#16223f;border-bottom:1px solid rgba(255,255,255,.08)}
+.simbar .d{display:flex;gap:6px}
+.simbar .d i{width:11px;height:11px;border-radius:50%;display:block}
+.simbar .d i:nth-child(1){background:#ff5f57}.simbar .d i:nth-child(2){background:#febc2e}.simbar .d i:nth-child(3){background:#28c840}
+.simbar .u{flex:1;font-size:12px;color:rgba(255,255,255,.62);background:rgba(0,0,0,.28);border-radius:7px;padding:5px 12px;text-align:center}
+.simbar .u b{color:rgba(255,255,255,.9)}
+.simbar .tag{font-size:10px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:#07345B;background:var(--accent);border-radius:20px;padding:4px 11px}
+.jump{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.jump button{
+  font:600 12.5px var(--sans);color:var(--mut);background:var(--card);
+  border:1px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer;transition:all .18s;
+}
+.jump button:hover{border-color:var(--accent);color:var(--accent-lt)}
+.jump button.on{background:var(--accent);border-color:var(--accent);color:#06283f}
+
+/* ── estado honesto ─────────────────────────────────────────────────── */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.three > div{border-radius:14px;padding:20px 22px;border:1px solid}
+.t-ok{background:rgba(62,207,122,.07);border-color:rgba(62,207,122,.3)}
+.t-dm{background:rgba(240,184,73,.07);border-color:rgba(240,184,73,.3)}
+.t-no{background:rgba(232,131,111,.07);border-color:rgba(232,131,111,.3)}
+.three h4{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:800;margin-bottom:12px}
+.t-ok h4{color:var(--ok)} .t-dm h4{color:var(--warn)} .t-no h4{color:var(--no)}
+.three ul{list-style:none;font-size:13.2px;color:var(--mut);line-height:1.75}
+.three li{padding-left:15px;position:relative}
+.three li::before{content:"";position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55}
+
+.quote{
+  font-family:var(--serif);font-size:clamp(18px,2.3vw,26px);line-height:1.5;color:var(--ink);
+  border-left:3px solid var(--accent);padding:6px 0 6px 24px;max-width:900px;margin:8px 0 22px;
+}
+.quote small{display:block;font-family:var(--sans);font-size:12.5px;color:var(--faint);
+  letter-spacing:1.4px;text-transform:uppercase;margin-top:14px;font-style:normal}
+
+.tenants{display:flex;gap:11px;flex-wrap:wrap;margin-top:6px}
+.tn{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 17px;min-width:160px}
+.tn b{display:block;font-size:14px}
+.tn span{font-size:11.5px;color:var(--faint);letter-spacing:.6px}
+.tn.you{border-color:var(--accent);background:rgba(80,155,205,.14)}
+.tn.you span{color:var(--accent-lt)}
+
+@media(max-width:980px){
+  .g4{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:1fr}
+  .split{grid-template-columns:1fr;gap:22px}
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .three{grid-template-columns:1fr}
+  .lanes{grid-template-columns:1fr}
+  .lane-l{flex-direction:row;justify-content:space-between;padding:0 0 8px}
+  .sec{padding:calc(var(--nav-h) + 30px) 18px 48px}
+  .bar b{font-size:13px} .bar .x{display:none}
+}
+@media(max-width:620px){
+  .g2,.g4,.steps{grid-template-columns:1fr}
+  .dots{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .anim .pulse,.anim .n-flow.go,.anim .f-live{animation:none}
+  .anim .n-flow.go,.anim .f-live{opacity:.5}
+}
+/* el simulador incrustado */
+__SIM_CSS__
+
+/* ── ajustes de encaje, DESPUÉS del CSS del simulador ─────────────────
+   Dos secciones no cabían en 900 px de alto: el diagrama dejaba su leyenda
+   —que es el premio de tocar un nodo— fuera de pantalla, y el simulador se
+   salía 219 px. El alto de .vc-app solo se puede corregir aquí, después de
+   demo.css, porque allí vale 660 px. Medido en Chrome, no a ojo. */
+#s2 .lede{margin-bottom:10px}
+#ecoSvg{max-height:52vh}
+.eco-cap{min-height:52px;margin-top:8px}
+
+#s7 .lede{margin-bottom:14px}
+#s7 .note{margin-top:12px}
+/* Se adapta al alto real de la pantalla en vez de a tres saltos fijos: el
+   descargo de "todo esto es inventado" tiene que quedar dentro de la
+   pantalla, no debajo del pliegue. */
+#s7 .vc-app{height:clamp(330px, calc(100vh - 445px), 620px)}
+#s7 .vc-main{padding:18px 20px 26px}
+
+/* En pantallas bajas (portátil conectado a un proyector) se aprieta más. */
+@media(max-height:820px){
+  #ecoSvg{max-height:46vh}
+  .sec{padding:calc(var(--nav-h) + 30px) 28px 44px}
+  h2{margin-bottom:10px}
+  .lede{margin-bottom:18px}
+}
+
+</style>
+</head>
+<body>

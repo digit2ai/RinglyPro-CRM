@@ -1,0 +1,301 @@
+
+<script>__SIM_DATA__</script>
+<script>__SIM_JS__</script>
+<script>
+/* ===========================================================================
+   El deck: navegación, el diagrama del ecosistema, la banda de flujo y los
+   atajos del simulador. Sin dependencias.
+   =========================================================================== */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  /* ── 1. navegación ───────────────────────────────────────────────── */
+  var secs = [].slice.call(document.querySelectorAll('.sec'));
+  var cur = 0;
+  $('dots').innerHTML = secs.map(function (s, i) {
+    return '<button type="button" data-i="' + i + '" title="' + s.getAttribute('data-t') + '"></button>';
+  }).join('');
+  $('dots').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-i]'); if (b) go(+b.getAttribute('data-i'));
+  });
+  function go(i) {
+    if (i < 0 || i >= secs.length) return;
+    secs[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+  function mark(i) {
+    cur = i;
+    [].forEach.call($('dots').children, function (b, j) { b.className = j === i ? 'on' : ''; });
+    $('count').textContent = (i + 1) + ' / ' + secs.length;
+    $('prog').style.width = ((i + 1) / secs.length * 100) + '%';
+  }
+  var io = new IntersectionObserver(function (es) {
+    es.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      var i = secs.indexOf(en.target);
+      if (i > -1) { mark(i); en.target.classList.add('anim'); onEnter(i); }
+    });
+  }, { threshold: 0.45 });
+  secs.forEach(function (s) { io.observe(s); });
+
+  document.addEventListener('keydown', function (e) {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName || ''))) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(secs.length - 1); }
+  });
+
+  /* ── 2. iconos compartidos ───────────────────────────────────────── */
+  var IC = {
+    directorio: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+    matching: 'M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM21 21l-4.35-4.35',
+    proyectos: 'M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z',
+    intercambio: 'M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4',
+    mensajeria: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6',
+    pagos: 'M2 6h20v12H2zM2 10h20',
+    motor: 'M3 5h18M3 12h18M3 19h11M17 17.5l2 2 4-4',
+    gobernanza: 'M12 3l8 4v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V7z',
+    persona: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
+    junta: 'M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6',
+    guia: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z',
+    busquedas: 'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
+    perfil: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8z',
+    invitaciones: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6',
+    panel: 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
+    jobup: 'M4 7h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2'
+  };
+
+  /* ── 3. el diagrama del ecosistema ───────────────────────────────── */
+  var R = 225, CX = 600, CY = 380;
+  var NODES = [
+    { id:'directorio',  a:-67.5, t:'Directorio',          s:'quién está en la red' },
+    { id:'matching',    a:-22.5, t:'Matching con IA',     s:'afinidad · confianza · equidad' },
+    { id:'proyectos',   a: 22.5, t:'Proyectos',           s:'validados antes de financiarse' },
+    { id:'intercambio', a: 67.5, t:'Intercambio',         s:'cotizaciones entre miembros' },
+    { id:'mensajeria',  a:112.5, t:'Mensajería',          s:'dentro de la cámara' },
+    { id:'pagos',       a:157.5, t:'Pagos',               s:'cuotas y facturas' },
+    { id:'motor',       a:202.5, t:'Motor de Directorio', s:'fuentes públicas · RGPD' },
+    { id:'gobernanza',  a:247.5, t:'Gobernanza',          s:'junta y delegaciones' }
+  ];
+  var HUM = [
+    { id:'miembro', x:108, y:CY, t:'El miembro',  s:'una cuenta, cualquier dispositivo', ic:'persona' },
+    { id:'junta',   x:1092,y:CY, t:'La dirección', s:'ve lo que pasa y responde de ello', ic:'junta' }
+  ];
+  var DESC = {
+    brain: '<b>El cerebro.</b> Cada petición pasa por aquí: comprueba el permiso, inyecta a qué cámara pertenece —nunca lo envía el navegador—, llama al módulo que corresponde y deja registro de lo que hizo, incluidas las peticiones que rechazó.',
+    directorio: '<b>Directorio.</b> Todos los miembros activos, filtrables por sector y región, con mensaje directo a cualquiera. No es un listado impreso que envejece: es el padrón vivo del que se alimenta todo lo demás.',
+    matching: '<b>Matching con IA.</b> Describes la necesidad en lenguaje natural y el motor puntúa toda la red por afinidad, la pondera por confianza y reserva dos puestos por equidad. Devuelve una lista corta en segundos.',
+    proyectos: '<b>Proyectos.</b> Una conexión se convierte en negocio: se arma el equipo por roles y, antes de mover un euro, se corre una simulación Monte Carlo diez mil veces. El puntaje IRS resume la preparación en un número.',
+    intercambio: '<b>Intercambio.</b> El mercado interno de la cámara. Publicas una solicitud de cotización y la ve toda la red, o presentas una oferta a la de otro, siempre entre miembros identificados.',
+    mensajeria: '<b>Mensajería.</b> Las conversaciones viven dentro de la cámara, no dispersas en teléfonos personales. Mensajes directos, hilos de equipo y anuncios a toda la red.',
+    pagos: '<b>Pagos.</b> Cuotas y facturas en un solo lugar con su historial. Los datos de la tarjeta nunca tocan nuestros servidores: los guarda Stripe, y nosotros solo el identificador y los cuatro últimos dígitos.',
+    motor: '<b>Motor de Directorio Inteligente.</b> Reservado a la dirección. Incorpora fundaciones y terceros desde fuentes públicas separando siempre el dato verificado del estimado, con la base legal del RGPD activada en cada ficha.',
+    gobernanza: '<b>Gobernanza.</b> Gestión de miembros, puestos de la junta y delegaciones regionales. Una cámara que pide confianza a sus socios tiene que ser lo primero que se pueda auditar.',
+    miembro: '<b>El miembro.</b> Entra desde la página de su asociación, en el móvil o en el ordenador, sin descargar nada. Su cuenta está siempre activa y la plataforma habla su idioma.',
+    junta: '<b>La dirección.</b> Ve el estado real de la red y responde de ella. Los cambios de gobernanza quedan registrados, porque una junta que no puede enseñar lo que hizo no puede pedir confianza.'
+  };
+  var SEQ = ['brain','miembro','directorio','matching','proyectos','intercambio','mensajeria','pagos','motor','gobernanza','junta'];
+
+  function buildEco() {
+    var svg = $('ecoSvg'); if (!svg) return;
+    var defs = el('defs');
+    var rg = el('radialGradient', { id:'bg1', cx:'40%', cy:'32%' });
+    rg.appendChild(el('stop', { offset:'0%',   'stop-color':'#1d6b9e' }));
+    rg.appendChild(el('stop', { offset:'100%', 'stop-color':'#0a2b47' }));
+    defs.appendChild(rg); svg.appendChild(defs);
+
+    svg.appendChild(el('circle', { cx:CX, cy:CY, r:R, class:'n-ring' }));
+
+    var pts = {};
+    NODES.forEach(function (n) {
+      var rad = n.a * Math.PI / 180;
+      n.x = CX + R * Math.cos(rad); n.y = CY + R * Math.sin(rad); pts[n.id] = n;
+    });
+    HUM.forEach(function (h) { pts[h.id] = h; });
+
+    // enlaces cerebro -> nodo (y humanos), más el hilo animado encima
+    var all = NODES.concat(HUM);
+    all.forEach(function (n) {
+      var dx = n.x - CX, dy = n.y - CY, d = Math.hypot(dx, dy);
+      var x1 = CX + dx / d * 62, y1 = CY + dy / d * 62;
+      var x2 = n.x - dx / d * 40, y2 = n.y - dy / d * 40;
+      var dd = 'M' + x1 + ' ' + y1 + 'L' + x2 + ' ' + y2;
+      svg.appendChild(el('path', { d: dd, class: 'n-link' }));
+      svg.appendChild(el('path', { d: dd, class: 'n-flow', 'data-flow': n.id }));
+    });
+
+    // nodos
+    all.forEach(function (n) {
+      var g = el('g', { class: 'n-node' + (n.ic ? ' human' : ''), 'data-id': n.id, tabindex: '0',
+                        role: 'button', 'aria-label': n.t });
+      g.appendChild(el('circle', { cx:n.x, cy:n.y, r:38 }));
+      var p = el('path', { d: IC[n.ic || n.id], class:'ico',
+        transform: 'translate(' + (n.x - 12) + ',' + (n.y - 12) + ')' });
+      g.appendChild(p);
+      var t = el('text', { x:n.x, y:n.y + 58 });
+      t.textContent = n.t;
+      var s = el('tspan', { x:n.x, dy:'15', class:'s' }); s.textContent = n.s;
+      t.appendChild(s); g.appendChild(t);
+      svg.appendChild(g);
+    });
+
+    // cerebro
+    var b = el('g', { class:'brain n-node', 'data-id':'brain', tabindex:'0', role:'button', 'aria-label':'El cerebro' });
+    b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'pulse' }));
+    b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'pulse b' }));
+    b.appendChild(el('circle', { cx:CX, cy:CY, r:62, class:'core' }));
+    var t1 = el('text', { x:CX, y:CY - 4, class:'t' }); t1.textContent = 'CEREBRO';
+    var t2 = el('text', { x:CX, y:CY + 16, class:'s' }); t2.textContent = 'PERMISO · CÁMARA · REGISTRO';
+    b.appendChild(t1); b.appendChild(t2); svg.appendChild(b);
+
+    svg.addEventListener('click', function (e) {
+      var g = e.target.closest('.n-node'); if (g) { stopSeq(); light(g.getAttribute('data-id')); }
+    });
+    svg.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var g = e.target.closest('.n-node'); if (g) { e.preventDefault(); stopSeq(); light(g.getAttribute('data-id')); }
+    });
+  }
+
+  function light(id) {
+    [].forEach.call(document.querySelectorAll('#ecoSvg .n-node'), function (g) {
+      g.classList.toggle('on', g.getAttribute('data-id') === id);
+    });
+    [].forEach.call(document.querySelectorAll('#ecoSvg .n-flow'), function (p) {
+      p.classList.toggle('go', id === 'brain' || p.getAttribute('data-flow') === id);
+    });
+    $('ecoCap').innerHTML = DESC[id] || '';
+  }
+  var seqT = null, si = 0;
+  function stopSeq() { clearInterval(seqT); seqT = null; }
+  function startSeq() {
+    if (seqT || reduce) { if (reduce) light('brain'); return; }
+    light(SEQ[si]);
+    seqT = setInterval(function () { si = (si + 1) % SEQ.length; light(SEQ[si]); }, 2600);
+  }
+
+  /* ── 4. los trece módulos ────────────────────────────────────────── */
+  var MODS = [
+    ['panel','Panel','La salud de la red en tiempo real'],
+    ['mensajeria','Mensajes','Directos, de grupo y anuncios'],
+    ['perfil','Mi Perfil','El motor de todo lo que viene después'],
+    ['directorio','Directorio','Filtrable por sector y región'],
+    ['matching','Matching con IA','Lenguaje natural, lista corta'],
+    ['busquedas','Mis Búsquedas','La red sigue trabajando sin ti'],
+    ['proyectos','Proyectos','Validados antes de financiarse'],
+    ['invitaciones','Invitaciones','Rol concreto y motivo'],
+    ['intercambio','Intercambio','Cotizaciones entre miembros'],
+    ['pagos','Pagos','Cuotas, facturas e historial'],
+    ['motor','Motor de Directorio','Solo para la dirección'],
+    ['guia','Guía del Miembro','Cada módulo explicado dentro'],
+    ['jobup','Perfil global','El miembro, más allá de la cámara']
+  ];
+  var mg = $('modGrid');
+  if (mg) mg.innerHTML = MODS.map(function (m) {
+    return '<div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="' + IC[m[0]] +
+      '"/></svg></div><h4>' + m[1] + '</h4><p>' + m[2] + '</p></div>';
+  }).join('');
+
+  /* ── 5. la banda de flujo ────────────────────────────────────────── */
+  var LANE = { a:48, b:115, c:185 };
+  var FLOW = [
+    { x:80,   l:'a', n:'1', who:'El miembro',   t:'Escribe la necesidad',      d:'En lenguaje natural, como lo diría en voz alta. Sin formularios ni categorías.' },
+    { x:270,  l:'b', n:'2', who:'La plataforma',t:'El motor puntúa la red',    d:'Afinidad contra cada perfil, ponderada por el TrustRank de cada uno.' },
+    { x:460,  l:'b', n:'3', who:'La plataforma',t:'Lista corta, con equidad',  d:'Seis candidatos. Dos puestos reservados para quien ha recibido menos oportunidades.' },
+    { x:650,  l:'a', n:'4', who:'El miembro',   t:'Acepta un rol concreto',    d:'La invitación nombra el rol y muestra por qué le eligieron. Acepta o declina.' },
+    { x:840,  l:'b', n:'5', who:'La plataforma',t:'Monte Carlo valida',        d:'Diez mil simulaciones antes de mover un euro. El IRS resume la preparación.' },
+    { x:1020, l:'c', n:'6', who:'Aprobación',   t:'Una persona decide',        d:'Nada avanza solo. El paso final siempre lo da alguien que responde por él.' }
+  ];
+  function buildFlow() {
+    var svg = $('flowSvg'); if (!svg) return;
+    var d = '', prev = null;
+    FLOW.forEach(function (f) {
+      var y = LANE[f.l];
+      if (!prev) { d = 'M' + f.x + ' ' + y; }
+      else {
+        var mx = (prev.x + f.x) / 2;
+        d += 'C' + mx + ' ' + LANE[prev.l] + ',' + mx + ' ' + y + ',' + f.x + ' ' + y;
+      }
+      prev = f;
+    });
+    svg.appendChild(el('path', { d:d, class:'f-path' }));
+    svg.appendChild(el('path', { d:d, class:'f-live' }));
+    FLOW.forEach(function (f, i) {
+      var g = el('g', { class:'f-node ' + f.l, 'data-i':i });
+      g.appendChild(el('circle', { cx:f.x, cy:LANE[f.l], r:21 }));
+      var t = el('text', { x:f.x, y:LANE[f.l] + 5 }); t.textContent = f.n;
+      g.appendChild(t); svg.appendChild(g);
+    });
+    $('flowSteps').innerHTML = FLOW.map(function (f, i) {
+      return '<div class="step" data-i="' + i + '"><em>' + f.who + '</em><b>' + f.t + '</b><span>' + f.d + '</span></div>';
+    }).join('');
+  }
+  var fT = null, fi = 0;
+  function fLight(i) {
+    [].forEach.call(document.querySelectorAll('#flowSvg .f-node'), function (g, j) { g.classList.toggle('on', j === i); });
+    [].forEach.call(document.querySelectorAll('#flowSteps .step'), function (g, j) { g.classList.toggle('on', j === i); });
+  }
+  function startFlow() {
+    if (fT) return;
+    if (reduce) { fLight(0); return; }
+    fLight(fi);
+    fT = setInterval(function () { fi = (fi + 1) % FLOW.length; fLight(fi); }, 2100);
+  }
+
+  /* ── 6. las barras del ranking ───────────────────────────────────── */
+  var GINI = [
+    ['Altamar Ingeniería','España',94,0],   ['Nervión Systems','España',88,0],
+    ['Instituto Quetzal','México',81,0],    ['Meseta Ingeniería','Argentina',76,0],
+    ['Ribera Consultores','Colombia',68,1], ['Cierzo Proyectos','Perú',64,1]
+  ];
+  var gb = $('giniBars');
+  if (gb) gb.innerHTML = GINI.map(function (g) {
+    return '<div class="brow' + (g[3] ? ' eq' : '') + '">' +
+      '<div class="t">' + g[0] + '<small>' + g[1] + '</small></div>' +
+      '<div class="tr"><i data-w="' + g[2] + '"></i></div>' +
+      '<div class="v">' + g[2] + '%</div></div>';
+  }).join('');
+
+  /* ── 7. atajos del simulador ─────────────────────────────────────── */
+  var JUMP = [
+    ['Panel',       function () { window.HispaDemo.set({ screen:'dashboard', clearMatch:true }); }],
+    ['Directorio',  function () { window.HispaDemo.set({ screen:'directory', dirSector:'', dirQ:'', clearMatch:true }); }],
+    ['Matching IA', function () { window.HispaDemo.runMatch(0); }],
+    ['Proyectos',   function () { window.HispaDemo.set({ screen:'projects', projTab:'all', clearMatch:true }); }],
+    ['Intercambio', function () { window.HispaDemo.set({ screen:'exchange', xchTab:'rfqs', clearMatch:true }); }],
+    ['Motor · Fundaciones', function () { window.HispaDemo.set({ screen:'motor', motorTab:'fun', clearMatch:true }); }],
+    ['Motor · Asistente',   function () { window.HispaDemo.set({ screen:'motor', motorTab:'ia', clearMatch:true }); }]
+  ];
+  var jw = $('simJump');
+  if (jw) {
+    jw.innerHTML = JUMP.map(function (j, i) { return '<button type="button" data-i="' + i + '">' + j[0] + '</button>'; }).join('');
+    jw.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-i]'); if (!b || !window.HispaDemo) return;
+      [].forEach.call(jw.children, function (x) { x.className = ''; });
+      b.className = 'on';
+      JUMP[+b.getAttribute('data-i')][1]();
+    });
+  }
+
+  /* ── 8. al entrar en cada sección ────────────────────────────────── */
+  function onEnter(i) {
+    var id = secs[i].id;
+    if (id === 's2') startSeq(); else stopSeq();
+    if (id === 's5') startFlow(); else { clearInterval(fT); fT = null; }
+    if (id === 's6') {
+      [].forEach.call(document.querySelectorAll('#giniBars .tr i'), function (b, j) {
+        setTimeout(function () { b.style.width = b.getAttribute('data-w') + '%'; }, 90 * j);
+      });
+    }
+  }
+
+  buildEco(); buildFlow(); mark(0); light('brain');
+  document.documentElement.lang = 'es';
+})();
+</script>
+</body>
+</html>
