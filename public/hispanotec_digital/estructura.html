@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Hispanotec Digital — Estructura</title>
+<style>
+/* ===========================================================================
+   Estructura de Hispanotec Digital, por capas. Un solo archivo, sin recursos
+   externos. Pensado para proyectar Y para exportar a PNG/PDF y pegarlo en un
+   documento, por eso el ancho es fijo y la tipografía del sistema.
+   Cada caja lleva su estado real: producción, sin estrenar o no construido.
+   =========================================================================== */
+:root{
+  --navy:#07345B; --deep:#04182b; --accent:#509BCD; --accent-lt:#7db8de;
+  --ink:#eaf2f8; --mut:rgba(234,242,248,.70); --faint:rgba(234,242,248,.46);
+  --line:rgba(125,184,222,.22); --card:rgba(255,255,255,.05);
+  --ok:#3ecf7a; --warn:#f0b849; --no:#e8836f;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--deep);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.page{width:1600px;margin:0 auto;padding:40px 44px 34px}
+
+.head{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.head img{width:46px;height:46px;border-radius:11px;background:#fff;padding:4px}
+.head h1{font-size:27px;font-weight:800;letter-spacing:-.5px}
+.head .s{font-size:13.5px;color:var(--faint);margin-top:3px}
+.head .sp{flex:1}
+.key{display:flex;gap:16px;font-size:11px;color:var(--mut)}
+.key i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.key b{width:9px;height:9px;border-radius:50%;display:inline-block}
+.k1{background:var(--ok)} .k2{background:var(--warn)} .k3{background:var(--no)}
+
+/* una capa */
+.layer{
+  position:relative;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);padding:16px 18px 18px;margin-bottom:0;
+}
+.layer > .lt{
+  display:flex;align-items:baseline;gap:12px;margin-bottom:13px;
+}
+.layer > .lt b{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent-lt)}
+.layer > .lt span{font-size:12.5px;color:var(--faint)}
+.layer.hl{border-color:rgba(80,155,205,.5);background:rgba(80,155,205,.08)}
+
+/* la flecha entre capas */
+.arrow{height:30px;display:flex;align-items:center;justify-content:center;position:relative}
+.arrow::before{content:"";width:2px;height:100%;background:linear-gradient(180deg,rgba(125,184,222,.12),rgba(125,184,222,.5))}
+.arrow::after{content:"";position:absolute;bottom:2px;width:0;height:0;
+  border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--accent)}
+.arrow em{position:absolute;left:50%;transform:translateX(18px);font-style:normal;
+  font-size:11px;color:var(--faint);white-space:nowrap}
+
+/* cajas */
+.row{display:flex;gap:12px}
+.box{
+  flex:1;background:rgba(255,255,255,.045);border:1px solid var(--line);
+  border-radius:11px;padding:13px 15px;position:relative;
+}
+.box h4{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.box p{font-size:12.2px;color:var(--mut);line-height:1.52}
+.box code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+  color:var(--accent-lt);background:rgba(80,155,205,.12);border-radius:4px;padding:1px 5px}
+.dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.d-ok{background:var(--ok)} .d-w{background:var(--warn)} .d-n{background:var(--no)}
+
+.mods{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+.mod{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;
+  padding:10px 11px;font-size:12.3px;font-weight:600;text-align:center;line-height:1.35}
+.mod small{display:block;font-size:10.5px;color:var(--faint);font-weight:400;margin-top:3px}
+.mod.adm{border-color:rgba(240,184,73,.4);background:rgba(240,184,73,.08)}
+
+.wp{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:12px}
+.chan{border-left:3px solid var(--accent)}
+.chan h4 span{font-size:10.5px;font-weight:800;letter-spacing:1.4px;color:var(--accent-lt);
+  border:1px solid rgba(80,155,205,.4);border-radius:12px;padding:2px 8px}
+
+.tenants{display:flex;gap:10px;align-items:stretch}
+.tn{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;
+  padding:11px 13px;font-size:12.5px}
+.tn b{display:block;font-weight:700;margin-bottom:2px}
+.tn span{font-size:11px;color:var(--faint)}
+.tn.on{border-color:var(--accent);background:rgba(80,155,205,.13)}
+.tn.on span{color:var(--accent-lt)}
+.tn.ghost{opacity:.42;border-style:dashed}
+
+.rule{font-size:11.8px;color:var(--faint);margin-top:11px;padding-top:10px;border-top:1px solid var(--line);line-height:1.55}
+.rule b{color:var(--accent-lt)}
+
+.foot{margin-top:18px;display:flex;align-items:baseline;gap:14px;font-size:11.5px;color:var(--faint)}
+.foot .sp{flex:1}
+.foot a{color:var(--accent-lt);font-weight:700;border-bottom:1px solid rgba(125,184,222,.4)}
+@media print{ body{background:#fff} .page{width:auto} }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4gPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDg5NSA4OTUiIHdpZHRoPSI4OTUiIGhlaWdodD0iODk1Ij48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODAsMjQ3KSIgZD0ibTAgMGg4Mmw0IDkgMTggNDggMTAgMjYgNiAxNiA3IDE4IDYgMTYgMTIgMzEgOCAyMXYzbDIzLTUgMzgtNiAzNS00IDI3LTIgMjQtMWgyNGwtMS0xMzgtMy0xMC02LTktMTAtNS0xNC0zdi01aDEyOHY1bC0xOCA0LTkgNi02IDEwLTIgMTYtMSAxMzAgMjQgMSA0MiA0IDQyIDYgNDIgOCAxNCAzLTEtMTYyLTQtMTEtNC02LTgtNS0xMC0zLTctMXYtNWgxMjh2NWwtMTQgMy0xMCA1LTYgNy0zIDctMSA2djE3NmwyNyA5djEwbC0xMC0yLTE4LTUgMSAxMzUgMiAxMSA1IDh2MmwxNCA3IDEzIDN2NWgtMTI4di01bDEzLTMgOC00IDUtNCA2LTEyIDEtNCAxLTE1My0xMS0xLTQwLTYtMzQtNC0zOS0zLTQwLTIgMSAxNTcgMiAxNyA2IDExIDkgNiAxMCAzIDggMnY1aC0xMjh2LTVsMTUtNCA5LTYgNC01IDQtMTAgMS01IDEtMTY2LTU3IDQtNDYgNS00NyA4LTExIDIgNiAxNSA2IDE2IDggMjAgNSAxMyAxMyAzMyAxMCAyNiAxMCAyNSA2IDExIDUgNXYybDE0IDcgMTMgMyAxIDZoLTEyM3YtNWwxNS01IDYtNSAzLTd2LThsLTYtMTktMzEtODAtNS0xMy03LTE4LTMtOC0xMCAyLTM2IDEyLTIxIDgtMzMgMTUtMTggMTAtMTggMTEtOCA2LTExIDgtMTUgMTMtOCA5aC0ybC0yIDUtOSAyNC0xIDV2MTRsNSAxMCA4IDYgOSAzIDggMnY1aC05N3YtNWwxOS01IDExLTcgOC05IDgtMTYgNi0xNCA5LTIyIDExLTI3IDEzLTMyIDE4LTQ0IDE0LTM0IDEwLTI0IDgtMjAgOC0xOSAxMS0yNyAxNS0zNyA3LTE4di0xMmwtMy01LTYtNS0xMS00LTYtMnptMzggNDctNSAxMS05IDIyLTEzIDMyLTYgMTUtMTEgMjctNiAxNS0xMiAyOS0yNiA2NS05IDIyLTEgNSA1LTIgMTUtMTUgMTQtMTEgMTUtMTAgMTUtOSAyMC0xMSAyOS0xMyAyOS0xMSAxOC02LTEtNy0xMC0yNi0yMC01MC03LTE3LTUtMTQtOS0yMi01LTEzLTMtNnoiIGZpbGw9IiM1MDlCQ0QiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxODAsMjQ3KSIgZD0ibTAgMGg4Mmw0IDkgMTggNDggMTAgMjYgNiAxNiA3IDE4IDYgMTYgMTIgMzEgOCAyMXYzbC0zMyA4LTE4IDVoLTJsLTYtMTctMjYtNjUtNy0xNy01LTE0LTktMjItNS0xMy0yLTVoLTJsLTExIDI4LTkgMjEtOSAyMy03IDE3LTEwIDI0LTggMjAtMTEgMjctMjYgNjUtNiAxNi0xMiAzMS00IDgtNyAxOS0xIDV2MTRsNSAxMCA4IDYgOSAzIDggMnY1aC05N3YtNWwxOS01IDExLTcgOC05IDgtMTYgNi0xNCA5LTIyIDExLTI3IDEzLTMyIDE4LTQ0IDE0LTM0IDEwLTI0IDgtMjAgOC0xOSAxMS0yNyAxNS0zNyA3LTE4di0xMmwtMy01LTYtNS0xMS00LTYtMnoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg2OTIsMjQ3KSIgZD0ibTAgMGgxMjh2NWwtMTQgMy0xMCA1LTYgNy0zIDctMSA2LTEgMTc1LTctMS01Mi0xNC0xLTE2Mi00LTExLTQtNi04LTUtMTAtMy03LTF6IiBmaWxsPSIjMDczNTVDIj48L3BhdGg+PHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTA4LDQzOCkiIGQ9Im0wIDBoNTRsMSAxNTcgMiAxNyA2IDExIDkgNiAxMCAzIDggMnY1aC0xMjh2LTVsMTUtNCA5LTYgNC01IDQtMTAgMi0xMyAxLTE1N3oiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg3MjcsNDU2KSIgZD0ibTAgMCAxMSAxIDQ0IDEwIDMgMSAxIDEzNSAyIDExIDUgOHYybDE0IDcgMTMgM3Y1aC0xMjh2LTVsMTMtMyA4LTQgNS00IDYtMTIgMi0xMnoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMzgsNDU4KSIgZD0ibTAgMGg1bDYgMTQgNiAxNiA4IDIwIDUgMTMgMTMgMzMgMTAgMjYgMTAgMjUgNiAxMSA1IDV2MmwxNCA3IDEzIDMgMSA2aC0xMjN2LTVsMTUtNSA2LTUgMy03di04bC02LTE5LTMxLTgwLTUtMTMtNy0xOC0zLTkgMzUtOXoiIGZpbGw9IiMwNzM0NUIiPjwvcGF0aD48cGF0aCB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NzAsMjQ3KSIgZD0ibTAgMGgxMjh2NWwtMTggNC05IDYtNiAxMC0yIDE2LTEgMTI5aC0yNmwtMzEtMS0xLTEzMC0zLTE1LTYtMTAtOC01LTExLTMtNi0xeiIgZmlsbD0iIzA3MzQ1QiI+PC9wYXRoPjwvc3ZnPg==" alt="">
+    <div>
+      <h1>Hispanotec Digital — estructura</h1>
+      <div class="s">Plataforma multi-inquilino sobre CamaraVirtual · Instancia HISPANOTEC (cv-105) · Desarrollado por DIGIT2AI</div>
+    </div>
+    <span class="sp"></span>
+    <div class="key">
+      <i><b class="k1"></b>En producción</i>
+      <i><b class="k2"></b>Desplegado, sin estrenar</i>
+      <i><b class="k3"></b>No construido</i>
+    </div>
+  </div>
+
+  <!-- 1 ─ identidad ───────────────────────────────────────────────────── -->
+  <div class="layer" style="margin-top:20px">
+    <div class="lt"><b>1 · Identidad</b><span>WordPress es el dueño de las cuentas. La plataforma no guarda contraseñas ni crea una segunda cuenta.</span></div>
+    <div class="wp">
+      <div class="box">
+        <h4><span class="dot d-ok"></span>hispanotec.org · WordPress</h4>
+        <p>Registro, contraseñas y 2FA. Sigue siendo el sistema de referencia de los socios; el endurecimiento de <code>wp-login.php</code> no se esquiva.</p>
+      </div>
+      <div class="box chan">
+        <h4><span class="dot d-w"></span><span>CANAL A</span> Handoff SSO</h4>
+        <p><code>GET /cv-105/auth/wp?token=…</code><br>
+           JWT HS256, <code>exp = iat + 120</code>, <code>jti</code> de un solo uso. Esto es lo que hace el login.</p>
+      </div>
+      <div class="box chan">
+        <h4><span class="dot d-w"></span><span>CANAL B</span> Aprovisionamiento</h4>
+        <p><code>POST /api/v1/webhooks/wordpress/users</code><br>
+           HMAC sobre el cuerpo crudo. <b>No es opcional:</b> sin él, una baja conserva su sesión hasta que caduque.</p>
+      </div>
+    </div>
+    <div class="rule">Los dos canales están <b>desplegados y respondiendo en producción</b>, con el secreto de cv-105 generado y el mapa de roles puesto.
+      Todavía no ha entrado nadie por ahí: <b>cero miembros vinculados</b>, porque el lado WordPress aún no emite un token real.</div>
+  </div>
+
+  <div class="arrow"><em>token firmado + eventos de alta, baja y cambio de rol</em></div>
+
+  <!-- 2 ─ la puerta ───────────────────────────────────────────────────── -->
+  <div class="layer hl">
+    <div class="lt"><b>2 · La puerta</b><span>Cada petición pasa por aquí. Es el único sitio donde se decide quién eres y a qué organización perteneces.</span></div>
+    <div class="row">
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Verifica</h4>
+        <p>Firma, algoritmo en lista blanca, caducidad, <code>aud</code>, <code>iss</code>, <code>jti</code> sin usar y que el TTL no supere la política del inquilino.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Inyecta la pertenencia</h4>
+        <p>El <code>chamber_id</code> lo pone el servidor a partir de la sesión. <b>Nunca lo envía el navegador</b> ni viaja en el cuerpo de una petición.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Autoriza</h4>
+        <p>Rol derivado del miembro, jamás enviado por el cliente. Varios roles: gana el mayor privilegio; uno sin mapear nunca escala.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Registra</h4>
+        <p>Toda llamada queda anotada, <b>incluidas las que rechaza</b>. Nunca se escribe en el registro el token, el secreto ni el cuerpo del webhook.</p>
+      </div>
+    </div>
+    <div class="rule"><b>El estado del usuario es autoridad del webhook, no del SSO:</b> entrar no reactiva a nadie. Una baja en WordPress bloquea el acceso hasta que llegue un <code>user.updated</code> con <code>status: "active"</code>.</div>
+  </div>
+
+  <div class="arrow"><em>sesión propia, con el inquilino ya resuelto</em></div>
+
+  <!-- 3 ─ instancias ──────────────────────────────────────────────────── -->
+  <div class="layer">
+    <div class="lt"><b>3 · Instancias</b><span>Una plataforma, una organización por instancia. Cada una con su secreto, su mapa de roles y su fila de configuración.</span></div>
+    <div class="tenants">
+      <div class="tn"><b>PACC-CFL</b><span>cv-2 · Florida Central</span></div>
+      <div class="tn"><b>PCCI</b><span>cv-3 · Filipinas</span></div>
+      <div class="tn on"><b>HISPANOTEC</b><span>cv-105 · España y LatAm</span></div>
+      <div class="tn ghost"><b>Nueva instancia</b><span>cv-1xx · su organización</span></div>
+      <div class="tn ghost"><b>…</b><span>sin límite · sin redespliegue</span></div>
+    </div>
+    <div class="rule">Dar de alta otra organización <b>no requiere cambios de código</b>. Ninguna consulta cruza de una instancia a otra: todas filtran por <code>chamber_id</code>, y un miembro de cv-105 no es resoluble desde una petición de cv-106.</div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 4 ─ módulos ─────────────────────────────────────────────────────── -->
+  <div class="layer">
+    <div class="lt"><b>4 · Módulos</b><span>Catorce entradas de menú, un solo acceso, dos idiomas. Nada que instalar.</span></div>
+    <div class="mods">
+      <div class="mod">Panel<small>estado de la red</small></div>
+      <div class="mod">Mensajes<small>directos y de grupo</small></div>
+      <div class="mod">Mi Perfil<small>el motor de todo</small></div>
+      <div class="mod">Directorio<small>sector y región</small></div>
+      <div class="mod">Matching con IA<small>lenguaje natural</small></div>
+      <div class="mod">Mis Búsquedas<small>siguen corriendo</small></div>
+      <div class="mod">Proyectos<small>validados</small></div>
+      <div class="mod">Invitaciones<small>rol y motivo</small></div>
+      <div class="mod">Intercambio<small>RFQ y ofertas</small></div>
+      <div class="mod">Pagos<small>cuotas y facturas</small></div>
+      <div class="mod adm">Motor de Directorio<small>solo dirección</small></div>
+      <div class="mod">Guía del Miembro<small>dentro de la app</small></div>
+      <div class="mod">Perfil global<small>más allá</small></div>
+      <div class="mod adm">Gobernanza<small>junta y delegaciones</small></div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 5 ─ motores ─────────────────────────────────────────────────────── -->
+  <div class="layer">
+    <div class="lt"><b>5 · Motores</b><span>Donde está la ingeniería. Aritmética que se puede defender ante una junta, no una caja negra.</span></div>
+    <div class="row">
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Emparejamiento</h4>
+        <p><b>Afinidad × TrustRank + corrección Gini.</b> Dos de los seis puestos se reservan para miembros cualificados con menos presentaciones, tomados de la mitad del ranking y solo por encima del 60 %.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Validación de proyectos</h4>
+        <p><b>Monte Carlo, diez mil iteraciones</b>, antes de mover un euro. El IRS resume equipo, presupuesto y viabilidad en un número.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Motor de Directorio</h4>
+        <p>Verificado y estimado <b>nunca en la misma columna</b>. Se analiza antes de escribir, los duplicados se reportan sin fusionarse, y la IA propone campo a campo con su fuente o deja el campo vacío.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-n"></span>Capacidad empresarial</h4>
+        <p>Hoy el motor empareja <b>personas</b>. La empresa como entidad, la representación y combinar varias empresas complementarias <b>no están construidas</b>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- 6 ─ datos ───────────────────────────────────────────────────────── -->
+  <div class="layer">
+    <div class="lt"><b>6 · Datos</b><span>Qué se guarda, dónde y con qué base legal.</span></div>
+    <div class="row">
+      <div class="box">
+        <h4><span class="dot d-ok"></span>PostgreSQL</h4>
+        <p>Toda tabla lleva <code>chamber_id</code> y está indexada por él. Es la cerradura, no la puerta.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Stripe</h4>
+        <p>Los datos de la tarjeta <b>nunca tocan nuestros servidores</b>. Se guarda el identificador, la marca y los cuatro últimos dígitos.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Fuentes públicas</h4>
+        <p>Cada ficha incorporada marca su origen y activa la base legal y la notificación del <b>artículo 14 del RGPD</b>.</p>
+      </div>
+      <div class="box">
+        <h4><span class="dot d-ok"></span>Secretos</h4>
+        <p>Cifrados en reposo, por inquilino. Al rotar se conserva el anterior para que los tokens ya emitidos sigan validando: <b>sin esa ventana, rotar es una caída</b>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Hispanotec Digital · Instancia HISPANOTEC (cv-105) · Septiembre de 2026</span>
+    <span class="sp"></span>
+    <span>Contrato de integración: <code style="color:var(--accent-lt)">docs/wordpress-integration.md</code></span>
+    <span>Creado por: <a href="https://manuelstagg.com/" target="_blank" rel="noopener">Manuel Stagg</a></span>
+  </div>
+</div>
+</body>
+</html>
