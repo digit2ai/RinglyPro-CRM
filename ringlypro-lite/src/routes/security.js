@@ -142,21 +142,21 @@ router.get('/ghl-probe', async (req, res) => {
       id: a.id || a._id || null,
       name: a.agentName || a.name || null,
       on_number: !!a.inboundNumber,
+      action_count: arr(a.actions).length,
       fields: Object.keys(a).sort(),
     }));
   });
 
   // Every action on every agent, by type. This is the list that decides it.
+  // The agent object carries them inline; there is no /voice-ai/actions GET.
   await step('actions', async () => {
     const seen = [];
     for (const a of agents.slice(0, 5)) {
-      const id = a.id || a._id;
-      if (!id) continue;
-      try {
-        const d = await ghl.call('GET', '/voice-ai/actions', { query: { agentId: id, locationId: ghl.locationId() } });
-        for (const x of arr(d)) seen.push({ agent: id, type: x.actionType || x.type || null,
-          name: x.name || null, fields: Object.keys(x).sort() });
-      } catch (e) { seen.push({ agent: id, error: `${e.status || ''} ${e.message}`.trim() }); }
+      for (const x of arr(a.actions)) seen.push({ agent: a.id || a._id || null,
+        type: x.actionType || x.type || null, name: x.name || null,
+        fields: Object.keys(x).sort(),
+        param_fields: x.actionParameters && typeof x.actionParameters === 'object'
+          ? Object.keys(x.actionParameters).sort() : null });
     }
     return seen;
   });
