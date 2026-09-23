@@ -23,19 +23,4 @@ function getProvider() {
   return _instance;
 }
 
-/**
- * Where NEW numbers come from. HighLevel (LC Phone + Voice AI) when the pilot
- * token is configured, since the account's own Twilio voice is disabled;
- * LITE_NUMBER_PROVIDER=twilio forces the old path. Deliberately separate from
- * getProvider(): calls to existing Twilio numbers and the demo lines still
- * arrive at /voice/incoming and must keep the Twilio provider.
- */
-function getNumberProvider() {
-  const forced = String(process.env.LITE_NUMBER_PROVIDER || '').toLowerCase();
-  const GhlProvider = require('./ghlProvider');
-  if (forced === 'twilio') return getProvider();
-  if (forced === 'ghl' || GhlProvider.configured()) return new GhlProvider();
-  return getProvider();
-}
-
-module.exports = { getProvider, getNumberProvider, TwilioProvider };
+module.exports = { getProvider, TwilioProvider };

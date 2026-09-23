@@ -43,8 +43,6 @@ jobs:
         run: node test/syntax-check.js
       - name: Security SIT
         run: node test/security-sit.js
-      - name: HighLevel number provider SIT
-        run: node test/ghl-sit.js
       - name: Call simulator (agent tools, incl. the refused premium transfer)
         run: node test/call-sim.js
       - name: Known-vulnerable dependencies (high and above)

@@ -57,11 +57,7 @@ app.get('/api/config', (req, res) => res.json({
   // prospect hears Lina in their language before a dedicated DID is provisioned.
   demo_number: process.env.LITE_DEMO_NUMBER || '+18132120813',
   demo_number_es: process.env.LITE_DEMO_NUMBER || '+18132120813',
-  // The number SHOWN to prospects. Since 2026-09-22 the English demo line is
-  // the owner's HighLevel number (answered by HighLevel Voice AI); the old
-  // Twilio line +17627611589 is dead with the account's voice disabled.
-  // LITE_DEMO_NUMBER_EN still routes calls that reach /voice/incoming.
-  demo_number_en: process.env.LITE_DEMO_CALL_EN || '+18132124888'
+  demo_number_en: process.env.LITE_DEMO_NUMBER_EN || '+17627611589'
 }));
 
 // API routers
