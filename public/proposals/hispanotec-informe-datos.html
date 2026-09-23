@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Hispanotec Digital — Informe técnico de tratamiento de datos</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 16mm; }
+  :root{--navy:#07345B;--blue:#0f5a8f;--accent:#509BCD;--ink:#1d2433;--mut:#5b6577;--line:#dfe6ee;
+        --ok:#1c7a45;--okbg:#e7f4ec;--mid:#8a5a08;--midbg:#fdf2dc;--no:#9a2c1c;--nobg:#fbe6e2;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:var(--ink);font-size:10.5pt;line-height:1.5}
+  .cover{text-align:center;padding:46mm 0 0;page-break-after:always}
+  .cover img{width:32mm;margin-bottom:9mm}
+  .cover h1{font-size:20pt;color:var(--navy);line-height:1.25;letter-spacing:-.2pt}
+  .cover .sub{font-size:11.5pt;color:var(--mut);margin-top:5mm;line-height:1.5}
+  .cover .meta{margin-top:14mm;font-size:9.5pt;color:var(--mut);line-height:1.9}
+  .cover .meta b{color:var(--ink)}
+  .cover .warn{margin:14mm auto 0;max-width:150mm;background:#fdf2dc;border:1px solid #e8c98a;
+    border-radius:6px;padding:5mm 6mm;font-size:9.5pt;color:#6b4708;text-align:left;line-height:1.6}
+  .cover .warn b{color:#5a3c06}
+  h2{font-size:13pt;color:var(--navy);margin:8mm 0 3mm;padding-bottom:1.5mm;
+     border-bottom:2px solid var(--accent);page-break-after:avoid}
+  h2:first-of-type{margin-top:0}
+  h3{font-size:11pt;color:var(--blue);margin:5mm 0 2mm;page-break-after:avoid}
+  p{margin-bottom:2.6mm}
+  .lede{font-size:11pt;color:var(--mut);margin-bottom:4mm}
+  table{width:100%;border-collapse:collapse;font-size:9.5pt;margin:3mm 0 5mm;page-break-inside:avoid}
+  th{text-align:left;background:#f4f8fc;color:var(--navy);font-size:8.5pt;letter-spacing:.4pt;
+     text-transform:uppercase;padding:2mm 3mm;border-bottom:1.5px solid var(--accent)}
+  td{padding:2mm 3mm;border-bottom:1px solid var(--line);vertical-align:top}
+  td code,p code{font-family:ui-monospace,Menlo,monospace;font-size:8.8pt;background:#f1f5f9;
+    border-radius:3px;padding:.5mm 1.2mm;color:var(--blue)}
+  .tag{display:inline-block;font-size:7.2pt;font-weight:700;letter-spacing:.5pt;text-transform:uppercase;
+    border-radius:9px;padding:.7mm 2.2mm;white-space:nowrap}
+  .t-ok{background:var(--okbg);color:var(--ok)} .t-mid{background:var(--midbg);color:var(--mid)}
+  .t-no{background:var(--nobg);color:var(--no)}
+  .key{background:#f4f8fc;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;
+    padding:4mm 5mm;margin:4mm 0;page-break-inside:avoid}
+  .key p:last-child{margin-bottom:0} .key b{color:var(--navy)}
+  .alert{background:#fdf2dc;border-left:3px solid #d9822b;border-radius:0 6px 6px 0;
+    padding:4mm 5mm;margin:4mm 0;page-break-inside:avoid;color:#5f4207}
+  .alert p:last-child{margin-bottom:0} .alert b{color:#4a3305}
+  ol,ul{margin:2mm 0 3mm 6mm} li{margin-bottom:2.2mm}
+  li b{color:var(--navy)}
+  .foot{margin-top:7mm;padding-top:3mm;border-top:1px solid var(--line);
+    font-size:8.5pt;color:var(--mut);text-align:center}
+  .pb{page-break-before:always}
+</style>
+</head>
+<body>
+<div class="cover">
+  <img src="logo-hispanotec.svg" alt="">
+  <h1>Hispanotec Digital<br>Informe técnico de tratamiento<br>de datos personales</h1>
+  <div class="sub">Instancia HISPANOTEC (cv-105) sobre la plataforma CamaraVirtual<br>
+    Insumo para la evaluación jurídica de cumplimiento</div>
+  <div class="meta">
+    <b>Dirigido a</b> la asesoría jurídica de HISPANOTEC<br>
+    <b>Emitido por</b> DIGIT2AI, como desarrollador y operador técnico<br>
+    <b>Fecha</b> 23 de septiembre de 2026
+  </div>
+  <div class="warn">
+    <b>Qué es y qué no es este documento.</b> Esto <b>no es un certificado de cumplimiento</b>
+    ni un dictamen jurídico, y DIGIT2AI no está en posición de emitir ninguno de los dos.
+    Es una descripción técnica y verificable de qué datos personales trata la plataforma,
+    dónde se alojan, quién más los toca y qué medidas están implementadas en el código,
+    para que sea usted quien evalúe el cumplimiento. Incluye deliberadamente una sección
+    con <b>lo que no está resuelto</b>, porque un informe que solo enumere lo hecho no le
+    sirve para decidir.
+  </div>
+</div>
+
+<h2>1. Reparto de papeles</h2>
+<p class="lede">Es la primera cuestión a fijar, porque de ella depende quién responde de qué.</p>
+<table>
+  <tr><th style="width:26%">Parte</th><th style="width:30%">Papel que sostiene el diseño técnico</th><th>Base de hecho</th></tr>
+  <tr><td><b>HISPANOTEC</b></td><td>Responsable del tratamiento</td>
+      <td>Decide qué datos se recogen, con qué finalidad y a quién se incorpora al directorio. Es además quien posee la relación con el socio.</td></tr>
+  <tr><td><b>DIGIT2AI</b></td><td>Encargado del tratamiento</td>
+      <td>Desarrolla y opera la plataforma por cuenta de HISPANOTEC, bajo el Acuerdo Marco de 9 de junio de 2026.</td></tr>
+  <tr><td><b>WordPress de HISPANOTEC</b></td><td>Sistema de registro de las cuentas</td>
+      <td>Las credenciales viven en <code>hispanotec.org</code>. La plataforma no almacena contraseñas.</td></tr>
+</table>
+<div class="alert"><p><b>Pendiente:</b> no consta en el repositorio un contrato de encargo de tratamiento
+  (artículo 28 RGPD) firmado entre HISPANOTEC y DIGIT2AI. El Acuerdo Marco regula la colaboración
+  tecnológica; el artículo 28 exige además un documento con el contenido mínimo que allí se enumera.
+  <b>Es el primer documento que recomendamos revisar.</b></p></div>
+
+<h2>2. Qué datos personales se tratan</h2>
+<p>Inventario tomado directamente de la estructura de la tabla de miembros, no de una descripción funcional.</p>
+<table>
+  <tr><th style="width:30%">Categoría</th><th>Campos</th></tr>
+  <tr><td><b>Identificación y contacto</b></td><td>nombre, apellidos, correo electrónico, teléfono, país, región</td></tr>
+  <tr><td><b>Perfil profesional</b></td><td>empresa, sector, subespecialidad, años de experiencia, idiomas, biografía, LinkedIn, sitio web</td></tr>
+  <tr><td><b>Relación asociativa</b></td><td>tipo de membresía, cargo de gobernanza, nivel de acceso, estado, fecha de alta y de última actividad</td></tr>
+  <tr><td><b>Datos derivados</b></td><td>índice de confianza (TrustRank), sus componentes y la evidencia que lo sustenta, fecha de verificación</td></tr>
+  <tr><td><b>Datos mercantiles</b></td><td>identificador de registro de empresa y su país</td></tr>
+  <tr><td><b>Identidad federada</b></td><td>identificador de usuario de WordPress, nombre de acceso, roles y fecha de sincronización</td></tr>
+  <tr><td><b>Pago</b></td><td>identificador de cliente en Stripe. <b>Ningún dato de tarjeta se almacena en la plataforma.</b></td></tr>
+</table>
+<p><b>No se tratan categorías especiales del artículo 9</b> (salud, origen étnico, convicciones,
+  afiliación sindical, biometría). Tampoco se recogen datos de menores: el alta es de profesionales
+  y empresas.</p>
+<div class="key"><p><b>Sobre los datos de demostración.</b> Las cifras y personas que aparecen en el
+  simulador de la presentación pública (1.042 miembros, empresas, conversaciones) están
+  <b>íntegramente inventadas</b> y generadas por programa. No corresponden a ninguna persona
+  identificable, y la interfaz va rotulada de forma permanente como datos de muestra. Fue una
+  decisión expresa: atribuir sectores, índices de confianza e historial de negocios ficticios a una
+  persona real sería, en sí mismo, un tratamiento ilícito.</p></div>
+
+<h2>3. Dónde se alojan los datos</h2>
+<div class="alert">
+  <p><b>Este es el punto que requiere su atención en primer lugar.</b></p>
+  <p>La infraestructura está en <b>Render</b>. La base de datos reside en <b>Virginia (Estados Unidos)</b>
+    y el servicio de aplicación en <b>Oregón (Estados Unidos)</b>. Los datos personales de socios
+    de una asociación española <b>salen del Espacio Económico Europeo</b>.</p>
+  <p>Eso activa el <b>Capítulo V del RGPD</b> (artículos 44 a 49) y exige un mecanismo de
+    transferencia válido: adhesión del proveedor al <b>Marco de Privacidad de Datos UE-EE. UU.</b>,
+    o bien <b>Cláusulas Contractuales Tipo</b> acompañadas de una evaluación de impacto de la
+    transferencia. <b>Hay que verificar cuál de los dos ampara a Render y documentarlo.</b></p>
+  <p>Si la conclusión jurídica es que el dato debe permanecer en la UE, <b>es viable</b>: Render
+    ofrece región de Fráncfort y la migración es una operación de infraestructura, no una
+    reescritura de la plataforma. Conviene decidirlo antes de que haya volumen real de socios.</p>
+</div>
+
+<h2>4. Terceros que intervienen (subencargados)</h2>
+<table>
+  <tr><th style="width:20%">Proveedor</th><th style="width:26%">Para qué</th><th>Qué recibe</th></tr>
+  <tr><td><b>Render</b></td><td>Alojamiento y base de datos</td><td>Todo el dato. EE. UU. (ver sección 3).</td></tr>
+  <tr><td><b>Stripe</b></td><td>Cobro de cuotas</td><td>Los datos de la tarjeta los recoge y guarda Stripe directamente. La plataforma conserva el identificador, la marca y los cuatro últimos dígitos.</td></tr>
+  <tr><td><b>SendGrid</b></td><td>Correo transaccional</td><td>Dirección de correo y contenido del mensaje enviado.</td></tr>
+  <tr><td><b>Anthropic</b></td><td>Funciones de inteligencia artificial</td><td>Ver sección 6. Procesamiento acotado y sin datos de contacto personales.</td></tr>
+</table>
+<div class="alert"><p><b>Pendiente:</b> la relación de subencargados debe constar por escrito y ser
+  comunicada a HISPANOTEC con derecho de objeción (artículo 28.2 y 28.4 RGPD). Debe además
+  verificarse el acuerdo de tratamiento de datos de cada uno.</p></div>
+
+<h2>5. Medidas técnicas implementadas</h2>
+<p class="lede">Todas ellas están en el código y son verificables; no son declaraciones de intenciones.</p>
+<table>
+  <tr><th style="width:34%">Medida</th><th style="width:17%">Artículo</th><th>Cómo está implementada</th></tr>
+  <tr><td><b>Aislamiento entre organizaciones</b></td><td>32.1.b</td>
+      <td>Toda consulta filtra por el identificador de organización, que <b>inyecta el servidor desde la sesión</b> y nunca se acepta del navegador. Un socio de una instancia no es resoluble desde otra.</td></tr>
+  <tr><td><b>Minimización</b></td><td>5.1.c</td>
+      <td>El directorio público expone un subconjunto que <b>excluye por diseño</b> correo, teléfono, contraseña, nivel de acceso e identificadores de pago. La búsqueda pública omite el correo para que no pueda usarse como oráculo de pertenencia.</td></tr>
+  <tr><td><b>Contraseñas</b></td><td>32.1.a</td>
+      <td>No se almacenan en claro. Con identidad federada, la plataforma no las ve en ningún momento.</td></tr>
+  <tr><td><b>Secretos cifrados en reposo</b></td><td>32.1.a</td>
+      <td>Cifrado AES-256-GCM por organización. Al rotar se conserva el anterior durante una ventana para no interrumpir el servicio.</td></tr>
+  <tr><td><b>Registro de actividad</b></td><td>5.2, 32</td>
+      <td>El Motor de Directorio audita cada consulta y cada acción, <b>incluidas las que rechaza</b>. Nunca se escriben en el registro credenciales ni el cuerpo de las peticiones.</td></tr>
+  <tr><td><b>Protección desde el diseño</b></td><td>25</td>
+      <td>Campos sensibles proyectados por rol: un campo que el rol no cubre <b>se elimina del objeto, no se enmascara</b>, porque una máscara sigue confirmando que el dato existe.</td></tr>
+  <tr><td><b>Limitación de acceso</b></td><td>32.1.b</td>
+      <td>El Motor de Directorio está cerrado a quien no tenga rol administrativo <b>en el servidor</b>, no ocultando un enlace.</td></tr>
+</table>
+
+<h2 class="pb">6. Datos de terceros e inteligencia artificial</h2>
+<h3>6.1 Incorporación desde fuentes públicas — artículo 14</h3>
+<p>El Motor de Directorio permite incorporar fichas de entidades (fundaciones, patronos, terceros)
+  obtenidas de registros y fuentes públicas. El sistema <b>marca el origen de cada ficha</b> y activa
+  la base jurídica y la nota informativa del artículo 14 RGPD cuando el origen declarado es una
+  fuente pública.</p>
+<p>Reglas impuestas en el código, no pedidas a un modelo: los duplicados <b>se detectan y se reportan,
+  nunca se fusionan automáticamente</b>, porque decidir que dos fichas son la misma entidad es una
+  decisión humana; y el análisis de una importación es un paso separado de la escritura, de modo que
+  nada entra en la base sin confirmación de una persona.</p>
+<div class="alert"><p><b>Pendiente y es de HISPANOTEC:</b> el sistema activa el aviso, pero el
+  <b>procedimiento operativo</b> no existe — quién atiende una solicitud de acceso, supresión u
+  oposición, en qué plazo y con qué registro. Debe estar escrito <b>antes de la primera importación
+  real</b>.</p></div>
+
+<h3>6.2 Decisiones automatizadas — artículo 22</h3>
+<p>La plataforma <b>no adopta decisiones automatizadas con efectos jurídicos o significativos</b>
+  sobre las personas. El emparejamiento produce una lista ordenada de sugerencias; la invitación, la
+  aceptación y la contratación son siempre actos humanos. El índice de confianza es un dato derivado
+  y ordena resultados, pero no excluye a nadie ni deniega ninguna prestación.</p>
+
+<h3>6.3 Uso de modelos de IA</h3>
+<p>Las funciones de IA operan sobre datos de entidades, no de personas físicas, y están acotadas en
+  el código: el enriquecimiento propone únicamente sector, país, tamaño, especialidad, localización,
+  web y líneas de actuación; tiene <b>prohibido proponer datos de contacto personales</b> y cifras
+  económicas; y <b>sin fuente identificada el campo se deja vacío</b> en lugar de rellenarse por
+  verosimilitud. Toda propuesta requiere validación humana campo por campo.</p>
+<p>El asistente <b>declara siempre su naturaleza artificial</b> y esa declaración no es desactivable
+  por ninguna instrucción, rol o configuración, conforme al artículo 50 del Reglamento (UE) 2024/1689
+  y a la Ley 3/1991 de Competencia Desleal.</p>
+<p>En cuanto a comunicaciones: las entidades clasificadas como <b>Nivel 1</b> (fundaciones, patronos
+  y mecenas) están <b>excluidas por diseño de todo envío automatizado</b>, sin parámetro que lo
+  habilite. Para el resto, sin consentimiento previo acreditado el único envío admisible es el
+  mensaje individual de solicitud de permiso, no promocional, tomando el artículo 21 de la LSSI-CE
+  como estándar único.</p>
+
+<h2>7. Derechos de los interesados</h2>
+<table>
+  <tr><th style="width:26%">Derecho</th><th style="width:20%">Estado</th><th>Observación</th></tr>
+  <tr><td>Acceso y portabilidad</td><td><span class="tag t-mid">Manual</span></td><td>Los datos son extraíbles, pero no hay una función de autoservicio para el socio.</td></tr>
+  <tr><td>Rectificación</td><td><span class="tag t-ok">Disponible</span></td><td>El socio edita su propia ficha desde la aplicación.</td></tr>
+  <tr><td>Supresión</td><td><span class="tag t-mid">Manual</span></td><td>Existe la operación de borrado, reservada a administradores. No hay solicitud de baja desde la cuenta.</td></tr>
+  <tr><td>Oposición y limitación</td><td><span class="tag t-no">Sin procedimiento</span></td><td>Técnicamente resoluble; falta el procedimiento escrito.</td></tr>
+  <tr><td>Información en la recogida</td><td><span class="tag t-no">No implementado</span></td><td>Ver el aviso siguiente.</td></tr>
+</table>
+<div class="alert"><p><b>Hallazgo relevante:</b> no se ha localizado <b>texto informativo de protección
+  de datos ni política de privacidad en el formulario de alta de miembro</b>. El artículo 13 RGPD
+  exige informar en el momento de la recogida sobre responsable, finalidad, base jurídica,
+  destinatarios, transferencias internacionales, plazos y forma de ejercer los derechos.
+  <b>Debe redactarse y publicarse antes de abrir el alta a socios reales</b>, y la transferencia a
+  Estados Unidos descrita en la sección 3 tiene que figurar expresamente en ella.</p></div>
+
+<h2 class="pb">8. Lo que no está resuelto</h2>
+<p class="lede">Esta sección existe a propósito. Es la que convierte el informe en algo accionable.</p>
+<table>
+  <tr><th style="width:34%">Cuestión</th><th style="width:16%">Responsable</th><th>Qué hace falta</th></tr>
+  <tr><td><b>Transferencia internacional</b></td><td>Asesoría + DIGIT2AI</td>
+      <td>Verificar el amparo de Render y documentarlo; o decidir la migración a región europea.</td></tr>
+  <tr><td><b>Contrato de encargo (art. 28)</b></td><td>Asesoría</td>
+      <td>Documento con el contenido mínimo del artículo 28.3, además del Acuerdo Marco.</td></tr>
+  <tr><td><b>Información en la recogida (art. 13)</b></td><td>Asesoría</td>
+      <td>Texto informativo y política de privacidad enlazados desde el alta.</td></tr>
+  <tr><td><b>Registro de actividades (art. 30)</b></td><td>Asesoría</td>
+      <td>No consta elaborado. Es obligación del responsable.</td></tr>
+  <tr><td><b>Procedimiento de derechos</b></td><td>HISPANOTEC</td>
+      <td>Quién atiende, en qué plazo y con qué registro. Antes de la primera importación.</td></tr>
+  <tr><td><b>Política de conservación</b></td><td>Asesoría</td>
+      <td>No hay plazos de supresión ni anonimización definidos en el sistema.</td></tr>
+  <tr><td><b>Evaluación de impacto (art. 35)</b></td><td>Asesoría</td>
+      <td>Valorar si procede, dada la incorporación de terceros desde fuentes públicas y el perfilado del índice de confianza.</td></tr>
+  <tr><td><b>Verificación de identidad</b></td><td>Ambas</td>
+      <td>Hoy la verificación se limita a la comprobación del correo electrónico. Si algún efecto jurídico va a apoyarse en la identidad del socio, el nivel actual es insuficiente.</td></tr>
+</table>
+
+<h2>9. Preguntas concretas para la asesoría</h2>
+<ol>
+  <li><b>¿Acepta la transferencia a Estados Unidos</b> con el amparo que ofrezca Render, o procede migrar el alojamiento a la Unión Europea?</li>
+  <li><b>¿Confirma el reparto de papeles</b> de la sección 1: HISPANOTEC responsable, DIGIT2AI encargado?</li>
+  <li><b>¿Qué base jurídica</b> asigna a cada tratamiento: ejecución de la relación asociativa, interés legítimo para el directorio profesional, consentimiento para las comunicaciones?</li>
+  <li><b>¿Considera que el índice de confianza constituye elaboración de perfiles</b> a efectos del artículo 4.4, y si es así, qué información adicional debe darse al socio?</li>
+  <li><b>¿Procede evaluación de impacto</b> por la incorporación de terceros desde fuentes públicas?</li>
+  <li><b>¿Qué plazos de conservación</b> deben implementarse, y qué ocurre con los datos de un socio que causa baja?</li>
+</ol>
+
+<div class="key"><p>DIGIT2AI queda a disposición de la asesoría para ampliar cualquier punto, mostrar
+  el código que implementa cada medida y ejecutar los cambios técnicos que se deriven de su
+  dictamen. Las medidas descritas en la sección 5 son verificables sobre el sistema en
+  funcionamiento.</p></div>
+
+<div class="foot">DIGIT2AI · Instancia HISPANOTEC (cv-105) · 23 de septiembre de 2026 ·
+  Documento técnico, no dictamen jurídico</div>
+</body>
+</html>
