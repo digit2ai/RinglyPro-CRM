@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================================
-   Genera public/proposals/hispanotec-upadi.html — UN SOLO ARCHIVO.
+   Genera public/hispanotec_digital/index.html — UN SOLO ARCHIVO.
 
    El simulador va INCRUSTADO, no enlazado ni capturado: durante la charla se
    hace clic en la aplicación real. Una captura se proyecta borrosa, no
@@ -10,15 +10,17 @@
    archivo no dependa de nada externo.
 
    El deck se REGENERA, no se edita a mano: las partes viven en
-   scripts/upadi-deck/ y esto solo las cose.
+   scripts/hispanotec-digital-deck/ y esto solo las cose.
    ========================================================================== */
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const PARTS = path.join(__dirname, 'upadi-deck');
-const OUT = path.join(ROOT, 'public/proposals/hispanotec-upadi.html');
+const PARTS = path.join(__dirname, 'hispanotec-digital-deck');
+// Servido en /hispanotec_digital por express.static, que redirige la ruta sin
+// barra final a la que la lleva.
+const OUT = path.join(ROOT, 'public/hispanotec_digital/index.html');
 const DEMO = path.join(ROOT, 'public/hispanotec/demo');
 
 function read(p) { return fs.readFileSync(p, 'utf8'); }
