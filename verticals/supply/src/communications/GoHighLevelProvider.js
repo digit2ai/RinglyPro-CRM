@@ -204,7 +204,8 @@ class GoHighLevelProvider extends CommunicationProvider {
   }
   /** PATCH /voice-ai/agents/{id} (Version v3) */
   async updateAgent(id, body) {
-    await this.call('PATCH', '/voice-ai/agents/' + encodeURIComponent(id), { data: Object.assign({ locationId: this.creds.locationId }, body), version: VOICE_VERSION() });
+    // GHL reads locationId from the QUERY on PATCH ("LocationId is required" when it is only in the body).
+    await this.call('PATCH', '/voice-ai/agents/' + encodeURIComponent(id), { params: { locationId: this.creds.locationId }, data: body, version: VOICE_VERSION() });
     return { id };
   }
   /** POST /voice-ai/actions (Version v3) -> { id } */

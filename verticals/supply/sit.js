@@ -424,7 +424,7 @@ async function cleanup() {
     const calls2 = []; let agentSeq = 0;
     ghl._setTransport(async (o) => {
       const path = o.url.replace(/^https:\/\/[^/]+/, '');
-      calls2.push({ m: o.method, path, v: o.headers.Version, body: o.data });
+      calls2.push({ m: o.method, path, v: o.headers.Version, body: o.data, params: o.params });
       if (o.method === 'GET' && /^\/locations\/loc9$/.test(path)) return { status: 200, data: { location: { name: 'AI Engineering Solutions' } } };
       if (o.method === 'GET' && /customFields/.test(path)) return { status: 200, data: { customFields: [] } };
       if (o.method === 'POST' && /customFields/.test(path)) return { status: 201, data: { customField: { id: 'cf_' + o.data.name.length, fieldKey: 'contact.' + o.data.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') } } };
@@ -454,6 +454,7 @@ async function cleanup() {
     const run2 = await setup.run(tA3, gp2, { answerInbound: true });
     ok(!calls2.some((c) => c.m === 'POST' && (c.path === '/voice-ai/agents' || c.path === '/voice-ai/actions')), 'second run updates in place: no duplicate agents or actions');
     const patchIn = calls2.find((c) => c.m === 'PATCH' && c.path === '/voice-ai/agents/ag_2');
+    ok(calls2.filter((c) => c.m === 'PATCH').every((c) => c.params && c.params.locationId === 'loc9'), 'agent updates send locationId in the query, as GHL requires');
     ok(patchIn && patchIn.body.inboundNumber === '+18132124888' && run2.steps.find((x) => x.key === 'inbound_number').status === 'ok', 'ticking "answer inbound" assigns the number to the inbound agent');
     ghl._setTransport(async (o) => (/\/locations\/loc9$/.test(o.url) ? { status: 200, data: { location: { name: 'x' } } } : { status: 401, data: { message: 'The token is not authorized for this scope.' } }));
     const run3 = await setup.run(tA3, new ghl.GoHighLevelProvider({ token: 't', locationId: 'loc9' }), {});
