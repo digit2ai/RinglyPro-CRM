@@ -25,7 +25,24 @@ So **cost per minute stops being the deciding number and BREAK-EVEN CLIENT
 COUNT starts.** `platformEconomics()` in `src/utils/cost.js` computes it, and
 `GET /internal/economics/platform` reports it against the live client count.
 
-### What the model actually says (300 min/client, $497 + AI Employee = $619 fixed)
+### THE SHIPPING SETUP: ONE SHARED SUB-ACCOUNT ON $97
+
+AI Employee Unlimited is billed **per location**, so putting every client in one
+location means one $97 covers all of their agent minutes. Each client still gets
+their own number, agent and calendar — only the contact list is shared, and Lite
+does not offer one.
+
+| Setup | Fixed/mo | Per min | Break-even at $26/mo |
+|---|---|---|---|
+| One shared sub-account, pay-per-use | $122 | $0.13 | 23 clients |
+| **One shared + AI Employee Unlimited** | **$219** | **$0.012** | **10 clients** |
+| $497 Agency Pro + AI Employee (exclusive sub-accounts) | $619 | $0.012 | 27 clients |
+
+**$497 is worse than $97 here**, which is the opposite of what it looks like:
+the extra $400 buys automated sub-account creation and rebill-with-markup, and
+neither is worth 17 more clients of break-even until there are clients to rebill.
+
+### What the model says on the exclusive path (300 min/client, $497 + AI Employee = $619 fixed)
 
 | Price per client | Break-even |
 |---|---|

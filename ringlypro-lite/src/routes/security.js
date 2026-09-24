@@ -195,7 +195,10 @@ router.get('/ghl-probe', async (req, res) => {
  *
  *   GET  /internal/security/ghl-pool        what is stocked and what is claimed
  *   POST /internal/security/ghl-pool        add one the owner made by hand
- *                                           { location_id, token, label? }
+ *                                           { location_id, token, label?, shared? }
+ *                                           shared:true = ONE sub-account for every
+ *                                           client (each still gets their own
+ *                                           number, agent and calendar).
  *
  * The token is verified against HighLevel before it is stored and is never
  * returned afterwards, encrypted or otherwise — only whether it is set.
@@ -209,8 +212,8 @@ router.get('/ghl-pool', async (req, res) => {
 router.post('/ghl-pool', express.json({ limit: '16kb' }), async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const { location_id, token, label } = req.body || {};
-    const out = await require('../services/ghlAccounts').addToPool({ location_id, token, label });
+    const { location_id, token, label, shared } = req.body || {};
+    const out = await require('../services/ghlAccounts').addToPool({ location_id, token, label, shared: !!shared });
     res.status(201).json({ ok: true, ...out });
   } catch (e) {
     res.status(e.code === 'BAD_INPUT' || e.code === 'TOKEN_LOCATION_MISMATCH' ? 400 : 500)

@@ -407,6 +407,49 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!/body\.tenant_id|body\.tenantId/.test(src), 'the webhook trusts a tenant id from the payload');
   });
 
+  section('shared sub-account mode (the $97 answer)');
+  await t('ONE SHARED SUB-ACCOUNT SERVES EVERY TENANT, AND IS NEVER CONSUMED', async () => {
+    // A fresh store for this section so the exclusive rows above cannot mask it.
+    M.GhlAccount._rows.length = 0;
+    await accounts.addToPool({ location_id: 'LOC-SHARED', token: 'pit-shared', shared: true });
+    const s1 = await accounts.claim(9001);
+    const s2 = await accounts.claim(9002);
+    const s3 = await accounts.claim(9003);
+    for (const r of [s1, s2, s3]) assert.strictEqual(r.location_id, 'LOC-SHARED');
+    assert.ok(s1.shared && s2.shared);
+    const row = await M.GhlAccount.findOne({ where: { location_id: 'LOC-SHARED' } });
+    assert.strictEqual(row.status, 'shared', 'the shared row was consumed by a claim');
+    assert.strictEqual(row.claimed_by_tenant, undefined, 'a shared row must not be pinned to one tenant');
+  });
+  await t('every tenant in the shared location still gets their OWN number, agent and calendar', async () => {
+    scenario = {}; reqs = []; boughtNumbers = 0;
+    const a = await M.Tenant.create(tenantSeed({ business_name: 'Clinic A' }));
+    const b = await M.Tenant.create(tenantSeed({ business_name: 'Clinic B' }));
+    await provisioning.provision(a);
+    await provisioning.provision(b);
+    assert.strictEqual(boughtNumbers, 2, 'the two clients did not get two numbers');
+    assert.notStrictEqual(a.ghl_agent_id, undefined);
+    assert.notStrictEqual(b.ghl_agent_id, undefined);
+    // Two calendars were created, one per client, inside the one location.
+    const cals = reqs.filter((r) => r.path === '/calendars/' && r.method === 'POST');
+    assert.strictEqual(cals.length, 2, 'the two clients shared a calendar');
+    assert.ok(cals[0].body.name !== cals[1].body.name);
+    assert.strictEqual(a.ghl_location_id, b.ghl_location_id, 'shared mode should put both in one location');
+  });
+  await t('the owner report names the mode and what sharing actually costs', async () => {
+    const st = await accounts.status();
+    assert.strictEqual(st.mode, 'shared');
+    assert.ok(/CONTACT list is shared/i.test(st.plan_note));
+  });
+  await t('a sub-account already carrying a client is never re-scoped to shared', async () => {
+    M.GhlAccount._rows.length = 0;
+    await accounts.addToPool({ location_id: 'LOC-EX', token: 'pit-ex' });
+    await accounts.claim(9100);
+    await accounts.addToPool({ location_id: 'LOC-EX', token: 'pit-ex', shared: true });
+    const row = await M.GhlAccount.findOne({ where: { location_id: 'LOC-EX' } });
+    assert.strictEqual(row.status, 'claimed', 'a claimed exclusive row was opened up to strangers');
+  });
+
   section('the post-call mirror');
   const express = require('express');
   const webhook = require(path.join(ROOT, 'src/routes/webhooks-ghl'));

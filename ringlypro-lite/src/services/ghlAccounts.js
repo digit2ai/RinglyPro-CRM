@@ -16,9 +16,33 @@
  * fills the pool automatically and NOTHING ELSE CHANGES — provisioning calls
  * `claim()` in both cases, which is what stops the upgrade being a rewrite.
  *
- * A claim is atomic. Two signups landing together must not be handed the same
- * location: one client's phone number and contacts inside another client's
- * sub-account is not a bug you can apologise your way out of.
+ * TWO MODES, AND THE OWNER PICKS ONE PER ROW.
+ *
+ *  - `free`   → an EXCLUSIVE sub-account, claimed by one tenant and no other.
+ *               Full isolation: contacts, calendar, conversations.
+ *  - `shared` → ONE sub-account that every tenant uses (owner decision
+ *               2026-09-24). Within a single location HighLevel allows
+ *               unlimited calendars, unlimited Voice AI agents and unlimited
+ *               numbers, so each client still gets their OWN agent, their OWN
+ *               calendar and their OWN number. The single thing they share is
+ *               the CONTACT list — and RinglyPro Lite does not offer a contact
+ *               list as a feature, so no subscriber surface is affected.
+ *
+ * Shared is not a compromise forced by the plan, it is the cheaper answer:
+ * AI Employee Unlimited is billed PER LOCATION, so one location means one $97
+ * covers every client's agent minutes. Break-even falls from 27 clients on the
+ * $497 exclusive path to 10 on this one.
+ *
+ * WHAT SHARING ACTUALLY COSTS, stated so it is a decision and not a surprise:
+ * callers to two different clients become ONE HighLevel contact with both
+ * conversations merged (our own mirror keys on the dialled number, so
+ * RinglyPro's data stays separate); anyone with access to that sub-account sees
+ * every client's callers; and removing one client's data means picking it out
+ * of a shared list. None of that reaches a subscriber screen — it is a privacy
+ * statement the owner makes, not a feature gap.
+ *
+ * An exclusive claim is atomic. Two signups landing together must never be
+ * handed the same EXCLUSIVE location.
  */
 const { Op } = require('sequelize');
 const { sequelize, GhlAccount, Tenant } = require('../models');
@@ -36,7 +60,7 @@ function canAutoCreate() { return !!(agencyToken() && agencyCompanyId()); }
  * is worse than an empty pool, because it fails at the moment a customer is
  * waiting rather than at the moment the owner is pasting.
  */
-async function addToPool({ location_id, token, label, source = 'manual', verify = true }) {
+async function addToPool({ location_id, token, label, source = 'manual', verify = true, shared = false }) {
   const loc = String(location_id || '').trim();
   const tok = String(token || '').trim();
   if (!loc || !tok) { const e = new Error('location_id and token are both required'); e.code = 'BAD_INPUT'; throw e; }
@@ -52,12 +76,17 @@ async function addToPool({ location_id, token, label, source = 'manual', verify 
   }
   const [row, made] = await GhlAccount.findOrCreate({
     where: { location_id: loc },
-    defaults: { location_id: loc, token_enc: secretbox.seal(tok), label: label || null, status: 'free', source },
+    defaults: { location_id: loc, token_enc: secretbox.seal(tok), label: label || null,
+                status: shared ? 'shared' : 'free', source },
   });
   if (!made) {
     // Re-adding an existing location updates its token (a rotated PIT) but never
     // silently frees one that is already carrying a client.
-    await row.update({ token_enc: secretbox.seal(tok), label: label || row.label });
+    // A row already carrying a client is never quietly re-scoped: switching a
+    // claimed exclusive row to shared would put strangers into it.
+    const patch = { token_enc: secretbox.seal(tok), label: label || row.label };
+    if (shared && row.status === 'free') patch.status = 'shared';
+    await row.update(patch);
     // AND it reaches the tenant holding it. credsFor() prefers the tenant's own
     // copy, taken at claim time, so without this the client 401s against
     // HighLevel for ever while the pool reports the account healthy — which is
@@ -81,6 +110,12 @@ async function addToPool({ location_id, token, label, source = 'manual', verify 
 async function claim(tenantId) {
   const existing = await GhlAccount.findOne({ where: { claimed_by_tenant: tenantId } });
   if (existing) return shape(existing, false);
+
+  // SHARED FIRST. A row marked `shared` serves every tenant, so nothing is
+  // consumed and there is nothing to run out of — which is why it is checked
+  // before the pool and before any agency create.
+  const sharedRow = await GhlAccount.findOne({ where: { status: 'shared' } });
+  if (sharedRow) return { ...shape(sharedRow, true), shared: true };
 
   if (canAutoCreate()) {
     const free = await GhlAccount.count({ where: { status: 'free' } });
@@ -137,11 +172,16 @@ async function agencyCreate({ name, timezone = 'America/New_York', country = 'US
 /** Owner-facing pool state. Never returns a token, encrypted or otherwise. */
 async function status() {
   const rows = await GhlAccount.findAll({ order: [['id', 'ASC']] });
+  const shared = rows.filter((r) => r.status === 'shared');
   return {
     auto_create: canAutoCreate(),
-    plan_note: canAutoCreate()
-      ? 'Agency API configured: an empty pool refills itself.'
-      : 'No agency API (HighLevel $97/$297). Stock the pool by hand before a signup needs one.',
+    mode: shared.length ? 'shared' : 'exclusive',
+    plan_note: shared.length
+      ? 'One shared sub-account serves every client. Each still gets their own number, agent and calendar; the CONTACT list is shared, and Lite does not expose one to subscribers.'
+      : (canAutoCreate()
+        ? 'Agency API configured: an empty pool refills itself.'
+        : 'No agency API (HighLevel $97/$297). Stock the pool by hand before a signup needs one.'),
+    shared: shared.length,
     free: rows.filter((r) => r.status === 'free').length,
     claimed: rows.filter((r) => r.status === 'claimed').length,
     accounts: rows.map((r) => ({
