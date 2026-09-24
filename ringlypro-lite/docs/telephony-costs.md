@@ -83,6 +83,50 @@ to target is always visible for pricing decisions.
 
 ---
 
+## Twilio (our stack) vs ElevenLabs Agents — re-verified 2026-09-24
+
+The premise this module was built on ("ConversationRelay is about half the price
+of ElevenLabs") **was true when it was written and is not true now.** ElevenLabs
+Agents was ~$0.15/min; it is $0.08/min today. Recorded here so the comparison is
+not re-derived from memory.
+
+| | Our stack (ConversationRelay) | ElevenLabs Agents |
+|---|---|---|
+| Speech in + out + turn-taking | $0.070 / min (CR, bundled) | included in $0.080 / min |
+| PSTN inbound, US local | $0.0085 / min (Twilio) | included (their telephony) |
+| LLM | ~$0.005 / min (Haiku 4.5) | **billed separately**, same ~$0.005 / min |
+| **Answered minute** | **≈ $0.084** | **≈ $0.085** |
+| Number rental | ~$1.00 / mo | included |
+| Platform fee | none | plan fee (Creator $22 / Pro $99 / Scale $299) |
+| Included minutes | none — every minute is metered | 275 (Creator) · 1,238 (Pro) · 3,738 (Scale) |
+| Over concurrency | no such rate | **$0.16 / min** burst, up to 3x the tier's cap |
+| Concurrency cap | Twilio account limits | 10 (Creator) · 20 (Pro) · 30 (Scale) |
+
+Source: elevenlabs.io/pricing/agents, read 2026-09-24. Twilio lines are the
+verified rate card above.
+
+**What this changes, and what it does not.**
+
+1. **Per minute they are the same.** Choosing between them on price alone is a
+   rounding error; choose on control, latency, voice quality and lock-in.
+2. **A plan fee is not automatically waste.** Creator at $22/mo includes 275
+   minutes — about $0.080/min if you use them all, and infinite $/min if you do
+   not. Below roughly 275 min/mo our metered path is cheaper because it has no
+   floor; above it the two converge.
+3. **Bringing your own Twilio number to ElevenLabs adds our PSTN line back**
+   (+$0.0085/min +$1/mo), which makes them slightly more expensive, not less.
+4. **The only real saving is still the unbundled path** (§Options, ~$0.03/min).
+   That is ~60% below BOTH, and it is the move that matters if volume ever
+   justifies owning the media pipeline.
+5. **Colombia does not change**: the cost there is the origination minute
+   ($0.0377 mobile / $0.0945 local) and the $14/mo DID, which neither vendor's
+   agent pricing touches.
+
+**Not verified here:** ElevenLabs' own PSTN coverage and per-minute for
+Colombian numbers, and whether their included-minute allotments roll over.
+
+---
+
 ## Options to reach under $0.06 (do NOT auto-apply — traction-gated)
 
 1. **Unbundle the media loop.** Replace `<Connect><ConversationRelay>` with
