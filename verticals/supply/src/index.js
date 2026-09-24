@@ -43,7 +43,7 @@ const platform = require('./platform');
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'sup-2026-09-24-2';
+const VERSION = 'sup-2026-09-24-3';
 const upload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
 router.use(express.json({ limit: '2mb' }));
