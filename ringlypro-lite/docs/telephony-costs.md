@@ -93,10 +93,10 @@ not re-derived from memory.
 | | Our stack (ConversationRelay) | ElevenLabs Agents |
 |---|---|---|
 | Speech in + out + turn-taking | $0.070 / min (CR, bundled) | included in $0.080 / min |
-| PSTN inbound, US local | $0.0085 / min (Twilio) | included (their telephony) |
+| PSTN inbound, US local | $0.0085 / min (Twilio) | **NOT included — you bring the carrier** |
 | LLM | ~$0.005 / min (Haiku 4.5) | **billed separately**, same ~$0.005 / min |
-| **Answered minute** | **≈ $0.084** | **≈ $0.085** |
-| Number rental | ~$1.00 / mo | included |
+| **Answered minute** | **≈ $0.084** | **≈ $0.094** (0.08 + LLM 0.005 + carrier ~0.0085) |
+| Number rental | ~$1.00 / mo | **NOT included — your carrier's rental** |
 | Platform fee | none | plan fee (Creator $22 / Pro $99 / Scale $299) |
 | Included minutes | none — every minute is metered | 275 (Creator) · 1,238 (Pro) · 3,738 (Scale) |
 | Over concurrency | no such rate | **$0.16 / min** burst, up to 3x the tier's cap |
@@ -124,6 +124,39 @@ verified rate card above.
 
 **Not verified here:** ElevenLabs' own PSTN coverage and per-minute for
 Colombian numbers, and whether their included-minute allotments roll over.
+
+
+### CORRECTION 2026-09-24 — ELEVENLABS DOES NOT SELL PHONE NUMBERS
+
+The pricing page's line "telephony is included on every plan" means ElevenLabs
+adds **no surcharge** for a call being on the phone. It does **not** mean they
+provision a number. Verified against their own docs the same day: every number
+is **brought by you**, through either
+
+  - the **Twilio native integration** — you import a Twilio number you already
+    own (elevenlabs.io/docs/eleven-agents/phone-numbers/twilio-integration/native-integration), or
+  - a **SIP trunk** from any standards-compliant carrier — Twilio, Telnyx,
+    Vonage, RingCentral, Sinch, Infobip, Exotel, Plivo, Bandwidth and others
+    (elevenlabs.io/docs/eleven-agents/phone-numbers/sip-trunking).
+
+Two consequences, and the second one is the important one:
+
+1. **The answered minute is ~$0.094, not $0.085** — ElevenLabs $0.08 + our LLM
+   ~$0.005 + the carrier's inbound minute (~$0.0085 on Twilio US), plus that
+   carrier's number rental. That is **more expensive than our own stack**
+   (~$0.084), not the same and not less.
+2. **It does not, on its own, route around our disabled Twilio account.**
+   Twilio voice has been off account-wide since 2026-08-07 (error 32005).
+   Importing a Twilio number into ElevenLabs still terminates on Twilio voice,
+   so it stays dead. Getting a working line means a **different carrier** —
+   Telnyx, Plivo, Bandwidth or similar over SIP trunking — which is a carrier
+   migration with its own KYC, A2P/SHAKEN registration and per-country pricing,
+   none of it verified here.
+
+So "switch to ElevenLabs" is really two decisions: the agent runtime (ElevenLabs
+vs ConversationRelay, a wash on price) and the **carrier** (Twilio vs someone
+else, which is the part that is actually blocked). Price the carrier before
+committing to either.
 
 ---
 
