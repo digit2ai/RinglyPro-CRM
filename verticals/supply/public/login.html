@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · RinglyPro Supply</title>
+<meta name="robots" content="noindex">
+<script>try{if(localStorage.getItem('sup_theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<link rel="stylesheet" href="{{BASE}}/supply.css?v={{VERSION}}">
+</head>
+<body>
+<div class="auth">
+  <div class="brand" style="margin-bottom:18px"><div class="mark">RP</div><div>RinglyPro<small>Supply</small></div></div>
+  <div class="card">
+    <h2 id="title" style="margin-top:0">Sign in</h2>
+    <form id="f">
+      <div id="signupOnly" hidden>
+        <label for="company">Company name</label><input id="company" autocomplete="organization">
+        <label for="name">Your name</label><input id="name" autocomplete="name">
+      </div>
+      <label for="email">Email</label><input id="email" type="email" autocomplete="email" required>
+      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required minlength="10">
+      <div class="err" id="err" role="alert"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px" id="go">Sign in</button>
+    </form>
+    <p class="small muted" id="switch"></p>
+  </div>
+</div>
+<script>
+(function(){
+  var BASE='{{BASE}}'; var signup=/mode=signup/.test(location.search);
+  function mode(s){signup=s;document.getElementById('signupOnly').hidden=!s;document.getElementById('title').textContent=s?'Create your company':'Sign in';
+    document.getElementById('go').textContent=s?'Create company':'Sign in';document.getElementById('password').autocomplete=s?'new-password':'current-password';
+    document.getElementById('switch').innerHTML=s?'Already have an account? <a href="#" id="sw">Sign in</a>':'New supplier? <a href="#" id="sw">Create your company</a>';
+    document.getElementById('sw').onclick=function(e){e.preventDefault();mode(!signup)};}
+  mode(signup);
+  document.getElementById('f').onsubmit=function(e){e.preventDefault();var err=document.getElementById('err');err.textContent='';
+    var body={email:document.getElementById('email').value,password:document.getElementById('password').value};
+    if(signup){body.company=document.getElementById('company').value;body.name=document.getElementById('name').value;body.timezone=Intl.DateTimeFormat().resolvedOptions().timeZone;}
+    fetch(BASE+'/api/v1/auth/'+(signup?'signup':'login'),{method:'POST',headers:{'Content-Type':'application/json','X-Supply':'1'},body:JSON.stringify(body)})
+      .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Failed');location.href=BASE+'/app';})})
+      .catch(function(x){err.textContent=x.message});};
+})();
+</script>
+</body>
+</html>

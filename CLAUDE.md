@@ -562,6 +562,21 @@ An unowned path on `architect.digit2ai.com` redirects to that host's root rather
 
 **Environment Variables:** `LEVELUP_JWT_SECRET` (falls back to `JWT_SECRET`) · `LEVELUP_OWNER_PASSWORD` / `LEVELUP_OWNER_EMAIL` (`mstagg@digit2ai.com`) · `LEVELUP_RESERVED_EMAILS` · `LEVELUP_MODEL` (`claude-haiku-4-5-20251001`) · `LEVELUP_MODEL_DEEP` (`claude-sonnet-5`, strategist + scripts) · `LEVELUP_DAILY_MODEL_CALLS` (300) · `LEVELUP_COPILOT_TURNS` (6) / `LEVELUP_COPILOT_CALLS` (10) · `LEVELUP_KB_MAX_CHARS` (40000) · `LEVELUP_DATABASE_URL`. Reuses `ANTHROPIC_API_KEY`.
 
+## RinglyPro Supply — AI outbound sales for hardware / building-material suppliers (folder: verticals/supply, mounted /supply)
+
+Built 2026-09-23. Multi-tenant (one tenant per supplier, `sup_` tables, `tenant_id NOT NULL`). Catalog -> Product Intelligence -> verified Competitive Pricing -> Offer Engine -> Campaign (owner approves AND activates) -> Dialer -> GoHighLevel Voice AI -> call logs/webhooks -> Potential Buyer + Customer Memory -> callback recognition -> transfer -> Sale -> first-touch Attribution -> Commission. Full design, GHL capability map and risks: `verticals/supply/RINGLYPRO_SUPPLY_IMPLEMENTATION_PLAN.md`.
+
+- **NO TWILIO.** Every call goes through `src/communications/CommunicationProvider.js`; `GoHighLevelProvider.js` is the only file that talks to `leadconnectorhq` (SIT greps both). The CRM's own 24 Twilio files were deliberately not migrated.
+- **AN OUTBOUND CALL IS A WORKFLOW ENROLLMENT.** HighLevel only dials Voice AI outbound from the "Voice AI Outbound Call" workflow action, so the provider enrolls the contact (`POST /contacts/{id}/workflow/{wf}`) and stores NO call id until the call log (`GET /voice-ai/dashboard/call-logs`, Version v3) returns one. Never invent one.
+- **TENANT ISOLATION IS IN THE DATA LAYER.** `db.tq/tone/trun` throw unless the SQL filters `tenant_id = :tenant`; business services may not use the unscoped helpers (SIT). Only a super admin can link a tenant to an existing CRM GHL connection (`crm_client`).
+- **NO INVENTED PRICE CLAIM.** Competitor prices are entered/imported, never scraped; a saving is spoken only when the price is verified (UPC / brand+model / person confirmed), fresh (30 d), same unit, and higher. Model rewrites that add a number or comparison are discarded.
+- **CONTEXT LIVES ON THE GHL CONTACT** (`rps_context`, `rps_offer`, `rps_rep`, `rps_campaign`), written after every call, so the inbound agent knows a returning caller even if a webhook is late.
+- **Attribution is first-touch and not editable**: buyer `campaign_id` / `original_call_id` are set once.
+- Dialer re-checks DNC/opt-out/consent/calling hours (contractor timezone) at dial time; runs only in production or `SUPPLY_DIALER=on`, one instance via `sup_locks`. National DNC scrub NOT built.
+- **Manual GHL setup per tenant:** outbound workflow, inbound + outbound Voice AI agents (prompt text on the AI Agents screen), extraction fields `rps_*`, call-ended/inbound Webhook actions to `/supply/webhooks/ghl/<tenant token>`, pipeline/stage ids.
+- **Tests:** `node verticals/supply/sit.js` -> **126/126** (all 18 acceptance steps, fake provider + fake GHL transport, throwaway tenants) · `node verticals/supply/test-ui.js` -> **55/55** (every screen at 1280 and 390). NOT covered: a real GHL sub-account, a real call, the model path.
+- **Env:** `SUPPLY_OWNER_PASSWORD` (super admin seed, private 10+ chars; unset = no super admin) · `SUPPLY_OWNER_EMAIL` · `SUPPLY_JWT_SECRET` · `SUPPLY_SECRET` (GHL token encryption) · `SUPPLY_DATABASE_URL` · `SUPPLY_DIALER` · `SUPPLY_DIALER_INTERVAL_SEC` (60) · `SUPPLY_MODEL` · `SUPPLY_SIGNUP` · `SUPPLY_GHL_VOICE_VERSION` (v3).
+
 ## Planea MVP — admin module, Maya knowledge upload, tax reminder (folder: verticals/planea, mounted /planea)
 
 Built 2026-09-18 from the agreed simple scope (knowledge upload, tax reminder, admin module, 36 h estimate). Personal-finance PWA for Colombia; own Sequelize on `CRM_DATABASE_URL || DATABASE_URL`, session cookie `planea_session`.

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RinglyPro Supply</title>
+<meta name="robots" content="noindex">
+<script>try{if(localStorage.getItem('sup_theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<link rel="stylesheet" href="{{BASE}}/supply.css?v={{VERSION}}">
+</head>
+<body>
+<div class="shell">
+  <aside class="side" id="side">
+    <div class="brand" style="padding:4px 8px 10px"><div class="mark">RP</div><div>RinglyPro<small>Supply</small></div></div>
+    <div class="small muted" style="padding:0 10px" id="tenantName"></div>
+    <nav id="nav"></nav>
+    <div style="padding:12px 10px" class="row">
+      <button class="theme-toggle" id="theme" aria-label="Switch theme">&#9681;</button>
+      <button class="btn small" id="logout">Sign out</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="bar"><div class="row" style="flex:1;align-items:center"><button class="btn small burger" id="burger" aria-label="Menu" style="flex:none">Menu</button><h1 id="title" style="flex:1">Dashboard</h1></div><div id="actions" class="row" style="flex:none"></div></div>
+    <div id="view"></div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>window.SUP_BASE='{{BASE}}';</script>
+<script src="{{BASE}}/app.js?v={{VERSION}}"></script>
+</body>
+</html>
