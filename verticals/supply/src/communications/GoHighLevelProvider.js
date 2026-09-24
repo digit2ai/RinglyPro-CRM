@@ -104,14 +104,19 @@ class GoHighLevelProvider extends CommunicationProvider {
     const d = await this.call('GET', `/locations/${loc}/customFields`, { params: { model: 'contact' } });
     const list = (d && d.customFields) || [];
     const ids = {};
+    const tags = {};
     for (const f of FIELDS) {
-      const found = list.find((c) => String(c.fieldKey || '').replace(/^contact\./, '') === f.key || c.name === f.name);
-      if (found) { ids[f.key] = found.id; continue; }
-      const made = await this.call('POST', `/locations/${loc}/customFields`, { data: { name: f.name, dataType: f.dataType, model: 'contact' } });
-      const cf = made && (made.customField || made);
-      if (cf && cf.id) ids[f.key] = cf.id;
+      let found = list.find((c) => String(c.fieldKey || '').replace(/^contact\./, '') === f.key || c.name === f.name);
+      if (!found) {
+        const made = await this.call('POST', `/locations/${loc}/customFields`, { data: { name: f.name, dataType: f.dataType, model: 'contact' } });
+        found = made && (made.customField || made);
+      }
+      if (found && found.id) ids[f.key] = found.id;
+      // GHL derives the merge key from the field NAME; the prompt must use this exact tag.
+      if (found && found.fieldKey) tags[f.key] = '{{' + found.fieldKey + '}}';
     }
     this.fieldIds = ids;
+    this.fieldTags = tags;
     return ids;
   }
 

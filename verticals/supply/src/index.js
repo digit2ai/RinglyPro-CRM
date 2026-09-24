@@ -43,7 +43,7 @@ const platform = require('./platform');
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'sup-2026-09-24-3';
+const VERSION = 'sup-2026-09-24-4';
 const upload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
 router.use(express.json({ limit: '2mb' }));
@@ -232,7 +232,7 @@ api.post('/ghl/test', ADMIN, h(async (req, res) => {
   await comms.recordHealth(t.id, hres.ok, hres.ok ? null : new Error(hres.detail));
   let fields = null;
   if (hres.ok && p.ensureFields) {
-    try { fields = await p.ensureFields(); }
+    try { await p.ensureFields(); fields = { prompt_tags: p.fieldTags || {} }; }
     catch (e) {
       fields = /not authorized for this scope/i.test(e.message) && /customFields/.test(e.message)
         ? { error: 'Connected, but the token is missing the custom-field scopes. In GoHighLevel: Settings → Private Integrations → edit this integration → tick "View Custom Fields" and "Edit Custom Fields", save, then test again (generate a new token if it still fails).' }
