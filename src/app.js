@@ -2962,6 +2962,8 @@ try {
 }
 app.get('/debug/levelup-error', (req, res) => {
   res.json({ service: 'LevelUp Media Marketing', available: !levelupError, error: levelupError ? { message: levelupError.message } : null });
+});
+
 
 // =====================================================
 // RINGLYPRO SUPPLY — AI outbound sales for hardware / building-material suppliers (served at /supply/)
@@ -2978,7 +2980,6 @@ try {
 }
 app.get('/debug/supply-error', (req, res) => {
   res.json({ service: 'RinglyPro Supply', available: !supplyError, error: supplyError ? { message: supplyError.message } : null });
-});
 });
 
 // =====================================================
