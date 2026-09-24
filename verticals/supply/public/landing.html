@@ -1,43 +1,18 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RinglyPro Supply</title>
-<meta name="description" content="AI outbound sales for hardware stores and building-material suppliers: know what to sell, who buys it, and which campaign made the sale.">
-<script>try{if(localStorage.getItem('sup_theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
-<link rel="stylesheet" href="{{BASE}}/supply.css?v={{VERSION}}">
-<style>html,body{background:#F6F7FB}</style>
+<title>RinglyPro Supply | AI Outbound Sales for Building-Material Suppliers</title>
+<meta name="description" content="RinglyPro Supply finds which contractors buy each product you stock and has an AI sales agent call them with an offer you approved.">
+<link rel="icon" type="image/png" sizes="32x32" href="{{BASE}}/favicon-32.png">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<meta name="theme-color" content="#12b8a6">
+<meta property="og:title" content="RinglyPro Supply">
+<meta property="og:description" content="AI outbound sales for hardware stores and building-material suppliers.">
+<meta property="og:image" content="{{ORIGIN}}{{BASE}}/icon-192.png">
+<style>html,body{margin:0;background:#ffffff}</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div class="brand"><div class="mark">RP</div><div>RinglyPro<small>Supply</small></div></div>
-    <div><a class="btn" href="{{BASE}}/login">Sign in</a> <a class="btn primary" href="{{BASE}}/login?mode=signup">Start free</a></div>
-  </div>
-  <section class="hero">
-    <h1>Your inventory, called into the right contractors' phones.</h1>
-    <p>RinglyPro Supply is AI outbound sales for hardware stores and building-material suppliers. It reads your catalog, works out which contractors buy each product, compares your price only against prices you have verified, and has an AI agent call the right contractors. When they call back, it already knows them. When they buy, it knows which campaign earned the sale.</p>
-    <p><a class="btn primary" href="{{BASE}}/login?mode=signup">Set up your company</a></p>
-  </section>
-  <section class="stack">
-    <h2>Eight questions it answers</h2>
-    <ol class="qs">
-      <li>What do we have to sell?</li>
-      <li>What is it worth in the current market? <span class="muted small">Only from competitor prices you checked, with the date.</span></li>
-      <li>Who is most likely to buy it?</li>
-      <li>What should we offer them?</li>
-      <li>Who should we call first?</li>
-      <li>What happened during the call?</li>
-      <li>What do we know when they call back?</li>
-      <li>Which campaign generated the sale?</li>
-    </ol>
-  </section>
-  <section class="grid" style="margin-top:20px">
-    <div class="card"><h3>Nothing dials by itself</h3><p class="muted">A campaign is a draft until an owner approves and activates it. Do Not Call and opt-outs are checked when a contractor is queued and again at dial time.</p></div>
-    <div class="card"><h3>No invented numbers</h3><p class="muted">The agent quotes your prices and a saving only when a same-unit competitor price was verified within your freshness window. Otherwise it makes no comparison.</p></div>
-    <div class="card"><h3>Runs on GoHighLevel</h3><p class="muted">Calls, AI voice agents, contacts and pipelines live in your GoHighLevel sub-account. The sales intelligence lives here, behind a provider layer, so the carrier can change without losing it.</p></div>
-  </section>
-  <footer>RinglyPro Supply · a RinglyPro division by Digit2AI</footer>
-</div>
+{{BLOCK}}
 </body>
 </html>

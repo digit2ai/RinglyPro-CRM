@@ -1,11 +1,11 @@
 /* RinglyPro Supply — one stylesheet for every page. Light is the default; dark is an explicit choice. */
-:root{--bg:#F6F7FB;--card:#FFFFFF;--ink:#0F172A;--mut:#475569;--line:#E2E8F0;--acc:#1D4ED8;--acc-d:#1E40AF;--on-acc:#FFFFFF;--amber:#B45309;--soft:#EFF4FF;--ok:#166534;--okbg:#DCFCE7;--warn:#92400E;--warnbg:#FEF3C7;--bad:#991B1B;--badbg:#FEE2E2;
- --font:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-:root[data-theme="dark"]{--bg:#0B1220;--card:#111A2E;--ink:#E5E9F2;--mut:#A3AEC2;--line:#24304A;--acc:#6B93F5;--acc-d:#8FAEFA;--on-acc:#0B1220;--amber:#F2B45A;--soft:#172444;--ok:#86EFAC;--okbg:#12301F;--warn:#FCD34D;--warnbg:#3A2E10;--bad:#FCA5A5;--badbg:#3B1717}
+:root{--bg:#F4F9FB;--card:#FFFFFF;--ink:#0F2033;--mut:#4B5A67;--line:#E7EDF1;--acc:#12B8A6;--acc-d:#0A7D71;--on-acc:#04302B;--amber:#0E9D8E;--soft:#E2F6F3;--ok:#166534;--okbg:#DCFCE7;--warn:#92400E;--warnbg:#FEF3C7;--bad:#991B1B;--badbg:#FEE2E2;
+ --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+:root[data-theme="dark"]{--bg:#0B1A26;--card:#0F2033;--ink:#E7EDF1;--mut:#A9B7C3;--line:#223649;--acc:#12B8A6;--acc-d:#5FD9CB;--on-acc:#04302B;--amber:#F2B45A;--soft:#12303A;--ok:#86EFAC;--okbg:#12301F;--warn:#FCD34D;--warnbg:#3A2E10;--bad:#FCA5A5;--badbg:#3B1717}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5}
 a{color:var(--acc-d)}button,input,select,textarea{font:inherit;color:inherit}
 [hidden]{display:none!important}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 18px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
 .btn:hover{border-color:var(--acc)}
 .btn.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
 .btn.danger{color:var(--bad)}
@@ -19,7 +19,8 @@ label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px;font-weigh
 .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:var(--soft);color:var(--acc-d);white-space:nowrap}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.bad{background:var(--badbg);color:var(--bad)}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em}
-.brand .mark{width:30px;height:30px;border-radius:8px;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;font-size:14px}
+.brand img.mark{width:32px;height:32px;border-radius:8px;display:block}
+.brand .tag{background:var(--soft);color:var(--acc-d);font-weight:800;font-size:11px;padding:2px 8px;border-radius:7px;margin-left:4px}
 .brand small{display:block;font-weight:600;color:var(--amber);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 .theme-toggle{width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
 

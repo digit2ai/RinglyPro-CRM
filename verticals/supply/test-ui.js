@@ -31,7 +31,14 @@ const ok = (c, n, x) => { if (c) pass++; else { fail++; console.log('  FAIL', n,
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(base + '/', { waitUntil: 'networkidle0' });
-    ok(await page.$eval('h1', (h) => h.textContent.includes('contractors')), 'landing renders');
+    ok(await page.$eval('h1', (h) => h.innerText.includes('contractors')), 'landing renders');
+    ok(await page.evaluate(() => [...document.querySelectorAll('.rps [data-es]')].every((e) => !e.offsetParent)), 'English mode shows no Spanish text anywhere');
+    await page.click('#rpsLang');
+    ok(await page.evaluate(() => [...document.querySelectorAll('.rps [data-en]')].every((e) => !e.offsetParent)), 'Spanish mode shows no English text anywhere');
+    await page.click('#rpsLang');
+    ok(await page.$eval('.rps .logo img', (i) => i.naturalWidth > 0), 'RinglyPro logo loads');
+    const blk = await (await fetch(base + '/ghl-block.txt')).text();
+    ok(!/\{\{/.test(blk) && /https:\/\/aiagent\.ringlypro\.com\/supply\/icon-192\.png/.test(blk) && !/href="\/supply/.test(blk), 'GHL paste block uses absolute links and has no template tokens');
     await page.goto(base + '/login?mode=signup', { waitUntil: 'networkidle0' });
     await page.type('#company', 'SIT Supply UI ' + stamp); await page.type('#name', 'UI Owner');
     await page.type('#email', `sit-sup-ui-${stamp}@example.com`); await page.type('#password', 'ui-password-123');

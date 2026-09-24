@@ -43,7 +43,7 @@ const platform = require('./platform');
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'sup-2026-09-23-1';
+const VERSION = 'sup-2026-09-24-1';
 const upload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
 router.use(express.json({ limit: '2mb' }));
@@ -92,7 +92,23 @@ const h = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(
 const provider = (req) => comms.providerFor(req.tenant);
 
 // ── Pages ──
-router.get('/', (req, res) => page(req, res, 'landing.html'));
+// The landing body is ONE block (public/landing-block.html) used twice: here, and pasted into the
+// GoHighLevel page at ringlypro.com/supply (ringlypro.com is a GHL site; this app cannot serve that path).
+function landingBlock(asset, app) {
+  return fs.readFileSync(path.join(PUB, 'landing-block.html'), 'utf8').replace(/\{\{ASSET\}\}/g, asset).replace(/\{\{APP\}\}/g, app);
+}
+const PUBLIC_URL = () => (process.env.SUPPLY_PUBLIC_URL || 'https://aiagent.ringlypro.com/supply').replace(/\/$/, '');
+router.get('/', (req, res) => {
+  const base = req.baseUrl || '';
+  const html = fs.readFileSync(path.join(PUB, 'landing.html'), 'utf8')
+    .replace('{{BLOCK}}', () => landingBlock(base, base))
+    .replace(/\{\{BASE\}\}/g, base).replace(/\{\{ORIGIN\}\}/g, req.protocol + '://' + req.get('host'));
+  res.set('Cache-Control', 'no-cache').type('html').send(html);
+});
+// Paste-ready copy for a GHL Custom Code element: absolute links back to this app.
+router.get('/ghl-block.txt', (req, res) => {
+  res.set('Cache-Control', 'no-cache').type('text/plain').send(landingBlock(PUBLIC_URL(), PUBLIC_URL()));
+});
 router.get('/login', (req, res) => (req.user ? res.redirect((req.baseUrl || '') + '/app') : page(req, res, 'login.html')));
 router.get('/app', needUser, (req, res) => page(req, res, 'app.html'));
 
