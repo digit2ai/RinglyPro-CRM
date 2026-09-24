@@ -158,6 +158,55 @@ vs ConversationRelay, a wash on price) and the **carrier** (Twilio vs someone
 else, which is the part that is actually blocked). Price the carrier before
 committing to either.
 
+
+### CARRIER ALTERNATIVES TO TWILIO — verified 2026-09-24
+
+Twilio voice has been disabled account-wide since 2026-08-07 and the support
+ticket is unanswered, so the carrier is now the binding constraint, not the
+agent runtime. Prices read from each vendor's own pricing page the same day.
+
+| | US number | Inbound / min | Agent runtime | Platform fee | Contract |
+|---|---|---|---|---|---|
+| **Twilio** (today, disabled) | $1.15 / mo | $0.0085 | ConversationRelay $0.07 | none | none |
+| **Telnyx** | $1.00 / mo | **$0.0032** | **own AI agent $0.05** | **$0** | none |
+| **Plivo** | **$0.50 / mo** | $0.0055 | none — bring ElevenLabs | none stated | none stated |
+
+Answered-minute build-ups, US English, same Haiku-class LLM at ~$0.005/min:
+
+| Path | Build-up | $/min | vs the $0.06 target |
+|---|---|---|---|
+| Twilio + ConversationRelay (today) | 0.07 + 0.0085 + 0.005 | $0.084 | over |
+| Plivo SIP + ElevenLabs Agents | 0.0055 + 0.08 + 0.005 | $0.091 | over |
+| Telnyx SIP + ElevenLabs Agents | 0.0032 + 0.08 + 0.005 | $0.088 | over |
+| **Telnyx carrier + Telnyx AI agent** | 0.0032 + 0.05 + ~0.005 | **≈ $0.058** | **UNDER — first path that meets it** |
+
+Telnyx bundles STT (Deepgram or their own), TTS and the agent runtime in the
+$0.05 and bills the LLM separately, either on their own GPUs (~$0.006/min) or
+pass-through to Anthropic. Their own published estimate for a production agent
+is ~$0.06/min all-in, which matches the build-up above.
+
+**Read this before treating Telnyx as decided.** None of it is a reason not to,
+but each is real work and none of it is verified here:
+
+1. **A2P / SHAKEN starts again on a new carrier.** The attestation and the 10DLC
+   registration live with whoever originates the call. Moving carriers means
+   redoing brand + campaign registration, which is the multi-week step — the same
+   cost as opening a fresh Twilio account, so it is not avoided by staying.
+2. **Porting the existing numbers is days, not minutes**, and a port cannot be
+   started from an account whose voice is suspended without Twilio's cooperation
+   — the very thing currently unanswered. Assume new numbers for the pilot and
+   port later.
+3. **Colombia keeps its blocker.** §Colombia already records that Telnyx has an
+   equivalent in-country address/KYC gate; changing carrier does not remove it.
+4. **SMS is a separate question.** The 32005 suspension hit voice; Lite's toll-free
+   SMS sender has not been re-verified since. Decide deliberately whether SMS
+   follows voice to the new carrier or stays on Twilio, rather than discovering it.
+5. **Quality is unmeasured.** Latency, interruption handling and Spanish voice
+   quality of the Telnyx agent have not been heard. One real call decides more
+   than this table does.
+6. **Telnyx pricing above is list, pay-as-you-go.** The $500/mo committed tier
+   discounts further and is irrelevant at pilot volume.
+
 ---
 
 ## Options to reach under $0.06 (do NOT auto-apply — traction-gated)
