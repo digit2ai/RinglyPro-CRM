@@ -41,7 +41,7 @@ class FakeProvider extends CommunicationProvider {
   async upsertContact(t, c) { if (this.failNext) { const e = this.failNext; this.failNext = null; throw e; } const key = t.id + ':' + c.phone_e164; if (!this.contacts.has(key)) this.contacts.set(key, 'fc_' + (++this.seq)); return { externalId: this.contacts.get(key) }; }
   async setContactContext(t, id, f) { this.fields.set(id, Object.assign({}, this.fields.get(id), f)); return { ok: true }; }
   async startOutboundCall(t, { externalContactId, campaign }) { if (!campaign.agent.ghl_workflow_id) throw Object.assign(new Error('no wf'), { code: 'NO_WORKFLOW' }); this.enrolled.push({ tenant: t.id, contact: externalContactId, wf: campaign.agent.ghl_workflow_id }); return { accepted: true, mode: 'fake', providerRef: null }; }
-  async listCallLogs(t, { contactId }) { return this.logs.filter((l) => l.externalContactId === contactId); }
+  async listCallLogs(t, { contactId } = {}) { return contactId ? this.logs.filter((l) => l.externalContactId === contactId) : this.logs.slice(); }
   async upsertOpportunity(t, o) { this.opps.push(o); return { externalId: o.externalId || 'opp_' + this.opps.length }; }
   parseWebhook(b) { return ghl.parseGhlWebhook(b); }
 }
@@ -418,6 +418,67 @@ async function cleanup() {
     ok(nw === 'NO_WORKFLOW', 'no workflow id = refused before any HTTP call');
     ok(healthEvents > 0, 'provider reports health on every call');
     ghl._setTransport(null);
+
+    // ───────────────────────── auto-setup ─────────────────────────
+    section('Set up automatically (fake GoHighLevel)');
+    const calls2 = []; let agentSeq = 0;
+    ghl._setTransport(async (o) => {
+      const path = o.url.replace(/^https:\/\/[^/]+/, '');
+      calls2.push({ m: o.method, path, v: o.headers.Version, body: o.data });
+      if (o.method === 'GET' && /^\/locations\/loc9$/.test(path)) return { status: 200, data: { location: { name: 'AI Engineering Solutions' } } };
+      if (o.method === 'GET' && /customFields/.test(path)) return { status: 200, data: { customFields: [] } };
+      if (o.method === 'POST' && /customFields/.test(path)) return { status: 201, data: { customField: { id: 'cf_' + o.data.name.length, fieldKey: 'contact.' + o.data.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') } } };
+      if (/phone-system\/numbers/.test(path)) return { status: 200, data: { status: 'success', data: { numbers: [{ phoneNumber: '+18132124888', friendlyName: 'RinglyPro' }] } } };
+      if (o.method === 'GET' && path === '/voice-ai/agents') return { status: 200, data: { agents: [] } };
+      if (o.method === 'POST' && path === '/voice-ai/agents') return { status: 201, data: { id: 'ag_' + (++agentSeq) } };
+      if (o.method === 'PATCH' && /^\/voice-ai\/agents\//.test(path)) return { status: 200, data: {} };
+      if (o.method === 'POST' && path === '/voice-ai/actions') return { status: 201, data: { id: 'act_' + calls2.length } };
+      if (/^\/workflows\//.test(path)) return { status: 200, data: { workflows: [{ id: 'wf_other', name: 'Birthday SMS', status: 'published' }, { id: 'wf_snap', name: 'Supply Outbound Call', status: 'published' }] } };
+      return { status: 404, data: { message: 'unexpected ' + o.method + ' ' + path } };
+    });
+    const setup = require('./src/services/ghlSetup');
+    const tA2 = await require('./src/services/tenants').get(A.tenant.id);
+    const gp2 = new ghl.GoHighLevelProvider({ token: 't', locationId: 'loc9' });
+    const run1 = await setup.run(tA2, gp2, { answerInbound: false });
+    const stepOf = (k) => (run1.steps.find((x) => x.key === k) || {}).status;
+    ok(run1.ok && stepOf('outbound_agent') === 'ok' && stepOf('inbound_agent') === 'ok' && stepOf('workflow') === 'ok' && stepOf('transfer') === 'ok', 'auto-setup completes every step', JSON.stringify(run1.steps));
+    const createdAgents = calls2.filter((c) => c.m === 'POST' && c.path === '/voice-ai/agents');
+    ok(createdAgents.length === 2 && createdAgents.every((c) => c.v === 'v3'), 'two Voice AI agents created with Version v3');
+    ok(createdAgents.every((c) => c.body.agentPrompt.includes('{{contact.ringlypro_supply_context}}') && c.body.agentPrompt.includes('{{contact.ringlypro_supply_offer}}')), 'agent prompts carry the exact merge tags GHL generated');
+    ok(createdAgents.every((c) => !('inboundNumber' in c.body)), 'the phone number is NOT taken over unless asked');
+    const acts = calls2.filter((c) => c.path === '/voice-ai/actions');
+    ok(acts.length === 2 && acts.every((a) => a.body.actionType === 'CALL_TRANSFER' && a.body.actionParameters.transferToValue === '+18135550100'), 'transfer-to-Samuel action on both agents');
+    const tA3 = await require('./src/services/tenants').get(A.tenant.id);
+    ok(tA3.ghl.default_workflow_id === 'wf_snap' && tA3.ghl.outbound_agent_id === 'ag_1' && tA3.ghl.phone_number === '+18132124888', 'workflow found by name; ids saved on the tenant');
+    calls2.length = 0;
+    const run2 = await setup.run(tA3, gp2, { answerInbound: true });
+    ok(!calls2.some((c) => c.m === 'POST' && (c.path === '/voice-ai/agents' || c.path === '/voice-ai/actions')), 'second run updates in place: no duplicate agents or actions');
+    const patchIn = calls2.find((c) => c.m === 'PATCH' && c.path === '/voice-ai/agents/ag_2');
+    ok(patchIn && patchIn.body.inboundNumber === '+18132124888' && run2.steps.find((x) => x.key === 'inbound_number').status === 'ok', 'ticking "answer inbound" assigns the number to the inbound agent');
+    ghl._setTransport(async (o) => (/\/locations\/loc9$/.test(o.url) ? { status: 200, data: { location: { name: 'x' } } } : { status: 401, data: { message: 'The token is not authorized for this scope.' } }));
+    const run3 = await setup.run(tA3, new ghl.GoHighLevelProvider({ token: 't', locationId: 'loc9' }), {});
+    ok(!run3.ok && run3.steps.filter((x) => x.status === 'failed').every((x) => /token is missing/.test(x.detail)), 'missing scopes are named in plain words, per step');
+    ghl._setTransport(null);
+    r = await req(B.jar, 'POST', '/api/v1/ghl/auto-setup', {});
+    ok(r.status === 409, 'auto-setup refuses a tenant with no GoHighLevel connection');
+
+    section('Transcript reading + callbacks without webhooks');
+    const llm = require('./src/llm');
+    llm._inject({ messages: { create: async () => ({ content: [{ type: 'text', text: JSON.stringify({ rps_outcome: 'needs_inventory_information', rps_interest: 'medium', rps_product: 'Door Trim', rps_quantity: '400 lf', rps_timeframe: 'this week', rps_price_discussed: '', rps_wants_transfer: 'no', rps_notes: '' }) }] }) } });
+    fake.logs.push({ providerCallId: 'poll_in_1', externalContactId: abcExt, summary: 'Called back asking about trim stock.', transcript: 'Caller: do you have primed casing in stock, about 400 feet this week?', extracted: {}, actions: [] });
+    const rc = await require('./src/services/dialer').reconcile(await require('./src/services/tenants').get(A.tenant.id), fake);
+    const polled = await db.tone(A.tenant.id, `SELECT * FROM sup_calls WHERE tenant_id = :tenant AND provider_call_id = 'poll_in_1'`);
+    ok(polled && polled.direction === 'inbound' && rc.ingested >= 1, 'an inbound call is picked up from the call logs with no webhook');
+    ok(polled.outcome === 'needs_inventory_information' && polled.outcome_source === 'model' && polled.extracted.rps_quantity === '400 lf', 'outcome and details read from the transcript by the model');
+    llm._inject({ messages: { create: async () => ({ content: [{ type: 'text', text: '{"rps_outcome":"closed_the_deal","rps_notes":"x"}' }] }) } });
+    fake.logs.push({ providerCallId: 'poll_in_2', externalContactId: abcExt, summary: 'Not interested right now.', transcript: 'Caller: not interested', extracted: {}, actions: [] });
+    await require('./src/services/dialer').reconcile(await require('./src/services/tenants').get(A.tenant.id), fake);
+    const polled2 = await db.tone(A.tenant.id, `SELECT * FROM sup_calls WHERE tenant_id = :tenant AND provider_call_id = 'poll_in_2'`);
+    ok(polled2 && polled2.outcome === 'not_interested' && polled2.outcome_source === 'rules', 'a model outcome outside the fixed list is discarded; rules decide');
+    llm._inject(null);
+    const nPoll = (await db.tone(A.tenant.id, `SELECT count(*)::int n FROM sup_calls WHERE tenant_id = :tenant AND provider_call_id LIKE 'poll_in_%'`)).n;
+    await require('./src/services/dialer').reconcile(await require('./src/services/tenants').get(A.tenant.id), fake);
+    ok((await db.tone(A.tenant.id, `SELECT count(*)::int n FROM sup_calls WHERE tenant_id = :tenant AND provider_call_id LIKE 'poll_in_%'`)).n === nPoll, 're-reading the call logs stores nothing twice');
 
     // Dispatch failure requeues
     fake.failNext = Object.assign(new Error('GoHighLevel unreachable: timeout'), { code: 'GHL_NETWORK' });

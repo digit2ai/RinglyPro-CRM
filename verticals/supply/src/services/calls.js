@@ -85,6 +85,32 @@ async function moveStage(tenantId, contractor, outcome) {
 }
 
 /**
+ * Read the transcript ourselves, so no extraction has to be configured inside
+ * GoHighLevel. The model may only return an outcome from the fixed list; every
+ * other field is a short string copied from what the caller said. Anything else
+ * is dropped. No model = the keyword rules decide (labelled 'rules').
+ */
+async function extractFromTranscript(call) {
+  const x = call.extracted || {};
+  if (x.rps_outcome || !(call.transcript || call.summary)) return null;
+  const llm = require('../llm');
+  if (!llm.configured()) return null;
+  const out = await llm.json({
+    system: 'You read a sales phone call between an AI agent for a building-material supplier and a contractor. Return JSON with keys: rps_outcome (exactly one of: ' + C.CALL_OUTCOMES.join(', ') + '), rps_interest (high|medium|low|none), rps_product, rps_quantity, rps_timeframe, rps_price_discussed, rps_wants_transfer (yes|no), rps_notes. Use only what was said on the call; use empty string when not said. Never invent a price or quantity.',
+    user: 'SUMMARY: ' + String(call.summary || '').slice(0, 2000) + '\n\nTRANSCRIPT:\n' + String(call.transcript || '').slice(0, 15000),
+    max_tokens: 400
+  });
+  if (!out || !C.CALL_OUTCOMES.includes(String(out.rps_outcome || ''))) return null;
+  const clean = { rps_outcome: out.rps_outcome };
+  for (const k of ['rps_interest', 'rps_product', 'rps_quantity', 'rps_timeframe', 'rps_price_discussed', 'rps_wants_transfer', 'rps_notes']) {
+    const v = String(out[k] == null ? '' : out[k]).trim();
+    if (v) clean[k] = v.slice(0, k === 'rps_notes' ? 500 : 120);
+  }
+  if (clean.rps_interest && !['high', 'medium', 'low', 'none'].includes(clean.rps_interest)) delete clean.rps_interest;
+  return clean;
+}
+
+/**
  * ingestCall(tenant, provider, call) — call is a normalizedCall.
  * Returns { call, created, outcome, buyer_id, transfer_id } or { ignored }.
  */
@@ -108,7 +134,10 @@ async function ingestCall(tenant, provider, call, { direction } = {}) {
   const pending = direction === 'inbound' ? null : await db.tone(T, `SELECT * FROM sup_calls WHERE tenant_id = :tenant AND contractor_id = :c AND direction = 'outbound' AND status = 'dispatched'
     AND started_at > now() - interval '48 hours' ORDER BY started_at DESC LIMIT 1`, { c: contractor.id });
   const dir = pending ? 'outbound' : (direction || call.direction || 'inbound');
-  const cls = classify(call);
+  const read = await extractFromTranscript(call).catch(() => null);
+  if (read) call.extracted = Object.assign({}, call.extracted, read);
+  let cls = classify(call);
+  if (read && cls.source === 'extracted') cls = { outcome: cls.outcome, source: 'model' };
   const fields = {
     outcome: cls.outcome, src: cls.source, pid: call.providerCallId ? String(call.providerCallId) : null, g: call.externalContactId || contractor.ghl_contact_id,
     sum: call.summary ? String(call.summary).slice(0, 4000) : null, tr: call.transcript ? String(call.transcript).slice(0, 60000) : null,
@@ -217,4 +246,4 @@ async function get(tenantId, id) {
   return db.tone(tenantId, 'SELECT * FROM sup_calls WHERE tenant_id = :tenant AND id = :id', { id: Number(id) });
 }
 
-module.exports = { classify, ingestCall, recognize, list, get, repFor, syncOpportunity };
+module.exports = { classify, extractFromTranscript, ingestCall, recognize, list, get, repFor, syncOpportunity };

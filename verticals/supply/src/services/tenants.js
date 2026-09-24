@@ -100,6 +100,12 @@ async function updateGhl(tenantId, patch, { actorId, isSuperAdmin }) {
   return u;
 }
 
+/** Internal: merge machine-set GHL ids (agents, workflow, number) without touching the connection source. */
+async function mergeGhl(tenantId, patch) {
+  const [u] = await db.run(`UPDATE sup_tenants SET ghl = ghl || :p::jsonb WHERE id = :id RETURNING *`, { p: JSON.stringify(patch), id: Number(tenantId) });
+  return u;
+}
+
 async function setStatus(tenantId, status, actorId) {
   if (!['trial', 'active', 'suspended', 'cancelled'].includes(status)) throw httpError(400, 'Unknown status');
   const [u] = await db.run('UPDATE sup_tenants SET status = :s WHERE id = :id RETURNING *', { s: status, id: Number(tenantId) });
@@ -139,4 +145,4 @@ async function onboarding(tenantId) {
   return { steps, done: steps.filter((x) => x.done).length, total: steps.length };
 }
 
-module.exports = { create, get, view, updateSettings, updateGhl, setStatus, markOnboarding, onboarding, DEFAULT_SETTINGS };
+module.exports = { create, get, view, updateSettings, updateGhl, mergeGhl, setStatus, markOnboarding, onboarding, DEFAULT_SETTINGS };

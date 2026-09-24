@@ -43,7 +43,7 @@ const platform = require('./platform');
 
 const router = express.Router();
 const PUB = path.join(__dirname, '..', 'public');
-const VERSION = 'sup-2026-09-24-4';
+const VERSION = 'sup-2026-09-24-5';
 const upload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 8 * 1024 * 1024, files: 1 } });
 
 router.use(express.json({ limit: '2mb' }));
@@ -240,6 +240,13 @@ api.post('/ghl/test', ADMIN, h(async (req, res) => {
     }
   }
   res.json({ provider: p.name, health: hres, custom_fields: fields });
+}));
+
+api.post('/ghl/auto-setup', ADMIN, h(async (req, res) => {
+  const t = await tenants.get(req.tenant.id);
+  const p = await comms.providerFor(t);
+  if (!p.listAgents) return res.status(409).json({ error: 'Connect GoHighLevel first (GoHighLevel screen → Save connection).' });
+  res.json(await require('./services/ghlSetup').run(t, p, { answerInbound: !!(req.body || {}).answer_inbound, actorId: req.actor.id }));
 }));
 
 // Categories / reps / competitors

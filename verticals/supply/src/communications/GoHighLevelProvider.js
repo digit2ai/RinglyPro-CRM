@@ -182,6 +182,44 @@ class GoHighLevelProvider extends CommunicationProvider {
   }
 
   parseWebhook(body) { return parseGhlWebhook(body); }
+
+  // ── Setup (auto-configuration). Paths and bodies from HighLevel's API docs, 2026-09-24. ──
+  /** GET /phone-system/numbers/location/{loc} (Version v3) -> [{ phoneNumber, friendlyName }] */
+  async listNumbers() {
+    const d = await this.call('GET', '/phone-system/numbers/location/' + encodeURIComponent(this.creds.locationId), { params: { pageSize: 100 }, version: 'v3' });
+    const data = (d && (d.data || d)) || {};
+    return (data.numbers || []).map((n) => ({ phoneNumber: n.phoneNumber, friendlyName: n.friendlyName || null }));
+  }
+  /** GET /voice-ai/agents (Version v3) */
+  async listAgents() {
+    const d = await this.call('GET', '/voice-ai/agents', { params: { locationId: this.creds.locationId, page: 1, pageSize: 50 }, version: VOICE_VERSION() });
+    return (d && (d.agents || d.data || [])) || [];
+  }
+  /** POST /voice-ai/agents (Version v3) -> { id } */
+  async createAgent(body) {
+    const d = await this.call('POST', '/voice-ai/agents', { data: Object.assign({ locationId: this.creds.locationId }, body), version: VOICE_VERSION() });
+    const id = d && (d.id || (d.agent && d.agent.id));
+    if (!id) throw Object.assign(new Error('GoHighLevel returned no agent id'), { code: 'GHL_SHAPE' });
+    return { id };
+  }
+  /** PATCH /voice-ai/agents/{id} (Version v3) */
+  async updateAgent(id, body) {
+    await this.call('PATCH', '/voice-ai/agents/' + encodeURIComponent(id), { data: Object.assign({ locationId: this.creds.locationId }, body), version: VOICE_VERSION() });
+    return { id };
+  }
+  /** POST /voice-ai/actions (Version v3) -> { id } */
+  async createAgentAction(agentId, actionType, name, actionParameters) {
+    const d = await this.call('POST', '/voice-ai/actions', { data: { agentId, locationId: this.creds.locationId, actionType, name, actionParameters }, version: VOICE_VERSION() });
+    return { id: d && (d.id || (d.action && d.action.id)) };
+  }
+  /** GET /workflows/?locationId= — docs list Version v3; older tokens answer on 2021-07-28. */
+  async listWorkflows() {
+    let d;
+    try { d = await this.call('GET', '/workflows/', { params: { locationId: this.creds.locationId }, version: 'v3' }); }
+    catch (e) { if (e.status && e.status < 500 && e.status !== 401 && e.status !== 403) d = await this.call('GET', '/workflows/', { params: { locationId: this.creds.locationId } }); else throw e; }
+    return ((d && (d.workflows || (d.data && d.data.workflows))) || []).map((w) => ({ id: w.id, name: w.name, status: w.status }));
+  }
+  fieldTag(key) { return (this.fieldTags && this.fieldTags[key]) || null; }
 }
 
 function normalizeCallLog(l) {

@@ -281,15 +281,35 @@
     });
   };
 
+  function setupPanel(g) {
+    var gh = g.ghl || {};
+    return '<div class="card" style="margin-bottom:14px;border-color:var(--acc)"><b>Set up automatically</b><p class="small muted">Creates the contact fields, both AI voice agents with their prompts, the transfer to your sales rep, and finds the outbound calling workflow. Safe to run again at any time.</p>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:500;color:var(--ink)"><input type="checkbox" id="ansIn" style="width:auto" ' + (gh.inbound_answering ? 'checked' : '') + '> Answer inbound calls on ' + esc(gh.phone_number || 'my GoHighLevel number') + ' with the Supply receptionist</label>' +
+      '<p class="small muted">Leave this off if that number already answers calls for something else.</p>' +
+      (isAdmin() ? '<button class="btn primary" id="auto">Set up automatically</button>' : '') + (gh.last_setup_at ? ' <span class="small muted">last run ' + esc(date(gh.last_setup_at)) + '</span>' : '') + '<div id="autoRes" style="margin-top:10px"></div></div>';
+  }
+  function bindSetup() {
+    if (!$('#auto')) return;
+    $('#auto').onclick = function () {
+      $('#auto').disabled = true; $('#autoRes').innerHTML = '<p class="small muted">Working in GoHighLevel…</p>';
+      api('POST', '/ghl/auto-setup', { answer_inbound: $('#ansIn').checked }).then(function (r) {
+        var cls = { ok: 'ok', skipped: '', needs_you: 'warn', failed: 'bad' };
+        $('#autoRes').innerHTML = (r.ok ? '<p><span class="pill ok">ready</span> Everything is set up.</p>' : '') + table([['Step', 'label'], ['Result', '', function (x) { return '<span class="pill ' + (cls[x.status] || '') + '">' + esc(label(x.status)) + '</span>'; }], ['Detail', 'detail']], r.steps);
+        $('#auto').disabled = false;
+      }).catch(function (e) { $('#auto').disabled = false; fail(e); });
+    };
+  }
+
   // ── AI agents ──
   V.agents = function () {
     return api('GET', '/ghl').then(function (g) {
       title('AI Agents');
       var gh = g.ghl || {};
-      $('#view').innerHTML = '<div class="card stack"><p>The voice agents run inside your GoHighLevel sub-account. RinglyPro Supply decides who they call and writes what they should say onto each contact before the call.</p>' +
+      $('#view').innerHTML = setupPanel(g) + '<details class="card"><summary><b>Advanced: agent ids and prompt</b></summary><div class="stack"><p>The voice agents run inside your GoHighLevel sub-account. RinglyPro Supply decides who they call and writes what they should say onto each contact before the call.</p>' +
         '<form id="ag" class="row">' + field('outbound_agent_id', 'Outbound sales agent id (GHL)', 'text', gh.outbound_agent_id) + field('inbound_agent_id', 'Inbound receptionist agent id (GHL)', 'text', gh.inbound_agent_id) + field('default_workflow_id', 'Default outbound workflow id', 'text', gh.default_workflow_id) + (isAdmin() ? '<button class="btn primary" style="flex:none">Save</button>' : '') + '</form></div>' +
         '<div class="two" style="margin-top:14px"><div class="card"><b>Agent prompt</b><p class="small muted">Copy all of this into the big prompt box of the GoHighLevel Voice AI agent. If a {{contact...}} tag does not turn into a chip, delete it and insert it with the # Custom Value button: Contact, then RinglyPro Supply Context / Offer / Assigned Rep.</p><button class="btn small" id="cpp">Copy prompt</button><pre id="pp">' + esc('You are Lina, a friendly sales assistant calling contractors on behalf of a building-material supplier. You speak English or Spanish, matching the caller.\n\nWHAT YOU KNOW ABOUT THIS CONTRACTOR (read before speaking):\n{{contact.ringlypro_supply_context}}\n\nTODAY\'S OFFER AND RULES:\n{{contact.ringlypro_supply_offer}}\n\nASSIGNED SALES REP: {{contact.ringlypro_supply_assigned_rep}}\n\nYOUR GOAL ON THIS CALL\n1. Introduce yourself and the supplier in one sentence.\n2. Ask if they buy the materials in the offer for their jobs.\n3. Present the offer briefly, using only the prices written in the offer above.\n4. If interested, ask which product, roughly how much, and when they need it.\n5. If they want pricing, a quote, or a person, transfer the call to the sales rep.\n6. If they are busy, ask for a better time to call back.\n\nRULES\n- Quote ONLY the prices and numbers written in the offer. Never invent a price, discount or stock level.\n- Never compare to Home Depot, Lowe\'s or any competitor unless the offer text contains that exact comparison.\n- If they ask not to be called again, apologize, confirm they will not be called, and end the call.\n- Keep answers short and natural. One question at a time.\n- If you do not know something, say a sales rep will follow up.\n') + '</pre></div>' +
-        '<div class="card"><b>Extraction fields to add to the agent</b><p class="small muted">The call log returns these; they drive outcome, potential buyer and pipeline.</p><ul>' + g.extract_keys.map(function (k) { return '<li><code>' + esc(k) + '</code></li>'; }).join('') + '</ul><p class="small">rps_outcome must be one of: ' + esc((VOCAB.outcomes || []).join(', ')) + '</p></div></div>';
+        '<div class="card"><b>Call outcomes</b><p class="small muted">RinglyPro Supply reads each call transcript itself and records one of: ' + esc((VOCAB.outcomes || []).map(label).join(', ')) + '. Nothing to configure in GoHighLevel.</p></div></div></details>';
+      bindSetup();
       $('#cpp').onclick = function () { navigator.clipboard.writeText($('#pp').textContent).then(function () { toast('Prompt copied'); }); };
       $('#ag').onsubmit = function (e) { e.preventDefault(); api('PATCH', '/ghl', formData(e.target)).then(function () { toast('Saved'); }).catch(fail); };
     });
@@ -301,12 +321,13 @@
       var g = x[0]; var gh = g.ghl || {};
       title('GoHighLevel', isAdmin() ? '<button class="btn primary" id="test">Test connection</button>' : '');
       var sm = gh.stage_map || {};
-      $('#view').innerHTML = '<div class="two"><div class="card"><b>Connection</b><p class="small">Provider in use: <b>' + esc(g.provider) + '</b> · Source: ' + esc(gh.source || 'none') + (gh.crm_client_id ? ' (CRM client ' + esc(gh.crm_client_id) + ')' : '') + ' · Token stored: ' + (g.token_set ? 'yes' : 'no') + '</p>' + (g.health ? '<p class="small">Last check: ' + (g.health.ok ? '<span class="pill ok">ok</span>' : '<span class="pill bad">error</span> ' + esc(g.health.last_error)) + ' ' + esc(date(g.health.last_checked_at)) + '</p>' : '') +
+      $('#view').innerHTML = (g.health && g.health.ok ? setupPanel(g) : '') + '<div class="two"><div class="card"><b>Connection</b><p class="small">Provider in use: <b>' + esc(g.provider) + '</b> · Source: ' + esc(gh.source || 'none') + (gh.crm_client_id ? ' (CRM client ' + esc(gh.crm_client_id) + ')' : '') + ' · Token stored: ' + (g.token_set ? 'yes' : 'no') + '</p>' + (g.health ? '<p class="small">Last check: ' + (g.health.ok ? '<span class="pill ok">ok</span>' : '<span class="pill bad">error</span> ' + esc(g.health.last_error)) + ' ' + esc(date(g.health.last_checked_at)) + '</p>' : '') +
         (isAdmin() ? '<form id="cn">' + select('source', 'Connect with', [['private_token', 'My sub-account (Private Integration token)']].concat(ME.user.is_super_admin ? [['crm_client', 'Existing RinglyPro CRM connection (super admin)']] : []), gh.source) + field('location_id', 'Location id', 'text', gh.location_id) + field('token', 'Private Integration token (blank keeps the stored one)', 'password') + (ME.user.is_super_admin ? field('crm_client_id', 'CRM client id', 'number', gh.crm_client_id) : '') +
           '<p class="small muted">Private Integration scopes to tick: View/Edit Contacts, View/Edit Custom Fields, View/Edit Opportunities, View Workflows + add contact to workflow, View Locations, Voice AI call logs.</p><button class="btn primary">Save connection</button></form>' : '') + '<div id="tres" class="small"></div></div>' +
-        '<div class="card"><b>Webhook URL</b><p class="small muted">Add a Webhook action to your GHL workflows (call ended with event=call.completed; inbound call with event=inbound; contact DND changes). Treat this URL as a secret.</p><pre>' + esc(x[1].webhook_url) + '</pre>' +
+        '<div class="card"><b>Webhook URL (optional)</b><p class="small muted">Not required: call results and callbacks are read from GoHighLevel every minute. A workflow Webhook action to this URL only makes them appear faster. Treat it as a secret.</p><pre>' + esc(x[1].webhook_url) + '</pre>' +
         '<b>Pipeline mapping</b><form id="pm"><div class="row">' + field('pipeline_id', 'GHL pipeline id', 'text', gh.pipeline_id) + '</div><div class="row">' + g.pipeline_stages.map(function (s) { return field('stage_' + s, label(s) + ' stage id', 'text', sm[s]); }).join('') + '</div>' + (isAdmin() ? '<button class="btn" style="margin-top:8px">Save mapping</button>' : '') + '</form></div></div>' +
         '<h3>What is automatic and what is not</h3>' + table([['Requirement', 'need'], ['Class', '', function (r) { return '<span class="pill cls-' + esc(r.class) + '">' + esc(label(r.class)) + '</span>'; }], ['How', 'how']], g.capabilities);
+      bindSetup();
       if ($('#cn')) $('#cn').onsubmit = function (e) { e.preventDefault(); api('PATCH', '/ghl', formData(e.target)).then(function () { toast('Saved'); go(); }).catch(fail); };
       if ($('#pm')) $('#pm').onsubmit = function (e) { e.preventDefault(); var d = formData(e.target); var map = {}; Object.keys(d).forEach(function (k) { if (k.indexOf('stage_') === 0) map[k.slice(6)] = d[k]; }); api('PATCH', '/ghl', { pipeline_id: d.pipeline_id || null, stage_map: map }).then(function () { toast('Saved'); }).catch(fail); };
       if ($('#test')) $('#test').onclick = function () { $('#tres').textContent = 'Testing…'; api('POST', '/ghl/test').then(function (r) { $('#tres').innerHTML = (r.health.ok ? '<span class="pill ok">connected</span> ' : '<span class="pill bad">failed</span> ') + esc(r.health.detail) + (r.custom_fields ? (r.custom_fields.error ? '<p class="small" style="color:var(--bad)">' + esc(r.custom_fields.error) + '</p>' : '<p class="small"><span class="pill ok">custom fields ready</span> Use these exact tags in the agent prompt:</p><pre>' + esc(Object.keys(r.custom_fields.prompt_tags || {}).map(function (k) { return k + '  ' + r.custom_fields.prompt_tags[k]; }).join('\n') || 'GoHighLevel returned no tag names; insert them with # Custom Value.') + '</pre>') : ''); }).catch(fail); };

@@ -115,6 +115,13 @@ async function reconcile(tenant, provider) {
       if (log) { const r = await calls.ingestCall(tenant, provider, log, { direction: 'outbound' }); if (r.created) ingested++; }
     } catch (e) { break; } // provider down: try next pass
   }
+  // Inbound calls and callbacks: no webhook needed. Every pass reads the recent
+  // call logs for the whole sub-account; ingestCall ignores callers who are not
+  // contractors and is idempotent on the call id, so re-reading is harmless.
+  try {
+    const recent = await provider.listCallLogs(tenant, { since: new Date(Date.now() - 3 * 3600e3), until: new Date() });
+    for (const l of recent) { const r = await calls.ingestCall(tenant, provider, l); if (r.created) ingested++; }
+  } catch (e) { /* provider down: next pass */ }
   // Give up on calls with no log after 48 h, so the campaign target is not stuck.
   await db.trun(tenant.id, `UPDATE sup_calls SET status = 'failed', summary = COALESCE(summary, 'No call log returned within 48 hours'), ended_at = now()
     WHERE tenant_id = :tenant AND status = 'dispatched' AND started_at <= now() - interval '48 hours'`);
