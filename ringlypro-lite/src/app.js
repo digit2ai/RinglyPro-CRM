@@ -15,6 +15,14 @@ app.set('trust proxy', 1);
 // Stripe webhook needs the raw body — mount BEFORE json parser.
 app.use('/webhooks/stripe', express.raw({ type: 'application/json' }));
 
+// The HighLevel post-call mirror gets its OWN, much smaller body cap, and it has
+// to be mounted BEFORE the global parser to get it: body-parser skips when
+// req._body is already set, so a route-level limit after a 1 MB global one is
+// dead code — a 600 KB body reached the handler in testing. This route is
+// reachable by anyone who knows a customer's phone number, so its ceiling is
+// the one that matters.
+app.use('/webhooks/ghl', express.json({ limit: process.env.LITE_GHL_BODY_LIMIT || '64kb' }));
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));   // Twilio webhooks are urlencoded
 app.use(cookieParser());
@@ -57,7 +65,11 @@ app.get('/api/config', (req, res) => res.json({
   // prospect hears Lina in their language before a dedicated DID is provisioned.
   demo_number: process.env.LITE_DEMO_NUMBER || '+18132120813',
   demo_number_es: process.env.LITE_DEMO_NUMBER || '+18132120813',
-  demo_number_en: process.env.LITE_DEMO_NUMBER_EN || '+17627611589'
+  // The number SHOWN to prospects. Since 2026-09-22 the English demo line is
+  // the owner's HighLevel number (answered by HighLevel Voice AI); the old
+  // Twilio line +17627611589 is dead with the account's voice disabled.
+  // LITE_DEMO_NUMBER_EN still routes calls that reach /voice/incoming.
+  demo_number_en: process.env.LITE_DEMO_CALL_EN || '+18132124888'
 }));
 
 // API routers
@@ -68,6 +80,9 @@ app.use('/api/public-booking', require('./routes/public-booking')); // PUBLIC te
 app.use('/api/billing', require('./routes/billing'));
 app.use('/api', require('./routes/api'));                // dashboard (auth-gated inside) — generic /api catch-all, mount LAST
 app.use('/webhooks', require('./routes/webhooks'));      // /webhooks/stripe
+// The post-call mirror from HighLevel. Deliberately OUTSIDE the /api cookie
+// gate (it is a machine caller) and authenticated by its own shared secret.
+app.use('/webhooks', require('./routes/webhooks-ghl'));  // /webhooks/ghl/call
 app.use('/internal/economics', require('./routes/unit-economics'));
 app.use('/internal/security', require('./routes/security'));   // owner-only, 404 without the admin key
 

@@ -41,8 +41,19 @@ router.get('/', async (req, res) => {
       if (r[f] && !tollFraud.checkDestination(r[f], { defaultCountry: r.country }).ok) stale.push({ tenant_id: r.id, field: f });
     }
   } catch (e) { stale = { error: e.message }; }
+  const ghlOn = !!(process.env.LITE_GHL_TOKEN && process.env.LITE_GHL_LOCATION_ID);
   res.json({ outbound_guard: tollFraud.status(), fraud_watch: fraudWatch.status(), webhook_signature: twilioSig.status(),
-    phones_now_refused: stale });
+    phones_now_refused: stale,
+    // SAID PLAINLY RATHER THAN IMPLIED. outbound_guard's velocity limits cover
+    // what OUR provider dials. A HighLevel transfer is placed by HighLevel, so
+    // the per-hour breaker never sees it — the country allow-list still applies
+    // at agent-build time, so a forbidden destination is never configured, but
+    // an attacker calling the line in a loop is cost amplification we cannot cap
+    // from here. Fix belongs in the HighLevel workflow, not in this service.
+    ghl_transfers_uncapped: ghlOn ? true : false,
+    ghl_post_call_webhook: (() => { const w = require('./webhooks-ghl');
+      return { mode: w.mode(), secret_configured: w.secretConfigured(), ...w.stats }; })(),
+  });
 });
 
 router.post('/run', async (req, res) => {
@@ -109,6 +120,102 @@ router.get('/users', async (req, res) => {
       logins_without_a_tenant: orphans
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/**
+ * GET /internal/security/ghl-probe — READ-ONLY structural probe of the
+ * HighLevel Voice AI surface, so a plan decision is made against what the API
+ * actually exposes rather than what the docs are remembered to say.
+ *
+ * It answers one question: can a HighLevel agent call OUR API during a call
+ * (a custom/webhook action), which is what would let bookings land in the
+ * client's own RinglyPro calendar instead of a HighLevel one.
+ *
+ * It returns SHAPE ONLY — ids, names, action types and the field names each
+ * object carries. Never a prompt, never a phone number, never the token.
+ */
+router.get('/ghl-probe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  if (!ghl.configured()) return res.json({ configured: false });
+  const out = { configured: true, location_id: ghl.locationId(), steps: {} };
+  const step = async (name, fn) => {
+    try { out.steps[name] = { ok: true, data: await fn() }; }
+    catch (e) { out.steps[name] = { ok: false, status: e.status || null, error: e.message }; }
+  };
+  const arr = (d) => (Array.isArray(d) ? d : (d && typeof d === 'object'
+    ? (Object.values(d).find((v) => Array.isArray(v)) || []) : []));
+
+  let agents = [];
+  await step('agents', async () => {
+    agents = arr(await ghl.listVoiceAgents());
+    return agents.map((a) => ({
+      id: a.id || a._id || null,
+      name: a.agentName || a.name || null,
+      on_number: !!a.inboundNumber,
+      action_count: arr(a.actions).length,
+      fields: Object.keys(a).sort(),
+    }));
+  });
+
+  // Every action on every agent, by type. This is the list that decides it.
+  // The agent object carries them inline; there is no /voice-ai/actions GET.
+  await step('actions', async () => {
+    const seen = [];
+    for (const a of agents.slice(0, 5)) {
+      for (const x of arr(a.actions)) seen.push({ agent: a.id || a._id || null,
+        type: x.actionType || x.type || null, name: x.name || null,
+        fields: Object.keys(x).sort(),
+        param_fields: x.actionParameters && typeof x.actionParameters === 'object'
+          ? Object.keys(x.actionParameters).sort() : null });
+    }
+    return seen;
+  });
+
+  // Does this token reach calendars at all (the HighLevel-side booking path)?
+  await step('calendars', async () => {
+    const d = await ghl.call('GET', '/calendars/', { query: { locationId: ghl.locationId() } });
+    return arr(d).map((c) => ({ id: c.id || null, name: c.name || null }));
+  });
+
+  // Can we CREATE a calendar per tenant (unattended signup) on this plan?
+  await step('calendars_writable_check', async () => {
+    // Deliberately a malformed create: a 4xx validation error proves the route
+    // is reachable and permitted; a 401/403 proves it is not. Nothing is made.
+    try { await ghl.call('POST', '/calendars/', { body: { locationId: ghl.locationId() } }); return 'created_unexpectedly'; }
+    catch (e) { return { status: e.status, meaning: e.status === 401 || e.status === 403 ? 'NOT PERMITTED' : 'reachable (validation error)', error: e.message }; }
+  });
+
+  return res.json(out);
+});
+
+/**
+ * The HighLevel sub-account pool, behind the SAME owner key as everything else
+ * here. Do not give it a second credential — one key, one gate.
+ *
+ *   GET  /internal/security/ghl-pool        what is stocked and what is claimed
+ *   POST /internal/security/ghl-pool        add one the owner made by hand
+ *                                           { location_id, token, label? }
+ *
+ * The token is verified against HighLevel before it is stored and is never
+ * returned afterwards, encrypted or otherwise — only whether it is set.
+ */
+router.get('/ghl-pool', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try { res.json(await require('../services/ghlAccounts').status()); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/ghl-pool', express.json({ limit: '16kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  try {
+    const { location_id, token, label } = req.body || {};
+    const out = await require('../services/ghlAccounts').addToPool({ location_id, token, label });
+    res.status(201).json({ ok: true, ...out });
+  } catch (e) {
+    res.status(e.code === 'BAD_INPUT' || e.code === 'TOKEN_LOCATION_MISMATCH' ? 400 : 500)
+       .json({ ok: false, error: e.code || 'failed', message: e.message });
+  }
 });
 
 module.exports = router;

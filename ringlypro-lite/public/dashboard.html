@@ -272,11 +272,11 @@ async function loadCalendar(){
     const msg=contactMsg('appt',a.caller_name,wh);
     return `<div class="item">
     <div class="top"><div class="name">${esc(a.caller_name||'—')}</div><div class="when">${new Date(a.starts_at).toLocaleTimeString(lang==='es'?'es-CO':'en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
-    ${a.callback_number?`<a class="call" href="tel:${esc(a.callback_number)}">${esc(a.callback_number)}</a>`:''}
+    ${a.callback_number?`<a class="call" href="tel:${esc(telSafe(a.callback_number))}">${esc(a.callback_number)}</a>`:''}
     <div class="apptbtns">
       <button class="sm ghost" onclick="cancelAppt(${a.id})">${I[lang].cancel}</button>
-      ${a.callback_number?`<a class="actbtn wa" target="_blank" rel="noopener" href="${waHref(a.callback_number,msg)}">${I[lang].whatsapp}</a>
-      <a class="actbtn sms" href="${smsHref(a.callback_number,msg)}">${I[lang].sms}</a>`:''}
+      ${a.callback_number?`<a class="actbtn wa" target="_blank" rel="noopener" href="${esc(waHref(a.callback_number,msg))}">${I[lang].whatsapp}</a>
+      <a class="actbtn sms" href="${esc(smsHref(a.callback_number,msg))}">${I[lang].sms}</a>`:''}
     </div>
   </div>`;}).join('')).join('');
 }
@@ -382,7 +382,13 @@ function contactMsg(kind,name,when){
   if(es)return `Hola${who}, le devuelvo la llamada${b?' de parte de '+b:''}.`;
   return `Hi${who},${b?' this is '+b+' —':''} returning your call.`;
 }
-function smsHref(num,body){return 'sms:'+num+(body?('?body='+encodeURIComponent(body)):'')}
+// A tel:/sms: target is digits and an optional leading +, never free text.
+// This was the one sink on the Calendar tab that interpolated a stored
+// value into an href without escaping, and a callback_number arriving from
+// the HighLevel webhook could therefore close the attribute and inject a
+// tag that ran in the signed-in owner's session.
+function telSafe(num){var d=digits(num);return d?('+'+d):''}
+function smsHref(num,body){var n=telSafe(num);return n?('sms:'+n+(body?('?body='+encodeURIComponent(body)):'')):''}
 function waHref(num,body){return 'https://wa.me/'+digits(num)+(body?('?text='+encodeURIComponent(body)):'')}
 
 /* ── Theme (Light/Dark) — applied to <html data-theme>, persisted ─────── */

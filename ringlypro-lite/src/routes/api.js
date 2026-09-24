@@ -130,8 +130,20 @@ router.patch('/settings', async (req, res) => {
       message: 'Only US and Colombian phone numbers can receive calls and texts from RinglyPro Lite.' });
     req.body[f] = chk.e164;
   }
+  const transferChanged = ('transfer_number' in (req.body || {}) && req.body.transfer_number !== tenant.transfer_number)
+    || ('owner_phone' in (req.body || {}) && req.body.owner_phone !== tenant.owner_phone);
   for (const k of allow) if (k in (req.body || {})) tenant[k] = req.body[k];
   await tenant.save();
+
+  // A NEW TRANSFER NUMBER MUST REACH THE DEPLOYED AGENT. Storing it and leaving
+  // the agent dialling the old one means calls keep going to a line the owner
+  // no longer controls — a departed employee, or a recycled number now
+  // belonging to a stranger. Fire and forget: the save has already succeeded,
+  // and a HighLevel hiccup must not fail the owner's settings change.
+  if (transferChanged && tenant.ghl_agent_id) {
+    require('../services/provisioning').syncTransfer(tenant)
+      .catch((e) => console.error('[lite:ghl] transfer action not synced:', e.message));
+  }
   res.json({ success: true, tenant });
 });
 

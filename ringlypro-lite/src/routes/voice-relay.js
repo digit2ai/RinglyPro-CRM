@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 /**
  * Telephony webhook surface for Lite.
  *  POST /voice/incoming  — Twilio Voice webhook → returns ConversationRelay TwiML
@@ -113,6 +115,21 @@ router.get('/health', async (req, res) => {
   };
   // ?check=twilio actively verifies credentials by making the same class of API
   // call number-provisioning uses. Reveals no secrets, only auth pass/fail.
+  // ?check=ghl probes the HighLevel pilot token (read-only; statuses and counts only).
+  // GATED: it makes five outbound HighLevel calls per request, each up to 20 s,
+  // so an anonymous caller could starve the worker pool and burn our API rate
+  // limit — and the result discloses whether the token authenticates. Same key
+  // as /internal/security/ghl-probe, which was already gated.
+  if (req.query.check === 'ghl') {
+    const key = process.env.LITE_ADMIN_KEY || '';
+    const got = String(req.headers['x-admin-key'] || '');
+    const ok = key.length >= 16 && got && crypto.timingSafeEqual(
+      crypto.createHash('sha256').update(key).digest(),
+      crypto.createHash('sha256').update(got).digest());
+    if (!ok) return res.json({ ...out, ghl: 'admin key required' });
+    try { out.ghl = await require('../telephony/ghl').probe(); }
+    catch (e) { out.ghl = { error: e.message }; }
+  }
   if (req.query.check === 'twilio') {
     try {
       const { getProvider } = require('../telephony');

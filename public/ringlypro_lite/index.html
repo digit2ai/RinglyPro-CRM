@@ -328,6 +328,24 @@
     <a class="btn primary" style="width:100%" href="https://ringlypro-lite.onrender.com/signup"><span data-en>Start free trial</span><span data-es>Iniciar prueba gratis</span></a>
     <div class="note"><span data-en>Extra minutes $0.40/min · Cancel anytime</span><span data-es>Minutos extra $0.40/min · Cancela cuando quieras</span></div>
   </div>
+
+  <!-- The second tier. Its price is DERIVED, not chosen: at the fixed monthly
+       platform stack it is the lowest round figure that breaks even at three
+       clients (see ringlypro-lite/src/utils/cost.js platformEconomics and
+       docs/pricing.md). Change LITE_PRICE_PRO_CENTS and change it here. -->
+  <div class="price" style="margin-top:26px;border-color:var(--ink)">
+    <span class="kicker"><span data-en>Managed</span><span data-es>Gestionado</span></span>
+    <div class="amt">$<span id="proPrice">249</span><span>/<span data-en>mo</span><span data-es>mes</span></span></div>
+    <div class="free" style="color:var(--ink)"><span data-en>Everything above, plus the work done for you</span><span data-es>Todo lo anterior, y el trabajo hecho por ti</span></div>
+    <ul>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-en>300 answered minutes / month included</span><span data-es>300 minutos contestados / mes incluidos</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-en>Follow-up automations built for your business</span><span data-es>Automatizaciones de seguimiento hechas para tu negocio</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-en>Reminders, review requests and missed-call text-backs</span><span data-es>Recordatorios, solicitudes de reseña y respuestas a llamadas perdidas</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span data-en>We set it up and maintain it — you approve it</span><span data-es>Lo configuramos y mantenemos — tú lo apruebas</span></li>
+    </ul>
+    <a class="btn dark" style="width:100%" href="https://ringlypro-lite.onrender.com/signup?plan=managed"><span data-en>Talk to us</span><span data-es>Hablemos</span></a>
+    <div class="note"><span data-en>Extra minutes $0.40/min · Cancel anytime</span><span data-es>Minutos extra $0.40/min · Cancela cuando quieras</span></div>
+  </div>
 </div></section>
 
 <!-- FAQ -->
@@ -395,7 +413,7 @@
     }catch(e){}
   })();
 
-  var DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(762) 761-1589',tel:'+17627611589'}};
+  var DEMO={es:{num:'(813) 212-0813',tel:'+18132120813'},en:{num:'(813) 212-4888',tel:'+18132124888'}};
   function curLang(){ return root.classList.contains('es')?'es':'en'; }
 
   // ---- Live web chat (same Lina brain over HTTP) ----
@@ -428,7 +446,7 @@
     root.classList.toggle('es',l==='es');document.documentElement.lang=l;langBtn.textContent=l==='es'?'EN':'ES';
     try{localStorage.setItem('rpl_lang',l)}catch(e){}
     // Price mirrors billing.js plan(): US (EN) $26/mo, CO (ES) $69/mo.
-    var pp=document.getElementById('planPrice');if(pp)pp.textContent=l==='es'?'69':'26';
+    var pp=document.getElementById('planPrice');if(pp)pp.textContent=l==='es'?'69':'26';var pr=document.getElementById('proPrice');if(pr)pr.textContent=l==='es'?'349':'249';
     var links=root.querySelectorAll('a[href*="/signup"]');for(var i=0;i<links.length;i++){links[i].href='https://ringlypro-lite.onrender.com/signup?lang='+l;}
     var d=DEMO[l];
     var b=document.getElementById('demoBtn');if(b)b.href='tel:'+d.tel;

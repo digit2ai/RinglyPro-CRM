@@ -36,6 +36,19 @@ const Tenant = sequelize.define('LiteTenant', {
   purchased_minutes: { type: DataTypes.DECIMAL(8, 2), defaultValue: 0 },
   rollover_period_start: { type: DataTypes.DATE },
   active: { type: DataTypes.BOOLEAN, defaultValue: true },
+  // GoHighLevel wiring, PER TENANT. A HighLevel Private Integration token is
+  // issued per sub-account, so these can never live in env once there is more
+  // than one client. The env vars remain only as the fallback for a tenant
+  // that has none (the pilot), which is what keeps the upgrade data entry.
+  ghl_location_id: { type: DataTypes.STRING },
+  ghl_token_enc: { type: DataTypes.TEXT },          // AES-256-GCM, services/secretbox
+  ghl_agent_id: { type: DataTypes.STRING },
+  ghl_calendar_id: { type: DataTypes.STRING },
+  // Provisioning is resumable, so the step reached is recorded rather than
+  // inferred: pending|claimed|number|calendar|agent|ready|failed
+  provisioning_state: { type: DataTypes.STRING, defaultValue: 'pending' },
+  provisioning_error: { type: DataTypes.TEXT },
+  forwarding_confirmed_at: { type: DataTypes.DATE },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'lite_tenants', timestamps: false, indexes: [{ fields: ['stripe_customer_id'] }] });
 
@@ -143,6 +156,29 @@ const Recharge = sequelize.define('LiteRecharge', {
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'lite_recharges', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['stripe_payment_intent'] }, { fields: ['stripe_checkout_session'] }] });
 
+
+/* ── GoHighLevel sub-account pool ──────────────────────────────────────
+ * Creating a sub-account by API needs HighLevel's $497 Agency Pro plan. Below
+ * that the owner makes them by hand — so signup CLAIMS a free one from this
+ * pool instead of creating one, and the customer cannot tell the difference.
+ * On $497 `agencyCreate` fills the pool automatically and the table keeps
+ * working unchanged; that is why the claim path, not the create path, is what
+ * provisioning calls.
+ * Platform-level rows (no tenant_id until claimed).
+ */
+const GhlAccount = sequelize.define('LiteGhlAccount', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  location_id: { type: DataTypes.STRING, allowNull: false, unique: true },
+  token_enc: { type: DataTypes.TEXT, allowNull: false },     // AES-256-GCM
+  label: { type: DataTypes.STRING },                          // owner's own note
+  status: { type: DataTypes.STRING, defaultValue: 'free' },   // free|claimed|disabled
+  claimed_by_tenant: { type: DataTypes.INTEGER },
+  claimed_at: { type: DataTypes.DATE },
+  source: { type: DataTypes.STRING, defaultValue: 'manual' }, // manual|agency_api
+  created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+}, { tableName: 'lite_ghl_accounts', timestamps: false,
+     indexes: [{ fields: ['status'] }, { fields: ['claimed_by_tenant'] }] });
+
 /* associations (loose — tenant_id scoping is enforced in queries) */
 Call.hasMany(Message, { foreignKey: 'call_id' });
 Message.belongsTo(Call, { foreignKey: 'call_id' });
@@ -150,5 +186,5 @@ Call.hasMany(Appointment, { foreignKey: 'call_id' });
 
 module.exports = {
   sequelize,
-  Tenant, User, Number, Call, Message, AvailabilityRule, Appointment, Transcript, Recharge
+  Tenant, User, Number, Call, Message, AvailabilityRule, Appointment, Transcript, Recharge, GhlAccount
 };

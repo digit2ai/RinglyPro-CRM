@@ -37,7 +37,21 @@ async function initDb() {
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS rollover_minutes NUMERIC(8,2) DEFAULT 0;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS purchased_minutes NUMERIC(8,2) DEFAULT 0;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS rollover_period_start TIMESTAMP WITH TIME ZONE;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ghl_location_id VARCHAR(255);
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ghl_token_enc TEXT;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ghl_agent_id VARCHAR(255);
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ghl_calendar_id VARCHAR(255);
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS provisioning_state VARCHAR(32) DEFAULT 'pending';
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS provisioning_error TEXT;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS forwarding_confirmed_at TIMESTAMP WITH TIME ZONE;
   `);
+  // One tenant may hold at most one sub-account from the pool. Enforced in the
+  // database, not only in the claim function, because a double-claim would put
+  // two clients' phone numbers and contacts in one HighLevel location.
+  await sequelize.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ghl_claim
+       ON lite_ghl_accounts(claimed_by_tenant) WHERE claimed_by_tenant IS NOT NULL`
+  );
   // Fraud-watch alert log: dedupes alerts across restarts, so a redeploy does
   // not re-text the owner about something already reported. Platform-level
   // (tenant 0), not tenant data.

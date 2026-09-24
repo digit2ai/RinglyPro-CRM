@@ -71,4 +71,111 @@ function callCostUnbundled(call, smsSegments = 0) {
   return { total: +total.toFixed(5), perMinute: minutes > 0 ? +(total / minutes).toFixed(5) : 0 };
 }
 
-module.exports = { callCost, callCostUnbundled, RATES, TARGET_PER_MIN };
+
+/* ── The GoHighLevel path ──────────────────────────────────────────────────
+ * Verified 2026-09-24 (gohighlevel.com/pricing + the Voice AI pricing pages).
+ *
+ * THE SHAPE OF THE COST INVERTS ON THIS PATH, and that is the whole point.
+ * Twilio's cost is almost entirely VARIABLE (per minute). HighLevel's is mostly
+ * FIXED and MONTHLY — an agency plan plus, optionally, AI Employee Unlimited —
+ * with a small per-minute LC Phone charge on top. So a per-minute comparison
+ * flatters whichever path you already prefer, and the number that decides the
+ * business is the BREAK-EVEN CLIENT COUNT, not $/min. `platformEconomics()`
+ * computes it and refuses to average the fixed stack away.
+ *
+ * ON PAY-PER-USE GHL IS DEARER THAN WHAT WE RUN TODAY (~$0.13/min against
+ * ~$0.084). The case for it rests on the flat plan and on the fact that our own
+ * Twilio voice is disabled — not on a per-minute saving, and the report must
+ * never present one.
+ */
+const GHL = {
+  // Pay-per-use Voice AI, all-in via LC Phone.
+  voicePerMin: () => num('LITE_COGS_GHL_VOICE_MIN', 0.13),
+  // LC Phone telephony only, used when AI Employee Unlimited covers the agent.
+  telephonyPerMin: () => num('LITE_COGS_GHL_TELEPHONY_MIN', 0.012),
+  didMonthly: () => num('LITE_COGS_GHL_DID_MONTHLY', 1.15),
+  // Fixed monthly stack. agencyPlan: 97 Starter | 297 Unlimited | 497 Agency Pro.
+  agencyPlanMonthly: () => num('LITE_COGS_GHL_PLAN_MONTHLY', 97),
+  // AI Employee Unlimited, per enabled location. 0 = pay-per-use instead.
+  aiEmployeeMonthly: () => num('LITE_COGS_GHL_AI_EMPLOYEE_MONTHLY', 0),
+  // Our own hosting etc., shared across tenants.
+  infraMonthly: () => num('LITE_COGS_INFRA_MONTHLY', 25),
+};
+
+/** Per-answered-minute cost on the HighLevel path, for one call. */
+function callCostGhl(call, smsSegments = 0) {
+  const minutes = Math.max(0, (call.duration || 0) / 60);
+  // With AI Employee Unlimited the agent minute is already paid for monthly, so
+  // only LC Phone telephony is variable. Without it, the full pay-per-use rate.
+  const perMin = GHL.aiEmployeeMonthly() > 0 ? GHL.telephonyPerMin() : GHL.voicePerMin();
+  const voice = minutes * perMin;
+  const sms = smsSegments * RATES.smsSegment();
+  const total = voice + sms;
+  return {
+    minutes: +minutes.toFixed(3),
+    voice: +voice.toFixed(5),
+    sms: +sms.toFixed(5),
+    total: +total.toFixed(5),
+    perMinute: minutes > 0 ? +(total / minutes).toFixed(5) : 0,
+    basis: GHL.aiEmployeeMonthly() > 0
+      ? 'AI Employee Unlimited: agent minutes are in the monthly fee, only LC Phone telephony is metered'
+      : 'pay-per-use Voice AI via LC Phone',
+  };
+}
+
+/**
+ * Whether the business works, at a given number of paying clients.
+ *
+ * THE FIXED STACK IS NOT DIVIDED BY AN OPTIMISTIC TENANT COUNT. It is reported
+ * at the count actually given, and the break-even is computed rather than
+ * asserted — a shared cost divided by a hoped-for number of clients is the
+ * classic way a margin table lies.
+ *
+ * @param {object} o
+ * @param {number} o.clients        paying clients today
+ * @param {number} o.priceCents     what each pays per month
+ * @param {number} o.minutesEach    answered minutes per client per month
+ */
+function platformEconomics({ clients = 1, priceCents = 2600, minutesEach = 150 } = {}) {
+  const fixed = GHL.agencyPlanMonthly() + GHL.aiEmployeeMonthly() + GHL.infraMonthly();
+  const perMin = GHL.aiEmployeeMonthly() > 0 ? GHL.telephonyPerMin() : GHL.voicePerMin();
+  const variablePerClient = (minutesEach * perMin) + GHL.didMonthly();
+  const price = priceCents / 100;
+
+  const marginPerClient = price - variablePerClient;   // before the fixed stack
+  const breakEven = marginPerClient > 0 ? Math.ceil(fixed / marginPerClient) : null;
+
+  const at = (n) => {
+    const revenue = n * price;
+    const cost = fixed + n * variablePerClient;
+    return {
+      clients: n,
+      revenue_usd: +revenue.toFixed(2),
+      cost_usd: +cost.toFixed(2),
+      profit_usd: +(revenue - cost).toFixed(2),
+      fixed_per_client_usd: +(fixed / n).toFixed(2),
+      gross_margin_pct: revenue > 0 ? +(((revenue - cost) / revenue) * 100).toFixed(1) : null,
+    };
+  };
+
+  return {
+    fixed_monthly_usd: +fixed.toFixed(2),
+    fixed_breakdown: {
+      ghl_agency_plan: GHL.agencyPlanMonthly(),
+      ghl_ai_employee: GHL.aiEmployeeMonthly(),
+      infra: GHL.infraMonthly(),
+    },
+    variable_per_client_usd: +variablePerClient.toFixed(2),
+    price_per_client_usd: price,
+    per_minute_usd: perMin,
+    break_even_clients: breakEven,
+    // Stated, not implied: one pilot client cannot carry a $97+ stack.
+    honest_note: breakEven && clients < breakEven
+      ? `At ${clients} client(s) this LOSES money. The fixed stack needs ${breakEven} paying clients to break even at $${price}/mo.`
+      : 'Above break-even at the given client count.',
+    scenarios: [1, 3, 5, 10, 25].map(at),
+    today: at(Math.max(1, clients)),
+  };
+}
+
+module.exports = { callCost, callCostUnbundled, callCostGhl, platformEconomics, RATES, GHL, TARGET_PER_MIN };

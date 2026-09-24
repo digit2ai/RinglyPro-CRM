@@ -1,15 +1,71 @@
 # RinglyPro Lite — Pricing (US)
 
-US-only for launch. All figures USD. COGS traces to `docs/telephony-costs.md`.
+> **CORRECTION 2026-09-24.** This document said $49/mo while `src/routes/billing.js`
+> has shipped **$26/mo** (`LITE_PRICE_US_CENTS`, 2600) and **$69/mo** for Colombia.
+> The code is what customers were charged, so the code is what is recorded here.
+> A published figure that disagrees with the billing code is the worst kind of
+> pricing bug, which is why `/internal/economics/platform` now derives the
+> numbers instead of restating them.
 
-## Plan
+## THE COST SHAPE INVERTED WHEN WE MOVED TO GOHIGHLEVEL
+
+Twilio's cost was almost entirely VARIABLE — about $0.084 per answered minute
+and ~$2.50/mo fixed per tenant. HighLevel's is mostly **FIXED and MONTHLY**:
+
+| Line | Monthly |
+|---|---|
+| HighLevel agency plan | $97 Starter · $297 Unlimited · **$497 Agency Pro** |
+| AI Employee Unlimited (per enabled location, optional) | $97 |
+| Our own infrastructure share | ~$25 |
+| LC Phone number, per client | $1.15 |
+| Voice AI, pay-per-use | ~$0.13 / min |
+| LC Phone telephony only, when AI Employee covers the agent | ~$0.012 / min |
+
+So **cost per minute stops being the deciding number and BREAK-EVEN CLIENT
+COUNT starts.** `platformEconomics()` in `src/utils/cost.js` computes it, and
+`GET /internal/economics/platform` reports it against the live client count.
+
+### What the model actually says (300 min/client, $497 + AI Employee = $619 fixed)
+
+| Price per client | Break-even |
+|---|---|
+| $199 / mo | 4 clients |
+| **$249 / mo** | **3 clients** |
+| $299 / mo | 3 clients |
+| $349 / mo | 2 clients |
+
+And on the CURRENT self-serve price, with the same fixed stack:
+
+| Price per client | Break-even |
+|---|---|
+| $26 / mo (US, today) | 23 clients |
+| $49 / mo | 14 clients |
+
+**Read that plainly: the $26 self-serve plan does not carry a $497 platform on
+its own.** It is a volume product and it needs volume. That is why the landing
+page now shows a second, managed tier at **$249** — the lowest round figure that
+breaks even at three clients — and why the pilot is expected to run at a loss.
+A pilot below break-even is a deliberate investment, not a margin, and the
+endpoint says so in those words rather than averaging it away.
+
+**The $497 plan is what makes any of this sellable**, not because of the
+sub-account creation but because it is the only tier that can **rebill usage
+with a markup**. $297 rebills at cost, which earns nothing.
+
+## Plan as shipped
 | Item | Price |
 |---|---|
-| **Setup (one-time)** | **$0 (removed)** |
-| **Monthly subscription** | **$49/mo** |
-| **Included** | **150 answered minutes/mo** (~100 calls @ 90s) |
-| **Overage** | **$0.40 / minute** beyond 150 |
+| **Monthly subscription (US)** | **$26/mo** (`LITE_PRICE_US_CENTS`) |
+| **Monthly subscription (CO)** | **$69/mo** (`LITE_PRICE_CO_CENTS`) |
+| **Managed tier (US)** | **$249/mo** — derived, see above |
+| **Included** | 150 answered minutes/mo (300 on managed) |
+| **Overage** | $0.40 / minute |
+| Setup | $0 |
 | Trial | 7 days |
+
+---
+
+## HISTORY — the Twilio-era model, kept for reference
 
 ## Unit economics (why it works)
 - Cost per answered call (~90s): **~$0.14** (ConversationRelay $0.07/min + inbound $0.0085/min + Haiku + 1–2 SMS via toll-free).
