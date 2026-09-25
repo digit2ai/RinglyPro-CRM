@@ -196,6 +196,9 @@ router.get('/ghl-probe', async (req, res) => {
  *   GET  /internal/security/ghl-pool        what is stocked and what is claimed
  *   POST /internal/security/ghl-pool        add one the owner made by hand
  *                                           { location_id, token, label?, shared? }
+ *                                           or { from_env: true, shared: true } to
+ *                                           copy LITE_GHL_TOKEN in without it
+ *                                           travelling anywhere.
  *                                           shared:true = ONE sub-account for every
  *                                           client (each still gets their own
  *                                           number, agent and calendar).
@@ -212,7 +215,21 @@ router.get('/ghl-pool', async (req, res) => {
 router.post('/ghl-pool', express.json({ limit: '16kb' }), async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const { location_id, token, label, shared } = req.body || {};
+    let { location_id, token, label, shared, from_env } = req.body || {};
+    // STOCK FROM ENV, SO A LIVE TOKEN NEVER HAS TO TRAVEL THROUGH A CHAT WINDOW
+    // OR A SHELL HISTORY. LITE_GHL_TOKEN / LITE_GHL_LOCATION_ID are already set
+    // on the service and already proven against HighLevel; this copies them
+    // into the pool (encrypted) without anyone re-typing them.
+    if (from_env) {
+      const env = require('../telephony/ghl').resolve(null);
+      location_id = location_id || env.locationId;
+      token = env.token;
+      if (!token || !location_id) {
+        return res.status(400).json({ ok: false, error: 'env_not_set',
+          message: 'LITE_GHL_TOKEN and LITE_GHL_LOCATION_ID must both be set to stock the pool from env.' });
+      }
+      label = label || 'from LITE_GHL_TOKEN';
+    }
     const out = await require('../services/ghlAccounts').addToPool({ location_id, token, label, shared: !!shared });
     res.status(201).json({ ok: true, ...out });
   } catch (e) {
