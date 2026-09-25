@@ -496,4 +496,83 @@ router.post('/ghl-message-selftest', express.json({ limit: '4kb' }), async (req,
   }
 });
 
+/**
+ * SIGNUP PREFLIGHT — everything the first real signup depends on, checked
+ * BEFORE any money is spent. Read-only: it buys nothing, creates nothing and
+ * writes no row.
+ *
+ * It exists because two steps of provisioning had never once executed against
+ * the live API, and the first one we ran turned out to be broken (the calendar
+ * sent a field HighLevel has no property for). The remaining unexecuted steps
+ * are the number purchase and the agent build; this checks every precondition
+ * either of them has.
+ */
+router.get('/signup-preflight', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const GhlProvider = require('../telephony/ghlProvider');
+  const { Tenant, Number: NumberModel } = require('../models');
+  const { getNumberProvider } = require('../telephony');
+  const ent = require('../services/entitlement');
+  const out = { blocking: [], warnings: [], checks: {} };
+  const add = (k, v) => { out.checks[k] = v; };
+
+  try {
+    // ---- configuration, before anything reaches HighLevel ----
+    const creds = ghl.resolve(null);
+    add('number_provider', getNumberProvider().name);
+    if (getNumberProvider().name !== 'ghl') out.blocking.push('LITE_GHL_TOKEN / LITE_GHL_LOCATION_ID are not both set, so signup would fall back to Twilio — whose voice is disabled account-wide.');
+    add('billing_enabled', ent.entitlement({}).billing_enabled !== undefined ? ent.entitlement({}).billing_enabled : null);
+    add('webhook_secret_set', !!String(process.env.LITE_GHL_WEBHOOK_SECRET || '').trim());
+    if (!out.checks.webhook_secret_set) out.blocking.push('LITE_GHL_WEBHOOK_SECRET is unset, so every post-call delivery is refused (503) and no message or booking would ever reach the dashboard.');
+
+    const capPerDay = Math.max(0, parseInt(process.env.LITE_MAX_NUMBERS_PER_DAY || '5', 10) || 0);
+    const boughtToday = await NumberModel.count({ where: { created_at: { [require('sequelize').Op.gte]: new Date(Date.now() - 24 * 3600 * 1000) } } });
+    add('purchase_cap', { per_day: capPerDay, bought_last_24h: boughtToday, remaining: Math.max(0, capPerDay - boughtToday) });
+    if (boughtToday >= capPerDay) out.blocking.push(`The 24h number purchase cap is reached (${boughtToday}/${capPerDay}).`);
+
+    const tf = tollFraud.status();
+    add('outbound_locked', !!(tf && tf.locked));
+    if (tf && tf.locked) out.blocking.push('The toll-fraud guard is locked, so provisioning refuses to run.');
+
+    // ---- the sub-account ----
+    const pool = await require('../services/ghlAccounts').status();
+    add('sub_account', { mode: pool.mode, shared: pool.shared, free: pool.free, claimed: pool.claimed });
+    if (!pool.shared && !pool.free) out.blocking.push('No shared or free sub-account in the pool — signup would fail at the claim step with POOL_EMPTY.');
+
+    // ---- are there numbers to buy at all? (a READ; buys nothing) ----
+    try {
+      const avail = await ghl.searchAvailable({}, creds);
+      const arr = Array.isArray(avail) ? avail : (avail && (avail.numbers || avail.data)) || [];
+      add('us_numbers_available', { count: arr.length, sample: arr.slice(0, 3).map((n) => n.phoneNumber || n.number) });
+      if (!arr.length) out.blocking.push('HighLevel returned no purchasable US local numbers, so the buy step would fail.');
+    } catch (e) { add('us_numbers_available', { error: String(e.message || e).slice(0, 200) }); out.blocking.push(`Could not list purchasable numbers: ${String(e.message || e).slice(0, 120)}`); }
+
+    // ---- the template the client's agent is copied from ----
+    try {
+      const tpl = await new GhlProvider({ creds }).templateAgent();
+      add('template_agent', tpl ? { id: tpl.id || null, name: tpl.agentName || tpl.name || null,
+        has_prompt: !!tpl.agentPrompt, voiceId: tpl.voiceId || null, language: tpl.language || null,
+        end_call_workflows: (tpl.callEndWorkflowIds || []).length } : null);
+      if (!tpl) out.warnings.push('No template agent exists in the sub-account. Signup still works, but the client gets a generic prompt and voice instead of the one you wrote — and no end-of-call workflow, which is what fires the post-call webhook.');
+      else if (!(tpl.callEndWorkflowIds || []).length) out.warnings.push('The template agent has NO end-of-call workflow. That workflow is what calls our webhook, so messages and bookings would never reach the dashboard.');
+    } catch (e) { add('template_agent', { error: String(e.message || e).slice(0, 200) }); out.warnings.push(`Could not read the template agent: ${String(e.message || e).slice(0, 120)}`); }
+
+    // ---- has the webhook EVER been reached? ----
+    const w = require('./webhooks-ghl').stats;
+    add('post_call_webhook', { mode: require('./webhooks-ghl').mode(), received: w.received, accepted: w.accepted });
+    if (!w.received) out.warnings.push('The post-call webhook has never been reached from HighLevel (received 0). Only a real call proves that leg.');
+
+    // ---- anyone already part-provisioned? ----
+    const stuck = await Tenant.findAll({ where: { provisioning_state: ['claimed', 'number', 'calendar', 'agent'] } });
+    add('part_provisioned_tenants', stuck.map((t) => ({ id: t.id, state: t.provisioning_state, error: t.provisioning_error })));
+
+    add('cost_of_one_signup_usd', { number_monthly: GhlProvider.MONTHLY_COST_USD, note: 'plus per-minute Voice AI at the pay-per-use rate' });
+    out.ready = out.blocking.length === 0;
+    return res.json(out);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 300), checks: out.checks });
+  }
+});
+
 module.exports = router;
