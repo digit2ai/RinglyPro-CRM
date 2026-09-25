@@ -74,7 +74,12 @@ class GhlProvider {
     let pick = null;
     const wanted = areaCode && /^\d{3}$/.test(String(areaCode)) ? String(areaCode) : null;
     if (wanted) {
-      pick = firstArray(await ghl.searchAvailable({ firstPart: `1${wanted}` }, this._c()))
+      // `firstPart` IS THE BARE AREA CODE, measured against the live API
+      // 2026-09-25: firstPart='813' returns 9 Tampa numbers, firstPart='1813'
+      // and '+1813' both return ZERO. Sending the country code silently
+      // matched nothing, so every area-code request fell through to "any
+      // number" and looked like HighLevel having no local stock.
+      pick = firstArray(await ghl.searchAvailable({ firstPart: wanted }, this._c()))
         .find((n) => String(n.phoneNumber || n.number || '').startsWith(`+1${wanted}`)) || null;
     }
     // ASKING FOR 813 AND GETTING A MICHIGAN NUMBER IS NOT A NEAR MISS.

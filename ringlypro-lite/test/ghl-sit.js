@@ -164,7 +164,8 @@ global.fetch = async (url, opts = {}) => {
       return json(200, { numbers: [{ phoneNumber: '+17344475009' }] });   // a prefix hint that missed
     }
     const fp = u.searchParams.get('firstPart');
-    if (fp === '1813') return json(200, { numbers: [{ phoneNumber: '+18135550101' }, { phoneNumber: '+18135550102' }] });
+    // The fake behaves like the real API: only the bare area code matches.
+    if (fp && fp !== '813') return json(200, { numbers: [] });
     return json(200, { numbers: [{ phoneNumber: '+18135550101' }, { phoneNumber: '+18135550102' }] });
   }
   if (p.endsWith('/purchase')) {
@@ -703,7 +704,8 @@ const tenantSeed = (over = {}) => ({
     const got = await prov.buyNumber({ areaCode: '813', tenantId: 5001 });
     assert.ok(String(got.did).startsWith('+1813'), `asked for 813, got ${got.did}`);
     const q = reqs.find((r) => r.path.endsWith('/available') && r.query.firstPart);
-    assert.strictEqual(q.query.firstPart, '1813');
+    // The BARE area code. '1813' returns zero from the real API.
+    assert.strictEqual(q.query.firstPart, '813');
   });
   await t('ASKING FOR 813 NEVER SILENTLY BUYS A MICHIGAN NUMBER', async () => {
     scenario = { noAreaCode: true }; reqs = [];
