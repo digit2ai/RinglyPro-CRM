@@ -291,14 +291,18 @@ router.post('/ghl-calendar-selftest', express.json({ limit: '4kb' }), async (req
     }
     steps.push({ step: 'version probe (GET /calendars/)', ok: true, detail: versions });
 
-    // 2. A calendar of our own, reused across runs so this leaves no litter.
+    // 2. A calendar of our own. It is DELETED again at the end, so a run leaves
+    //    the sub-account exactly as it found it — and every run exercises
+    //    provisioning.ensureCalendar for real rather than reusing yesterday's.
     const NAME = 'RinglyPro Self Test';
-    const calendarId = await step('find or create the self-test calendar', async () => {
+    // ensureCalendar appends " — Appointments" to the business name, so a
+    // find-by-exact-name never matched and every run quietly created another.
+    const listCals = async () => {
       const list = await ghl.call('GET', '/calendars/', { query: { locationId: creds.locationId }, creds, timeoutMs: 12000 });
       const arr = Array.isArray(list) ? list : (list && (list.calendars || list.data)) || [];
-      const found = arr.find((c) => c && String(c.name || '').trim() === NAME);
-      if (found) return { id: found.id, reused: true, via: 'existing' };
-
+      return arr.filter((c) => c && String(c.name || '').startsWith(NAME));
+    };
+    const calendarId = await step('create a calendar through provisioning.ensureCalendar', async () => {
       // Exercise THE PRODUCT'S OWN creation path, so this proves provisioning
       // rather than a body written for the test.
       const provisioning = require('../services/provisioning');
@@ -359,6 +363,18 @@ router.post('/ghl-calendar-selftest', express.json({ limit: '4kb' }), async (req
     // 6. Clean up: cancel it for real.
     const cancelled = await step('cancel it (and leave nothing behind)',
       () => cal.cancelAppointment({ tenant, creds, appt }));
+
+    // 7. Leave nothing behind — including anything an earlier run stranded.
+    await step('delete every self-test calendar (this run and any left by an earlier one)', async () => {
+      const leftovers = await listCals();
+      const removed = [];
+      for (const c of leftovers) {
+        try { await ghl.call('DELETE', `/calendars/${encodeURIComponent(c.id)}`, { creds, timeoutMs: 12000 }); removed.push(c.id); }
+        catch (e) { removed.push(`${c.id}:FAILED ${String(e.message || e).slice(0, 80)}`); }
+      }
+      const still = await listCals();
+      return { removed, remaining: still.map((c) => c.id) };
+    });
 
     return res.json({
       ok: steps.every((s) => s.ok) && !!pushed.eventId && !!(cancelled && cancelled.cancelled),
