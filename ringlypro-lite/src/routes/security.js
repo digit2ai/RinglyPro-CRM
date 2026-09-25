@@ -575,4 +575,23 @@ router.get('/signup-preflight', async (req, res) => {
   }
 });
 
+/** Read-only: is a given area code actually purchasable right now? Buys nothing. */
+router.get('/available-numbers', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const area = String(req.query.area || '').trim();
+  try {
+    const creds = ghl.resolve(null);
+    const q = /^\d{3}$/.test(area) ? { firstPart: `1${area}` } : {};
+    const raw = await ghl.searchAvailable(q, creds);
+    const arr = Array.isArray(raw) ? raw : (raw && (raw.numbers || raw.data)) || [];
+    const nums = arr.map((n) => n.phoneNumber || n.number).filter(Boolean);
+    // HighLevel's filter is a PREFIX hint, not a guarantee — count what really
+    // matches, so "30 results" can never be mistaken for "30 in your city".
+    const inArea = area ? nums.filter((n) => String(n).startsWith(`+1${area}`)) : nums;
+    res.json({ area_code: area || null, returned: nums.length, in_that_area: inArea.length,
+      sample_in_area: inArea.slice(0, 5), sample_returned: nums.slice(0, 5) });
+  } catch (e) { res.status(502).json({ error: String(e.message || e).slice(0, 200) }); }
+});
+
 module.exports = router;

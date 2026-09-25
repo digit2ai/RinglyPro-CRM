@@ -69,11 +69,23 @@ class GhlProvider {
   }
 
   /** Buy a US local number. Nothing else — see the class note. */
-  async buyNumber({ country = 'US', areaCode, tenantId }) {
+  async buyNumber({ country = 'US', areaCode, tenantId, allowAnyArea = false }) {
     if (country !== 'US') throw new Error('HighLevel numbers are US-only in this pilot');
     let pick = null;
-    if (areaCode && /^\d{3}$/.test(String(areaCode))) {
-      pick = firstArray(await ghl.searchAvailable({ firstPart: `1${areaCode}` }, this._c()))[0] || null;
+    const wanted = areaCode && /^\d{3}$/.test(String(areaCode)) ? String(areaCode) : null;
+    if (wanted) {
+      pick = firstArray(await ghl.searchAvailable({ firstPart: `1${wanted}` }, this._c()))
+        .find((n) => String(n.phoneNumber || n.number || '').startsWith(`+1${wanted}`)) || null;
+    }
+    // ASKING FOR 813 AND GETTING A MICHIGAN NUMBER IS NOT A NEAR MISS.
+    // The old code fell straight through to "any number", so a client who
+    // asked for their own city could be given another state's area code with
+    // nothing on any screen saying so — and a local business's whole reason
+    // for wanting a local number is that customers recognise it. If the area
+    // was asked for and is not available, say so and let them choose.
+    if (wanted && !pick && !allowAnyArea) {
+      const e = new Error(`No numbers are available in area code ${wanted} right now. Pick another area code, or continue with any available US number.`);
+      e.code = 'NO_NUMBER_IN_AREA'; e.area_code = wanted; throw e;
     }
     if (!pick) pick = firstArray(await ghl.searchAvailable({}, this._c()))[0] || null;
     const phoneNumber = pick && (pick.phoneNumber || pick.number);

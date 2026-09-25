@@ -160,6 +160,11 @@ global.fetch = async (url, opts = {}) => {
   if (p.endsWith('/available')) {
     if (scenario.noNumbers) return json(200, { numbers: [] });
     if (u.searchParams.get('firstPart') && scenario.noAreaCode) return json(200, { numbers: [] });
+    if (u.searchParams.get('firstPart') && scenario.wrongAreaResults) {
+      return json(200, { numbers: [{ phoneNumber: '+17344475009' }] });   // a prefix hint that missed
+    }
+    const fp = u.searchParams.get('firstPart');
+    if (fp === '1813') return json(200, { numbers: [{ phoneNumber: '+18135550101' }, { phoneNumber: '+18135550102' }] });
     return json(200, { numbers: [{ phoneNumber: '+18135550101' }, { phoneNumber: '+18135550102' }] });
   }
   if (p.endsWith('/purchase')) {
@@ -691,6 +696,40 @@ const tenantSeed = (over = {}) => ({
    * below attack the two ways a two-way sync goes wrong — an echo loop, and a
    * booking that is kept locally after the remote write failed.
    */
+  section('area codes');
+  await t('A REQUESTED AREA CODE IS HONOURED', async () => {
+    scenario = {}; reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    const got = await prov.buyNumber({ areaCode: '813', tenantId: 5001 });
+    assert.ok(String(got.did).startsWith('+1813'), `asked for 813, got ${got.did}`);
+    const q = reqs.find((r) => r.path.endsWith('/available') && r.query.firstPart);
+    assert.strictEqual(q.query.firstPart, '1813');
+  });
+  await t('ASKING FOR 813 NEVER SILENTLY BUYS A MICHIGAN NUMBER', async () => {
+    scenario = { noAreaCode: true }; reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    await assert.rejects(prov.buyNumber({ areaCode: '813', tenantId: 5002 }),
+      (e) => e.code === 'NO_NUMBER_IN_AREA' && e.area_code === '813');
+    assert.strictEqual(reqs.filter((r) => r.path.endsWith('/purchase')).length, 0, 'it bought a number in the wrong area');
+    scenario = {};
+  });
+  await t('...unless the client is told and chooses any number', async () => {
+    scenario = { noAreaCode: true }; reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    const got = await prov.buyNumber({ areaCode: '813', tenantId: 5003, allowAnyArea: true });
+    assert.ok(got.did, 'the explicit opt-in did not buy anything');
+    scenario = {};
+  });
+  await t('a PREFIX match that is not really in the area is rejected', async () => {
+    // HighLevel's firstPart is a hint, not a filter: it can return numbers
+    // outside the area. Trusting the first row is how 813 becomes 8135-ish.
+    scenario = { wrongAreaResults: true }; reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    await assert.rejects(prov.buyNumber({ areaCode: '813', tenantId: 5004 }),
+      (e) => e.code === 'NO_NUMBER_IN_AREA');
+    scenario = {};
+  });
+
   section('the two-way calendar');
   const booking = require(path.join(ROOT, 'src/services/booking'));
   const ghlCalendar = require(path.join(ROOT, 'src/services/ghlCalendar'));

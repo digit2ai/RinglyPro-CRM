@@ -132,7 +132,8 @@ async function runProvision(tenant, opts = {}) {
     let num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
     if (!num) {
       const bought = await new GhlProvider({ creds }).buyNumber({
-        country: tenant.country || 'US', areaCode: opts.areaCode, tenantId: tenant.id, tenant,
+        country: tenant.country || 'US', areaCode: opts.areaCode, allowAnyArea: !!opts.allowAnyArea,
+        tenantId: tenant.id, tenant,
       });
       num = await Number.create({
         tenant_id: tenant.id, did: bought.did, country: tenant.country || 'US',

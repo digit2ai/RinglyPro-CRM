@@ -87,7 +87,10 @@ router.post('/provision-number', requireAuth, async (req, res) => {
     // builds their agent on it — every step resumable, none repeatable by
     // accident (see services/provisioning.js). The Twilio path is unchanged.
     if (provider.name === 'ghl') {
-      const out = await provisioning.provision(tenant, { areaCode: req.body && req.body.area_code });
+      const out = await provisioning.provision(tenant, {
+        areaCode: req.body && req.body.area_code,
+        allowAnyArea: !!(req.body && req.body.any_area),
+      });
       num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
       return res.status(201).json({
         success: true, number: num, provider: 'ghl',
@@ -95,13 +98,21 @@ router.post('/provision-number', requireAuth, async (req, res) => {
       });
     }
 
-    const bought = await provider.buyNumber({ country, areaCode: req.body && req.body.area_code, tenantId: tenant.id, tenant });
+    const bought = await provider.buyNumber({ country, areaCode: req.body && req.body.area_code,
+      allowAnyArea: !!(req.body && req.body.any_area), tenantId: tenant.id, tenant });
     num = await Number.create({
       tenant_id: tenant.id, did: bought.did, country, provider: bought.provider,
       provider_sid: bought.providerSid, status: 'active', monthly_cost_usd: bought.monthlyCostUsd
     });
     res.status(201).json({ success: true, number: num, provider: bought.provider });
   } catch (e) {
+    // "Your area code has nothing free" is a CHOICE for the client, not a
+    // server error: 409 plus the area they asked for, so the page can offer
+    // "try another area code" or "any number will do" instead of a red 500.
+    if (e.code === 'NO_NUMBER_IN_AREA') {
+      return res.status(409).json({ success: false, error: 'no_number_in_area',
+        area_code: e.area_code, message: e.message });
+    }
     console.error('[lite:onboarding] provision error:', e.message);
     res.status(500).json({ error: e.message });
   }
