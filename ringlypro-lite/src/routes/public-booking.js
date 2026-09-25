@@ -69,6 +69,31 @@ function labels(tz, iso, lang) {
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * A CEILING ON /book, PER IP AND PER KEY.
+ *
+ * This endpoint is public, CORS is open, there is no session, and the booking
+ * key is a value in this repository. The only thing that used to cap abuse was
+ * the partial unique index: book a slot once and every later attempt on it was
+ * a cheap 409. The two-way calendar removed that by design — a push that fails
+ * DELETES the row, freeing the slot — so one slot can now be hammered forever,
+ * and each attempt spends real HighLevel requests against a quota that, in the
+ * shared sub-account, belongs to every tenant at once. In memory, per instance;
+ * stated rather than implied.
+ */
+const BOOK_HITS = new Map();
+function bookOverLimit(bucket, perMin) {
+  const win = Math.floor(Date.now() / 60000);
+  for (const k of BOOK_HITS.keys()) if (!k.endsWith(`:${win}`)) BOOK_HITS.delete(k);
+  const key = `${bucket}:${win}`;
+  const n = (BOOK_HITS.get(key) || 0) + 1;
+  BOOK_HITS.set(key, n);
+  return n > perMin;
+}
+function clientIp(req) {
+  return String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim() || 'unknown';
+}
+
 // CORS so the marketing site (aiagent.ringlypro.com / vision2ai.app) can call this.
 router.use((req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');
@@ -111,8 +136,15 @@ router.get('/availability', async (req, res) => {
 // POST /api/public-booking/book  { key, name, phone, email?, company?, notes?, date, time, lang? }
 router.post('/book', async (req, res) => {
   const b = req.body || {};
+  const perIp = Math.max(1, parseInt(process.env.LITE_PUBLIC_BOOK_PER_MIN || '6', 10) || 6);
+  const perKey = Math.max(1, parseInt(process.env.LITE_PUBLIC_BOOK_PER_MIN_KEY || '30', 10) || 30);
+  if (bookOverLimit(`ip:${clientIp(req)}`, perIp)) return res.status(429).json({ success: false, error: 'slow_down' });
+
   const tenantId = tenantForKey(b.key);
   if (tenantId == null) return res.status(401).json({ success: false, error: 'invalid_key' });
+  // Per key as well as per IP: the published key plus a spread of addresses
+  // would otherwise walk straight past the per-IP ceiling.
+  if (bookOverLimit(`key:${tenantId}`, perKey)) return res.status(429).json({ success: false, error: 'slow_down' });
 
   const name = (b.name || '').toString().trim().slice(0, 160);
   const phone = (b.phone || '').toString().trim().slice(0, 40);
@@ -130,9 +162,29 @@ router.post('/book', async (req, res) => {
 
   try {
     const result = await booking.bookAppointment({
-      tenantId, caller_name: name, callback_number: phone || null, date, time
+      tenantId, caller_name: name, callback_number: phone || null, date, time,
+      // Passed through for the HighLevel contact, not stored on the row: the
+      // calendar table has no email column and the address already travels to
+      // the owner in the dashboard message below.
+      email: EMAIL_RE.test(email) ? email : null
     });
     if (!result.success) {
+      // sync_failed = we could not write it into the owner's HighLevel
+      // calendar, so nothing was kept here either. Saying "booked" would put
+      // the visitor in a slot the AI will hand to the next caller, which is
+      // the exact failure the two-way sync exists to prevent.
+      if (result.error === 'sync_failed' || result.error === 'sync_unconfirmed') {
+        // sync_failed   = the other calendar refused; nothing was kept here either.
+        // sync_unconfirmed = we may have created it there and cannot prove it, so
+        // the slot is HELD here and flagged for the owner rather than handed to
+        // the next visitor. Both tell the visitor the same true thing: it is not
+        // confirmed. Saying "booked" would put them in a slot the AI may hand to
+        // the next caller, which is the failure the two-way sync exists to remove.
+        return res.status(503).json({ success: false, error: result.error,
+          message: lang === 'es'
+            ? 'No pudimos confirmar ese horario. Por favor elige otro o llámanos.'
+            : 'We could not confirm that time. Please pick another one, or call us.' });
+      }
       const code = result.error === 'slot_taken' ? 409 : 400;
       return res.status(code).json({ success: false, error: result.error });
     }

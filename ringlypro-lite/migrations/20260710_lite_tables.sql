@@ -103,10 +103,20 @@ CREATE TABLE IF NOT EXISTS lite_appointments (
   starts_at       TIMESTAMPTZ NOT NULL,
   ends_at         TIMESTAMPTZ NOT NULL,
   status          VARCHAR(24) DEFAULT 'confirmed',
+  -- Which side the row was born on: 'ringlypro' (pushed to HighLevel) or 'ai'
+  -- (mirrored in from HighLevel, never pushed back). NO DEFAULT: a NULL means
+  -- provenance unknown, and unknown is never pushed. This column is what stops
+  -- the two-way calendar becoming an echo loop.
+  origin          VARCHAR(16),
+  ghl_event_id    VARCHAR(255),
+  -- local cancel succeeded, remote cancel did not: the slot is still blocked
+  -- in HighLevel and someone has to know.
+  ghl_cancel_failed_at TIMESTAMPTZ,
   created_at      TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_lite_appts_tenant ON lite_appointments(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_lite_appts_tenant_start ON lite_appointments(tenant_id, starts_at);
+CREATE INDEX IF NOT EXISTS ix_lite_appts_ghl_event ON lite_appointments(ghl_event_id);
 
 -- Atomic slot lock: no two live appointments may share a (tenant_id, starts_at).
 -- Partial unique index ignores cancelled rows so a freed slot can be rebooked.

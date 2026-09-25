@@ -44,11 +44,24 @@ function section(s) { console.log(`\n-- ${s} ${'-'.repeat(Math.max(0, 58 - s.len
 function table(name) {
   const rows = []; let seq = 0;
   const match = (r, w) => Object.entries(w || {}).every(([k, v]) => {
-    if (v && typeof v === 'object' && v.constructor === Object) return true; // Op.* — not used in asserts
+    // A Date compares by REFERENCE with ===, so booking.js's clash lookup
+    // (`starts_at: startUtc`) could NEVER match and the whole slot_taken path
+    // was dead in this harness — which made "the freed slot is rebookable"
+    // pass for the wrong reason.
+    if (v instanceof Date) return r[k] != null && +new Date(r[k]) === +v;
+    if (v && typeof v === 'object' && Array.isArray(v[Object.getOwnPropertySymbols(v)[0]])) {
+      const arr = v[Object.getOwnPropertySymbols(v)[0]];      // Op.in
+      return arr.includes(r[k]);
+    }
+    if (v && typeof v === 'object' && v.constructor === Object) return true; // other Op.* — not asserted on
     return r[k] === v;
   });
   const wrap = (r) => Object.assign(r, {
     update: async (patch) => { Object.assign(r, patch); return r; },
+    save: async () => r,
+    // A failed push DELETES the local row, so destroy has to be real here or
+    // the "booked here, free there" test would pass without the fix.
+    destroy: async () => { const i = rows.indexOf(r); if (i >= 0) rows.splice(i, 1); return 1; },
     get: (k) => r[k],
   });
   return {
@@ -76,6 +89,10 @@ const M = {
 // its contract — one winner, skip-locked — so the caller is still under test.
 const LOCKS = new Set();
 M.sequelize = {
+  // booking.bookAppointment wraps the insert in a transaction; the push happens
+  // OUTSIDE it on purpose (an HTTP round trip must not hold a row lock), which
+  // this stand-in preserves by simply running the body.
+  async transaction(fn) { return fn({ LOCK: { UPDATE: 'UPDATE' } }); },
   async query(sql, opts) {
     // Emulate pg_try_advisory_lock faithfully: a second holder is REFUSED, so
     // the caller's serialisation is genuinely under test.
@@ -108,11 +125,14 @@ const { getNumberProvider, getProvider } = require(path.join(ROOT, 'src/telephon
 let reqs = [];
 let scenario = {};
 let boughtNumbers = 0;
+let eventSeq = 0;
+const EVENTS = {};   // event id -> the calendar it was created on
 global.fetch = async (url, opts = {}) => {
   const u = new URL(String(url));
   const body = opts.body ? JSON.parse(opts.body) : null;
   reqs.push({ method: opts.method || 'GET', path: u.pathname, query: Object.fromEntries(u.searchParams),
-              body, auth: opts.headers && opts.headers.Authorization });
+              body, auth: opts.headers && opts.headers.Authorization,
+              version: opts.headers && opts.headers.Version });
   const json = (status, data) => ({ ok: status < 400, status, json: async () => data });
   const p = u.pathname;
   if (p.startsWith('/locations/') && (opts.method || 'GET') === 'GET') {
@@ -141,6 +161,36 @@ global.fetch = async (url, opts = {}) => {
     return scenario.agentFails ? json(500, { message: 'agent service down' }) : json(201, { id: 'agent-new-1' });
   }
   if (p === '/voice-ai/actions') return json(201, { id: 'act1' });
+  if (p === '/contacts/upsert' && opts.method === 'POST') {
+    if (scenario.contactFails) return json(422, { message: 'contact rejected' });
+    if (scenario.contactFlaky && !scenario._cFlaky) { scenario._cFlaky = true; return json(503, { message: 'busy' }); }
+    return json(201, { new: true, contact: { id: `CT-${body.phone || body.email || 'x'}` } });
+  }
+  if (p === '/calendars/events/appointments' && opts.method === 'POST') {
+    if (scenario.apptVersionError && (opts.headers || {}).Version === 'v3') {
+      // DELIBERATELY SAYS NOTHING ABOUT VERSIONS. The first implementation fell
+      // back only when HighLevel's prose contained the word, which is a promise
+      // about their wording — a real sub-account answers `404 Cannot POST ...`
+      // or a bare 400, and every booking would have died.
+      return json(scenario.apptVersionStatus || 400, { message: 'Bad Request' });
+    }
+    if (scenario.apptRefused) return json(403, { message: 'not allowed on this calendar' });
+    if (scenario.apptFlaky && !scenario._flakyUsed) { scenario._flakyUsed = true; return json(503, { message: 'upstream busy' }); }
+    const id = `EVT-${++eventSeq}`;
+    EVENTS[id] = body.calendarId;
+    return json(201, { id });
+  }
+  if (p.startsWith('/calendars/events/appointments/') && (opts.method || 'GET') === 'GET') {
+    if (scenario.readEventFails) return json(500, { message: 'event service down' });
+    const id = p.split('/').pop();
+    if (scenario.foreignCalendar) return json(200, { appointment: { id, calendarId: scenario.foreignCalendar } });
+    if (!EVENTS[id]) return json(404, { message: 'not found' });
+    return json(200, { appointment: { id, calendarId: EVENTS[id] } });
+  }
+  if (p.startsWith('/calendars/events/appointments/') && opts.method === 'PUT') {
+    if (scenario.cancelFails) return json(500, { message: 'cancel service down' });
+    return json(200, { succeeded: true });
+  }
   return json(404, { message: 'not found' });
 };
 
@@ -573,12 +623,363 @@ const tenantSeed = (over = {}) => ({
     assert.ok(throttled, 'an unauthenticated-reachable route has no ceiling');
     delete process.env.LITE_GHL_WEBHOOK_PER_MIN;
   });
+  /* ── the two-way calendar ─────────────────────────────────────────────
+   * Until this shipped the calendar was one-way: HighLevel wrote to us and
+   * nothing went back, so a booking taken on the public page was invisible to
+   * the Voice AI and the same slot was offered to the next caller. The tests
+   * below attack the two ways a two-way sync goes wrong — an echo loop, and a
+   * booking that is kept locally after the remote write failed.
+   */
+  section('the two-way calendar');
+  const booking = require(path.join(ROOT, 'src/services/booking'));
+  const ghlCalendar = require(path.join(ROOT, 'src/services/ghlCalendar'));
+
+  // Give the shared fixture tenant working availability. Its provisioning above
+  // already left it with a location, a calendar and its own sealed token.
+  const CAL_T = tenant;
+  // Starts FAR out on purpose. The mirror section above writes appointments at
+  // fixed dates ('2026-10-01T15:00:00Z'), and once match() compares Dates by
+  // value rather than by reference — which it now does — a generated slot that
+  // lands on one of them comes back `slot_taken` and the test under it reports
+  // a defect the product does not have.
+  const nextSlot = (() => { let n = 0; return () => {
+    const d = new Date(Date.now() + (400 + (n++)) * 86400000);
+    d.setUTCHours(15, 0, 0, 0);
+    return d;
+  }; })();
+
+  await t('THE TENANT IS ACTUALLY ON THE HIGHLEVEL PATH (fixture sanity)', () => {
+    assert.ok(ghlCalendar.enabledFor(CAL_T), 'fixture has no HighLevel calendar; the rest would vacuously pass');
+  });
+
+  await t('a booking made in RinglyPro IS written into the HighLevel calendar', async () => {
+    reqs = []; scenario = {};
+    const r = await booking.bookAppointment({
+      tenantId: CAL_T.id, caller_name: 'Rosa Diaz', callback_number: '+14085551212',
+      starts_at: nextSlot().toISOString(), email: 'rosa@example.com',
+    });
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    assert.strictEqual(r.synced_to_calendar, true, 'the booking was never pushed to HighLevel');
+    const made = reqs.find((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.ok(made, 'no appointment was created in HighLevel');
+    assert.strictEqual(made.body.calendarId, CAL_T.ghl_calendar_id, 'pushed into the wrong calendar');
+    assert.strictEqual(made.body.locationId, CAL_T.ghl_location_id);
+    assert.ok(made.body.contactId, 'HighLevel requires a contactId and none was sent');
+    const appt = (await M.Appointment.findAll({ where: { tenant_id: CAL_T.id } })).slice(-1)[0];
+    assert.ok(String(appt.ghl_event_id).startsWith('EVT-'), 'the HighLevel event id was not kept');
+    assert.strictEqual(appt.origin, 'ringlypro');
+  });
+
+  await t('THE CREDENTIALS USED ARE THAT TENANT\'S OWN, never the env fallback', async () => {
+    const made = reqs.filter((x) => x.path === '/calendars/events/appointments');
+    assert.ok(made.length, '[].every() is true — this asserted nothing without a request to check');
+    const want = `Bearer ${secretbox.open(CAL_T.ghl_token_enc)}`;
+    assert.ok(made.every((x) => x.auth === want), 'another account\'s token reached the calendar');
+    assert.ok(made.every((x) => x.auth !== 'Bearer pit-env-fallback-token'));
+  });
+
+  await t('THE TOKEN NEVER LEAVES THE AUTHORIZATION HEADER', () => {
+    const tok = secretbox.open(CAL_T.ghl_token_enc);
+    for (const r of reqs) {
+      assert.ok(!r.path.includes(tok), 'a token appeared in a URL path');
+      assert.ok(!JSON.stringify(r.query || {}).includes(tok), 'a token appeared in a query string');
+      assert.ok(!JSON.stringify(r.body || {}).includes(tok), 'a token appeared in a request body');
+    }
+  });
+
+  await t('AN APPOINTMENT MIRRORED IN FROM HIGHLEVEL IS NEVER PUSHED BACK', async () => {
+    reqs = []; scenario = {};
+    const before = await M.Appointment.count();
+    const r = await post({ to: mirrorTenantNum.did, call_id: 'echo-1', outcome: 'appointment booked',
+      appointment: { startTime: '2026-11-04T16:00:00Z', id: 'EVT-FROM-GHL' } },
+      { 'x-ringlypro-signature': 'sit-webhook-secret' });
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(await M.Appointment.count(), before + 1, 'the mirror did not store the booking');
+    const echoed = reqs.filter((x) => x.path === '/calendars/events/appointments' || x.path === '/contacts/upsert');
+    assert.strictEqual(echoed.length, 0, 'ECHO LOOP: a HighLevel booking was pushed straight back');
+    const row = (await M.Appointment.findAll({ where: { tenant_id: CAL_T.id } })).slice(-1)[0];
+    assert.strictEqual(row.origin, 'ai', 'a mirrored row was not marked as coming from the AI');
+    assert.strictEqual(row.ghl_event_id, 'EVT-FROM-GHL');
+  });
+
+  await t('A CALLER CANNOT SET `origin` — the relay spreads raw model tool input', async () => {
+    // relayAgent does bookAppointment({ ...base, ...input }) where `input` is
+    // whatever the model emitted. If `origin` were an argument, a model writing
+    // origin:'ai' would book locally, push nothing, and silently hand the slot
+    // back to HighLevel's Voice AI — reinstating the exact double-booking this
+    // change removes, with nothing on any screen to show for it.
+    reqs = []; scenario = {};
+    const r = await booking.bookAppointment({
+      tenantId: CAL_T.id, caller_name: 'Model', callback_number: '+14085550099',
+      starts_at: nextSlot().toISOString(), origin: 'ai',
+    });
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    assert.strictEqual(r.synced_to_calendar, true, 'a caller-supplied origin suppressed the push');
+    const row = await M.Appointment.findByPk(r.appointment_id);
+    assert.strictEqual(row.origin, 'ringlypro', 'the model chose the provenance of a RinglyPro booking');
+    assert.ok(reqs.some((x) => x.path === '/calendars/events/appointments'));
+    // and the signature itself does not name it
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/booking.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.ok(!/async function bookAppointment\([^)]*\borigin\b/.test(src),
+      'origin is back in the destructured arguments');
+  });
+
+  await t('a row with UNKNOWN provenance (pre-dating the column) is never pushed', () => {
+    assert.strictEqual(ghlCalendar.pushable({ origin: null }), false);
+    assert.strictEqual(ghlCalendar.pushable({ origin: undefined }), false);
+    assert.strictEqual(ghlCalendar.pushable({ origin: 'ai' }), false);
+    assert.strictEqual(ghlCalendar.pushable({ origin: 'ringlypro' }), true);
+  });
+
+  await t('THE MIRROR CANNOT REACH THE PUSH AT ALL — structural, not behavioural', () => {
+    // Comments are stripped FIRST. This file explains the echo guard in prose,
+    // and the first version of this check passed against its own explanation.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks-ghl.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.ok(!/require\(['"][^'"]*ghlCalendar['"]\)/.test(src), 'the mirror imports the push service');
+    assert.ok(!/bookAppointment/.test(src), 'the mirror now books through the pushing path — that is the echo loop');
+    assert.ok(/origin:\s*'ai'/.test(src), 'the mirror no longer marks its rows as AI-origin');
+  });
+
+  // The SAME instant is reused by the next test on purpose — "the slot is free
+  // again" is only meaningful about the slot that just failed.
+  const FAILED_SLOT = nextSlot();
+
+  await t('A FAILED PUSH LEAVES NO LOCALLY-BOOKED, REMOTELY-FREE SLOT', async () => {
+    scenario = { apptRefused: true }; reqs = [];
+    const before = await M.Appointment.count();
+    const r = await booking.bookAppointment({
+      tenantId: CAL_T.id, caller_name: 'Ghost', callback_number: '+14085550000',
+      starts_at: FAILED_SLOT.toISOString(),
+    });
+    scenario = {};
+    assert.strictEqual(r.success, false, 'a booking HighLevel refused was reported as booked');
+    assert.strictEqual(r.error, 'sync_failed');
+    assert.strictEqual(r.detail, undefined, 'HighLevel\'s own words reached the caller');
+    assert.strictEqual(await M.Appointment.count(), before, 'the local row survived a failed push');
+  });
+
+  await t('THE EXACT slot that failed is rebookable, not merely a different day', async () => {
+    scenario = {};
+    const r = await booking.bookAppointment({
+      tenantId: CAL_T.id, caller_name: 'Second Try', callback_number: '+14085550001',
+      starts_at: FAILED_SLOT.toISOString(),
+    });
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+  });
+
+  await t('THE HARNESS CAN ACTUALLY SEE A CLASH (or the test above proves nothing)', async () => {
+    const when = nextSlot();
+    const a = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'A',
+      callback_number: '+14085550100', starts_at: when.toISOString() });
+    const b = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'B',
+      callback_number: '+14085550101', starts_at: when.toISOString() });
+    assert.strictEqual(a.success, true, JSON.stringify(a));
+    assert.strictEqual(b.success, false, 'the same instant booked twice — Date matching is broken in the fake');
+    assert.strictEqual(b.error, 'slot_taken');
+  });
+
+  await t('A PERMISSION REFUSAL IS NOT RETRIED — a retry cannot change a 403', async () => {
+    scenario = { apptRefused: true }; reqs = [];
+    const out = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'X', callback_number: '+14085550002',
+      starts_at: nextSlot().toISOString() });
+    scenario = {};
+    assert.strictEqual(out.error, 'sync_failed', `expected a clean refusal, got ${JSON.stringify(out)} / reqs=${JSON.stringify(reqs.map((r) => r.method + ' ' + r.path))}`);
+    const tries = reqs.filter((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.strictEqual(tries.length, 1, 'a refusal was retried, doubling the visitor\'s wait for nothing');
+  });
+
+  await t('A CREATE IS NEVER RETRIED — a timeout says nothing about what HighLevel did', async () => {
+    scenario = { apptFlaky: true }; reqs = [];
+    const when = nextSlot();
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Flaky', callback_number: '+14085550003',
+      starts_at: when.toISOString() });
+    scenario = {};
+    const tries = reqs.filter((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.strictEqual(tries.length, 1, 'a create was sent twice — that is how one visitor gets two events');
+    assert.strictEqual(r.success, false, JSON.stringify(r));
+    assert.strictEqual(r.error, 'sync_unconfirmed', 'an unknown outcome was reported as a clean failure');
+  });
+
+  await t('AN UNKNOWN OUTCOME KEEPS THE ROW AND HOLDS THE SLOT', async () => {
+    const rows = await M.Appointment.findAll({ where: { tenant_id: CAL_T.id } });
+    const held = rows.filter((r) => r.status === 'sync_unknown');
+    assert.strictEqual(held.length, 1, 'the row was deleted, orphaning an event that may exist there');
+    // and the slot it holds cannot be handed to the next visitor
+    const again = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Next',
+      callback_number: '+14085550031', starts_at: new Date(held[0].starts_at).toISOString() });
+    assert.strictEqual(again.success, false, 'a slot we may hold in HighLevel was offered again');
+    assert.strictEqual(again.error, 'slot_taken');
+  });
+
+  await t('the contact upsert IS retried — it is an upsert', async () => {
+    scenario = { contactFlaky: true }; reqs = [];
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Retry Me',
+      callback_number: '+14085550032', starts_at: nextSlot().toISOString() });
+    scenario = {};
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    assert.strictEqual(reqs.filter((x) => x.path === '/contacts/upsert').length, 2);
+  });
+
+  await t('A CALLER WITH NO NUMBER AND NO EMAIL STILL GETS BOOKED', async () => {
+    reqs = []; scenario = {};
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Withheld',
+      callback_number: null, starts_at: nextSlot().toISOString() });
+    assert.strictEqual(r.success, true, 'a booking the business can honour was thrown away');
+    assert.strictEqual(r.synced_to_calendar, false, 'it must be flagged as not pushed, not silently fine');
+    assert.strictEqual(reqs.length, 0, 'a contact with nothing to identify it was sent anyway');
+  });
+
+  await t('AN EVENT ON ANOTHER CALENDAR IS NEVER CANCELLED', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Foreign',
+      callback_number: '+14085550033', starts_at: nextSlot().toISOString() });
+    scenario = { foreignCalendar: 'CAL-SOMEONE-ELSE' }; reqs = [];
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id, appointmentId: r.appointment_id });
+    scenario = {};
+    assert.strictEqual(out.remote, false, 'we cancelled an event on a calendar that is not ours');
+    const put = reqs.find((x) => x.method === 'PUT');
+    assert.ok(!put, 'a PUT went out against a foreign event');
+  });
+
+  await t('a failed remote cancel is RECORDED on the row, not only counted', async () => {
+    const rows = await M.Appointment.findAll({ where: { tenant_id: CAL_T.id } });
+    assert.ok(rows.some((r) => r.ghl_cancel_failed_at), 'nobody who could act on it can see it');
+  });
+
+  await t('the caller never receives HighLevel\'s own error text', async () => {
+    scenario = { cancelFails: true };
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Words',
+      callback_number: '+14085550034', starts_at: nextSlot().toISOString() });
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id, appointmentId: r.appointment_id });
+    scenario = {};
+    assert.strictEqual(out.remote_error, undefined, 'the raw message is back');
+    assert.strictEqual(out.remote_status, 'not_confirmed_elsewhere');
+  });
+
+  await t('a Version the sub-account rejects falls back to the date-stamped one', async () => {
+    scenario = { apptVersionError: true }; reqs = [];
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Ver', callback_number: '+14085550004',
+      starts_at: nextSlot().toISOString() });
+    scenario = {};
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    const tries = reqs.filter((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.strictEqual(tries.length, 2);
+    assert.strictEqual(tries[0].version, 'v3');
+    assert.strictEqual(tries[1].version, '2021-07-28', 'the documented fallback version was not tried');
+  });
+
+  await t('A TENANT NOT ON HIGHLEVEL BOOKS LOCALLY AND CALLS NOTHING', async () => {
+    const plain = await M.Tenant.create(tenantSeed({ business_name: 'Twilio-path Co' }));
+    reqs = []; scenario = {};
+    const r = await booking.bookAppointment({ tenantId: plain.id, caller_name: 'Local Only',
+      callback_number: '+14085550005', starts_at: nextSlot().toISOString() });
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    assert.strictEqual(r.synced_to_calendar, false);
+    assert.strictEqual(reqs.length, 0, 'a non-HighLevel tenant made an outbound HighLevel call');
+  });
+
+  await t('CANCELLING HERE CANCELS IT THERE, on the right event id', async () => {
+    reqs = []; scenario = {};
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'To Cancel',
+      callback_number: '+14085550006', starts_at: nextSlot().toISOString() });
+    const appt = await M.Appointment.findByPk(r.appointment_id);
+    reqs = [];
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id, appointmentId: appt.id });
+    assert.strictEqual(out.success, true);
+    assert.strictEqual(out.remote, true, 'the HighLevel side was never cancelled — the slot stays blocked there');
+    const put = reqs.find((x) => x.method === 'PUT' && x.path.startsWith('/calendars/events/appointments/'));
+    assert.ok(put, 'no cancel reached HighLevel');
+    assert.ok(put.path.endsWith(appt.ghl_event_id), 'cancelled the wrong event');
+    assert.strictEqual(put.body.appointmentStatus, 'cancelled');
+    assert.strictEqual((await M.Appointment.findByPk(appt.id)).status, 'cancelled');
+  });
+
+  await t('a HighLevel outage never blocks the owner\'s own cancellation', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Outage',
+      callback_number: '+14085550007', starts_at: nextSlot().toISOString() });
+    scenario = { cancelFails: true };
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id, appointmentId: r.appointment_id });
+    scenario = {};
+    assert.strictEqual(out.success, true, 'the owner could not cancel because HighLevel was down');
+    assert.strictEqual(out.remote, false);
+    assert.strictEqual(out.remote_status, 'not_confirmed_elsewhere', 'the failure was swallowed instead of reported');
+    assert.strictEqual((await M.Appointment.findByPk(r.appointment_id)).status, 'cancelled');
+  });
+
+  await t('cancelling a row that never reached HighLevel makes no outbound call', async () => {
+    const oStart = nextSlot();
+    const orphan = await M.Appointment.create({ tenant_id: CAL_T.id, starts_at: oStart,
+      ends_at: new Date(oStart.getTime() + 30 * 60000), status: 'confirmed', origin: 'ringlypro' });
+    reqs = [];
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id, appointmentId: orphan.id });
+    assert.strictEqual(out.success, true);
+    assert.strictEqual(out.remote, false);
+    assert.strictEqual(reqs.length, 0);
+  });
+
+  await t('ONE TENANT CAN NEVER CANCEL ANOTHER TENANT\'S APPOINTMENT', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Mine',
+      callback_number: '+14085550008', starts_at: nextSlot().toISOString() });
+    reqs = [];
+    const out = await booking.cancelAppointment({ tenantId: CAL_T.id + 9999, appointmentId: r.appointment_id });
+    assert.strictEqual(out.success, false);
+    assert.strictEqual(out.error, 'not_found');
+    assert.strictEqual(reqs.length, 0, 'a cross-tenant cancel reached HighLevel');
+    assert.strictEqual((await M.Appointment.findByPk(r.appointment_id)).status, 'confirmed');
+  });
+
+  await t('the contact upsert carries the caller, and the push carries its id', async () => {
+    reqs = []; scenario = {};
+    await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Ana Ruiz',
+      callback_number: '+14085550009', email: 'ana@example.com', starts_at: nextSlot().toISOString() });
+    const up = reqs.find((x) => x.path === '/contacts/upsert');
+    assert.ok(up, 'no contact was upserted, yet HighLevel requires contactId');
+    assert.strictEqual(up.body.locationId, CAL_T.ghl_location_id);
+    assert.strictEqual(up.body.phone, '+14085550009');
+    assert.strictEqual(up.body.email, 'ana@example.com');
+    const made = reqs.find((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.strictEqual(made.body.contactId, up_id(up), 'the appointment used a different contact than the upsert returned');
+    function up_id(u) { return `CT-${u.body.phone || u.body.email || 'x'}`; }
+  });
+
+  await t('a contact HighLevel will not accept fails the booking, it does not half-book it', async () => {
+    scenario = { contactFails: true };
+    const before = await M.Appointment.count();
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'NoContact',
+      callback_number: '+14085550010', starts_at: nextSlot().toISOString() });
+    scenario = {};
+    assert.strictEqual(r.success, false);
+    assert.strictEqual(r.error, 'sync_failed');
+    assert.strictEqual(await M.Appointment.count(), before);
+  });
+
+  await t('slot validation at HighLevel is OFF by default, and the reason is written down', () => {
+    assert.strictEqual(ghlCalendar.validateSlot(), false);
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlCalendar.js'), 'utf8');
+    assert.ok(/uq_lite_appts_slot/.test(src), 'the file does not say which index is the conflict authority');
+    assert.ok(/LITE_GHL_APPT_VALIDATE_SLOT=1/.test(src), 'the gap left by ignoring slot validation is not named');
+  });
+
+  await t('LITE_GHL_APPT_VALIDATE_SLOT=1 hands the second opinion back to HighLevel', async () => {
+    process.env.LITE_GHL_APPT_VALIDATE_SLOT = '1';
+    reqs = []; scenario = {};
+    try {
+      await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Strict',
+        callback_number: '+14085550011', starts_at: nextSlot().toISOString() });
+      const made = reqs.find((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+      assert.strictEqual(made.body.ignoreFreeSlotValidation, false);
+    } finally { delete process.env.LITE_GHL_APPT_VALIDATE_SLOT; }
+  });
+
   srv.close();
 
   console.log(`\n${'='.repeat(66)}\n  ${pass}/${pass + fail} passed`);
   if (fail) console.log('  FAILED: ' + failures.join(' | '));
-  console.log('  NOT COVERED: the real HighLevel API, a real purchase, a real webhook');
-  console.log('               from HighLevel\'s servers, and Postgres itself.');
+  console.log('  NOT COVERED: the real HighLevel API (including whether a live sub-account');
+  console.log('               honours Version v3 or 2021-07-28 on the calendar endpoints),');
+  console.log('               a real purchase, a real webhook from HighLevel\'s servers,');
+  console.log('               and Postgres itself.');
   console.log('='.repeat(66));
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error('SIT crashed:', e); process.exit(1); });

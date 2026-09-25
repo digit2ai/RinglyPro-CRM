@@ -53,6 +53,13 @@ router.get('/', async (req, res) => {
     ghl_transfers_uncapped: ghlOn ? true : false,
     ghl_post_call_webhook: (() => { const w = require('./webhooks-ghl');
       return { mode: w.mode(), secret_configured: w.secretConfigured(), ...w.stats }; })(),
+    // The OUTBOUND half of the calendar. A push that keeps failing is silent
+    // from a customer's side — they simply see "pick another time" — so the
+    // counter and the last error are surfaced here, where the owner can find
+    // them, rather than living only in the logs.
+    ghl_calendar_push: (() => { const c = require('../services/ghlCalendar');
+      return { ...c.stats, slot_validation_at_highlevel: c.validateSlot(),
+        version: c.primaryVersion(), version_fallback: c.fallbackVersion() }; })(),
   });
 });
 

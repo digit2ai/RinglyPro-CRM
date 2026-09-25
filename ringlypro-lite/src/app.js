@@ -104,4 +104,20 @@ app.get('/dashboard', page('dashboard.html'));
 // Debug error surface (parity with the verticals pattern)
 app.get('/debug/lite-error', (req, res) => res.json({ service: 'ringlypro-lite', ok: true }));
 
+/**
+ * LAST RESORT. Express 4 does not route a rejected async handler, so anything
+ * a route forgets to catch becomes an unhandled rejection — which on current
+ * Node ends the process, taking every tenant's line down with it. This catches
+ * what reaches Express; server.js catches what does not.
+ *
+ * The message is never returned: a stack or a driver error is exactly the kind
+ * of internal detail a customer surface must not carry.
+ */
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('[lite] unhandled route error:', req.method, req.path, err && err.message);
+  if (res.headersSent) return;
+  res.status(500).json({ error: 'server_error' });
+});
+
 module.exports = app;

@@ -11,6 +11,8 @@ const { Op } = require('sequelize');
 const { sequelize, Tenant, Number: LiteNumber, Call, Message, AvailabilityRule, Appointment } = require('../models');
 const { zonedToUtc, utcToZonedParts, hhmmToMinutes, displaySlot } = require('../utils/dates');
 const { answeringAllowed } = require('./entitlement');
+const ghlCalendar = require('./ghlCalendar');
+const accounts = require('./ghlAccounts');
 
 function last10(p) { return String(p || '').replace(/[^0-9]/g, '').slice(-10); }
 
@@ -135,8 +137,11 @@ async function checkAvailability({ tenantId, date, time, days_ahead = 7, limit =
   if (!rules.length) return { success: true, slots: [], slot_count: 0, note: 'no_availability_rules' };
 
   const now = new Date();
+  // `sync_unknown` is a slot we may have created in HighLevel and cannot prove
+  // — it still blocks the partial unique index, so availability has to agree or
+  // the picker offers a time the insert then refuses.
   const booked = await Appointment.findAll({
-    where: { tenant_id: tenantId, status: 'confirmed', starts_at: { [Op.gte]: now } }
+    where: { tenant_id: tenantId, status: { [Op.in]: ['confirmed', 'sync_unknown'] }, starts_at: { [Op.gte]: now } }
   });
   const bookedSet = new Set(booked.map(a => new Date(a.starts_at).getTime()));
 
@@ -218,7 +223,13 @@ async function checkAvailability({ tenantId, date, time, days_ahead = 7, limit =
  * uq_lite_appts_slot(tenant_id, starts_at) WHERE status<>'cancelled' as the
  * final race guard, so two concurrent calls can never double-book one slot.
  */
-async function bookAppointment({ tenantId, caller_name, callback_number, date, time, starts_at, slot_minutes, call_id }) {
+// `origin` is deliberately NOT an argument. relayAgent spreads the MODEL's raw
+// tool input into this call, so any field named here can be set by the model —
+// and a model emitting origin:'ai' would book locally, push nothing, and
+// silently reinstate the double-booking this whole change removes. Everything
+// that reaches this function is a RinglyPro-side booking by definition; the
+// mirror writes its own rows directly with origin:'ai'.
+async function bookAppointment({ tenantId, caller_name, callback_number, date, time, starts_at, slot_minutes, call_id, email }) {
   const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const tz = tenant.timezone || 'America/New_York';
@@ -242,7 +253,7 @@ async function bookAppointment({ tenantId, caller_name, callback_number, date, t
   try {
     const appt = await sequelize.transaction(async (tx) => {
       const clash = await Appointment.findOne({
-        where: { tenant_id: tenantId, starts_at: startUtc, status: 'confirmed' },
+        where: { tenant_id: tenantId, starts_at: startUtc, status: { [Op.in]: ['confirmed', 'sync_unknown'] } },
         transaction: tx,
         lock: tx.LOCK.UPDATE
       });
@@ -250,12 +261,49 @@ async function bookAppointment({ tenantId, caller_name, callback_number, date, t
       return Appointment.create({
         tenant_id: tenantId, call_id: call_id || null,
         caller_name: caller_name || null, callback_number: callback_number || null,
-        starts_at: startUtc, ends_at: endUtc, status: 'confirmed'
+        starts_at: startUtc, ends_at: endUtc, status: 'confirmed',
+        origin: 'ringlypro'
       }, { transaction: tx });
     });
+
+    // ── The other calendar ────────────────────────────────────────────────
+    // A booking taken here is invisible to the HighLevel Voice AI until it is
+    // written into the tenant's HighLevel calendar, and an AI that cannot see
+    // it will offer the slot to the next caller. Push OUTSIDE the transaction:
+    // the row id is needed, and an HTTP round trip inside a transaction holds a
+    // row lock open for seconds.
+    const push = await pushToHighLevel(tenant, appt, email);
+
+    if (push && push.unconfirmed) {
+      // WE MAY HAVE CREATED IT AND CANNOT PROVE IT. Deleting the row here would
+      // leave an event in the customer's calendar with nothing on our side
+      // pointing at it, so it could never be cancelled — and with slot
+      // validation off, every retry of the same time would add another. The row
+      // is KEPT, marked, left blocking the slot, and surfaced to the owner; the
+      // visitor is told it could not be confirmed rather than that it is booked.
+      try { await appt.update({ status: 'sync_unknown' }); } catch (_) { /* reported below */ }
+      console.error('[lite:booking] HighLevel outcome UNKNOWN for appt', appt.id, '-', push.detail);
+      return { success: false, error: 'sync_unconfirmed' };
+    }
+
+    if (push && push.failed) {
+      // A DEFINITE refusal: HighLevel answered and said no, so nothing exists
+      // there. Booked here and free there is the double-book this work removes,
+      // so the local row goes rather than being left in a half state.
+      try { await appt.destroy(); }
+      catch (e) { console.error('[lite:booking] SYNC FAILED AND THE LOCAL ROW SURVIVED — appt', appt.id, e.message); }
+      console.error('[lite:booking] HighLevel refused the booking:', push.detail);
+      // The reason stays in the log and in /internal/security. It reaches no
+      // caller: on the relay path the return value is stringified into the
+      // transcript and handed back to the model, which would read a HighLevel
+      // error — or a decryption failure naming an env var — out loud.
+      return { success: false, error: 'sync_failed' };
+    }
+
     return {
       success: true, booked: true, appointment_id: appt.id,
       starts_at: startUtc.toISOString(),
+      synced_to_calendar: !!(push && push.eventId),
       display: displaySlot(tz, startUtc, tenant.locale)
     };
   } catch (e) {
@@ -266,6 +314,74 @@ async function bookAppointment({ tenantId, caller_name, callback_number, date, t
     console.error('[lite:booking] book error:', e.message);
     return { success: false, error: e.message };
   }
+}
+
+/**
+ * Write a RinglyPro-born appointment into the tenant's HighLevel calendar.
+ * Returns `{}` when the tenant is not on HighLevel (the Twilio path, and every
+ * tenant mid-setup — they behave exactly as before), `{ eventId }` on success,
+ * `{ failed:true, detail }` when HighLevel was reached and refused or could not
+ * be reached at all.
+ */
+async function pushToHighLevel(tenant, appt, email) {
+  if (!ghlCalendar.enabledFor(tenant)) return {};
+  if (!ghlCalendar.pushable(appt)) return {};          // echo guard, checked twice on purpose
+  let creds = null;
+  try { creds = await accounts.credsFor(tenant); } catch (e) {
+    return { failed: true, detail: `credentials unavailable: ${e.message}` };
+  }
+  if (!creds || !creds.token) return { failed: true, detail: 'no HighLevel credentials for this account' };
+  // Defence in depth: the calendar id and the credentials must name the SAME
+  // location. No current path can separate them (provisioning writes the
+  // location and the token together, and the calendar only after), but a
+  // hand-edited row falling through to the env fallback would post this
+  // visitor's name and phone into the pilot sub-account before the calendar
+  // call failed.
+  if (String(creds.locationId) !== String(tenant.ghl_location_id)) {
+    return { failed: true, detail: 'credentials do not match this account\'s location' };
+  }
+
+  let out = null;
+  try {
+    out = await ghlCalendar.pushAppointment({ tenant, creds, appt, email });
+  } catch (e) {
+    const detail = `${e.status || ''} ${String(e.message || e)}`.trim().slice(0, 200);
+    return e.ambiguous ? { unconfirmed: true, detail } : { failed: true, detail };
+  }
+  if (!out || !out.eventId) return {};                  // skipped for a stated reason, not a failure
+
+  // OUTSIDE the try above ON PURPOSE. A database hiccup writing the id is not
+  // a push failure — the event exists — and treating it as one deleted the row
+  // and orphaned that event.
+  try { await appt.update({ ghl_event_id: out.eventId }); }
+  catch (e) { console.error('[lite:booking] event', out.eventId, 'created but its id was not stored:', e.message); }
+  return { eventId: out.eventId };
+}
+
+/**
+ * Cancel both calendars. The local row is authoritative and is cancelled
+ * first; the HighLevel side is best-effort and reports itself, because a
+ * cancellation must never fail on the owner because HighLevel is down.
+ */
+async function cancelAppointment({ tenantId, appointmentId }) {
+  const appt = await Appointment.findOne({ where: { id: appointmentId, tenant_id: tenantId } });
+  if (!appt) return { success: false, error: 'not_found' };
+  if (appt.status !== 'cancelled') { appt.status = 'cancelled'; await appt.save(); }
+  const tenant = await Tenant.findByPk(tenantId);
+  if (!tenant || !ghlCalendar.enabledFor(tenant) || !appt.ghl_event_id) return { success: true, remote: false };
+  let creds = null;
+  try { creds = await accounts.credsFor(tenant); } catch (_) { creds = null; }
+  const out = await ghlCalendar.cancelAppointment({ tenant, creds, appt });
+  const ok = !!(out && out.cancelled);
+  // RECORDED ON THE ROW, not only in a counter. The local cancel stands either
+  // way — an outage must never stop an owner cancelling — but if the other
+  // calendar still holds the slot, that fact belongs somewhere an operator can
+  // find it and act on, not behind an admin key as an aggregate.
+  try { await appt.update({ ghl_cancel_failed_at: ok ? null : new Date() }); } catch (_) { /* logged below */ }
+  if (!ok) console.error('[lite:booking] appt', appt.id, 'is cancelled here and NOT in the other calendar');
+  // A CODE, never HighLevel's own words: this value is rendered in the
+  // subscriber's dashboard, and the platform is not named on a customer surface.
+  return { success: true, remote: ok, remote_status: ok ? null : 'not_confirmed_elsewhere' };
 }
 
 /** Message-taking path. */
@@ -280,4 +396,4 @@ async function takeMessage({ tenantId, call_id, caller_name, callback_number, bo
   return { success: true, saved: true, message_id: msg.id };
 }
 
-module.exports = { getBusinessInfo, identifyCaller, checkAvailability, bookAppointment, takeMessage, last10 };
+module.exports = { getBusinessInfo, identifyCaller, checkAvailability, bookAppointment, cancelAppointment, takeMessage, last10 };

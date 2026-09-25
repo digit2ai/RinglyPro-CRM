@@ -129,6 +129,20 @@ const Appointment = sequelize.define('LiteAppointment', {
   starts_at: { type: DataTypes.DATE, allowNull: false },    // UTC instant of the slot
   ends_at: { type: DataTypes.DATE, allowNull: false },
   status: { type: DataTypes.STRING, defaultValue: 'confirmed' }, // confirmed|cancelled|completed
+  // WHICH SIDE THIS ROW WAS BORN ON. 'ringlypro' = booked here (public booking
+  // page, dashboard, our own relay agent) and therefore PUSHED to HighLevel;
+  // 'ai' = mirrored in from HighLevel and NEVER pushed back, which is the only
+  // thing standing between a two-way sync and an echo loop. No default on
+  // purpose: rows written before this column existed are NULL, i.e. provenance
+  // unknown, and unknown never pushes.
+  origin: { type: DataTypes.STRING(16) },
+  // HighLevel's own event id, set when the push succeeds or when the mirror
+  // reports one. It is what lets a cancellation reach both calendars.
+  ghl_event_id: { type: DataTypes.STRING },
+  // Set when the LOCAL cancel succeeded but the remote one did not. Without it
+  // the failure lived only in an aggregate counter behind the admin key, so the
+  // slot stayed blocked in HighLevel and nobody who could act on it could see.
+  ghl_cancel_failed_at: { type: DataTypes.DATE },
   created_at: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, { tableName: 'lite_appointments', timestamps: false, indexes: [{ fields: ['tenant_id'] }, { fields: ['tenant_id', 'starts_at'] }] });
 

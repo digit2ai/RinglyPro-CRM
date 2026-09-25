@@ -43,17 +43,30 @@ function configured(creds) {
 }
 function locationId(creds) { return resolve(creds).locationId; }
 
-async function call(method, path, { query, body, creds } = {}) {
+/**
+ * `version` overrides the Version header for ONE call. It exists because the
+ * calendar and contact endpoints this service now writes to are documented
+ * under `Version: v3` while everything that already worked here is on the
+ * date-stamped `2021-07-28`. Rather than guess which one a given sub-account
+ * honours, the caller supplies one and retries with the other (see
+ * services/ghlCalendar.js) — a version mismatch is then a recorded fact, not
+ * an assumption baked into a constant.
+ */
+async function call(method, path, { query, body, creds, version, timeoutMs } = {}) {
   const { token } = resolve(creds);
   if (!token) { const e = new Error('no HighLevel token for this tenant (and LITE_GHL_TOKEN is not set)'); e.status = 0; throw e; }
   const url = new URL(BASE + path);
   for (const [k, v] of Object.entries(query || {})) if (v != null) url.searchParams.set(k, String(v));
   const res = await fetch(url, {
     method,
-    headers: { Authorization: `Bearer ${token}`, Version: VERSION, Accept: 'application/json',
+    headers: { Authorization: `Bearer ${token}`, Version: version || VERSION, Accept: 'application/json',
       ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(20000),
+    // 20 s is right for a background provisioning step and far too long for a
+    // call a person is waiting on: the calendar push runs inside a live phone
+    // turn and inside a visitor's HTTP request, so those callers pass a much
+    // smaller budget. See services/ghlCalendar.js.
+    signal: AbortSignal.timeout(Math.max(1000, Number(timeoutMs) || 20000)),
   });
   let data = null;
   try { data = await res.json(); } catch (_) { data = null; }

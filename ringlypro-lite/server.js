@@ -45,6 +45,16 @@ async function initDb() {
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS provisioning_error TEXT;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS forwarding_confirmed_at TIMESTAMP WITH TIME ZONE;
   `);
+  // Two-way calendar. `origin` is deliberately left NULL on existing rows —
+  // they pre-date the column and their provenance is genuinely unknown, and
+  // only origin='ringlypro' is ever pushed to HighLevel, so an unknown row can
+  // never be replayed into a customer's calendar.
+  await sequelize.query(`
+    ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS origin VARCHAR(16);
+    ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS ghl_event_id VARCHAR(255);
+    ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS ghl_cancel_failed_at TIMESTAMPTZ;
+    CREATE INDEX IF NOT EXISTS ix_lite_appts_ghl_event ON lite_appointments(ghl_event_id);
+  `);
   // One tenant may hold at most one sub-account from the pool. Enforced in the
   // database, not only in the claim function, because a double-claim would put
   // two clients' phone numbers and contacts in one HighLevel location.
@@ -299,5 +309,18 @@ async function main() {
     } catch (e) { console.error('[lite] rollover scheduler failed to start:', e.message); }
   });
 }
+
+/**
+ * A REJECTED PROMISE MUST NOT END THE SERVICE. Node's default for an unhandled
+ * rejection is to exit, so one bad request — `/api/appointments/abc/cancel`
+ * sent a non-integer into an integer column — restarted Lite for every tenant.
+ * The route is fixed; this is the net under every route that is not.
+ */
+process.on('unhandledRejection', (err) => {
+  console.error('[lite] UNHANDLED REJECTION (kept running):', (err && err.stack) || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[lite] UNCAUGHT EXCEPTION (kept running):', (err && err.stack) || err);
+});
 
 main();

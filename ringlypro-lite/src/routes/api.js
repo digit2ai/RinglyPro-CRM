@@ -93,18 +93,48 @@ router.delete('/messages/:id', async (req, res) => {
 router.get('/appointments', async (req, res) => {
   const from = req.query.from ? new Date(req.query.from) : new Date(Date.now() - 86400000);
   const to = req.query.to ? new Date(req.query.to) : new Date(Date.now() + 14 * 86400000);
+  // FIELDS ARE NAMED, not whole rows. `ghl_event_id` and `origin` are plumbing:
+  // the platform underneath is not named on a customer surface, and returning
+  // the model wholesale means every column added later ships to the browser by
+  // default. `synced` is the useful part of it, as a boolean.
   const rows = await Appointment.findAll({
+    attributes: ['id', 'call_id', 'caller_name', 'callback_number', 'starts_at', 'ends_at', 'status', 'created_at', 'ghl_event_id', 'ghl_cancel_failed_at'],
     where: { tenant_id: req.tenantId, starts_at: { [Op.between]: [from, to] } },
     order: [['starts_at', 'ASC']]
   });
-  res.json({ appointments: rows });
+  res.json({
+    appointments: rows.map((r) => {
+      const o = r.get({ plain: true });
+      const synced = !!o.ghl_event_id;
+      const cancel_incomplete = !!o.ghl_cancel_failed_at;
+      delete o.ghl_event_id; delete o.ghl_cancel_failed_at;
+      return { ...o, synced, cancel_incomplete };
+    })
+  });
 });
 
+// Cancelling here also cancels it in the tenant's HighLevel calendar, or the
+// slot stays blocked there and the Voice AI stops offering a time the owner
+// has actually freed — the mirror image of the double-booking bug, and the one
+// that quietly costs them bookings. The HighLevel leg is best-effort and
+// reported (`remote`), never a reason to refuse the owner's cancellation.
 router.post('/appointments/:id/cancel', async (req, res) => {
-  const a = await Appointment.findOne({ where: { id: req.params.id, tenant_id: req.tenantId } });
-  if (!a) return res.status(404).json({ error: 'not_found' });
-  a.status = 'cancelled'; await a.save();
-  res.json({ success: true });
+  // `:id` IS PARSED BEFORE IT REACHES POSTGRES. `/appointments/abc/cancel` sent
+  // 'abc' into an integer column, Postgres threw, the handler's promise
+  // rejected, and with no Express error middleware and no unhandledRejection
+  // handler in this service that TAKES THE WHOLE PROCESS DOWN on modern Node —
+  // one unauthenticated-shaped URL from a signed-in tenant restarts Lite for
+  // every tenant.
+  const id = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'not_found' });
+  try {
+    const out = await booking.cancelAppointment({ tenantId: req.tenantId, appointmentId: id });
+    if (!out.success) return res.status(404).json({ error: out.error || 'not_found' });
+    res.json(out);
+  } catch (e) {
+    console.error('[lite:api] cancel failed:', e.message);
+    res.status(500).json({ error: 'cancel_failed' });
+  }
 });
 
 /* ── Settings: business ────────────────────────────────────────────── */

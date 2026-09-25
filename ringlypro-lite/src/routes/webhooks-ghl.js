@@ -97,6 +97,9 @@ function read(body) {
     outcome: pick('outcome', 'call_status', 'status'),
     apptStart: pick('appointment.startTime', 'appointment_start', 'appointmentStartTime'),
     apptEnd: pick('appointment.endTime', 'appointment_end', 'appointmentEndTime'),
+    // HighLevel's own event id when the workflow sends one, so a later
+    // cancellation in RinglyPro can reach the right event on their side.
+    apptId: pick('appointment.id', 'appointment_id', 'appointmentId', 'calendar_event_id'),
     message: pick('message', 'note', 'message_body'),
   };
 }
@@ -181,13 +184,27 @@ router.post('/ghl/call', async (req, res) => {
     }
     if (f.apptStart) {
       const starts = new Date(f.apptStart);
-      if (!isNaN(starts.getTime())) {
+      // A booking HighLevel has already told us about is not a second booking.
+      // Without this the only thing stopping a duplicate row was the partial
+      // unique index, and that error was swallowed by the .catch below — so a
+      // re-delivery under a new call id quietly logged a warning and moved on.
+      const eid = f.apptId ? String(f.apptId).slice(0, 200) : null;
+      const already = eid ? await Appointment.findOne({ where: { tenant_id: tenantId, ghl_event_id: eid } }) : null;
+      if (already) { /* same event, already mirrored */ }
+      else if (!isNaN(starts.getTime())) {
         const ends = f.apptEnd && !isNaN(new Date(f.apptEnd).getTime())
           ? new Date(f.apptEnd) : new Date(starts.getTime() + 30 * 60000);
+        // origin:'ai' IS THE ECHO GUARD. This row was born in HighLevel; the
+        // outbound push (services/ghlCalendar.js) only ever sends
+        // origin='ringlypro', so a booking mirrored in here can never be
+        // pushed straight back as a duplicate of itself. Nothing in this file
+        // calls the push — the mirror writes and stops.
         await Appointment.create({
           tenant_id: tenantId, call_id: call.id,
           caller_name: f.callerName ? String(f.callerName).slice(0, 120) : null, callback_number: caller,
           starts_at: starts, ends_at: ends, status: 'confirmed',
+          origin: 'ai',
+          ghl_event_id: eid,
         }).catch((e) => console.warn('[lite:ghl-webhook] appointment not mirrored:', e.message));
       }
     }
