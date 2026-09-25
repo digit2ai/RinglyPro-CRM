@@ -620,4 +620,84 @@ router.get('/available-numbers', async (req, res) => {
   } catch (e) { res.status(502).json({ error: String(e.message || e).slice(0, 200) }); }
 });
 
+/**
+ * WIPE EVERY LITE ACCOUNT AND START CLEAN.
+ *
+ * The Lite database is a separate Render instance and is deliberately not
+ * reachable from the repo, so "just delete the rows" has nowhere to run. This
+ * is that operation, behind the same admin key, with the two guards that
+ * matter.
+ *
+ * IT REFUSES WHILE ANY TENANT STILL HOLDS A PHONE NUMBER. HighLevel has NO
+ * release API — a number is given up by hand in their UI — so deleting the row
+ * does not stop the ~$1.15/month; it just removes the only record of which
+ * number was ours and who had it. The refusal lists them so they can be
+ * released first. `i_have_released_the_numbers: true` proceeds anyway.
+ *
+ * A sub-account a tenant had CLAIMED goes back to `free` so the pool is usable
+ * again. A `shared` row is never touched, and no credential is deleted.
+ */
+router.post('/reset-accounts', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const { sequelize, Tenant, User, Number: NumberModel, Call, Message,
+          AvailabilityRule, Appointment, Transcript, Recharge, GhlAccount } = require('../models');
+
+  if (!req.body || req.body.confirm !== 'delete-all-accounts') {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":"delete-all-accounts"}. This permanently deletes every Lite tenant, login, call, message and appointment.' });
+  }
+
+  try {
+    const tenants = await Tenant.findAll();
+    const ids = tenants.map((t) => t.id);
+    const held = await NumberModel.findAll({ where: { status: 'active' } });
+
+    if (held.length && req.body.i_have_released_the_numbers !== true) {
+      return res.status(409).json({
+        ok: false, error: 'numbers_still_held',
+        message: 'These numbers are still on the account. HighLevel has no release API, so deleting these rows would keep the monthly charge and lose the record of which number was whose. Release them in HighLevel first, then re-send with "i_have_released_the_numbers": true.',
+        numbers: held.map((n) => ({ tenant_id: n.tenant_id, did: n.did, provider: n.provider })),
+      });
+    }
+
+    const before = { tenants: ids.length, logins: await User.count(), numbers: await NumberModel.count(),
+      calls: await Call.count(), messages: await Message.count(), appointments: await Appointment.count() };
+
+    const deleted = {};
+    await sequelize.transaction(async (tx) => {
+      const opt = { transaction: tx, where: {} };
+      // Children first. `where: {}` is every row on purpose: this wipes the
+      // whole service, and a per-tenant filter would strand rows whose tenant
+      // was already gone.
+      deleted.appointments = await Appointment.destroy(opt);
+      deleted.messages = await Message.destroy(opt);
+      deleted.transcripts = await Transcript.destroy(opt);
+      deleted.calls = await Call.destroy(opt);
+      deleted.availability_rules = await AvailabilityRule.destroy(opt);
+      deleted.recharges = await Recharge.destroy(opt);
+      deleted.numbers = await NumberModel.destroy(opt);
+      deleted.logins = await User.destroy(opt);
+      deleted.tenants = await Tenant.destroy(opt);
+
+      // Hand any exclusively-claimed sub-account back to the pool. A shared
+      // row serves everyone and is never claimed, so it is left alone.
+      const [, freed] = await GhlAccount.update(
+        { status: 'free', claimed_by_tenant: null, claimed_at: null },
+        { where: { status: 'claimed' }, transaction: tx });
+      deleted.sub_accounts_freed = Array.isArray(freed) ? freed.length : (freed || 0);
+    });
+
+    const pool = await require('../services/ghlAccounts').status();
+    return res.json({
+      ok: true, before, deleted,
+      pool_after: { mode: pool.mode, shared: pool.shared, free: pool.free, claimed: pool.claimed },
+      kept: 'HighLevel sub-accounts and their stored tokens, and the platform security-alert log. No credential was deleted.',
+      next: 'Sign up fresh at /signup. The next tenant gets id 1 only if the sequence was reset; ids simply continue otherwise, which is harmless.',
+    });
+  } catch (e) {
+    console.error('[lite:security] reset-accounts failed:', e.message);
+    return res.status(500).json({ ok: false, error: 'reset_failed', message: String(e.message || e).slice(0, 300) });
+  }
+});
+
 module.exports = router;
