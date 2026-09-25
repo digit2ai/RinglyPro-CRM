@@ -245,4 +245,108 @@ router.post('/ghl-pool', express.json({ limit: '16kb' }), async (req, res) => {
   }
 });
 
+/**
+ * PROVE THE TWO-WAY CALENDAR AGAINST THE REAL HIGHLEVEL API.
+ *
+ * WHY THIS EXISTS. The SIT runs against a fake, so the one thing it cannot
+ * answer is the one thing the code comments flag as unverified: whether this
+ * sub-account honours `Version: v3` on the calendar endpoints, what
+ * `POST /calendars/events/appointments` actually returns, and whether the
+ * ownership read and the cancel behave as documented. Buying a number to find
+ * out costs money and trips the purchase cap; this costs nothing.
+ *
+ * WHAT IT TOUCHES: the owner's own sub-account, a calendar named "RinglyPro
+ * Self Test" (created once, reused after), one contact and one appointment —
+ * which it then CANCELS. It never touches a tenant row, never buys anything,
+ * and never runs against a customer's calendar.
+ */
+router.post('/ghl-calendar-selftest', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true}. This writes a test appointment into the owner\'s own HighLevel sub-account and then cancels it.' });
+  }
+  const ghl = require('../telephony/ghl');
+  const cal = require('../services/ghlCalendar');
+  const steps = [];
+  const step = async (name, fn) => {
+    const t0 = Date.now();
+    try { const out = await fn(); steps.push({ step: name, ok: true, ms: Date.now() - t0, detail: out || null }); return out; }
+    catch (e) { steps.push({ step: name, ok: false, ms: Date.now() - t0, status: e.status || null, error: String(e.message || e).slice(0, 300) }); throw e; }
+  };
+
+  try {
+    const creds = ghl.resolve(null);
+    if (!creds.token || !creds.locationId) {
+      return res.status(503).json({ ok: false, error: 'not_configured',
+        message: 'LITE_GHL_TOKEN and LITE_GHL_LOCATION_ID must be set on the service.' });
+    }
+
+    // 1. Which Version header do the calendar endpoints actually accept here?
+    const versions = {};
+    for (const v of [cal.primaryVersion(), cal.fallbackVersion()]) {
+      try { await ghl.call('GET', '/calendars/', { query: { locationId: creds.locationId }, creds, version: v, timeoutMs: 12000 });
+            versions[v] = 'accepted'; }
+      catch (e) { versions[v] = `refused ${e.status || ''} ${String(e.message || e).slice(0, 120)}`.trim(); }
+    }
+    steps.push({ step: 'version probe (GET /calendars/)', ok: true, detail: versions });
+
+    // 2. A calendar of our own, reused across runs so this leaves no litter.
+    const NAME = 'RinglyPro Self Test';
+    const calendarId = await step('find or create the self-test calendar', async () => {
+      const list = await ghl.call('GET', '/calendars/', { query: { locationId: creds.locationId }, creds, timeoutMs: 12000 });
+      const arr = Array.isArray(list) ? list : (list && (list.calendars || list.data)) || [];
+      const found = arr.find((c) => c && String(c.name || '').trim() === NAME);
+      if (found) return { id: found.id, reused: true };
+      const made = await ghl.call('POST', '/calendars/', { creds, timeoutMs: 15000, body: {
+        locationId: creds.locationId, name: NAME,
+        description: 'Created by the RinglyPro Lite calendar self-test. Safe to delete.',
+        slotDuration: 30, slotDurationUnit: 'mins', timezone: 'America/New_York', isActive: true } });
+      return { id: made && (made.id || (made.calendar && made.calendar.id)), reused: false };
+    });
+    const calId = calendarId && calendarId.id;
+    if (!calId) throw Object.assign(new Error('no calendar id'), { status: 0 });
+
+    // 3. The real push, through the real code path.
+    const tenant = { id: 0, business_name: 'RinglyPro Self Test', timezone: 'America/New_York',
+                     ghl_location_id: creds.locationId, ghl_calendar_id: calId };
+    const start = new Date(Date.now() + 40 * 86400000); start.setUTCHours(16, 0, 0, 0);
+    const appt = { id: 0, origin: 'ringlypro', caller_name: 'RinglyPro SelfTest',
+                   callback_number: '+18886103810', starts_at: start,
+                   ends_at: new Date(start.getTime() + 30 * 60000), ghl_event_id: null };
+
+    const pushed = await step('push an appointment (contacts/upsert + calendars/events/appointments)',
+      () => cal.pushAppointment({ tenant, creds, appt }));
+    appt.ghl_event_id = pushed && pushed.eventId;
+
+    // 4. The ownership read the cancel depends on.
+    await step('read it back and confirm it is on OUR calendar', async () => {
+      const got = await ghl.call('GET', `/calendars/events/appointments/${encodeURIComponent(appt.ghl_event_id)}`,
+        { creds, timeoutMs: 12000 });
+      const ev = (got && (got.appointment || got.event || got.data || got)) || {};
+      return { returned_calendarId: ev.calendarId || ev.calendar_id || null, matches: String(ev.calendarId || ev.calendar_id || '') === String(calId) };
+    });
+
+    // 5. A foreign event must be refused.
+    await step('REFUSE to cancel an event on a calendar that is not ours', async () => {
+      const out = await cal.cancelAppointment({ tenant: { ...tenant, ghl_calendar_id: 'CAL-NOT-OURS' }, creds, appt });
+      return { cancelled: out.cancelled, reason: out.error || null,
+               correct: out.cancelled === false };
+    });
+
+    // 6. Clean up: cancel it for real.
+    const cancelled = await step('cancel it (and leave nothing behind)',
+      () => cal.cancelAppointment({ tenant, creds, appt }));
+
+    return res.json({
+      ok: steps.every((s) => s.ok) && !!pushed.eventId && !!(cancelled && cancelled.cancelled),
+      location_id: creds.locationId, calendar_id: calId, event_id: appt.ghl_event_id,
+      versions, steps, stats: cal.stats,
+    });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: e.code || 'selftest_failed',
+      message: String(e.message || e).slice(0, 300), steps, stats: require('../services/ghlCalendar').stats });
+  }
+});
+
 module.exports = router;
