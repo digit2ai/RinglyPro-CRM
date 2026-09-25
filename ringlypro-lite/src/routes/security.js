@@ -605,7 +605,10 @@ router.get('/available-numbers', async (req, res) => {
       return res.json({ area_code: area, matrix: rows });
     }
 
-    const q = /^\d{3}$/.test(area) ? { firstPart: `1${area}` } : {};
+    // The BARE area code — see ghlProvider.buyNumber. This probe shipped with
+    // the very bug it was written to find, and reported "0 available in 813"
+    // for an area that has 9.
+    const q = /^\d{3}$/.test(area) ? { firstPart: area } : {};
     const raw = await ghl.searchAvailable(q, creds);
     const arr = Array.isArray(raw) ? raw : (raw && (raw.numbers || raw.data)) || [];
     const nums = arr.map((n) => n.phoneNumber || n.number).filter(Boolean);
