@@ -582,6 +582,29 @@ router.get('/available-numbers', async (req, res) => {
   const area = String(req.query.area || '').trim();
   try {
     const creds = ghl.resolve(null);
+    // `?matrix=1` tries every (Version x firstPart) combination and reports
+    // which one actually filters. The docs say this endpoint requires
+    // Version v3 while the rest of this service sends 2021-07-28, and
+    // "the beginning of the phone number" does not say whether that includes
+    // the country code — so it is measured, not guessed.
+    if (req.query.matrix && /^\d{3}$/.test(area)) {
+      const rows = [];
+      for (const version of ['v3', '2021-07-28']) {
+        for (const fp of [area, `1${area}`, `+1${area}`]) {
+          try {
+            const r = await ghl.call('GET', `/phone-system/numbers/location/${creds.locationId}/available`,
+              { query: { countryCode: 'US', numberTypes: 'local', voiceEnabled: true, smsEnabled: true, firstPart: fp },
+                creds, version, timeoutMs: 15000 });
+            const a = Array.isArray(r) ? r : (r && (r.numbers || r.data)) || [];
+            const n = a.map((x) => x.phoneNumber || x.number).filter(Boolean);
+            rows.push({ version, firstPart: fp, returned: n.length,
+              in_area: n.filter((x) => String(x).startsWith(`+1${area}`)).length, sample: n.slice(0, 3) });
+          } catch (e) { rows.push({ version, firstPart: fp, error: String(e.message || e).slice(0, 120) }); }
+        }
+      }
+      return res.json({ area_code: area, matrix: rows });
+    }
+
     const q = /^\d{3}$/.test(area) ? { firstPart: `1${area}` } : {};
     const raw = await ghl.searchAvailable(q, creds);
     const arr = Array.isArray(raw) ? raw : (raw && (raw.numbers || raw.data)) || [];
