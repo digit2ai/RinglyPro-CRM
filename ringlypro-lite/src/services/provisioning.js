@@ -48,15 +48,24 @@ async function mark(tenant, state, extra = {}) {
  */
 async function ensureCalendar(tenant, creds) {
   if (tenant.ghl_calendar_id) return tenant.ghl_calendar_id;
+  // NO `timezone` FIELD. HighLevel rejects the whole request with "property
+  // timezone should not exist" — their schema has no such property, and a
+  // calendar takes its timezone from the location. This was never caught
+  // because nothing had ever run this step against the live API: every signup
+  // would have failed at step 3 of provisioning. Only `locationId` and `name`
+  // are required (verified against their docs and the live sub-account
+  // 2026-09-25); `calendarType:'event'` is set explicitly because the types
+  // that need a team member (round_robin, collective, class, service) would
+  // fail for a sub-account with nobody assigned.
   const made = await ghl.call('POST', '/calendars/', {
     creds,
     body: {
       locationId: creds.locationId,
       name: `${tenant.business_name} — Appointments`,
       description: `Booked by the RinglyPro assistant for ${tenant.business_name}.`,
+      calendarType: 'event',
       slotDuration: 30,
       slotDurationUnit: 'mins',
-      timezone: tenant.timezone || 'America/New_York',
       isActive: true,
     },
   });

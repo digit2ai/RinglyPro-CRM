@@ -297,12 +297,34 @@ router.post('/ghl-calendar-selftest', express.json({ limit: '4kb' }), async (req
       const list = await ghl.call('GET', '/calendars/', { query: { locationId: creds.locationId }, creds, timeoutMs: 12000 });
       const arr = Array.isArray(list) ? list : (list && (list.calendars || list.data)) || [];
       const found = arr.find((c) => c && String(c.name || '').trim() === NAME);
-      if (found) return { id: found.id, reused: true };
-      const made = await ghl.call('POST', '/calendars/', { creds, timeoutMs: 15000, body: {
-        locationId: creds.locationId, name: NAME,
-        description: 'Created by the RinglyPro Lite calendar self-test. Safe to delete.',
-        slotDuration: 30, slotDurationUnit: 'mins', timezone: 'America/New_York', isActive: true } });
-      return { id: made && (made.id || (made.calendar && made.calendar.id)), reused: false };
+      if (found) return { id: found.id, reused: true, via: 'existing' };
+
+      // Exercise THE PRODUCT'S OWN creation path, so this proves provisioning
+      // rather than a body written for the test.
+      const provisioning = require('../services/provisioning');
+      try {
+        const id = await provisioning.ensureCalendar(
+          { business_name: NAME, timezone: 'America/New_York', ghl_calendar_id: null }, creds);
+        return { id, reused: false, via: 'provisioning.ensureCalendar' };
+      } catch (e) {
+        // If it still fails, say exactly which reduced body HighLevel accepts,
+        // so the fix is a fact rather than another guess.
+        const tries = [
+          { label: 'minimum (locationId+name)', body: { locationId: creds.locationId, name: NAME } },
+          { label: 'no calendarType', body: { locationId: creds.locationId, name: NAME, slotDuration: 30, slotDurationUnit: 'mins', isActive: true } },
+          { label: 'calendarType personal', body: { locationId: creds.locationId, name: NAME, calendarType: 'personal', slotDuration: 30, slotDurationUnit: 'mins' } },
+        ];
+        const probed = [];
+        for (const t of tries) {
+          try {
+            const made = await ghl.call('POST', '/calendars/', { creds, timeoutMs: 15000, body: t.body });
+            const id = made && (made.id || (made.calendar && made.calendar.id));
+            probed.push({ ...t, ok: true, id });
+            return { id, reused: false, via: t.label, ensureCalendar_error: String(e.message || e).slice(0, 200), probed };
+          } catch (e2) { probed.push({ label: t.label, ok: false, status: e2.status || null, error: String(e2.message || e2).slice(0, 200) }); }
+        }
+        throw Object.assign(new Error(`every calendar body was refused: ${JSON.stringify(probed).slice(0, 400)}`), { status: 0 });
+      }
     });
     const calId = calendarId && calendarId.id;
     if (!calId) throw Object.assign(new Error('no calendar id'), { status: 0 });
