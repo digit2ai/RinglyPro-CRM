@@ -25,6 +25,35 @@ So **cost per minute stops being the deciding number and BREAK-EVEN CLIENT
 COUNT starts.** `platformEconomics()` in `src/utils/cost.js` computes it, and
 `GET /internal/economics/platform` reports it against the live client count.
 
+
+### WHICH GHL VOICE PLAN, AND THE EXACT MOMENT TO SWITCH (owner decision 2026-09-25)
+
+**Shipping on pay-per-use.** AI Employee Unlimited is $97/mo flat plus $0.012/min;
+pay-per-use is $0.13/min with no fixed fee. They cross where
+
+    $97 = minutes x ($0.130 - $0.012)   ->   minutes = 822 / month
+
+**822 answered minutes a month across ALL clients** — roughly 5 to 6 clients at
+150 minutes each. Below that the flat fee is money spent on capacity nobody is
+using: one client at 150 minutes costs **$19.50** on pay-per-use against $97.
+
+So the trigger is not a client count and not a feeling, it is a number:
+
+| Total minutes / month | Cheaper plan |
+|---|---|
+| under 822 | **pay-per-use** ($0.13/min) |
+| over 822 | **AI Employee Unlimited** ($97 + $0.012/min) |
+
+`GET /internal/economics/platform` reports the live figure. Set
+`LITE_COGS_GHL_AI_EMPLOYEE_MONTHLY=97` on the day the plan is turned on and every
+published break-even moves with it — no redeploy.
+
+**The cost of waiting, stated:** per-client margin is much thinner on
+pay-per-use. At $26/mo and 150 included minutes, a client costs $19.50 in
+minutes alone, leaving about $6.50 before the number rental. That is fine while
+proving the product and bad as a business, which is why the switch matters as
+soon as there is volume — and why the managed tier exists.
+
 ### THE SHIPPING SETUP: ONE SHARED SUB-ACCOUNT ON $97
 
 AI Employee Unlimited is billed **per location**, so putting every client in one
