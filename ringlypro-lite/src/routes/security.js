@@ -387,4 +387,113 @@ router.post('/ghl-calendar-selftest', express.json({ limit: '4kb' }), async (req
   }
 });
 
+/**
+ * PROVE THE MESSAGE PATH END TO END, ON THE LIVE SERVICE.
+ *
+ * "The tests pass" and "it works" are different claims. The SIT drives a fake
+ * HighLevel against in-memory models; this drives the REAL webhook route over
+ * the network, against the REAL Postgres, and reads the result back through
+ * the SAME query the dashboard uses. It answers: does a delivery authenticate,
+ * does it write a message, does the owner's Messages tab return it, and does
+ * the alert text actually leave the building.
+ *
+ * It uses a THROWAWAY tenant (990001) and a throwaway number, and deletes
+ * every row it made — it never writes into a real client's dashboard.
+ *
+ * `text_me` is optional and is the only part that spends money: give it a
+ * mobile and that phone receives the real alert, which is the only way to
+ * prove the alert rather than assert it.
+ */
+router.post('/ghl-message-selftest', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true[,"text_me":"+1..."]}. Uses a throwaway tenant and deletes its own rows. With text_me, that phone receives one real SMS.' });
+  }
+  const { Tenant, Number: NumberModel, Call, Message } = require('../models');
+  const crypto = require('crypto');
+  const TID = 990001;
+  const DID = '+15005550001';            // a reserved test number, never dialable
+  const steps = [];
+  const step = async (name, fn) => {
+    const t0 = Date.now();
+    try { const out = await fn(); steps.push({ step: name, ok: true, ms: Date.now() - t0, detail: out ?? null }); return out; }
+    catch (e) { steps.push({ step: name, ok: false, ms: Date.now() - t0, error: String(e.message || e).slice(0, 300) }); throw e; }
+  };
+  const cleanup = async () => {
+    await Message.destroy({ where: { tenant_id: TID } }).catch(() => {});
+    await Call.destroy({ where: { tenant_id: TID } }).catch(() => {});
+    await NumberModel.destroy({ where: { tenant_id: TID } }).catch(() => {});
+    await Tenant.destroy({ where: { id: TID } }).catch(() => {});
+  };
+
+  const secret = String(process.env.LITE_GHL_WEBHOOK_SECRET || '').trim();
+  if (!secret) return res.status(503).json({ ok: false, error: 'no_webhook_secret',
+    message: 'LITE_GHL_WEBHOOK_SECRET is not set, so the webhook refuses everything by design.' });
+
+  const textTo = req.body.text_me ? String(req.body.text_me).trim() : null;
+  const callId = `selftest-${Date.now()}`;
+  try {
+    await cleanup();
+
+    await step('create a throwaway tenant and number (never a real client)', async () => {
+      await Tenant.create({ id: TID, business_name: 'RinglyPro Self Test', owner_phone: textTo,
+        country: 'US', locale: 'en', timezone: 'America/New_York' });
+      await NumberModel.create({ tenant_id: TID, did: DID, country: 'US', provider: 'ghl', status: 'active' });
+      return { tenant_id: TID, did: DID, will_text: textTo || '(none — pass text_me to prove the alert)' };
+    });
+
+    // The REAL route, over the network, signed the way HighLevel would be.
+    const port = process.env.PORT || process.env.LITE_PORT || 10001;
+    const payload = { call_id: callId, to: DID, from: '+14085559999', duration: 42,
+      contact_name: 'Self Test Caller', outcome: 'message taken',
+      summary: 'Wants a quote for a new roof. Best time to call back is after 4pm.' };
+
+    const delivered = await step('POST a signed delivery to the real /webhooks/ghl/call', async () => {
+      const r = await fetch(`http://127.0.0.1:${port}/webhooks/ghl/call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-ringlypro-signature': secret },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(20000),
+      });
+      return { status: r.status, body: await r.json().catch(() => null) };
+    });
+    if (delivered.status !== 200) throw new Error(`the webhook refused a correctly signed delivery: ${delivered.status}`);
+
+    await step('an UNSIGNED delivery is still refused', async () => {
+      const r = await fetch(`http://127.0.0.1:${port}/webhooks/ghl/call`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, call_id: callId + '-unsigned' }),
+        signal: AbortSignal.timeout(20000) });
+      if (r.status !== 403) throw new Error(`expected 403, got ${r.status}`);
+      return { status: r.status };
+    });
+
+    // Read it back exactly as GET /api/messages does.
+    const seen = await step('the Messages tab query returns it', async () => {
+      const rows = await Message.findAll({ where: { tenant_id: TID }, order: [['created_at', 'DESC']], limit: 200 });
+      const unread = rows.filter((m) => !m.read_at).length;
+      const m = rows[0];
+      return { count: rows.length, unread,
+        caller_name: m && m.caller_name, callback_number: m && m.callback_number,
+        body: m && String(m.body).slice(0, 120) };
+    });
+    if (!seen.count) throw new Error('the delivery was accepted but no message reached the dashboard query');
+
+    const alerts = require('./webhooks-ghl').stats;
+    const out = {
+      ok: steps.every((s) => s.ok),
+      texted: textTo ? `one SMS was attempted to ${tollFraud.mask(textTo)} — check that phone` : 'not requested',
+      steps,
+      webhook_counters: { received: alerts.received, accepted: alerts.accepted, unauthenticated: alerts.unauthenticated },
+      still_unproven: 'Whether HighLevel\'s own workflow calls this URL on a real call. Only a real call proves that; watch ghl_post_call_webhook.received rise above 0.',
+    };
+    await cleanup();
+    return res.json(out);
+  } catch (e) {
+    await cleanup();
+    return res.status(502).json({ ok: false, error: 'selftest_failed', message: String(e.message || e).slice(0, 300), steps });
+  }
+});
+
 module.exports = router;
