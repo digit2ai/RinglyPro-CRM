@@ -115,6 +115,23 @@ M.sequelize = {
 };
 require.cache[require.resolve(path.join(ROOT, 'src/models.js'))] = { id: 'models', filename: 'models', loaded: true, exports: M };
 
+// The mirror now texts the owner, so the suite has to own the transport: a
+// real send would reach Twilio, cost money and drag the toll-fraud guard into
+// a test about webhooks.
+const SENT = [];
+let smsFails = false;
+require.cache[require.resolve(path.join(ROOT, 'src/services/sms.js'))] = {
+  id: 'sms', filename: 'sms', loaded: true,
+  exports: {
+    send: async ({ from, to, body }) => {
+      if (smsFails) throw new Error('carrier unavailable');
+      SENT.push({ from, to, body }); return { segments: 1 };
+    },
+    segments: () => 1,
+    sendDemoConfirm: async () => ({ segments: 0 }),
+  },
+};
+
 const secretbox = require(path.join(ROOT, 'src/services/secretbox'));
 const accounts = require(path.join(ROOT, 'src/services/ghlAccounts'));
 const provisioning = require(path.join(ROOT, 'src/services/provisioning'));
@@ -613,6 +630,50 @@ const tenantSeed = (over = {}) => ({
     const turns = (await M.Transcript.findAll({})).filter((x) => x.call_sid === 'ghl:big-1');
     assert.strictEqual(turns.length, 0, 'the transcript was stored a second time per-turn');
   });
+  await t('A MESSAGE TAKEN BY THE AI TEXTS THE OWNER', async () => {
+    const owner = await M.Tenant.findByPk(tenant.id);
+    await owner.update({ owner_phone: '+14085551234', locale: 'en' });
+    SENT.length = 0;
+    await post({ to: mirrorTenantNum.did, from: '+14085557777', call_id: 'alert-1',
+      summary: 'Wants a quote for a roof', outcome: 'message taken', contact_name: 'Rosa' },
+      { 'x-ringlypro-signature': 'sit-webhook-secret' });
+    assert.strictEqual(SENT.length, 1, 'the owner was never told a message came in');
+    assert.strictEqual(SENT[0].to, '+14085551234');
+    assert.strictEqual(SENT[0].from, mirrorTenantNum.did, 'the alert did not come from the tenant\'s own line');
+    assert.ok(/Rosa/.test(SENT[0].body) && /roof/.test(SENT[0].body));
+  });
+
+  await t('THE CALLER IS NEVER TEXTED ON THIS PATH — HighLevel owns that', async () => {
+    SENT.length = 0;
+    await post({ to: mirrorTenantNum.did, from: '+14085557778', call_id: 'alert-2',
+      outcome: 'appointment booked', appointment: { startTime: '2027-03-02T15:00:00Z', id: 'EVT-ALERT-2' } },
+      { 'x-ringlypro-signature': 'sit-webhook-secret' });
+    assert.ok(!SENT.some((m) => m.to === '+14085557778'), 'the caller got a second confirmation from us');
+    assert.strictEqual(SENT.length, 1, 'exactly one alert, to the owner');
+  });
+
+  await t('A CARRIER OUTAGE DOES NOT FAIL THE MIRROR — the rows are already written', async () => {
+    smsFails = true;
+    const r = await post({ to: mirrorTenantNum.did, from: '+14085557779', call_id: 'alert-3',
+      summary: 'Call me back', outcome: 'message taken' }, { 'x-ringlypro-signature': 'sit-webhook-secret' });
+    smsFails = false;
+    assert.strictEqual(r.status, 200);
+    const j = await r.json();
+    assert.ok(j.call_id, 'the delivery failed because a text failed, so HighLevel will retry it');
+    assert.ok(await M.Call.findOne({ where: { call_sid: 'ghl:alert-3' } }), 'the call row was lost');
+  });
+
+  await t('no owner mobile on file = no text, and no error', async () => {
+    const owner = await M.Tenant.findByPk(tenant.id);
+    await owner.update({ owner_phone: null });
+    SENT.length = 0;
+    const r = await post({ to: mirrorTenantNum.did, call_id: 'alert-4', summary: 'hi', outcome: 'message taken' },
+      { 'x-ringlypro-signature': 'sit-webhook-secret' });
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(SENT.length, 0);
+    await owner.update({ owner_phone: '+14085551234' });
+  });
+
   await t('THE ROUTE IS RATE LIMITED', async () => {
     process.env.LITE_GHL_WEBHOOK_PER_MIN = '3';
     let throttled = false;

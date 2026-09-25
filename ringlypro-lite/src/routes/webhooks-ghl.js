@@ -39,6 +39,8 @@ const router = express.Router();
 // node --check cannot see and the SIT caught.
 const { Tenant, Number: NumberModel, Call, Message, Appointment, Transcript } = require('../models');
 const tollFraud = require('../security/tollFraud');
+const smsSvc = require('../services/sms');
+const { t } = require('../services/i18n');
 
 const stats = { received: 0, accepted: 0, unauthenticated: 0, unmatched: 0, replayed: 0, throttled: 0, failed: 0, last_at: null };
 
@@ -161,6 +163,10 @@ router.post('/ghl/call', async (req, res) => {
     const callerChk = f.caller ? tollFraud.checkDestination(f.caller, { defaultCountry: 'US' }) : null;
     const caller = callerChk && callerChk.ok ? callerChk.e164 : null;
 
+    const from = num.did;            // the tenant's own line, for the owner alert
+    let wroteMessage = false;
+    let wroteAppointment = null;     // the display string, when one was booked
+
     const call = await Call.create({
       tenant_id: tenantId,
       call_sid: sid,
@@ -180,7 +186,8 @@ router.post('/ghl/call', async (req, res) => {
         caller_name: f.callerName ? String(f.callerName).slice(0, 120) : null,
         callback_number: caller,
         body: String(f.summary || f.message).slice(0, 4000),
-      }).catch((e) => console.warn('[lite:ghl-webhook] message not stored:', e.message));
+      }).then(() => { wroteMessage = true; })
+        .catch((e) => console.warn('[lite:ghl-webhook] message not stored:', e.message));
     }
     if (f.apptStart) {
       const starts = new Date(f.apptStart);
@@ -205,9 +212,36 @@ router.post('/ghl/call', async (req, res) => {
           starts_at: starts, ends_at: ends, status: 'confirmed',
           origin: 'ai',
           ghl_event_id: eid,
-        }).catch((e) => console.warn('[lite:ghl-webhook] appointment not mirrored:', e.message));
+        }).then(() => { wroteAppointment = starts.toISOString(); })
+          .catch((e) => console.warn('[lite:ghl-webhook] appointment not mirrored:', e.message));
       }
     }
+
+    // TELL THE OWNER, the way the Twilio path always has.
+    //
+    // A message the owner only finds by opening the dashboard is a message they
+    // find tomorrow. On the ConversationRelay path `fireSms` texts them the
+    // moment one is taken; the HighLevel path had NO alert at all, so the same
+    // product answered the same call and said nothing. Best-effort by design:
+    // an SMS failure must never fail the mirror, or HighLevel retries a
+    // delivery whose rows are already written.
+    //
+    // The CALLER is deliberately not texted here. On this path HighLevel's own
+    // workflow owns caller-facing messages, and a confirmation from both of us
+    // is worse than one from neither.
+    try {
+      const tenant = await Tenant.findByPk(tenantId);
+      if (tenant && tenant.owner_phone && from) {
+        const tt = t(tenant.locale);
+        if (wroteMessage) {
+          await smsSvc.send({ from, to: tenant.owner_phone,
+            body: tt.smsMessageOwner(tenant.business_name, f.callerName || null, caller, String(f.summary || f.message).slice(0, 300)) });
+        } else if (wroteAppointment) {
+          await smsSvc.send({ from, to: tenant.owner_phone,
+            body: tt.smsBookingOwner(tenant.business_name, f.callerName || null, wroteAppointment) });
+        }
+      }
+    } catch (e) { console.warn('[lite:ghl-webhook] owner alert not sent:', e.message); }
 
     stats.accepted++;
     return res.json({ ok: true, call_id: call.id });

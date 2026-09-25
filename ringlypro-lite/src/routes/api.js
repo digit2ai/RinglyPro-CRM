@@ -70,8 +70,19 @@ router.get('/messages', async (req, res) => {
   res.json({ unread, messages: rows });
 });
 
+// EVERY `:id` IS PARSED BEFORE IT REACHES POSTGRES — see the cancel route: a
+// non-integer goes into an integer column, the driver throws, and an
+// unhandled rejection used to take the whole service down. The appointments
+// route was fixed first; these three are the same shape and were missed.
+function idParam(req) {
+  const n = Number.parseInt(req.params.id, 10);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 router.post('/messages/:id/read', async (req, res) => {
-  const m = await Message.findOne({ where: { id: req.params.id, tenant_id: req.tenantId } });
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: 'not_found' });
+  const m = await Message.findOne({ where: { id, tenant_id: req.tenantId } });
   if (!m) return res.status(404).json({ error: 'not_found' });
   m.read_at = new Date(); await m.save();
   res.json({ success: true });
@@ -84,7 +95,9 @@ router.post('/messages/read-all', async (req, res) => {
 
 // Delete a message (swipe-left to delete).
 router.delete('/messages/:id', async (req, res) => {
-  const n = await Message.destroy({ where: { id: req.params.id, tenant_id: req.tenantId } });
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: 'not_found' });
+  const n = await Message.destroy({ where: { id, tenant_id: req.tenantId } });
   if (!n) return res.status(404).json({ error: 'not_found' });
   res.json({ success: true });
 });
@@ -125,8 +138,8 @@ router.post('/appointments/:id/cancel', async (req, res) => {
   // handler in this service that TAKES THE WHOLE PROCESS DOWN on modern Node —
   // one unauthenticated-shaped URL from a signed-in tenant restarts Lite for
   // every tenant.
-  const id = Number.parseInt(req.params.id, 10);
-  if (!Number.isInteger(id) || id <= 0) return res.status(404).json({ error: 'not_found' });
+  const id = idParam(req);
+  if (!id) return res.status(404).json({ error: 'not_found' });
   try {
     const out = await booking.cancelAppointment({ tenantId: req.tenantId, appointmentId: id });
     if (!out.success) return res.status(404).json({ error: out.error || 'not_found' });
