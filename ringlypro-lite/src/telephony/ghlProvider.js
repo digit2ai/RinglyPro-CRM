@@ -129,6 +129,10 @@ class GhlProvider {
 
     await ghl.call('POST', `/phone-system/numbers/location/${this._loc()}/purchase`, {
       creds: this._c(),
+      // A purchase reaches HighLevel's own upstream carrier, so it is slower
+      // than anything else here and the default 20 s cut it off mid-flight —
+      // which produced a "failed" that may have succeeded.
+      timeoutMs: Math.max(20000, parseInt(process.env.LITE_GHL_BUY_TIMEOUT_MS || '45000', 10) || 45000),
       body: {
         phoneNumber, countryCode: 'US', numberType: 'local',
         // Per-tenant, so a retried signup cannot buy a second number even if
@@ -268,5 +272,7 @@ class GhlProvider {
 }
 
 GhlProvider.MONTHLY_COST_USD = MONTHLY_COST_USD;
+/** Tests only: the owned-number cache is keyed by location and lives 60 s. */
+GhlProvider._clearOwnedCache = () => OWNED_CACHE.clear();
 GhlProvider.clientContext = clientContext;
 module.exports = GhlProvider;

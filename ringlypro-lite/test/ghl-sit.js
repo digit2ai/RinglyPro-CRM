@@ -144,6 +144,7 @@ let scenario = {};
 let boughtNumbers = 0;
 let eventSeq = 0;
 const EVENTS = {};   // event id -> the calendar it was created on
+const OWNED = [];    // numbers the fake sub-account has actually bought
 global.fetch = async (url, opts = {}) => {
   const u = new URL(String(url));
   const body = opts.body ? JSON.parse(opts.body) : null;
@@ -170,7 +171,9 @@ global.fetch = async (url, opts = {}) => {
   }
   if (p.endsWith('/purchase')) {
     if (scenario.purchaseFails) return json(400, { message: 'purchase refused' });
-    boughtNumbers++; return json(201, { ok: true });
+    boughtNumbers++;
+    if (body && body.phoneNumber && !OWNED.includes(body.phoneNumber)) OWNED.push(body.phoneNumber);
+    return json(201, { ok: true });
   }
   if (p === '/calendars/' && opts.method === 'POST') {
     if (scenario.calendarFails) return json(500, { message: 'calendar service down' });
@@ -190,10 +193,12 @@ global.fetch = async (url, opts = {}) => {
     return scenario.agentFails ? json(500, { message: 'agent service down' }) : json(201, { id: 'agent-new-1' });
   }
   if (p === '/voice-ai/actions') return json(201, { id: 'act1' });
-  // What the sub-account OWNS (distinct from what is purchasable).
+  // What the sub-account OWNS — distinct from what is purchasable, and empty
+  // until something is actually bought, exactly like the real location.
   if (/^\/phone-system\/numbers\/location\/[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
     if (scenario.ownsNothing) return json(200, { status: 'success', data: { numbers: [], total: 0 } });
-    return json(200, { status: 'success', data: { numbers: [{ phoneNumber: '+18135550101' }], total: 1 } });
+    const list = scenario.ownedOverride || OWNED;
+    return json(200, { status: 'success', data: { numbers: list.map((n) => ({ phoneNumber: n })), total: list.length } });
   }
   if (p === '/conversations/messages' && opts.method === 'POST') {
     if (scenario.smsFails) return json(422, { message: 'message rejected' });
@@ -712,6 +717,39 @@ const tenantSeed = (over = {}) => ({
    * below attack the two ways a two-way sync goes wrong — an echo loop, and a
    * booking that is kept locally after the remote write failed.
    */
+  section('a purchase that timed out');
+  await t('A RETRY ADOPTS THE NUMBER INSTEAD OF BUYING A SECOND ONE', async () => {
+    // The live failure: HighLevel bought (or may have bought) +1656... and did
+    // not answer in time, so the tenant sat at `claimed` with an error. Going
+    // straight to "buy" on the retry spends another $1.15/month for ever on a
+    // line nothing points at.
+    const tn = await M.Tenant.create(tenantSeed({ business_name: 'Timed Out Co', provisioning_state: 'claimed',
+      ghl_location_id: 'LOC-SHARED', ghl_token_enc: secretbox.seal('pit-shared') }));
+    GhlProvider._clearOwnedCache();                  // it is cached for 60 s per location
+    scenario = { ownedOverride: ['+18139990001'] };   // bought, unclaimed
+    const before = boughtNumbers;
+    await provisioning.provision(tn);
+    scenario = {};
+    assert.strictEqual(boughtNumbers, before, 'it bought a second number after a timeout');
+    const n = await M.Number.findOne({ where: { tenant_id: tn.id } });
+    assert.ok(n, 'the orphan was not adopted');
+    assert.strictEqual(n.did, '+18139990001');
+  });
+  await t('IT NEVER ADOPTS A NUMBER ANOTHER TENANT ALREADY HOLDS', async () => {
+    const mine = await M.Number.findOne({ where: { did: '+18139990001' } });
+    assert.ok(mine, 'fixture missing');
+    const other = await M.Tenant.create(tenantSeed({ business_name: 'Someone Else', provisioning_state: 'claimed',
+      ghl_location_id: 'LOC-SHARED', ghl_token_enc: secretbox.seal('pit-shared') }));
+    GhlProvider._clearOwnedCache();
+    scenario = { ownedOverride: ['+18139990001'] };   // the SAME line, already taken
+    const before = boughtNumbers;
+    await provisioning.provision(other);
+    scenario = {};
+    assert.strictEqual(boughtNumbers, before + 1, 'it should have bought its own rather than adopting');
+    const n = await M.Number.findOne({ where: { tenant_id: other.id } });
+    assert.notStrictEqual(n.did, '+18139990001', 'it handed one tenant another tenant\'s line');
+  });
+
   section('the end-of-call workflow');
   await t('AN AGENT BUILT BEFORE THE WORKFLOW EXISTED CAN BE REPAIRED', async () => {
     scenario = {}; reqs = [];
@@ -741,7 +779,8 @@ const tenantSeed = (over = {}) => ({
   section('SMS on the HighLevel path');
   await t('A TEXT GOES OUT FROM THE TENANT\'S OWN HIGHLEVEL NUMBER', async () => {
     reqs = []; scenario = {};
-    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    scenario = { ownedOverride: ['+18135550101'] };
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-SMS-1' } });
     const out = await prov.sendSMS({ from: '+18135550101', to: '+14085551234', body: 'hello' });
     assert.ok(out && out.provider === 'ghl');
     const msg = reqs.find((r) => r.path === '/conversations/messages' && r.method === 'POST');
@@ -753,10 +792,11 @@ const tenantSeed = (over = {}) => ({
     assert.ok(reqs.some((r) => r.path === '/contacts/upsert'), 'the recipient was never upserted');
   });
   await t('A NUMBER THE ACCOUNT DOES NOT OWN IS REFUSED, not accepted and dropped', async () => {
-    reqs = []; scenario = {};
+    reqs = []; scenario = { ownedOverride: ['+18135550101'] };
     const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-OWN-1' } });
     await assert.rejects(prov.sendSMS({ from: '+18886103810', to: '+14085551234', body: 'x' }),
       (e) => e.code === 'FROM_NOT_OWNED');
+    scenario = {};
     assert.strictEqual(reqs.filter((r) => r.path === '/conversations/messages').length, 0,
       'HighLevel answers 201 for a sender it does not hold and delivers nothing');
   });
@@ -775,12 +815,13 @@ const tenantSeed = (over = {}) => ({
     finally { delete process.env.LITE_TWILIO_SMS; }
   });
   await t('THE TOLL-FRAUD GATE IS IN THIS PROVIDER TOO, not only Twilio\'s', async () => {
-    reqs = [];
+    reqs = []; scenario = { ownedOverride: ['+18135550101'] };
     const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
     await assert.rejects(prov.sendSMS({ from: '+18135550101', to: '+237650000000', body: 'x' }),
       (e) => e.code === 'TOLL_FRAUD_GUARD');
     assert.strictEqual(reqs.filter((r) => r.path === '/conversations/messages').length, 0,
       'a Cameroon destination reached HighLevel');
+    scenario = {};
   });
   await t('a demo text draws on its own budget, so it cannot starve owner alerts', () => {
     const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');

@@ -127,9 +127,38 @@ async function runProvision(tenant, opts = {}) {
       });
     }
 
-    // 2. Their number. The fingerprint inside buyNumber makes a retry idempotent
-    //    at HighLevel's end as well as ours.
+    // 2. Their number.
+    //
+    // ADOPT BEFORE BUYING. A purchase that times out is AMBIGUOUS — HighLevel
+    // may have bought the number and simply not answered in time — so a retry
+    // that goes straight to "buy" can spend a second $1.15/month on a number
+    // nothing points at. The `fingerprintId` is supposed to make HighLevel
+    // refuse the duplicate, but that is their behaviour to change, not ours,
+    // and this is money. So: look at what the sub-account actually holds, and
+    // if there is a number no tenant of ours has claimed, take that one.
+    //
+    // The unclaimed filter is what makes this safe in the shared sub-account,
+    // where every tenant's numbers live in one location — without it, a retry
+    // would hand this tenant another client's line.
     let num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
+    if (!num) {
+      try {
+        const owned = await new GhlProvider({ creds }).ownedNumbers();
+        if (owned.length) {
+          const taken = new Set((await Number.findAll({ attributes: ['did'] })).map((r) => r.did));
+          const spare = owned.find((d) => !taken.has(d));
+          if (spare) {
+            console.warn(`[lite:provision] adopting ${spare}, already bought and unclaimed — not buying again`);
+            num = await Number.create({
+              tenant_id: tenant.id, did: spare, country: tenant.country || 'US',
+              provider: 'ghl', provider_sid: 'ghl-number', status: 'active',
+              monthly_cost_usd: GhlProvider.MONTHLY_COST_USD,
+            });
+            await mark(tenant, 'number');
+          }
+        }
+      } catch (e) { console.warn('[lite:provision] could not check for an already-bought number:', e.message); }
+    }
     if (!num) {
       const bought = await new GhlProvider({ creds }).buyNumber({
         country: tenant.country || 'US', areaCode: opts.areaCode, allowAnyArea: !!opts.allowAnyArea,
