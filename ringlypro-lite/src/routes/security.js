@@ -657,12 +657,34 @@ router.post('/buy-number-probe', express.json({ limit: '2kb' }), async (req, res
     const phoneNumber = (arr[0] && (arr[0].phoneNumber || arr[0].number)) || null;
     if (!phoneNumber) return res.json({ ok: false, step: 'search', message: 'no number offered for that area' });
 
-    const out = await ghl.call('POST', `/phone-system/numbers/location/${creds.locationId}/purchase`, {
-      creds, timeoutMs: 60000,
-      body: { phoneNumber, countryCode: 'US', numberType: 'local', fingerprintId: 'ringlypro-lite-probe' },
-    });
-    return res.json({ ok: true, bought: phoneNumber, ms: Date.now() - t0, response: out,
-      next: 'Resume the signup — provisioning adopts an unclaimed number instead of buying again.' });
+    // A 403 in under a second is a refusal, not a timeout, whatever their
+    // canned message says. Try the variables one at a time and STOP at the
+    // first success, so this can never buy two numbers.
+    const variants = [
+      { label: 'as the product sends it', version: undefined,
+        body: { phoneNumber, countryCode: 'US', numberType: 'local', fingerprintId: 'ringlypro-lite-probe' } },
+      { label: 'Version v3', version: 'v3',
+        body: { phoneNumber, countryCode: 'US', numberType: 'local', fingerprintId: 'ringlypro-lite-probe' } },
+      { label: 'no fingerprintId', version: undefined,
+        body: { phoneNumber, countryCode: 'US', numberType: 'local' } },
+      { label: 'minimum body', version: undefined, body: { phoneNumber } },
+    ];
+    const tried = [];
+    for (const v of variants) {
+      const s0 = Date.now();
+      try {
+        const out = await ghl.call('POST', `/phone-system/numbers/location/${creds.locationId}/purchase`,
+          { creds, timeoutMs: 60000, version: v.version, body: v.body });
+        tried.push({ ...v, ok: true, ms: Date.now() - s0 });
+        return res.json({ ok: true, bought: phoneNumber, worked: v.label, tried, response: out,
+          next: 'Resume the signup — provisioning adopts an unclaimed number instead of buying again.' });
+      } catch (e) {
+        tried.push({ label: v.label, ok: false, ms: Date.now() - s0,
+          status: e.status || null, message: String(e.message || e).slice(0, 160), raw: e.body || null });
+      }
+    }
+    return res.status(502).json({ ok: false, bought: null, ms: Date.now() - t0, tried,
+      read_this: 'Every variant was refused. A 403 in well under a second is an entitlement problem on the sub-account, not slowness.' });
   } catch (e) {
     return res.status(502).json({ ok: false, ms: Date.now() - t0,
       status: e.status || null, message: String(e.message || e).slice(0, 300), raw: e.body || null });
