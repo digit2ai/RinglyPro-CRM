@@ -177,9 +177,15 @@ global.fetch = async (url, opts = {}) => {
     return json(201, { id: `CAL-${body.locationId}` });
   }
   if (p === '/voice-ai/agents' && (opts.method || 'GET') === 'GET') {
+    // The pilot template really does carry NO end-of-call workflow today,
+    // which is why messages never reach us. The fake keeps one by default —
+    // that is the behaviour provisioning is supposed to have — and a test
+    // opts in to the empty case.
     return json(200, { agents: [{ id: 'tpl1', agentPrompt: 'TEMPLATE PROMPT', voiceId: 'voice-xyz',
-      language: 'en-US', callEndWorkflowIds: ['wf-after-call'], welcomeMessage: 'Template hello' }] });
+      language: 'en-US', callEndWorkflowIds: scenario.templateNoWorkflow ? [] : ['wf-after-call'],
+      welcomeMessage: 'Template hello' }] });
   }
+  if (/^\/voice-ai\/agents\/[^/]+$/.test(p) && opts.method === 'PATCH') return json(200, { id: p.split('/').pop() });
   if (p === '/voice-ai/agents' && opts.method === 'POST') {
     return scenario.agentFails ? json(500, { message: 'agent service down' }) : json(201, { id: 'agent-new-1' });
   }
@@ -706,6 +712,32 @@ const tenantSeed = (over = {}) => ({
    * below attack the two ways a two-way sync goes wrong — an echo loop, and a
    * booking that is kept locally after the remote write failed.
    */
+  section('the end-of-call workflow');
+  await t('AN AGENT BUILT BEFORE THE WORKFLOW EXISTED CAN BE REPAIRED', async () => {
+    scenario = {}; reqs = [];
+    const tn = await M.Tenant.create(tenantSeed({ business_name: 'Repair Me',
+      ghl_location_id: 'LOC-A', ghl_agent_id: 'agent-old', ghl_token_enc: secretbox.seal('pit-x'),
+      provisioning_state: 'ready' }));
+    const out = await provisioning.syncWorkflows(tn);
+    scenario = {};
+    assert.strictEqual(out.changed, true, JSON.stringify(out));
+    const patch = reqs.find((r) => r.method === 'PATCH' && r.path.includes('/voice-ai/agents/'));
+    assert.ok(patch, 'the existing agent was never re-pointed');
+    assert.deepStrictEqual(patch.body.callEndWorkflowIds, ['wf-after-call']);
+  });
+  await t('A TEMPLATE WITH NO WORKFLOW NEVER WIPES A WORKING AGENT', async () => {
+    scenario = { templateNoWorkflow: true }; reqs = [];
+    const tn = await M.Tenant.create(tenantSeed({ business_name: 'Leave Me Alone',
+      ghl_location_id: 'LOC-A', ghl_agent_id: 'agent-live', ghl_token_enc: secretbox.seal('pit-x'),
+      provisioning_state: 'ready' }));
+    const out = await provisioning.syncWorkflows(tn);
+    assert.strictEqual(out.changed, false);
+    assert.ok(/no end-of-call workflow/.test(out.reason));
+    assert.strictEqual(reqs.filter((r) => r.method === 'PATCH').length, 0,
+      'a missing template setting was pushed onto a working agent');
+    scenario = {};
+  });
+
   section('SMS on the HighLevel path');
   await t('A TEXT GOES OUT FROM THE TENANT\'S OWN HIGHLEVEL NUMBER', async () => {
     reqs = []; scenario = {};

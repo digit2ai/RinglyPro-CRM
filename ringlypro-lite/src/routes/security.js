@@ -612,6 +612,26 @@ router.get('/signup-preflight', async (req, res) => {
   }
 });
 
+/**
+ * Re-point every provisioned agent at the template's end-of-call workflows.
+ * Run this after adding the workflow in HighLevel — agents built before it
+ * existed will never call our webhook otherwise.
+ */
+router.post('/sync-agent-workflows', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const { Tenant } = require('../models');
+  const provisioning = require('../services/provisioning');
+  try {
+    const tenants = await Tenant.findAll({ where: { provisioning_state: 'ready' } });
+    const results = [];
+    for (const t of tenants) {
+      try { results.push({ tenant_id: t.id, ...(await provisioning.syncWorkflows(t)) }); }
+      catch (e) { results.push({ tenant_id: t.id, changed: false, error: String(e.message || e).slice(0, 160) }); }
+    }
+    res.json({ ok: true, tenants: tenants.length, results });
+  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: which numbers does the sub-account actually OWN? */
 router.get('/owned-numbers', async (req, res) => {
   res.set('Cache-Control', 'no-store');

@@ -214,6 +214,37 @@ async function syncTransfer(tenantOrId) {
   return { changed: true, transfer: chk.e164 };
 }
 
+/**
+ * Re-point an EXISTING agent at the template's end-of-call workflows.
+ *
+ * WHY THIS HAS TO EXIST. `callEndWorkflowIds` is copied from the template at
+ * the moment the agent is built and never looked at again — unlike the
+ * transfer action, which `syncTransfer` keeps current. So an agent created
+ * while the template had no end-of-call workflow is born with none, and
+ * adding one to the template afterwards does NOT reach it: that client's
+ * messages and bookings never call our webhook and never appear anywhere,
+ * with nothing on any screen to say why. Without this the only repair is by
+ * hand in HighLevel, per client.
+ */
+async function syncWorkflows(tenantOrId) {
+  const tenant = (tenantOrId && tenantOrId.id) ? tenantOrId : await Tenant.findByPk(tenantOrId);
+  if (!tenant || !tenant.ghl_agent_id) return { changed: false, reason: 'no agent' };
+  const creds = await accounts.credsFor(tenant);
+  if (!creds) return { changed: false, reason: 'no credentials' };
+
+  const tpl = await new GhlProvider({ creds }).templateAgent();
+  const ids = (tpl && tpl.callEndWorkflowIds) || [];
+  if (!ids.length) {
+    // Do NOT wipe an agent's workflows because the template has none. That
+    // would turn a missing template setting into a working client breaking.
+    return { changed: false, reason: 'the template has no end-of-call workflow to copy' };
+  }
+  await ghl.call('PATCH', `/voice-ai/agents/${encodeURIComponent(tenant.ghl_agent_id)}`, {
+    creds, body: { locationId: creds.locationId, callEndWorkflowIds: ids },
+  });
+  return { changed: true, callEndWorkflowIds: ids };
+}
+
 async function summary(tenant, extra = {}) {
   const num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
   return {
@@ -243,4 +274,4 @@ async function clientView(tenantOrId) {
   };
 }
 
-module.exports = { provision, summary, clientView, ensureCalendar, syncTransfer, withTenantLock, STATES, reached };
+module.exports = { provision, summary, clientView, ensureCalendar, syncTransfer, syncWorkflows, withTenantLock, STATES, reached };
