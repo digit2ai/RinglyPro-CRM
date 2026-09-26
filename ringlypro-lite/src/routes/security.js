@@ -846,22 +846,22 @@ router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, 
     if (!calendarId) return res.json({ ok: false, error: 'no calendar to point at' });
 
     // One variable at a time, from the known-good 3/3/3 their UI wrote.
-    const combos = [
-      { days: 3, slots: 3, hours: 3 },                    // control
-      { days: 5, slots: 3, hours: 3 }, { days: 7, slots: 3, hours: 3 },
-      { days: 10, slots: 3, hours: 3 }, { days: 14, slots: 3, hours: 3 },
-      { days: 3, slots: 2, hours: 3 }, { days: 3, slots: 4, hours: 3 },
-      { days: 3, slots: 5, hours: 3 },
-      { days: 3, slots: 3, hours: 1 }, { days: 3, slots: 3, hours: 2 },
-      { days: 3, slots: 3, hours: 4 },
-    ];
+    const combos = (req.body && Array.isArray(req.body.combos) && req.body.combos.length)
+      ? req.body.combos
+      : [
+        { days: 3, slots: 3, hours: 3 },                  // control
+        { days: 1, slots: 3, hours: 3 }, { days: 2, slots: 3, hours: 3 },
+        { days: 3, slots: 1, hours: 3 }, { days: 3, slots: 2, hours: 3 },
+        { days: 3, slots: 3, hours: 1 }, { days: 3, slots: 3, hours: 2 },
+        { days: 3, slots: 3, hours: 4 },
+      ];
     const tried = [];
     for (const c of combos) {
       let created = null;
       try {
         const out = await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
           agentId: tpl.id, locationId: creds.locationId,
-          actionType: 'APPOINTMENT_BOOKING', name: 'Range probe temporary',
+          actionType: 'APPOINTMENT_BOOKING', name: `Range probe ${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           actionParameters: { calendarId, daysOfOfferingDates: c.days, slotsPerDay: c.slots, hoursBetweenSlots: c.hours },
         } });
         created = out && (out.id || out.actionId || (out.action && out.action.id));
@@ -875,9 +875,24 @@ router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, 
           .catch((e) => console.warn('[lite:probe] could not remove probe action', created, e.message));
       }
     }
+    // Sweep every probe action, this run's and any an earlier run stranded —
+    // the previous version reused one name, so a failed delete silently turned
+    // the next three cases into "already exists" and they were never tested.
+    let swept = 0, stranded = [];
+    try {
+      const one = await ghl.call('GET', `/voice-ai/agents/${encodeURIComponent(tpl.id)}`,
+        { query: { locationId: creds.locationId }, creds, version: 'v3' });
+      const a = (one && (one.agent || one.data || one)) || {};
+      for (const act of (Array.isArray(a.actions) ? a.actions : [])) {
+        if (!/^Range probe/i.test(String(act.name || ''))) continue;
+        try { await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(act.id)}`, { creds, version: 'v3' }); swept++; }
+        catch (e) { stranded.push({ id: act.id, name: act.name, error: String(e.message || e).slice(0, 120) }); }
+      }
+    } catch (e) { stranded.push({ error: `could not re-read the template: ${String(e.message || e).slice(0, 120)}` }); }
+
     const ok = tried.filter((x) => x.ok);
     res.json({ ok: ok.length > 0, accepted: ok, tried,
-      left_behind: 'nothing — every probe action was deleted' });
+      cleanup: { swept, stranded } });
   } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
 });
 
