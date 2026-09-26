@@ -761,6 +761,64 @@ router.post('/repair-agent-actions', express.json({ limit: '2kb' }), async (req,
   } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
 });
 
+/**
+ * Find the actionParameters shape HighLevel actually accepts.
+ *
+ * `POST /voice-ai/actions` answered 422 "Invalid actionParameters for the
+ * given actionType" — not a permission problem, a shape problem — and their
+ * docs do not publish the APPOINTMENT_BOOKING fields at all. Their own docs
+ * DO say this endpoint requires `Version: v3`, which the service was not
+ * sending. So: try the combinations, report every error verbatim, and stop at
+ * the first that works.
+ */
+router.post('/action-shape-probe', express.json({ limit: '2kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const { Tenant } = require('../models');
+  try {
+    const creds = ghl.resolve(null);
+    const t = await Tenant.findOne({ where: { provisioning_state: 'ready' } });
+    if (!t || !t.ghl_agent_id) return res.json({ ok: false, error: 'no provisioned agent to test against' });
+
+    const cal = t.ghl_calendar_id;
+    const to = t.transfer_number || t.owner_phone;
+    const cases = [
+      ['BOOK v3 full', 'v3', 'APPOINTMENT_BOOKING',
+        { calendarId: cal, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 }],
+      ['BOOK v3 calendarId only', 'v3', 'APPOINTMENT_BOOKING', { calendarId: cal }],
+      ['BOOK v3 + triggerPrompt', 'v3', 'APPOINTMENT_BOOKING',
+        { calendarId: cal, triggerPrompt: 'When the caller wants to book an appointment' }],
+      ['BOOK default-version full', undefined, 'APPOINTMENT_BOOKING',
+        { calendarId: cal, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 }],
+      ['XFER v3 documented', 'v3', 'CALL_TRANSFER',
+        { triggerPrompt: 'When the caller asks to speak to a person or the owner',
+          transferToType: 'number', transferToValue: to,
+          triggerMessage: 'Let me connect you now, one moment.', hearWhisperMessage: false }],
+      ['XFER v3 minimal', 'v3', 'CALL_TRANSFER',
+        { triggerPrompt: 'When the caller asks for a person', transferToType: 'number', transferToValue: to }],
+    ];
+
+    const tried = [];
+    const worked = {};
+    for (const [label, version, actionType, actionParameters] of cases) {
+      if (worked[actionType]) { tried.push({ label, skipped: 'already solved for this type' }); continue; }
+      try {
+        const out = await ghl.call('POST', '/voice-ai/actions', {
+          creds, version, body: { agentId: t.ghl_agent_id, locationId: creds.locationId,
+            actionType, name: actionType === 'CALL_TRANSFER' ? 'Transfer to owner' : 'Book an appointment',
+            actionParameters },
+        });
+        worked[actionType] = { label, version: version || '(default)', actionParameters };
+        tried.push({ label, ok: true, id: (out && (out.id || out.actionId)) || null });
+      } catch (e) {
+        tried.push({ label, ok: false, status: e.status || null,
+          message: String(e.message || e).slice(0, 200), raw: (e.body || '').slice(0, 300) });
+      }
+    }
+    res.json({ ok: Object.keys(worked).length > 0, agent: t.ghl_agent_id, worked, tried });
+  } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: what does each provisioned agent actually look like in HighLevel? */
 router.get('/agents', async (req, res) => {
   res.set('Cache-Control', 'no-store');
