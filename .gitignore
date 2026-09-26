@@ -1,4 +1,14 @@
 node_modules
 .env
+# A BACKUP OF A .env IS STILL A .env. `.env` alone did not match
+# `.env.bak-1788575471`, and a `git add -A` at the repo root swept one into a
+# commit carrying a live OpenAI key and a GCP service-account key — GitHub's
+# push protection refused it, which is the only reason it did not become public
+# history. Match every variant, and keep scoping `git add` to paths.
+.env.*
+!.env.example
+!.env.sample
+*.env.bak*
+*.bak-[0-9]*
 store-health-ai-dashboard-dist/
 client-builds/equimind-gs-engine/.gs-store/

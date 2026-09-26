@@ -401,7 +401,16 @@ async function cleanup() {
       if (o.url.includes('/workflow/wf_flaky') && seen.filter((s) => s.includes('wf_flaky')).length < 2) return { status: 502, data: { message: 'bad gateway' } };
       if (o.url.includes('/workflow/wf_denied')) return { status: 403, data: { message: 'forbidden' } };
       if (o.url.includes('/contacts/upsert')) return { status: 200, data: { contact: { id: 'ghl_c_9' } } };
-      if (o.url.includes('/voice-ai/dashboard/call-logs')) return { status: 200, data: { callLogs: [{ id: 'L1', contactId: 'ghl_c_9', summary: 's', extractedData: { rps_outcome: 'interested' }, executedCallActions: [], duration: 12.4 }] } };
+      if (o.url.includes('/voice-ai/dashboard/call-logs')) {
+        // THE FAKE PUNISHES A SECONDS WINDOW, exactly as the live API does: it
+        // answers 200 with an empty list, which reads as "nobody called". This
+        // fake ignored the dates entirely, so the bug passed here for months.
+        // `params` travels beside the url in this transport, not inside it —
+        // reading the url's query string finds nothing and the check never fires.
+        const sd = Number((o.params || {}).startDate);
+        if (sd && sd < 1e11) return { status: 200, data: { callLogs: [], totalRecords: 0 } };
+        return { status: 200, data: { callLogs: [{ id: 'L1', contactId: 'ghl_c_9', summary: 's', extractedData: { rps_outcome: 'interested' }, executedCallActions: [], duration: 12.4 }] } };
+      }
       return { status: 200, data: {} };
     });
     let healthEvents = 0;
@@ -412,6 +421,15 @@ async function cleanup() {
     ok(st.accepted && st.providerRef === null && seen.filter((s) => s.includes('wf_flaky')).length === 2, 'a 502 is retried once and then succeeds; no call id invented');
     let denied = null; try { await gp.startOutboundCall({}, { externalContactId: 'ghl_c_9', campaign: { agent: { ghl_workflow_id: 'wf_denied' } } }); } catch (e) { denied = e.status; }
     ok(denied === 403 && seen.filter((s) => s.includes('wf_denied')).length === 1, 'a 403 is not retried');
+    // A WINDOWED READ IS THE ONE THE DIALER ACTUALLY MAKES (the last 3 h), and
+    // it was the only call shape that could be wrong. The unwindowed call below
+    // sends no dates at all, so it passed with the window in seconds - the fake
+    // ignored the dates, and reverting the unit changed nothing here.
+    const win = await gp.listCallLogs({}, { since: new Date(Date.now() - 3 * 3600e3), until: new Date() });
+    ok(win.length === 1, 'a WINDOWED call-log read finds the call - the window must be in milliseconds, since seconds returns a silent empty list');
+    const winUrl = seen.find((x) => x.includes('/voice-ai/dashboard/call-logs'));
+    ok(!!winUrl, 'the windowed read reached the call-logs endpoint');
+
     const logs = await gp.listCallLogs({}, { contactId: 'ghl_c_9' });
     ok(logs[0].providerCallId === 'L1' && logs[0].durationSec === 12 && seen.some((s) => s.includes('/voice-ai/dashboard/call-logs') && s.endsWith('vv3')), 'call logs read with Version v3 and normalized');
     let nw = null; try { await gp.startOutboundCall({}, { externalContactId: 'x', campaign: { agent: {} } }); } catch (e) { nw = e.code; }

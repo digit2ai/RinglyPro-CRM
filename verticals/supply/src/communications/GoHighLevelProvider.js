@@ -161,7 +161,14 @@ class GoHighLevelProvider extends CommunicationProvider {
 
   async listCallLogs(tenant, { since, until, contactId, agentId } = {}) {
     const params = { locationId: this.creds.locationId, page: 1, pageSize: 50, sortBy: 'createdAt', sort: 'descend' };
-    if (since && until) { params.startDate = Math.floor(new Date(since).getTime() / 1000); params.endDate = Math.floor(new Date(until).getTime() / 1000); }
+    // MILLISECONDS, NOT SECONDS. Measured against the live API 2026-09-26 while
+    // debugging the same bug in ringlypro-lite: with the window in unix
+    // seconds this endpoint answers 200 with {callLogs:[],totalRecords:0} — no
+    // error, no clue — so a real call reads as "nobody called". The dialer pass
+    // that reads the last 3 h of call logs would silently find nothing and no
+    // transcript would ever be classified. The identical request in
+    // milliseconds returns the calls.
+    if (since && until) { params.startDate = new Date(since).getTime(); params.endDate = new Date(until).getTime(); }
     if (contactId) params.contactId = contactId;
     if (agentId) params.agentId = agentId;
     const d = await this.call('GET', '/voice-ai/dashboard/call-logs', { params, version: VOICE_VERSION() });
