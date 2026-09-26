@@ -691,6 +691,34 @@ router.post('/buy-number-probe', express.json({ limit: '2kb' }), async (req, res
   }
 });
 
+/** Read-only: what does each provisioned agent actually look like in HighLevel? */
+router.get('/agents', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const { Tenant } = require('../models');
+  try {
+    const creds = ghl.resolve(null);
+    const list = await ghl.listVoiceAgents(creds);
+    const arr = Array.isArray(list) ? list : (list && (list.agents || list.data)) || [];
+    const mine = await Tenant.findAll({ attributes: ['id', 'business_name', 'ghl_agent_id', 'ghl_calendar_id', 'transfer_number'] });
+    const byId = new Map(mine.map((t) => [t.ghl_agent_id, t]));
+    res.json({
+      count: arr.length,
+      agents: arr.map((a) => {
+        const t = byId.get(a.id);
+        const actions = Array.isArray(a.actions) ? a.actions : [];
+        return {
+          id: a.id, name: a.agentName || a.name, inbound_number: a.inboundNumber || null,
+          end_call_workflows: (a.callEndWorkflowIds || []).length,
+          actions: actions.map((x) => x.actionType || x.type),
+          is_a_tenant_agent: !!t,
+          tenant: t ? { id: t.id, business_name: t.business_name, calendar: t.ghl_calendar_id, transfer_to: t.transfer_number } : null,
+        };
+      }),
+    });
+  } catch (e) { res.status(502).json({ error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: which numbers does the sub-account actually OWN? */
 router.get('/owned-numbers', async (req, res) => {
   res.set('Cache-Control', 'no-store');
