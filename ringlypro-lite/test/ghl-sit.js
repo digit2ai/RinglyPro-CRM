@@ -196,6 +196,16 @@ global.fetch = async (url, opts = {}) => {
   }
   if (/^\/calendars\/[^/]+$/.test(p) && opts.method === 'PUT') {
     if (scenario.calWriteFails) return json(422, { message: 'calendar update refused' });
+    // THE FAKE REFUSES A MULTI-DAY ENTRY, exactly as the live API does:
+    // daysOfTheWeek takes ONE day. The error reads like a complaint about the
+    // value and is really about the count, so the suite must reproduce it or
+    // the obvious grouping optimisation passes here and 422s in production.
+    for (const g of (body && body.openHours) || []) {
+      if (!Array.isArray(g.daysOfTheWeek) || g.daysOfTheWeek.length !== 1
+          || !Number.isInteger(g.daysOfTheWeek[0]) || g.daysOfTheWeek[0] < 0 || g.daysOfTheWeek[0] > 6) {
+        return json(422, { message: 'openHours.0.must be a valid day of week' });
+      }
+    }
     // Store what was written so the read-back sees it, and so a test can assert
     // the exact payload HighLevel was given.
     CAL_HOURS = body && body.openHours ? body.openHours : CAL_HOURS;
@@ -1568,22 +1578,33 @@ const tenantSeed = (over = {}) => ({
   /* ─── calendar hours: a calendar with none offers no slots ─────────────── */
   section('calendar open hours (why the agent offered nothing)');
 
-  await t('hours are grouped into ONE entry for an identical Mon-Fri window', () => {
+  await t('ONE ENTRY PER WEEKDAY — grouping identical windows is refused by HighLevel', () => {
+    // Measured: daysOfTheWeek:[1] is accepted, [1,2,3,4,5] gets 422
+    // "must be a valid day of week". Grouping is the obvious optimisation and
+    // it breaks the entire request.
     const rules = [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start: '09:00', end: '17:00', active: true }));
     const p = provisioning.hoursPayload(rules);
-    assert.strictEqual(p.length, 1, 'five identical days should be one entry');
-    assert.deepStrictEqual(p[0].daysOfTheWeek, [1, 2, 3, 4, 5]);
+    assert.strictEqual(p.length, 5, 'Mon-Fri must be five entries, not one grouped entry');
+    for (const g of p) assert.strictEqual(g.daysOfTheWeek.length, 1, 'an entry carried more than one day');
+    assert.deepStrictEqual(p.map((g) => g.daysOfTheWeek[0]), [1, 2, 3, 4, 5], 'days must be in order');
     assert.deepStrictEqual(p[0].hours, [{ openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 0 }]);
   });
 
-  await t('a different window becomes its own entry, and an inactive rule is left out', () => {
+  await t('two windows on one day travel together; an inactive rule is left out', () => {
     const p = provisioning.hoursPayload([
-      { weekday: 1, start: '09:00', end: '17:00', active: true },
-      { weekday: 6, start: '10:00', end: '14:00', active: true },
+      { weekday: 1, start: '09:00', end: '12:00', active: true },
+      { weekday: 1, start: '13:00', end: '17:00', active: true },   // after lunch
+      { weekday: 1, start: '09:00', end: '12:00', active: true },   // a duplicate row
       { weekday: 0, start: '09:00', end: '17:00', active: false },
     ]);
-    assert.strictEqual(p.length, 2);
-    assert.ok(!JSON.stringify(p).includes('"0"'), 'an inactive day was sent to HighLevel');
+    assert.strictEqual(p.length, 1, 'one day is one entry');
+    assert.strictEqual(p[0].hours.length, 2, 'the two windows should both be sent, the duplicate once');
+    assert.ok(!p.some((g) => g.daysOfTheWeek[0] === 0), 'an inactive day was sent to HighLevel');
+  });
+
+  await t('a weekday outside 0-6 is dropped rather than sent', () => {
+    const p = provisioning.hoursPayload([{ weekday: 9, start: '09:00', end: '17:00', active: true }]);
+    assert.strictEqual(p.length, 0);
   });
 
   await t('a malformed rule is dropped, never sent as NaN', () => {
@@ -1603,7 +1624,8 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual(r.ok, true, JSON.stringify(r));
     const put = reqs.find((x) => x.method === 'PUT' && /^\/calendars\//.test(x.path));
     assert.ok(put, 'nothing was written to the calendar');
-    assert.deepStrictEqual(put.body.openHours[0].daysOfTheWeek, [1, 2, 3, 4, 5]);
+    assert.strictEqual(put.body.openHours.length, 5, 'Mon-Fri must be five single-day entries');
+    assert.deepStrictEqual(put.body.openHours[0].daysOfTheWeek, [1]);
     assert.strictEqual(put.body.openHours[0].hours[0].openHour, 9);
   });
 

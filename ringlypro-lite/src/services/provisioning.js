@@ -120,9 +120,15 @@ async function ensureAvailabilityRules(tenant) {
  * open is how a caller gets offered a slot the owner has already filled.
  */
 function hoursPayload(rules) {
-  // Group identical windows so a normal week is one entry rather than five,
-  // which is the shape HighLevel's own UI produces.
-  const byWindow = new Map();
+  // ONE ENTRY PER WEEKDAY. `daysOfTheWeek` takes exactly one day, measured
+  // against the live calendar 2026-09-26: `[1]` is accepted and `[1,2,3,4,5]`
+  // is refused with "openHours.0.must be a valid day of week" — which reads
+  // like a complaint about the VALUE and is actually a complaint about the
+  // COUNT. Day names, lowercase names, short names and numeric strings are all
+  // refused the same way, so the message is not a hint. Grouping identical
+  // windows into one entry is the obvious optimisation and it makes the whole
+  // request fail, which is why it is spelled out here.
+  const byDay = new Map();
   for (const r of rules) {
     if (r.active === false) continue;
     const [oh, om] = String(r.start || '').split(':').map((n) => parseInt(n, 10));
@@ -136,12 +142,17 @@ function hoursPayload(rules) {
     // Real clock values only: 25:00 is not a time, and HighLevel would take it.
     if (oh < 0 || oh > 23 || ch < 0 || ch > 24 || om < 0 || om > 59 || cm < 0 || cm > 59) continue;
     if (ch * 60 + cm <= oh * 60 + om) continue;     // a window that closes before it opens is not a window
-    const key = `${oh}:${om}-${ch}:${cm}`;
-    if (!byWindow.has(key)) byWindow.set(key, { days: [], hours: [{ openHour: oh, openMinute: om, closeHour: ch, closeMinute: cm }] });
-    const g = byWindow.get(key);
-    if (!g.days.includes(r.weekday)) g.days.push(r.weekday);
+    const wd = parseInt(r.weekday, 10);
+    if (!(wd >= 0 && wd <= 6)) continue;
+    if (!byDay.has(wd)) byDay.set(wd, []);
+    const win = { openHour: oh, openMinute: om, closeHour: ch, closeMinute: cm };
+    // A day can carry two windows (a lunch break); the same window twice cannot.
+    const hrs = byDay.get(wd);
+    if (!hrs.some((x) => x.openHour === oh && x.openMinute === om && x.closeHour === ch && x.closeMinute === cm)) hrs.push(win);
   }
-  return [...byWindow.values()].map((g) => ({ daysOfTheWeek: g.days.sort((a, b) => a - b), hours: g.hours }));
+  return [...byDay.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([wd, hours]) => ({ daysOfTheWeek: [wd], hours }));
 }
 
 async function syncCalendarHours(tenant, creds, { force = false } = {}) {
