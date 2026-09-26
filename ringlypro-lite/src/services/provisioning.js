@@ -228,8 +228,15 @@ async function syncTransfer(tenantOrId) {
     const a = (agent && (agent.agent || agent)) || {};
     const actions = Array.isArray(a.actions) ? a.actions : [];
     for (const act of actions.filter((x) => (x.actionType || x.type) === 'CALL_TRANSFER')) {
-      if (act.id) await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(act.id)}`, { creds })
-        .catch((e) => console.warn('[lite:ghl] old transfer action not removed:', e.message));
+      // agentId AND locationId are REQUIRED on a delete — without them
+      // HighLevel answers "AgentId is required" and the old action stays.
+      // That is the whole point of this function: a transfer number the owner
+      // has changed must stop being dialled, and a silently failed delete
+      // leaves the departed employee's line live.
+      if (act.id) await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(act.id)}`, {
+        creds, version: process.env.LITE_GHL_ACTION_VERSION || 'v3',
+        query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId },
+      }).catch((e) => console.warn('[lite:ghl] old transfer action not removed:', e.message));
     }
   } catch (e) { console.warn('[lite:ghl] could not read the agent to sync its transfer:', e.message); }
 
