@@ -704,17 +704,29 @@ router.get('/agents', async (req, res) => {
     const byId = new Map(mine.map((t) => [t.ghl_agent_id, t]));
     res.json({
       count: arr.length,
-      agents: arr.map((a) => {
-        const t = byId.get(a.id);
+      agents: await Promise.all(arr.map(async (a0) => {
+        // The LIST payload may omit actions entirely, so an empty array there
+        // proves nothing. Read each agent on its own before concluding it has
+        // no booking or transfer.
+        let a = a0;
+        try {
+          const one = await ghl.call('GET', `/voice-ai/agents/${encodeURIComponent(a0.id)}`,
+            { query: { locationId: creds.locationId }, creds });
+          a = (one && (one.agent || one.data || one)) || a0;
+        } catch (_) { /* fall back to the list row */ }
+        const t = byId.get(a.id || a0.id);
         const actions = Array.isArray(a.actions) ? a.actions : [];
         return {
           id: a.id, name: a.agentName || a.name, inbound_number: a.inboundNumber || null,
           end_call_workflows: (a.callEndWorkflowIds || []).length,
           actions: actions.map((x) => x.actionType || x.type),
+          action_detail: actions.map((x) => ({ type: x.actionType || x.type,
+            calendarId: (x.actionParameters && x.actionParameters.calendarId) || null,
+            to: (x.actionParameters && x.actionParameters.transferToValue) || null })),
           is_a_tenant_agent: !!t,
           tenant: t ? { id: t.id, business_name: t.business_name, calendar: t.ghl_calendar_id, transfer_to: t.transfer_number } : null,
         };
-      }),
+      })),
     });
   } catch (e) { res.status(502).json({ error: String(e.message || e).slice(0, 200) }); }
 });
