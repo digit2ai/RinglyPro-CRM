@@ -235,7 +235,11 @@ async function syncTransfer(tenantOrId) {
       // leaves the departed employee's line live.
       if (act.id) await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(act.id)}`, {
         creds, version: process.env.LITE_GHL_ACTION_VERSION || 'v3',
+        // BOTH query and body: HighLevel answers "AgentId is required" without
+        // it and does not say where it wants it, so it is sent in both places
+        // rather than deleting nothing and logging a warning nobody reads.
         query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId },
+        body: { agentId: tenant.ghl_agent_id, locationId: creds.locationId },
       }).catch((e) => console.warn('[lite:ghl] old transfer action not removed:', e.message));
     }
   } catch (e) { console.warn('[lite:ghl] could not read the agent to sync its transfer:', e.message); }
