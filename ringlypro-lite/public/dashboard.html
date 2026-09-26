@@ -7,17 +7,17 @@
 <link rel="icon" type="image/png" href="/favicon-32.png" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
-<meta name="theme-color" content="#0d1320" />
+<meta name="theme-color" content="#f4f9fb" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="RinglyPro Lite" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="mobile-web-app-capable" content="yes" />
 <style>
-  :root{--bg:#0d1320;--card:#141b29;--line:#243049;--txt:#e9eef7;--mut:#8a98b0;--acc:#6a4bff;--acc2:#bda4ff;--ok:#3ad29f;--warn:#ffb454;--err:#ff6b6b;--inp:#0f1626}
-  html[data-theme="light"]{--bg:#f4f7fb;--card:#ffffff;--line:#e5e7eb;--txt:#111827;--mut:#6b7280;--acc:#2563eb;--acc2:#1d4ed8;--ok:#0f9d6e;--warn:#c2740a;--err:#dc2626;--inp:#eef2f7}
+  :root{--bg:#f4f9fb;--card:#ffffff;--line:#e7edf1;--txt:#0f2033;--mut:#5f7180;--acc:#12b8a6;--acc2:#0a7f73;--on-acc:#04302b;--ok:#0d7d5a;--warn:#a36100;--err:#bf3f2a;--inp:#eef6f5}
+  html[data-theme="dark"]{--bg:#0b1622;--card:#12202f;--line:#1e3346;--txt:#eaf2f6;--mut:#93a7b5;--acc:#12b8a6;--acc2:#5fd8c9;--on-acc:#04302b;--ok:#3ad29f;--warn:#ffb454;--err:#ff8a75;--inp:#0e1b27}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(78px + env(safe-area-inset-bottom));overscroll-behavior-y:none}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:calc(78px + env(safe-area-inset-bottom));overscroll-behavior-y:none}
   header{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
   .brand{font-weight:800}.brand span{color:var(--acc2)}
   .lang{font-size:13px;color:var(--mut);cursor:pointer}
@@ -27,13 +27,13 @@
   .item .top{display:flex;justify-content:space-between;align-items:center}
   .name{font-weight:700}.when{color:var(--mut);font-size:12px}
   .body{color:var(--mut);font-size:14px;margin-top:6px}
-  .badge{background:var(--acc);color:#fff;font-size:11px;border-radius:10px;padding:2px 7px;margin-left:6px}
+  .badge{background:var(--acc);color:var(--on-acc);font-size:11px;border-radius:10px;padding:2px 7px;margin-left:6px}
   .unread{border-left:3px solid var(--acc)}
   .call{display:inline-block;margin-top:8px;color:var(--ok);text-decoration:none;font-weight:700;font-size:14px}
   .day{margin:16px 0 6px;color:var(--acc2);font-weight:700;font-size:14px}
   label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
   input,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--inp);color:var(--txt);font-size:16px}
-  button{padding:11px 14px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-weight:700;cursor:pointer}
+  button{padding:11px 14px;border:0;border-radius:10px;background:var(--acc);color:var(--on-acc);font-weight:700;cursor:pointer}
   button.sm{padding:7px 10px;font-size:13px}
   button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
   .empty{color:var(--mut);text-align:center;padding:40px 10px}
@@ -53,7 +53,7 @@
   #v-messages{padding-bottom:54px}
   .msgtools{display:flex;gap:8px;margin-bottom:12px}
   .chip{background:var(--card);border:1px solid var(--line);color:var(--mut);padding:7px 14px;border-radius:20px;font-size:13px;font-weight:700}
-  .chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+  .chip.on{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
   #msgSearchBar{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);padding:8px calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left));z-index:6;display:none}
   #msgSearchBar.on{display:block}
   #msgSearch{max-width:560px;margin:0 auto;display:block;font-size:15px;padding:10px 12px}
@@ -73,10 +73,10 @@
   .modal.on{display:flex}
   .sheet{background:var(--card);border:1px solid var(--line);border-top-left-radius:18px;border-top-right-radius:18px;width:100%;max-width:560px;padding:20px calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
   .amtgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-  .amtbtn{padding:16px 0;font-size:18px;font-weight:800;border-radius:12px;background:var(--acc);color:#fff;border:0;cursor:pointer}
+  .amtbtn{padding:16px 0;font-size:18px;font-weight:800;border-radius:12px;background:var(--acc);color:var(--on-acc);border:0;cursor:pointer}
   .amtbtn:disabled{opacity:.5}
 </style>
-<script>/* apply saved theme before paint to avoid a flash */(function(){try{var t=localStorage.getItem('lite_theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script>/* apply saved theme before paint to avoid a flash */(function(){try{var t=localStorage.getItem('lite_theme');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
 <header>
@@ -397,9 +397,9 @@ function waHref(num,body){return 'https://wa.me/'+digits(num)+(body?('?text='+en
 
 /* ── Theme (Light/Dark) — applied to <html data-theme>, persisted ─────── */
 function applyTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('lite_theme',t)}catch(e){}
-  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',t==='light'?'#f4f7fb':'#0d1320');
+  const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute('content',t==='light'?'#f4f9fb':'#0b1622');
   const sel=$('themeSel');if(sel)sel.value=t;}
-(function(){let t='dark';try{t=localStorage.getItem('lite_theme')||'dark'}catch(e){}if(t!=='light'&&t!=='dark')t='dark';applyTheme(t)})();
+(function(){let t='light';try{t=localStorage.getItem('lite_theme')||'light'}catch(e){}if(t!=='light'&&t!=='dark')t='light';applyTheme(t)})();
 $('themeSel').onchange=function(){applyTheme(this.value)};
 
 /* ── Recharge dialog (buy prepaid overage minutes) ────────────────────── */

@@ -47,5 +47,11 @@ jobs:
         run: node test/ghl-sit.js
       - name: Call simulator (agent tools, incl. the refused premium transfer)
         run: node test/call-sim.js
+      # Runs its non-browser half in CI without puppeteer and SKIPS LOUDLY on
+      # the contrast measurement. What it still catches here is the one thing
+      # that rots silently: the app's palette drifting away from the landing
+      # page it is copied from, because the tokens are read out of that page.
+      - name: Theme matches the landing page (drift guard)
+        run: node test/theme-sit.js
       - name: Known-vulnerable dependencies (high and above)
         run: npm audit --omit=dev --audit-level=high
