@@ -368,6 +368,27 @@ const tenantSeed = (over = {}) => ({
     assert.ok(a.agentPrompt.includes('Sunny Dental'));
     assert.strictEqual(a.inboundNumber, '+18135550101');
   });
+  await t('THE BOOKING ACTION USES THE VALUES HIGHLEVEL ACCEPTS', () => {
+    // Measured against the live API: 3/3/3 is accepted and 14/1/4 - what this
+    // used to send - is refused 422, which is why no agent ever got one.
+    const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');
+    const m = src.match(/actionParameters:\s*\{\s*calendarId,\s*daysOfOfferingDates:\s*(\d+),\s*slotsPerDay:\s*(\d+),\s*hoursBetweenSlots:\s*(\d+)/);
+    assert.ok(m, 'the booking parameters changed shape');
+    assert.deepStrictEqual(m.slice(1, 4), ['3', '3', '3'], 'a value HighLevel refuses is back');
+  });
+  await t('VOICE AI ACTIONS ARE SENT WITH Version v3', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const calls = src.split("'/voice-ai/actions'").slice(1);
+    assert.ok(calls.length >= 2, 'expected both action creates');
+    for (const c of calls) assert.ok(/version: ACTION_VERSION/.test(c.slice(0, 160)),
+      'an action call lost its Version v3 — HighLevel 422s on the default');
+  });
+  await t('a transfer action carries the two fields HighLevel requires', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');
+    assert.ok(/triggerMessage:/.test(src) && /hearWhisperMessage:/.test(src),
+      'without these HighLevel refuses the transfer action');
+  });
   await t('the agent is told never to invent prices or hours', () => {
     assert.ok(/Never quote a price, hour or policy/.test(GhlProvider.clientContext(tenantSeed())));
   });

@@ -730,7 +730,7 @@ router.post('/repair-agent-actions', express.json({ limit: '2kb' }), async (req,
           await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
             agentId: t.ghl_agent_id, locationId: creds.locationId,
             actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
-            actionParameters: { calendarId: t.ghl_calendar_id, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 },
+            actionParameters: { calendarId: t.ghl_calendar_id, daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 },
           } });
           row.added.push('APPOINTMENT_BOOKING');
         } catch (e) { row.refused.push({ action: 'APPOINTMENT_BOOKING', status: e.status || null, message: String(e.message || e).slice(0, 160) }); }

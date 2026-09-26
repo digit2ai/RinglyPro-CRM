@@ -179,7 +179,12 @@ class GhlProvider {
           creds: this._c(), version: ACTION_VERSION,
           body: {
             agentId, locationId: this._loc(), actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
-            actionParameters: { calendarId, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 },
+            // 3/3/3, MEASURED not chosen. The field names were always right;
+            // the VALUES were not. HighLevel's own UI writes 3/3/3, and
+            // daysOfOfferingDates 5, 7, 10 and 14 and slotsPerDay 4 and 5 are
+            // each refused with 422 "Invalid actionParameters" — so the 14/1/4
+            // this used to send is why no agent ever got a booking action.
+            actionParameters: { calendarId, daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 },
           },
         });
         actions.booking = (a && a.id) || 'created';
