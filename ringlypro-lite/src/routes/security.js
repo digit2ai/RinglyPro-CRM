@@ -1168,4 +1168,84 @@ router.get('/ghl-call-raw', async (req, res) => {
 });
 function calls_read(l) { return require('../services/ghlCallLogs').readLog(l); }
 
+/**
+ * WHERE DOES HIGHLEVEL KEEP A FINISHED VOICE AI CALL?
+ *
+ * The poller runs clean and reports zero calls over seven days, while a real
+ * call demonstrably happened — so either the parameters are wrong or the answer
+ * is in a field this code does not read. Rather than guess at the shape a fifth
+ * time, this tries several documented variants and returns what each ACTUALLY
+ * answered: status, top-level keys, and a truncated body.
+ *
+ * Read-only. It creates nothing and stores nothing; it exists to be deleted
+ * once the right call is known.
+ */
+router.get('/call-logs-probe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant, Number: NumberModel } = require('../models');
+  const { Op } = require('sequelize');
+  const anchor = await Tenant.findOne({ where: { ghl_location_id: { [Op.ne]: null } }, order: [['id', 'ASC']] });
+  const creds = anchor ? await accounts.credsFor(anchor) : null;
+  if (!creds) return res.status(503).json({ ok: false, error: 'no_credentials' });
+  const loc = ghl.locationId(creds);
+  const nums = await NumberModel.findAll({ where: { status: 'active' } });
+  const agentIds = [...new Set(nums.map((n) => n.ghl_agent_id).filter(Boolean))];
+  const mins = Math.min(43200, Math.max(60, parseInt(req.query.minutes, 10) || 10080));
+  const now = Date.now();
+  const secs = { startDate: Math.floor((now - mins * 60000) / 1000), endDate: Math.floor(now / 1000) };
+  const ms = { startDate: now - mins * 60000, endDate: now };
+
+  const variants = [
+    { label: 'v3 + seconds', path: '/voice-ai/dashboard/call-logs', version: 'v3',
+      query: { locationId: loc, page: 1, pageSize: 20, sortBy: 'createdAt', sort: 'descend', ...secs } },
+    { label: 'v3 + MILLIseconds', path: '/voice-ai/dashboard/call-logs', version: 'v3',
+      query: { locationId: loc, page: 1, pageSize: 20, ...ms } },
+    { label: 'v3 + no date range at all', path: '/voice-ai/dashboard/call-logs', version: 'v3',
+      query: { locationId: loc, page: 1, pageSize: 20 } },
+    { label: 'date-stamped default version', path: '/voice-ai/dashboard/call-logs', version: undefined,
+      query: { locationId: loc, page: 1, pageSize: 20 } },
+    // Maybe the log is per agent rather than per location.
+    ...agentIds.map((a) => ({ label: `v3 + agentId ${String(a).slice(0, 8)}`, path: '/voice-ai/dashboard/call-logs',
+      version: 'v3', query: { locationId: loc, agentId: a, page: 1, pageSize: 20 } })),
+    // Or it is a conversation of type CALL, not a Voice AI dashboard row.
+    { label: 'conversations search (type CALL)', path: '/conversations/search', version: 'v3',
+      query: { locationId: loc, limit: 20 } },
+    // Or the phone system's own call records.
+    { label: 'phone-system calls', path: '/phone-system/calls', version: 'v3',
+      query: { locationId: loc, limit: 20 } },
+    // A sanity control: an endpoint known to work, so a blanket auth failure is
+    // distinguishable from "this particular endpoint returns nothing".
+    { label: 'CONTROL: voice-ai agents (known good)', path: '/voice-ai/agents', version: 'v3',
+      query: { locationId: loc } },
+  ];
+
+  const out = [];
+  for (const v of variants) {
+    try {
+      const d = await ghl.call('GET', v.path, { creds, version: v.version, query: v.query });
+      const keys = d && typeof d === 'object' ? Object.keys(d) : [typeof d];
+      // The COUNT of every array found, at the top level and one level down:
+      // that is what says which field holds the rows.
+      const arrays = {};
+      if (d && typeof d === 'object') {
+        for (const [k, val] of Object.entries(d)) {
+          if (Array.isArray(val)) arrays[k] = val.length;
+          else if (val && typeof val === 'object') {
+            for (const [k2, v2] of Object.entries(val)) if (Array.isArray(v2)) arrays[`${k}.${k2}`] = v2.length;
+          }
+        }
+      }
+      out.push({ variant: v.label, status: 200, keys, arrays,
+        body: JSON.stringify(d).slice(0, 700) });
+    } catch (e) {
+      out.push({ variant: v.label, status: e.status || null,
+        error: String(e.message || e).slice(0, 200), body: (e.body || '').slice(0, 300) });
+    }
+  }
+  return res.json({ ok: true, location: loc, agents_on_numbers: agentIds.length,
+    window_minutes: mins, variants: out });
+});
+
 module.exports = router;
