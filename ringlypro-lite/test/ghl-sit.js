@@ -71,6 +71,17 @@ function table(name) {
     async findByPk(id) { return rows.find((r) => r.id === id) || null; },
     async findAll({ where } = {}) { return where ? rows.filter((r) => match(r, where)) : rows.slice(); },
     async count({ where } = {}) { return (where ? rows.filter((r) => match(r, where)) : rows).length; },
+    // Sequelize's static update: patch every matching row, return [count].
+    async update(patch, { where } = {}) {
+      const hit = where ? rows.filter((r) => match(r, where)) : rows.slice();
+      hit.forEach((r) => Object.assign(r, patch));
+      return [hit.length];
+    },
+    async destroy({ where } = {}) {
+      const hit = where ? rows.filter((r) => match(r, where)) : rows.slice();
+      hit.forEach((r) => { const i = rows.indexOf(r); if (i >= 0) rows.splice(i, 1); });
+      return hit.length;
+    },
     async findOrCreate({ where, defaults }) {
       const found = rows.find((r) => match(r, where));
       if (found) return [found, false];
@@ -533,6 +544,20 @@ const tenantSeed = (over = {}) => ({
     const st = await accounts.status();
     assert.strictEqual(st.mode, 'shared');
     assert.ok(/CONTACT list is shared/i.test(st.plan_note));
+  });
+  await t('ROTATING A SHARED TOKEN REACHES EVERY TENANT USING IT', async () => {
+    M.GhlAccount._rows.length = 0;
+    await accounts.addToPool({ location_id: 'LOC-ROT', token: 'pit-old', shared: true });
+    const a = await M.Tenant.create(tenantSeed({ business_name: 'A', ghl_location_id: 'LOC-ROT',
+      ghl_token_enc: secretbox.seal('pit-old') }));
+    const b = await M.Tenant.create(tenantSeed({ business_name: 'B', ghl_location_id: 'LOC-ROT',
+      ghl_token_enc: secretbox.seal('pit-old') }));
+    await accounts.addToPool({ location_id: 'LOC-ROT', token: 'pit-new', shared: true });
+    // credsFor prefers the tenant's own copy, so a stale copy means every
+    // call, text and booking 401s while the pool reports the account healthy.
+    assert.strictEqual(secretbox.open((await M.Tenant.findByPk(a.id)).ghl_token_enc), 'pit-new');
+    assert.strictEqual(secretbox.open((await M.Tenant.findByPk(b.id)).ghl_token_enc), 'pit-new');
+    M.GhlAccount._rows.length = 0;
   });
   await t('a sub-account already carrying a client is never re-scoped to shared', async () => {
     M.GhlAccount._rows.length = 0;

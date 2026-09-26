@@ -95,6 +95,17 @@ async function addToPool({ location_id, token, label, source = 'manual', verify 
       const t = await Tenant.findByPk(row.claimed_by_tenant);
       if (t) await t.update({ ghl_token_enc: secretbox.seal(tok) });
     }
+    // A SHARED ROW IS CLAIMED BY NOBODY AND USED BY EVERYONE. Provisioning
+    // copies the token onto each tenant at claim time and `credsFor` prefers
+    // that copy, so refreshing only `claimed_by_tenant` (always null on a
+    // shared row) would leave EVERY tenant holding the old token after a
+    // rotation — every call, text and booking failing 401 while the pool
+    // reported the account healthy.
+    if (row.status === 'shared') {
+      const [n] = await Tenant.update({ ghl_token_enc: secretbox.seal(tok) },
+        { where: { ghl_location_id: loc } });
+      if (n) console.log(`[lite:ghl] refreshed the stored token for ${n} tenant(s) on shared ${loc}`);
+    }
   }
   return { id: row.id, location_id: row.location_id, status: row.status, created: made };
 }
