@@ -156,6 +156,9 @@ let boughtNumbers = 0;
 let eventSeq = 0;
 const EVENTS = {};   // event id -> the calendar it was created on
 const OWNED = [];    // numbers the fake sub-account has actually bought
+// A calendar created by POST /calendars/ really does read back as `{}` — an
+// EMPTY OBJECT, not an array — which is why it offers no slots at all.
+let CAL_HOURS = {};
 global.fetch = async (url, opts = {}) => {
   const u = new URL(String(url));
   const body = opts.body ? JSON.parse(opts.body) : null;
@@ -185,6 +188,18 @@ global.fetch = async (url, opts = {}) => {
     boughtNumbers++;
     if (body && body.phoneNumber && !OWNED.includes(body.phoneNumber)) OWNED.push(body.phoneNumber);
     return json(201, { ok: true });
+  }
+  if (/^\/calendars\/[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
+    if (scenario.calRead === 'fail') return json(500, { message: 'calendar read down' });
+    return json(200, { calendar: { id: p.split('/').pop(), name: 'Cal',
+      openHours: scenario.calOpenHours !== undefined ? scenario.calOpenHours : CAL_HOURS } });
+  }
+  if (/^\/calendars\/[^/]+$/.test(p) && opts.method === 'PUT') {
+    if (scenario.calWriteFails) return json(422, { message: 'calendar update refused' });
+    // Store what was written so the read-back sees it, and so a test can assert
+    // the exact payload HighLevel was given.
+    CAL_HOURS = body && body.openHours ? body.openHours : CAL_HOURS;
+    return json(200, { succeeded: true });
   }
   if (p === '/calendars/' && opts.method === 'POST') {
     if (scenario.calendarFails) return json(500, { message: 'calendar service down' });
@@ -1518,6 +1533,127 @@ const tenantSeed = (over = {}) => ({
       assert.ok(!src.includes(w), `the webhook still writes rows itself (${w})`);
     }
     assert.ok(src.includes('mirror.storeCallResult'), 'the webhook does not use the shared writer');
+  });
+
+
+  await t('NO FILE USES THE GLOBAL Number WHERE THE SEQUELIZE MODEL SHADOWS IT', () => {
+    // This has now broken production twice: `Number(duration)` in the webhook,
+    // and `Number.isInteger` in provisioning's calendar hours. Both parse
+    // cleanly and throw at runtime, and both were swallowed by a catch, so they
+    // read as HighLevel refusing something. A grep is the only cheap guard.
+    const walk = (dir, out = []) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const f = path.join(dir, e.name);
+        if (e.isDirectory()) walk(f, out);
+        else if (e.name.endsWith('.js')) out.push(f);
+      }
+      return out;
+    };
+    const offenders = [];
+    for (const f of walk(path.join(ROOT, 'src'))) {
+      const src = fs.readFileSync(f, 'utf8');
+      // Only files that pull the MODEL into module scope under the bare name.
+      const shadows = /^const \{[^}]*\bNumber\b(?!\s*:)[^}]*\} = require\(['"][^'"]*models['"]\)/m.test(src);
+      if (!shadows) continue;
+      const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      // Any use of Number as the global: a call, or a static like isInteger.
+      const bad = body.match(/\bNumber\s*\(|\bNumber\.(isInteger|isNaN|parseInt|parseFloat|isFinite|MAX_SAFE_INTEGER)/g);
+      if (bad) offenders.push(`${path.relative(ROOT, f)} → ${[...new Set(bad)].join(', ')}`);
+    }
+    assert.strictEqual(offenders.length, 0,
+      `the Sequelize Number model shadows the global here: ${offenders.join(' | ')}`
+      + ' — alias the import (Number: NumberModel) or use isNaN/parseInt instead');
+  });
+
+  /* ─── calendar hours: a calendar with none offers no slots ─────────────── */
+  section('calendar open hours (why the agent offered nothing)');
+
+  await t('hours are grouped into ONE entry for an identical Mon-Fri window', () => {
+    const rules = [1, 2, 3, 4, 5].map((weekday) => ({ weekday, start: '09:00', end: '17:00', active: true }));
+    const p = provisioning.hoursPayload(rules);
+    assert.strictEqual(p.length, 1, 'five identical days should be one entry');
+    assert.deepStrictEqual(p[0].daysOfTheWeek, [1, 2, 3, 4, 5]);
+    assert.deepStrictEqual(p[0].hours, [{ openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 0 }]);
+  });
+
+  await t('a different window becomes its own entry, and an inactive rule is left out', () => {
+    const p = provisioning.hoursPayload([
+      { weekday: 1, start: '09:00', end: '17:00', active: true },
+      { weekday: 6, start: '10:00', end: '14:00', active: true },
+      { weekday: 0, start: '09:00', end: '17:00', active: false },
+    ]);
+    assert.strictEqual(p.length, 2);
+    assert.ok(!JSON.stringify(p).includes('"0"'), 'an inactive day was sent to HighLevel');
+  });
+
+  await t('a malformed rule is dropped, never sent as NaN', () => {
+    const p = provisioning.hoursPayload([{ weekday: 1, start: 'whenever', end: '17:00', active: true }]);
+    assert.strictEqual(p.length, 0);
+    assert.ok(!JSON.stringify(p).includes('null'));
+  });
+
+  const HRS_T = await M.Tenant.create(tenantSeed({ business_name: 'Hours Dental',
+    ghl_location_id: 'LOC-HRS', ghl_calendar_id: 'CAL-HRS', provisioning_state: 'ready' }));
+
+  await t('AN EMPTY CALENDAR GETS THE TENANT\'S OWN HOURS WRITTEN ONTO IT', async () => {
+    // The live failure: openHours reads as {} and free-slots answers nothing,
+    // so the agent tells every caller there is nothing available.
+    CAL_HOURS = {}; scenario = { calOpenHours: {} }; reqs = [];
+    const r = await provisioning.syncCalendarHours(HRS_T, { token: 'tk', locationId: 'LOC-HRS' });
+    assert.strictEqual(r.ok, true, JSON.stringify(r));
+    const put = reqs.find((x) => x.method === 'PUT' && /^\/calendars\//.test(x.path));
+    assert.ok(put, 'nothing was written to the calendar');
+    assert.deepStrictEqual(put.body.openHours[0].daysOfTheWeek, [1, 2, 3, 4, 5]);
+    assert.strictEqual(put.body.openHours[0].hours[0].openHour, 9);
+  });
+
+  await t('...and the rules were seeded from nothing, so a new tenant is bookable', async () => {
+    const rules = M.AvailabilityRule._rows.filter((x) => x.tenant_id === HRS_T.id);
+    assert.strictEqual(rules.length, 5, `expected Mon-Fri, got ${rules.length}`);
+    assert.strictEqual(rules[0].timezone, 'America/New_York');
+  });
+
+  await t('the result is READ BACK — a 200 on the write is not evidence of a slot', async () => {
+    scenario = {}; reqs = [];
+    const r = await provisioning.syncCalendarHours(HRS_T, { token: 'tk', locationId: 'LOC-HRS' }, { force: true });
+    assert.ok(r.read_back >= 1, `hours were not confirmed after writing: ${JSON.stringify(r)}`);
+    const gets = reqs.filter((x) => x.method === 'GET' && /^\/calendars\//.test(x.path));
+    assert.ok(gets.length >= 1, 'the calendar was never re-read');
+  });
+
+  await t('HOURS SOMEBODY SET BY HAND ARE NEVER OVERWRITTEN', async () => {
+    // Replacing a real business's configured hours with our defaults changes
+    // when they are bookable. Only ?force=1 may do that.
+    CAL_HOURS = [{ daysOfTheWeek: [2], hours: [{ openHour: 11, openMinute: 30, closeHour: 15, closeMinute: 0 }] }];
+    scenario = { calOpenHours: CAL_HOURS }; reqs = [];
+    const r = await provisioning.syncCalendarHours(HRS_T, { token: 'tk', locationId: 'LOC-HRS' });
+    assert.strictEqual(r.skipped, 'already_has_open_hours');
+    assert.ok(!reqs.some((x) => x.method === 'PUT' && /^\/calendars\//.test(x.path)), 'existing hours were overwritten');
+  });
+
+  await t('AN UNREADABLE CALENDAR IS NOT AN EMPTY ONE — it refuses rather than clobbering', async () => {
+    scenario = { calRead: 'fail' }; reqs = [];
+    const r = await provisioning.syncCalendarHours(HRS_T, { token: 'tk', locationId: 'LOC-HRS' });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'calendar_unreadable');
+    assert.ok(!reqs.some((x) => x.method === 'PUT'), 'it wrote hours on a failed read');
+  });
+
+  await t('PROVISIONING SETS THE HOURS, and a failure there never loses the number', async () => {
+    CAL_HOURS = {}; scenario = { calOpenHours: {}, calWriteFails: true };
+    reqs = []; boughtNumbers = 0;
+    const fresh = await M.Tenant.create(tenantSeed({ business_name: 'Fresh Dental' }));
+    await accounts.addToPool({ location_id: 'LOC-FRESH', token: 'pit-fresh', shared: true });
+    const r = await provisioning.provision(fresh.id, { areaCode: '813' });
+    scenario = {};
+    // The calendar-hours write was refused; the run must still have finished
+    // and the bought number must still be on the tenant.
+    assert.strictEqual(boughtNumbers, 1, 'the purchase did not happen exactly once');
+    const after = await M.Tenant.findByPk(fresh.id);
+    assert.ok(after.ghl_calendar_id, 'no calendar was recorded');
+    assert.ok(M.Number._rows.some((n) => n.tenant_id === fresh.id), 'the bought number was lost');
+    assert.ok(reqs.some((x) => x.method === 'PUT' && /^\/calendars\//.test(x.path)), 'provisioning never tried to set hours');
+    assert.ok(r, 'provision returned nothing');
   });
 
 

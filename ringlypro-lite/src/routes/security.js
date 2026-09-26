@@ -1316,4 +1316,45 @@ router.get('/calendar-slots-probe', async (req, res) => {
   return res.json(out);
 });
 
+/**
+ * SET THE CALENDAR HOURS ON A TENANT PROVISIONED BEFORE THIS EXISTED.
+ *
+ * Their calendar was created with `openHours: {}` and therefore offers nothing,
+ * which is why the agent told the first real caller there were no slots. This
+ * writes the tenant's own availability rules onto it and reads the result back.
+ *
+ * `force:true` REPLACES hours that are already set — only for a calendar whose
+ * hours are wrong, because overwriting hours a real business configured by hand
+ * changes when they are bookable.
+ */
+router.post('/repair-calendar-hours', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const { Tenant } = require('../models');
+  const accounts = require('../services/ghlAccounts');
+  const provisioning = require('../services/provisioning');
+  const tid = parseInt((req.body && req.body.tenant) ?? req.query.tenant, 10);
+  const force = !!(req.body && req.body.force);
+  const out = [];
+  try {
+    const list = Number.isInteger(tid)
+      ? [await Tenant.findByPk(tid)].filter(Boolean)
+      : await Tenant.findAll({ where: { active: true }, order: [['id', 'ASC']] });
+    if (!list.length) return res.status(404).json({ ok: false, error: 'no_tenant' });
+    for (const tenant of list) {
+      if (!tenant.ghl_calendar_id) { out.push({ tenant: tenant.id, skipped: 'no_calendar' }); continue; }
+      try {
+        const creds = await accounts.credsFor(tenant);
+        const r = await provisioning.syncCalendarHours(tenant, creds, { force });
+        out.push({ tenant: tenant.id, calendar: tenant.ghl_calendar_id, ...r });
+      } catch (e) {
+        out.push({ tenant: tenant.id, ok: false, error: String(e.message || e).slice(0, 250), status: e.status || null });
+      }
+    }
+    return res.json({ ok: true, forced: force, results: out,
+      next: 'Re-run GET /internal/security/calendar-slots-probe?tenant=N — total_slots must now be above zero.' });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 300) });
+  }
+});
+
 module.exports = router;

@@ -74,6 +74,122 @@ async function ensureCalendar(tenant, creds) {
   return id;
 }
 
+
+/**
+ * DEFAULT BUSINESS HOURS, so a brand-new tenant is bookable from the first call.
+ * Mon-Fri 09:00-17:00 in the tenant's own timezone, 30-minute slots — the same
+ * default the public booking page seeds, kept identical on purpose: two
+ * different "default hours" in one product is a bug waiting to be reported as
+ * a mystery.
+ */
+const DEFAULT_WEEKDAYS = [1, 2, 3, 4, 5];       // models.js: 0=Sun .. 6=Sat
+const DEFAULT_OPEN = '09:00';
+const DEFAULT_CLOSE = '17:00';
+
+async function ensureAvailabilityRules(tenant) {
+  const { AvailabilityRule } = require('../models');
+  const have = await AvailabilityRule.count({ where: { tenant_id: tenant.id } });
+  if (have > 0) return false;
+  const tz = tenant.timezone || 'America/New_York';
+  for (const wd of DEFAULT_WEEKDAYS) {
+    await AvailabilityRule.create({ tenant_id: tenant.id, weekday: wd,
+      start: DEFAULT_OPEN, end: DEFAULT_CLOSE, slot_minutes: 30, timezone: tz, active: true });
+  }
+  console.log(`[lite:provisioning] seeded default Mon-Fri ${DEFAULT_OPEN}-${DEFAULT_CLOSE} for tenant ${tenant.id}`);
+  return true;
+}
+
+/**
+ * MIRROR THE TENANT'S OWN HOURS ONTO THEIR HIGHLEVEL CALENDAR.
+ *
+ * A calendar created by POST /calendars/ comes back with `openHours: {}` —
+ * EMPTY — and a calendar with no open hours has no free slots. Measured on the
+ * live sub-account 2026-09-26: GET /calendars/{id}/free-slots for the next
+ * seven days answered with a bare traceId and nothing else, so on the first
+ * real call the agent truthfully told the caller "there aren't any available
+ * appointment slots showing right now" and took a message instead. Booking is
+ * the product; this is the step that makes it exist.
+ *
+ * Same class of bug as the `timezone` field that broke calendar creation: a
+ * provisioning step that had never once run against the live API.
+ *
+ * `lite_availability_rules` IS THE SOURCE OF TRUTH. RinglyPro already decides
+ * availability from those rows — the dashboard, the public booking page and the
+ * relay agent all read them — so HighLevel is written FROM them rather than
+ * configured separately. Two calendars disagreeing about when a business is
+ * open is how a caller gets offered a slot the owner has already filled.
+ */
+function hoursPayload(rules) {
+  // Group identical windows so a normal week is one entry rather than five,
+  // which is the shape HighLevel's own UI produces.
+  const byWindow = new Map();
+  for (const r of rules) {
+    if (r.active === false) continue;
+    const [oh, om] = String(r.start || '').split(':').map((n) => parseInt(n, 10));
+    const [ch, cm] = String(r.end || '').split(':').map((n) => parseInt(n, 10));
+    // NOT `Number.isInteger`. This module destructures the Sequelize `Number`
+    // MODEL off ../models, which shadows the global Number, so `Number.isInteger`
+    // throws "is not a function" at runtime — the same trap that once broke
+    // `Number(duration)` in the webhook. It would have been swallowed by
+    // provisioning's own catch and looked like HighLevel refusing the write.
+    if ([oh, om, ch, cm].some((n) => isNaN(n))) continue;
+    // Real clock values only: 25:00 is not a time, and HighLevel would take it.
+    if (oh < 0 || oh > 23 || ch < 0 || ch > 24 || om < 0 || om > 59 || cm < 0 || cm > 59) continue;
+    if (ch * 60 + cm <= oh * 60 + om) continue;     // a window that closes before it opens is not a window
+    const key = `${oh}:${om}-${ch}:${cm}`;
+    if (!byWindow.has(key)) byWindow.set(key, { days: [], hours: [{ openHour: oh, openMinute: om, closeHour: ch, closeMinute: cm }] });
+    const g = byWindow.get(key);
+    if (!g.days.includes(r.weekday)) g.days.push(r.weekday);
+  }
+  return [...byWindow.values()].map((g) => ({ daysOfTheWeek: g.days.sort((a, b) => a - b), hours: g.hours }));
+}
+
+async function syncCalendarHours(tenant, creds, { force = false } = {}) {
+  const cal = tenant.ghl_calendar_id;
+  if (!cal) return { ok: false, reason: 'no_calendar' };
+  const { AvailabilityRule } = require('../models');
+  await ensureAvailabilityRules(tenant);
+  const rules = await AvailabilityRule.findAll({ where: { tenant_id: tenant.id } });
+  const openHours = hoursPayload(rules);
+  if (!openHours.length) return { ok: false, reason: 'no_usable_rules' };
+
+  // DO NOT OVERWRITE HOURS SOMEBODY SET BY HAND. If the calendar already has
+  // open hours, the owner (or the client) has been in there; replacing them
+  // from our defaults would quietly change when a real business is bookable.
+  if (!force) {
+    try {
+      const cur = await ghl.call('GET', `/calendars/${encodeURIComponent(cal)}`, { creds, version: 'v3' });
+      const c = (cur && (cur.calendar || cur)) || {};
+      const existing = Array.isArray(c.openHours) ? c.openHours.length
+        : (c.openHours && typeof c.openHours === 'object' ? Object.keys(c.openHours).length : 0);
+      if (existing > 0) return { ok: true, skipped: 'already_has_open_hours', open_hours: existing };
+    } catch (e) {
+      // Unreadable is not "empty": writing on a failed read could clobber real
+      // hours. Refuse and say so.
+      return { ok: false, reason: 'calendar_unreadable', error: String(e.message || e).slice(0, 160) };
+    }
+  }
+
+  await ghl.call('PUT', `/calendars/${encodeURIComponent(cal)}`, { creds, version: 'v3',
+    body: { openHours, slotDuration: 30, slotDurationUnit: 'mins', slotInterval: 30, isActive: true } });
+
+  // READ IT BACK. The write shape and the read shape differ on this endpoint
+  // (it reads as an object, not an array), so "the PUT returned 200" is not
+  // evidence that a slot now exists.
+  let confirmed = null;
+  try {
+    const after = await ghl.call('GET', `/calendars/${encodeURIComponent(cal)}`, { creds, version: 'v3' });
+    const c = (after && (after.calendar || after)) || {};
+    confirmed = Array.isArray(c.openHours) ? c.openHours.length
+      : (c.openHours && typeof c.openHours === 'object' ? Object.keys(c.openHours).length : 0);
+  } catch (_) { /* reported as unconfirmed below */ }
+
+  console.log(`[lite:provisioning] calendar hours set for tenant ${tenant.id}: `
+    + `${openHours.map((g) => `${g.daysOfTheWeek.join(',')} ${g.hours[0].openHour}:00-${g.hours[0].closeHour}:00`).join(' | ')}`
+    + ` (read back: ${confirmed === null ? 'unconfirmed' : confirmed})`);
+  return { ok: true, written: openHours, read_back: confirmed };
+}
+
 /**
  * ONE PROVISIONING RUN PER TENANT AT A TIME.
  *
@@ -179,6 +295,14 @@ async function runProvision(tenant, opts = {}) {
       const cal = await ensureCalendar(tenant, creds);
       await mark(tenant, 'calendar', { ghl_calendar_id: cal });
     }
+    // A CALENDAR WITH NO OPEN HOURS HAS NO SLOTS, and the agent then tells
+    // every caller there is nothing available. Best-effort on purpose: a
+    // failure here must not lose a number that has already been bought, and it
+    // is repairable afterwards (POST /internal/security/repair-calendar-hours).
+    try {
+      const r = await syncCalendarHours(tenant, creds);
+      if (!r.ok) console.warn(`[lite:provisioning] calendar hours not set for tenant ${tenant.id}: ${r.reason}`);
+    } catch (e) { console.warn(`[lite:provisioning] calendar hours failed for tenant ${tenant.id}: ${e.message}`); }
 
     // 4. Their agent, on their number, booking into their calendar.
     if (!tenant.ghl_agent_id) {
@@ -317,4 +441,4 @@ async function clientView(tenantOrId) {
   };
 }
 
-module.exports = { provision, summary, clientView, ensureCalendar, syncTransfer, syncWorkflows, withTenantLock, STATES, reached };
+module.exports = { provision, summary, clientView, ensureCalendar, syncTransfer, syncWorkflows, withTenantLock, STATES, reached, syncCalendarHours, hoursPayload, ensureAvailabilityRules};
