@@ -1,5 +1,8 @@
 /* RinglyPro Lite service worker — installability + app-icon badge support. */
-const CACHE = 'lite-v7';
+// BUMP THIS WHENEVER A SHELL FILE CHANGES. '/dashboard' is precached, so a
+// stale copy is served whenever the network hiccups — which is exactly how a
+// deployed fix can look like it never shipped.
+const CACHE = 'lite-v8';
 const ASSETS = ['/dashboard', '/apple-touch-icon.png', '/icon-192.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
