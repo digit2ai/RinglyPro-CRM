@@ -29,15 +29,38 @@ async function sendDemoConfirm(ctx, ev) {
   return send({ from: ctx.to, to, body, purpose: 'demo' });   // from is overridden by LITE_SMS_FROM
 }
 
-async function send({ from, to, body, purpose }) {
-  if (!to || !from) return { sent: false, segments: 0, reason: 'missing_from_or_to' };
+/**
+ * A TENANT ON HIGHLEVEL IS TEXTED FROM THEIR OWN HIGHLEVEL NUMBER.
+ *
+ * Numbers and voice moved to HighLevel; SMS did not, so every text went out
+ * through Twilio from a toll-free unrelated to the client — on the account
+ * whose voice is disabled and whose token had since been rotated, which is why
+ * no alert had been delivered at all and nothing said so. Pass the tenant and
+ * the text goes out on their own line; without one, nothing changes and Twilio
+ * still carries it (the demo lines and every pre-HighLevel number).
+ */
+async function providerFor(tenant) {
+  if (!tenant) return { p: getProvider(), via: 'twilio' };
   try {
-    const provider = getProvider();
-    await provider.sendSMS({ from, to, body, purpose });
-    return { sent: true, segments: segments(body) };
+    const accounts = require('./ghlAccounts');
+    const creds = await accounts.credsFor(tenant);
+    if (creds && creds.token && creds.locationId) {
+      const GhlProvider = require('../telephony/ghlProvider');
+      return { p: new GhlProvider({ creds }), via: 'ghl' };
+    }
+  } catch (e) { console.warn('[lite:sms] could not resolve HighLevel creds, using the default provider:', e.message); }
+  return { p: getProvider(), via: 'twilio' };
+}
+
+async function send({ from, to, body, purpose, tenant }) {
+  if (!to || !from) return { sent: false, segments: 0, reason: 'missing_from_or_to' };
+  const { p, via } = await providerFor(tenant);
+  try {
+    await p.sendSMS({ from, to, body, purpose });
+    return { sent: true, segments: segments(body), via };
   } catch (e) {
-    console.error('[lite:sms] send failed:', e.message);
-    return { sent: false, segments: 0, reason: e.message };
+    console.error(`[lite:sms] send failed via ${via}:`, e.message);
+    return { sent: false, segments: 0, reason: e.message, via };
   }
 }
 

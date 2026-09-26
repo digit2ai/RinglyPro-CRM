@@ -28,6 +28,10 @@
 const ghl = require('./ghl');
 const tollFraud = require('../security/tollFraud');
 
+// The conversations and contacts endpoints are documented under v3, while the
+// phone-system calls this file already makes work on the date-stamped default.
+// Overridable without a redeploy if HighLevel moves it again.
+const SMS_VERSION = String(process.env.LITE_GHL_SMS_VERSION || 'v3').trim();
 const MONTHLY_COST_USD = 1.15; // LC Phone local number, HighLevel pricing page 2026-09-01
 
 function firstArray(data) {
@@ -178,7 +182,44 @@ class GhlProvider {
   async releaseNumber() { return { released: false, manual: true, reason: 'Release the number in HighLevel > Phone System' }; }
   // Calls on a HighLevel number are answered by its Voice AI agent, never by Lite.
   async configureInboundWebhook() { return { ok: true, managed_by: 'ghl' }; }
-  async sendSMS() { const e = new Error('ghl_sms_via_workflows'); e.code = 'GHL_WORKFLOWS'; throw e; }
+  /**
+   * Send an SMS from the tenant's OWN HighLevel number.
+   *
+   * WHY THIS REPLACED A STUB THAT THREW. Numbers and voice moved to HighLevel;
+   * SMS never did, so `getProvider()` stayed Twilio and every owner alert went
+   * out from a Twilio toll-free that has nothing to do with the client, on the
+   * account whose voice is disabled and whose token had been rotated out from
+   * under us. A client on a HighLevel number should be texted from that
+   * number — it threads with their calls and it is the number their customer
+   * already knows.
+   *
+   * THE TOLL-FRAUD GATE IS HERE, IN THE PROVIDER, exactly as it is in the
+   * Twilio one. That placement is the whole design: a check at save time would
+   * miss rows edited in the database or reached by a path written later, and
+   * the security SIT fails if any file outside a provider reaches a send API.
+   */
+  async sendSMS({ from, to, body, purpose }) {
+    const gate = tollFraud.authorize(purpose === 'demo' ? 'demo_sms' : 'sms', to);
+    if (!gate.ok) { const e = new Error(`sms_refused:${gate.reason}`); e.code = 'TOLL_FRAUD_GUARD'; throw e; }
+    to = gate.e164;
+    if (!from) { const e = new Error('no HighLevel number to send from'); e.code = 'NO_FROM'; throw e; }
+
+    // HighLevel requires a contactId on a message, the same way it does on an
+    // appointment. An upsert is safe to repeat and returns the same contact.
+    const up = await ghl.call('POST', '/contacts/upsert', {
+      creds: this._c(), version: SMS_VERSION,
+      body: { locationId: this._loc(), phone: to, source: 'RinglyPro' },
+    });
+    const contactId = up && (up.contact ? up.contact.id : up.id);
+    if (!contactId) { const e = new Error('HighLevel did not return a contact id'); e.code = 'NO_CONTACT_ID'; throw e; }
+
+    const sent = await ghl.call('POST', '/conversations/messages', {
+      creds: this._c(), version: SMS_VERSION,
+      body: { type: 'SMS', contactId, message: String(body || '').slice(0, 1500),
+              fromNumber: from, toNumber: to },
+    });
+    return { sid: (sent && (sent.messageId || sent.id)) || null, provider: 'ghl' };
+  }
   async redirectCall() { const e = new Error('ghl_transfer_is_an_agent_action'); e.code = 'GHL_WORKFLOWS'; throw e; }
 }
 

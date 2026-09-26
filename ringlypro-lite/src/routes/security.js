@@ -488,10 +488,26 @@ router.post('/ghl-message-selftest', express.json({ limit: '4kb' }), async (req,
     if (textTo) {
       await step('send a test alert and report the real result', async () => {
         const smsSvc = require('../services/sms');
-        const r = await smsSvc.send({ from: DID, to: textTo,
+        const ghlMod = require('../telephony/ghl');
+        const creds = ghlMod.resolve(null);
+        // Send from a number the sub-account actually owns. The throwaway DID
+        // is a reserved test number, and a real carrier refuses a From it does
+        // not hold — which would report a transport failure that is really a
+        // fixture problem.
+        let from = process.env.LITE_SMS_FROM || null;
+        try {
+          const list = await ghlMod.listActiveNumbers(creds);
+          const arr = Array.isArray(list) ? list : (list && (list.numbers || list.data)) || [];
+          const own = arr.map((n) => n.phoneNumber || n.number).filter(Boolean);
+          if (own.length) from = own[0];
+          if (!from) return { skipped: 'the sub-account holds no number to send from yet' };
+        } catch (e) { if (!from) return { skipped: `could not list the sub-account's numbers: ${String(e.message || e).slice(0, 120)}` }; }
+
+        const t = await Tenant.findByPk(TID);
+        const r = await smsSvc.send({ tenant: t, from, to: textTo,
           body: 'RinglyPro Lite test: this is the alert you get when the AI takes a message. Nothing to do.' });
-        if (!r.sent) throw new Error(`the carrier did not accept it: ${r.reason || 'unknown'}`);
-        return { sent: true, segments: r.segments, to: tollFraud.mask(textTo) };
+        if (!r.sent) throw new Error(`${r.via || 'carrier'} did not accept it: ${r.reason || 'unknown'}`);
+        return { sent: true, via: r.via, from, segments: r.segments, to: tollFraud.mask(textTo) };
       });
     }
 

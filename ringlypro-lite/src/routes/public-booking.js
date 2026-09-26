@@ -213,7 +213,7 @@ router.post('/book', async (req, res) => {
         if (from) {
           const sms = `New booking (${tenant.business_name || 'Vision2Ai'}): ${name}`
             + (phone ? ` (${phone})` : '') + ` — ${l.day} ${l.time}.`;
-          await smsSvc.send({ from, to: tenant.owner_phone, body: sms });
+          await smsSvc.send({ tenant, from, to: tenant.owner_phone, body: sms });
         }
       } catch (e) { console.warn('[lite:public-booking] owner SMS failed:', e.message); }
     }

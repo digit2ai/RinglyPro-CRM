@@ -93,17 +93,17 @@ async function fireSms(ctx, ev) {
     if (ev.type === 'message') {
       if (tenant.owner_phone) {
         const body = tt.smsMessageOwner(tenant.business_name, ev.data.caller_name, ev.data.callback_number || ctx.from, ev.data.body);
-        const r = await smsSvc.send({ from, to: tenant.owner_phone, body }); segs += r.segments;
+        const r = await smsSvc.send({ tenant, from, to: tenant.owner_phone, body }); segs += r.segments;
       }
     } else if (ev.type === 'appointment') {
       const when = ev.data.display || ev.data.starts_at;
       if (tenant.owner_phone) {
-        const r = await smsSvc.send({ from, to: tenant.owner_phone, body: tt.smsBookingOwner(tenant.business_name, ev.data.caller_name, when) });
+        const r = await smsSvc.send({ tenant, from, to: tenant.owner_phone, body: tt.smsBookingOwner(tenant.business_name, ev.data.caller_name, when) });
         segs += r.segments;
       }
       const callerNum = ev.data.callback_number || ctx.from;
       if (callerNum) {
-        const r = await smsSvc.send({ from, to: callerNum, body: tt.smsBookingCaller(tenant.business_name, when) });
+        const r = await smsSvc.send({ tenant, from, to: callerNum, body: tt.smsBookingCaller(tenant.business_name, when) });
         segs += r.segments;
       }
     }

@@ -184,6 +184,10 @@ global.fetch = async (url, opts = {}) => {
     return scenario.agentFails ? json(500, { message: 'agent service down' }) : json(201, { id: 'agent-new-1' });
   }
   if (p === '/voice-ai/actions') return json(201, { id: 'act1' });
+  if (p === '/conversations/messages' && opts.method === 'POST') {
+    if (scenario.smsFails) return json(422, { message: 'message rejected' });
+    return json(201, { messageId: 'MSG-1', conversationId: 'CONV-1' });
+  }
   if (p === '/contacts/upsert' && opts.method === 'POST') {
     if (scenario.contactFails) return json(422, { message: 'contact rejected' });
     if (scenario.contactFlaky && !scenario._cFlaky) { scenario._cFlaky = true; return json(503, { message: 'busy' }); }
@@ -697,6 +701,38 @@ const tenantSeed = (over = {}) => ({
    * below attack the two ways a two-way sync goes wrong — an echo loop, and a
    * booking that is kept locally after the remote write failed.
    */
+  section('SMS on the HighLevel path');
+  await t('A TEXT GOES OUT FROM THE TENANT\'S OWN HIGHLEVEL NUMBER', async () => {
+    reqs = []; scenario = {};
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    const out = await prov.sendSMS({ from: '+18135550101', to: '+14085551234', body: 'hello' });
+    assert.ok(out && out.provider === 'ghl');
+    const msg = reqs.find((r) => r.path === '/conversations/messages' && r.method === 'POST');
+    assert.ok(msg, 'no message was sent through HighLevel');
+    assert.strictEqual(msg.body.type, 'SMS');
+    assert.strictEqual(msg.body.fromNumber, '+18135550101', 'it did not send from the tenant\'s own line');
+    assert.strictEqual(msg.body.toNumber, '+14085551234');
+    assert.ok(msg.body.contactId, 'HighLevel requires a contactId and none was sent');
+    assert.ok(reqs.some((r) => r.path === '/contacts/upsert'), 'the recipient was never upserted');
+  });
+  await t('THE TOLL-FRAUD GATE IS IN THIS PROVIDER TOO, not only Twilio\'s', async () => {
+    reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-A' } });
+    await assert.rejects(prov.sendSMS({ from: '+18135550101', to: '+237650000000', body: 'x' }),
+      (e) => e.code === 'TOLL_FRAUD_GUARD');
+    assert.strictEqual(reqs.filter((r) => r.path === '/conversations/messages').length, 0,
+      'a Cameroon destination reached HighLevel');
+  });
+  await t('a demo text draws on its own budget, so it cannot starve owner alerts', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');
+    assert.ok(/purpose === 'demo' \? 'demo_sms' : 'sms'/.test(src), 'the two budgets were merged');
+  });
+  await t('NO FILE OUTSIDE A PROVIDER REACHES A SEND API', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/sms.js'), 'utf8');
+    assert.ok(!/conversations\/messages/.test(src), 'the service reaches the send endpoint directly');
+    assert.ok(/sendSMS/.test(src), 'it should go through the provider');
+  });
+
   section('area codes');
   await t('A REQUESTED AREA CODE IS HONOURED', async () => {
     scenario = {}; reqs = [];

@@ -234,10 +234,10 @@ router.post('/ghl/call', async (req, res) => {
       if (tenant && tenant.owner_phone && from) {
         const tt = t(tenant.locale);
         if (wroteMessage) {
-          await smsSvc.send({ from, to: tenant.owner_phone,
+          await smsSvc.send({ tenant, from, to: tenant.owner_phone,
             body: tt.smsMessageOwner(tenant.business_name, f.callerName || null, caller, String(f.summary || f.message).slice(0, 300)) });
         } else if (wroteAppointment) {
-          await smsSvc.send({ from, to: tenant.owner_phone,
+          await smsSvc.send({ tenant, from, to: tenant.owner_phone,
             body: tt.smsBookingOwner(tenant.business_name, f.callerName || null, wroteAppointment) });
         }
       }
