@@ -820,6 +820,66 @@ router.post('/action-shape-probe', express.json({ limit: '2kb' }), async (req, r
   } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
 });
 
+/**
+ * Find the accepted VALUE RANGES for APPOINTMENT_BOOKING.
+ *
+ * The field names were never wrong — HighLevel's own UI writes exactly
+ * `{calendarId, daysOfOfferingDates, slotsPerDay, hoursBetweenSlots}`, which
+ * is what we were sending. It 422'd on the VALUES: their UI chose 3/3/3 and we
+ * sent 14/1/4. Three days ahead is thin for a booking product, so rather than
+ * copy their defaults blindly this measures what is actually allowed.
+ *
+ * It runs against the TEMPLATE agent and DELETES every action it creates, so
+ * it leaves nothing behind.
+ */
+router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const { Tenant } = require('../models');
+  try {
+    const creds = ghl.resolve(null);
+    const GhlProvider = require('../telephony/ghlProvider');
+    const tpl = await new GhlProvider({ creds }).templateAgent();
+    if (!tpl || !tpl.id) return res.json({ ok: false, error: 'no template agent to test against' });
+    const t = await Tenant.findOne({ where: { provisioning_state: 'ready' } });
+    const calendarId = t && t.ghl_calendar_id;
+    if (!calendarId) return res.json({ ok: false, error: 'no calendar to point at' });
+
+    const combos = [
+      { days: 3, slots: 3, hours: 3 },     // what their UI wrote — known good
+      { days: 7, slots: 3, hours: 3 },
+      { days: 14, slots: 3, hours: 3 },
+      { days: 30, slots: 3, hours: 3 },
+      { days: 7, slots: 5, hours: 2 },
+      { days: 7, slots: 4, hours: 1 },
+      { days: 14, slots: 1, hours: 4 },
+    ];
+    const tried = [];
+    for (const c of combos) {
+      let created = null;
+      try {
+        const out = await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
+          agentId: tpl.id, locationId: creds.locationId,
+          actionType: 'APPOINTMENT_BOOKING', name: 'RANGE PROBE (temporary)',
+          actionParameters: { calendarId, daysOfOfferingDates: c.days, slotsPerDay: c.slots, hoursBetweenSlots: c.hours },
+        } });
+        created = out && (out.id || out.actionId || (out.action && out.action.id));
+        tried.push({ ...c, ok: true });
+      } catch (e) {
+        tried.push({ ...c, ok: false, status: e.status || null, message: String(e.message || e).slice(0, 120) });
+      }
+      // Clean up immediately — the template must not be left carrying probes.
+      if (created) {
+        await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(created)}`, { creds, version: 'v3' })
+          .catch((e) => console.warn('[lite:probe] could not remove probe action', created, e.message));
+      }
+    }
+    const ok = tried.filter((x) => x.ok);
+    res.json({ ok: ok.length > 0, accepted: ok, tried,
+      left_behind: 'nothing — every probe action was deleted' });
+  } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: what does each provisioned agent actually look like in HighLevel? */
 router.get('/agents', async (req, res) => {
   res.set('Cache-Control', 'no-store');
