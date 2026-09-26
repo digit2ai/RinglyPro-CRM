@@ -32,6 +32,7 @@ const tollFraud = require('../security/tollFraud');
 // phone-system calls this file already makes work on the date-stamped default.
 // Overridable without a redeploy if HighLevel moves it again.
 const SMS_VERSION = String(process.env.LITE_GHL_SMS_VERSION || 'v3').trim();
+const OWNED_CACHE = new Map();   // locationId -> { at, nums }
 const MONTHLY_COST_USD = 1.15; // LC Phone local number, HighLevel pricing page 2026-09-01
 
 function firstArray(data) {
@@ -70,6 +71,32 @@ class GhlProvider {
     }
     const list = firstArray(await ghl.listVoiceAgents(this._c()));
     return list.find((a) => !a.inboundNumber) || list[0] || null;
+  }
+
+  /**
+   * The numbers this sub-account actually holds. Cached briefly: it gates
+   * every send, and a list request per text would be the slowest part of an
+   * alert. The v3 shape is `{data:{numbers:[]}}`, the date-stamped one is a
+   * bare array — both are read rather than guessed.
+   */
+  async ownedNumbers() {
+    const key = this._loc();
+    const hit = OWNED_CACHE.get(key);
+    if (hit && Date.now() - hit.at < 60000) return hit.nums;
+    let nums = [];
+    for (const version of [SMS_VERSION, undefined]) {
+      try {
+        const r = await ghl.call('GET', `/phone-system/numbers/location/${key}`, { creds: this._c(), version });
+        let arr = Array.isArray(r) ? r : null;
+        if (!arr && r && typeof r === 'object') {
+          if (r.data && Array.isArray(r.data.numbers)) arr = r.data.numbers;
+          else for (const v of Object.values(r)) if (Array.isArray(v)) { arr = v; break; }
+        }
+        if (arr) { nums = arr.map((n) => n.phoneNumber || n.number || n.number_e164).filter(Boolean); break; }
+      } catch (_) { /* try the other version */ }
+    }
+    OWNED_CACHE.set(key, { at: Date.now(), nums });
+    return nums;
   }
 
   /** Buy a US local number. Nothing else — see the class note. */
@@ -204,6 +231,20 @@ class GhlProvider {
     to = gate.e164;
     if (!from) { const e = new Error('no HighLevel number to send from'); e.code = 'NO_FROM'; throw e; }
 
+    // THE SENDER MUST BE A NUMBER THIS SUB-ACCOUNT ACTUALLY OWNS.
+    // HighLevel returned 201 for a message whose fromNumber was a Twilio
+    // toll-free it has never held, and delivered nothing — so "the API
+    // accepted it" told us a text had been sent when no text existed. A 201
+    // is not a delivery, and this is the check that makes the difference
+    // visible instead of silent.
+    const owned = await this.ownedNumbers();
+    if (!owned.includes(from)) {
+      const e = new Error(owned.length
+        ? `${from} is not a number this account owns (it has ${owned.join(', ')})`
+        : 'this account owns no phone number yet, so it cannot send a text');
+      e.code = 'FROM_NOT_OWNED'; throw e;
+    }
+
     // HighLevel requires a contactId on a message, the same way it does on an
     // appointment. An upsert is safe to repeat and returns the same contact.
     const up = await ghl.call('POST', '/contacts/upsert', {
@@ -218,7 +259,10 @@ class GhlProvider {
       body: { type: 'SMS', contactId, message: String(body || '').slice(0, 1500),
               fromNumber: from, toNumber: to },
     });
-    return { sid: (sent && (sent.messageId || sent.id)) || null, provider: 'ghl' };
+    // `accepted`, not `delivered`. HighLevel returns an id the instant it
+    // queues the message; carrier delivery is a later, separate event we do
+    // not observe. Saying "sent" here is what made a silent failure look fine.
+    return { sid: (sent && (sent.messageId || sent.id)) || null, provider: 'ghl', accepted: true };
   }
   async redirectCall() { const e = new Error('ghl_transfer_is_an_agent_action'); e.code = 'GHL_WORKFLOWS'; throw e; }
 }

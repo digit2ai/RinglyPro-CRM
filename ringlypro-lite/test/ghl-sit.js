@@ -184,6 +184,11 @@ global.fetch = async (url, opts = {}) => {
     return scenario.agentFails ? json(500, { message: 'agent service down' }) : json(201, { id: 'agent-new-1' });
   }
   if (p === '/voice-ai/actions') return json(201, { id: 'act1' });
+  // What the sub-account OWNS (distinct from what is purchasable).
+  if (/^\/phone-system\/numbers\/location\/[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
+    if (scenario.ownsNothing) return json(200, { status: 'success', data: { numbers: [], total: 0 } });
+    return json(200, { status: 'success', data: { numbers: [{ phoneNumber: '+18135550101' }], total: 1 } });
+  }
   if (p === '/conversations/messages' && opts.method === 'POST') {
     if (scenario.smsFails) return json(422, { message: 'message rejected' });
     return json(201, { messageId: 'MSG-1', conversationId: 'CONV-1' });
@@ -714,6 +719,28 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual(msg.body.toNumber, '+14085551234');
     assert.ok(msg.body.contactId, 'HighLevel requires a contactId and none was sent');
     assert.ok(reqs.some((r) => r.path === '/contacts/upsert'), 'the recipient was never upserted');
+  });
+  await t('A NUMBER THE ACCOUNT DOES NOT OWN IS REFUSED, not accepted and dropped', async () => {
+    reqs = []; scenario = {};
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-OWN-1' } });
+    await assert.rejects(prov.sendSMS({ from: '+18886103810', to: '+14085551234', body: 'x' }),
+      (e) => e.code === 'FROM_NOT_OWNED');
+    assert.strictEqual(reqs.filter((r) => r.path === '/conversations/messages').length, 0,
+      'HighLevel answers 201 for a sender it does not hold and delivers nothing');
+  });
+  await t('an account with no number at all says so rather than sending', async () => {
+    scenario = { ownsNothing: true }; reqs = [];
+    const prov = new GhlProvider({ creds: { token: 'pit-x', locationId: 'LOC-OWN-2' } });
+    await assert.rejects(prov.sendSMS({ from: '+18135550101', to: '+14085551234', body: 'x' }),
+      (e) => e.code === 'FROM_NOT_OWNED' && /owns no phone number/.test(e.message));
+    scenario = {};
+  });
+  await t('TWILIO SMS IS OFF WHILE HIGHLEVEL IS CONFIGURED', () => {
+    const TwilioProvider = require(path.join(ROOT, 'src/telephony/twilioProvider'));
+    assert.strictEqual(TwilioProvider.smsDisabled(), true, 'a text could still fall back to Twilio');
+    process.env.LITE_TWILIO_SMS = 'on';
+    try { assert.strictEqual(TwilioProvider.smsDisabled(), false, 'the deliberate override does not work'); }
+    finally { delete process.env.LITE_TWILIO_SMS; }
   });
   await t('THE TOLL-FRAUD GATE IS IN THIS PROVIDER TOO, not only Twilio\'s', async () => {
     reqs = [];

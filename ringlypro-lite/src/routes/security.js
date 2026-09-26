@@ -494,27 +494,33 @@ router.post('/ghl-message-selftest', express.json({ limit: '4kb' }), async (req,
         // is a reserved test number, and a real carrier refuses a From it does
         // not hold — which would report a transport failure that is really a
         // fixture problem.
-        let from = process.env.LITE_SMS_FROM || null;
-        try {
-          const list = await ghlMod.listActiveNumbers(creds);
-          const arr = Array.isArray(list) ? list : (list && (list.numbers || list.data)) || [];
-          const own = arr.map((n) => n.phoneNumber || n.number).filter(Boolean);
-          if (own.length) from = own[0];
-          if (!from) return { skipped: 'the sub-account holds no number to send from yet' };
-        } catch (e) { if (!from) return { skipped: `could not list the sub-account's numbers: ${String(e.message || e).slice(0, 120)}` }; }
+        // ONLY a number this sub-account owns. It used to fall back to
+        // LITE_SMS_FROM — the Twilio toll-free — and HighLevel returned 201
+        // for a sender it has never held, so the run reported "sent" and no
+        // phone ever rang. No number, no send, and say so.
+        const GhlProvider = require('../telephony/ghlProvider');
+        const owned = await new GhlProvider({ creds }).ownedNumbers();
+        if (!owned.length) {
+          return { skipped: 'this sub-account owns no phone number yet, so it cannot send a text. Provision one first.' };
+        }
+        const from = owned[0];
 
         const t = await Tenant.findByPk(TID);
         const r = await smsSvc.send({ tenant: t, from, to: textTo,
           body: 'RinglyPro Lite test: this is the alert you get when the AI takes a message. Nothing to do.' });
         if (!r.sent) throw new Error(`${r.via || 'carrier'} did not accept it: ${r.reason || 'unknown'}`);
-        return { sent: true, via: r.via, from, segments: r.segments, to: tollFraud.mask(textTo) };
+        // ACCEPTED, not delivered — the carrier hop is not something this run
+        // can see, and calling it "sent" is exactly how a silent failure
+        // passed for a success.
+        return { accepted_by: r.via, from, segments: r.segments, to: tollFraud.mask(textTo),
+                 note: 'accepted for delivery — confirm on the handset' };
       });
     }
 
     const alerts = require('./webhooks-ghl').stats;
     const out = {
       ok: steps.every((s) => s.ok),
-      texted: textTo ? `sent to ${tollFraud.mask(textTo)} — check that phone` : 'not requested',
+      texted: textTo ? `accepted for delivery to ${tollFraud.mask(textTo)} — confirm on the handset` : 'not requested',
       steps,
       webhook_counters: { received: alerts.received, accepted: alerts.accepted, unauthenticated: alerts.unauthenticated },
       still_unproven: 'Whether HighLevel\'s own workflow calls this URL on a real call. Only a real call proves that; watch ghl_post_call_webhook.received rise above 0.',

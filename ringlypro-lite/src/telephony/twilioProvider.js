@@ -101,6 +101,23 @@ class TwilioProvider extends TelephonyProvider {
       throw e;
     }
     to = gate.e164;
+
+    // TWILIO IS OFF ON THIS SERVICE ONCE HIGHLEVEL IS CONFIGURED (owner
+    // decision 2026-09-25). Numbers and voice moved months ago; SMS silently
+    // did not, so every text went out through a Twilio toll-free unrelated to
+    // the client, on an account whose voice is disabled and whose token had
+    // been rotated — and each failure was swallowed, so nothing said so. A
+    // silent fallback is what hid it, so there is no fallback any more: this
+    // refuses loudly and HighLevel is the only path. LITE_TWILIO_SMS=on
+    // re-enables it deliberately.
+    //
+    // AFTER the toll-fraud gate, never before: a refused destination must be
+    // counted by the guard whether or not the transport happens to be off.
+    if (TwilioProvider.smsDisabled()) {
+      const e = new Error('twilio_sms_disabled: this service sends through HighLevel. Set LITE_TWILIO_SMS=on to re-enable Twilio.');
+      e.code = 'TWILIO_DISABLED'; throw e;
+    }
+
     const c = this.client();
     // Delivery to US numbers requires an A2P-registered sender (else error 30034).
     // Default sender = Digit2AI's verified toll-free (+18886103810), which is
@@ -178,5 +195,19 @@ class TwilioProvider extends TelephonyProvider {
 // Digit2AI verified toll-free (TWILIO_APPROVED) — default SMS sender for US
 // A2P delivery. Overridable via LITE_SMS_FROM.
 TwilioProvider.DEFAULT_SMS_FROM = '+18886103810';
+
+/**
+ * Twilio SMS is disabled whenever HighLevel is configured, unless explicitly
+ * turned back on. Read at call time, not at boot, so flipping the env var on
+ * Render takes effect on the next request.
+ */
+TwilioProvider.smsDisabled = function () {
+  const forced = String(process.env.LITE_TWILIO_SMS || '').trim().toLowerCase();
+  if (['on', '1', 'true', 'yes'].includes(forced)) return false;
+  if (['off', '0', 'false', 'no'].includes(forced)) return true;
+  const ghlConfigured = !!(String(process.env.LITE_GHL_TOKEN || '').trim()
+    && String(process.env.LITE_GHL_LOCATION_ID || '').trim());
+  return ghlConfigured;
+};
 
 module.exports = TwilioProvider;

@@ -457,9 +457,20 @@ function providerWith(client) { const p = new TwilioProvider(); p._client = clie
   await t('the provider checks the guard BEFORE touching the client, in both paths', () => {
     const src = read('src/telephony/twilioProvider.js');
     for (const fn of ['async sendSMS(', 'async redirectCall(']) {
-      const body = src.slice(src.indexOf(fn), src.indexOf(fn) + 900);
-      assert.ok(body.indexOf('tollFraud.authorize') > -1, `${fn} has no guard`);
-      assert.ok(body.indexOf('tollFraud.authorize') < body.indexOf('this.client()'), `${fn} reaches the client before the guard`);
+      const start = src.indexOf(fn);
+      assert.ok(start > -1, `${fn} is gone`);
+      // THE WHOLE FUNCTION, not a fixed byte window. This used to slice 900
+      // characters, so adding a comment pushed `this.client()` out of view,
+      // indexOf returned -1, and the ordering check passed or failed on
+      // comment length rather than on the code.
+      const rest = src.slice(start + fn.length);
+      const nextFn = rest.search(/\n  (?:async )?[A-Za-z_]+\(/);
+      const body = nextFn > -1 ? rest.slice(0, nextFn) : rest;
+      const g = body.indexOf('tollFraud.authorize');
+      const c = body.indexOf('this.client()');
+      assert.ok(g > -1, `${fn} has no guard`);
+      assert.ok(c > -1, `${fn} never reaches the client — did the method move?`);
+      assert.ok(g < c, `${fn} reaches the client before the guard`);
     }
   });
   await t('the phone fields are validated when an owner saves them', () => {
