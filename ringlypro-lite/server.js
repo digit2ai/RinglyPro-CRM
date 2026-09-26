@@ -288,6 +288,16 @@ async function main() {
   app.set('fraudWatchDeps', fraudWatchDeps);
   if (fraudWatch.start(fraudWatchDeps)) console.log('[lite] fraud watch started');
 
+  // PULL FINISHED CALLS FROM HIGHLEVEL. The post-call webhook is configured by
+  // hand in someone else's dashboard and cannot be verified from here — a real
+  // call on 2026-09-26 left a message that never reached RinglyPro because the
+  // workflow's signature header was missing. A voicemail is the product, so it
+  // does not hang on a field in a form: the poller reads the same facts from
+  // HighLevel's API and hands them to the same writer, keyed on the same call
+  // id, so whichever arrives second is a no-op.
+  try { require('./src/services/ghlCallLogs').start(); }
+  catch (e) { console.error('[lite] call-log poller failed to start:', e.message); }
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);

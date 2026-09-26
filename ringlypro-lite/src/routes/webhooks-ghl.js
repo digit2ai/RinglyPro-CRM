@@ -37,10 +37,14 @@ const router = express.Router();
 // `Number` is deliberately aliased: the Sequelize model would shadow the
 // global Number(), and `Number(duration)` then throws at runtime — a bug
 // node --check cannot see and the SIT caught.
-const { Tenant, Number: NumberModel, Call, Message, Appointment, Transcript } = require('../models');
+const { Number: NumberModel } = require('../models');
 const tollFraud = require('../security/tollFraud');
-const smsSvc = require('../services/sms');
-const { t } = require('../services/i18n');
+// ONE WRITER, TWO SOURCES. This route and the call-log poller both hand their
+// fields to services/callMirror.js rather than each creating rows. Two copies
+// of that logic drifted the moment one of them learned something the other
+// did not, and which one ran depended on whether a HighLevel workflow action
+// happened to be configured.
+const mirror = require('../services/callMirror');
 
 const stats = { received: 0, accepted: 0, unauthenticated: 0, unmatched: 0, replayed: 0, throttled: 0, failed: 0,
   // WHY a delivery was rejected, not just how many. "unauthenticated: 1" is
@@ -110,16 +114,7 @@ function read(body) {
   };
 }
 
-function normalizeOutcome(v) {
-  const s = String(v || '').toLowerCase();
-  if (s.includes('appoint') || s.includes('book')) return 'appointment';
-  if (s.includes('transfer')) return 'transferred';
-  if (s.includes('message') || s.includes('voicemail')) return 'message';
-  if (s.includes('abandon') || s.includes('no-answer') || s.includes('missed')) return 'abandoned';
-  return 'completed';
-}
 
-const MAX_TRANSCRIPT = Math.max(500, parseInt(process.env.LITE_GHL_MAX_TRANSCRIPT || '8000', 10) || 8000);
 
 router.post('/ghl/call', async (req, res) => {
   stats.received++; stats.last_at = new Date().toISOString();
@@ -154,107 +149,22 @@ router.post('/ghl/call', async (req, res) => {
     if (!f.callId) { stats.unmatched++; return res.json({ ok: true, ignored: 'no call id' }); }
 
     // THE TENANT IS THE OWNER OF THE NUMBER THAT WAS CALLED. Never the body.
-    const chk = tollFraud.checkDestination(f.dialed, { defaultCountry: 'US' });
-    const did = chk.ok ? chk.e164 : String(f.dialed);
-    const num = await NumberModel.findOne({ where: { did, status: 'active' } });
-    if (!num) {
+    // The mirror resolves it and refuses rather than guessing; this route's
+    // own check is kept only so an unknown number is counted as unmatched
+    // here, which is what the owner report reads.
+    const r = await mirror.storeCallResult(f, { source: 'webhook' });
+    if (!r.stored && r.reason === 'number_not_on_file') {
       stats.unmatched++;
-      console.warn(`[lite:ghl-webhook] no tenant owns ${tollFraud.mask(did)} — dropped`);
       return res.json({ ok: true, ignored: 'number not on file' });
     }
-    const tenantId = num.tenant_id;
-
-    // Replay-safe: keyed on HighLevel's own call id within this tenant.
-    const sid = `ghl:${String(f.callId).slice(0, 120)}`;
-    const existing = await Call.findOne({ where: { tenant_id: tenantId, call_sid: sid } });
-    if (existing) { stats.replayed++; return res.json({ ok: true, replayed: true, call_id: existing.id }); }
-
-    // A callback number is a real number or it is null — never free text.
-    const callerChk = f.caller ? tollFraud.checkDestination(f.caller, { defaultCountry: 'US' }) : null;
-    const caller = callerChk && callerChk.ok ? callerChk.e164 : null;
-
-    const from = num.did;            // the tenant's own line, for the owner alert
-    let wroteMessage = false;
-    let wroteAppointment = null;     // the display string, when one was booked
-
-    const call = await Call.create({
-      tenant_id: tenantId,
-      call_sid: sid,
-      caller,
-      did,
-      duration: Math.max(0, Math.round(f.durationSec)),
-      disposition: normalizeOutcome(f.outcome),
-      transcript: f.transcript ? String(f.transcript).slice(0, MAX_TRANSCRIPT) : null,
-      ended_at: new Date(),
-    });
-
-    // The transcript is stored ONCE, on the call. Writing it again per-turn
-    // doubled the row cost of every delivery for no extra information.
-    if (f.summary || f.message) {
-      await Message.create({
-        tenant_id: tenantId, call_id: call.id,
-        caller_name: f.callerName ? String(f.callerName).slice(0, 120) : null,
-        callback_number: caller,
-        body: String(f.summary || f.message).slice(0, 4000),
-      }).then(() => { wroteMessage = true; })
-        .catch((e) => console.warn('[lite:ghl-webhook] message not stored:', e.message));
+    if (!r.stored && r.reason === 'replayed') {
+      stats.replayed++;
+      return res.json({ ok: true, replayed: true, call_id: r.call_id });
     }
-    if (f.apptStart) {
-      const starts = new Date(f.apptStart);
-      // A booking HighLevel has already told us about is not a second booking.
-      // Without this the only thing stopping a duplicate row was the partial
-      // unique index, and that error was swallowed by the .catch below — so a
-      // re-delivery under a new call id quietly logged a warning and moved on.
-      const eid = f.apptId ? String(f.apptId).slice(0, 200) : null;
-      const already = eid ? await Appointment.findOne({ where: { tenant_id: tenantId, ghl_event_id: eid } }) : null;
-      if (already) { /* same event, already mirrored */ }
-      else if (!isNaN(starts.getTime())) {
-        const ends = f.apptEnd && !isNaN(new Date(f.apptEnd).getTime())
-          ? new Date(f.apptEnd) : new Date(starts.getTime() + 30 * 60000);
-        // origin:'ai' IS THE ECHO GUARD. This row was born in HighLevel; the
-        // outbound push (services/ghlCalendar.js) only ever sends
-        // origin='ringlypro', so a booking mirrored in here can never be
-        // pushed straight back as a duplicate of itself. Nothing in this file
-        // calls the push — the mirror writes and stops.
-        await Appointment.create({
-          tenant_id: tenantId, call_id: call.id,
-          caller_name: f.callerName ? String(f.callerName).slice(0, 120) : null, callback_number: caller,
-          starts_at: starts, ends_at: ends, status: 'confirmed',
-          origin: 'ai',
-          ghl_event_id: eid,
-        }).then(() => { wroteAppointment = starts.toISOString(); })
-          .catch((e) => console.warn('[lite:ghl-webhook] appointment not mirrored:', e.message));
-      }
-    }
-
-    // TELL THE OWNER, the way the Twilio path always has.
-    //
-    // A message the owner only finds by opening the dashboard is a message they
-    // find tomorrow. On the ConversationRelay path `fireSms` texts them the
-    // moment one is taken; the HighLevel path had NO alert at all, so the same
-    // product answered the same call and said nothing. Best-effort by design:
-    // an SMS failure must never fail the mirror, or HighLevel retries a
-    // delivery whose rows are already written.
-    //
-    // The CALLER is deliberately not texted here. On this path HighLevel's own
-    // workflow owns caller-facing messages, and a confirmation from both of us
-    // is worse than one from neither.
-    try {
-      const tenant = await Tenant.findByPk(tenantId);
-      if (tenant && tenant.owner_phone && from) {
-        const tt = t(tenant.locale);
-        if (wroteMessage) {
-          await smsSvc.send({ tenant, from, to: tenant.owner_phone,
-            body: tt.smsMessageOwner(tenant.business_name, f.callerName || null, caller, String(f.summary || f.message).slice(0, 300)) });
-        } else if (wroteAppointment) {
-          await smsSvc.send({ tenant, from, to: tenant.owner_phone,
-            body: tt.smsBookingOwner(tenant.business_name, f.callerName || null, wroteAppointment) });
-        }
-      }
-    } catch (e) { console.warn('[lite:ghl-webhook] owner alert not sent:', e.message); }
+    if (!r.stored) { stats.unmatched++; return res.json({ ok: true, ignored: r.reason || 'not stored' }); }
 
     stats.accepted++;
-    return res.json({ ok: true, call_id: call.id });
+    return res.json({ ok: true, call_id: r.call_id });
   } catch (e) {
     stats.failed++;
     console.error('[lite:ghl-webhook] failed:', e.message);

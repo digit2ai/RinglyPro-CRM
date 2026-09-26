@@ -53,6 +53,17 @@ router.get('/', async (req, res) => {
     ghl_transfers_uncapped: ghlOn ? true : false,
     ghl_post_call_webhook: (() => { const w = require('./webhooks-ghl');
       return { mode: w.mode(), secret_configured: w.secretConfigured(), ...w.stats }; })(),
+    // THE WEBHOOK IS NO LONGER THE ONLY WAY A MESSAGE ARRIVES. This poller
+    // reads HighLevel's own call logs and writes through the same mirror, so a
+    // workflow that was never configured (or whose signature header is wrong,
+    // which is what happened on the first real call) costs a couple of minutes
+    // of latency rather than the message itself.
+    ghl_call_poller: (() => { const c = require('../services/ghlCallLogs');
+      return { ...c.stats,
+        enabled: String(process.env.LITE_GHL_CALL_POLL || '').toLowerCase() !== 'off'
+          && (String(process.env.LITE_GHL_CALL_POLL || '').toLowerCase() === 'on' || process.env.NODE_ENV === 'production'),
+        every_sec: Math.max(60, parseInt(process.env.LITE_GHL_CALL_POLL_SEC || '120', 10) || 120),
+        window_min: Math.max(5, parseInt(process.env.LITE_GHL_CALLS_LOOKBACK_MIN || '180', 10) || 180) }; })(),
     // The OUTBOUND half of the calendar. A push that keeps failing is silent
     // from a customer's side — they simply see "pick another time" — so the
     // counter and the last error are surfaced here, where the owner can find
@@ -1093,5 +1104,68 @@ router.post('/reset-accounts', express.json({ limit: '4kb' }), async (req, res) 
     return res.status(500).json({ ok: false, error: 'reset_failed', message: String(e.message || e).slice(0, 300) });
   }
 });
+
+/**
+ * WHAT DOES HIGHLEVEL THINK HAPPENED ON MY CALLS?
+ *
+ * Read-only. It answers the question a customer actually asks — "I left a
+ * message, where is it?" — by reading HighLevel's own call logs and saying, per
+ * call, which RinglyPro tenant it belongs to and whether we already hold it.
+ * Nothing is written, so it is safe to run while diagnosing.
+ *
+ * `?import=1` stores what is missing, through the same mirror the webhook uses.
+ * Kept behind an explicit flag: this can text an owner, and a diagnostic that
+ * sends a message as a side effect of being read is a bad diagnostic.
+ */
+router.get('/ghl-calls', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const calls = require('../services/ghlCallLogs');
+  const minutes = Math.min(10080, Math.max(5, parseInt(req.query.minutes, 10) || 180));
+  const doImport = String(req.query.import || '') === '1';
+  try {
+    const r = await calls.importRecent({ minutes, dryRun: !doImport });
+    if (!r.ok) return res.status(502).json(r);
+    return res.json({ ok: true, window_minutes: minutes, imported: doImport,
+      fetched: r.fetched, calls: r.results,
+      note: doImport
+        ? 'Stored anything missing, through the same writer the webhook uses. Owner alerts were sent for new messages.'
+        : 'Read-only. Pass ?import=1 to store what is missing (that can text the owner).' });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 300) });
+  }
+});
+
+/**
+ * The raw call log for one call, so a shape change in HighLevel's payload is
+ * visible instead of being guessed at. Read-only, and it prints the log for the
+ * given id only — not the whole location's traffic.
+ */
+router.get('/ghl-call-raw', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const wanted = String(req.query.call_id || '').trim();
+  if (!wanted) return res.status(400).json({ ok: false, error: 'call_id_required' });
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant } = require('../models');
+  const { Op } = require('sequelize');
+  try {
+    const anchor = await Tenant.findOne({ where: { ghl_location_id: { [Op.ne]: null } }, order: [['id', 'ASC']] });
+    const creds = anchor ? await accounts.credsFor(anchor) : null;
+    if (!creds) return res.status(503).json({ ok: false, error: 'no_credentials' });
+    const minutes = Math.min(10080, Math.max(5, parseInt(req.query.minutes, 10) || 1440));
+    const now = Date.now();
+    const d = await ghl.call('GET', '/voice-ai/dashboard/call-logs', { creds,
+      version: String(process.env.LITE_GHL_VOICE_VERSION || 'v3').trim(),
+      query: { locationId: ghl.locationId(creds), page: 1, pageSize: 100, sortBy: 'createdAt', sort: 'descend',
+        startDate: Math.floor((now - minutes * 60000) / 1000), endDate: Math.floor(now / 1000) } });
+    const arr = Array.isArray(d) ? d : (d && (d.callLogs || (d.data && d.data.callLogs))) || [];
+    const hit = arr.find((l) => String(l.id || l.callId || '') === wanted);
+    if (!hit) return res.status(404).json({ ok: false, error: 'not_in_window', looked_at: arr.length });
+    return res.json({ ok: true, keys: Object.keys(hit), log: hit, parsed: calls_read(hit) });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 300), status: e.status || null });
+  }
+});
+function calls_read(l) { return require('../services/ghlCallLogs').readLog(l); }
 
 module.exports = router;

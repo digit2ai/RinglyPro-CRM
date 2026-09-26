@@ -211,6 +211,12 @@ global.fetch = async (url, opts = {}) => {
     const list = scenario.ownedOverride || OWNED;
     return json(200, { status: 'success', data: { numbers: list.map((n) => ({ phoneNumber: n })), total: list.length } });
   }
+  // The Voice AI call log: what HighLevel says happened, which is what the
+  // poller reads so a message never depends on a webhook action being wired.
+  if (p === '/voice-ai/dashboard/call-logs' && (opts.method || 'GET') === 'GET') {
+    if (scenario.callLogsFail) return json(scenario.callLogsStatus || 500, { message: 'call logs down' });
+    return json(200, { callLogs: scenario.callLogs || [] });
+  }
   if (p === '/conversations/messages' && opts.method === 'POST') {
     if (scenario.smsFails) return json(422, { message: 'message rejected' });
     return json(201, { messageId: 'MSG-1', conversationId: 'CONV-1' });
@@ -527,9 +533,15 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/no_secret_configured[\s\S]{0,300}503/.test(src), 'an unset secret does not hard-refuse');
   });
   await t('the mirror resolves the tenant from the dialled number, never the body', () => {
-    const src = strip(read('src/routes/webhooks-ghl.js'));
-    assert.ok(/NumberModel\.findOne\(\{ where: \{ did/.test(src));
-    assert.ok(!/body\.tenant_id|body\.tenantId/.test(src), 'the webhook trusts a tenant id from the payload');
+    // The lookup lives in callMirror.js now, because the poller needs it too.
+    // Both the route and the writer must still refuse a tenant id from a
+    // payload — that is the half of the rule an attacker would attack.
+    const mir = strip(read('src/services/callMirror.js'));
+    assert.ok(/NumberModel\.findOne\(\{ where: \{ did/.test(mir),
+      'the writer no longer resolves the tenant from the dialled number');
+    for (const f of ['src/routes/webhooks-ghl.js', 'src/services/callMirror.js', 'src/services/ghlCallLogs.js']) {
+      assert.ok(!/body\.tenant_id|body\.tenantId/.test(strip(read(f))), `${f} trusts a tenant id from the payload`);
+    }
   });
 
   section('shared sub-account mode (the $97 answer)');
@@ -1019,11 +1031,19 @@ const tenantSeed = (over = {}) => ({
   await t('THE MIRROR CANNOT REACH THE PUSH AT ALL — structural, not behavioural', () => {
     // Comments are stripped FIRST. This file explains the echo guard in prose,
     // and the first version of this check passed against its own explanation.
-    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks-ghl.js'), 'utf8')
+    // BOTH inbound paths are checked: the route and the writer it delegates to,
+    // plus the poller. Any one of them reaching the push reopens the echo loop.
+    for (const f of ['src/routes/webhooks-ghl.js', 'src/services/callMirror.js', 'src/services/ghlCallLogs.js']) {
+      const src = fs.readFileSync(path.join(ROOT, f), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      assert.ok(!/require\(['"][^'"]*ghlCalendar['"]\)/.test(src), `${f} imports the push service`);
+      assert.ok(!/bookAppointment/.test(src), `${f} books through the pushing path — that is the echo loop`);
+    }
+    // origin:'ai' travels with the Appointment.create it guards, which is now
+    // in the writer. It is the field the outbound push filters on.
+    const mir = fs.readFileSync(path.join(ROOT, 'src/services/callMirror.js'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    assert.ok(!/require\(['"][^'"]*ghlCalendar['"]\)/.test(src), 'the mirror imports the push service');
-    assert.ok(!/bookAppointment/.test(src), 'the mirror now books through the pushing path — that is the echo loop');
-    assert.ok(/origin:\s*'ai'/.test(src), 'the mirror no longer marks its rows as AI-origin');
+    assert.ok(/origin:\s*'ai'/.test(mir), 'the mirror no longer marks its rows as AI-origin');
   });
 
   // The SAME instant is reused by the next test on purpose — "the slot is free
@@ -1255,6 +1275,190 @@ const tenantSeed = (over = {}) => ({
       assert.strictEqual(made.body.ignoreFreeSlotValidation, false);
     } finally { delete process.env.LITE_GHL_APPT_VALIDATE_SLOT; }
   });
+
+  /* ─── the call-log poller: a message must not depend on a webhook ─────── */
+  section('call-log poller (the webhook is no longer the only path)');
+
+  const calls = require(path.join(ROOT, 'src/services/ghlCallLogs'));
+  const mirror = require(path.join(ROOT, 'src/services/callMirror'));
+
+  // A tenant that owns a line and has an agent on it, the way provisioning
+  // leaves one. POLL_CREDS is passed explicitly so a test never depends on
+  // which tenant the fake model layer happens to return first.
+  const POLL_T = await M.Tenant.create(tenantSeed({ business_name: 'Poller Dental',
+    owner_phone: '+14085557777', ghl_location_id: 'LOC-POLL', provisioning_state: 'ready' }));
+  await M.Number.create({ tenant_id: POLL_T.id, did: '+16562203777', country: 'US',
+    provider: 'ghl', status: 'active', ghl_agent_id: 'agent-poll-1' });
+  const OTHER_T = await M.Tenant.create(tenantSeed({ business_name: 'Other Dental',
+    owner_phone: '+14085558888', ghl_location_id: 'LOC-POLL', provisioning_state: 'ready' }));
+  await M.Number.create({ tenant_id: OTHER_T.id, did: '+16562204444', country: 'US',
+    provider: 'ghl', status: 'active', ghl_agent_id: 'agent-other-1' });
+  const POLL_CREDS = { token: 'tok-poll', locationId: 'LOC-POLL' };
+
+  const logOf = (over = {}) => Object.assign({
+    id: 'CL-1', agentId: 'agent-poll-1', toNumber: '+16562203777', fromNumber: '+14085551111',
+    contactName: 'Manuel', duration: 61, createdAt: new Date().toISOString(),
+    summary: 'Wants a quote for a new roof. Call back after 4pm.',
+    transcript: 'AI: Hello. Caller: I need a quote.',
+    executedCallActions: [],
+  }, over);
+
+  await t('a message left on a call reaches the tenant with no webhook at all', async () => {
+    scenario = { callLogs: [logOf()] };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.results[0].stored, true);
+    const msg = M.Message._rows.find((m) => m.tenant_id === POLL_T.id);
+    assert.ok(msg, 'the message was not stored');
+    assert.match(msg.body, /quote for a new roof/);
+    assert.strictEqual(M.Call._rows.filter((c) => c.tenant_id === POLL_T.id).length, 1);
+  });
+
+  await t('the owner is texted about it, on their own line', async () => {
+    const sent = SENT.filter((x) => x.to === '+14085557777');
+    assert.strictEqual(sent.length, 1, `expected one owner alert, got ${sent.length}`);
+    assert.strictEqual(sent[0].from, '+16562203777');
+  });
+
+  await t('re-polling the same window stores nothing and texts nobody again', async () => {
+    const before = SENT.length;
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].reason, 'replayed');
+    assert.strictEqual(M.Call._rows.filter((c) => c.tenant_id === POLL_T.id).length, 1);
+    assert.strictEqual(SENT.length, before, 'a re-poll texted the owner a second time');
+  });
+
+  await t('the webhook and the poller converge on ONE call row, either order', async () => {
+    // The same HighLevel call id arriving down the other path is a no-op, which
+    // is what makes running both safe.
+    const r = await mirror.storeCallResult({ callId: 'CL-1', dialed: '+16562203777',
+      caller: '+14085551111', summary: 'same call, webhook copy' }, { source: 'webhook' });
+    assert.strictEqual(r.stored, false);
+    assert.strictEqual(r.reason, 'replayed');
+    assert.strictEqual(M.Message._rows.filter((m) => m.tenant_id === POLL_T.id).length, 1);
+  });
+
+  await t('THE TENANT COMES FROM THE LINE DIALLED, not from whose token polled', async () => {
+    // One sub-account serves every tenant, so a poll returns everyone's calls.
+    // Filing them by the credential used would put one client's caller in
+    // another client's dashboard.
+    scenario = { callLogs: [logOf({ id: 'CL-2', agentId: 'agent-other-1',
+      toNumber: '+16562204444', summary: 'this one belongs to the other tenant' })] };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, true);
+    assert.strictEqual(r.results[0].tenant_id, OTHER_T.id);
+    assert.ok(!M.Message._rows.some((m) => m.tenant_id === POLL_T.id && /other tenant/.test(m.body)),
+      'a call for one tenant was filed under another');
+  });
+
+  await t('the agent id attributes a call when HighLevel sends no dialled number', async () => {
+    scenario = { callLogs: [logOf({ id: 'CL-3', toNumber: null, summary: 'no toNumber in this payload' })] };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, true);
+    assert.strictEqual(r.results[0].tenant_id, POLL_T.id);
+  });
+
+  await t('a call on a line nobody owns is DROPPED, never filed against a guess', async () => {
+    scenario = { callLogs: [logOf({ id: 'CL-4', agentId: 'agent-unknown',
+      toNumber: '+15125559999', summary: 'a stranger\'s line' })] };
+    const before = M.Call._rows.length;
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, false);
+    assert.strictEqual(r.results[0].reason, 'number_not_on_file');
+    assert.strictEqual(M.Call._rows.length, before, 'an unattributable call created a row');
+  });
+
+  await t('a caller number that is not a real number is stored as null, not as text', async () => {
+    scenario = { callLogs: [logOf({ id: 'CL-5', fromNumber: '<script>x</script>',
+      summary: 'a message from a bad caller field' })] };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, true);
+    const c = M.Call._rows.find((x) => x.call_sid === 'ghl:CL-5');
+    assert.strictEqual(c.caller, null, 'free text reached the caller column');
+  });
+
+  await t('an executed booking action never invents an appointment time', async () => {
+    // HighLevel does not put the slot in the call log. A row here would be a
+    // fabricated appointment in a customer's calendar; the booking arrives
+    // through the calendar path instead.
+    scenario = { callLogs: [logOf({ id: 'CL-6',
+      executedCallActions: [{ actionType: 'APPOINTMENT_BOOKING', executedAt: new Date().toISOString() }] })] };
+    const before = M.Appointment._rows.length;
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, true);
+    assert.strictEqual(M.Appointment._rows.length, before, 'the poller invented an appointment');
+    const c = M.Call._rows.find((x) => x.call_sid === 'ghl:CL-6');
+    assert.strictEqual(c.disposition, 'appointment', 'the outcome should still say a booking happened');
+  });
+
+  await t('a transfer reads as transferred, a bare call as completed', async () => {
+    scenario = { callLogs: [
+      logOf({ id: 'CL-7', executedCallActions: [{ actionType: 'CALL_TRANSFER' }] }),
+      logOf({ id: 'CL-8', summary: null, transcript: null }),
+    ] };
+    await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(M.Call._rows.find((x) => x.call_sid === 'ghl:CL-7').disposition, 'transferred');
+    assert.strictEqual(M.Call._rows.find((x) => x.call_sid === 'ghl:CL-8').disposition, 'completed');
+  });
+
+  await t('a dry run reports what WOULD be stored and writes nothing', async () => {
+    scenario = { callLogs: [logOf({ id: 'CL-DRY' })] };
+    const before = M.Call._rows.length;
+    const r = await calls.importRecent({ creds: POLL_CREDS, dryRun: true });
+    assert.strictEqual(r.results[0].would_store, true);
+    assert.strictEqual(r.results[0].tenant_id, POLL_T.id);
+    assert.strictEqual(M.Call._rows.length, before, 'a dry run wrote a row');
+  });
+
+  await t('a call-logs outage is reported as itself, never as "no calls"', async () => {
+    scenario = { callLogsFail: true, callLogsStatus: 503 };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.error, 'fetch_failed');
+    assert.ok(r.detail, 'the failure carried no detail');
+  });
+
+  await t('the window is sent as unix seconds, newest first, for that location only', async () => {
+    scenario = { callLogs: [] }; reqs = [];
+    await calls.importRecent({ creds: POLL_CREDS, minutes: 60 });
+    const q = reqs.find((x) => x.path === '/voice-ai/dashboard/call-logs').query;
+    assert.strictEqual(q.locationId, 'LOC-POLL');
+    assert.strictEqual(q.sort, 'descend');
+    const span = Number(q.endDate) - Number(q.startDate);
+    assert.ok(Math.abs(span - 3600) < 5, `window was ${span}s, expected ~3600`);
+    assert.ok(Number(q.endDate) < 1e11, 'dates must be seconds, not milliseconds');
+  });
+
+  await t('the call log is read with Version v3', async () => {
+    const r = reqs.find((x) => x.path === '/voice-ai/dashboard/call-logs');
+    assert.strictEqual(r.version, 'v3');
+  });
+
+  await t('the poller does NOT run outside production unless it is switched on', async () => {
+    const env = process.env.NODE_ENV, flag = process.env.LITE_GHL_CALL_POLL;
+    try {
+      process.env.NODE_ENV = 'development'; delete process.env.LITE_GHL_CALL_POLL;
+      assert.strictEqual(calls.start(), null);
+      process.env.LITE_GHL_CALL_POLL = 'off'; process.env.NODE_ENV = 'production';
+      assert.strictEqual(calls.start(), null, 'off must stop it even in production');
+    } finally {
+      process.env.NODE_ENV = env;
+      if (flag === undefined) delete process.env.LITE_GHL_CALL_POLL; else process.env.LITE_GHL_CALL_POLL = flag;
+      calls.stop();
+    }
+  });
+
+  await t('THE WEBHOOK OWNS NO ROW-WRITING CODE OF ITS OWN', async () => {
+    // Two writers drift: one learns to mirror something the other does not, and
+    // which one ran depends on a checkbox in HighLevel. The route must delegate.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks-ghl.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const w of ['Call.create', 'Message.create', 'Appointment.create']) {
+      assert.ok(!src.includes(w), `the webhook still writes rows itself (${w})`);
+    }
+    assert.ok(src.includes('mirror.storeCallResult'), 'the webhook does not use the shared writer');
+  });
+
 
   srv.close();
 
