@@ -632,6 +632,43 @@ router.post('/sync-agent-workflows', express.json({ limit: '4kb' }), async (req,
   } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
 });
 
+/**
+ * Attempt ONE real purchase and report HighLevel's full response.
+ *
+ * Two signups failed with their message "request took longer than expected",
+ * which says nothing about why. This runs the same call the product runs and
+ * returns the status code and the whole body. It CAN succeed — that is fine
+ * and desirable: a bought number with no tenant row is adopted by the next
+ * resume rather than bought again.
+ */
+router.post('/buy-number-probe', express.json({ limit: '2kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true[,"area":"727"]}. This attempts a REAL purchase (~$1.15/mo if it succeeds).' });
+  }
+  const ghl = require('../telephony/ghl');
+  const area = /^\d{3}$/.test(String(req.body.area || '')) ? String(req.body.area) : null;
+  const t0 = Date.now();
+  try {
+    const creds = ghl.resolve(null);
+    const avail = await ghl.searchAvailable(area ? { firstPart: area } : {}, creds);
+    const arr = Array.isArray(avail) ? avail : (avail && (avail.numbers || avail.data)) || [];
+    const phoneNumber = (arr[0] && (arr[0].phoneNumber || arr[0].number)) || null;
+    if (!phoneNumber) return res.json({ ok: false, step: 'search', message: 'no number offered for that area' });
+
+    const out = await ghl.call('POST', `/phone-system/numbers/location/${creds.locationId}/purchase`, {
+      creds, timeoutMs: 60000,
+      body: { phoneNumber, countryCode: 'US', numberType: 'local', fingerprintId: 'ringlypro-lite-probe' },
+    });
+    return res.json({ ok: true, bought: phoneNumber, ms: Date.now() - t0, response: out,
+      next: 'Resume the signup — provisioning adopts an unclaimed number instead of buying again.' });
+  } catch (e) {
+    return res.status(502).json({ ok: false, ms: Date.now() - t0,
+      status: e.status || null, message: String(e.message || e).slice(0, 300), raw: e.body || null });
+  }
+});
+
 /** Read-only: which numbers does the sub-account actually OWN? */
 router.get('/owned-numbers', async (req, res) => {
   res.set('Cache-Control', 'no-store');

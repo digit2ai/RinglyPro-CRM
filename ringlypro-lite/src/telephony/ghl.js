@@ -73,6 +73,11 @@ async function call(method, path, { query, body, creds, version, timeoutMs } = {
   if (!res.ok) {
     const e = new Error((data && (data.message || data.error)) ? String(data.message || data.error).slice(0, 300) : `HTTP ${res.status}`);
     e.status = res.status;
+    // The whole body, for diagnosis. HighLevel's `message` alone said
+    // "request took longer than expected" for two different numbers and told
+    // us nothing about why; the rest of the payload usually does. Capped, and
+    // never logged automatically — a caller decides whether to surface it.
+    try { e.body = data ? JSON.stringify(data).slice(0, 800) : null; } catch (_) { e.body = null; }
     throw e;
   }
   return data;
