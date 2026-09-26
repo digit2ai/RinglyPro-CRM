@@ -606,6 +606,26 @@ router.get('/signup-preflight', async (req, res) => {
   }
 });
 
+/** Read-only: which numbers does the sub-account actually OWN? */
+router.get('/owned-numbers', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  try {
+    const creds = ghl.resolve(null);
+    const out = {};
+    for (const version of ['v3', '2021-07-28']) {
+      try {
+        const r = await ghl.call('GET', `/phone-system/numbers/location/${creds.locationId}`,
+          { creds, version, timeoutMs: 15000 });
+        const arr = Array.isArray(r) ? r : (r && (r.numbers || r.data)) || [];
+        out[version] = { count: arr.length, numbers: arr.map((n) => n.phoneNumber || n.number).filter(Boolean).slice(0, 20) };
+      } catch (e) { out[version] = { error: String(e.message || e).slice(0, 160) }; }
+    }
+    res.json({ location_id: creds.locationId, by_version: out,
+      lite_sms_from: process.env.LITE_SMS_FROM || '(unset — falls back to the Twilio toll-free)' });
+  } catch (e) { res.status(502).json({ error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: is a given area code actually purchasable right now? Buys nothing. */
 router.get('/available-numbers', async (req, res) => {
   res.set('Cache-Control', 'no-store');
