@@ -79,9 +79,6 @@
 <script>/* apply saved theme before paint to avoid a flash */(function(){try{var t=localStorage.getItem('lite_theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
-<!-- A tenant with no number can otherwise see a dashboard that does nothing
-     and has no route to finishing setup. -->
-
 <header>
   <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
   <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="bell" title="Alerts" style="cursor:pointer" data-i="alerts">Alerts</span><span class="lang" id="lang">ES</span></div>
@@ -456,7 +453,6 @@ $('msgSearchBar').classList.add('on');   // Messages is the default view
 if(/[?&]recharge=1/.test(location.search)){location.hash='';document.querySelector('nav a[data-view="settings"]').click();}
 setInterval(loadMessages,20000);
 
-<script>
 // Show the finish-setup banner when this account has no number yet.
 (async()=>{try{
   const r=await fetch('/api/onboarding/status',{credentials:'include'});
