@@ -32,6 +32,8 @@ const tollFraud = require('../security/tollFraud');
 // phone-system calls this file already makes work on the date-stamped default.
 // Overridable without a redeploy if HighLevel moves it again.
 const SMS_VERSION = String(process.env.LITE_GHL_SMS_VERSION || 'v3').trim();
+// /voice-ai/actions is documented as Version v3 and 422s on the default.
+const ACTION_VERSION = String(process.env.LITE_GHL_ACTION_VERSION || 'v3').trim();
 const OWNED_CACHE = new Map();   // locationId -> { at, nums }
 const MONTHLY_COST_USD = 1.15; // LC Phone local number, HighLevel pricing page 2026-09-01
 
@@ -174,7 +176,7 @@ class GhlProvider {
     if (calendarId) {
       try {
         const a = await ghl.call('POST', '/voice-ai/actions', {
-          creds: this._c(),
+          creds: this._c(), version: ACTION_VERSION,
           body: {
             agentId, locationId: this._loc(), actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
             actionParameters: { calendarId, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 },
@@ -191,12 +193,18 @@ class GhlProvider {
     if (chk && chk.ok) {
       try {
         const a = await ghl.call('POST', '/voice-ai/actions', {
-          creds: this._c(),
+          creds: this._c(), version: ACTION_VERSION,
           body: {
             agentId, locationId: this._loc(), actionType: 'CALL_TRANSFER', name: 'Transfer to owner',
+            // MEASURED, not guessed: without Version v3 and without
+            // triggerMessage + hearWhisperMessage, HighLevel answers
+            // 422 "Invalid actionParameters for the given actionType" — which
+            // is why every agent built so far could not transfer a caller.
             actionParameters: {
               triggerPrompt: 'When the caller asks to speak to a person or the owner',
               transferToType: 'number', transferToValue: chk.e164,
+              triggerMessage: 'Let me connect you now, one moment.',
+              hearWhisperMessage: false,
             },
           },
         });

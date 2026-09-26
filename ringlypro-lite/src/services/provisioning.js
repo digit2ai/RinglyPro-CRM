@@ -234,12 +234,15 @@ async function syncTransfer(tenantOrId) {
   } catch (e) { console.warn('[lite:ghl] could not read the agent to sync its transfer:', e.message); }
 
   if (!chk || !chk.ok) return { changed: true, transfer: null, refused: !!dest };
-  await ghl.call('POST', '/voice-ai/actions', { creds, body: {
-    agentId: tenant.ghl_agent_id, locationId: creds.locationId,
-    actionType: 'CALL_TRANSFER', name: 'Transfer to owner',
-    actionParameters: { triggerPrompt: 'When the caller asks to speak to a person or the owner',
-      transferToType: 'number', transferToValue: chk.e164 },
-  } });
+  await ghl.call('POST', '/voice-ai/actions', {
+    creds, version: process.env.LITE_GHL_ACTION_VERSION || 'v3',
+    body: {
+      agentId: tenant.ghl_agent_id, locationId: creds.locationId,
+      actionType: 'CALL_TRANSFER', name: 'Transfer to owner',
+      actionParameters: { triggerPrompt: 'When the caller asks to speak to a person or the owner',
+        transferToType: 'number', transferToValue: chk.e164,
+        triggerMessage: 'Let me connect you now, one moment.', hearWhisperMessage: false },
+    } });
   return { changed: true, transfer: chk.e164 };
 }
 

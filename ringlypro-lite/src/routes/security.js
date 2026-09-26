@@ -727,7 +727,7 @@ router.post('/repair-agent-actions', express.json({ limit: '2kb' }), async (req,
 
       if (t.ghl_calendar_id && !have.includes('APPOINTMENT_BOOKING')) {
         try {
-          await ghl.call('POST', '/voice-ai/actions', { creds, body: {
+          await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
             agentId: t.ghl_agent_id, locationId: creds.locationId,
             actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
             actionParameters: { calendarId: t.ghl_calendar_id, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 },
@@ -740,11 +740,12 @@ router.post('/repair-agent-actions', express.json({ limit: '2kb' }), async (req,
       const chk = dest ? tollFraud2.checkDestination(dest, { defaultCountry: t.country }) : null;
       if (chk && chk.ok && !have.includes('CALL_TRANSFER')) {
         try {
-          await ghl.call('POST', '/voice-ai/actions', { creds, body: {
+          await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
             agentId: t.ghl_agent_id, locationId: creds.locationId,
             actionType: 'CALL_TRANSFER', name: 'Transfer to owner',
             actionParameters: { triggerPrompt: 'When the caller asks to speak to a person or the owner',
-              transferToType: 'number', transferToValue: chk.e164 },
+              transferToType: 'number', transferToValue: chk.e164,
+              triggerMessage: 'Let me connect you now, one moment.', hearWhisperMessage: false },
           } });
           row.added.push('CALL_TRANSFER');
         } catch (e) { row.refused.push({ action: 'CALL_TRANSFER', status: e.status || null, message: String(e.message || e).slice(0, 160) }); }
@@ -848,9 +849,11 @@ router.get('/agents', async (req, res) => {
           id: a.id, name: a.agentName || a.name, inbound_number: a.inboundNumber || null,
           end_call_workflows: (a.callEndWorkflowIds || []).length,
           actions: actions.map((x) => x.actionType || x.type),
-          action_detail: actions.map((x) => ({ type: x.actionType || x.type,
-            calendarId: (x.actionParameters && x.actionParameters.calendarId) || null,
-            to: (x.actionParameters && x.actionParameters.transferToValue) || null })),
+          // FULL parameters. HighLevel does not document APPOINTMENT_BOOKING's
+          // fields, so the only reliable way to learn them is to read one
+          // their own UI created and copy it exactly.
+          action_detail: actions.map((x) => ({ type: x.actionType || x.type, name: x.name,
+            actionParameters: x.actionParameters || null })),
           is_a_tenant_agent: !!t,
           tenant: t ? { id: t.id, business_name: t.business_name, calendar: t.ghl_calendar_id, transfer_to: t.transfer_number } : null,
         };
