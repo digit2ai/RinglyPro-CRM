@@ -79,6 +79,12 @@
 <script>/* apply saved theme before paint to avoid a flash */(function(){try{var t=localStorage.getItem('lite_theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body>
+<!-- A tenant with no number can otherwise see a dashboard that does nothing
+     and has no route to finishing setup. -->
+<div id="needNum" style="display:none;background:#3a2d12;color:#ffd79a;padding:12px 16px;font:14px/1.4 system-ui;text-align:center">
+  <span id="needNumTxt">Your number isn't set up yet.</span>
+  <a href="/signup" style="color:#ffd79a;font-weight:700;margin-left:6px">Finish setup</a>
+</div>
 <header>
   <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
   <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="bell" title="Alerts" style="cursor:pointer" data-i="alerts">Alerts</span><span class="lang" id="lang">ES</span></div>
@@ -448,6 +454,18 @@ $('msgSearchBar').classList.add('on');   // Messages is the default view
 // Returning from a recharge Checkout fallback → refresh billing view.
 if(/[?&]recharge=1/.test(location.search)){location.hash='';document.querySelector('nav a[data-view="settings"]').click();}
 setInterval(loadMessages,20000);
+
+<script>
+// Show the finish-setup banner when this account has no number yet.
+(async()=>{try{
+  const r=await fetch('/api/onboarding/status',{credentials:'include'});
+  if(!r.ok)return; const j=await r.json();
+  if(!j.number){
+    const b=document.getElementById('needNum'); if(b)b.style.display='block';
+    const t=document.getElementById('needNumTxt');
+    if(t&&document.documentElement.lang==='es')t.textContent='Tu número aún no está configurado.';
+  }
+}catch(_){}})();
 </script>
 </body>
 </html>
