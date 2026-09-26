@@ -1357,4 +1357,85 @@ router.post('/repair-calendar-hours', express.json({ limit: '4kb' }), async (req
   }
 });
 
+/**
+ * WHAT SHAPE OF OPEN HOURS DOES HIGHLEVEL ACTUALLY ACCEPT?
+ *
+ * `daysOfTheWeek: [1,2,3,4,5]` — the shape their own docs imply — is refused
+ * with "openHours.0.must be a valid day of week". Rather than guess a fourth
+ * time, try the plausible shapes against the live calendar and report which one
+ * it takes. STOPS AT THE FIRST SUCCESS, so the calendar is written once, and
+ * reads the hours back afterwards because a 200 here has already proved not to
+ * mean a slot exists.
+ *
+ * Only usable on a calendar whose hours are EMPTY, so a probe can never damage
+ * a business's configured hours.
+ */
+router.post('/open-hours-shape-probe', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true,"tenant":N}. Writes open hours to that tenant\'s calendar, but only if it currently has none.' });
+  }
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant } = require('../models');
+  const tid = parseInt(req.body.tenant, 10);
+  const tenant = Number.isInteger(tid) ? await Tenant.findByPk(tid) : null;
+  if (!tenant || !tenant.ghl_calendar_id) return res.status(404).json({ ok: false, error: 'no_tenant_or_calendar' });
+  const creds = await accounts.credsFor(tenant);
+  const cal = tenant.ghl_calendar_id;
+  const url = `/calendars/${encodeURIComponent(cal)}`;
+
+  const count = (c) => Array.isArray(c && c.openHours) ? c.openHours.length
+    : (c && c.openHours && typeof c.openHours === 'object' ? Object.keys(c.openHours).length : 0);
+  let before;
+  try {
+    const cur = await ghl.call('GET', url, { creds, version: 'v3' });
+    before = count((cur && (cur.calendar || cur)) || {});
+  } catch (e) { return res.status(502).json({ ok: false, error: 'calendar_unreadable', detail: String(e.message || e).slice(0, 200) }); }
+  if (before > 0) return res.status(409).json({ ok: false, error: 'calendar_already_has_hours', open_hours: before,
+    message: 'Refusing to probe on a calendar that already has hours — use repair-calendar-hours with force.' });
+
+  const h = [{ openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 0 }];
+  const shapes = [
+    { label: 'names UPPERCASE', openHours: [{ daysOfTheWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'], hours: h }] },
+    { label: 'names lowercase', openHours: [{ daysOfTheWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], hours: h }] },
+    { label: 'short names', openHours: [{ daysOfTheWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], hours: h }] },
+    { label: 'numbers as STRINGS', openHours: [{ daysOfTheWeek: ['1', '2', '3', '4', '5'], hours: h }] },
+    { label: 'one day only, number 1', openHours: [{ daysOfTheWeek: [1], hours: h }] },
+    { label: 'daysOfWeek (no The)', openHours: [{ daysOfWeek: [1, 2, 3, 4, 5], hours: h }] },
+    { label: 'day singular per entry', openHours: [{ day: 1, hours: h }] },
+    { label: 'flat openHour/closeHour on the entry', openHours: [{ daysOfTheWeek: [1, 2, 3, 4, 5], openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 0 }] },
+  ];
+
+  const tried = [];
+  for (const sh of shapes) {
+    try {
+      await ghl.call('PUT', url, { creds, version: 'v3',
+        body: { openHours: sh.openHours, slotDuration: 30, slotDurationUnit: 'mins', slotInterval: 30, isActive: true } });
+      // Accepted. Read it back — the write shape and the read shape differ.
+      let after = null, raw = null;
+      try {
+        const d = await ghl.call('GET', url, { creds, version: 'v3' });
+        const c = (d && (d.calendar || d)) || {};
+        after = count(c); raw = JSON.stringify(c.openHours).slice(0, 400);
+      } catch (_) { /* unconfirmed */ }
+      tried.push({ shape: sh.label, status: 200, accepted: true, read_back: after, read_back_raw: raw });
+      // Free slots for the next week: the question that actually matters.
+      let slots = null;
+      try {
+        const now = Date.now();
+        const fs2 = await ghl.call('GET', `${url}/free-slots`, { creds, version: 'v3',
+          query: { startDate: now, endDate: now + 7 * 86400000, timezone: tenant.timezone || 'America/New_York' } });
+        const days = Object.entries(fs2 || {}).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k));
+        slots = { days: days.length, total: days.reduce((n, [, v]) => n + (Array.isArray(v && v.slots) ? v.slots.length : 0), 0) };
+      } catch (e) { slots = { error: String(e.message || e).slice(0, 150) }; }
+      return res.json({ ok: true, winner: sh.label, sent: sh.openHours, tried, free_slots: slots });
+    } catch (e) {
+      tried.push({ shape: sh.label, status: e.status || null, error: String(e.message || e).slice(0, 200) });
+    }
+  }
+  return res.status(502).json({ ok: false, error: 'no_shape_accepted', tried });
+});
+
 module.exports = router;
