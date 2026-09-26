@@ -1237,7 +1237,12 @@ router.get('/call-logs-probe', async (req, res) => {
           }
         }
       }
+      // ?full=1 returns ONE whole call log. Which field carries the call's own
+      // id decides the idempotency key, and a truncated body cannot show that.
+      const rows = (d && (d.callLogs || (d.data && d.data.callLogs))) || null;
       out.push({ variant: v.label, status: 200, keys, arrays,
+        first_row_keys: Array.isArray(rows) && rows[0] ? Object.keys(rows[0]) : null,
+        first_row: (String(req.query.full || '') === '1' && Array.isArray(rows) && rows[0]) ? rows[0] : undefined,
         body: JSON.stringify(d).slice(0, 700) });
     } catch (e) {
       out.push({ variant: v.label, status: e.status || null,
