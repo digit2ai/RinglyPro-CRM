@@ -1253,4 +1253,67 @@ router.get('/call-logs-probe', async (req, res) => {
     window_minutes: mins, variants: out });
 });
 
+/**
+ * WHY DID THE AGENT SAY THERE WERE NO APPOINTMENT SLOTS?
+ *
+ * On the first real call the AI offered no times: "It looks like there aren't
+ * any available appointment slots showing right now." Booking is the product,
+ * so this reads the tenant's calendar AS HIGHLEVEL SEES IT — the calendar
+ * object, its open hours, and its own free-slots answer for the next week —
+ * beside RinglyPro's own availability rules, so the two can be compared instead
+ * of reasoned about. Read-only.
+ */
+router.get('/calendar-slots-probe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant, AvailabilityRule } = require('../models');
+  const tid = parseInt(req.query.tenant, 10);
+  if (!Number.isInteger(tid)) return res.status(400).json({ ok: false, error: 'tenant_required' });
+  const tenant = await Tenant.findByPk(tid);
+  if (!tenant) return res.status(404).json({ ok: false, error: 'no_such_tenant' });
+  if (!tenant.ghl_calendar_id) return res.status(409).json({ ok: false, error: 'tenant_has_no_calendar' });
+  const creds = await accounts.credsFor(tenant);
+  const cal = tenant.ghl_calendar_id;
+  const out = { ok: true, tenant: tid, calendar_id: cal, timezone: tenant.timezone };
+
+  out.ringlypro_rules = (await AvailabilityRule.findAll({ where: { tenant_id: tid } }))
+    .map((r) => ({ weekday: r.weekday, start: r.start, end: r.end, slot_minutes: r.slot_minutes,
+      timezone: r.timezone, active: r.active }));
+
+  try {
+    const d = await ghl.call('GET', `/calendars/${encodeURIComponent(cal)}`, { creds, version: 'v3' });
+    const c = (d && (d.calendar || d)) || {};
+    // openHours is the field that decides whether ANY slot exists. Reported in
+    // full, because "it is set" and "it is set to something usable" differ.
+    out.highlevel_calendar = { name: c.name, calendarType: c.calendarType, isActive: c.isActive,
+      slotDuration: c.slotDuration, slotDurationUnit: c.slotDurationUnit,
+      slotInterval: c.slotInterval, slotBuffer: c.slotBuffer,
+      openHours: c.openHours ?? null, open_hours_count: Array.isArray(c.openHours) ? c.openHours.length : 0,
+      availabilityType: c.availabilityType, teamMembers: Array.isArray(c.teamMembers) ? c.teamMembers.length : null,
+      allKeys: Object.keys(c) };
+  } catch (e) {
+    out.highlevel_calendar = { error: String(e.message || e).slice(0, 250), status: e.status || null };
+  }
+
+  // HighLevel's OWN answer to "when are you free?" — the same question the
+  // Voice AI booking action asks. An empty answer here is the bug, reproduced.
+  const now = Date.now();
+  for (const [label, version] of [['v3', 'v3'], ['default', undefined]]) {
+    try {
+      const d = await ghl.call('GET', `/calendars/${encodeURIComponent(cal)}/free-slots`, { creds, version,
+        query: { startDate: now, endDate: now + 7 * 86400000, timezone: tenant.timezone || 'America/New_York' } });
+      const days = d && typeof d === 'object'
+        ? Object.entries(d).filter(([k]) => /^\d{4}-\d{2}-\d{2}$/.test(k))
+          .map(([k, v]) => ({ date: k, slots: Array.isArray(v && v.slots) ? v.slots.length : 0 }))
+        : [];
+      out[`free_slots_${label}`] = { keys: d && typeof d === 'object' ? Object.keys(d).slice(0, 12) : typeof d,
+        days, total_slots: days.reduce((n, x) => n + x.slots, 0), body: JSON.stringify(d).slice(0, 400) };
+    } catch (e) {
+      out[`free_slots_${label}`] = { error: String(e.message || e).slice(0, 250), status: e.status || null };
+    }
+  }
+  return res.json(out);
+});
+
 module.exports = router;
