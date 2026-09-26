@@ -195,9 +195,13 @@ global.fetch = async (url, opts = {}) => {
     // which is why messages never reach us. The fake keeps one by default —
     // that is the behaviour provisioning is supposed to have — and a test
     // opts in to the empty case.
-    return json(200, { agents: [{ id: 'tpl1', agentPrompt: 'TEMPLATE PROMPT', voiceId: 'voice-xyz',
+    const agents = [{ id: 'tpl1', agentPrompt: 'TEMPLATE PROMPT', voiceId: 'voice-xyz',
       language: 'en-US', callEndWorkflowIds: scenario.templateNoWorkflow ? [] : ['wf-after-call'],
-      welcomeMessage: 'Template hello' }] });
+      welcomeMessage: 'Template hello' }];
+    // Live agents carry the line they answer. That is the ONLY route from a
+    // call log to a tenant, because the log has no dialled number at all.
+    if (scenario.agentRoster) agents.push(...scenario.agentRoster);
+    return json(200, { agents });
   }
   if (/^\/voice-ai\/agents\/[^/]+$/.test(p) && opts.method === 'PATCH') return json(200, { id: p.split('/').pop() });
   if (p === '/voice-ai/agents' && opts.method === 'POST') {
@@ -215,7 +219,12 @@ global.fetch = async (url, opts = {}) => {
   // poller reads so a message never depends on a webhook action being wired.
   if (p === '/voice-ai/dashboard/call-logs' && (opts.method || 'GET') === 'GET') {
     if (scenario.callLogsFail) return json(scenario.callLogsStatus || 500, { message: 'call logs down' });
-    return json(200, { callLogs: scenario.callLogs || [] });
+    // THE FAKE PUNISHES SECONDS, exactly as the live API does: a window sent in
+    // unix seconds answers 200 with an empty list, which reads as "nobody
+    // called". Without this the suite passed against the bug.
+    const sd = Number(u.searchParams.get('startDate'));
+    if (sd && sd < 1e11) return json(200, { callLogs: [], totalRecords: 0 });
+    return json(200, { callLogs: scenario.callLogs || [], totalRecords: (scenario.callLogs || []).length });
   }
   if (p === '/conversations/messages' && opts.method === 'POST') {
     if (scenario.smsFails) return json(422, { message: 'message rejected' });
@@ -1418,15 +1427,18 @@ const tenantSeed = (over = {}) => ({
     assert.ok(r.detail, 'the failure carried no detail');
   });
 
-  await t('the window is sent as unix seconds, newest first, for that location only', async () => {
+  await t('the window is the right LENGTH, newest first, for that location only', async () => {
+    // This test asserted SECONDS when it was written, from a reading of the
+    // docs. It was asserting the bug: the live API answers an empty list to a
+    // seconds window. The unit is checked in its own test above; this one is
+    // about the span, the ordering and the scope.
     scenario = { callLogs: [] }; reqs = [];
     await calls.importRecent({ creds: POLL_CREDS, minutes: 60 });
     const q = reqs.find((x) => x.path === '/voice-ai/dashboard/call-logs').query;
     assert.strictEqual(q.locationId, 'LOC-POLL');
     assert.strictEqual(q.sort, 'descend');
-    const span = Number(q.endDate) - Number(q.startDate);
+    const span = (Number(q.endDate) - Number(q.startDate)) / 1000;
     assert.ok(Math.abs(span - 3600) < 5, `window was ${span}s, expected ~3600`);
-    assert.ok(Number(q.endDate) < 1e11, 'dates must be seconds, not milliseconds');
   });
 
   await t('the call log is read with Version v3', async () => {
@@ -1446,6 +1458,55 @@ const tenantSeed = (over = {}) => ({
       if (flag === undefined) delete process.env.LITE_GHL_CALL_POLL; else process.env.LITE_GHL_CALL_POLL = flag;
       calls.stop();
     }
+  });
+
+  await t('THE WINDOW IS SENT IN MILLISECONDS — seconds silently returns nothing', async () => {
+    // Measured on the live API 2026-09-26: the identical request in seconds
+    // answers 200 with an empty list. A missing voicemail then looks like a
+    // quiet day, which is the worst way for this endpoint to fail.
+    scenario = { callLogs: [logOf({ id: 'CL-MS' })] }; reqs = [];
+    const r = await calls.importRecent({ creds: POLL_CREDS, minutes: 180 });
+    assert.strictEqual(r.fetched, 1, 'the window found nothing — it is probably in seconds again');
+    const q = reqs.find((x) => x.path === '/voice-ai/dashboard/call-logs').query;
+    assert.ok(Number(q.startDate) > 1e11, `startDate ${q.startDate} is not milliseconds`);
+    assert.ok(Number(q.endDate) > 1e11, `endDate ${q.endDate} is not milliseconds`);
+  });
+
+  await t('a call log with NO dialled number is attributed through its agent', async () => {
+    // The live shape: fromNumber is the CALLER and there is no toNumber. A
+    // number row provisioned before ghl_agent_id existed has it empty, so the
+    // line is read off the agent roster.
+    await M.Number.create({ tenant_id: POLL_T.id, did: '+16562205555', country: 'US',
+      provider: 'ghl', status: 'active' });     // deliberately NO ghl_agent_id
+    scenario = { callLogs: [logOf({ id: 'CL-AG', toNumber: null, agentId: 'agent-roster-1',
+      summary: 'attributed through the agent roster' })],
+      agentRoster: [{ id: 'agent-roster-1', inboundNumber: '+16562205555' }] };
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, true, 'the call was dropped as unattributable');
+    assert.strictEqual(r.results[0].tenant_id, POLL_T.id);
+  });
+
+  await t('...and the agent id is recorded, so the webhook can attribute it too', async () => {
+    const num = M.Number._rows.find((n) => n.did === '+16562205555');
+    assert.strictEqual(num.ghl_agent_id, 'agent-roster-1', 'what we learned was not written down');
+  });
+
+  await t('a stale roster can NEVER move a number between tenants', async () => {
+    // Backfill fills an EMPTY column only. Overwriting one would let one
+    // client's line start answering for another's agent.
+    scenario = { callLogs: [logOf({ id: 'CL-STEAL', toNumber: null, agentId: 'agent-thief' })],
+      agentRoster: [{ id: 'agent-thief', inboundNumber: '+16562205555' }] };
+    await calls.importRecent({ creds: POLL_CREDS });
+    const num = M.Number._rows.find((n) => n.did === '+16562205555');
+    assert.strictEqual(num.ghl_agent_id, 'agent-roster-1', 'a later roster overwrote the agent id');
+  });
+
+  await t('an unreadable agent roster degrades to dropping, never to guessing', async () => {
+    scenario = { callLogs: [logOf({ id: 'CL-NOROSTER', toNumber: null, agentId: 'agent-unknown-9' })] };
+    const before = M.Call._rows.length;
+    const r = await calls.importRecent({ creds: POLL_CREDS });
+    assert.strictEqual(r.results[0].stored, false);
+    assert.strictEqual(M.Call._rows.length, before);
   });
 
   await t('THE WEBHOOK OWNS NO ROW-WRITING CODE OF ITS OWN', async () => {

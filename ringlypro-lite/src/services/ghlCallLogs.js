@@ -86,16 +86,72 @@ function readLog(l) {
   };
 }
 
+/**
+ * AGENT -> THE LINE IT ANSWERS. A Voice AI call log carries `fromNumber` (the
+ * caller) and `agentId`, and NO dialled number at all — measured on the live
+ * API 2026-09-26, full field list: contactId, fromNumber, createdAt, duration,
+ * agentId, isAgentDeleted, summary, transcript, agentTransferOccurred,
+ * translation, extractedData, messageId, trialCall, id, executedCallActions.
+ *
+ * So the only route to "whose line was this?" is the agent, and an agent is
+ * attached to exactly one inbound number. `lite_numbers.ghl_agent_id` is meant
+ * to hold it, but rows provisioned before that column was written have it
+ * empty, so the map is read from HighLevel and BACKFILLED onto the row — after
+ * which the webhook path can attribute a call without any lookup at all.
+ *
+ * Cached for a minute: it gates every stored call and the agent roster of a
+ * sub-account does not change between polls.
+ */
+const AGENT_CACHE = { at: 0, map: new Map() };
+async function agentNumberMap(creds) {
+  if (Date.now() - AGENT_CACHE.at < 60000 && AGENT_CACHE.map.size) return AGENT_CACHE.map;
+  const map = new Map();
+  try {
+    const d = await ghl.call('GET', '/voice-ai/agents',
+      { query: { locationId: ghl.locationId(creds) }, creds, version: VOICE_VERSION() });
+    for (const a of firstArray(d)) {
+      const did = a.inboundNumber || a.phoneNumber || a.inbound_number || null;
+      if (a.id && did) map.set(String(a.id), String(did));
+    }
+    AGENT_CACHE.at = Date.now(); AGENT_CACHE.map = map;
+  } catch (e) { console.warn('[lite:ghl-calls] agent roster unreadable:', e.message); }
+  return map;
+}
+
+/**
+ * Record what we learned, so the next call does not need the lookup — and so
+ * the WEBHOOK path (which cannot make this request mid-delivery) can attribute
+ * a call by agent id too. Only ever fills an EMPTY column: overwriting one
+ * would let a stale roster move a number between tenants, which is the one
+ * thing this whole file must never do.
+ */
+async function backfillAgentId(did, agentId) {
+  try {
+    const num = await NumberModel.findOne({ where: { did, status: 'active' } });
+    if (num && !num.ghl_agent_id) {
+      await num.update({ ghl_agent_id: String(agentId) });
+      console.log(`[lite:ghl-calls] learned agent ${String(agentId).slice(0, 8)}… answers ${did}`);
+    }
+  } catch (e) { console.warn('[lite:ghl-calls] agent id not recorded:', e.message); }
+}
+
 /** Read the recent call logs for one sub-account. Read-only; stores nothing. */
 async function fetchRecent(creds, { minutes, agentId } = {}) {
   const loc = ghl.locationId(creds);
   const mins = minutes || LOOKBACK_MIN();
   const now = Date.now();
+  // MILLISECONDS, MEASURED AGAINST THE LIVE API 2026-09-26. Sent as unix
+  // SECONDS — which is what a reasonable reading of the docs gives, and what
+  // verticals/supply sends — the same window returns `{callLogs:[],
+  // totalRecords:0}`: a clean 200 that is indistinguishable from "nobody
+  // called". That is the worst possible failure for this endpoint, because a
+  // missing voicemail then looks like a quiet day. The identical request in
+  // milliseconds returned the call.
   const query = {
     locationId: loc, page: 1, pageSize: PAGE_SIZE(),
     sortBy: 'createdAt', sort: 'descend',
-    startDate: Math.floor((now - mins * 60000) / 1000),
-    endDate: Math.floor(now / 1000),
+    startDate: now - mins * 60000,
+    endDate: now,
   };
   if (agentId) query.agentId = agentId;
   const d = await ghl.call('GET', '/voice-ai/dashboard/call-logs',
@@ -126,6 +182,15 @@ async function importRecent({ creds, minutes, dryRun = false } = {}) {
     return { ok: false, error: 'fetch_failed', status: e.status || null, detail: stats.last_error };
   }
   stats.fetched += logs.length;
+
+  // Fill in the dialled line the call log does not carry.
+  const amap = await agentNumberMap(c);
+  for (const f of logs) {
+    if (!f.dialed && f.agentId && amap.has(String(f.agentId))) {
+      f.dialed = amap.get(String(f.agentId));
+      if (!dryRun) await backfillAgentId(f.dialed, f.agentId);
+    }
+  }
 
   const results = [];
   for (const f of logs) {
