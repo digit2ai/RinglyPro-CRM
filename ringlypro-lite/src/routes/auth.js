@@ -13,7 +13,7 @@ const TRIAL_DAYS = parseInt(process.env.LITE_TRIAL_DAYS || '7', 10);
 // Self-serve signup: creates tenant (7-day trial) + owner login + default hours.
 router.post('/register', async (req, res) => {
   try {
-    const { business_name, owner_name, email, password, owner_phone, country, locale, timezone } = req.body || {};
+    const { business_name, owner_name, email, password, owner_phone, transfer_number, country, locale, timezone } = req.body || {};
     if (!business_name || !email || !password) {
       return res.status(400).json({ error: 'business_name, email, password required' });
     }
@@ -26,6 +26,19 @@ router.post('/register', async (req, res) => {
         message: 'Only US and Colombian phone numbers can receive texts from RinglyPro Lite.' });
       ownerPhone = chk.e164;
     }
+    // WHERE A LIVE CALL IS SENT IS A SEPARATE QUESTION FROM WHERE TEXTS GO.
+    // Until now signup asked only for "Owner mobile (SMS alerts)" and the
+    // agent quietly transferred callers to that same number — a personal
+    // mobile given for notifications could end up receiving customer calls
+    // with nothing on the form saying so. Asked for explicitly, optional, and
+    // it still falls back to the mobile when left blank (stated on the form).
+    let transferPhone = null;
+    if (transfer_number && String(transfer_number).trim()) {
+      const chk = tollFraud.checkDestination(transfer_number, { defaultCountry: (country || 'US').toUpperCase() });
+      if (!chk.ok) return res.status(400).json({ error: 'phone_not_allowed', field: 'transfer_number', reason: chk.reason,
+        message: 'Only US and Colombian phone numbers can receive transferred calls.' });
+      transferPhone = chk.e164;
+    }
     const existing = await User.findOne({ where: { email: String(email).toLowerCase() } });
     if (existing) return res.status(409).json({ error: 'email_in_use' });
 
@@ -34,6 +47,7 @@ router.post('/register', async (req, res) => {
       business_name,
       owner_name: owner_name || null,
       owner_phone: ownerPhone,
+      transfer_number: transferPhone,
       owner_email: String(email).toLowerCase(),
       country: (country || 'US').toUpperCase().slice(0, 2),
       locale: (locale || 'en').toLowerCase().slice(0, 2),
