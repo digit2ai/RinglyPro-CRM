@@ -691,6 +691,76 @@ router.post('/buy-number-probe', express.json({ limit: '2kb' }), async (req, res
   }
 });
 
+/**
+ * Add the booking and transfer actions to agents that are missing them.
+ *
+ * Provisioning creates these right after the agent, and records a failure
+ * rather than aborting — so an agent built while the token lacked a write
+ * scope answers calls but can neither book nor put a caller through, with
+ * nothing on any screen saying so. This repairs an existing agent without a
+ * second signup or a second number.
+ *
+ * It is also the FREE way to test whether a scope change took effect: the
+ * purchase probe would buy a number the account does not need.
+ */
+router.post('/repair-agent-actions', express.json({ limit: '2kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const { Tenant } = require('../models');
+  const tollFraud2 = require('../security/tollFraud');
+  try {
+    const creds = ghl.resolve(null);
+    const tenants = await Tenant.findAll({ where: { provisioning_state: 'ready' } });
+    const out = [];
+    for (const t of tenants) {
+      if (!t.ghl_agent_id) { out.push({ tenant_id: t.id, skipped: 'no agent' }); continue; }
+      // What does it already have? Never add a duplicate.
+      let have = [];
+      try {
+        const one = await ghl.call('GET', `/voice-ai/agents/${encodeURIComponent(t.ghl_agent_id)}`,
+          { query: { locationId: creds.locationId }, creds });
+        const a = (one && (one.agent || one.data || one)) || {};
+        have = (Array.isArray(a.actions) ? a.actions : []).map((x) => x.actionType || x.type);
+      } catch (e) { out.push({ tenant_id: t.id, read_failed: String(e.message || e).slice(0, 120) }); }
+
+      const row = { tenant_id: t.id, had: have, added: [], refused: [] };
+
+      if (t.ghl_calendar_id && !have.includes('APPOINTMENT_BOOKING')) {
+        try {
+          await ghl.call('POST', '/voice-ai/actions', { creds, body: {
+            agentId: t.ghl_agent_id, locationId: creds.locationId,
+            actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
+            actionParameters: { calendarId: t.ghl_calendar_id, daysOfOfferingDates: 14, hoursBetweenSlots: 1, slotsPerDay: 4 },
+          } });
+          row.added.push('APPOINTMENT_BOOKING');
+        } catch (e) { row.refused.push({ action: 'APPOINTMENT_BOOKING', status: e.status || null, message: String(e.message || e).slice(0, 160) }); }
+      }
+
+      const dest = t.transfer_number || t.owner_phone;
+      const chk = dest ? tollFraud2.checkDestination(dest, { defaultCountry: t.country }) : null;
+      if (chk && chk.ok && !have.includes('CALL_TRANSFER')) {
+        try {
+          await ghl.call('POST', '/voice-ai/actions', { creds, body: {
+            agentId: t.ghl_agent_id, locationId: creds.locationId,
+            actionType: 'CALL_TRANSFER', name: 'Transfer to owner',
+            actionParameters: { triggerPrompt: 'When the caller asks to speak to a person or the owner',
+              transferToType: 'number', transferToValue: chk.e164 },
+          } });
+          row.added.push('CALL_TRANSFER');
+        } catch (e) { row.refused.push({ action: 'CALL_TRANSFER', status: e.status || null, message: String(e.message || e).slice(0, 160) }); }
+      } else if (dest && !(chk && chk.ok)) {
+        row.refused.push({ action: 'CALL_TRANSFER', reason: 'the saved transfer number is not an allowed destination' });
+      }
+      out.push(row);
+    }
+    const anyRefused = out.some((r) => (r.refused || []).some((x) => x.status === 403 || x.status === 401));
+    res.json({ ok: !anyRefused, tenants: tenants.length, results: out,
+      read_this: anyRefused
+        ? 'Still 401/403: the token cannot write Voice AI actions. The scope change has not taken effect - try rotating the token, then update LITE_GHL_TOKEN on Render.'
+        : 'Scopes are good. Re-read /internal/security/agents to confirm the actions are on the agent.' });
+  } catch (e) { res.status(502).json({ ok: false, error: String(e.message || e).slice(0, 200) }); }
+});
+
 /** Read-only: what does each provisioned agent actually look like in HighLevel? */
 router.get('/agents', async (req, res) => {
   res.set('Cache-Control', 'no-store');
