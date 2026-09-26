@@ -845,14 +845,15 @@ router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, 
     const calendarId = t && t.ghl_calendar_id;
     if (!calendarId) return res.json({ ok: false, error: 'no calendar to point at' });
 
+    // One variable at a time, from the known-good 3/3/3 their UI wrote.
     const combos = [
-      { days: 3, slots: 3, hours: 3 },     // what their UI wrote — known good
-      { days: 7, slots: 3, hours: 3 },
-      { days: 14, slots: 3, hours: 3 },
-      { days: 30, slots: 3, hours: 3 },
-      { days: 7, slots: 5, hours: 2 },
-      { days: 7, slots: 4, hours: 1 },
-      { days: 14, slots: 1, hours: 4 },
+      { days: 3, slots: 3, hours: 3 },                    // control
+      { days: 5, slots: 3, hours: 3 }, { days: 7, slots: 3, hours: 3 },
+      { days: 10, slots: 3, hours: 3 }, { days: 14, slots: 3, hours: 3 },
+      { days: 3, slots: 2, hours: 3 }, { days: 3, slots: 4, hours: 3 },
+      { days: 3, slots: 5, hours: 3 },
+      { days: 3, slots: 3, hours: 1 }, { days: 3, slots: 3, hours: 2 },
+      { days: 3, slots: 3, hours: 4 },
     ];
     const tried = [];
     for (const c of combos) {
@@ -860,7 +861,7 @@ router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, 
       try {
         const out = await ghl.call('POST', '/voice-ai/actions', { creds, version: 'v3', body: {
           agentId: tpl.id, locationId: creds.locationId,
-          actionType: 'APPOINTMENT_BOOKING', name: 'RANGE PROBE (temporary)',
+          actionType: 'APPOINTMENT_BOOKING', name: 'Range probe temporary',
           actionParameters: { calendarId, daysOfOfferingDates: c.days, slotsPerDay: c.slots, hoursBetweenSlots: c.hours },
         } });
         created = out && (out.id || out.actionId || (out.action && out.action.id));
