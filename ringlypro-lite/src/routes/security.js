@@ -1393,11 +1393,19 @@ router.post('/open-hours-shape-probe', express.json({ limit: '4kb' }), async (re
     const cur = await ghl.call('GET', url, { creds, version: 'v3' });
     before = count((cur && (cur.calendar || cur)) || {});
   } catch (e) { return res.status(502).json({ ok: false, error: 'calendar_unreadable', detail: String(e.message || e).slice(0, 200) }); }
-  if (before > 0) return res.status(409).json({ ok: false, error: 'calendar_already_has_hours', open_hours: before,
-    message: 'Refusing to probe on a calendar that already has hours — use repair-calendar-hours with force.' });
+  if (before > 0 && !req.body.force) return res.status(409).json({ ok: false, error: 'calendar_already_has_hours', open_hours: before,
+    message: 'Refusing to probe on a calendar that already has hours — pass "force":true if these hours are ours and wrong.' });
 
   const h = [{ openHour: 9, openMinute: 0, closeHour: 17, closeMinute: 0 }];
+  const day = (d) => ({ daysOfTheWeek: [d], hours: h });
   const shapes = [
+    // The open question after the first probe: [1] alone was accepted, so how
+    // many single-day ENTRIES will it take? Ordered smallest-first so the
+    // ceiling is found rather than jumped over.
+    { label: 'FIVE single-day entries (Mon-Fri)', openHours: [1, 2, 3, 4, 5].map(day) },
+    { label: 'TWO single-day entries (Mon,Tue)', openHours: [1, 2].map(day) },
+    { label: 'ONE single-day entry (Mon) — known good', openHours: [day(1)] },
+    { label: 'five entries, day 0 first (Sun-Thu)', openHours: [0, 1, 2, 3, 4].map(day) },
     { label: 'names UPPERCASE', openHours: [{ daysOfTheWeek: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'], hours: h }] },
     { label: 'names lowercase', openHours: [{ daysOfTheWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'], hours: h }] },
     { label: 'short names', openHours: [{ daysOfTheWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], hours: h }] },
@@ -1420,7 +1428,9 @@ router.post('/open-hours-shape-probe', express.json({ limit: '4kb' }), async (re
         const c = (d && (d.calendar || d)) || {};
         after = count(c); raw = JSON.stringify(c.openHours).slice(0, 400);
       } catch (_) { /* unconfirmed */ }
-      tried.push({ shape: sh.label, status: 200, accepted: true, read_back: after, read_back_raw: raw });
+      tried.push({ shape: sh.label, status: 200, accepted: true, entries_sent: sh.openHours.length,
+        read_back: after, read_back_raw: raw });
+      if (req.body.all) continue;   // keep probing to find the ceiling
       // Free slots for the next week: the question that actually matters.
       let slots = null;
       try {
@@ -1432,9 +1442,12 @@ router.post('/open-hours-shape-probe', express.json({ limit: '4kb' }), async (re
       } catch (e) { slots = { error: String(e.message || e).slice(0, 150) }; }
       return res.json({ ok: true, winner: sh.label, sent: sh.openHours, tried, free_slots: slots });
     } catch (e) {
-      tried.push({ shape: sh.label, status: e.status || null, error: String(e.message || e).slice(0, 200) });
+      tried.push({ shape: sh.label, status: e.status || null, entries_sent: sh.openHours.length,
+        error: String(e.message || e).slice(0, 200) });
     }
   }
+  const won = tried.filter((x) => x.accepted);
+  if (won.length) return res.json({ ok: true, accepted: won.map((x) => x.shape), tried });
   return res.status(502).json({ ok: false, error: 'no_shape_accepted', tried });
 });
 
