@@ -480,10 +480,25 @@ router.post('/ghl-message-selftest', express.json({ limit: '4kb' }), async (req,
     });
     if (!seen.count) throw new Error('the delivery was accepted but no message reached the dashboard query');
 
+    // THE MIRROR'S ALERT IS FIRE-AND-FORGET, so its result is invisible to
+    // this run — "attempted" is not proof a phone rang. Send one more through
+    // the SAME transport and report what it actually returned, so a silent
+    // failure (bad credentials, an unregistered sender, the toll-fraud guard)
+    // is named instead of assumed.
+    if (textTo) {
+      await step('send a test alert and report the real result', async () => {
+        const smsSvc = require('../services/sms');
+        const r = await smsSvc.send({ from: DID, to: textTo,
+          body: 'RinglyPro Lite test: this is the alert you get when the AI takes a message. Nothing to do.' });
+        if (!r.sent) throw new Error(`the carrier did not accept it: ${r.reason || 'unknown'}`);
+        return { sent: true, segments: r.segments, to: tollFraud.mask(textTo) };
+      });
+    }
+
     const alerts = require('./webhooks-ghl').stats;
     const out = {
       ok: steps.every((s) => s.ok),
-      texted: textTo ? `one SMS was attempted to ${tollFraud.mask(textTo)} — check that phone` : 'not requested',
+      texted: textTo ? `sent to ${tollFraud.mask(textTo)} — check that phone` : 'not requested',
       steps,
       webhook_counters: { received: alerts.received, accepted: alerts.accepted, unauthenticated: alerts.unauthenticated },
       still_unproven: 'Whether HighLevel\'s own workflow calls this URL on a real call. Only a real call proves that; watch ghl_post_call_webhook.received rise above 0.',
