@@ -42,7 +42,11 @@ const tollFraud = require('../security/tollFraud');
 const smsSvc = require('../services/sms');
 const { t } = require('../services/i18n');
 
-const stats = { received: 0, accepted: 0, unauthenticated: 0, unmatched: 0, replayed: 0, throttled: 0, failed: 0, last_at: null };
+const stats = { received: 0, accepted: 0, unauthenticated: 0, unmatched: 0, replayed: 0, throttled: 0, failed: 0,
+  // WHY a delivery was rejected, not just how many. "unauthenticated: 1" is
+  // true of both a missing header and a wrong value, and those need different
+  // fixes — one is a field nobody filled in, the other is a mismatched secret.
+  last_reject: null, last_reject_at: null, header_seen: null, last_at: null };
 
 function mode() {
   const m = String(process.env.LITE_GHL_WEBHOOK_MODE || 'enforce').toLowerCase();
@@ -132,6 +136,12 @@ router.post('/ghl/call', async (req, res) => {
   }
   if (!auth.ok) {
     stats.unauthenticated++;
+    stats.last_reject = auth.why;                 // 'missing' or 'mismatch'
+    stats.last_reject_at = new Date().toISOString();
+    // The NAMES of the headers that arrived, never their values — enough to
+    // see whether the header was spelled differently, without printing a
+    // secret into a report that gets pasted around.
+    stats.header_seen = Object.keys(req.headers || {}).filter((k) => /sig|secret|auth|token|ringly/i.test(k));
     console.warn(`[lite:ghl-webhook] unauthenticated (${auth.why}); mode=${m}`);
     if (m !== 'log') return res.status(403).json({ error: 'forbidden' });
   }
