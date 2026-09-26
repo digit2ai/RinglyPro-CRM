@@ -617,8 +617,15 @@ router.get('/owned-numbers', async (req, res) => {
       try {
         const r = await ghl.call('GET', `/phone-system/numbers/location/${creds.locationId}`,
           { creds, version, timeoutMs: 15000 });
-        const arr = Array.isArray(r) ? r : (r && (r.numbers || r.data)) || [];
-        out[version] = { count: arr.length, numbers: arr.map((n) => n.phoneNumber || n.number).filter(Boolean).slice(0, 20) };
+        // Report the RAW shape when it is not what we expected. Guessing a
+        // wrapper is how "0 numbers" gets reported for an account that has some.
+        let arr = Array.isArray(r) ? r : null;
+        if (!arr && r && typeof r === 'object') {
+          for (const v of Object.values(r)) if (Array.isArray(v)) { arr = v; break; }
+        }
+        out[version] = arr
+          ? { count: arr.length, numbers: arr.map((n) => n.phoneNumber || n.number || n.number_e164).filter(Boolean).slice(0, 20) }
+          : { count: null, raw_keys: r && typeof r === 'object' ? Object.keys(r) : typeof r, raw: JSON.stringify(r).slice(0, 400) };
       } catch (e) { out[version] = { error: String(e.message || e).slice(0, 160) }; }
     }
     res.json({ location_id: creds.locationId, by_version: out,
