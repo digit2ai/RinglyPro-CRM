@@ -888,9 +888,9 @@ router.post('/booking-range-probe', express.json({ limit: '2kb' }), async (req, 
       for (const act of (Array.isArray(a.actions) ? a.actions : [])) {
         if (!/^Range probe/i.test(String(act.name || ''))) continue;
         try { await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(act.id)}`,
-          { creds, version: 'v3', query: { agentId: tpl.id, locationId: creds.locationId },
-            body: { agentId: tpl.id, locationId: creds.locationId } }); swept++; }
-        catch (e) { stranded.push({ id: act.id, name: act.name, error: String(e.message || e).slice(0, 120) }); }
+          { creds, version: 'v3', query: { agentId: tpl.id, locationId: creds.locationId } }); swept++; }
+        catch (e) { stranded.push({ id: act.id, name: act.name, agentId_sent: tpl.id,
+          status: e.status || null, error: String(e.message || e).slice(0, 160), raw: (e.body || '').slice(0, 300) }); }
       }
     } catch (e) { stranded.push({ error: `could not re-read the template: ${String(e.message || e).slice(0, 120)}` }); }
 
