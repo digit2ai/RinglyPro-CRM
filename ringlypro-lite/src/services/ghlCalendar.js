@@ -226,7 +226,13 @@ async function pushAppointment({ tenant, creds, appt, email }) {
         contactId,
         startTime: new Date(appt.starts_at).toISOString(),
         endTime: new Date(appt.ends_at).toISOString(),
-        title: `${appt.caller_name || 'Appointment'} — booked on ${tenant.business_name || 'RinglyPro'}`,
+        // THE TITLE CARRIES THE PURPOSE, because that is the field the mirror
+        // reads back and the field the owner sees in HighLevel's own calendar.
+        // Without it a booking made here shows as "(No title)" there, which is
+        // exactly what the owner reported seeing.
+        title: appt.reason
+          ? `${appt.reason}${appt.caller_name ? ` — ${appt.caller_name}` : ''}`
+          : `${appt.caller_name || 'Appointment'} — booked on ${tenant.business_name || 'RinglyPro'}`,
         appointmentStatus: 'confirmed',
         ignoreFreeSlotValidation: !validateSlot(),
         toNotify: false,

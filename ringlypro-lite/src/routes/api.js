@@ -111,7 +111,7 @@ router.get('/appointments', async (req, res) => {
   // the model wholesale means every column added later ships to the browser by
   // default. `synced` is the useful part of it, as a boolean.
   const rows = await Appointment.findAll({
-    attributes: ['id', 'call_id', 'caller_name', 'callback_number', 'starts_at', 'ends_at', 'status', 'created_at', 'ghl_event_id', 'ghl_cancel_failed_at'],
+    attributes: ['id', 'call_id', 'caller_name', 'callback_number', 'reason', 'starts_at', 'ends_at', 'status', 'created_at', 'ghl_event_id', 'ghl_cancel_failed_at'],
     where: { tenant_id: req.tenantId, starts_at: { [Op.between]: [from, to] } },
     order: [['starts_at', 'ASC']]
   });
@@ -124,6 +124,61 @@ router.get('/appointments', async (req, res) => {
       return { ...o, synced, cancel_incomplete };
     })
   });
+});
+
+/**
+ * BOOK BY HAND, AND IT SYNCS LIKE ANY OTHER BOOKING.
+ *
+ * The owner had no way to add an appointment themselves — every row arrived
+ * from a caller. This goes through `booking.bookAppointment`, the SAME path
+ * the relay agent and the public page use, so it inherits the slot lock, the
+ * push to HighLevel and, critically, the THREE-OUTCOME handling: a definite
+ * refusal deletes the local row (booked here and free there is the
+ * double-book), while an ambiguous one KEEPS it as `sync_unknown` because the
+ * event may exist in HighLevel with nothing on our side pointing at it.
+ *
+ * A manual booking is `origin:'ringlypro'` and therefore IS pushed. Reusing
+ * the service rather than inserting a row here is the whole point: a second
+ * insert path would have to re-implement all of that and would get it wrong.
+ */
+router.post('/appointments', express.json({ limit: '8kb' }), async (req, res) => {
+  const b = req.body || {};
+  const name = String(b.caller_name || '').trim().slice(0, 120);
+  if (!name) return res.status(400).json({ error: 'name_required' });
+
+  // A callback number is optional here — the owner may be booking someone
+  // whose number they already have elsewhere — but if given it must be a real
+  // number, because it is rendered into a tel: href on this same screen.
+  let phone = null;
+  if (b.callback_number && String(b.callback_number).trim()) {
+    const tenant = await Tenant.findByPk(req.tenantId);
+    const chk = tollFraud.checkDestination(String(b.callback_number), {
+      defaultCountry: (tenant && tenant.country) || 'US' });
+    if (!chk.ok) return res.status(400).json({ error: 'bad_number', detail: chk.reason || null });
+    phone = chk.e164;
+  }
+
+  try {
+    const r = await booking.bookAppointment({
+      tenantId: req.tenantId,
+      caller_name: name,
+      callback_number: phone,
+      reason: b.reason,
+      date: b.date, time: b.time, starts_at: b.starts_at,
+    });
+    if (!r.success) {
+      // sync_unconfirmed is NOT a failure the owner should read as "nothing
+      // happened" — the slot is held and flagged. Say which it was.
+      const code = r.error === 'slot_taken' ? 409
+        : (r.error === 'sync_failed' || r.error === 'sync_unconfirmed') ? 503 : 400;
+      return res.status(code).json({ error: r.error });
+    }
+    return res.status(201).json({ ok: true, id: r.appointment_id, starts_at: r.starts_at,
+      synced: r.synced_to_calendar !== false });
+  } catch (e) {
+    console.error('[lite:api] manual booking failed:', e.message);
+    return res.status(500).json({ error: 'book_failed' });
+  }
 });
 
 // Cancelling here also cancels it in the tenant's HighLevel calendar, or the

@@ -1712,6 +1712,45 @@ const tenantSeed = (over = {}) => ({
   });
 
 
+  /* ─── an appointment must say what it is FOR ──────────────────────────── */
+  section('appointment reason (a time and a name is not enough)');
+
+  await t('a reason given by the caller is stored and pushed as the title', async () => {
+    scenario = {}; reqs = [];
+    const when = nextSlot();
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Reason Caller',
+      callback_number: '+14085550077', starts_at: when.toISOString(),
+      reason: '  Roof   estimate for the back porch  ' });
+    assert.strictEqual(r.success, true, JSON.stringify(r));
+    const row = M.Appointment._rows.find((a) => a.id === r.appointment_id);
+    // Trimmed and whitespace-collapsed, not re-worded.
+    assert.strictEqual(row.reason, 'Roof estimate for the back porch');
+    const push = reqs.find((x) => x.path === '/calendars/events/appointments' && x.method === 'POST');
+    assert.ok(push.body.title.includes('Roof estimate'),
+      'the purpose did not reach HighLevel, so their calendar still shows "(No title)"');
+  });
+
+  await t('NO REASON IS NULL, NEVER A GUESS', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Silent Caller',
+      callback_number: '+14085550078', starts_at: nextSlot().toISOString() });
+    const row = M.Appointment._rows.find((a) => a.id === r.appointment_id);
+    assert.strictEqual(row.reason, null, 'an unstated reason was invented');
+  });
+
+  await t('whitespace-only is the same as saying nothing', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Blank',
+      callback_number: '+14085550079', starts_at: nextSlot().toISOString(), reason: '   ' });
+    assert.strictEqual(M.Appointment._rows.find((a) => a.id === r.appointment_id).reason, null);
+  });
+
+  await t('a runaway reason is capped, not refused', async () => {
+    const r = await booking.bookAppointment({ tenantId: CAL_T.id, caller_name: 'Long',
+      callback_number: '+14085550080', starts_at: nextSlot().toISOString(), reason: 'x'.repeat(4000) });
+    const row = M.Appointment._rows.find((a) => a.id === r.appointment_id);
+    assert.strictEqual(row.reason.length, 500, 'the cap did not apply');
+    assert.strictEqual(r.success, true, 'a long reason lost the booking');
+  });
+
   /* ─── the appointment mirror: the slot only exists on the calendar ────── */
   section('appointment mirror (Lina booked it; the Calendar tab was empty)');
 
@@ -1888,6 +1927,25 @@ const tenantSeed = (over = {}) => ({
     assert.ok(M.Appointment._rows.some((a) => a.ghl_event_id === 'EV-OK'),
       'a healthy client was starved by another client\'s outage');
     assert.ok(r.results.filter((x) => x.ok).length >= 1, 'no tenant succeeded after the failure');
+  });
+
+  await t('THE MIRROR NEVER TURNS AN EMPTY TITLE INTO A NAME OR A REASON', async () => {
+    // HighLevel's own calendar shows "(No title)" for the booking the owner
+    // made by phone. The title used to stand in for a missing caller name,
+    // which put "Appointment" in the name column.
+    scenario = { events: [evOf({ id: 'EV-NOTITLE', title: '' })], contactReadFails: true };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].stored, true);
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-NOTITLE');
+    assert.strictEqual(row.reason, null);
+    assert.strictEqual(row.caller_name, null, 'an empty title was used as the caller name');
+  });
+
+  await t('a titled event mirrors the title as the REASON', async () => {
+    scenario = { events: [evOf({ id: 'EV-TITLED', title: 'Quote for a new roof' })] };
+    await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-TITLED').reason,
+      'Quote for a new roof');
   });
 
   await t('THE APPOINTMENT MIRROR CANNOT REACH THE PUSH', () => {

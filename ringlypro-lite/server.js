@@ -53,6 +53,11 @@ async function initDb() {
     ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS origin VARCHAR(16);
     ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS ghl_event_id VARCHAR(255);
     ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS ghl_cancel_failed_at TIMESTAMPTZ;
+    -- WHY the appointment exists. The Calendar tab showed a time and a name and
+    -- nothing about the purpose, so an owner could not tell a consultation from
+    -- a complaint. NULL on every existing row on purpose: their reason was never
+    -- captured and inventing one is worse than an empty field.
+    ALTER TABLE lite_appointments ADD COLUMN IF NOT EXISTS reason TEXT;
     CREATE INDEX IF NOT EXISTS ix_lite_appts_ghl_event ON lite_appointments(ghl_event_id);
   `);
   // One tenant may hold at most one sub-account from the pool. Enforced in the

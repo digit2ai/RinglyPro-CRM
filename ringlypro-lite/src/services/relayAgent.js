@@ -51,7 +51,11 @@ const TOOL_DEFS = [
         caller_name: { type: 'string' },
         callback_number: { type: 'string', description: 'Digits confirmed with the caller' },
         date: { type: 'string', description: 'YYYY-MM-DD' },
-        time: { type: 'string', description: 'HH:MM 24h local' }
+        time: { type: 'string', description: 'HH:MM 24h local' },
+        // ASK, DO NOT INFER. The owner sees this in the Calendar tab and needs
+        // to know what the appointment is for. The agent captures what the
+        // caller actually said; booking.cleanReason turns silence into NULL.
+        reason: { type: 'string', description: "What the appointment is for, in the caller's own words. Omit it if they did not say." }
       },
       required: ['date', 'time']
     }

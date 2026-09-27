@@ -1545,4 +1545,76 @@ router.get('/ghl-appointments', async (req, res) => {
   }
 });
 
+/**
+ * CAN THE AGENT OFFER TWO DAYS AND TWO TIMES?
+ *
+ * The owner wants a shorter spoken list. Currently 3/3/3. Measured 2026-09-25:
+ * daysOfOfferingDates 5, 7, 10 and 14 and slotsPerDay 4 and 5 are all REFUSED
+ * (422) — HighLevel accepts a narrow set and does not document it. SMALLER
+ * values have never been tried, so 2/2 is an assumption until this runs.
+ *
+ * It PATCHes the tenant's real booking action, so it changes what callers are
+ * offered. It stops at the first accepted combination and reports every
+ * refusal, and it restores the known-good 3/3/3 if nothing works.
+ */
+router.post('/booking-offer-probe', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true,"tenant":N}. PATCHes that tenant\'s live booking action.' });
+  }
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant } = require('../models');
+  const tid = parseInt(req.body.tenant, 10);
+  const tenant = Number.isInteger(tid) ? await Tenant.findByPk(tid) : null;
+  if (!tenant || !tenant.ghl_agent_id || !tenant.ghl_calendar_id) {
+    return res.status(404).json({ ok: false, error: 'no_tenant_agent_or_calendar' });
+  }
+  const creds = await accounts.credsFor(tenant);
+  const V = String(process.env.LITE_GHL_ACTION_VERSION || 'v3').trim();
+
+  let actionId = null;
+  try {
+    const list = await ghl.call('GET', '/voice-ai/actions',
+      { creds, version: V, query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId } });
+    const arr = (list && (list.actions || list.data)) || (Array.isArray(list) ? list : []);
+    const bk = (Array.isArray(arr) ? arr : []).find((a) =>
+      String(a.actionType || '').toUpperCase() === 'APPOINTMENT_BOOKING');
+    actionId = bk && bk.id;
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: 'cannot_list_actions',
+      detail: String(e.message || e).slice(0, 200) });
+  }
+  if (!actionId) return res.status(404).json({ ok: false, error: 'no_booking_action_on_this_agent' });
+
+  // Smallest first — the owner asked for two, and finding the floor matters
+  // more than finding something that merely works.
+  const combos = [
+    { daysOfOfferingDates: 2, slotsPerDay: 2, hoursBetweenSlots: 3 },
+    { daysOfOfferingDates: 2, slotsPerDay: 3, hoursBetweenSlots: 3 },
+    { daysOfOfferingDates: 3, slotsPerDay: 2, hoursBetweenSlots: 3 },
+    { daysOfOfferingDates: 1, slotsPerDay: 2, hoursBetweenSlots: 3 },
+    { daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 },   // known good
+  ];
+  const tried = [];
+  for (const c of combos) {
+    try {
+      await ghl.call('PATCH', `/voice-ai/actions/${encodeURIComponent(actionId)}`, { creds, version: V,
+        query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId },
+        body: { agentId: tenant.ghl_agent_id, locationId: creds.locationId,
+          actionType: 'APPOINTMENT_BOOKING',
+          actionParameters: Object.assign({ calendarId: tenant.ghl_calendar_id }, c) } });
+      tried.push({ ...c, accepted: true });
+      return res.json({ ok: true, accepted: c, action_id: actionId, tried,
+        note: 'Left the agent on this combination. Re-run with a different order to change it.' });
+    } catch (e) {
+      tried.push({ ...c, accepted: false, status: e.status || null,
+        error: String(e.message || e).slice(0, 180) });
+    }
+  }
+  return res.status(502).json({ ok: false, error: 'nothing_accepted', tried,
+    note: 'The agent may now have no working booking parameters — re-run repair-agent-actions.' });
+});
+
 module.exports = router;

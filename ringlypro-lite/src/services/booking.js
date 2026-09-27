@@ -229,7 +229,19 @@ async function checkAvailability({ tenantId, date, time, days_ahead = 7, limit =
 // silently reinstate the double-booking this whole change removes. Everything
 // that reaches this function is a RinglyPro-side booking by definition; the
 // mirror writes its own rows directly with origin:'ai'.
-async function bookAppointment({ tenantId, caller_name, callback_number, date, time, starts_at, slot_minutes, call_id, email }) {
+/**
+ * A reason is free text a caller spoke or an owner typed, rendered in the
+ * dashboard. Cap it, trim it, and turn nothing into NULL. It is deliberately
+ * NOT validated beyond that: a purpose is prose, and refusing an unusual one
+ * would lose the booking.
+ */
+function cleanReason(v) {
+  if (v === undefined || v === null) return null;
+  const s = String(v).trim().replace(/\s+/g, ' ').slice(0, 500);
+  return s || null;
+}
+
+async function bookAppointment({ tenantId, caller_name, callback_number, date, time, starts_at, slot_minutes, call_id, email, reason }) {
   const tenant = await resolveTenant(tenantId);
   if (!tenant) return { success: false, error: 'tenant_not_found' };
   const tz = tenant.timezone || 'America/New_York';
@@ -262,6 +274,13 @@ async function bookAppointment({ tenantId, caller_name, callback_number, date, t
         tenant_id: tenantId, call_id: call_id || null,
         caller_name: caller_name || null, callback_number: callback_number || null,
         starts_at: startUtc, ends_at: endUtc, status: 'confirmed',
+        // WHAT IT IS FOR. This reaches here from three places — the relay
+        // agent (which spreads the MODEL's raw tool input), the public booking
+        // page and the owner's own form — so it is capped and trimmed here
+        // rather than at each caller, and an empty string becomes NULL: a
+        // blank reason and no reason are the same thing, and the UI must be
+        // able to tell "nobody said" from "somebody said nothing".
+        reason: cleanReason(reason),
         origin: 'ringlypro'
       }, { transaction: tx });
     });
@@ -396,4 +415,4 @@ async function takeMessage({ tenantId, call_id, caller_name, callback_number, bo
   return { success: true, saved: true, message_id: msg.id };
 }
 
-module.exports = { getBusinessInfo, identifyCaller, checkAvailability, bookAppointment, cancelAppointment, takeMessage, last10 };
+module.exports = { getBusinessInfo, identifyCaller, checkAvailability, bookAppointment, cancelAppointment, takeMessage, last10, cleanReason};

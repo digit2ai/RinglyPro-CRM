@@ -44,6 +44,13 @@
   nav a.on{color:var(--acc2)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
   .msg{font-size:13px;color:var(--mut);min-height:16px}
+  .addbar{margin:4px 0 10px}
+  .apptform{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+  .apptform input{font-size:16px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--inp);color:var(--txt)}
+  .aprow{display:flex;gap:8px}.aprow input{flex:1;min-width:0}
+  .apmsg{font-size:13px;color:var(--warn);min-height:16px}
+  .why{font-size:14px;color:var(--txt);margin:2px 0 6px}
+  .why i{color:var(--mut);font-style:normal}
   .fwd{font-family:ui-monospace,Menlo,monospace;background:var(--inp);border:1px dashed var(--acc);border-radius:8px;padding:6px 10px;display:inline-block}
   .telbtn{flex:1;min-width:96px;text-align:center;text-decoration:none;font-weight:800;border-radius:10px;padding:13px 10px;font-size:15px}
   .telbtn.on{background:var(--ok);color:#04231a}
@@ -180,8 +187,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",noResults:"No messages match your search.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",noResults:"Ningún mensaje coincide con su búsqueda.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",noReason:"No reason given",apAdd:"Add appointment",apName:"Name",apPhone:"Phone (optional)",apReason:"What is it for?",apSave:"Save",apSaving:"Saving…",apFill:"Name, date and time are required.",apTaken:"That time is already booked.",apUnconfirmed:"Held, but not confirmed with the calendar yet — check it.",apSyncFail:"The calendar refused it. Pick another time.",apBadNum:"That phone number is not one we can use.",apFailed:"Could not save. Try again.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",noResults:"No messages match your search.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",noReason:"Sin motivo indicado",apAdd:"Agregar cita",apName:"Nombre",apPhone:"Teléfono (opcional)",apReason:"¿Para qué es?",apSave:"Guardar",apSaving:"Guardando…",apFill:"Nombre, fecha y hora son obligatorios.",apTaken:"Ese horario ya está reservado.",apUnconfirmed:"Reservado, pero aún sin confirmar con el calendario — revísalo.",apSyncFail:"El calendario lo rechazó. Elige otro horario.",apBadNum:"Ese número no lo podemos usar.",apFailed:"No se pudo guardar. Inténtalo de nuevo.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",noResults:"Ningún mensaje coincide con su búsqueda.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.querySelectorAll('[data-i-ph]').forEach(e=>{const v=I[lang][e.getAttribute('data-i-ph')];if(typeof v==='string')e.placeholder=v});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -267,15 +274,48 @@ $('fAll').onclick=()=>{msgFilter='all';$('fAll').classList.add('on');$('fUnread'
 $('fUnread').onclick=()=>{msgFilter='unread';$('fUnread').classList.add('on');$('fAll').classList.remove('on');renderMessages()};
 $('msgSearch').addEventListener('input',e=>{msgQuery=(e.target.value||'').trim();renderMessages()});
 
+window.toggleAddAppt=()=>{const f=$('apptForm');f.hidden=!f.hidden;if(!f.hidden){$('ap_name').focus();$('ap_msg').textContent='';}};
+window.saveAppt=async()=>{
+  const btn=$('ap_save'), msg=$('ap_msg');
+  const name=$('ap_name').value.trim(), date=$('ap_date').value, time=$('ap_time').value;
+  if(!name||!date||!time){msg.textContent=I[lang].apFill;return;}
+  btn.disabled=true; msg.textContent=I[lang].apSaving;
+  try{
+    const r=await fetch('/api/appointments',{method:'POST',headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',body:JSON.stringify({caller_name:name,callback_number:$('ap_phone').value.trim(),
+        reason:$('ap_reason').value.trim(),date:date,time:time})});
+    const j=await r.json().catch(()=>({}));
+    if(r.status===201){ $('apptForm').hidden=true; ['ap_name','ap_phone','ap_reason'].forEach(i=>$(i).value='');
+      loadCalendar(); return; }
+    // Every refusal is named. 'sync_unconfirmed' in particular must not read as
+    // "nothing happened" — the slot IS held and flagged for review.
+    msg.textContent = j.error==='slot_taken' ? I[lang].apTaken
+      : j.error==='sync_unconfirmed' ? I[lang].apUnconfirmed
+      : j.error==='sync_failed' ? I[lang].apSyncFail
+      : j.error==='bad_number' ? I[lang].apBadNum
+      : I[lang].apFailed;
+  }catch(e){ msg.textContent=I[lang].apFailed; }
+  finally{ btn.disabled=false; }
+};
+
 async function loadCalendar(){
   const j=await api('/api/appointments');if(!j)return;const box=$('calendar');
-  if(!j.appointments.length){box.innerHTML='<div class="empty">'+I[lang].noAppt+'</div>';return}
+  const addBar='<div class="addbar"><button class="sm" onclick="toggleAddAppt()">+ '+I[lang].apAdd+'</button></div>'
+    +'<div id="apptForm" class="apptform" hidden>'
+    +'<input id="ap_name" placeholder="'+I[lang].apName+'">'
+    +'<input id="ap_phone" placeholder="'+I[lang].apPhone+'">'
+    +'<input id="ap_reason" placeholder="'+I[lang].apReason+'">'
+    +'<div class="aprow"><input id="ap_date" type="date"><input id="ap_time" type="time"></div>'
+    +'<button id="ap_save" class="sm" onclick="saveAppt()">'+I[lang].apSave+'</button>'
+    +'<div id="ap_msg" class="apmsg"></div></div>';
+  if(!j.appointments.length){box.innerHTML=addBar+'<div class="empty">'+I[lang].noAppt+'</div>';return}
   const byDay={};j.appointments.filter(a=>a.status!=='cancelled').forEach(a=>{const d=new Date(a.starts_at).toLocaleDateString(lang==='es'?'es-CO':'en-US',{weekday:'long',month:'long',day:'numeric'});(byDay[d]=byDay[d]||[]).push(a)});
-  box.innerHTML=Object.keys(byDay).map(d=>`<div class="day">${d}</div>`+byDay[d].map(a=>{
+  box.innerHTML=addBar+Object.keys(byDay).map(d=>`<div class="day">${d}</div>`+byDay[d].map(a=>{
     const wh=new Date(a.starts_at).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',hour:'numeric',minute:'2-digit'});
     const msg=contactMsg('appt',a.caller_name,wh);
     return `<div class="item">
     <div class="top"><div class="name">${esc(a.caller_name||'—')}</div><div class="when">${new Date(a.starts_at).toLocaleTimeString(lang==='es'?'es-CO':'en-US',{hour:'numeric',minute:'2-digit'})}</div></div>
+    <div class="why">${a.reason?esc(a.reason):'<i>'+I[lang].noReason+'</i>'}</div>
     ${a.callback_number?`<a class="call" href="tel:${esc(telSafe(a.callback_number))}">${esc(a.callback_number)}</a>`:''}
     <div class="apptbtns">
       <button class="sm ghost" onclick="cancelAppt(${a.id})">${I[lang].cancel}</button>

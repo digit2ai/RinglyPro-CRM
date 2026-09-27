@@ -147,7 +147,12 @@ async function importForTenant(tenant, { creds, dryRun = false, backDays, aheadD
     try {
       const row = await Appointment.create({
         tenant_id: tenant.id,
-        caller_name: who.name || (ev.title ? String(ev.title).slice(0, 120) : null),
+        caller_name: who.name || null,
+        // THE TITLE IS THE PURPOSE, NOT THE PERSON. It used to stand in for a
+        // missing name, which put "Appointment" in the name column. HighLevel
+        // often returns an empty title (the calendar shows "(No title)"), and
+        // an untitled event gets NULL — never a guessed reason.
+        reason: (ev.title && String(ev.title).trim()) ? String(ev.title).trim().slice(0, 500) : null,
         callback_number: who.phone || null,
         starts_at: starts, ends_at: ends,
         status: 'confirmed',

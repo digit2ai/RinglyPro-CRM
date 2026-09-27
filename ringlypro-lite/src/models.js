@@ -139,6 +139,10 @@ const Appointment = sequelize.define('LiteAppointment', {
   // HighLevel's own event id, set when the push succeeds or when the mirror
   // reports one. It is what lets a cancellation reach both calendars.
   ghl_event_id: { type: DataTypes.STRING },
+  // WHAT THE APPOINTMENT IS FOR, in the caller's own words where we have them.
+  // NULL means nobody said — never a guessed purpose, and the UI prints "No
+  // reason given" rather than inventing one.
+  reason: { type: DataTypes.TEXT },
   // Set when the LOCAL cancel succeeded but the remote one did not. Without it
   // the failure lived only in an aggregate counter behind the admin key, so the
   // slot stayed blocked in HighLevel and nobody who could act on it could see.
