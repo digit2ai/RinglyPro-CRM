@@ -186,6 +186,49 @@ function landingTokens() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     t(`${label} ${p} does not scroll sideways`, () => assert.ok(overflow <= 1, `${overflow}px of horizontal overflow`));
 
+    // MESSAGES OPENS ON UNREAD, AND AN ALL-READ INBOX SAYS SO.
+    // Defaulting to Unread makes "nothing to show" the commonest state in a
+    // healthy account, and the existing empty text was "No messages match
+    // your search" - with no search typed, which reads as a broken filter.
+    if (p === 'dashboard.html') {
+      const msg = await page.evaluate(() => {
+        const r = { chipOn: document.querySelector('.chip.on') && document.querySelector('.chip.on').id };
+        /* eslint-disable no-undef */
+        allMessages = [
+          { id: 1, caller_name: 'A', body: 'read one', read_at: '2026-09-26T00:00:00Z', created_at: '2026-09-26T00:00:00Z' },
+          { id: 2, caller_name: 'B', body: 'unread one', read_at: null, created_at: '2026-09-26T01:00:00Z' }];
+        renderMessages();
+        r.shown = [...document.querySelectorAll('#messages .item .body')].map((e) => e.textContent);
+        allMessages = allMessages.map((m) => ({ ...m, read_at: '2026-09-26T00:00:00Z' }));
+        renderMessages();
+        r.allRead = (document.querySelector('#messages .empty') || {}).textContent || '';
+        document.getElementById('fAll').click();
+        r.afterAll = document.querySelectorAll('#messages .item').length;
+        document.getElementById('fUnread').click();
+        msgQuery = 'zzzznotfound'; renderMessages();
+        r.search = (document.querySelector('#messages .empty') || {}).textContent || '';
+        msgQuery = ''; allMessages = []; renderMessages();
+        r.none = (document.querySelector('#messages .empty') || {}).textContent || '';
+        /* eslint-enable no-undef */
+        return r;
+      });
+      t(`${label} messages opens on Unread`, () => {
+        assert.strictEqual(msg.chipOn, 'fUnread', 'the highlighted chip is ' + msg.chipOn);
+        assert.deepStrictEqual(msg.shown, ['unread one'], 'the read message was shown by default');
+      });
+      t(`${label} an all-read inbox does not claim a search found nothing`, () => {
+        assert.ok(!/search|búsqueda/i.test(msg.allRead),
+          'all-read shows a SEARCH message: ' + JSON.stringify(msg.allRead));
+        assert.ok(msg.allRead.length > 10, 'all-read shows nothing at all');
+        assert.notStrictEqual(msg.allRead, msg.none, 'all-read and never-had-any read identically');
+      });
+      t(`${label} the three empty states are distinct, and All still shows everything`, () => {
+        assert.strictEqual(msg.afterAll, 2, 'tapping All did not reveal the read message');
+        assert.ok(/search|búsqueda/i.test(msg.search), 'a real search miss lost its own wording');
+        assert.ok(/yet|Aún/i.test(msg.none), 'the never-had-any state lost its own wording');
+      });
+    }
+
     // THE BOTTOM TABS ARE MEASURED, NOT ASSUMED. A `@media(max-width:700px)`
     // rule set `padding:0 2px` on the tab links, which WIPED the vertical
     // padding from the rule above it - so on every phone each tab was one
