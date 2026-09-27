@@ -53,6 +53,16 @@ function table(name) {
       const arr = v[Object.getOwnPropertySymbols(v)[0]];      // Op.in
       return arr.includes(r[k]);
     }
+    if (v && typeof v === 'object') {
+      const syms = Object.getOwnPropertySymbols(v);
+      for (const sym of syms) {
+        const d = String(sym.description || sym.toString());
+        // Postgres really does filter on this, so the fake must too — a
+        // permissive stand-in turns an untested query into a passing test.
+        if (d.includes('ne')) { if (r[k] === v[sym] || (v[sym] === null && r[k] == null)) return false; }
+      }
+      if (syms.length) return true;
+    }
     if (v && typeof v === 'object' && v.constructor === Object) return true; // other Op.* — not asserted on
     return r[k] === v;
   });
@@ -244,6 +254,10 @@ global.fetch = async (url, opts = {}) => {
   // poller reads so a message never depends on a webhook action being wired.
   if (p === '/calendars/events' && (opts.method || 'GET') === 'GET') {
     if (scenario.eventsFail) return json(scenario.eventsStatus || 500, { message: 'calendar events down' });
+    if (Array.isArray(scenario.failCalendars)
+        && scenario.failCalendars.includes(u.searchParams.get('calendarId'))) {
+      return json(500, { message: 'calendar unavailable for this sub-account' });
+    }
     // THE FAKE PUNISHES AN ISO WINDOW, exactly as the live API does: measured
     // 2026-09-27, the same request with ISO timestamps answers 200 {events:[]}
     // — indistinguishable from an empty calendar. Without this the suite would
@@ -1814,6 +1828,66 @@ const tenantSeed = (over = {}) => ({
     const r = await appts.importForTenant(APT_T, { creds: APT_CREDS, dryRun: true });
     assert.strictEqual(r.results[0].would_store, true);
     assert.strictEqual(M.Appointment._rows.length, before);
+  });
+
+  /* IS IT FIXED FOR TENANT 4, OR FOR EVERY CLIENT? importAll() is the loop the
+     poller actually runs, and every test above drives importForTenant with an
+     explicit tenant — so "it works for future clients" was an assertion about
+     untested code. These four make it a fact. */
+
+  await t('A CLIENT WHO SIGNS UP TOMORROW IS COVERED — no per-tenant wiring', async () => {
+    const fresh = await M.Tenant.create(tenantSeed({ business_name: 'Signed Up Later',
+      ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-NEW', provisioning_state: 'ready' }));
+    scenario = { events: [evOf({ id: 'EV-NEW', calendarId: 'CAL-NEW' })] };
+    const r = await appts.importAll({});
+    const mine = r.results.find((x) => x.tenant === fresh.id);
+    assert.ok(mine, 'importAll did not even visit the new tenant');
+    assert.ok((mine.results || []).some((x) => x.stored), 'the new tenant\'s booking was not mirrored');
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-NEW');
+    assert.strictEqual(row.tenant_id, fresh.id);
+  });
+
+  await t('two clients booking at once land in their OWN calendars', async () => {
+    const a = await M.Tenant.create(tenantSeed({ business_name: 'Client A',
+      ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-A', provisioning_state: 'ready' }));
+    const b = await M.Tenant.create(tenantSeed({ business_name: 'Client B',
+      ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-B', provisioning_state: 'ready' }));
+    scenario = { events: [
+      evOf({ id: 'EV-A', calendarId: 'CAL-A' }),
+      evOf({ id: 'EV-B', calendarId: 'CAL-B', startTime: new Date(soon.getTime() + 3600e3).toISOString(),
+        endTime: new Date(soon.getTime() + 5400e3).toISOString() }),
+    ] };
+    await appts.importAll({});
+    assert.strictEqual(M.Appointment._rows.find((x) => x.ghl_event_id === 'EV-A').tenant_id, a.id);
+    assert.strictEqual(M.Appointment._rows.find((x) => x.ghl_event_id === 'EV-B').tenant_id, b.id);
+  });
+
+  await t('a tenant with NO calendar is skipped, not an error', async () => {
+    const none = await M.Tenant.create(tenantSeed({ business_name: 'No Calendar Yet' }));
+    scenario = { events: [] };
+    const r = await appts.importAll({});
+    assert.ok(!r.results.some((x) => x.tenant === none.id),
+      'a tenant still being provisioned was polled anyway');
+  });
+
+  await t('ONE CLIENT\'S OUTAGE DOES NOT STOP EVERY OTHER CLIENT', async () => {
+    // The single most important property of a shared loop: without a per-tenant
+    // catch, the first broken calendar silently stops every client behind it.
+    const ok = await M.Tenant.create(tenantSeed({ business_name: 'Healthy Client',
+      ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-OK', provisioning_state: 'ready' }));
+    scenario = { events: [evOf({ id: 'EV-OK', calendarId: 'CAL-OK',
+      startTime: new Date(soon.getTime() + 7200e3).toISOString(),
+      endTime: new Date(soon.getTime() + 9000e3).toISOString() })] };
+    // One specific client's calendar is unreadable — a revoked token, a
+    // deleted calendar, HighLevel 500ing for that sub-account.
+    scenario.failCalendars = ['CAL-APT'];
+    const r = await appts.importAll({});
+    const hurt = r.results.find((x) => x.tenant === APT_T.id);
+    assert.ok(hurt && hurt.ok === false, 'the broken tenant was not reported as failed');
+    assert.strictEqual(hurt.reason, 'fetch_failed');
+    assert.ok(M.Appointment._rows.some((a) => a.ghl_event_id === 'EV-OK'),
+      'a healthy client was starved by another client\'s outage');
+    assert.ok(r.results.filter((x) => x.ok).length >= 1, 'no tenant succeeded after the failure');
   });
 
   await t('THE APPOINTMENT MIRROR CANNOT REACH THE PUSH', () => {
