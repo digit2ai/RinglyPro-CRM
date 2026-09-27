@@ -1451,4 +1451,67 @@ router.post('/open-hours-shape-probe', express.json({ limit: '4kb' }), async (re
   return res.status(502).json({ ok: false, error: 'no_shape_accepted', tried });
 });
 
+/**
+ * HOW DO WE READ APPOINTMENTS BACK OUT OF A HIGHLEVEL CALENDAR?
+ *
+ * The call-log poller deliberately does NOT create an appointment: HighLevel
+ * does not put the slot in the call log, so a row built from it would be a
+ * fabricated time in a customer's calendar. The booking is real and sits in
+ * their calendar; nothing reads it back. This finds the endpoint, version and
+ * date format that actually answer, rather than guessing a fourth time — the
+ * call-log window turned out to be milliseconds where the docs implied
+ * seconds, and a wrong guess there returns a clean, silent empty list.
+ *
+ * Read-only. Creates nothing.
+ */
+router.get('/calendar-events-probe', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const { Tenant } = require('../models');
+  const tid = parseInt(req.query.tenant, 10);
+  const tenant = Number.isInteger(tid) ? await Tenant.findByPk(tid) : null;
+  if (!tenant || !tenant.ghl_calendar_id) return res.status(404).json({ ok: false, error: 'no_tenant_or_calendar' });
+  const creds = await accounts.credsFor(tenant);
+  const loc = ghl.locationId(creds);
+  const cal = tenant.ghl_calendar_id;
+
+  const days = Math.min(90, Math.max(1, parseInt(req.query.days, 10) || 30));
+  const now = Date.now();
+  const from = now - 7 * 86400000, to = now + days * 86400000;
+  const iso = (n) => new Date(n).toISOString();
+
+  const variants = [
+    { label: 'events + calendarId + ms + 2021-04-15', path: '/calendars/events', version: '2021-04-15',
+      query: { locationId: loc, calendarId: cal, startTime: String(from), endTime: String(to) } },
+    { label: 'events + calendarId + ms + v3', path: '/calendars/events', version: 'v3',
+      query: { locationId: loc, calendarId: cal, startTime: String(from), endTime: String(to) } },
+    { label: 'events + calendarId + ISO + 2021-04-15', path: '/calendars/events', version: '2021-04-15',
+      query: { locationId: loc, calendarId: cal, startTime: iso(from), endTime: iso(to) } },
+    { label: 'events + calendarId + ms + default version', path: '/calendars/events', version: undefined,
+      query: { locationId: loc, calendarId: cal, startTime: String(from), endTime: String(to) } },
+    { label: 'appointments path + ms + 2021-04-15', path: '/calendars/events/appointments', version: '2021-04-15',
+      query: { locationId: loc, calendarId: cal, startTime: String(from), endTime: String(to) } },
+    { label: 'events, no calendarId (whole location)', path: '/calendars/events', version: '2021-04-15',
+      query: { locationId: loc, startTime: String(from), endTime: String(to) } },
+  ];
+
+  const out = [];
+  for (const v of variants) {
+    try {
+      const d = await ghl.call('GET', v.path, { creds, version: v.version, query: v.query });
+      const arrays = {};
+      if (d && typeof d === 'object') for (const [k, val] of Object.entries(d)) if (Array.isArray(val)) arrays[k] = val.length;
+      const rows = (d && (d.events || d.appointments)) || (Array.isArray(d) ? d : null);
+      out.push({ variant: v.label, status: 200, arrays,
+        first_row_keys: Array.isArray(rows) && rows[0] ? Object.keys(rows[0]) : null,
+        first_row: (String(req.query.full || '') === '1' && Array.isArray(rows) && rows[0]) ? rows[0] : undefined,
+        body: JSON.stringify(d).slice(0, 500) });
+    } catch (e) {
+      out.push({ variant: v.label, status: e.status || null, error: String(e.message || e).slice(0, 220) });
+    }
+  }
+  return res.json({ ok: true, tenant: tid, calendar: cal, window_days: days, variants: out });
+});
+
 module.exports = router;
