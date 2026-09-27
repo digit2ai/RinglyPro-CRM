@@ -1800,6 +1800,66 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/CSV/i.test(r.message), 'the refusal does not say what to do instead');
   });
 
+  // ── A REAL LIST, NOT A LIST SHAPED LIKE THE TEST ────────────────────────
+  // Every case below comes from an actual roster the owner tried to upload
+  // (139 City-of-Tampa realtors). Each one passed the old importer and lost
+  // data in silence, which is the failure mode worth testing.
+
+  await t('a PDF is refused BY NAME - it is the one wrong format that parses', () => {
+    // xlsx and xls are binary and produce obvious rubbish. A PDF is mostly
+    // ASCII, so without this the splitter returns hundreds of object-dictionary
+    // rows and the tenant is shown a preview of garbage.
+    const pdf = Buffer.concat([Buffer.from('%PDF-1.7\n'),
+      Buffer.from('1 0 obj<</Type/Page>>endobj\nPhone 813-546-1954\n')]);
+    const r = ob.parseList(pdf);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.error, 'pdf_not_supported');
+    assert.ok(/CSV/i.test(r.message), 'the refusal does not say what to do instead');
+  });
+
+  await t('a trade-named company column is recognised, not silently dropped', () => {
+    // A realtor roster says "Brokerage / Agency"; a contractor list says "Firm".
+    // An unrecognised header used to become a null with nothing saying so.
+    for (const h of ['Brokerage / Agency', 'brokerage/agency', 'Agency', 'Firm', 'Office']) {
+      const r = ob.parseList(Buffer.from(h + ',Phone\nFlorida Realty,813-546-1954\n'));
+      assert.strictEqual(r.accepted.length, 1, h);
+      assert.strictEqual(r.accepted[0].company, 'Florida Realty', h + ' did not map to company');
+    }
+  });
+
+  await t('First Name + Last Name are JOINED, not half-dropped', () => {
+    const r = ob.parseList(Buffer.from(
+      'First Name,Last Name,Brokerage / Agency,Email,Phone,Language\n'
+      + 'Albert,Medina Jr,Homelife Realty,j@live.com,813-409-0237,English/Spanish\n'));
+    assert.strictEqual(r.accepted.length, 1);
+    assert.strictEqual(r.accepted[0].contact_name, 'Albert Medina Jr');
+    assert.strictEqual(r.accepted[0].company, 'Homelife Realty');
+    assert.strictEqual(r.accepted[0].email, 'j@live.com');
+  });
+
+  await t('the preview REPORTS which columns were understood and which were not', () => {
+    const r = ob.parseList(Buffer.from(
+      'First Name,Last Name,Brokerage / Agency,Email,Phone,Language\n'
+      + 'Ainsley,Daux,Florida Realty,a@b.com,813-546-1954,Creole\n'));
+    const mapped = r.columns_mapped.map((c) => c.field);
+    assert.ok(mapped.includes('company'), 'company not reported as mapped');
+    assert.ok(mapped.includes('last_name'), 'last name not reported as mapped');
+    // A column we do not use must be NAMED, so nothing is lost in silence.
+    assert.deepStrictEqual(r.columns_ignored, ['Language']);
+  });
+
+  await t('a malformed number in a real roster is refused, the rest still import', () => {
+    // Kelly Dobbin's row in the real file reads 99-489-1990: nine digits.
+    const r = ob.parseList(Buffer.from(
+      'First Name,Last Name,Brokerage / Agency,Phone\n'
+      + 'Kelly,Dobbin,Intl Realty,99-489-1990\n'
+      + 'Keyanna,Jacobs,Jacobs Realty,813-270-1212\n'));
+    assert.strictEqual(r.accepted.length, 1);
+    assert.strictEqual(r.accepted[0].phone, '+18132701212');
+    assert.strictEqual(r.refused.length, 1);
+    assert.ok(/[*]/.test(r.refused[0].phone), 'the refused number was not masked');
+  });
+
   await t('CALLING HOURS ARE THE CALLED PARTY\'S, not the business\'s', () => {
     // 8pm Eastern is 5pm Pacific: legal to ring California, and the business
     // being in Florida is irrelevant to whether it is legal.

@@ -50,6 +50,7 @@ router.post('/preview', express.text({ limit: MAX_UPLOAD, type: '*/*' }), async 
   if (!r.ok) return res.status(400).json(r);
   res.json({ ok: true, would_accept: r.accepted.length, would_refuse: r.refused.length,
     truncated: r.truncated, header_detected: r.header_detected,
+    columns_mapped: r.columns_mapped, columns_ignored: r.columns_ignored,
     sample: r.accepted.slice(0, 10), refused: r.refused.slice(0, 50) });
 });
 

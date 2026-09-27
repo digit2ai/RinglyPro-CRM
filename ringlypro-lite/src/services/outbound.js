@@ -189,6 +189,19 @@ function looksLikeSpreadsheet(buf) {
          (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0);
 }
 
+/**
+ * A PDF MUST BE REFUSED BY NAME, because it is the one wrong format that
+ * PARSES. xlsx and xls are binary and produce obvious rubbish; a PDF is mostly
+ * ASCII, so the splitter returns hundreds of rows of object dictionaries, the
+ * header match fails, the positional fallback runs, and the tenant is shown a
+ * preview of garbage with a phone column of nonsense. Detected by magic bytes,
+ * never by file extension, which anyone can rename.
+ */
+function looksLikePdf(buf) {
+  return !!buf && buf.length >= 5 &&
+    buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46 && buf[4] === 0x2d;
+}
+
 /** A tolerant CSV/TSV row splitter: quotes, escaped quotes, commas or tabs. */
 function splitRows(text) {
   const rows = []; let row = [], cell = '', q = false;
@@ -219,18 +232,42 @@ function safeCell(v) {
 }
 
 const HEADERS = {
-  company: ['company', 'company name', 'business', 'business name', 'empresa', 'negocio', 'organization'],
-  contact_name: ['name', 'contact', 'contact name', 'nombre', 'contacto', 'first name'],
-  phone: ['phone', 'phone number', 'telephone', 'mobile', 'cell', 'telefono', 'teléfono', 'number'],
+  // A REAL LIST DOES NOT SAY "COMPANY". The lists tenants actually hold are
+  // exported from someone else's system and name the column after the trade:
+  // a realtor roster says "Brokerage / Agency", a contractor list says "Firm".
+  // An unrecognised header is not a refusal, it is a SILENT null - the company
+  // never reaches HighLevel and nothing on any screen says a column was lost.
+  company: ['company', 'company name', 'business', 'business name', 'empresa', 'negocio',
+    'organization', 'organisation', 'brokerage', 'agency', 'brokerage / agency',
+    'brokerage/agency', 'agency / brokerage', 'firm', 'office', 'employer'],
+  contact_name: ['name', 'full name', 'contact', 'contact name', 'nombre', 'nombres',
+    'contacto', 'first name', 'firstname', 'first'],
+  // Carried SEPARATELY and joined onto the first name, because a roster that
+  // splits the person across two columns is the common case, not the odd one.
+  last_name: ['last name', 'lastname', 'last', 'surname', 'apellido', 'apellidos'],
+  phone: ['phone', 'phone number', 'telephone', 'mobile', 'cell', 'cell phone',
+    'telefono', 'teléfono', 'number'],
   email: ['email', 'e-mail', 'correo', 'email address'],
 };
+
+// Header text is matched on a NORMALISED key: lowercase, whitespace collapsed,
+// and the spaces around a slash removed - so "Brokerage / Agency",
+// "brokerage/agency" and "BROKERAGE  /  AGENCY" are one header, not three.
+function normaliseHeader(h) {
+  return String(h || '').trim().toLowerCase()
+    .replace(/[\s_]+/g, ' ')
+    .replace(/\s*\/\s*/g, ' / ')
+    .replace(/[:.]+$/, '')
+    .trim();
+}
 
 function mapHeaders(headerRow) {
   const idx = {};
   headerRow.forEach((h, i) => {
-    const k = String(h || '').trim().toLowerCase();
+    const k = normaliseHeader(h);
+    const kNoSpaceSlash = k.replace(/ \/ /g, '/');
     for (const [field, names] of Object.entries(HEADERS)) {
-      if (idx[field] === undefined && names.includes(k)) idx[field] = i;
+      if (idx[field] === undefined && (names.includes(k) || names.includes(kNoSpaceSlash))) idx[field] = i;
     }
   });
   return idx;
@@ -242,6 +279,11 @@ function mapHeaders(headerRow) {
  * 700 were dialled, and nothing says which 200 vanished.
  */
 function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
+  if (looksLikePdf(buf)) {
+    return { ok: false, error: 'pdf_not_supported',
+      message: 'This is a PDF. Open it in Excel or Google Sheets, put the columns in order '
+             + '(Company, Name, Phone, Email), then File, Save As, CSV and upload that file.' };
+  }
   if (looksLikeSpreadsheet(buf)) {
     return { ok: false, error: 'spreadsheet_not_supported',
       message: 'Save the file as CSV first (Excel: File, Save As, CSV) and upload that.' };
@@ -252,6 +294,17 @@ function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
 
   const idx = mapHeaders(rows[0]);
   const hasHeader = idx.phone !== undefined;
+  // WHICH COLUMNS WERE UNDERSTOOD, AND WHICH WERE NOT. Reported so the tenant
+  // sees "Brokerage / Agency was not recognised" on the preview instead of
+  // discovering months later that every company field is empty.
+  const recognised = hasHeader
+    ? Object.entries(idx).sort((a, b) => a[1] - b[1]).map(([f, i]) => ({ field: f, column: String(rows[0][i] || '').trim() }))
+    : [];
+  const ignored = hasHeader
+    ? rows[0].map((h, i) => ({ h: String(h || '').trim(), i }))
+        .filter((c) => c.h && !Object.values(idx).includes(c.i))
+        .map((c) => c.h)
+    : [];
   // With no recognisable header, assume company, phone, email in that order —
   // and SAY SO, so a mis-ordered file is the tenant's informed choice.
   const map = hasHeader ? idx : { company: 0, phone: 1, email: 2 };
@@ -262,7 +315,9 @@ function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
   for (const r of body.slice(0, maxRows)) {
     const rawPhone = r[map.phone] !== undefined ? String(r[map.phone]) : '';
     const company = safeCell(map.company !== undefined ? r[map.company] : '').slice(0, 200);
-    const name = safeCell(map.contact_name !== undefined ? r[map.contact_name] : '').slice(0, 160);
+    const first = safeCell(map.contact_name !== undefined ? r[map.contact_name] : '');
+    const last = safeCell(map.last_name !== undefined ? r[map.last_name] : '');
+    const name = [first, last].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim().slice(0, 160);
     const email = safeCell(map.email !== undefined ? r[map.email] : '').slice(0, 200);
 
     if (!String(rawPhone).trim()) { refused.push({ company, phone: rawPhone, reason: 'no phone number' }); continue; }
@@ -284,6 +339,8 @@ function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
   const truncated = body.length > maxRows;
   return { ok: true, accepted, refused, truncated,
     header_detected: hasHeader,
+    columns_mapped: recognised,
+    columns_ignored: ignored,
     total_rows: body.length };
 }
 

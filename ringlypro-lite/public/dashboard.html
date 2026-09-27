@@ -440,6 +440,11 @@ async function obPreview(){
   const lines=[j.would_accept+' will be added, '+j.would_refuse+' refused.'];
   if(j.truncated) lines.push('Only the first rows were read — the file is very large.');
   if(!j.header_detected) lines.push('No header row found, so columns were read as company, phone, email.');
+  else{
+    (j.columns_mapped||[]).forEach(c=>lines.push('  '+c.column+' -> '+c.field.replace('_',' ')));
+    if((j.columns_ignored||[]).length) lines.push('  not used: '+j.columns_ignored.join(', '));
+    if(!(j.columns_mapped||[]).some(c=>c.field==='company')) lines.push('  NOTE: no company column was recognised, so the company will be blank.');
+  }
   (j.refused||[]).slice(0,12).forEach(x=>lines.push('  refused '+(x.phone||'')+' — '+x.reason));
   out.textContent=lines.join('\n');
 }
