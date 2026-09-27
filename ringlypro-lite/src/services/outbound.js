@@ -50,27 +50,142 @@ const AREA_TZ = {
 // A small, honest map: the common US zones by area code prefix. A number we
 // cannot place falls back to the tenant's timezone AND is flagged, rather than
 // being assumed Eastern — assuming is how somebody gets rung at 5am.
+// AREA CODE -> TIMEZONE, BY STATE, EACH CODE IN EXACTLY ONE ZONE.
+// The first version of this table listed TWELVE codes in two zones at once and
+// resolved them by object key order, which is not a decision anyone made: 915
+// (El Paso) read as Central, 601 (Mississippi) as Eastern, 707 (California) as
+// Eastern. Single assignments were wrong too - 352 (Gainesville FL) as Central,
+// 615 (Nashville) and 931 as Eastern, 502 (Louisville) as Central. An hour out
+// at the edge of the 8am-9pm window is an ILLEGAL call, not a cosmetic slip,
+// and it is silent: the number dials and the log looks normal.
 const TZ_BY_AREA = {
-  Eastern: ['201','202','203','207','212','215','216','229','239','240','267','276','301','302','304','305','404','407','410','412','413','434','440','443','470','475','478','484','508','516','517','518','540','551','561','567','570','571','585','586','601','603','606','607','609','610','612','614','615','616','617','631','636','646','667','678','689','703','704','706','707','716','717','718','724','727','732','734','737','740','754','757','762','770','772','774','781','786','802','803','804','810','812','813','814','828','843','845','848','850','856','857','860','862','863','864','865','878','901','904','906','908','910','912','914','917','919','929','931','941','947','954','956','959','973','978','980','984','989'],
-  Central: ['205','214','217','218','224','225','228','251','256','262','270','281','309','312','314','316','318','319','320','325','334','337','346','352','361','380','402','405','406','409','414','417','430','432','469','479','501','502','504','505','507','512','515','531','539','541','563','573','574','580','601','605','608','618','620','630','636','641','651','660','662','682','701','712','713','715','731','737','763','769','773','779','785','806','815','816','817','830','832','847','850','870','872','901','903','913','915','918','920','936','940','956','972','979','985'],
-  Mountain: ['303','307','385','406','435','480','505','520','575','602','623','719','720','801','828','915','928','970','986'],
-  Pacific: ['206','209','213','253','279','310','323','341','360','408','415','424','425','442','503','509','510','530','541','559','562','619','626','628','650','657','661','669','707','714','747','760','805','818','831','858','909','916','925','949','951','971'],
+  Eastern: [
+    // CT, DE, DC
+    '203','475','860','959','302','202',
+    // FL (peninsula) - 656 is the Tampa overlay, 321/386/352 are Florida too
+    '239','305','321','324','352','386','407','448','561','656','689','727','728',
+    '754','772','786','813','863','904','941','954',
+    // GA
+    '229','404','470','478','678','706','762','770','912','943',
+    // IN
+    '219','260','317','463','574','765','812','930',
+    // KY (Louisville and east)
+    '502','606','859',
+    // ME, MD
+    '207','227','240','301','410','443','667',
+    // MA
+    '339','351','413','508','617','774','781','857','978',
+    // MI
+    '231','248','269','313','517','586','616','679','734','810','906','947','989',
+    // NH, NJ
+    '603','201','551','609','640','732','848','856','862','908','973',
+    // NY
+    '212','315','332','347','516','518','585','607','631','646','680','716','718',
+    '838','845','914','917','929','934',
+    // NC
+    '252','336','704','743','828','910','919','980','984',
+    // OH
+    '216','220','234','326','330','380','419','440','513','567','614','740','937',
+    // PA
+    '215','223','267','272','412','445','484','570','582','610','717','724','814','835','878',
+    // RI, SC
+    '401','803','839','843','854','864',
+    // TN (east)
+    '423','865',
+    // VT, VA, WV
+    '802','276','434','540','571','703','757','804','826','948','304','681',
+  ],
+  Central: [
+    // AL
+    '205','251','256','334','659','938',
+    // AR
+    '479','501','870',
+    // IL
+    '217','224','309','312','331','447','464','618','630','708','730','773','779','815','847','872',
+    // IA
+    '319','515','563','641','712',
+    // KS
+    '316','620','785','913',
+    // KY (west)
+    '270','364',
+    // LA
+    '225','318','337','504','985',
+    // MN
+    '218','320','507','612','651','763','952',
+    // MS
+    '228','601','662','769',
+    // MO
+    '314','417','557','573','636','660','816','975',
+    // NE, ND
+    '402','531','701',
+    // OK
+    '405','539','572','580','918',
+    // TN (middle and west)
+    '615','629','731','901','931',
+    // TX (all but El Paso)
+    '210','214','254','281','325','346','361','409','430','432','469','512','682',
+    '713','726','737','806','817','830','832','903','936','940','945','956','972','979',
+    // WI
+    '262','414','534','608','715','920',
+  ],
+  Mountain: [
+    '303','719','720','970','983',        // CO
+    '406',                                 // MT
+    '505','575',                           // NM
+    '385','435','801',                     // UT
+    '307',                                 // WY
+    '915',                                 // TX, El Paso
+  ],
+  // ARIZONA DOES NOT OBSERVE DAYLIGHT SAVING, so America/Denver is an hour out
+  // for half the year. It needs its own zone, not a Mountain entry.
+  Arizona: ['480','520','602','623','928'],
+  Pacific: [
+    // CA
+    '209','213','279','310','323','341','350','369','408','415','424','442','510',
+    '530','559','562','619','626','628','650','657','661','669','707','714','747',
+    '760','805','818','820','831','840','858','909','916','925','949','951',
+    // NV, OR, WA
+    '702','725','775','458','503','541','971','206','253','360','425','509','564',
+  ],
+};
+
+// GENUINELY SPLIT AREA CODES, where the line itself does not say which side of
+// the boundary the person is on. Guessing either way puts somebody an hour
+// outside the legal window, so the call must be legal in BOTH zones - the
+// intersection, never a coin toss. This is the same doctrine as refusing an
+// unplaceable number, applied to a number we can only place approximately.
+const SPLIT_AREAS = {
+  '850': ['Eastern', 'Central'],   // FL panhandle: Tallahassee vs Pensacola
+  '605': ['Central', 'Mountain'],  // South Dakota
+  '308': ['Central', 'Mountain'],  // western Nebraska
+  '208': ['Mountain', 'Pacific'],  // Idaho
+  '986': ['Mountain', 'Pacific'],  // Idaho overlay
 };
 const ZONE = { Eastern: 'America/New_York', Central: 'America/Chicago',
-  Mountain: 'America/Denver', Pacific: 'America/Los_Angeles' };
+  Mountain: 'America/Denver', Arizona: 'America/Phoenix',
+  Pacific: 'America/Los_Angeles' };
 
 /**
  * The called party's timezone, from their own number. Returns null when we
  * cannot tell — the caller decides what to do with that, and the honest
  * choice is to refuse rather than guess somebody into a 5am call.
  */
-function tzForNumber(e164) {
+function zonesForNumber(e164) {
   const m = String(e164 || '').match(/^\+1(\d{3})/);
-  if (!m) return null;
+  if (!m) return [];
+  if (SPLIT_AREAS[m[1]]) return SPLIT_AREAS[m[1]].map((z) => ZONE[z]);
   for (const [zone, list] of Object.entries(TZ_BY_AREA)) {
-    if (list.includes(m[1])) return ZONE[zone];
+    if (list.includes(m[1])) return [ZONE[zone]];
   }
-  return null;
+  return [];
+}
+
+// The single zone stored on the contact and shown in the preview. For a split
+// area code it is the FIRST, which is only a label: the calling-hours check
+// below reads every zone, so the label can never widen the window.
+function tzForNumber(e164) {
+  const z = zonesForNumber(e164);
+  return z.length ? z[0] : null;
 }
 
 /** Local hour in a zone, without pulling in a date library. */
@@ -90,18 +205,25 @@ function endHour() { return Math.min(24, parseInt(process.env.LITE_OUTBOUND_END_
  * window, and it is THEIR clock that counts, not the business's.
  */
 function withinCallingHours(e164, tenant, at = new Date()) {
-  const tz = tzForNumber(e164);
-  if (!tz) {
+  const zones = zonesForNumber(e164);
+  if (!zones.length) {
     // Unknown zone. Refusing is the safe answer: a wrong guess is a call at
     // an illegal hour, and the cost of waiting is that somebody is rung later.
     return { ok: false, reason: 'timezone_unknown', tz: null };
   }
-  const h = hourIn(tz, at);
-  if (h === null) return { ok: false, reason: 'timezone_unreadable', tz };
-  if (h < startHour() || h >= endHour()) {
-    return { ok: false, reason: `outside calling hours (${startHour()}:00-${endHour()}:00 ${tz})`, tz, hour: h };
+  // EVERY zone the number could be in must be legal. For a split area code
+  // that is the intersection of the two windows, so a Pensacola number is
+  // never rung at 7am local because Tallahassee says 8am.
+  let hour = null;
+  for (const tz of zones) {
+    const h = hourIn(tz, at);
+    if (h === null) return { ok: false, reason: 'timezone_unreadable', tz };
+    if (hour === null) hour = h;
+    if (h < startHour() || h >= endHour()) {
+      return { ok: false, reason: `outside calling hours (${startHour()}:00-${endHour()}:00 ${tz})`, tz, hour: h };
+    }
   }
-  return { ok: true, tz, hour: h };
+  return { ok: true, tz: zones[0], hour };
 }
 
 /** Add a number to this tenant's do-not-call list. Idempotent. */

@@ -1805,6 +1805,85 @@ const tenantSeed = (over = {}) => ({
   // (139 City-of-Tampa realtors). Each one passed the old importer and lost
   // data in silence, which is the failure mode worth testing.
 
+  await t('NO AREA CODE IS IN TWO TIMEZONES - the resolution was key order, not a decision', () => {
+    // The first table listed TWELVE codes twice and let object key order pick
+    // the winner: 915 (El Paso) read as Central, 601 (Mississippi) as Eastern,
+    // 707 (California) as Eastern. An hour out at the edge of the 8am-9pm
+    // window is an illegal call, and it is silent - the number dials and the
+    // log looks normal.
+    const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'services', 'outbound.js'), 'utf8')
+      .replace(/\/\/[^\n]*/g, '');                    // comments carry example codes
+    const table = src.match(/const TZ_BY_AREA = \{[\s\S]*?\n\};/);
+    assert.ok(table, 'the area-code table was not found');
+    const zones = {};
+    let cur = null;
+    for (const line of table[0].split('\n')) {
+      const head = line.match(/^\s*(\w+):\s*\[/);
+      if (head) { cur = head[1]; zones[cur] = zones[cur] || []; }
+      if (!cur) continue;
+      for (const q of (line.match(/'\d{3}'/g) || [])) zones[cur].push(q.replace(/'/g, ''));
+      if (/\],\s*$/.test(line)) cur = null;
+    }
+    const total = Object.values(zones).reduce((n, l) => n + l.length, 0);
+    assert.ok(total > 200, 'the table parsed to ' + total + ' codes - the parser, not the table, is wrong');
+    const seen = {};
+    for (const [z, list] of Object.entries(zones)) for (const a of list) (seen[a] = seen[a] || []).push(z);
+    const dupes = Object.entries(seen).filter(([, zs]) => zs.length > 1);
+    assert.strictEqual(dupes.length, 0,
+      'area codes in more than one zone: ' + dupes.map(([a, zs]) => a + '=' + zs.join('/')).join(', '));
+  });
+
+  await t('the area codes that were WRONG now resolve to the right zone', () => {
+    // Each of these was measurably wrong before: a duplicate resolved by key
+    // order, a single misfiling, or missing entirely so the dialer refused it.
+    const expect = {
+      '+13525550100': 'America/New_York',      // Gainesville FL - was Central
+      '+16155550100': 'America/Chicago',       // Nashville - was Eastern
+      '+19315550100': 'America/Chicago',       // Clarksville TN - was Eastern
+      '+15025550100': 'America/New_York',      // Louisville KY - was Central
+      '+19155550100': 'America/Denver',        // El Paso - was Central
+      '+17075550100': 'America/Los_Angeles',   // Santa Rosa CA - was Eastern
+      '+16015550100': 'America/Chicago',       // Mississippi - was Eastern
+      '+19015550100': 'America/Chicago',       // Memphis - was Eastern
+      '+15415550100': 'America/Los_Angeles',   // Oregon - was Central
+      '+14065550100': 'America/Denver',        // Montana - was Central
+      '+16565550100': 'America/New_York',      // Tampa overlay - was MISSING
+      '+13215550100': 'America/New_York',      // Brevard FL - was MISSING
+      '+13865550100': 'America/New_York',      // Daytona FL - was MISSING
+      '+17025550100': 'America/Los_Angeles',   // Las Vegas - was MISSING
+      '+16025550100': 'America/Phoenix',       // Arizona keeps no DST
+    };
+    for (const [num, tz] of Object.entries(expect)) {
+      assert.strictEqual(ob.tzForNumber(num), tz, num + ' resolved to ' + ob.tzForNumber(num));
+    }
+  });
+
+  await t('A SPLIT AREA CODE MUST BE LEGAL IN BOTH ZONES, never a coin toss', () => {
+    // 850 straddles the Florida time boundary: Tallahassee is Eastern,
+    // Pensacola is Central. The line does not say which. Picking either side
+    // puts somebody an hour outside the window, so both must be legal.
+    // Daylight saving is still in effect on 1 October, so Eastern is UTC-4 and
+    // Central UTC-5. 12:30 UTC = 08:30 Eastern, 07:30 Central: legal for
+    // Tallahassee, illegal for Pensacola.
+    const early = new Date('2026-10-01T12:30:00Z');
+    assert.strictEqual(ob.withinCallingHours('+18135550100', null, early).ok, true,
+      'a plain Eastern number should be callable at 08:30 local');
+    assert.strictEqual(ob.withinCallingHours('+18505550100', null, early).ok, false,
+      'a split 850 number was allowed while one of its zones was at 07:30');
+
+    // AND THE OTHER END, which a one-sided test would miss. 01:30 UTC the next
+    // day = 21:30 Eastern, 20:30 Central: legal for Pensacola, illegal for
+    // Tallahassee. Picking either zone alone lets one of these through.
+    const late = new Date('2026-10-02T01:30:00Z');
+    assert.strictEqual(ob.withinCallingHours('+19015550100', null, late).ok, true,
+      'a plain Central number should be callable at 20:30 local');
+    assert.strictEqual(ob.withinCallingHours('+18505550100', null, late).ok, false,
+      'a split 850 number was allowed while one of its zones was at 21:30');
+
+    // 15:30 UTC = 11:30 Eastern, 10:30 Central -> legal in both.
+    assert.strictEqual(ob.withinCallingHours('+18505550100', null, new Date('2026-10-01T15:30:00Z')).ok, true);
+  });
+
   await t('a PDF is refused BY NAME - it is the one wrong format that parses', () => {
     // xlsx and xls are binary and produce obvious rubbish. A PDF is mostly
     // ASCII, so without this the splitter returns hundreds of object-dictionary
