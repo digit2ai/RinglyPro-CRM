@@ -43,13 +43,6 @@ const accounts = require('./ghlAccounts');
 
 const CONSENT_BASES = ['existing_customer', 'express_written', 'business_published', 'unstated'];
 
-/** Area code → IANA zone. Coarse on purpose; see callingHours(). */
-const AREA_TZ = {
-  America: null, // placeholder so the object is never empty
-};
-// A small, honest map: the common US zones by area code prefix. A number we
-// cannot place falls back to the tenant's timezone AND is flagged, rather than
-// being assumed Eastern — assuming is how somebody gets rung at 5am.
 // AREA CODE -> TIMEZONE, BY STATE, EACH CODE IN EXACTLY ONE ZONE.
 // The first version of this table listed TWELVE codes in two zones at once and
 // resolved them by object key order, which is not a decision anyone made: 915
