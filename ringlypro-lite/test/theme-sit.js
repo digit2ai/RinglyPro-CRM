@@ -229,6 +229,49 @@ function landingTokens() {
       });
     }
 
+    // NO TWO GLOBALS MAY SHARE A NAME, AND A BUTTON MUST CALL SOMETHING.
+    //
+    // The $20 setup button shipped calling obActivate(), which already existed
+    // as `window.obActivate = async id => ...` for activating a LIST. The
+    // assignment wins over the hoisted declaration, so the button hit the list
+    // route with an undefined id and the user got an alert saying "bad_id".
+    // Nothing in a syntax check, a route test or a contrast audit can see a
+    // collision like that — only counting the names can.
+    if (p === 'dashboard.html') {
+      const dupes = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML;
+        const re = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)|(?:^|\n)\s*window\.([A-Za-z_$][\w$]*)\s*=|(?:^|\n)\s*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\(|function)/g;
+        const seen = {}; let m;
+        while ((m = re.exec(src))) { const n = m[1] || m[2] || m[3]; seen[n] = (seen[n] || 0) + 1; }
+        return Object.entries(seen).filter(([, c]) => c > 1).map(([n]) => n);
+      });
+      t(`${label} no two globals in the dashboard share a name`, () => {
+        assert.deepStrictEqual(dupes, [], 'colliding globals: ' + dupes.join(', '));
+      });
+
+      // EVERY onclick NAME MUST BE DEFINED — INCLUDING THE GENERATED ONES.
+      //
+      // The first version of this walked document.querySelectorAll('[onclick]')
+      // on the loaded page, which only ever sees the STATIC handlers. The
+      // button that actually broke is written by loadPlan() into innerHTML at
+      // run time, behind an authenticated fetch that never fires in a test —
+      // so renaming its function and leaving the markup behind changed
+      // nothing and the mutation passed. Scanning the SOURCE finds both.
+      const unbound = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML;
+        const defined = new Set();
+        const dre = /(?:async\s+)?function\s+([A-Za-z_$][\w$]*)|window\.([A-Za-z_$][\w$]*)\s*=|(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\(|function)/g;
+        let d; while ((d = dre.exec(src))) defined.add(d[1] || d[2] || d[3]);
+        const used = new Set();
+        const ure = /on(?:click|change|input|submit)\s*=\s*[\\]?["']\s*([A-Za-z_$][\w$]*)\s*\(/g;
+        let u; while ((u = ure.exec(src))) used.add(u[1]);
+        return [...used].filter((n) => !defined.has(n) && typeof window[n] !== 'function');
+      });
+      t(`${label} every onclick name is defined, generated ones included`, () => {
+        assert.deepStrictEqual(unbound, [], 'handlers that do not exist: ' + unbound.join(', '));
+      });
+    }
+
     // THE BOTTOM TABS ARE MEASURED, NOT ASSUMED. A `@media(max-width:700px)`
     // rule set `padding:0 2px` on the tab links, which WIPED the vertical
     // padding from the rule above it - so on every phone each tab was one

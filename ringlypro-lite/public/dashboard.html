@@ -467,12 +467,12 @@ async function loadPlan(){
       +'<div class="obhint">'+esc(p.pricing.note)+'</div>'
       +'<div class="obhint">'+D.obDncOff+'</div>'
       +(p.reason?'<div class="obwarn">'+esc(p.reason)+'</div>':'')
-      +'<div class="obrow" style="margin-top:10px"><button class="sm primary" id="obAct" onclick="obActivate()">'
+      +'<div class="obrow" style="margin-top:10px"><button class="sm primary" id="obAct" onclick="obBuySetup()">'
       +D.obActivateFee.replace('{fee}',fee)+'</button></div>'
       +'<div id="ob_gate_msg" class="obmsg"></div>';
   } else if(p.state==='awaiting_setup_payment'){
     gate.innerHTML='<div class="obh">'+D.obPitchTitle+'</div><div class="obhint">'+D.obWaitingPay+'</div>'
-      +'<div class="obrow"><button class="sm" onclick="obActivate()">'+D.obResumePay+'</button></div>'
+      +'<div class="obrow"><button class="sm" onclick="obBuySetup()">'+D.obResumePay+'</button></div>'
       +'<div id="ob_gate_msg" class="obmsg"></div>';
   } else if(p.state==='pending_setup'){
     // A DEADLINE THAT HAS PASSED IS NEVER SHOWN AS A PROMISE.
@@ -487,7 +487,12 @@ async function loadPlan(){
   return p;
 }
 
-async function obActivate(){
+// NAMED FOR WHAT IT BUYS, not for what it does. The first version was called
+// obActivate(), which already existed as window.obActivate = async id => ...
+// for activating a LIST. The assignment wins over the hoisted declaration, so
+// the $20 button called the list route with an undefined id and the server
+// answered bad_id. Two things called "activate" in one file is the bug.
+async function obBuySetup(){
   const m=$('ob_gate_msg'); if(m){m.className='obmsg';m.textContent='…';}
   const r=await api('/api/outbound/activate',{method:'POST'});
   if(r&&r.url){ location.href=r.url; return; }
