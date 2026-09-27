@@ -108,12 +108,25 @@ async function storeCallResult(f, { source = 'unknown', notifyOwner = true } = {
 
   // The transcript is stored ONCE, on the call. Writing it again per-turn
   // doubled the row cost of every delivery for no extra information.
-  if (f.summary || f.message) {
+  // DID WE RING THEM FIRST? A caller on this tenant's outbound list gets the
+  // fact recorded on the message, so the owner reads "calling back — Acme, we
+  // called them on the 27th" instead of an unfamiliar name. Added only when a
+  // call actually happened: being on a list is not being rung, and a greeting
+  // that claims a call nobody made is worse than no greeting.
+  let callback = null;
+  if (caller) {
+    try {
+      const obs = require('./outbound');
+      callback = obs.callbackNote(await obs.recogniseCaller(tenantId, caller));
+    } catch (e) { console.warn('[lite:call-mirror] callback lookup failed:', e.message); }
+  }
+
+  if (f.summary || f.message || callback) {
     await Message.create({
       tenant_id: tenantId, call_id: call.id,
       caller_name: f.callerName ? String(f.callerName).slice(0, 120) : null,
       callback_number: caller,
-      body: String(f.summary || f.message).slice(0, 4000),
+      body: (callback ? callback + '\n\n' : '') + String(f.summary || f.message || '').slice(0, 4000),
     }).then(() => { wroteMessage = true; })
       .catch((e) => console.warn('[lite:call-mirror] message not stored:', e.message));
   }

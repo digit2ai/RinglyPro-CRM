@@ -1753,6 +1753,148 @@ const tenantSeed = (over = {}) => ({
   });
 
 
+  /* ─── outbound calling: the toll-fraud payout path, with a UI ─────────── */
+  section('outbound (upload a spreadsheet, dial strangers — gate it twice)');
+
+  const ob = require(path.join(ROOT, 'src/services/outbound'));
+  const obTenant = (over = {}) => Object.assign({ id: 4242, country: 'US', timezone: 'America/New_York',
+    outbound_enabled: true, outbound_workflow_id: 'wf-outbound', outbound_daily_cap: 50 }, over);
+
+  await t('A CAMEROON NUMBER IS REFUSED AT IMPORT, and masked in the report', () => {
+    const r = ob.parseList(Buffer.from('Company,Phone\nAcme,813-555-0134\nFraud,+237650000000\n'));
+    assert.strictEqual(r.accepted.length, 1);
+    assert.strictEqual(r.accepted[0].phone, '+18135550134');
+    assert.strictEqual(r.refused.length, 1);
+    assert.ok(!r.refused[0].phone.includes('650000000'), 'the full number was echoed back');
+  });
+
+  await t('...AND AGAIN AT DIAL, because a row can be edited after import', async () => {
+    // The import check happened while a human watched. This one is the only
+    // thing standing between an edited row and a premium-rate call.
+    const g = await ob.mayDial(obTenant(), { id: 1, phone: '+237650000000', status: 'pending' });
+    assert.strictEqual(g.ok, false);
+    assert.strictEqual(g.reason, 'destination_not_allowed');
+  });
+
+  await t('EVERY ROW GETS A RESULT — nothing is silently dropped', () => {
+    const r = ob.parseList(Buffer.from('Company,Phone\nA,813-555-0100\nB,\nC,+237650000001\nD,813-555-0100\n'));
+    assert.strictEqual(r.accepted.length + r.refused.length, 4,
+      'a row vanished: the tenant would never know which');
+    assert.ok(r.refused.some((x) => /no phone/.test(x.reason)));
+    assert.ok(r.refused.some((x) => /duplicate/.test(x.reason)));
+  });
+
+  await t('A FORMULA CELL IS NEUTRALISED, not stored as a formula', () => {
+    // Excel executes =cmd|... when the file is reopened. A list exported later
+    // must not carry it into somebody's spreadsheet.
+    const r = ob.parseList(Buffer.from('Company,Phone\n=cmd|\' /c calc\'!A1,813-555-0111\n'));
+    assert.strictEqual(r.accepted.length, 1);
+    assert.ok(r.accepted[0].company.startsWith("'"), 'a formula survived into storage');
+  });
+
+  await t('an .xlsx is refused with the fix, not parsed by a new dependency', () => {
+    const xlsx = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0]);
+    const r = ob.parseList(xlsx);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.error, 'spreadsheet_not_supported');
+    assert.ok(/CSV/i.test(r.message), 'the refusal does not say what to do instead');
+  });
+
+  await t('CALLING HOURS ARE THE CALLED PARTY\'S, not the business\'s', () => {
+    // 8pm Eastern is 5pm Pacific: legal to ring California, and the business
+    // being in Florida is irrelevant to whether it is legal.
+    const at = new Date('2026-10-01T00:30:00Z');            // 20:30 ET, 17:30 PT
+    assert.strictEqual(ob.withinCallingHours('+12135550100').tz, 'America/Los_Angeles');
+    assert.strictEqual(ob.withinCallingHours('+12135550100', null, at).ok, true, 'a legal Pacific call was refused');
+    const early = new Date('2026-10-01T11:30:00Z');          // 07:30 ET, 04:30 PT
+    assert.strictEqual(ob.withinCallingHours('+12135550100', null, early).ok, false, '4:30am was allowed');
+    assert.strictEqual(ob.withinCallingHours('+18135550100', null, early).ok, false, '7:30am Eastern was allowed');
+  });
+
+  await t('AN UNPLACEABLE NUMBER IS REFUSED, NEVER ASSUMED EASTERN', () => {
+    // Guessing is how somebody gets rung at 5am.
+    const r = ob.withinCallingHours('+441134960000');
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'timezone_unknown');
+  });
+
+  await t('DIALLING IS OFF UNTIL AN OPERATOR TURNS IT ON', async () => {
+    const g = await ob.mayDial(obTenant({ outbound_enabled: false }), { id: 1, phone: '+18135550100', status: 'pending' });
+    assert.strictEqual(g.ok, false);
+    assert.strictEqual(g.reason, 'outbound_not_enabled_for_this_tenant');
+  });
+
+  await t('no outbound workflow means it REFUSES and says why', async () => {
+    // HighLevel dials Voice AI outbound only from a workflow action, and a
+    // workflow cannot be created by API — it is loaded from a Snapshot.
+    const g = await ob.mayDial(obTenant({ outbound_workflow_id: null }), { id: 1, phone: '+18135550100', status: 'pending' });
+    assert.strictEqual(g.reason, 'no_outbound_workflow');
+    assert.ok(/Snapshot/i.test(g.detail || ''), 'the refusal does not name the owner-side fix');
+  });
+
+  await t('a suppressed contact is never dialled', async () => {
+    const g = await ob.mayDial(obTenant(), { id: 1, phone: '+18135550100', status: 'suppressed' });
+    assert.strictEqual(g.reason, 'do_not_call');
+  });
+
+  await t('THE DAILY CAP IS OURS, because HighLevel places the call', () => {
+    // The toll-fraud velocity breaker cannot see a HighLevel-placed call —
+    // already reported as ghl_transfers_uncapped — so the ceiling lives here.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outbound.js'), 'utf8');
+    assert.ok(/daily_cap_reached/.test(src), 'there is no per-tenant daily ceiling');
+    assert.ok(/dialledToday/.test(src), 'the cap is not counted from real rows');
+  });
+
+  await t('NO CALL ID IS EVER INVENTED', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outbound.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.ok(!/ghl_call_id\s*[:=]\s*['"`]/.test(src), 'a call id literal is being written');
+    assert.ok(!/randomUUID|Date\.now\(\)\s*\+\s*['"]/.test(src), 'a call id looks minted locally');
+  });
+
+  await t('NATIONAL DNC IS NOT CLAIMED ANYWHERE', () => {
+    // Scrubbing needs an FTC SAN the owner does not have. Implying a scrub
+    // that is not happening is the one failure here with legal consequences.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outbound.js'), 'utf8');
+    assert.ok(/not.*scrub|National DNC.*not|no National DNC scrub/i.test(src),
+      'the absence of a national DNC scrub is not stated');
+    assert.ok(!/scrubbed against the national/i.test(src.replace(/not scrubbed against the national/gi, '')),
+      'the code claims a national scrub');
+  });
+
+  await t('a consent basis is a recorded claim, not a checkbox', () => {
+    assert.ok(ob.CONSENT_BASES.includes('unstated'),
+      'there is no way to record that the tenant claimed nothing — which is the honest default');
+    assert.ok(ob.CONSENT_BASES.includes('existing_customer'));
+  });
+
+  await t('A CALLBACK GREETING MAY ONLY CLAIM A CALL THAT HAPPENED', () => {
+    // Being on a list is not being rung. A greeting that says "thanks for
+    // calling us back" to someone nobody called is a lie the product told.
+    assert.strictEqual(ob.callbackNote(null), null);
+    assert.strictEqual(ob.callbackNote({ known: false }), null);
+    const notCalled = ob.callbackNote({ known: true, called: false, company: 'Acme' });
+    assert.ok(!/calling back/i.test(notCalled || ''), 'it claimed a callback for someone never called');
+    const called = ob.callbackNote({ known: true, called: true, company: 'Acme',
+      last_called_at: '2026-09-20T10:00:00Z', last_outcome: 'voicemail' });
+    assert.ok(/Acme/.test(called) && /2026-09-20/.test(called),
+      'the note does not carry what actually happened');
+  });
+
+  await t('the note carries no marketing copy — only recorded facts', () => {
+    const n = ob.callbackNote({ known: true, called: true, company: 'Acme',
+      last_called_at: '2026-09-20T10:00:00Z' });
+    // Nothing about an offer, a discount or a reason we did not record.
+    assert.ok(!/offer|discount|save|deal|special/i.test(n), 'a sales claim leaked into the greeting');
+  });
+
+  await t('recognition is keyed on the CALLING number, never on what a caller says', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outbound.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function recogniseCaller'), src.indexOf('function callbackNote'));
+    assert.ok(/c\.phone = :p/.test(fn), 'recognition does not match on the phone number');
+    assert.ok(/tenant_id = :t/.test(fn), 'recognition is not tenant-scoped');
+  });
+
   /* ─── web push: the badge on a CLOSED app ────────────────────────────── */
   section('web push (an in-page badge cannot update a closed icon)');
 

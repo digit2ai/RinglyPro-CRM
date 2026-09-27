@@ -14,6 +14,10 @@ const tollFraud = require('../security/tollFraud');
 
 router.use(requireAuth);
 
+// Outbound list management. Mounted INSIDE the authenticated tree, after
+// requireAuth, so every handler already has req.tenantId from the session.
+router.use('/outbound', require('./outbound'));
+
 /* ── Booking diagnostics (owner-scoped) ────────────────────────────── */
 router.get('/debug/booking', async (req, res) => {
   try {

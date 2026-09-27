@@ -72,6 +72,88 @@ async function initDb() {
     `CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ghl_claim
        ON lite_ghl_accounts(claimed_by_tenant) WHERE claimed_by_tenant IS NOT NULL`
   );
+  // ── OUTBOUND CALLING ────────────────────────────────────────────────────
+  // A product with open signup that accepts a spreadsheet of phone numbers and
+  // dials them is the 2026-08-06 toll-fraud payout path, industrialised. Every
+  // table here is tenant-scoped, every number is allow-list checked at IMPORT
+  // and again at DIAL, and dialling is off until an operator enables it.
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS lite_outbound_lists (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      name VARCHAR(160) NOT NULL,
+      -- What the tenant ASSERTED about why they may call these people. A claim
+      -- with a timestamp, not a checkbox: it is the record if anyone asks.
+      consent_basis VARCHAR(40) NOT NULL DEFAULT 'unstated',
+      consent_note TEXT,
+      status VARCHAR(20) NOT NULL DEFAULT 'draft',
+      rows_total INTEGER NOT NULL DEFAULT 0,
+      rows_accepted INTEGER NOT NULL DEFAULT 0,
+      rows_refused INTEGER NOT NULL DEFAULT 0,
+      created_by VARCHAR(160),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      activated_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_lists_tenant ON lite_outbound_lists(tenant_id);
+
+    CREATE TABLE IF NOT EXISTS lite_outbound_contacts (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      list_id INTEGER NOT NULL,
+      company VARCHAR(200),
+      contact_name VARCHAR(160),
+      phone VARCHAR(32) NOT NULL,
+      email VARCHAR(200),
+      timezone VARCHAR(64),
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      last_attempt_at TIMESTAMPTZ,
+      last_outcome VARCHAR(40),
+      ghl_contact_id VARCHAR(64),
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_contacts_tenant ON lite_outbound_contacts(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_contacts_list ON lite_outbound_contacts(list_id);
+    -- One row per number per tenant: re-uploading the same sheet must not
+    -- double-dial anybody.
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ob_contact_phone
+      ON lite_outbound_contacts(tenant_id, phone);
+
+    -- CHECKED AT DIAL TIME, not at save time: a person can opt out between the
+    -- two, and the later check is the one that matters.
+    CREATE TABLE IF NOT EXISTS lite_outbound_suppressions (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      phone VARCHAR(32) NOT NULL,
+      reason VARCHAR(40) NOT NULL,
+      source VARCHAR(40),
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ob_suppress ON lite_outbound_suppressions(tenant_id, phone);
+
+    CREATE TABLE IF NOT EXISTS lite_outbound_calls (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      contact_id INTEGER NOT NULL,
+      list_id INTEGER,
+      -- NO call id exists until HighLevel's call log returns one: an outbound
+      -- call is a WORKFLOW ENROLLMENT, not an API dial. Inventing an id here
+      -- would put a fiction at the head of the attribution chain.
+      ghl_call_id VARCHAR(64),
+      enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+      outcome VARCHAR(40),
+      summary TEXT
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_calls_tenant ON lite_outbound_calls(tenant_id);
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_calls_contact ON lite_outbound_calls(contact_id);
+  `);
+  // Dialling is a per-tenant privilege an operator grants, never a signup default.
+  await sequelize.query(`
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_enabled BOOLEAN DEFAULT FALSE;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_workflow_id VARCHAR(64);
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_daily_cap INTEGER DEFAULT 50;
+  `);
+
   // Fraud-watch alert log: dedupes alerts across restarts, so a redeploy does
   // not re-text the owner about something already reported. Platform-level
   // (tenant 0), not tenant data.
