@@ -158,7 +158,15 @@ function landingTokens() {
   // is fine at 1440 can land on a different surface at 390.
   for (const { w, h, label } of [{ w: 1440, h: 900, label: 'desktop' }, { w: 390, h: 844, label: 'mobile' }])
   for (const p of PAGES) {
-    const page = await browser.newPage();
+    // A CLEAN CONTEXT PER PAGE. The dashboard's theme script WRITES
+    // lite_theme to localStorage, so sharing one browser origin let login.html
+    // and onboarding.html read 'light' that the dashboard had just stored —
+    // and both pages passed while a real first-time visitor, who lands on the
+    // login screen, got the dark default they still carried. The test was
+    // reporting a pass it had not earned.
+    const ctx = await (browser.createBrowserContext
+      ? browser.createBrowserContext() : browser.createIncognitoBrowserContext());
+    const page = await ctx.newPage();
     await page.setViewport({ width: w, height: h });
     await page.goto(`http://127.0.0.1:${port}/${p}`, { waitUntil: 'domcontentloaded' }).catch(() => {});
     await new Promise((r) => setTimeout(r, 300));
@@ -178,7 +186,7 @@ function landingTokens() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     t(`${label} ${p} does not scroll sideways`, () => assert.ok(overflow <= 1, `${overflow}px of horizontal overflow`));
 
-    await page.close();
+    await page.close(); await ctx.close();
   }
 
   await browser.close(); srv.close();
