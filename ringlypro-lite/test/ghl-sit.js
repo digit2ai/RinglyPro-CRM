@@ -2854,8 +2854,12 @@ const tenantSeed = (over = {}) => ({
     process.env.LITE_OUTBOUND_MARKUP = '3';
     assert.strictEqual(bl.pricePerMinCents(), 39, 'changing the env did not change the price');
     process.env.LITE_OUTBOUND_MARKUP = '2';
-    // No surface may carry a figure of its own.
-    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    // No surface may carry a figure of its own — but a COMMENT explaining the
+    // rule is not a violation of it. The first version of this check flagged
+    // its own explanation, which is a trap this repo has fallen into before.
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/[^\n]*/gm, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
     assert.ok(!/\$0\.26|\$0,26/.test(page), 'the dashboard hardcodes a per-minute price');
   });
 

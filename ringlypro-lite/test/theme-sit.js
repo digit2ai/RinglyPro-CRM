@@ -229,6 +229,43 @@ function landingTokens() {
       });
     }
 
+    // THE NOTIFICATION CHANNEL MUST ACTUALLY BE ON SCREEN.
+    // The whole "works with no email transport" claim rests on a dashboard row
+    // the client can see. The rows were written on every payment and
+    // activation and NOTHING in the UI read them — the fallback was a promise
+    // in a commit message, not a feature.
+    if (p === 'dashboard.html') {
+      const notif = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML;
+        // SPECIFIC. Checking only for the word "notifications" was satisfied
+        // by the dismiss call alone, so deleting the fetch that populates the
+        // strip changed nothing and the mutation passed.
+        return { strip: !!document.getElementById('notif'),
+          reads: /api\('\/api\/outbound\/notifications'\)/.test(src),
+          called: /loadNotifs\(\)/.test(src),
+          dismisses: /notifications\/read/.test(src) };
+      });
+      t(`${label} unread notifications have somewhere to appear`, () => {
+        assert.ok(notif.strip, 'there is no notification strip in the page');
+        assert.ok(notif.reads, 'nothing in the UI fetches the notifications');
+        assert.ok(notif.called, 'the notification loader is never invoked');
+        assert.ok(notif.dismisses, 'a notification can be shown but never dismissed');
+      });
+
+      // ONE CARD AT A TIME. The operational panel used to render in every
+      // state, so "not switched on for this account yet" sat directly above
+      // "Outbound calling · $0.26 per minute · Activate" — and stayed there
+      // after the client had paid.
+      const gated = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML.replace(/\s+/g, '');
+        const i = src.indexOf('asyncfunctionloadOutbound');
+        return /state!=='active'\)\{box\.style\.display='none'/.test(src.slice(i, i + 700));
+      });
+      t(`${label} the operational card is hidden until the add-on is live`, () => {
+        assert.ok(gated, 'ob_status renders alongside the gate and contradicts it');
+      });
+    }
+
     // NO TWO GLOBALS MAY SHARE A NAME, AND A BUTTON MUST CALL SOMETHING.
     //
     // The $20 setup button shipped calling obActivate(), which already existed
