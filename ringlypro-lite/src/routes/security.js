@@ -1591,33 +1591,61 @@ router.post('/booking-offer-probe', express.json({ limit: '4kb' }), async (req, 
   }
   if (!actionId) return res.status(404).json({ ok: false, error: 'no_booking_action_on_this_agent' });
 
-  // Smallest first — the owner asked for two, and finding the floor matters
-  // more than finding something that merely works.
+  // A VOICE AI ACTION IS IMMUTABLE. There is no GET and no PATCH either
+  // (404 Cannot PATCH) — the only way to change its parameters is DELETE then
+  // POST, which is what provisioning already does. That makes this probe
+  // destructive in the middle: between the delete and a successful create the
+  // agent CANNOT BOOK, so the known-good 3/3/3 is the guaranteed last step and
+  // the response says plainly if even that failed.
+  const KNOWN_GOOD = { daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 };
+  const create = (params) => ghl.call('POST', '/voice-ai/actions', { creds, version: V,
+    body: { agentId: tenant.ghl_agent_id, locationId: creds.locationId,
+      actionType: 'APPOINTMENT_BOOKING', name: 'Book an appointment',
+      actionParameters: Object.assign({ calendarId: tenant.ghl_calendar_id }, params) } });
+
+  try {
+    await ghl.call('DELETE', `/voice-ai/actions/${encodeURIComponent(actionId)}`,
+      { creds, version: V, query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId } });
+  } catch (e) {
+    return res.status(502).json({ ok: false, error: 'cannot_remove_existing_action',
+      detail: String(e.message || e).slice(0, 200),
+      note: 'Nothing was changed — the agent still books on its previous settings.' });
+  }
+
+  // Smallest first: the owner asked for two, and finding the floor matters more
+  // than finding something that merely works.
   const combos = [
     { daysOfOfferingDates: 2, slotsPerDay: 2, hoursBetweenSlots: 3 },
+    { daysOfOfferingDates: 2, slotsPerDay: 2, hoursBetweenSlots: 2 },
     { daysOfOfferingDates: 2, slotsPerDay: 3, hoursBetweenSlots: 3 },
     { daysOfOfferingDates: 3, slotsPerDay: 2, hoursBetweenSlots: 3 },
-    { daysOfOfferingDates: 1, slotsPerDay: 2, hoursBetweenSlots: 3 },
-    { daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 },   // known good
   ];
   const tried = [];
   for (const c of combos) {
     try {
-      await ghl.call('PATCH', `/voice-ai/actions/${encodeURIComponent(actionId)}`, { creds, version: V,
-        query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId },
-        body: { agentId: tenant.ghl_agent_id, locationId: creds.locationId,
-          actionType: 'APPOINTMENT_BOOKING',
-          actionParameters: Object.assign({ calendarId: tenant.ghl_calendar_id }, c) } });
+      const out = await create(c);
       tried.push({ ...c, accepted: true });
-      return res.json({ ok: true, accepted: c, action_id: actionId, tried,
-        note: 'Left the agent on this combination. Re-run with a different order to change it.' });
+      return res.json({ ok: true, accepted: c, tried,
+        action_id: (out && (out.id || (out.action && out.action.id))) || null,
+        note: 'The agent now offers this many days and times. Tell the prompt to match.' });
     } catch (e) {
       tried.push({ ...c, accepted: false, status: e.status || null,
         error: String(e.message || e).slice(0, 180) });
     }
   }
-  return res.status(502).json({ ok: false, error: 'nothing_accepted', tried,
-    note: 'The agent may now have no working booking parameters — re-run repair-agent-actions.' });
+
+  // Nothing smaller works — put the agent back the way it was. This MUST
+  // succeed; if it does not, the agent cannot book and the owner needs to know
+  // in the response, not from a caller.
+  try {
+    await create(KNOWN_GOOD);
+    return res.json({ ok: true, accepted: null, restored: KNOWN_GOOD, tried,
+      note: 'HighLevel refused every smaller combination. The agent is back on 3 days / 3 times.' });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'RESTORE_FAILED', tried,
+      detail: String(e.message || e).slice(0, 200),
+      note: 'THE AGENT HAS NO BOOKING ACTION RIGHT NOW. Run POST /internal/security/repair-agent-actions.' });
+  }
 });
 
 module.exports = router;
