@@ -312,6 +312,10 @@ M.sequelize = {
       for (const k of Object.keys(rp)) if (!['t', 'to', 'froms'].includes(k)) t[k] = rp[k];
       return [[{ id: t.id, outbound_state: t.outbound_state }], {}];
     }
+    if (/COUNT\(\*\)::int AS n FROM lite_notifications/.test(sql)) {
+      const t = opts.replacements.t;
+      return [[{ n: OB.notifs.filter((x) => x.tenant_id === t && !x.read_at).length }], {}];
+    }
     if (/INSERT INTO lite_notifications/.test(sql)) {
       OB.notifs.push({ tenant_id: opts.replacements.t, kind: opts.replacements.k,
         title: opts.replacements.ti, body: opts.replacements.b });
@@ -3043,17 +3047,67 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual(b.moved, false, 'a replayed transition moved the row a second time');
   });
 
-  await t('NO MAIL TRANSPORT IS NOT A FAILURE — the dashboard row is written regardless', async () => {
-    const saved = process.env.SENDGRID_API_KEY;
-    delete process.env.SENDGRID_API_KEY;
+  await t('THERE IS NO MAIL TRANSPORT, AND NONE MAY COME BACK', () => {
+    // Owner decision 2026-09-27: everything is a dashboard notification.
+    // Server-sent mail across this estate has been landing in spam, and a
+    // notification that reaches a spam folder is worse than none because it
+    // looks delivered. Comments are stripped first — the file EXPLAINS why
+    // SendGrid is gone, and an earlier check of this shape flagged its own
+    // explanation.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/notify.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/[^\n]*/gm, '');
+    for (const t2 of ['sendgrid', 'nodemailer', 'smtp', 'mailgun', 'postmark']) {
+      assert.ok(!new RegExp(t2, 'i').test(src), 'a mail transport is back in notify.js: ' + t2);
+    }
+    assert.ok(!/\bemail\s*[:(]/.test(src), 'notify.js exposes an email() function again');
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+    assert.ok(!pkg.dependencies['@sendgrid/mail'], 'the SendGrid dependency is back');
+  });
+
+  await t('a notification is written AND pushes the badge — the row alone is not delivery', async () => {
     const nt = require(path.join(ROOT, 'src/services/notify'));
     const before = OB.notifs.length;
-    const r = await nt.email({ to: 'x@example.com', subject: 's', text: 't' });
-    assert.strictEqual(r.sent, false);
-    assert.strictEqual(r.reason, 'no_transport', 'a missing key must be reported as itself');
+    let pushed = 0;
+    const pn = require(path.join(ROOT, 'src/services/pushNotify'));
+    const realPush = pn.pushBadge;
+    pn.pushBadge = async () => { pushed++; return { ok: true }; };
     await nt.notify(1, 'test', 'Title', 'Body');
-    assert.strictEqual(OB.notifs.length, before + 1, 'the dashboard notification was not written');
-    if (saved) process.env.SENDGRID_API_KEY = saved;
+    pn.pushBadge = realPush;
+    assert.strictEqual(OB.notifs.length, before + 1, 'the notification row was not written');
+    assert.strictEqual(pushed, 1, 'the badge was not pushed — the client sees nothing until they open the app');
+  });
+
+  await t('THE ICON BADGE COUNTS NOTIFICATIONS TOO, or the client is told nothing', async () => {
+    // Counting only messages meant "your outbound caller is ready" arrived
+    // with a silent icon: the notification existed and delivery depended on
+    // the client opening the app for some other reason.
+    //
+    // MEASURED, NOT GREPPED. The first version of this looked for the word
+    // `lite_notifications` in the function body — which stayed there when the
+    // return was changed back to messages only, so the mutation passed.
+    const pn = require(path.join(ROOT, 'src/services/pushNotify'));
+    const bt = await M.Tenant.create({ business_name: 'Badge Co' });
+    const base = await pn.unreadCount(bt.id);
+    OB.notifs.push({ tenant_id: bt.id, kind: 'x', title: 'One', body: null, read_at: null });
+    OB.notifs.push({ tenant_id: bt.id, kind: 'x', title: 'Two', body: null, read_at: null });
+    const after = await pn.unreadCount(bt.id);
+    assert.strictEqual(after, base + 2,
+      'two unread notifications did not move the badge (' + base + ' -> ' + after + ')');
+    // And a read one must not keep counting, or the badge never comes down.
+    OB.notifs.filter((x) => x.tenant_id === bt.id).forEach((x) => { x.read_at = new Date(); });
+    assert.strictEqual(await pn.unreadCount(bt.id), base, 'read notifications still count');
+  });
+
+  await t('the OWNER is a tenant too — their alert lands on their own dashboard', async () => {
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/notify.js'), 'utf8');
+    assert.ok(/LITE_OWNER_ALERT_EMAIL/.test(src), 'the owner is not resolved from the alert email');
+    // A miss must be reported, never guessed: notifying the wrong tenant puts
+    // an operational alert about client A into client B's dashboard.
+    const fn = src.slice(src.indexOf('async function notifyOwner'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(/console\.error/.test(body), 'an unresolvable owner is dropped silently');
+    assert.ok(/no_owner_tenant/.test(body));
   });
 
   await t('an owner alert carries NO caller or contact detail', () => {

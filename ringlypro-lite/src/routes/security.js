@@ -1855,20 +1855,15 @@ router.post('/outbound', express.json({ limit: '4kb' }), async (req, res) => {
     const moved = await billing.transition(tenantId, 'pending_setup', 'active',
       { outbound_activated_at: new Date(), outbound_state_reason: null });
     if (moved.moved) {
-      await notify.notify(tenantId, 'outbound_ready', 'Your outbound caller is ready',
-        'Add funds and upload your list to start calling.');
-      const [u] = await sequelize.query(
-        'SELECT email FROM lite_users WHERE tenant_id = :t ORDER BY id LIMIT 1',
-        { replacements: { t: tenantId } }).catch(() => [[]]);
-      const to = u && u[0] && u[0].email;
-      told = to ? await notify.clientOutboundReady(t, to).catch(() => ({ sent: false }))
-        : { sent: false, reason: 'no_user_email' };
+      // ONE CALL. It writes the client's dashboard row AND pushes their badge,
+      // so there is no second channel that can silently not happen.
+      told = await notify.clientOutboundReady(t).catch((e) => ({ ok: false, reason: String(e.message || e) }));
     }
   }
 
   res.json({ ok: true, tenant: tenantId,
     activated: told !== null,
-    client_emailed: told,
+    client_notified: told,
     enabled: !!patch.outbound_enabled,
     workflow_id: effectiveWorkflow || null,
     workflow_verified: verified,

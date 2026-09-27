@@ -79,9 +79,9 @@ async function handleOutbound(tenant, obj, event, kind) {
     console.warn('[lite:webhook] DUPLICATE outbound setup fee for tenant', tenant.id, '— refund due');
     await notify.notify(tenant.id, 'outbound_duplicate_fee', 'Duplicate setup fee',
       'You were charged the setup fee twice. We have been notified and will refund it.');
-    await notify.email({ to: notify.ownerEmail(),
-      subject: `[RinglyPro Lite] REFUND DUE — duplicate setup fee, tenant ${tenant.id}`,
-      text: `Tenant ${tenant.id} paid the outbound setup fee twice.\nStripe session: ${obj.id}\nAmount: ${amount}c\nRefund it in Stripe.` }).catch(() => {});
+    await notify.notifyOwner('owner_refund_due',
+      `REFUND DUE — duplicate setup fee, tenant ${tenant.id}`,
+      `Tenant ${tenant.id} paid the outbound setup fee twice.\nStripe session: ${obj.id}\nAmount: ${amount}c\nRefund it in Stripe.`).catch(() => {});
     return;
   }
 
@@ -90,8 +90,9 @@ async function handleOutbound(tenant, obj, event, kind) {
   await notify.notify(tenant.id, 'outbound_setup_paid', 'Outbound setup paid',
     `Your outbound caller will be ready by ${due.toISOString()}. We will let you know the moment it is live.`);
 
-  // Then the owner's email, best effort and OUTSIDE anything transactional:
-  // a mail failure must never undo a payment Stripe has already taken.
+  // Then the owner's own dashboard, best effort and OUTSIDE anything
+  // transactional: a notification failure must never undo a payment Stripe
+  // has already taken.
   await notify.ownerSetupPaid(tenant, due).catch(() => {});
 }
 

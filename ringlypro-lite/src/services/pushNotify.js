@@ -114,8 +114,32 @@ async function unsubscribe(tenantId, endpoint) {
  * THE COUNT IS A COUNT OF REAL ROWS, never a stored counter, so deleting a
  * message lowers it and nothing can drift.
  */
+/**
+ * ONE NUMBER ON THE ICON: unread messages PLUS unread notifications.
+ *
+ * Counting only messages meant a client could be told "your outbound caller
+ * is ready" and see no badge at all — the notification existed, the icon said
+ * nothing, and the delivery depended on them opening the app for some other
+ * reason. The icon badge is the app saying "there are N things for you", not
+ * "there are N messages"; the Messages TAB badge stays message-only because
+ * that is what it labels.
+ */
 async function unreadCount(tenantId) {
-  return Message.count({ where: { tenant_id: tenantId, read_at: null } });
+  const msgs = await Message.count({ where: { tenant_id: tenantId, read_at: null } });
+  let notifs = 0;
+  try {
+    const [rows] = await sequelize.query(
+      `SELECT COUNT(*)::int AS n FROM lite_notifications
+        WHERE tenant_id = :t AND read_at IS NULL`,
+      { replacements: { t: tenantId } }
+    );
+    notifs = (rows && rows[0] && rows[0].n) || 0;
+  } catch (e) {
+    // The table may not exist yet on a first boot. A messages-only count is
+    // wrong-but-safe; failing the whole badge would be worse.
+    notifs = 0;
+  }
+  return msgs + notifs;
 }
 
 /**

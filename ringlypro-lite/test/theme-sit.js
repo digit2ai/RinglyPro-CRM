@@ -245,6 +245,26 @@ function landingTokens() {
           called: /loadNotifs\(\)/.test(src),
           dismisses: /notifications\/read/.test(src) };
       });
+      // THE BADGE IS THE DELIVERY. A notification row the icon does not count
+      // is a message nobody is told about until they open the app for some
+      // other reason.
+      const badge = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML.replace(/\s+/g, '');
+        // The DEFINITION alone is not enough: changing the messages poll back
+        // to setAppBadge(j.unread) left refreshBadge() defined and unused, and
+        // the first version of this check passed.
+        return { combined: /functionrefreshBadge\(\)\{setAppBadge\(\(msgUnread\|\|0\)\+\(notifUnread\|\|0\)\)/.test(src)
+            && /msgUnread=j\.unread;refreshBadge\(\)/.test(src)
+            && !/setAppBadge\(j\.unread\)/.test(src),
+          notifFeeds: /notifUnread=list\.length;refreshBadge\(\)/.test(src),
+          dropsOnRead: /notifUnread=0;refreshBadge\(\)/.test(src) };
+      });
+      t(`${label} the icon badge counts messages AND notifications`, () => {
+        assert.ok(badge.combined, 'the icon badge is not the sum of both sources');
+        assert.ok(badge.notifFeeds, 'notifications never update the badge');
+        assert.ok(badge.dropsOnRead, 'the badge does not come down when notifications are read');
+      });
+
       t(`${label} unread notifications have somewhere to appear`, () => {
         assert.ok(notif.strip, 'there is no notification strip in the page');
         assert.ok(notif.reads, 'nothing in the UI fetches the notifications');
