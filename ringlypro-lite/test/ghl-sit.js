@@ -192,16 +192,137 @@ M.sequelize = {
       return [[{ n }], {}];
     }
     if (/INSERT INTO lite_outbound_calls/.test(sql)) {
-      const { t, c, l } = opts.replacements;
-      const row = { id: OB.calls.length + 1, tenant_id: t, contact_id: c, list_id: l, enrolled_at: new Date() };
+      const { t, c, l, r } = opts.replacements;
+      const row = { id: ++OB_CALL_SEQ, tenant_id: t, contact_id: c, list_id: l,
+        enrolled_at: new Date(), reserved_cents: Number(r) || 0, settled_at: null,
+        charged_cents: null, duration_sec: null, outcome: null, summary: null, ghl_call_id: null };
       OB.calls.push(row);
       return [[{ id: row.id }], {}];
+    }
+
+    /* ── WALLET ─────────────────────────────────────────────────────────
+     * Emulated faithfully, INCLUDING the conditional predicate on the
+     * reserve. A fake that always succeeds would let the atomicity test
+     * pass while the real UPDATE had lost its `balance_cents >= :hold`.
+     */
+    if (/INSERT INTO lite_outbound_credit/.test(sql)) {
+      const t = opts.replacements.t;
+      if (!OB.wallet[t]) OB.wallet[t] = { balance_cents: 0, reserved_cents: 0,
+        lifetime_topup_cents: 0, lifetime_spent_cents: 0 };
+      return [[], {}];
+    }
+    if (/SELECT balance_cents, reserved_cents/.test(sql)) {
+      const w = OB.wallet[opts.replacements.t] || { balance_cents: 0, reserved_cents: 0,
+        lifetime_topup_cents: 0, lifetime_spent_cents: 0 };
+      return [[Object.assign({}, w)], {}];
+    }
+    if (/UPDATE lite_outbound_credit/.test(sql)) {
+      const rp = opts.replacements || {};
+      const w = OB.wallet[rp.t] || (OB.wallet[rp.t] = { balance_cents: 0, reserved_cents: 0,
+        lifetime_topup_cents: 0, lifetime_spent_cents: 0 });
+      if (/balance_cents - :hold/.test(sql)) {
+        // HONOUR THE PREDICATE AS WRITTEN. Applying the condition in
+        // JavaScript regardless of the SQL made the harness enforce
+        // atomicity the code had lost: deleting `balance_cents >= :hold`
+        // from the real UPDATE changed nothing here, so the one thing
+        // stopping two dials spending the same dollar was untested.
+        const guarded = /balance_cents\s*>=\s*:hold/.test(sql);
+        if (guarded && w.balance_cents < rp.hold) return [[], {}];
+        w.balance_cents -= rp.hold; w.reserved_cents += rp.hold;
+        return [[{ balance_cents: w.balance_cents }], {}];
+      }
+      if (/lifetime_topup_cents \+ :c/.test(sql)) {
+        w.balance_cents += rp.c; w.lifetime_topup_cents += rp.c; return [[], {}];
+      }
+      if (/reserved_cents - :c/.test(sql)) {
+        w.balance_cents += rp.c; w.reserved_cents = Math.max(0, w.reserved_cents - rp.c); return [[], {}];
+      }
+      if (/reserved_cents - :held/.test(sql)) {
+        // The overrun is a DEBIT, and the balance is allowed to go negative
+        // here: the cost is already incurred by settlement time. A fake that
+        // ignored `:over` hid exactly the loss the charge-in-full fix closes.
+        w.reserved_cents = Math.max(0, w.reserved_cents - rp.held);
+        w.balance_cents += rp.back - (Number(rp.over) || 0);
+        w.lifetime_spent_cents += rp.c; return [[], {}];
+      }
+      return [[], {}];
+    }
+    if (/SELECT id, reserved_cents FROM lite_outbound_calls/.test(sql)) {
+      const onlyOpen = /settled_at IS NULL/.test(sql);     // as written, not assumed
+      const c = OB.calls.find((x) => x.id === opts.replacements.id
+        && x.tenant_id === opts.replacements.t && (!onlyOpen || !x.settled_at));
+      return [c ? [{ id: c.id, reserved_cents: c.reserved_cents }] : [], {}];
+    }
+    if (/UPDATE lite_outbound_calls/.test(sql) && /settled_at = NOW\(\)/.test(sql) && opts.replacements.id) {
+      const rp = opts.replacements;
+      const onlyOpen = /settled_at IS NULL/.test(sql);
+      const c = OB.calls.find((x) => x.id === rp.id && x.tenant_id === rp.t
+        && (!onlyOpen || !x.settled_at));
+      if (!c) return [[], {}];
+      c.settled_at = new Date(); c.charged_cents = rp.c; c.duration_sec = rp.d;
+      if (rp.o) c.outcome = rp.o; if (rp.s) c.summary = rp.s; if (rp.g) c.ghl_call_id = rp.g;
+      return [[{ id: c.id }], {}];
+    }
+    if (/SELECT oc\.id, oc\.enrolled_at/.test(sql)) {
+      const rp = opts.replacements;
+      const rows = OB.calls
+        .filter((x) => x.tenant_id === rp.t && (rp.l == null || x.list_id === rp.l))
+        .sort((a, b) => b.enrolled_at - a.enrolled_at)
+        .slice(0, rp.n)
+        .map((x) => {
+          const c = OB.contacts.find((y) => y.id === x.contact_id) || {};
+          return Object.assign({}, x, { contact_name: c.contact_name || null,
+            company: c.company || null, phone: c.phone || null });
+        });
+      return [rows, {}];
+    }
+    if (/COUNT\(\*\) FILTER \(WHERE settled_at IS NOT NULL/.test(sql)) {
+      const rp = opts.replacements;
+      const mine = OB.calls.filter((x) => x.tenant_id === rp.t && (rp.l == null || x.list_id === rp.l));
+      const settled = mine.filter((x) => x.settled_at);
+      return [[{ attempted: mine.length,
+        connected: settled.filter((x) => (x.duration_sec || 0) > 0).length,
+        total_sec: settled.reduce((a, x) => a + (x.duration_sec || 0), 0),
+        spent_cents: settled.reduce((a, x) => a + (x.charged_cents || 0), 0),
+        in_progress: mine.filter((x) => !x.settled_at).length }], {}];
+    }
+    if (/FROM lite_outbound_calls oc/.test(sql) && /ghl_contact_id = :gc/.test(sql)) {
+      const gc = String(opts.replacements.gc);
+      // HONOUR THE TENANT PREDICATE AS WRITTEN. Filtering only on the contact
+      // id here — which the first harness did — reproduced the production bug
+      // inside the test, so the cross-tenant settle passed the suite.
+      const scoped = /oc\.tenant_id = :t/.test(sql);
+      const tid = opts.replacements.t;
+      const hits = OB.calls.filter((x) => {
+        if (scoped && x.tenant_id !== tid) return false;
+        const ct = OB.contacts.find((c) => c.id === x.contact_id);
+        return ct && String(ct.ghl_contact_id) === gc;
+      });
+      if (/settled_at IS NULL/.test(sql)) {
+        const open = hits.filter((x) => !x.settled_at).sort((a, b) => a.enrolled_at - b.enrolled_at);
+        return [open.length ? [{ id: open[0].id, tenant_id: open[0].tenant_id }] : [], {}];
+      }
+      return [hits.length ? [{ '?column?': 1 }] : [], {}];
+    }
+    if (/UPDATE lite_tenants SET outbound_state/.test(sql)) {
+      const rp = opts.replacements;
+      const t = M.Tenant._rows.find((x) => x.id === rp.t);
+      if (!t || !rp.froms.includes(t.outbound_state || 'off')) return [[], {}];
+      t.outbound_state = rp.to;
+      for (const k of Object.keys(rp)) if (!['t', 'to', 'froms'].includes(k)) t[k] = rp[k];
+      return [[{ id: t.id, outbound_state: t.outbound_state }], {}];
+    }
+    if (/INSERT INTO lite_notifications/.test(sql)) {
+      OB.notifs.push({ tenant_id: opts.replacements.t, kind: opts.replacements.k,
+        title: opts.replacements.ti, body: opts.replacements.b });
+      return [[], {}];
     }
     return [[], {}];
   },
 };
 // In-memory stand-ins for the outbound tables the dialer reads and writes.
-const OB = { lists: [], contacts: [], calls: [], suppressions: [] };
+const OB = { lists: [], contacts: [], calls: [], suppressions: [], wallet: {}, payments: [], notifs: [] };
+let OB_CALL_SEQ = 0;
 require.cache[require.resolve(path.join(ROOT, 'src/models.js'))] = { id: 'models', filename: 'models', loaded: true, exports: M };
 
 // The mirror now texts the owner, so the suite has to own the transport: a
@@ -2611,7 +2732,13 @@ const tenantSeed = (over = {}) => ({
   };
 
   const dT = await M.Tenant.create({ business_name: 'Dialer Co', country: 'US',
-    outbound_enabled: true, outbound_workflow_id: 'wf-published-001', outbound_daily_cap: 3 });
+    outbound_enabled: true, outbound_workflow_id: 'wf-published-001', outbound_daily_cap: 3,
+    // BOTH GATES. `outbound_enabled` says the owner built the workflow;
+    // `outbound_state` says the client paid. The dialer needs both, and the
+    // wallet needs funding, or every call is refused before it starts.
+    outbound_state: 'active' });
+  const bill = require(path.join(ROOT, 'src/services/outboundBilling'));
+  await bill.credit(dT.id, 100000);          // $1000, plenty for the pacing tests
   OB.lists.push({ id: 5001, tenant_id: dT.id, status: 'active' });
   OB.lists.push({ id: 5002, tenant_id: dT.id, status: 'draft' });
   let cid = 6000;
@@ -2710,6 +2837,373 @@ const tenantSeed = (over = {}) => ({
         'the dialer re-implements ' + forbidden + ' instead of going through mayDial');
     }
     assert.ok(/ob\.dial\(/.test(src), 'the dialer does not go through ob.dial');
+  });
+
+  /* ── THE PAID ADD-ON: WALLET, STATE, SETTLEMENT ────────────────────────
+   * Outbound costs the owner money per minute. Every test here is about a
+   * way the client could be called without having paid, or charged for
+   * something that did not happen.
+   */
+  const bl = require(path.join(ROOT, 'src/services/outboundBilling'));
+  process.env.LITE_OUTBOUND_COST_PER_MIN_USD = '0.13';
+  process.env.LITE_OUTBOUND_MARKUP = '2';
+  process.env.LITE_OUTBOUND_RESERVE_MIN = '5';
+
+  await t('the price is the owner cost x the markup, computed not hardcoded', () => {
+    assert.strictEqual(bl.pricePerMinCents(), 26, 'expected 13c x 2 = 26c');
+    process.env.LITE_OUTBOUND_MARKUP = '3';
+    assert.strictEqual(bl.pricePerMinCents(), 39, 'changing the env did not change the price');
+    process.env.LITE_OUTBOUND_MARKUP = '2';
+    // No surface may carry a figure of its own.
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.ok(!/\$0\.26|\$0,26/.test(page), 'the dashboard hardcodes a per-minute price');
+  });
+
+  await t('a call is charged per minute, ROUNDED UP, and zero seconds is free', () => {
+    assert.strictEqual(bl.chargeForSeconds(0), 0, 'an unanswered call was charged');
+    assert.strictEqual(bl.chargeForSeconds(1), 26, '1 second must round up to one minute');
+    assert.strictEqual(bl.chargeForSeconds(60), 26);
+    assert.strictEqual(bl.chargeForSeconds(61), 52, '61s must round up to two minutes');
+    assert.strictEqual(bl.chargeForSeconds(100), 52);
+  });
+
+  // A tenant with the plumbing but NOT the payment.
+  const unpaid = await M.Tenant.create({ business_name: 'Unpaid Co', country: 'US',
+    outbound_enabled: true, outbound_workflow_id: 'wf-published-001', outbound_state: 'pending_setup' });
+  await bl.credit(unpaid.id, 100000);
+
+  await t('A TENANT WHO HAS NOT PAID CANNOT DIAL, even with the workflow and the money', async () => {
+    const g = await ob.mayDial(unpaid, { phone: '+18135550300', status: 'new' }, new Date('2026-10-01T16:00:00Z'));
+    assert.strictEqual(g.ok, false);
+    assert.strictEqual(g.reason, 'outbound_not_activated');
+  });
+
+  // Active but broke.
+  const broke = await M.Tenant.create({ business_name: 'Broke Co', country: 'US',
+    outbound_enabled: true, outbound_workflow_id: 'wf-published-001', outbound_state: 'active' });
+
+  await t('A TENANT WITH NO FUNDS CANNOT DIAL, even when fully activated', async () => {
+    const g = await ob.mayDial(broke, { phone: '+18135550301', status: 'new' }, new Date('2026-10-01T16:00:00Z'));
+    assert.strictEqual(g.ok, false);
+    assert.strictEqual(g.reason, 'insufficient_credit');
+  });
+
+  await t('THE RESERVE IS ATOMIC — two dials against a one-call balance give ONE winner', async () => {
+    const one = await M.Tenant.create({ business_name: 'One Call Co', outbound_state: 'active' });
+    await bl.credit(one.id, bl.reserveCents());          // exactly one reserve
+    const [a, b] = await Promise.all([bl.reserve(one.id), bl.reserve(one.id)]);
+    const wins = [a, b].filter((x) => x.ok).length;
+    assert.strictEqual(wins, 1, 'both dials reserved against the same money');
+    const w = await bl.wallet(one.id);
+    assert.ok(w.balance_cents >= 0, 'the balance went NEGATIVE: ' + w.balance_cents);
+  });
+
+  await t('a failed enrollment RELEASES the reserve — no money held for a call never placed', async () => {
+    const f = await M.Tenant.create({ business_name: 'Enroll Fail Co', country: 'US',
+      outbound_enabled: true, outbound_workflow_id: 'wf-published-001',
+      outbound_state: 'active', outbound_daily_cap: 50 });
+    await bl.credit(f.id, 50000);
+    const before = (await bl.wallet(f.id)).balance_cents;
+    OB.contacts.push({ id: 7777, tenant_id: f.id, list_id: 5001, phone: '+18135550302',
+      contact_name: 'Fail Target', status: 'pending', attempts: 0 });
+    const boom = ghlMod.call;
+    ghlMod.call = async (m, pth) => {
+      if (/\/workflow\//.test(pth)) { const e = new Error('HighLevel said no'); e.status = 422; throw e; }
+      if (/contacts\/upsert/.test(pth)) return { contact: { id: 'c-fail' } };
+      return {};
+    };
+    const r = await ob.dial(f, OB.contacts.find((c) => c.id === 7777), { at: new Date('2026-10-01T16:00:00Z') });
+    ghlMod.call = boom;
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'enroll_failed');
+    const after = await bl.wallet(f.id);
+    assert.strictEqual(after.balance_cents, before, 'the reserve was not returned');
+    assert.strictEqual(after.reserved_cents, 0, 'money is still held for a call that never happened');
+  });
+
+  await t('SETTLEMENT charges the real duration and releases the rest', async () => {
+    const st = await M.Tenant.create({ business_name: 'Settle Co', outbound_state: 'active' });
+    await bl.credit(st.id, 50000);
+    const held = await bl.reserve(st.id);
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: st.id, contact_id: 1, list_id: null,
+      enrolled_at: new Date(), reserved_cents: held.reserved_cents, settled_at: null });
+    const callRow = OB.calls[OB.calls.length - 1].id;
+    const before = (await bl.wallet(st.id)).balance_cents;
+
+    const r = await bl.settle(st.id, callRow, { durationSec: 95, outcome: 'message' });
+    assert.strictEqual(r.settled, true);
+    assert.strictEqual(r.charged_cents, 52, '95s must be two minutes at 26c');
+    assert.strictEqual(r.released_cents, held.reserved_cents - 52);
+    const after = await bl.wallet(st.id);
+    assert.strictEqual(after.balance_cents, before + (held.reserved_cents - 52));
+    assert.strictEqual(after.reserved_cents, 0, 'the hold was not cleared');
+
+    // RE-SETTLING THE SAME CALL MUST DO NOTHING. The poller re-reads a 3h
+    // window every two minutes, so it WILL see this log again.
+    const again = await bl.settle(st.id, callRow, { durationSec: 95 });
+    assert.strictEqual(again.settled, false);
+    assert.strictEqual((await bl.wallet(st.id)).balance_cents, after.balance_cents, 'it charged twice');
+  });
+
+  await t('A LONG CALL IS CHARGED IN FULL — capping it at the reserve made it nearly free', async () => {
+    // The first version capped the charge at the 5-minute reserve, so a
+    // 60-minute call cost the client $1.30 while HighLevel billed the owner
+    // $7.80 — and a client dialling a number they control and leaving it off
+    // the hook turned that into an uncapped loss on every top-up.
+    const lg = await M.Tenant.create({ business_name: 'Long Call Co', outbound_state: 'active' });
+    await bl.credit(lg.id, 200);                    // deliberately less than the call costs
+    const held = await bl.reserve(lg.id);
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: lg.id, contact_id: 1,
+      enrolled_at: new Date(), reserved_cents: held.reserved_cents, settled_at: null });
+    const r = await bl.settle(lg.id, OB.calls[OB.calls.length - 1].id, { durationSec: 3600 });
+    assert.strictEqual(r.charged_cents, 60 * 26, 'a 60-minute call was not charged 60 minutes');
+    assert.ok(r.overrun_cents > 0, 'the overrun was not reported');
+    const w = await bl.wallet(lg.id);
+    assert.ok(w.balance_cents < 0, 'the overrun was absorbed instead of billed');
+    // And a negative balance must STOP the next call rather than continue.
+    assert.strictEqual(w.can_place_a_call, false);
+    assert.strictEqual((await bl.reserve(lg.id)).ok, false);
+  });
+
+  await t('SETTLEMENT MATCHES ON contactId, NEVER ON THE PHONE NUMBER', () => {
+    // One shared HighLevel sub-account serves every tenant, so matching on
+    // `fromNumber` — a field whose meaning on an outbound call is UNVERIFIED —
+    // would one day settle one client's call against another's wallet.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function settleFromCallLog'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(/ghl_contact_id/.test(body), 'settlement does not key on the contact id');
+    assert.ok(!/fromNumber|\bcaller\b|\.phone\b/.test(body.replace(/\/\*[\s\S]*?\*\//g, '')),
+      'settlement reads a phone number — that is the cross-tenant billing bug');
+  });
+
+  await t('AN OUTBOUND CALL NEVER BECOMES A "SOMEBODY CALLED YOU" MESSAGE', async () => {
+    // The poller mirrors inbound calls into the Messages tab. Without the
+    // claim, every outbound call the client PAID FOR also lands there as a
+    // missed call, and the owner gets texted about it.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlCallLogs.js'), 'utf8');
+    const i1 = src.indexOf('settleFromCallLog'), i2 = src.indexOf('mirror.storeCallResult');
+    assert.ok(i1 > 0 && i2 > 0 && i1 < i2, 'the mirror runs before the outbound claim');
+    assert.ok(/if \(ob\.claimed\)[\s\S]{0,200}continue;/.test(src),
+      'a claimed outbound call is not skipped before the mirror');
+
+    // And behaviourally: an already-settled outbound call is STILL claimed,
+    // so a re-poll cannot leak it into the inbox later.
+    const oc = await M.Tenant.create({ business_name: 'Claim Co', outbound_state: 'active' });
+    OB.contacts.push({ id: 8888, tenant_id: oc.id, list_id: 5001, phone: '+18135550303',
+      status: 'dialled', ghl_contact_id: 'gc-claimed', attempts: 1 });
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: oc.id, contact_id: 8888,
+      enrolled_at: new Date(), reserved_cents: 0, settled_at: new Date() });
+    const c = await bl.settleFromCallLog({ contactId: 'gc-claimed', durationSec: 30, callId: 'log-1' }, { tenantId: oc.id });
+    assert.strictEqual(c.claimed, true, 'an already-settled outbound call was handed to the inbox mirror');
+    assert.strictEqual(c.settled, false);
+  });
+
+  await t('a call log that is NOT ours is left for the inbound mirror', async () => {
+    const c = await bl.settleFromCallLog({ contactId: 'gc-a-stranger', durationSec: 30 }, { tenantId: 1 });
+    assert.strictEqual(c.claimed, false);
+  });
+
+  await t('A MISSING LOG READS "no result recorded", NEVER "not answered"', async () => {
+    // Different facts. We know one call was not answered; we know nothing
+    // about the other. Reporting the second as the first is a fabrication.
+    const nl = await M.Tenant.create({ business_name: 'No Log Co', outbound_state: 'active' });
+    await bl.credit(nl.id, 50000);
+    const held = await bl.reserve(nl.id);
+    OB.contacts.push({ id: 9001, tenant_id: nl.id, list_id: 5001, phone: '+18135550304', status: 'dialled' });
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: nl.id, contact_id: 9001,
+      enrolled_at: new Date(), reserved_cents: held.reserved_cents, settled_at: null });
+    const id = OB.calls[OB.calls.length - 1].id;
+    await bl.settle(nl.id, id, { durationSec: 0, outcome: 'no_log' });
+    const rep = await bl.callReport(nl.id, { limit: 10 });
+    const row = rep.find((r) => r.id === id);
+    assert.ok(row, 'the call is missing from the report');
+    assert.strictEqual(row.outcome, 'no_result_recorded');
+    assert.strictEqual(row.charged_cents, 0, 'a call we know nothing about was charged');
+  });
+
+  await t('the report shows what was CHARGED, not a figure recomputed at render', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function callReport'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(/charged_cents/.test(body));
+    assert.ok(!/chargeForSeconds|pricePerMinCents/.test(body),
+      'the report recomputes a price — it must read the settled figure');
+  });
+
+  await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
+    const sm = await M.Tenant.create({ business_name: 'State Co', outbound_state: 'awaiting_setup_payment' });
+    const a = await bl.transition(sm.id, ['off', 'awaiting_setup_payment'], 'pending_setup');
+    const b = await bl.transition(sm.id, ['off', 'awaiting_setup_payment'], 'pending_setup');
+    assert.strictEqual(a.moved, true);
+    assert.strictEqual(b.moved, false, 'a replayed transition moved the row a second time');
+  });
+
+  await t('NO MAIL TRANSPORT IS NOT A FAILURE — the dashboard row is written regardless', async () => {
+    const saved = process.env.SENDGRID_API_KEY;
+    delete process.env.SENDGRID_API_KEY;
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const before = OB.notifs.length;
+    const r = await nt.email({ to: 'x@example.com', subject: 's', text: 't' });
+    assert.strictEqual(r.sent, false);
+    assert.strictEqual(r.reason, 'no_transport', 'a missing key must be reported as itself');
+    await nt.notify(1, 'test', 'Title', 'Body');
+    assert.strictEqual(OB.notifs.length, before + 1, 'the dashboard notification was not written');
+    if (saved) process.env.SENDGRID_API_KEY = saved;
+  });
+
+  await t('an owner alert carries NO caller or contact detail', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/notify.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function ownerSetupPaid'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    for (const leak of ['contact_name', 'callback_number', 'transcript', 'caller']) {
+      assert.ok(!body.includes(leak), 'the owner alert includes ' + leak);
+    }
+  });
+
+  await t('the National DNC gap is still stated on the paid surfaces', async () => {
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.ok(/obDncOff/.test(page), 'the DNC statement is gone from the dashboard');
+    const route = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    assert.ok(/national_dnc_scrub: false/.test(route) && /FTC/.test(route),
+      'the plan endpoint stopped stating the DNC gap');
+  });
+
+  /* ── WHAT THE SECURITY REVIEW FOUND ────────────────────────────────────── */
+
+  await t('TWO TENANTS SHARING A CONTACT ID SETTLE SEPARATELY — no cross-tenant charge', async () => {
+    // One shared HighLevel sub-account: /contacts/upsert dedupes by phone
+    // WITHIN a location, so two tenants who both hold the same number get the
+    // IDENTICAL ghl_contact_id. Unscoped, the settle took whichever row was
+    // oldest across ALL tenants — charging A for B's call and writing B's
+    // call summary onto A's row for A to read back. No attacker needed.
+    const A = await M.Tenant.create({ business_name: 'Tenant A', outbound_state: 'active' });
+    const B = await M.Tenant.create({ business_name: 'Tenant B', outbound_state: 'active' });
+    await bl.credit(A.id, 50000); await bl.credit(B.id, 50000);
+    const hA = await bl.reserve(A.id), hB = await bl.reserve(B.id);
+    OB.contacts.push({ id: 9100, tenant_id: A.id, list_id: 5001, phone: '+18135559999',
+      ghl_contact_id: 'gc-shared', status: 'dialled' });
+    OB.contacts.push({ id: 9101, tenant_id: B.id, list_id: 5001, phone: '+18135559999',
+      ghl_contact_id: 'gc-shared', status: 'dialled' });
+    // A enrolled FIRST, so the unscoped query would always pick A.
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: A.id, contact_id: 9100,
+      enrolled_at: new Date(Date.now() - 300000), reserved_cents: hA.reserved_cents, settled_at: null });
+    const aRow = OB.calls[OB.calls.length - 1].id;
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: B.id, contact_id: 9101,
+      enrolled_at: new Date(), reserved_cents: hB.reserved_cents, settled_at: null });
+    const bRow = OB.calls[OB.calls.length - 1].id;
+
+    // B's call log arrives, attributed to B by the dialled line.
+    const r = await bl.settleFromCallLog(
+      { contactId: 'gc-shared', durationSec: 120, summary: "B's private call summary", callId: 'log-b' },
+      { tenantId: B.id });
+    assert.strictEqual(r.claimed, true);
+    assert.strictEqual(r.tenant_id, B.id, 'it settled against the WRONG tenant');
+    assert.strictEqual(r.call_row, bRow);
+
+    const aCall = OB.calls.find((x) => x.id === aRow);
+    assert.strictEqual(aCall.settled_at, null, "tenant A's call was settled by tenant B's log");
+    assert.ok(!aCall.summary, "tenant B's call summary leaked onto tenant A's row");
+  });
+
+  await t('WITH NO RESOLVABLE TENANT NOTHING IS CLAIMED — refusing is safe, guessing is the bug', async () => {
+    const r = await bl.settleFromCallLog({ contactId: 'gc-shared', durationSec: 60 }, {});
+    assert.strictEqual(r.claimed, false);
+    assert.strictEqual(r.reason, 'no_tenant');
+  });
+
+  await t('the poller resolves the tenant from the DIALLED LINE, not the contact id', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlCallLogs.js'), 'utf8');
+    const i1 = src.indexOf('mirror.resolveNumber({ dialed: f.dialed, agentId: f.agentId })');
+    const i2 = src.indexOf('billing.settleFromCallLog');
+    assert.ok(i1 > 0 && i2 > i1, 'the tenant is not resolved before the claim');
+    assert.ok(/tenantId: obNum\.tenant_id/.test(src), 'the resolved tenant is not passed to settlement');
+  });
+
+  await t('a settle ERROR is claimed, never dropped into the client inbox', () => {
+    // The catch used to return {claimed:false}, so a transient DB error
+    // produced exactly the bug the branch exists to prevent: the client's own
+    // paid outbound call arriving as "somebody called you", owner texted.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlCallLogs.js'), 'utf8');
+    const c = src.slice(src.indexOf('billing.settleFromCallLog'));
+    const body = c.slice(0, c.indexOf('if (ob.claimed)'));
+    assert.ok(/claimed: true[^}]*settle_error/.test(body.replace(/\n/g, ' ')),
+      'a settle error still falls through to the inbound mirror');
+  });
+
+  await t('AN UNSIGNED STRIPE EVENT MAY NEVER MOVE MONEY', () => {
+    // With no webhook secret the endpoint is unauthenticated: open a Checkout
+    // session, never pay, POST a forged "completed" naming your own session,
+    // and credit yourself any amount.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks.js'), 'utf8');
+    assert.ok(/event\.__unsigned = true/.test(src), 'an unsigned event is not marked');
+    const out = src.slice(src.indexOf("kind === 'lite_outbound_setup'"));
+    const guard = out.slice(0, out.indexOf('await handleOutbound'));
+    assert.ok(/event\.__unsigned/.test(guard) && /503/.test(guard),
+      'an unsigned outbound payment event is not refused');
+  });
+
+  await t('the reserve TTL always exceeds the window a log can still settle in', () => {
+    // At 60 against a 180-minute match window, a log arriving at 90 minutes
+    // found the row already swept and charged 0 — a call the owner paid for,
+    // billed to nobody.
+    process.env.LITE_OUTBOUND_MATCH_WINDOW_MIN = '180';
+    process.env.LITE_OUTBOUND_RESERVE_TTL_MIN = '60';          // deliberately wrong
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
+    assert.ok(/Math\.max\(matchWin \+ 30/.test(src), 'the TTL floor is not enforced against the window');
+    delete process.env.LITE_OUTBOUND_MATCH_WINDOW_MIN;
+    delete process.env.LITE_OUTBOUND_RESERVE_TTL_MIN;
+  });
+
+  await t('THE STALE-RESERVE SWEEP IS ACTUALLY CALLED', () => {
+    // It was written, exported, documented — and invoked by nothing. Every
+    // call whose log never arrived held the client's money for ever.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundDialer.js'), 'utf8');
+    assert.ok(/sweepStaleReserves/.test(src), 'the dialer never runs the reserve sweep');
+  });
+
+  await t('RUNNING OUT OF CREDIT DOES NOT DESTROY THE REST OF THE LIST', async () => {
+    // Nothing requeues a 'skipped' contact and the dialer only selects
+    // 'pending', so marking them skipped meant a client topped up and their
+    // campaign was silently, permanently dead.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundDialer.js'), 'utf8');
+    const tr = src.slice(src.indexOf('const transient ='), src.indexOf('if (!transient)'));
+    assert.ok(/insufficient_credit/.test(tr), 'running out of credit burns the contact');
+    assert.ok(/outbound_not_activated/.test(tr), 'a deactivated tenant burns its contacts');
+
+    const poor = await M.Tenant.create({ business_name: 'Poor Co', country: 'US',
+      outbound_enabled: true, outbound_workflow_id: 'wf-published-001',
+      outbound_state: 'active', outbound_daily_cap: 50 });
+    OB.lists.push({ id: 5100, tenant_id: poor.id, status: 'active' });
+    for (const n of ['+18135550401', '+18135550402']) {
+      OB.contacts.push({ id: ++cid, tenant_id: poor.id, list_id: 5100, phone: n,
+        contact_name: 'Broke Target', status: 'pending', attempts: 0 });
+    }
+    const r = await dialer.runTenant(poor.id, { at: noon, limit: 10 });
+    assert.ok(r.results.every((x) => x.transient), 'a contact was burned for a lack of funds');
+    assert.strictEqual(OB.contacts.filter((c) => c.list_id === 5100 && c.status === 'pending').length, 2,
+      'contacts were consumed when the client simply needed to top up');
+  });
+
+  await t('a duplicate setup fee is raised for refund, never pocketed', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks.js'), 'utf8');
+    const dup = src.slice(src.indexOf('if (!moved.moved)'));
+    const body = dup.slice(0, dup.indexOf('  }'));
+    assert.ok(/REFUND DUE|refund/i.test(body), 'a second paid setup fee is silently kept');
+    assert.ok(/notify\.notify/.test(body), 'the client is not told they were charged twice');
+  });
+
+  await t('transition() will not write a column outside the allow-list', async () => {
+    const v = await M.Tenant.create({ business_name: 'Injection Co', outbound_state: 'off' });
+    await assert.rejects(
+      () => bl.transition(v.id, 'off', 'pending_setup', { subscription_status: 'active' }),
+      /not writable/, 'an arbitrary column reached the SQL string');
+  });
+
+  await t('changing only the daily cap does not activate a paying tenant', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
+    assert.ok(/b\.enabled === true && t\.outbound_state === 'pending_setup'/.test(src),
+      'activation still rides on the default-true enable flag');
   });
 
   ghlMod.call = realCall;

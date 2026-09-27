@@ -1718,7 +1718,10 @@ router.get('/outbound', async (req, res) => {
   const { sequelize } = require('../models');
   const rows = await sequelize.query(
     `SELECT t.id, t.business_name, t.outbound_enabled, t.outbound_workflow_id,
-            t.outbound_daily_cap, t.ghl_location_id,
+            t.outbound_daily_cap, t.ghl_location_id, t.outbound_state,
+            t.outbound_setup_paid_at, t.outbound_setup_due_at,
+            (SELECT balance_cents FROM lite_outbound_credit w WHERE w.tenant_id = t.id) AS balance_cents,
+            (SELECT reserved_cents FROM lite_outbound_credit w WHERE w.tenant_id = t.id) AS reserved_cents,
             (SELECT COUNT(*) FROM lite_outbound_lists l WHERE l.tenant_id = t.id) AS lists,
             (SELECT COUNT(*) FROM lite_outbound_lists l WHERE l.tenant_id = t.id AND l.status = 'active') AS active_lists,
             (SELECT COUNT(*) FROM lite_outbound_contacts c WHERE c.tenant_id = t.id) AS contacts
@@ -1726,9 +1729,17 @@ router.get('/outbound', async (req, res) => {
     { type: sequelize.QueryTypes.SELECT }
   ).catch((e) => { throw e; });
   res.json({ ok: true,
+    pricing: require('../services/outboundBilling').pricing(),
     tenants: rows.map((r) => ({
       tenant: r.id,
       business: r.business_name || null,
+      state: r.outbound_state || 'off',
+      setup_paid_at: r.outbound_setup_paid_at || null,
+      setup_due_at: r.outbound_setup_due_at || null,
+      overdue: !!(r.outbound_state === 'pending_setup' && r.outbound_setup_due_at
+        && new Date(r.outbound_setup_due_at) < new Date()),
+      balance_cents: Number(r.balance_cents) || 0,
+      reserved_cents: Number(r.reserved_cents) || 0,
       enabled: !!r.outbound_enabled,
       workflow_id: r.outbound_workflow_id ? String(r.outbound_workflow_id) : null,
       daily_cap: r.outbound_daily_cap == null ? null : Number(r.outbound_daily_cap),
@@ -1831,7 +1842,33 @@ router.post('/outbound', express.json({ limit: '4kb' }), async (req, res) => {
   console.log('[lite:outbound] tenant', tenantId, 'enabled=', patch.outbound_enabled,
     'workflow=', patch.outbound_workflow_id !== undefined ? 'set' : 'unchanged');
 
+  // COMPLETING THE SETUP AND TELLING THE CLIENT ARE ONE ACTION.
+  // Two actions is how a client who has paid sits uninformed for a day while
+  // the thing they bought is already working.
+  let told = null;
+  // EXPLICIT, not the default. `enable` defaults true, so a call that only
+  // changed `daily_cap` would flip a paying tenant live and email them "your
+  // outbound caller is ready" before the operator had finished building it.
+  if (b.enabled === true && t.outbound_state === 'pending_setup') {
+    const billing = require('../services/outboundBilling');
+    const notify = require('../services/notify');
+    const moved = await billing.transition(tenantId, 'pending_setup', 'active',
+      { outbound_activated_at: new Date(), outbound_state_reason: null });
+    if (moved.moved) {
+      await notify.notify(tenantId, 'outbound_ready', 'Your outbound caller is ready',
+        'Add funds and upload your list to start calling.');
+      const [u] = await sequelize.query(
+        'SELECT email FROM lite_users WHERE tenant_id = :t ORDER BY id LIMIT 1',
+        { replacements: { t: tenantId } }).catch(() => [[]]);
+      const to = u && u[0] && u[0].email;
+      told = to ? await notify.clientOutboundReady(t, to).catch(() => ({ sent: false }))
+        : { sent: false, reason: 'no_user_email' };
+    }
+  }
+
   res.json({ ok: true, tenant: tenantId,
+    activated: told !== null,
+    client_emailed: told,
     enabled: !!patch.outbound_enabled,
     workflow_id: effectiveWorkflow || null,
     workflow_verified: verified,

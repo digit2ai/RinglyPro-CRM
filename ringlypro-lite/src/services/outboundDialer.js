@@ -83,7 +83,14 @@ async function runTenant(tenantId, { at = new Date(), limit = perTick() } = {}) 
     // A refusal that will still be true next tick must not be retried for
     // ever: mark it so the pass moves on. A refusal that is about the CLOCK
     // is left pending on purpose — it becomes dialable later today.
-    const transient = ['outside calling hours', 'daily_cap_reached', 'timezone_unreadable']
+    // TRANSIENT = "this will not still be true later". Running out of credit
+    // and not being activated are BOTH temporary: the client tops up, or the
+    // owner finishes the setup. Marking those contacts `skipped` destroyed the
+    // rest of the list permanently — the dialer only ever selects `pending`
+    // and nothing requeues — so a client topped up and their campaign was
+    // silently dead, with the tab reporting 0 waiting as if it had finished.
+    const transient = ['outside calling hours', 'daily_cap_reached', 'timezone_unreadable',
+      'insufficient_credit', 'outbound_not_activated']
       .some((k) => String(r.reason || '').includes(k));
     if (!transient) {
       await sequelize.query(
@@ -100,8 +107,8 @@ async function runTenant(tenantId, { at = new Date(), limit = perTick() } = {}) 
 
     // A whole-tenant stop, so one exhausted cap or a closed window does not
     // burn the rest of the pass refusing every remaining contact in turn.
-    if (String(r.reason || '').includes('daily_cap_reached')
-      || String(r.reason || '').includes('outside calling hours')) break;
+    if (['daily_cap_reached', 'outside calling hours', 'insufficient_credit',
+      'outbound_not_activated'].some((k) => String(r.reason || '').includes(k))) break;
   }
   return { tenant: tenantId, results };
 }
@@ -134,6 +141,15 @@ function start() {
       held = !!(lk && lk[0] && (lk[0].ok === true || lk[0].ok === 't'));
       if (!held) return;
       stats.runs++; stats.last_at = new Date().toISOString();
+      // THE SWEEP RUNS HERE BECAUSE IT WAS WRITTEN AND NEVER CALLED. Every
+      // call whose log never arrives holds 130c of the client's balance for
+      // ever, shows as in-progress in their report, and eats the funds they
+      // paid for. The dialer already holds the advisory lock, so this runs
+      // once across instances.
+      try {
+        const sw = await require('./outboundBilling').sweepStaleReserves({});
+        if (sw.swept) console.log(`[lite:dialer] released ${sw.swept} stale reserve(s)`);
+      } catch (e) { console.warn('[lite:dialer] reserve sweep failed:', e.message); }
       const r = await runAll({});
       const n = r.results.reduce((a, x) => a + (x.results || []).filter((y) => y.dialled).length, 0);
       if (n) console.log(`[lite:dialer] enrolled ${n} call(s)`);

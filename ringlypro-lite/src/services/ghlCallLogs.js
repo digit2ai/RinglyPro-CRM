@@ -25,6 +25,7 @@
 const ghl = require('../telephony/ghl');
 const accounts = require('./ghlAccounts');
 const mirror = require('./callMirror');
+const billing = require('./outboundBilling');
 const { Tenant, Number: NumberModel } = require('../models');
 
 const VOICE_VERSION = () => String(process.env.LITE_GHL_VOICE_VERSION || 'v3').trim();
@@ -67,6 +68,9 @@ function readLog(l) {
   return {
     callId: l.id || l.callId || null,
     agentId: l.agentId || null,
+    // The ONLY key that reliably identifies an outbound call we placed.
+    // See outboundBilling.settleFromCallLog for why not the phone number.
+    contactId: l.contactId || l.contact_id || (l.contact && l.contact.id) || null,
     dialed: l.toNumber || l.to || l.inboundNumber || null,
     caller: l.fromNumber || l.from || (l.contact && l.contact.phone) || null,
     callerName: l.contactName || (l.contact && (l.contact.name || l.contact.firstName)) || ex.name || null,
@@ -202,6 +206,36 @@ async function importRecent({ creds, minutes, dryRun = false } = {}) {
       continue;
     }
     try {
+      // AN OUTBOUND CALL IS OURS TO SETTLE, NOT A MISSED CALL TO MIRROR.
+      // Without this branch every outbound call the client paid for would
+      // also appear in their Messages tab as "somebody called you" — and the
+      // owner would be texted about it. The claim is checked FIRST and an
+      // already-settled outbound call is still claimed, so a re-poll cannot
+      // leak one into the inbox later.
+      // THE TENANT COMES FROM THE DIALLED LINE, never from the contact id.
+      // One shared sub-account means a contact id is not tenant-specific; the
+      // agent that placed the call is, and `f.dialed` was backfilled from the
+      // agent map above. With no resolvable tenant nothing is claimed and the
+      // log falls through to the mirror, which does its own attribution.
+      const obNum = await mirror.resolveNumber({ dialed: f.dialed, agentId: f.agentId })
+        .catch(() => null);
+      const ob = obNum
+        ? await billing.settleFromCallLog(f, { tenantId: obNum.tenant_id }).catch((e) => {
+          // A SETTLE ERROR MUST NOT FALL THROUGH TO THE MIRROR. Doing so turns
+          // a transient database error into the exact bug this branch exists
+          // to prevent: the client's own outbound call arriving in their inbox
+          // as "somebody called you", with the owner texted about it. Claim it
+          // unsettled instead; the next poll retries.
+          stats.last_error = 'settle: ' + String(e.message || e).slice(0, 160);
+          return { claimed: true, settled: false, reason: 'settle_error' };
+        })
+        : { claimed: false, reason: 'no_tenant_for_log' };
+      if (ob.claimed) {
+        if (ob.settled) stats.settled = (stats.settled || 0) + 1;
+        results.push(Object.assign({ call_id: f.callId, outbound: true }, ob));
+        continue;
+      }
+
       // notifyOwner stays TRUE: a message found by a poll is still a message
       // the owner has not seen. It is guarded by the call-id idempotency, so a
       // re-poll of the same window cannot text them twice.

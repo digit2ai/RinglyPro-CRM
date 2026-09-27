@@ -40,6 +40,7 @@ const { sequelize, Tenant } = require('../models');
 const tollFraud = require('../security/tollFraud');
 const ghl = require('../telephony/ghl');
 const accounts = require('./ghlAccounts');
+const billing = require('./outboundBilling');
 
 const CONSENT_BASES = ['existing_customer', 'express_written', 'business_published', 'unstated'];
 
@@ -284,6 +285,24 @@ async function mayDial(tenant, contact, at = new Date()) {
   const cap = Math.max(0, parseInt(tenant.outbound_daily_cap, 10) || 0);
   if (cap > 0 && (await dialledToday(tenant.id)) >= cap) {
     return { ok: false, reason: 'daily_cap_reached', detail: `cap ${cap}` };
+  }
+
+  // THE COMMERCIAL GATE, SEPARATE FROM THE TECHNICAL ONE. `outbound_enabled`
+  // says the owner built this client's HighLevel workflow; `outbound_state`
+  // says they paid for it. Both are required, and they are different
+  // messages: one is "we are still setting you up", the other is "you have
+  // not bought this".
+  if (tenant.outbound_state !== 'active') {
+    return { ok: false, reason: 'outbound_not_activated', detail: tenant.outbound_state || 'off' };
+  }
+
+  // FUNDS LAST, because it is the only gate that MOVES something. Every check
+  // above is a read; this one holds money, so it must not run for a call that
+  // some earlier rule was going to refuse anyway.
+  const bal = await billing.wallet(tenant.id);
+  if (!bal.can_place_a_call) {
+    return { ok: false, reason: 'insufficient_credit',
+      detail: `balance ${bal.balance_cents}c, need ${billing.reserveCents()}c` };
   }
   return { ok: true, e164: chk.e164, tz: hours.tz };
 }
@@ -536,14 +555,31 @@ async function dial(tenant, contact, { at = new Date(), creds } = {}) {
     }
   }
 
-  await ghl.call('POST',
-    `/contacts/${encodeURIComponent(contactId)}/workflow/${encodeURIComponent(tenant.outbound_workflow_id)}`,
-    { creds: c, version: 'v3', body: {} });
+  // RESERVE BEFORE ENROLLING, AND THE ORDER IS NOT ARBITRARY.
+  //
+  // A reserve with no enrollment is money held for a moment and given straight
+  // back. An enrollment with no reserve is a call the owner pays HighLevel for
+  // and never bills. Only one of those is recoverable, so the money moves
+  // first and the release below undoes it if the enrollment throws.
+  //
+  // It is also the only place two racing dials can be serialised: the hold is
+  // a conditional UPDATE, so exactly one wins the last dollar.
+  const held = await billing.reserve(tenant.id);
+  if (!held.ok) return { ok: false, reason: 'insufficient_credit', detail: held.needed_cents };
+
+  try {
+    await ghl.call('POST',
+      `/contacts/${encodeURIComponent(contactId)}/workflow/${encodeURIComponent(tenant.outbound_workflow_id)}`,
+      { creds: c, version: 'v3', body: {} });
+  } catch (e) {
+    await billing.release(tenant.id, held.reserved_cents);
+    return { ok: false, reason: 'enroll_failed', detail: String(e.message || e).slice(0, 200) };
+  }
 
   const [ins] = await sequelize.query(
-    `INSERT INTO lite_outbound_calls (tenant_id, contact_id, list_id)
-       VALUES (:t, :c, :l) RETURNING id`,
-    { replacements: { t: tenant.id, c: contact.id, l: contact.list_id || null } }
+    `INSERT INTO lite_outbound_calls (tenant_id, contact_id, list_id, reserved_cents)
+       VALUES (:t, :c, :l, :r) RETURNING id`,
+    { replacements: { t: tenant.id, c: contact.id, l: contact.list_id || null, r: held.reserved_cents } }
   );
   await sequelize.query(
     `UPDATE lite_outbound_contacts

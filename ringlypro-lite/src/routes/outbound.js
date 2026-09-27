@@ -14,6 +14,25 @@ const router = express.Router();
 const { sequelize, Tenant } = require('../models');
 const ob = require('../services/outbound');
 const tollFraud = require('../security/tollFraud');
+const billing = require('../services/outboundBilling');
+const notify = require('../services/notify');
+
+// A PER-TENANT CEILING ON THE PAID ENDPOINTS. Nothing else in the /api tree
+// is rate limited, so one signed-in client looping /topup could create
+// thousands of Stripe Checkout sessions — spending the PLATFORM's shared
+// Stripe quota and breaking checkout for every other tenant — and grow a
+// table with a unique index without bound. In memory, per instance, which is
+// stated rather than implied.
+const HITS = new Map();
+function tooMany(tenantId, key, perMin) {
+  const now = Date.now();
+  const k = `${tenantId}:${key}`;
+  const arr = (HITS.get(k) || []).filter((t) => now - t < 60000);
+  if (arr.length >= perMin) { HITS.set(k, arr); return true; }
+  arr.push(now); HITS.set(k, arr);
+  if (HITS.size > 5000) HITS.clear();          // unbounded map is its own leak
+  return false;
+}
 
 const MAX_UPLOAD = Math.max(1, parseInt(process.env.LITE_OUTBOUND_MAX_KB || '2048', 10) || 2048) * 1024;
 
@@ -135,11 +154,26 @@ router.post('/lists/:id/activate', async (req, res) => {
     return res.status(403).json({ error: 'outbound_not_enabled',
       message: 'Outbound calling is not switched on for this account yet.' });
   }
-  await sequelize.query(
+  // Paid AND set up. Activating a list while either is missing would start a
+  // campaign the dialer then refuses on every contact, one at a time.
+  if (t.outbound_state !== 'active') {
+    return res.status(402).json({ error: 'outbound_not_activated', state: t.outbound_state,
+      message: 'Activate outbound first.' });
+  }
+  const w = await billing.wallet(req.tenantId);
+  if (!w.can_place_a_call) {
+    return res.status(402).json({ error: 'insufficient_credit', balance_cents: w.balance_cents,
+      message: 'Add funds before starting this list.' });
+  }
+  // Check what actually moved: reporting 'active' for another tenant's list
+  // id, or a stale one, tells the client a campaign started that does not
+  // exist.
+  const [moved] = await sequelize.query(
     `UPDATE lite_outbound_lists SET status = 'active', activated_at = NOW()
-       WHERE id = :i AND tenant_id = :t`,
+       WHERE id = :i AND tenant_id = :t RETURNING id`,
     { replacements: { i: id, t: req.tenantId } }
   );
+  if (!moved || !moved.length) return res.status(404).json({ error: 'no_such_list' });
   res.json({ ok: true, status: 'active' });
 });
 
@@ -177,6 +211,139 @@ router.post('/contacts/:id/dial', async (req, res) => {
     return res.status(502).json({ ok: false, reason: 'dial_failed',
       detail: String(e.message || e).slice(0, 200) });
   }
+});
+
+/* ── THE PAID ADD-ON ─────────────────────────────────────────────────────── */
+
+function stripe() {
+  const key = process.env.LITE_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  return require('stripe')(key);
+}
+function publicUrl() {
+  return (process.env.LITE_PUBLIC_URL || 'https://ringlypro-lite.onrender.com').replace(/\/$/, '');
+}
+
+/**
+ * Everything the tab needs to render itself, in one call. The PRICE IS
+ * COMPUTED HERE and nowhere else — no surface may hardcode a figure, so
+ * changing the env changes every screen with no redeploy.
+ */
+router.get('/plan', async (req, res) => {
+  const t = await Tenant.findByPk(req.tenantId);
+  const state = (t && t.outbound_state) || 'off';
+  const w = await billing.wallet(req.tenantId);
+  res.json({
+    state,
+    pricing: billing.pricing(),
+    wallet: w,
+    setup_paid_at: t && t.outbound_setup_paid_at,
+    setup_due_at: t && t.outbound_setup_due_at,
+    // A deadline that has passed must never keep being shown as a promise.
+    overdue: !!(state === 'pending_setup' && t && t.outbound_setup_due_at
+      && new Date(t.outbound_setup_due_at) < new Date()),
+    reason: t && t.outbound_state_reason,
+    national_dnc_scrub: false,
+    national_dnc_note: 'Numbers are NOT checked against the National Do Not Call registry. That needs an FTC Subscription Account Number. Only your own do-not-call list is applied.',
+  });
+});
+
+/** Pay the one-off setup fee. The AMOUNT IS READ FROM ENV, never from the body. */
+router.post('/activate', async (req, res) => {
+  if (tooMany(req.tenantId, 'activate', 5)) return res.status(429).json({ error: 'slow_down' });
+  const t = await Tenant.findByPk(req.tenantId);
+  if (!t) return res.status(404).json({ error: 'no_tenant' });
+  if (['pending_setup', 'active'].includes(t.outbound_state)) {
+    return res.status(409).json({ error: 'already_' + t.outbound_state });
+  }
+  const s = stripe();
+  if (!s) return res.status(503).json({ error: 'payments_not_configured' });
+
+  const amount = billing.setupFeeCents();
+  try {
+    // Reuse an open session rather than minting a second: two sessions for
+    // one activation is two charges if both get paid.
+    const [open] = await sequelize.query(
+      `SELECT stripe_session_id FROM lite_outbound_payments
+        WHERE tenant_id = :t AND kind = 'setup' AND status = 'open'
+        ORDER BY id DESC LIMIT 1`, { replacements: { t: req.tenantId } });
+    if (open && open.length && open[0].stripe_session_id) {
+      try {
+        const prev = await s.checkout.sessions.retrieve(open[0].stripe_session_id);
+        if (prev && prev.status === 'open' && prev.url) return res.json({ url: prev.url, reused: true });
+      } catch (_) { /* fall through and make a new one */ }
+    }
+
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: amount,
+        product_data: { name: 'Outbound calling — one-off setup' } } }],
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(req.tenantId) },
+      success_url: `${publicUrl()}/dashboard?outbound=confirming`,
+      cancel_url: `${publicUrl()}/dashboard?outbound=cancelled`,
+    });
+    await sequelize.query(
+      `INSERT INTO lite_outbound_payments (tenant_id, kind, amount_cents, stripe_session_id)
+       VALUES (:t, 'setup', :a, :s)`,
+      { replacements: { t: req.tenantId, a: amount, s: session.id } });
+    await billing.transition(req.tenantId, ['off', 'awaiting_setup_payment', 'failed_setup'],
+      'awaiting_setup_payment');
+    res.json({ url: session.url, amount_cents: amount });
+  } catch (e) {
+    res.status(502).json({ error: 'checkout_failed', detail: String(e.message || e).slice(0, 200) });
+  }
+});
+
+/** Add funds. Any amount at or above the floor. */
+router.post('/topup', express.json({ limit: '4kb' }), async (req, res) => {
+  if (tooMany(req.tenantId, 'topup', 10)) return res.status(429).json({ error: 'slow_down' });
+  const t = await Tenant.findByPk(req.tenantId);
+  if (!t) return res.status(404).json({ error: 'no_tenant' });
+  if (t.outbound_state !== 'active') {
+    return res.status(402).json({ error: 'outbound_not_activated', state: t.outbound_state });
+  }
+  const amount = Math.round(Number((req.body || {}).amount_cents) || 0);
+  if (!Number.isFinite(amount) || amount < billing.minTopupCents() || amount > 500000) {
+    return res.status(400).json({ error: 'bad_amount', min_cents: billing.minTopupCents() });
+  }
+  const s = stripe();
+  if (!s) return res.status(503).json({ error: 'payments_not_configured' });
+  try {
+    const session = await s.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: amount,
+        product_data: { name: 'Outbound calling credit' } } }],
+      metadata: { kind: 'lite_outbound_topup', tenant_id: String(req.tenantId) },
+      success_url: `${publicUrl()}/dashboard?outbound=funded`,
+      cancel_url: `${publicUrl()}/dashboard?outbound=cancelled`,
+    });
+    await sequelize.query(
+      `INSERT INTO lite_outbound_payments (tenant_id, kind, amount_cents, stripe_session_id)
+       VALUES (:t, 'credit', :a, :s)`,
+      { replacements: { t: req.tenantId, a: amount, s: session.id } });
+    res.json({ url: session.url, amount_cents: amount });
+  } catch (e) {
+    res.status(502).json({ error: 'checkout_failed', detail: String(e.message || e).slice(0, 200) });
+  }
+});
+
+/** The call report: what happened, and what it cost. */
+router.get('/calls', async (req, res) => {
+  const listId = req.query.list ? parseInt(req.query.list, 10) : null;
+  res.json({
+    calls: await billing.callReport(req.tenantId, { limit: 200, listId: Number.isInteger(listId) ? listId : null }),
+    summary: await billing.spendSummary(req.tenantId, { listId: Number.isInteger(listId) ? listId : null }),
+    pricing: billing.pricing(),
+  });
+});
+
+/** Dashboard notifications — the channel that works with no email transport. */
+router.get('/notifications', async (req, res) => {
+  res.json({ notifications: await notify.list(req.tenantId, { limit: 20 }) });
+});
+router.post('/notifications/read', async (req, res) => {
+  await notify.markRead(req.tenantId, null);
+  res.json({ ok: true });
 });
 
 module.exports = router;

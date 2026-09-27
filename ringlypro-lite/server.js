@@ -148,10 +148,89 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS ix_lite_ob_calls_contact ON lite_outbound_calls(contact_id);
   `);
   // Dialling is a per-tenant privilege an operator grants, never a signup default.
+  //
+  // TWO GATES, DELIBERATELY SEPARATE. `outbound_enabled` + `outbound_workflow_id`
+  // say the PLUMBING exists (the owner built this client's HighLevel workflow by
+  // hand — HighLevel has no API to create one). `outbound_state` says it has
+  // been PAID FOR. Both must be true to dial. Collapsing them into one column
+  // loses the difference between "not set up" and "not paid", which are
+  // different messages to the client and different actions for the owner.
   await sequelize.query(`
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_enabled BOOLEAN DEFAULT FALSE;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_workflow_id VARCHAR(64);
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_daily_cap INTEGER DEFAULT 50;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_state VARCHAR(24) NOT NULL DEFAULT 'off';
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_setup_paid_at TIMESTAMPTZ;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_setup_due_at TIMESTAMPTZ;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_activated_at TIMESTAMPTZ;
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS outbound_state_reason VARCHAR(200);
+  `);
+
+  // THE WALLET. One row per tenant. `reserved_cents` is money held against
+  // calls that are in flight: the cost of a call is NOT known when it is
+  // placed (HighLevel bills per minute and reports the duration minutes
+  // later), so a generous amount is reserved at dial time and the unused part
+  // is released when the call log arrives. Holding rather than charging is
+  // what stops a balance going negative when two dials race.
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS lite_outbound_credit (
+      tenant_id INTEGER PRIMARY KEY,
+      balance_cents INTEGER NOT NULL DEFAULT 0,
+      reserved_cents INTEGER NOT NULL DEFAULT 0,
+      lifetime_topup_cents INTEGER NOT NULL DEFAULT 0,
+      lifetime_spent_cents INTEGER NOT NULL DEFAULT 0,
+      low_balance_notified_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ALTER TABLE lite_outbound_credit ADD COLUMN IF NOT EXISTS low_balance_notified_at TIMESTAMPTZ;
+
+    -- EVERY CHARGE, AUDITABLE. Two unique indexes carry the idempotency that
+    -- makes a replayed Stripe webhook a no-op rather than a second credit.
+    CREATE TABLE IF NOT EXISTS lite_outbound_payments (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      kind VARCHAR(16) NOT NULL,
+      amount_cents INTEGER NOT NULL,
+      currency VARCHAR(8) NOT NULL DEFAULT 'usd',
+      status VARCHAR(16) NOT NULL DEFAULT 'open',
+      stripe_session_id VARCHAR(120),
+      stripe_event_id VARCHAR(120),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      confirmed_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_ob_pay_tenant ON lite_outbound_payments(tenant_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ob_pay_session
+      ON lite_outbound_payments(stripe_session_id) WHERE stripe_session_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ob_pay_event
+      ON lite_outbound_payments(stripe_event_id) WHERE stripe_event_id IS NOT NULL;
+  `);
+
+  // What a call cost and what happened on it. Added to the existing table
+  // rather than a new one: the report and the billing read the same row, so
+  // the figure shown to the client is the figure that moved the money.
+  await sequelize.query(`
+    ALTER TABLE lite_outbound_calls ADD COLUMN IF NOT EXISTS reserved_cents INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE lite_outbound_calls ADD COLUMN IF NOT EXISTS charged_cents INTEGER;
+    ALTER TABLE lite_outbound_calls ADD COLUMN IF NOT EXISTS duration_sec INTEGER;
+    ALTER TABLE lite_outbound_calls ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_lite_ob_calls_ghl
+      ON lite_outbound_calls(ghl_call_id) WHERE ghl_call_id IS NOT NULL;
+  `);
+
+  // The one channel that cannot fail. Email needs a key and a working
+  // transport; this needs neither, so it is written FIRST on every event and
+  // the email is the optimisation on top.
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS lite_notifications (
+      id SERIAL PRIMARY KEY,
+      tenant_id INTEGER NOT NULL,
+      kind VARCHAR(40) NOT NULL,
+      title VARCHAR(200) NOT NULL,
+      body TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      read_at TIMESTAMPTZ
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_notif_tenant ON lite_notifications(tenant_id, created_at DESC);
   `);
 
   // Fraud-watch alert log: dedupes alerts across restarts, so a redeploy does
