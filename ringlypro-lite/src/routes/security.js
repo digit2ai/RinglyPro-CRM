@@ -29,6 +29,24 @@ router.use((req, res, next) => (keyOk(req) ? next() : res.status(404).json({ err
 
 router.get('/', async (req, res) => {
   res.set('Cache-Control', 'no-store');
+
+  // CAN THE FOUNDER ACTUALLY BE REACHED? Every owner alert — "a client paid,
+  // go build their workflow" — is a notification on the owner's OWN tenant,
+  // resolved from LITE_OWNER_ALERT_EMAIL. If no account carries that address
+  // the alert goes NOWHERE, and the only symptom is a paying client waiting
+  // a day for a setup nobody was told about. Reported here so it is a visible
+  // fact rather than an assumption.
+  let ownerAlerts;
+  try {
+    const nt = require('../services/notify');
+    const t = await nt.ownerTenantId();
+    ownerAlerts = t
+      ? { email: nt.ownerEmail(), tenant: t, deliverable: true }
+      : { email: nt.ownerEmail(), tenant: null, deliverable: false,
+        problem: 'NO ACCOUNT HAS THIS EMAIL — owner alerts are not being delivered. Sign up or rename an account to it, or set LITE_OWNER_ALERT_EMAIL to an address that exists.' };
+  } catch (e) {
+    ownerAlerts = { deliverable: false, problem: String(e.message || e).slice(0, 160) };
+  }
   // Phones saved before the allow-list existed that it would now refuse: those
   // owners silently stop getting texts or transfers, so they are listed here
   // (tenant id and field only, never the number) for someone to fix.
@@ -42,7 +60,8 @@ router.get('/', async (req, res) => {
     }
   } catch (e) { stale = { error: e.message }; }
   const ghlOn = !!(process.env.LITE_GHL_TOKEN && process.env.LITE_GHL_LOCATION_ID);
-  res.json({ outbound_guard: tollFraud.status(), fraud_watch: fraudWatch.status(), webhook_signature: twilioSig.status(),
+  res.json({
+    owner_alerts: ownerAlerts, outbound_guard: tollFraud.status(), fraud_watch: fraudWatch.status(), webhook_signature: twilioSig.status(),
     phones_now_refused: stale,
     // SAID PLAINLY RATHER THAN IMPLIED. outbound_guard's velocity limits cover
     // what OUR provider dials. A HighLevel transfer is placed by HighLevel, so

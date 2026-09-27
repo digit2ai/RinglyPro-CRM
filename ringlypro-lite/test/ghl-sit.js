@@ -3365,6 +3365,17 @@ const tenantSeed = (over = {}) => ({
       'an ordinary subscriber reads as the founder');
   });
 
+  await t('AN UNREACHABLE FOUNDER IS REPORTED, not discovered by a waiting client', () => {
+    // Owner alerts are notifications on the owner's own tenant, resolved from
+    // LITE_OWNER_ALERT_EMAIL. If no account carries that address the alert
+    // goes NOWHERE and the only symptom is a paying client waiting a day for
+    // a setup nobody was told about.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
+    assert.ok(/owner_alerts: ownerAlerts/.test(src), '/internal/security does not report owner reachability');
+    assert.ok(/deliverable: false/.test(src), 'an unresolvable owner is not reported as undeliverable');
+    assert.ok(/NO ACCOUNT HAS THIS EMAIL/.test(src), 'the problem is reported without saying what to do');
+  });
+
   ghlMod.call = realCall;
 
   srv.close();
