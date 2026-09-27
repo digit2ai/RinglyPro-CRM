@@ -44,6 +44,19 @@
   nav a.on{color:var(--acc2)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
   .msg{font-size:13px;color:var(--mut);min-height:16px}
+  .obcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .obh{font-weight:700;color:var(--txt);margin-bottom:4px}
+  .obhint{font-size:13px;color:var(--mut);margin:4px 0 8px;display:block}
+  .obcard input,.obcard textarea,.obcard select{width:100%;font-size:16px;padding:10px;margin:6px 0;
+    border:1px solid var(--line);border-radius:10px;background:var(--inp);color:var(--txt)}
+  .obrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .obrow input{flex:1;min-width:140px}
+  .obmsg{font-size:13px;margin-top:8px;white-space:pre-wrap}
+  .obwarn{color:var(--warn)}.obok{color:var(--ok)}
+  .obitem{border-top:1px solid var(--line);padding:8px 0;font-size:14px}
+  .obitem:first-child{border-top:0}
+  .obpill{display:inline-block;font-size:11px;padding:2px 7px;border-radius:9px;background:var(--inp);color:var(--mut);margin-left:6px}
+  @media(max-width:700px){ nav a{font-size:12px;padding:0 2px} }
   .addbar{margin:4px 0 10px}
   .apptform{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
   .apptform input{font-size:16px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--inp);color:var(--txt)}
@@ -112,6 +125,39 @@
     <div id="calendar"></div>
   </section>
   <!-- SETTINGS -->
+  <section class="view" id="v-outbound">
+    <div id="ob_status" class="obcard"></div>
+    <div class="obcard">
+      <div class="obh" data-i="obUpload">Upload a list</div>
+      <div class="obhint" data-i="obCsvHint">CSV with company, phone and (optional) email. Export from Excel with File, Save As, CSV.</div>
+      <input id="ob_file" type="file" accept=".csv,.txt,text/csv,text/plain">
+      <textarea id="ob_paste" rows="4" placeholder="…or paste rows here"></textarea>
+      <input id="ob_name" placeholder="List name">
+      <label class="obhint" data-i="obConsent">Why may you call these people?</label>
+      <select id="ob_consent">
+        <option value="existing_customer">They are existing customers</option>
+        <option value="express_written">They gave written permission</option>
+        <option value="business_published">Businesses that publish this number</option>
+        <option value="unstated" selected>Not stated</option>
+      </select>
+      <div class="obrow">
+        <button class="sm" onclick="obPreview()" data-i="obCheck">Check the file</button>
+        <button class="sm" id="ob_save" onclick="obSave()" disabled data-i="obSaveList">Save as draft</button>
+      </div>
+      <div id="ob_result" class="obmsg"></div>
+    </div>
+    <div class="obcard">
+      <div class="obh" data-i="obLists">Your lists</div>
+      <div id="ob_lists"></div>
+    </div>
+    <div class="obcard">
+      <div class="obh" data-i="obDnc">Do not call</div>
+      <div class="obhint" data-i="obDncHint">Anyone who asks to be taken off. Checked again every time before dialling.</div>
+      <div class="obrow"><input id="ob_dnc" placeholder="+1…"><button class="sm" onclick="obAddDnc()" data-i="obAdd">Add</button></div>
+      <div id="ob_dnclist"></div>
+    </div>
+  </section>
+
   <section class="view" id="v-settings">
     <div class="card">
       <div class="day" data-i="biz">Business</div>
@@ -184,11 +230,12 @@
 <nav>
   <a href="#" class="on" data-view="messages" data-i="nmsg">Messages<span class="badge" id="unread" style="display:none">0</span></a>
   <a href="#" data-view="calendar" data-i="ncal">Calendar</a>
+  <a href="#" data-view="outbound" data-i="nout">Outbound</a>
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",noReason:"No reason given",apAdd:"Add appointment",apName:"Name",apPhone:"Phone (optional)",apReason:"What is it for?",apSave:"Save",apSaving:"Saving…",apFill:"Name, date and time are required.",apTaken:"That time is already booked.",apUnconfirmed:"Held, but not confirmed with the calendar yet — check it.",apSyncFail:"The calendar refused it. Pick another time.",apBadNum:"That phone number is not one we can use.",apFailed:"Could not save. Try again.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",noResults:"No messages match your search.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",noReason:"Sin motivo indicado",apAdd:"Agregar cita",apName:"Nombre",apPhone:"Teléfono (opcional)",apReason:"¿Para qué es?",apSave:"Guardar",apSaving:"Guardando…",apFill:"Nombre, fecha y hora son obligatorios.",apTaken:"Ese horario ya está reservado.",apUnconfirmed:"Reservado, pero aún sin confirmar con el calendario — revísalo.",apSyncFail:"El calendario lo rechazó. Elige otro horario.",apBadNum:"Ese número no lo podemos usar.",apFailed:"No se pudo guardar. Inténtalo de nuevo.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",noResults:"Ningún mensaje coincide con su búsqueda.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",nout:"Outbound",obUpload:"Upload a list",obCsvHint:"CSV with company, phone and (optional) email. Export from Excel with File, Save As, CSV.",obConsent:"Why may you call these people?",obCheck:"Check the file",obSaveList:"Save as draft",obLists:"Your lists",obDnc:"Do not call",obDncHint:"Anyone who asks to be taken off. Checked again every time before dialling.",obAdd:"Add",obOff:"Outbound calling is not switched on for this account yet.",obNoWf:"Not connected to an outbound workflow yet, so nothing can dial.",obDncOff:"Numbers are NOT checked against the National Do Not Call registry. Only your own list below is applied.",obActivate:"Activate",obDial:"Call now",obDraft:"draft",obActive:"active",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",noReason:"No reason given",apAdd:"Add appointment",apName:"Name",apPhone:"Phone (optional)",apReason:"What is it for?",apSave:"Save",apSaving:"Saving…",apFill:"Name, date and time are required.",apTaken:"That time is already booked.",apUnconfirmed:"Held, but not confirmed with the calendar yet — check it.",apSyncFail:"The calendar refused it. Pick another time.",apBadNum:"That phone number is not one we can use.",apFailed:"Could not save. Try again.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",noResults:"No messages match your search.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",nout:"Salientes",obUpload:"Subir una lista",obCsvHint:"CSV con empresa, teléfono y (opcional) correo. Expórtalo desde Excel con Archivo, Guardar como, CSV.",obConsent:"¿Por qué puede llamar a estas personas?",obCheck:"Revisar el archivo",obSaveList:"Guardar como borrador",obLists:"Sus listas",obDnc:"No llamar",obDncHint:"Quien pida no ser llamado. Se verifica otra vez antes de cada llamada.",obAdd:"Agregar",obOff:"Las llamadas salientes aún no están activadas en esta cuenta.",obNoWf:"Aún no hay flujo de salida conectado, así que nada puede llamar.",obDncOff:"Los números NO se comparan con el registro nacional No Llame. Solo se aplica su propia lista.",obActivate:"Activar",obDial:"Llamar ahora",obDraft:"borrador",obActive:"activa",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",noReason:"Sin motivo indicado",apAdd:"Agregar cita",apName:"Nombre",apPhone:"Teléfono (opcional)",apReason:"¿Para qué es?",apSave:"Guardar",apSaving:"Guardando…",apFill:"Nombre, fecha y hora son obligatorios.",apTaken:"Ese horario ya está reservado.",apUnconfirmed:"Reservado, pero aún sin confirmar con el calendario — revísalo.",apSyncFail:"El calendario lo rechazó. Elige otro horario.",apBadNum:"Ese número no lo podemos usar.",apFailed:"No se pudo guardar. Inténtalo de nuevo.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",noResults:"Ningún mensaje coincide con su búsqueda.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.querySelectorAll('[data-i-ph]').forEach(e=>{const v=I[lang][e.getAttribute('data-i-ph')];if(typeof v==='string')e.placeholder=v});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -200,7 +247,7 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();c
   document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));$('v-'+v).classList.add('on');
   $('msgSearchBar').classList.toggle('on',v==='messages');   // search bar only on Messages
-  if(v==='calendar')loadCalendar();if(v==='settings')loadSettings();});
+  if(v==='calendar')loadCalendar();if(v==='settings')loadSettings();if(v==='outbound')loadOutbound();});
 
 function fmt(d){return new Date(d).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 
@@ -356,6 +403,110 @@ async function loadCalendar(){
     </div>
   </div>`;}).join('')).join('');
 }
+/* ── OUTBOUND ────────────────────────────────────────────────────────────
+   Nothing here dials by accident: check the file, save a DRAFT, activate,
+   then call one contact at a time. Every refusal the server gives is shown
+   verbatim — a row that is silently skipped is a row the owner never learns
+   about. The National Do Not Call statement is always on screen, because
+   implying a scrub that is not happening is the one thing here with legal
+   consequences.                                                            */
+let obParsed=null;
+async function loadOutbound(){
+  const st=await api('/api/outbound/status'); if(!st)return;
+  const box=$('ob_status');
+  const warn=[];
+  if(!st.enabled) warn.push('<div class="obwarn">'+I[lang].obOff+'</div>');
+  else if(!st.workflow_ready) warn.push('<div class="obwarn">'+I[lang].obNoWf+'</div>');
+  box.innerHTML='<div class="obh">'+I[lang].nout+'</div>'+warn.join('')
+    +'<div class="obhint">'+esc(st.calling_hours||'')+'</div>'
+    +'<div class="obhint">'+I[lang].obDncOff+'</div>'
+    +'<div class="obhint">'+esc(String(st.dialled_today))+' / '+esc(String(st.daily_cap))+' today</div>';
+  obLists(); obDnc();
+}
+async function obBody(){
+  const f=$('ob_file').files&&$('ob_file').files[0];
+  if(f) return await f.text();
+  return $('ob_paste').value||'';
+}
+async function obPreview(){
+  const out=$('ob_result'); out.className='obmsg'; out.textContent='…';
+  const body=await obBody();
+  if(!body.trim()){out.textContent='Add a file or paste some rows first.';return}
+  const r=await fetch('/api/outbound/preview',{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'text/plain'},body});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){ out.className='obmsg obwarn'; out.textContent=(j.message||j.error||'Could not read that file.'); $('ob_save').disabled=true; return; }
+  obParsed=body; $('ob_save').disabled=false;
+  const lines=[j.would_accept+' will be added, '+j.would_refuse+' refused.'];
+  if(j.truncated) lines.push('Only the first rows were read — the file is very large.');
+  if(!j.header_detected) lines.push('No header row found, so columns were read as company, phone, email.');
+  (j.refused||[]).slice(0,12).forEach(x=>lines.push('  refused '+(x.phone||'')+' — '+x.reason));
+  out.textContent=lines.join('\n');
+}
+async function obSave(){
+  if(!obParsed){obPreview();return}
+  const q='?name='+encodeURIComponent($('ob_name').value||'Uploaded list')
+         +'&consent='+encodeURIComponent($('ob_consent').value);
+  const r=await fetch('/api/outbound/lists'+q,{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'text/plain'},body:obParsed});
+  const j=await r.json().catch(()=>({}));
+  const out=$('ob_result');
+  if(r.status!==201){out.className='obmsg obwarn';out.textContent=j.message||j.error||'Could not save.';return}
+  out.className='obmsg obok';
+  out.textContent=j.stored+' saved as a draft'+(j.duplicates?', '+j.duplicates+' already on your list':'')+'. '+(j.next||'');
+  obParsed=null;$('ob_save').disabled=true;$('ob_paste').value='';$('ob_file').value='';
+  obLists();
+}
+async function obLists(){
+  const j=await api('/api/outbound/lists'); if(!j)return;
+  const el=$('ob_lists');
+  if(!j.lists.length){el.innerHTML='<div class="obhint">No lists yet.</div>';return}
+  el.innerHTML=j.lists.map(l=>'<div class="obitem"><b>'+esc(l.name)+'</b>'
+    +'<span class="obpill">'+esc(l.status==='active'?I[lang].obActive:I[lang].obDraft)+'</span>'
+    +'<span class="obpill">'+l.rows_accepted+' contacts</span>'
+    +(l.rows_refused?'<span class="obpill">'+l.rows_refused+' refused</span>':'')
+    +'<div class="obrow" style="margin-top:6px">'
+    +(l.status!=='active'?'<button class="sm ghost" onclick="obActivate('+l.id+')">'+I[lang].obActivate+'</button>':'')
+    +'<button class="sm ghost" onclick="obOpen('+l.id+')">Open</button></div>'
+    +'<div id="obl'+l.id+'"></div></div>').join('');
+}
+window.obActivate=async id=>{
+  const r=await fetch('/api/outbound/lists/'+id+'/activate',{method:'POST',credentials:'same-origin'});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) alert(j.message||j.error||'Could not activate.');
+  obLists();
+};
+window.obOpen=async id=>{
+  const j=await api('/api/outbound/lists/'+id+'/contacts'); if(!j)return;
+  $('obl'+id).innerHTML=(j.contacts||[]).map(c=>'<div class="obitem">'
+    +esc(c.company||c.contact_name||'—')+' · '+esc(c.phone)
+    +'<span class="obpill">'+esc(c.status)+'</span>'
+    +(c.timezone?'<span class="obpill">'+esc(c.timezone.split("/")[1]||c.timezone)+'</span>':'')
+    +' <button class="sm ghost" onclick="obDial('+c.id+')">'+I[lang].obDial+'</button>'
+    +'<span id="obd'+c.id+'" class="obhint"></span></div>').join('')
+    ||'<div class="obhint">Empty.</div>';
+};
+window.obDial=async id=>{
+  const el=$('obd'+id); el.textContent='…';
+  const r=await fetch('/api/outbound/contacts/'+id+'/dial',{method:'POST',credentials:'same-origin'});
+  const j=await r.json().catch(()=>({}));
+  // The server's reason is shown as-is: "outside calling hours (8:00-21:00
+  // America/Los_Angeles)" tells the owner something a generic failure cannot.
+  el.textContent = j.ok ? ' ✓ '+(j.note||'enrolled') : ' ✗ '+(j.detail||j.reason||'refused');
+  el.className = 'obhint '+(j.ok?'obok':'obwarn');
+};
+async function obDnc(){
+  const j=await api('/api/outbound/suppressions'); if(!j)return;
+  $('ob_dnclist').innerHTML=(j.suppressions||[]).map(x=>'<div class="obitem">'+esc(x.phone)
+    +'<span class="obpill">'+esc(x.reason)+'</span></div>').join('')||'<div class="obhint">Empty.</div>';
+}
+window.obAddDnc=async()=>{
+  const v=$('ob_dnc').value.trim(); if(!v)return;
+  await fetch('/api/outbound/suppressions',{method:'POST',credentials:'same-origin',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:v})});
+  $('ob_dnc').value=''; obDnc();
+};
+
 window.cancelAppt=async id=>{await api('/api/appointments/'+id+'/cancel',{method:'POST'});loadCalendar()};
 
 let rules=[]; let curBill=null;
