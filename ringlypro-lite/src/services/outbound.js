@@ -306,13 +306,26 @@ async function dial(tenant, contact, { at = new Date(), creds } = {}) {
   // The person must exist as a contact before a workflow can enroll them.
   let contactId = contact.ghl_contact_id;
   if (!contactId) {
-    const up = await ghl.call('POST', '/contacts/upsert', { creds: c, version: 'v3',
-      body: { locationId: ghl.locationId(c), phone: gate.e164,
-        name: contact.contact_name || contact.company || undefined,
-        email: contact.email || undefined,
-        companyName: contact.company || undefined } });
-    contactId = (up && (up.contact && up.contact.id)) || (up && up.id) || null;
-    if (!contactId) return { ok: false, reason: 'contact_upsert_returned_no_id' };
+    // ONE UPSERT PATH, THE ONE THAT IS PROVEN. This had its own copy pinned to
+    // Version v3 with no fallback, and no firstName/lastName — so a
+    // sub-account that rejects v3 would have failed every outbound call with
+    // '404 Cannot POST', and a contact would have landed in HighLevel's UI
+    // with no name. services/ghlCalendar.js has created real contacts in
+    // production: it tries v3 then the date-stamped version, splits the name,
+    // and is safe to retry because an upsert is one by definition.
+    try {
+      contactId = await require('./ghlCalendar').upsertContact({
+        creds: c,
+        name: contact.contact_name || contact.company || null,
+        phone: gate.e164,
+        email: contact.email || null,
+        companyName: contact.company || null,
+        source: 'RinglyPro Outbound',
+      });
+    } catch (e) {
+      return { ok: false, reason: 'contact_upsert_failed',
+        detail: String(e.message || e).slice(0, 200) };
+    }
   }
 
   await ghl.call('POST',

@@ -188,7 +188,7 @@ async function callVersioned(method, path, opts = {}, { idempotent = false, cloc
 }
 
 /** HighLevel requires a contactId on an appointment, so the caller becomes one. */
-async function upsertContact({ creds, name, phone, email, clock }) {
+async function upsertContact({ creds, name, phone, email, companyName, source, clock }) {
   const first = String(name || '').trim().split(/\s+/)[0] || null;
   const last = String(name || '').trim().split(/\s+/).slice(1).join(' ') || null;
   const out = await callVersioned('POST', '/contacts/upsert', {
@@ -200,7 +200,11 @@ async function upsertContact({ creds, name, phone, email, clock }) {
       ...(name ? { name: String(name).slice(0, 160) } : {}),
       ...(phone ? { phone: String(phone) } : {}),
       ...(email ? { email: String(email) } : {}),
-      source: 'RinglyPro',
+      // companyName is what the outbound importer carries; omitted entirely
+      // when absent so the body stays byte-identical for the booking path
+      // that has been working in production.
+      ...(companyName ? { companyName: String(companyName).slice(0, 200) } : {}),
+      source: source || 'RinglyPro',
     },
   }, { idempotent: true, clock });   // an upsert is safe to repeat; a create is not
   const id = out && (out.contact ? out.contact.id : out.id);
@@ -332,5 +336,4 @@ async function cancelAppointment({ tenant, creds, appt }) {
 
 module.exports = {
   pushAppointment, cancelAppointment, enabledFor, pushable,
-  stats, primaryVersion, fallbackVersion, validateSlot, budgetMs, _forgetVersion,
-};
+  stats, primaryVersion, fallbackVersion, validateSlot, budgetMs, _forgetVersion, upsertContact};

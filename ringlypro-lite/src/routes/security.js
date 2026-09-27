@@ -1652,4 +1652,51 @@ router.post('/booking-offer-probe', express.json({ limit: '4kb' }), async (req, 
   }
 });
 
+/**
+ * DOES HIGHLEVEL ACCEPT THE FIELDS THE OUTBOUND IMPORTER CARRIES?
+ *
+ * The booking path has created real contacts with firstName/lastName/name/
+ * phone/email/source. The outbound importer also carries a COMPANY, and
+ * `companyName` had never been sent to this sub-account — an unknown property
+ * is a 422 on this API, which would have failed every outbound call. Measure
+ * it rather than assume it.
+ *
+ * Uses a reserved test number that cannot be dialled, and reports the id it
+ * gets back so the contact can be found and removed by hand.
+ */
+router.post('/contact-fields-probe', express.json({ limit: '4kb' }), async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!(req.body && req.body.confirm === true)) {
+    return res.status(400).json({ ok: false, error: 'confirm_required',
+      message: 'POST {"confirm":true}. Creates ONE contact on a reserved test number.' });
+  }
+  const accounts = require('../services/ghlAccounts');
+  const cal = require('../services/ghlCalendar');
+  const { Tenant } = require('../models');
+  const { Op } = require('sequelize');
+  const anchor = await Tenant.findOne({ where: { ghl_location_id: { [Op.ne]: null } }, order: [['id', 'ASC']] });
+  if (!anchor) return res.status(404).json({ ok: false, error: 'no_tenant_with_location' });
+  const creds = await accounts.credsFor(anchor);
+
+  const tried = [];
+  // Field by field, so a refusal names the field rather than the request.
+  const cases = [
+    { label: 'baseline (proven booking fields)', args: { name: 'Field Probe', phone: '+15005550077' } },
+    { label: '+ companyName', args: { name: 'Field Probe', phone: '+15005550077', companyName: 'Probe Roofing LLC' } },
+    { label: '+ companyName + custom source', args: { name: 'Field Probe', phone: '+15005550077',
+      companyName: 'Probe Roofing LLC', source: 'RinglyPro Outbound' } },
+  ];
+  for (const c of cases) {
+    try {
+      const id = await cal.upsertContact(Object.assign({ creds }, c.args));
+      tried.push({ case: c.label, accepted: true, contact_id: id });
+    } catch (e) {
+      tried.push({ case: c.label, accepted: false, status: e.status || null,
+        error: String(e.message || e).slice(0, 220) });
+    }
+  }
+  return res.json({ ok: true, tried,
+    note: 'One contact on +1 500 555 0077 (a reserved, undialable test number). Remove it from HighLevel by hand.' });
+});
+
 module.exports = router;
