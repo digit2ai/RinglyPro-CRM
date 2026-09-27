@@ -1553,6 +1553,63 @@ app.get('/api/chamber-qr/:slug.svg', (req, res) => {
   return res.send(svg);
 });
 
+/**
+ * IS THE COPY OF THE LANDING PAGE ON ringlypro.com STILL CURRENT?
+ *
+ * ringlypro.com is a GoHighLevel site and holds an INLINE PASTE of the block in
+ * public/ringlypro_lite/index.html — this app cannot change it. That copy goes
+ * stale silently, and the way it was found was the owner tapping "Hear it now"
+ * on their own marketing page and being offered a phone number that had been
+ * dead since the Twilio voice shutdown. A copy nobody can see rotting is a copy
+ * that rots, so the drift is reported here instead of being discovered.
+ *
+ * Read-only, same-origin for the helper page, and it compares the ONE line that
+ * carries the demo numbers rather than diffing 42 KB of markup — whitespace and
+ * GoHighLevel's own wrapper make a byte comparison useless.
+ */
+let _syncCache = { at: 0, body: null };
+app.get('/ringlypro_lite/sync-check', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (Date.now() - _syncCache.at < 60000 && _syncCache.body) return res.json(_syncCache.body);
+  const demoLine = (html) => {
+    const m = String(html).match(/var DEMO=\{[^;]*\};/);
+    return m ? m[0] : null;
+  };
+  const nums = (html) => [...new Set((String(html).match(/\+1\d{10}/g) || []))].sort();
+  try {
+    const srcPath = path.join(__dirname, '../public/ringlypro_lite/index.html');
+    const source = fs.readFileSync(srcPath, 'utf8');
+    const r = await fetch('https://ringlypro.com/', {
+      headers: { 'User-Agent': 'RinglyProSyncCheck/1.0' },
+      signal: AbortSignal.timeout(15000),
+    });
+    const live = await r.text();
+    const a = demoLine(source), b = demoLine(live);
+    const out = {
+      checked_at: new Date().toISOString(),
+      source_of_truth: 'aiagent.ringlypro.com/ringlypro_lite/',
+      published_copy: 'ringlypro.com (GoHighLevel — this app cannot edit it)',
+      in_sync: !!a && a === b,
+      source_demo_line: a,
+      published_demo_line: b,
+      source_numbers: nums(source),
+      published_numbers: nums(live),
+      // GoHighLevel can render the pasted element more than once; every copy
+      // has to be replaced, so the count is reported rather than assumed to be 1.
+      published_block_copies: (String(live).match(/var DEMO=/g) || []).length,
+      uses_iframe: /aiagent\.ringlypro\.com\/ringlypro_lite/.test(live),
+      fix: 'Open /ringlypro_lite/ghl.html and re-paste, or switch to the Option A iframe so it can never drift again.',
+    };
+    _syncCache = { at: Date.now(), body: out };
+    return res.json(out);
+  } catch (e) {
+    // An unreachable ringlypro.com is NOT "in sync" — saying so would be the
+    // same silent all-clear this endpoint exists to remove.
+    return res.status(502).json({ in_sync: null, error: String(e.message || e).slice(0, 200),
+      note: 'Could not read ringlypro.com, so drift is UNKNOWN — not confirmed in sync.' });
+  }
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Serve all-in-one landing page (LaunchStack)

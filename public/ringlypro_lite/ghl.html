@@ -26,6 +26,13 @@
   <p>Two ways to make a GHL page (e.g. <code>ringlypro.com/home</code>) show the exact same landing as
   <code>aiagent.ringlypro.com/ringlypro_lite</code>. Option A is zero-maintenance and always in sync.</p>
 
+  <!-- Is the published copy current? Answered before the instructions, because
+       the whole reason to be on this page is that it usually is not. -->
+  <div id="syncBox" class="box" style="border-color:#3a4a2a;background:#141b29">
+    <b>ringlypro.com right now:</b> <span id="syncMsg">checking…</span>
+    <div id="syncDetail" style="font-size:13px;color:#8a98b0;margin-top:8px"></div>
+  </div>
+
   <h2>Option A — Iframe, full-page auto-height (recommended, always identical)</h2>
   <div class="box">
     <p>In GHL add a <b>Custom Code / HTML</b> element and paste this. The iframe
@@ -49,6 +56,34 @@
 </div>
 <script>
   var LANDING='https://aiagent.ringlypro.com/ringlypro_lite/';
+
+  // Report the drift rather than let the owner find it by tapping their own
+  // phone number. Same origin, so no CORS; the server does the outbound read.
+  fetch('/ringlypro_lite/sync-check').then(function(r){return r.json();}).then(function(d){
+    var msg=document.getElementById('syncMsg'), det=document.getElementById('syncDetail'),
+        box=document.getElementById('syncBox');
+    if(d.in_sync===true){
+      msg.textContent='IN SYNC — the published page matches this landing.';
+      msg.style.color='#3ad29f'; box.style.borderColor='#2c5a44';
+      det.textContent='Nothing to do.';
+    } else if(d.in_sync===false){
+      msg.textContent='STALE — it is showing different phone numbers.';
+      msg.style.color='#ffb454'; box.style.borderColor='#5a4520';
+      det.innerHTML='Published: <b>'+(d.published_numbers||[]).join(', ')+'</b><br>'+
+        'Should be: <b>'+(d.source_numbers||[]).join(', ')+'</b><br>'+
+        (d.uses_iframe?'':'The block is pasted inline '+d.published_block_copies+
+          '&times; on that page — replace every copy, or use Option A below and it can never drift again.');
+    } else {
+      // Unreadable is not all-clear.
+      msg.textContent='UNKNOWN — could not read ringlypro.com.';
+      msg.style.color='#ff6b6b'; box.style.borderColor='#5a2c2c';
+      det.textContent=d.error||d.note||'';
+    }
+  }).catch(function(e){
+    document.getElementById('syncMsg').textContent='UNKNOWN — '+e.message;
+    document.getElementById('syncMsg').style.color='#ff6b6b';
+  });
+
   document.getElementById('iframeCode').value =
     '<iframe id="ringlyproLite" src="'+LANDING+'" title="RinglyPro Lite"\n'+
     '  style="width:100%;height:2400px;border:0;display:block" scrolling="no" loading="lazy"></iframe>\n'+
