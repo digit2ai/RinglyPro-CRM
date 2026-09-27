@@ -2415,6 +2415,120 @@ const tenantSeed = (over = {}) => ({
   });
 
 
+  /* ── THE OUTBOUND SWITCH ────────────────────────────────────────────────
+   * `outbound_enabled` and `outbound_workflow_id` were read in three places
+   * and written by NOTHING: the columns existed, the dialer checked them, the
+   * dashboard reported them, and no surface anywhere could set either. The
+   * banner "not switched on for this account yet" was the end of the road.
+   */
+  const ghlMod = require(path.join(ROOT, 'src/telephony/ghl'));
+  const realCall = ghlMod.call;
+  const WF = [
+    { id: 'wf-published-001', name: 'RinglyPro Outbound', status: 'published' },
+    { id: 'wf-draft-002', name: 'Half built', status: 'draft' },
+  ];
+  let wfThrows = false;
+  ghlMod.call = async (m, pth, o) => {
+    if (String(pth).startsWith('/workflows')) {
+      if (wfThrows) { const e = new Error('upstream down'); e.status = 502; throw e; }
+      return { workflows: WF };
+    }
+    return realCall ? realCall(m, pth, o) : {};
+  };
+  ghlMod.resolve = () => ({ token: 't', locationId: 'loc-sit' });
+
+  process.env.LITE_ADMIN_KEY = 'k'.repeat(32);
+  const appA = express();
+  appA.use('/internal/security', require(path.join(ROOT, 'src/routes/security')));
+  const srvA = http.createServer(appA);
+  await new Promise((r) => srvA.listen(0, r));
+  const baseA = `http://127.0.0.1:${srvA.address().port}/internal/security/outbound`;
+  const adminPost = (body, key = 'k'.repeat(32)) => fetchReal(baseA, { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': key }, body: JSON.stringify(body) });
+
+  const obT = await M.Tenant.create({ business_name: 'SIT Outbound', outbound_enabled: false });
+
+  await t('the outbound switch answers 404 without the admin key, never 401', async () => {
+    const r = await fetchReal(baseA, { method: 'GET', headers: {} });
+    assert.strictEqual(r.status, 404);
+  });
+
+  await t('enabling REFUSES without a workflow id - "ready" with nothing able to dial is worse', async () => {
+    const r = await adminPost({ tenant: obT.id, confirm: true });
+    assert.strictEqual(r.status, 422);
+    assert.strictEqual((await r.json()).error, 'no_outbound_workflow');
+  });
+
+  await t('A WORKFLOW ID IS VERIFIED AGAINST HIGHLEVEL, NOT TAKEN ON TRUST', async () => {
+    // A typo does not fail loudly: mayDial passes, the enrollment POSTs to a
+    // workflow that is not there, and every contact errors one at a time while
+    // the dashboard says outbound is ready.
+    const r = await adminPost({ tenant: obT.id, confirm: true, workflow_id: 'wf-typo-999' });
+    assert.strictEqual(r.status, 422);
+    const j = await r.json();
+    assert.strictEqual(j.error, 'workflow_not_found');
+    assert.ok(j.available.some((w) => w.id === 'wf-published-001'), 'it did not offer the real workflows');
+  });
+
+  await t('a DRAFT workflow is refused - an enrollment would silently do nothing', async () => {
+    const r = await adminPost({ tenant: obT.id, confirm: true, workflow_id: 'wf-draft-002' });
+    assert.strictEqual(r.status, 422);
+    assert.strictEqual((await r.json()).error, 'workflow_not_published');
+  });
+
+  await t('a HighLevel outage refuses rather than enabling unchecked', async () => {
+    wfThrows = true;
+    const r = await adminPost({ tenant: obT.id, confirm: true, workflow_id: 'wf-published-001' });
+    wfThrows = false;
+    assert.strictEqual(r.status, 502);
+    assert.strictEqual((await r.json()).error, 'workflow_check_failed');
+  });
+
+  await t('AFTER EVERY REFUSAL NOTHING WAS WRITTEN', async () => {
+    const row = await M.Tenant.findByPk(obT.id);
+    assert.strictEqual(!!row.outbound_enabled, false, 'a refused call enabled outbound');
+    assert.ok(!row.outbound_workflow_id, 'a refused call stored a workflow id');
+  });
+
+  await t('confirm is required - this is what lets a list start dialling real people', async () => {
+    const r = await adminPost({ tenant: obT.id, workflow_id: 'wf-published-001' });
+    assert.strictEqual(r.status, 400);
+    assert.strictEqual((await r.json()).error, 'confirm_required');
+  });
+
+  await t('a published workflow enables it, reports what it verified, and persists', async () => {
+    const r = await adminPost({ tenant: obT.id, confirm: true, workflow_id: 'wf-published-001', daily_cap: 60 });
+    assert.strictEqual(r.status, 200);
+    const j = await r.json();
+    assert.strictEqual(j.enabled, true);
+    assert.strictEqual(j.workflow_verified.name, 'RinglyPro Outbound');
+    assert.strictEqual(j.daily_cap, 60);
+    assert.ok(/Do Not Call/i.test(j.reminder), 'the DNC gap is not restated on the way out');
+    const row = await M.Tenant.findByPk(obT.id);
+    assert.strictEqual(!!row.outbound_enabled, true);
+    assert.strictEqual(row.outbound_workflow_id, 'wf-published-001');
+  });
+
+  await t('switching OFF keeps the workflow id, so turning it back on is one field', async () => {
+    const r = await adminPost({ tenant: obT.id, confirm: true, enabled: false });
+    assert.strictEqual(r.status, 200);
+    const row = await M.Tenant.findByPk(obT.id);
+    assert.strictEqual(!!row.outbound_enabled, false);
+    assert.strictEqual(row.outbound_workflow_id, 'wf-published-001', 'a disable wiped the workflow');
+  });
+
+  await t('an unknown tenant is 404, and mayDial still refuses a tenant with no workflow', async () => {
+    const r = await adminPost({ tenant: 999999, confirm: true, workflow_id: 'wf-published-001' });
+    assert.strictEqual(r.status, 404);
+    const bare = await M.Tenant.create({ business_name: 'No Workflow' });
+    const gate = await ob.mayDial(bare, { phone: '+18135550100', status: 'new' }, new Date('2026-10-01T16:00:00Z'));
+    assert.strictEqual(gate.ok, false);
+    assert.strictEqual(gate.reason, 'outbound_not_enabled_for_this_tenant');
+  });
+
+  srvA.close();
+  ghlMod.call = realCall;
+
   srv.close();
 
   console.log(`\n${'='.repeat(66)}\n  ${pass}/${pass + fail} passed`);

@@ -1699,4 +1699,146 @@ router.post('/contact-fields-probe', express.json({ limit: '4kb' }), async (req,
     note: 'One contact on +1 500 555 0077 (a reserved, undialable test number). Remove it from HighLevel by hand.' });
 });
 
+/* ── OUTBOUND: THE SWITCH THAT DID NOT EXIST ──────────────────────────────
+ * `lite_tenants.outbound_enabled` and `outbound_workflow_id` were read in
+ * three places and WRITTEN BY NOTHING. The columns shipped, the dialer
+ * checked them, the dashboard reported them - and there was no surface,
+ * anywhere, that could set either one. Outbound could never be turned on,
+ * and the banner saying "not switched on for this account yet" was the end
+ * of the road rather than a step.
+ *
+ * It lives behind the SAME admin key as everything else here - one key, one
+ * gate - because enabling outbound is what lets a tenant's list start
+ * dialling real people, which is an operator decision and never a tenant's.
+ */
+
+/** What outbound is set to, per tenant. Read-only, buys and dials nothing. */
+router.get('/outbound', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const { sequelize } = require('../models');
+  const rows = await sequelize.query(
+    `SELECT t.id, t.business_name, t.outbound_enabled, t.outbound_workflow_id,
+            t.outbound_daily_cap, t.ghl_location_id,
+            (SELECT COUNT(*) FROM lite_outbound_lists l WHERE l.tenant_id = t.id) AS lists,
+            (SELECT COUNT(*) FROM lite_outbound_lists l WHERE l.tenant_id = t.id AND l.status = 'active') AS active_lists,
+            (SELECT COUNT(*) FROM lite_outbound_contacts c WHERE c.tenant_id = t.id) AS contacts
+       FROM lite_tenants t ORDER BY t.id`,
+    { type: sequelize.QueryTypes.SELECT }
+  ).catch((e) => { throw e; });
+  res.json({ ok: true,
+    tenants: rows.map((r) => ({
+      tenant: r.id,
+      business: r.business_name || null,
+      enabled: !!r.outbound_enabled,
+      workflow_id: r.outbound_workflow_id ? String(r.outbound_workflow_id) : null,
+      daily_cap: r.outbound_daily_cap == null ? null : Number(r.outbound_daily_cap),
+      lists: Number(r.lists), active_lists: Number(r.active_lists), contacts: Number(r.contacts),
+      // Both are required before a single call can be placed, so say which is
+      // missing rather than leaving the operator to infer it from two nulls.
+      blocked_by: !r.outbound_workflow_id ? 'no_outbound_workflow'
+        : (!r.outbound_enabled ? 'outbound_not_enabled_for_this_tenant' : null),
+    })),
+    national_dnc: 'NOT scrubbed. Needs an FTC Subscription Account Number; only the tenant\'s own suppression list is applied.',
+  });
+});
+
+/**
+ * Turn outbound on (or off) for ONE tenant.
+ *
+ * THE WORKFLOW ID IS VERIFIED AGAINST HIGHLEVEL, NOT TAKEN ON TRUST. A typo
+ * here does not fail loudly: `mayDial` passes, the enrollment POSTs to a
+ * workflow that does not exist, and every contact in the list comes back an
+ * error one at a time while the dashboard says outbound is ready. Checking
+ * once, here, is the difference between a refusal now and 139 failures later.
+ * `skip_verify` exists for the case where the probe itself is broken, and it
+ * is RECORDED in the response so nobody later believes the id was checked.
+ */
+router.post('/outbound', express.json({ limit: '4kb' }), async (req, res) => {
+  const b = req.body || {};
+  if (b.confirm !== true) return res.status(400).json({ error: 'confirm_required',
+    message: 'Send {"confirm":true} - this lets a tenant start dialling real people.' });
+  const tenantId = parseInt(b.tenant, 10);
+  if (!Number.isInteger(tenantId)) return res.status(400).json({ error: 'tenant_required' });
+
+  const { Tenant } = require('../models');
+  const ghl = require('../telephony/ghl');
+  const accounts = require('../services/ghlAccounts');
+  const t = await Tenant.findByPk(tenantId);
+  if (!t) return res.status(404).json({ error: 'no_such_tenant' });
+
+  const enable = b.enabled !== false;               // default ON; pass false to switch off
+  const workflowId = b.workflow_id == null ? null : String(b.workflow_id).trim().slice(0, 64);
+  const patch = {};
+  let verified = null;
+
+  if (workflowId !== null) {
+    if (workflowId && !/^[A-Za-z0-9_-]{6,64}$/.test(workflowId)) {
+      return res.status(400).json({ error: 'bad_workflow_id',
+        message: 'A HighLevel workflow id is letters, numbers, dashes or underscores.' });
+    }
+    if (workflowId && b.skip_verify !== true) {
+      try {
+        let creds = null;
+        try { creds = await accounts.credsFor(t); } catch (_) { creds = null; }
+        if (!creds) creds = ghl.resolve(null);
+        const loc = (creds && creds.locationId) || t.ghl_location_id || ghl.locationId();
+        const list = await ghl.call('GET', '/workflows/', { query: { locationId: loc }, creds });
+        const all = (list && (list.workflows || list.data)) || [];
+        const hit = all.find((w) => String(w.id || w._id) === workflowId);
+        if (!hit) {
+          return res.status(422).json({ error: 'workflow_not_found',
+            message: 'HighLevel does not have that workflow in this sub-account. Nothing was changed.',
+            workflow_id: workflowId,
+            available: all.slice(0, 40).map((w) => ({ id: String(w.id || w._id), name: w.name || null,
+              status: w.status || null })) });
+        }
+        verified = { id: workflowId, name: hit.name || null, status: hit.status || null };
+        // A draft workflow accepts the enrollment and does nothing with it,
+        // which looks exactly like a call that was never answered.
+        if (hit.status && String(hit.status).toLowerCase() !== 'published') {
+          return res.status(422).json({ error: 'workflow_not_published',
+            message: 'That workflow exists but is not published, so an enrollment would do nothing. Publish it in HighLevel first. Nothing was changed.',
+            workflow: verified });
+        }
+      } catch (e) {
+        return res.status(502).json({ error: 'workflow_check_failed',
+          message: 'Could not ask HighLevel whether that workflow exists, so nothing was changed. Retry, or send "skip_verify":true to set it unchecked.',
+          detail: String(e.message || e).slice(0, 220), status: e.status || null });
+      }
+    }
+    patch.outbound_workflow_id = workflowId || null;
+  }
+
+  // Enabling with no workflow is a half-state the dialer refuses anyway, and
+  // it makes the dashboard say "ready" when nothing can dial.
+  const effectiveWorkflow = patch.outbound_workflow_id !== undefined
+    ? patch.outbound_workflow_id : t.outbound_workflow_id;
+  if (enable && !effectiveWorkflow) {
+    return res.status(422).json({ error: 'no_outbound_workflow',
+      message: 'Set the HighLevel outbound workflow id in the same call. Without it nothing can dial, and enabling alone would report ready.' });
+  }
+  patch.outbound_enabled = enable;
+
+  if (b.daily_cap !== undefined) {
+    const cap = parseInt(b.daily_cap, 10);
+    if (!Number.isInteger(cap) || cap < 0 || cap > 5000) {
+      return res.status(400).json({ error: 'bad_daily_cap', message: '0 to 5000.' });
+    }
+    patch.outbound_daily_cap = cap;
+  }
+
+  await t.update(patch);
+  console.log('[lite:outbound] tenant', tenantId, 'enabled=', patch.outbound_enabled,
+    'workflow=', patch.outbound_workflow_id !== undefined ? 'set' : 'unchanged');
+
+  res.json({ ok: true, tenant: tenantId,
+    enabled: !!patch.outbound_enabled,
+    workflow_id: effectiveWorkflow || null,
+    workflow_verified: verified,
+    workflow_unverified: !!(workflowId && b.skip_verify === true) || undefined,
+    daily_cap: patch.outbound_daily_cap !== undefined ? patch.outbound_daily_cap
+      : (t.outbound_daily_cap == null ? null : Number(t.outbound_daily_cap)),
+    reminder: 'Numbers are still NOT checked against the National Do Not Call registry.' });
+});
+
 module.exports = router;
