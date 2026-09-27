@@ -82,6 +82,17 @@ function landingTokens() {
     }
   });
 
+  t('THE SERVICE WORKER CACHE WAS BUMPED FOR THIS THEME', () => {
+    // The theme shipped once and stayed invisible: the server was sending the
+    // light palette while every installed copy served the dark dashboard from
+    // 'lite-v9'. A shell colour change that does not bump the cache has not
+    // shipped, whatever the server returns.
+    const sw = fs.readFileSync(path.join(ROOT, 'public/sw.js'), 'utf8');
+    const m = sw.match(/const CACHE = 'lite-v(\d+)'/);
+    assert.ok(m, 'no versioned CACHE in sw.js');
+    assert.ok(Number(m[1]) >= 10, `sw.js is still on lite-v${m[1]} — the re-theme needs a bump`);
+  });
+
   t('WHITE IS NEVER PUT ON THE TEAL FILL', () => {
     for (const p of PAGES) {
       const s = fs.readFileSync(path.join(ROOT, 'public', p), 'utf8');
@@ -142,14 +153,18 @@ function landingTokens() {
     return bad;
   };
 
+  // DESKTOP AND MOBILE BOTH. A token is shared, but which rules win is not:
+  // the app hides and restacks things under its breakpoints, so a colour that
+  // is fine at 1440 can land on a different surface at 390.
+  for (const { w, h, label } of [{ w: 1440, h: 900, label: 'desktop' }, { w: 390, h: 844, label: 'mobile' }])
   for (const p of PAGES) {
     const page = await browser.newPage();
-    await page.setViewport({ width: 390, height: 844 });
+    await page.setViewport({ width: w, height: h });
     await page.goto(`http://127.0.0.1:${port}/${p}`, { waitUntil: 'domcontentloaded' }).catch(() => {});
     await new Promise((r) => setTimeout(r, 300));
 
     const ground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    t(`${p} paints the LIGHT ground by default`, () => {
+    t(`${label} ${p} paints the LIGHT ground by default`, () => {
       const m = ground.match(/(\d+), (\d+), (\d+)/);
       assert.ok(m, `no background on body: ${ground}`);
       const [, r, g, b] = m.map(Number);
@@ -157,8 +172,11 @@ function landingTokens() {
     });
 
     const bad = await page.evaluate(AUDIT);
-    t(`${p} has no unreadable text`, () => assert.strictEqual(bad.length, 0,
+    t(`${label} ${p} has no unreadable text`, () => assert.strictEqual(bad.length, 0,
       bad.map((x) => `"${x.txt}" ${x.ratio}:1 (needs ${x.need}) ${x.color}`).join(' | ')));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    t(`${label} ${p} does not scroll sideways`, () => assert.ok(overflow <= 1, `${overflow}px of horizontal overflow`));
 
     await page.close();
   }
