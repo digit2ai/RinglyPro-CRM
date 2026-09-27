@@ -131,9 +131,77 @@ M.sequelize = {
       const row = { id: free.id, location_id: free.location_id, token_enc: free.token_enc };
       return [[row], { rows: [row] }];
     }
+
+    // ── THE OUTBOUND TABLES ─────────────────────────────────────────────
+    // Backed for real, because the fake's default is `[[], {}]`: without
+    // this every dialer query returns nothing, the loop does nothing, and
+    // the tests pass while testing nothing at all. Each branch emulates the
+    // CONTRACT of the statement the service actually issues.
+    if (/FROM lite_outbound_suppressions/.test(sql)) {
+      const hit = OB.suppressions.find((r) => r.tenant_id === opts.replacements.t
+        && r.phone === opts.replacements.p);
+      return [hit ? [{ reason: hit.reason }] : [], {}];
+    }
+    if (/INSERT INTO lite_outbound_suppressions/.test(sql)) {
+      const { t, p, r, s: src } = opts.replacements;
+      const ex = OB.suppressions.find((x) => x.tenant_id === t && x.phone === p);
+      if (ex) { ex.reason = r; ex.source = src; } else OB.suppressions.push({ tenant_id: t, phone: p, reason: r, source: src });
+      return [[], {}];
+    }
+    if (/SELECT DISTINCT t\.id/.test(sql) && /lite_outbound_lists/.test(sql)) {
+      const onlyActive = /l\.status\s*=\s*'active'/.test(sql);
+      const ids = [...new Set(OB.lists.filter((l) => !onlyActive || l.status === 'active').map((l) => l.tenant_id))]
+        .filter((id) => { const t = M.Tenant._rows.find((x) => x.id === id);
+          return t && t.outbound_enabled && t.outbound_workflow_id; })
+        .sort((a, b) => a - b);
+      return [ids.map((id) => ({ id })), {}];
+    }
+    if (/SELECT c\.\* FROM lite_outbound_contacts/.test(sql)) {
+      const { t, n } = opts.replacements;
+      // HONOUR THE JOIN AS WRITTEN. Filtering to active lists in JavaScript
+      // regardless of the SQL made the harness MORE PERMISSIVE THAN POSTGRES:
+      // deleting `AND l.status = 'active'` from the statement changed nothing
+      // here, so the one rule that stops a draft list being dialled was not
+      // actually under test. Same class as the Op.ne bug.
+      const restricted = /l\.status\s*=\s*'active'/.test(sql);
+      const active = new Set(OB.lists.filter((l) => !restricted || l.status === 'active').map((l) => l.id));
+      const rows = OB.contacts
+        .filter((c) => c.tenant_id === t && c.status === 'pending' && active.has(c.list_id))
+        .sort((a, b) => a.id - b.id).slice(0, n);
+      return [rows.map((r) => ({ ...r })), {}];
+    }
+    if (/UPDATE lite_outbound_contacts/.test(sql)) {
+      const rp = opts.replacements || {};
+      for (const c of OB.contacts) {
+        const byId = rp.id !== undefined && c.id === rp.id && c.tenant_id === rp.t;
+        const byPhone = rp.p !== undefined && c.phone === rp.p && c.tenant_id === rp.t;
+        if (!byId && !byPhone) continue;
+        if (/status = 'dialled'/.test(sql)) {
+          c.status = 'dialled'; c.attempts = (c.attempts || 0) + 1;
+          c.last_attempt_at = new Date(); c.ghl_contact_id = rp.gc;
+        } else if (/status = 'skipped'/.test(sql)) {
+          c.status = 'skipped'; c.last_outcome = rp.o; c.last_attempt_at = new Date();
+        } else if (/status = 'suppressed'/.test(sql)) { c.status = 'suppressed'; }
+      }
+      return [[], {}];
+    }
+    if (/FROM lite_outbound_calls/.test(sql) && /COUNT/.test(sql)) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const n = OB.calls.filter((c) => c.tenant_id === opts.replacements.t
+        && new Date(c.enrolled_at) >= today).length;
+      return [[{ n }], {}];
+    }
+    if (/INSERT INTO lite_outbound_calls/.test(sql)) {
+      const { t, c, l } = opts.replacements;
+      const row = { id: OB.calls.length + 1, tenant_id: t, contact_id: c, list_id: l, enrolled_at: new Date() };
+      OB.calls.push(row);
+      return [[{ id: row.id }], {}];
+    }
     return [[], {}];
   },
 };
+// In-memory stand-ins for the outbound tables the dialer reads and writes.
+const OB = { lists: [], contacts: [], calls: [], suppressions: [] };
 require.cache[require.resolve(path.join(ROOT, 'src/models.js'))] = { id: 'models', filename: 'models', loaded: true, exports: M };
 
 // The mirror now texts the owner, so the suite has to own the transport: a
@@ -2527,6 +2595,123 @@ const tenantSeed = (over = {}) => ({
   });
 
   srvA.close();
+
+  /* ── THE DIALER ─────────────────────────────────────────────────────────
+   * "Activate" wrote status='active' and NOTHING read it. A tenant could
+   * upload 139 contacts, press Activate and wait for calls that were never
+   * going to happen, while the UI implied it had started.
+   */
+  const dialer = require(path.join(ROOT, 'src/services/outboundDialer'));
+  let enrolled = [];
+  ghlMod.call = async (m, pth, o) => {
+    if (/\/workflow\//.test(pth)) { enrolled.push(pth); return { ok: true }; }
+    if (String(pth).startsWith('/workflows')) return { workflows: WF };
+    if (/contacts\/upsert/.test(pth)) return { contact: { id: 'c-' + (enrolled.length + 1) } };
+    return {};
+  };
+
+  const dT = await M.Tenant.create({ business_name: 'Dialer Co', country: 'US',
+    outbound_enabled: true, outbound_workflow_id: 'wf-published-001', outbound_daily_cap: 3 });
+  OB.lists.push({ id: 5001, tenant_id: dT.id, status: 'active' });
+  OB.lists.push({ id: 5002, tenant_id: dT.id, status: 'draft' });
+  let cid = 6000;
+  const addContact = (phone, listId = 5001, status = 'pending') =>
+    OB.contacts.push({ id: ++cid, tenant_id: dT.id, list_id: listId, phone,
+      contact_name: 'Person ' + cid, status, attempts: 0 });
+  // Tampa numbers: Eastern, so a mid-morning UTC time is inside the window.
+  for (const n of ['+18135550101', '+18135550102', '+18135550103', '+18135550104']) addContact(n);
+  addContact('+18135550999', 5002);                   // on the DRAFT list
+  const noon = new Date('2026-10-01T15:00:00Z');      // 11:00 Eastern
+
+  await t('a DRAFT list is never dialled - activation is what starts it', async () => {
+    // The draft contact must be the ONLY candidate, or the pass ends on the
+    // daily cap before reaching it and the test passes without testing:
+    // removing the draft filter entirely changed nothing until this.
+    OB.contacts.forEach((c) => { if (c.list_id === 5001) c.status = 'done'; });
+    const draftRow = OB.contacts.find((c) => c.list_id === 5002);
+    draftRow.status = 'pending';
+    OB.calls.length = 0; enrolled = [];
+    await dialer.runTenant(dT.id, { at: noon, limit: 10 });
+    assert.strictEqual(enrolled.length, 0, 'it dialled a contact on a draft list');
+    assert.strictEqual(draftRow.status, 'pending', 'a contact on a draft list was consumed');
+  });
+
+  await t('THE PASS IS PACED - it does not dump a whole list into HighLevel at once', async () => {
+    OB.contacts.filter((c) => c.list_id === 5001).forEach((c) => { c.status = 'pending'; });
+    OB.calls.length = 0; enrolled = [];
+    await dialer.runTenant(dT.id, { at: noon, limit: 2 });
+    assert.strictEqual(enrolled.length, 2, 'enrolled ' + enrolled.length + ' in one pass');
+  });
+
+  await t('the daily cap stops the pass, and stops it for the WHOLE tenant', async () => {
+    // SIX candidates against a cap of THREE. With four, "stopped the pass" and
+    // "refused each remaining contact one by one" produce identical counts, so
+    // the whole-tenant break was untested; the surplus is what reveals it.
+    for (const n of ['+18135550105', '+18135550106']) addContact(n);
+    OB.contacts.forEach((c) => { if (c.list_id === 5001) c.status = 'pending'; });
+    OB.contacts.forEach((c) => { if (c.list_id === 5002) c.status = 'done'; });
+    OB.suppressions.length = 0;
+    OB.calls.length = 0; enrolled = [];
+    const r = await dialer.runTenant(dT.id, { at: noon, limit: 10 });
+    assert.strictEqual(enrolled.length, 3, 'the cap of 3 let ' + enrolled.length + ' through');
+    const capped = r.results.find((x) => /daily_cap/.test(x.reason || ''));
+    assert.ok(capped, 'the cap refusal was not reported');
+    assert.strictEqual(capped.transient, true, 'a capped contact was burned instead of left pending');
+    assert.strictEqual(r.results.length, 4,
+      'the pass kept going after the cap (' + r.results.length + ' results); it must stop for the tenant');
+    assert.strictEqual(OB.contacts.filter((c) => c.list_id === 5001 && c.status === 'pending').length, 3,
+      'contacts past the cap were consumed instead of left for tomorrow');
+  });
+
+  await t('OUTSIDE CALLING HOURS NOTHING DIALS, AND NOBODY IS BURNED', async () => {
+    OB.contacts.filter((c) => c.list_id === 5001).forEach((c) => { c.status = 'pending'; });
+    OB.calls.length = 0; enrolled = [];
+    const night = new Date('2026-10-02T05:00:00Z');   // 01:00 Eastern
+    const r = await dialer.runTenant(dT.id, { at: night, limit: 10 });
+    assert.strictEqual(enrolled.length, 0, 'it dialled at 1am');
+    assert.ok(r.results.every((x) => x.transient), 'a contact was marked skipped for a clock refusal');
+    assert.strictEqual(OB.contacts.filter((c) => c.list_id === 5001 && c.status === 'pending').length, 6,
+      'contacts were consumed by a refusal that will not be true later today');
+  });
+
+  await t('a SUPPRESSED number is refused by the dialer and never retried', async () => {
+    OB.contacts.filter((c) => c.list_id === 5001).forEach((c) => { c.status = 'pending'; });
+    OB.calls.length = 0; enrolled = [];
+    await ob.suppress(dT.id, '+18135550101', 'asked to be removed', 'sit');
+    const r = await dialer.runTenant(dT.id, { at: noon, limit: 10 });
+    assert.ok(!enrolled.some((p) => /c-.*/.test(p) === false), 'sanity');
+    const row = OB.contacts.find((c) => c.phone === '+18135550101');
+    assert.strictEqual(row.status, 'suppressed', 'a do-not-call number stayed dialable');
+    assert.ok(!r.results.some((x) => x.id === row.id && x.dialled), 'a suppressed number was dialled');
+  });
+
+  await t('a tenant that is switched OFF is not offered to the dialer at all', async () => {
+    await dT.update({ outbound_enabled: false });
+    const ids = await dialer.dialableTenants();
+    assert.ok(!ids.includes(dT.id), 'a disabled tenant was still queued');
+    await dT.update({ outbound_enabled: true });
+  });
+
+  await t('a tenant with no workflow is not offered either - it could only fail', async () => {
+    await dT.update({ outbound_workflow_id: null });
+    const ids = await dialer.dialableTenants();
+    assert.ok(!ids.includes(dT.id), 'a tenant with no workflow was queued');
+    await dT.update({ outbound_workflow_id: 'wf-published-001' });
+  });
+
+  await t('THE DIALER RE-CHECKS NOTHING ITSELF - every gate stays in mayDial', () => {
+    // Two copies of the calling-hours or allow-list rules is how one of them
+    // drifts and starts ringing people at 7am. The loop decides WHO and HOW
+    // FAST; it must never decide WHETHER.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundDialer.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    for (const forbidden of ['checkDestination', 'withinCallingHours', 'startHour', 'endHour', 'tzForNumber']) {
+      assert.ok(!src.includes(forbidden),
+        'the dialer re-implements ' + forbidden + ' instead of going through mayDial');
+    }
+    assert.ok(/ob\.dial\(/.test(src), 'the dialer does not go through ob.dial');
+  });
+
   ghlMod.call = realCall;
 
   srv.close();

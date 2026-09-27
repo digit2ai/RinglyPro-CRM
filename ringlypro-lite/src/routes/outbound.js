@@ -21,7 +21,12 @@ const MAX_UPLOAD = Math.max(1, parseInt(process.env.LITE_OUTBOUND_MAX_KB || '204
 router.get('/status', async (req, res) => {
   const t = await Tenant.findByPk(req.tenantId);
   const [[cnt]] = await sequelize.query(
-    `SELECT COUNT(*)::int AS lists FROM lite_outbound_lists WHERE tenant_id = :t`,
+    `SELECT COUNT(*)::int AS lists,
+            COUNT(*) FILTER (WHERE status = 'active')::int AS active,
+            (SELECT COUNT(*)::int FROM lite_outbound_contacts c
+               JOIN lite_outbound_lists l2 ON l2.id = c.list_id AND l2.status = 'active'
+              WHERE c.tenant_id = :t AND c.status = 'pending') AS waiting
+       FROM lite_outbound_lists WHERE tenant_id = :t`,
     { replacements: { t: req.tenantId } }
   );
   res.json({
@@ -30,6 +35,12 @@ router.get('/status', async (req, res) => {
     daily_cap: (t && t.outbound_daily_cap) || 0,
     dialled_today: await ob.dialledToday(req.tenantId),
     lists: (cnt && cnt.lists) || 0,
+    active_lists: (cnt && cnt.active) || 0,
+    waiting: (cnt && cnt.waiting) || 0,
+    // WHETHER ANYTHING IS ACTUALLY RUNNING. "Activate" used to set a column
+    // nothing read, so a tenant could activate a list and wait for calls that
+    // were never going to happen. The tab now says which it is.
+    dialer_running: !!require('../services/outboundDialer').stats.last_at,
     calling_hours: `${ob.startHour()}:00–${ob.endHour()}:00 in each contact's own timezone`,
     consent_bases: ob.CONSENT_BASES,
     // STATED, NOT IMPLIED. Scrubbing needs an FTC SAN the owner does not have.

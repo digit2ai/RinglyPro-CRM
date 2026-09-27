@@ -396,6 +396,13 @@ async function main() {
   try { require('./src/services/ghlAppointments').start(); }
   catch (e) { console.error('[lite] appointment poller failed to start:', e.message); }
 
+  // THE DIALER. Until this existed, "Activate" set a column nothing read and
+  // an activated list of 139 contacts sat there while the UI implied it had
+  // started. Every gate is inside mayDial and applied per contact at dial
+  // time, so this loop only decides WHO to offer and how fast.
+  try { require('./src/services/outboundDialer').start(); }
+  catch (e) { console.error('[lite] outbound dialer failed to start:', e.message); }
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);
