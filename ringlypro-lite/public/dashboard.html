@@ -107,12 +107,13 @@
 <body>
 <header>
   <div class="brand"><img src="/icon-192.png" alt="" style="height:24px;width:24px;border-radius:6px;vertical-align:middle;margin-right:7px" />RinglyPro <span>Lite</span></div>
-  <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="bell" title="Alerts" style="cursor:pointer" data-i="alerts">Alerts</span><span class="lang" id="lang">ES</span></div>
+  <div style="display:flex;align-items:center;gap:14px"><span class="lang" id="notifBtn" style="cursor:pointer" data-i="notifs">Notifications<span class="badge" id="notifCount" style="display:none">0</span></span><span class="lang" id="lang">ES</span></div>
 </header>
-<!-- THE CHANNEL THAT CANNOT FAIL, now actually on screen. The rows were
-     being written on every payment and activation and NOTHING displayed them,
-     so the "works with no email transport" promise was false in practice. -->
-<div id="notif" style="display:none;background:#0d3b34;color:#c8f5ea;padding:12px 16px;font:14px/1.45 system-ui;cursor:pointer"></div>
+<!-- THE NOTIFICATION PANEL. One surface, not two: an earlier version had a
+     strip here AND a panel, which is the same duplicate-card mistake that put
+     "not switched on yet" above "Activate". The header item carries the
+     count; this is where they are read. -->
+<div id="notifPanel" style="display:none;background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px;max-height:60vh;overflow:auto"></div>
 <div id="needNum" style="display:none;background:#3a2d12;color:#ffd79a;padding:12px 16px;font:14px/1.4 system-ui;text-align:center">
   <span id="needNumTxt">Your number isn't set up yet.</span>
   <a href="/signup" style="color:#ffd79a;font-weight:700;margin-left:6px">Finish setup</a>
@@ -229,6 +230,12 @@
       <div class="day" data-i="theme">Theme</div>
       <label data-i="themepick">Appearance</label>
       <select id="themeSel"><option value="dark" data-i="tdark">Dark</option><option value="light" data-i="tlight">Light</option></select>
+      <!-- Moved out of the header: this is a device preference, not a place
+           where notifications live. The header now shows the notifications
+           themselves. -->
+      <label data-i="alerts">Alerts</label>
+      <div class="obhint" id="bellState"></div>
+      <button class="sm" id="bell" data-i="alertsEnable">Enable alerts on this device</button>
     </div>
     <div style="text-align:center;margin:18px 0"><a href="#" id="logout" style="color:var(--mut)" data-i="logout">Log out</a></div>
   </section>
@@ -253,8 +260,8 @@
   <a href="#" data-view="settings" data-i="nset">Settings</a>
 </nav>
 <script>
-const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",nout:"Outbound",obUpload:"Upload a list",obCsvHint:"CSV or plain text, or paste the rows here. Only the phone is required; Name, Last Name, Company (or Brokerage), and Email are read when present. From Excel or Google Sheets: File, Save As, CSV. Up to 5,000 rows, 2 MB.",obConsent:"Why may you call these people?",obCheck:"Check the file",obSaveList:"Save as draft",obLists:"Your lists",obDnc:"Do not call",obDncHint:"Anyone who asks to be taken off. Checked again every time before dialling.",obAdd:"Add",obOff:"Outbound calling is not switched on for this account yet.",obNoWf:"Not connected to an outbound workflow yet, so nothing can dial.",obDncOff:"Numbers are NOT checked against the National Do Not Call registry. Only your own list below is applied.",obActivate:"Activate",obDial:"Call now",obPitchTitle:"Outbound calling",obPitchBody:"Your AI rings a list you upload, books, and reports back.",obPerMin:"per minute",obBalance:"Your balance",obMinutesLeft:"minutes left",obHeld:"held for calls in progress",obAdd:"Add",obNoFunds:"Add funds to place calls.",obActivateFee:"Activate outbound — {fee}",obWaitingPay:"Waiting for your payment to clear.",obResumePay:"Continue to payment",obReadyBy:"Paid. Your outbound caller will be ready by {when}. We will let you know the moment it is live.",obOverdue:"This is taking longer than expected. We have been notified.",obSuspended:"Outbound calling is paused on this account.",obPayFail:"Could not start the payment. Try again.",obCalls:"Calls",obNoCalls:"No calls yet.",obAttempted:"placed",obConnected:"connected",obOut_in_progress:"in progress",obOut_no_result_recorded:"no result recorded",obOut_connected:"connected",obOut_not_answered:"not answered",obOut_appointment:"appointment",obOut_transferred:"transferred",obOut_message:"message",obOut_completed:"completed",obDraft:"draft",obActive:"active",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",noReason:"No reason given",apAdd:"Add appointment",apName:"Name",apPhone:"Phone (optional)",apReason:"What is it for?",apSave:"Save",apSaving:"Saving…",apFill:"Name, date and time are required.",apTaken:"That time is already booked.",apUnconfirmed:"Held, but not confirmed with the calendar yet — check it.",apSyncFail:"The calendar refused it. Pick another time.",apBadNum:"That phone number is not one we can use.",apFailed:"Could not save. Try again.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",notifDismiss:"Tap to dismiss",noResults:"No messages match your search.",allRead:"You are all caught up. Tap All to see every message.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",nout:"Salientes",obUpload:"Subir una lista",obCsvHint:"CSV o texto sin formato, o pega las filas aquí. Solo el teléfono es obligatorio; también se leen Nombre, Apellido, Empresa (o Agencia) y Correo si están. Desde Excel o Google Sheets: Archivo, Guardar como, CSV. Hasta 5.000 filas, 2 MB.",obConsent:"¿Por qué puede llamar a estas personas?",obCheck:"Revisar el archivo",obSaveList:"Guardar como borrador",obLists:"Sus listas",obDnc:"No llamar",obDncHint:"Quien pida no ser llamado. Se verifica otra vez antes de cada llamada.",obAdd:"Agregar",obOff:"Las llamadas salientes aún no están activadas en esta cuenta.",obNoWf:"Aún no hay flujo de salida conectado, así que nada puede llamar.",obDncOff:"Los números NO se comparan con el registro nacional No Llame. Solo se aplica su propia lista.",obActivate:"Activar",obDial:"Llamar ahora",obPitchTitle:"Llamadas salientes",obPitchBody:"Su IA llama a la lista que usted suba, agenda y le reporta.",obPerMin:"por minuto",obBalance:"Su saldo",obMinutesLeft:"minutos disponibles",obHeld:"retenido por llamadas en curso",obAdd:"Agregar",obNoFunds:"Agregue saldo para poder llamar.",obActivateFee:"Activar salientes — {fee}",obWaitingPay:"Esperando la confirmación de su pago.",obResumePay:"Continuar al pago",obReadyBy:"Pagado. Su marcador saliente estará listo el {when}. Le avisaremos aquí apenas esté activo.",obOverdue:"Está tardando más de lo previsto. Ya fuimos notificados.",obSuspended:"Las llamadas salientes están pausadas en esta cuenta.",obPayFail:"No se pudo iniciar el pago. Inténtelo de nuevo.",obCalls:"Llamadas",obNoCalls:"Aún no hay llamadas.",obAttempted:"realizadas",obConnected:"conectadas",obOut_in_progress:"en curso",obOut_no_result_recorded:"sin resultado registrado",obOut_connected:"conectada",obOut_not_answered:"sin contestar",obOut_appointment:"cita",obOut_transferred:"transferida",obOut_message:"mensaje",obOut_completed:"completada",obDraft:"borrador",obActive:"activa",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",noReason:"Sin motivo indicado",apAdd:"Agregar cita",apName:"Nombre",apPhone:"Teléfono (opcional)",apReason:"¿Para qué es?",apSave:"Guardar",apSaving:"Guardando…",apFill:"Nombre, fecha y hora son obligatorios.",apTaken:"Ese horario ya está reservado.",apUnconfirmed:"Reservado, pero aún sin confirmar con el calendario — revísalo.",apSyncFail:"El calendario lo rechazó. Elige otro horario.",apBadNum:"Ese número no lo podemos usar.",apFailed:"No se pudo guardar. Inténtalo de nuevo.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",notifDismiss:"Toque para descartar",noResults:"Ningún mensaje coincide con su búsqueda.",allRead:"No hay mensajes sin leer. Toque Todos para ver todos los mensajes.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
+const I={en:{payMsg:"Your free trial ended. Add payment to keep answering calls.",payNow:"Add payment",alerts:"Alerts",nmsg:"Messages",ncal:"Calendar",nset:"Settings",nout:"Outbound",obUpload:"Upload a list",obCsvHint:"CSV or plain text, or paste the rows here. Only the phone is required; Name, Last Name, Company (or Brokerage), and Email are read when present. From Excel or Google Sheets: File, Save As, CSV. Up to 5,000 rows, 2 MB.",obConsent:"Why may you call these people?",obCheck:"Check the file",obSaveList:"Save as draft",obLists:"Your lists",obDnc:"Do not call",obDncHint:"Anyone who asks to be taken off. Checked again every time before dialling.",obAdd:"Add",obOff:"Outbound calling is not switched on for this account yet.",obNoWf:"Not connected to an outbound workflow yet, so nothing can dial.",obDncOff:"Numbers are NOT checked against the National Do Not Call registry. Only your own list below is applied.",obActivate:"Activate",obDial:"Call now",obPitchTitle:"Outbound calling",obPitchBody:"Your AI rings a list you upload, books, and reports back.",obPerMin:"per minute",obBalance:"Your balance",obMinutesLeft:"minutes left",obHeld:"held for calls in progress",obAdd:"Add",obNoFunds:"Add funds to place calls.",obActivateFee:"Activate outbound — {fee}",obWaitingPay:"Waiting for your payment to clear.",obResumePay:"Continue to payment",obReadyBy:"Paid. Your outbound caller will be ready by {when}. We will let you know the moment it is live.",obOverdue:"This is taking longer than expected. We have been notified.",obSuspended:"Outbound calling is paused on this account.",obPayFail:"Could not start the payment. Try again.",obCalls:"Calls",obNoCalls:"No calls yet.",obAttempted:"placed",obConnected:"connected",obOut_in_progress:"in progress",obOut_no_result_recorded:"no result recorded",obOut_connected:"connected",obOut_not_answered:"not answered",obOut_appointment:"appointment",obOut_transferred:"transferred",obOut_message:"message",obOut_completed:"completed",obDraft:"draft",obActive:"active",biz:"Business",bizname:"Business name",ownerph:"Owner mobile (SMS alerts)",transferph:"Transfer-to number (live person)",glang:"Greeting language",tz:"Timezone",save:"Save",avail:"Availability",addhours:"+ Add hours",fwd:"Call forwarding",fmode:"Forwarding mode",mdirect:"Forward all calls (AI always answers)",mnoans:"After 2 rings (if I don't answer)",carrier:"Carrier",turnon:"Turn ON",turnoff:"Turn OFF",check:"Check",onlabel:"ON code",offlabel:"OFF code",copy:"Copy",bill:"Billing",startbill:"Start / manage plan",cancelsub:"Cancel subscription",logout:"Log out",noMsg:"No messages yet. When you miss a call, it shows up here.",noAppt:"No appointments yet.",noReason:"No reason given",apAdd:"Add appointment",apName:"Name",apPhone:"Phone (optional)",apReason:"What is it for?",apSave:"Save",apSaving:"Saving…",apFill:"Name, date and time are required.",apTaken:"That time is already booked.",apUnconfirmed:"Held, but not confirmed with the calendar yet — check it.",apSyncFail:"The calendar refused it. Pick another time.",apBadNum:"That phone number is not one we can use.",apFailed:"Could not save. Try again.",cancel:"Cancel",read:"Mark read",callback:"Call back",fall:"All",funread:"Unread",searchph:"Search messages…",del:"Delete",whatsapp:"WhatsApp",sms:"SMS",theme:"Theme",themepick:"Appearance",tdark:"Dark",tlight:"Light",addmin:"Add minutes",startplan:"Start monthly plan",close:"Close",rechargeInfo:"Buy extra answered minutes. Charged to your saved card and added to your balance.",notifDismiss:"Tap to dismiss",notifs:"Notifications",notifNone:"Nothing new.",notifAnnounce:"Announce to all subscribers",notifAnnounceHint:"Everyone gets this in their notifications, with a badge. There is no email — this is the channel.",notifTitle:"Title",notifBody:"Message (optional)",notifSend:"Send to everyone",notifNeedTitle:"Give it a title first.",notifSent:"Sent to {n} account(s).",notifJustSent:"That was just sent. Wait a minute before sending it again.",notifFail:"Could not send. Try again.",notifRecipients:"recipients",alertsEnable:"Enable alerts on this device",noResults:"No messages match your search.",allRead:"You are all caught up. Tap All to see every message.",rollLabel:"rollover",prepaidLabel:"prepaid",wd:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+        es:{payMsg:"Su prueba gratis terminó. Agregue un método de pago para seguir contestando llamadas.",payNow:"Agregar pago",alerts:"Alertas",nmsg:"Mensajes",ncal:"Agenda",nset:"Ajustes",nout:"Salientes",obUpload:"Subir una lista",obCsvHint:"CSV o texto sin formato, o pega las filas aquí. Solo el teléfono es obligatorio; también se leen Nombre, Apellido, Empresa (o Agencia) y Correo si están. Desde Excel o Google Sheets: Archivo, Guardar como, CSV. Hasta 5.000 filas, 2 MB.",obConsent:"¿Por qué puede llamar a estas personas?",obCheck:"Revisar el archivo",obSaveList:"Guardar como borrador",obLists:"Sus listas",obDnc:"No llamar",obDncHint:"Quien pida no ser llamado. Se verifica otra vez antes de cada llamada.",obAdd:"Agregar",obOff:"Las llamadas salientes aún no están activadas en esta cuenta.",obNoWf:"Aún no hay flujo de salida conectado, así que nada puede llamar.",obDncOff:"Los números NO se comparan con el registro nacional No Llame. Solo se aplica su propia lista.",obActivate:"Activar",obDial:"Llamar ahora",obPitchTitle:"Llamadas salientes",obPitchBody:"Su IA llama a la lista que usted suba, agenda y le reporta.",obPerMin:"por minuto",obBalance:"Su saldo",obMinutesLeft:"minutos disponibles",obHeld:"retenido por llamadas en curso",obAdd:"Agregar",obNoFunds:"Agregue saldo para poder llamar.",obActivateFee:"Activar salientes — {fee}",obWaitingPay:"Esperando la confirmación de su pago.",obResumePay:"Continuar al pago",obReadyBy:"Pagado. Su marcador saliente estará listo el {when}. Le avisaremos aquí apenas esté activo.",obOverdue:"Está tardando más de lo previsto. Ya fuimos notificados.",obSuspended:"Las llamadas salientes están pausadas en esta cuenta.",obPayFail:"No se pudo iniciar el pago. Inténtelo de nuevo.",obCalls:"Llamadas",obNoCalls:"Aún no hay llamadas.",obAttempted:"realizadas",obConnected:"conectadas",obOut_in_progress:"en curso",obOut_no_result_recorded:"sin resultado registrado",obOut_connected:"conectada",obOut_not_answered:"sin contestar",obOut_appointment:"cita",obOut_transferred:"transferida",obOut_message:"mensaje",obOut_completed:"completada",obDraft:"borrador",obActive:"activa",biz:"Negocio",bizname:"Nombre del negocio",ownerph:"Móvil del dueño (alertas SMS)",transferph:"Número para transferir (persona real)",glang:"Idioma del saludo",tz:"Zona horaria",save:"Guardar",avail:"Disponibilidad",addhours:"+ Agregar horario",fwd:"Reenvío de llamadas",fmode:"Modo de reenvío",mdirect:"Reenviar todas las llamadas (la IA siempre contesta)",mnoans:"Después de 2 timbres (si no contesto)",carrier:"Operador",turnon:"Activar",turnoff:"Desactivar",check:"Verificar",onlabel:"Código ON",offlabel:"Código OFF",copy:"Copiar",bill:"Facturación",startbill:"Iniciar / administrar plan",cancelsub:"Cancelar suscripción",logout:"Cerrar sesión",noMsg:"Aún no hay mensajes. Cuando pierda una llamada, aparecerá aquí.",noAppt:"Aún no hay citas.",noReason:"Sin motivo indicado",apAdd:"Agregar cita",apName:"Nombre",apPhone:"Teléfono (opcional)",apReason:"¿Para qué es?",apSave:"Guardar",apSaving:"Guardando…",apFill:"Nombre, fecha y hora son obligatorios.",apTaken:"Ese horario ya está reservado.",apUnconfirmed:"Reservado, pero aún sin confirmar con el calendario — revísalo.",apSyncFail:"El calendario lo rechazó. Elige otro horario.",apBadNum:"Ese número no lo podemos usar.",apFailed:"No se pudo guardar. Inténtalo de nuevo.",cancel:"Cancelar",read:"Marcar leído",callback:"Llamar",fall:"Todos",funread:"No leídos",searchph:"Buscar mensajes…",del:"Eliminar",whatsapp:"WhatsApp",sms:"SMS",theme:"Tema",themepick:"Apariencia",tdark:"Oscuro",tlight:"Claro",addmin:"Agregar minutos",startplan:"Iniciar plan mensual",close:"Cerrar",rechargeInfo:"Compre minutos contestados adicionales. Se cargan a su tarjeta guardada y se suman a su saldo.",notifDismiss:"Toque para descartar",notifs:"Notificaciones",notifNone:"Nada nuevo.",notifAnnounce:"Anunciar a todos los suscriptores",notifAnnounceHint:"Todos lo reciben en sus notificaciones, con contador. No hay correo — este es el canal.",notifTitle:"Título",notifBody:"Mensaje (opcional)",notifSend:"Enviar a todos",notifNeedTitle:"Escriba un título primero.",notifSent:"Enviado a {n} cuenta(s).",notifJustSent:"Eso se acaba de enviar. Espere un minuto antes de reenviarlo.",notifFail:"No se pudo enviar. Inténtelo de nuevo.",notifRecipients:"destinatarios",alertsEnable:"Activar alertas en este dispositivo",noResults:"Ningún mensaje coincide con su búsqueda.",allRead:"No hay mensajes sin leer. Toque Todos para ver todos los mensajes.",rollLabel:"acumulados",prepaidLabel:"prepagados",wd:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]}};
 let lang=localStorage.getItem('lite_lang')||'en';
 function apply(){document.querySelectorAll('[data-i]').forEach(e=>{const k=e.getAttribute('data-i');const v=I[lang][k];if(typeof v==='string'){if(e.querySelector('.badge')){e.childNodes[0].nodeValue=v}else e.textContent=v}});document.querySelectorAll('[data-i-ph]').forEach(e=>{const v=I[lang][e.getAttribute('data-i-ph')];if(typeof v==='string')e.placeholder=v});document.getElementById('lang').textContent=lang==='en'?'ES':'EN';document.documentElement.lang=lang}
 document.getElementById('lang').onclick=()=>{lang=lang==='en'?'es':'en';localStorage.setItem('lite_lang',lang);apply();render()};
@@ -442,8 +449,15 @@ async function loadCalendar(){
    consequences.                                                            */
 let obParsed=null;
 function money(c){ return '$'+((Number(c)||0)/100).toFixed(2); }
-function whenLocal(iso){ try{ return new Date(iso).toLocaleString(lang==='es'?'es-CO':'en-US',
-  {weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; } }
+function whenLocal(iso){
+  // new Date(undefined).toLocaleString() does not THROW — it returns the
+  // string "Invalid Date", which then renders to the user as those words.
+  // The try/catch was never going to catch it.
+  const d=new Date(iso);
+  if(!iso||isNaN(d.getTime())) return '';
+  try{ return d.toLocaleString(lang==='es'?'es-CO':'en-US',
+    {weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; }
+}
 
 /**
  * THE GATE. Renders what the client may do right now, and hides everything
@@ -822,27 +836,100 @@ $('bell').onclick=async()=>{
   }catch(e){}
 };
 /**
- * Unread notifications, shown from whatever tab the client is on — "your
- * outbound caller is ready" has to reach them wherever they are, not only if
- * they happen to open Outbound.
+ * THE NOTIFICATION PANEL — this service's only notification channel.
+ *
+ * No email and no SMS exist here by decision, so a row plus a badge is the
+ * whole delivery mechanism. The header item carries the count from any tab;
+ * opening the panel is reading them, which is what brings the badge down.
  */
-async function loadNotifs(){
-  const box=$('notif'); if(!box) return;
-  const j=await api('/api/outbound/notifications'); 
-  const list=(j&&j.notifications||[]).filter(n=>!n.read_at);
-  notifUnread=list.length; refreshBadge();
-  if(!list.length){ box.style.display='none'; return; }
-  box.style.display='';
-  box.innerHTML=list.slice(0,3).map(n=>'<div><b>'+esc(n.title)+'</b>'
-    +(n.body?' — '+esc(n.body):'')+'</div>').join('')
-    +'<div style="opacity:.7;font-size:12px;margin-top:6px">'+esc(I[lang].notifDismiss)+'</div>';
+let notifOpen=false, isOwner=false;
+async function loadNotifs(opts){
+  const j=await api('/api/notifications'); if(!j) return;
+  const list=j.notifications||[];
+  isOwner=!!j.is_owner;
+  notifUnread=j.unread||0; refreshBadge();
+  const c=$('notifCount');
+  if(c){ if(notifUnread>0){c.style.display='inline-block';c.textContent=notifUnread}else c.style.display='none'; }
+  // Re-rendering rebuilds the panel's innerHTML, which DESTROYS the compose
+  // box and the confirmation inside it — the founder sent a broadcast and the
+  // "sent to 7 accounts" message vanished in the same tick it appeared.
+  if(notifOpen && !(opts&&opts.render===false)) renderNotifs(list);
+  return list;
 }
-$('notif').onclick=async()=>{
-  // Reading them IS the dismissal, so there is no second button to miss —
-  // and the badge must come DOWN with it, or it is noise within a day.
-  await api('/api/outbound/notifications/read',{method:'POST'});
-  $('notif').style.display='none';
-  notifUnread=0; refreshBadge();
+function renderNotifs(list){
+  const box=$('notifPanel'), D=I[lang];
+  const rows = list.length
+    ? list.map(function(n){
+        return '<div class="obitem'+(n.read_at?'':' unread')+'">'
+          +'<b>'+esc(n.title)+'</b>'
+          +(n.body?'<div class="obhint" style="white-space:pre-wrap">'+esc(n.body)+'</div>':'')
+          +'<div class="obhint">'+esc(whenLocal(n.created_at))+'</div></div>';
+      }).join('')
+    : '<div class="obhint">'+D.notifNone+'</div>';
+  // THE FOUNDER'S COMPOSE BOX, drawn only when the SERVER says so. The flag
+  // comes from /api/notifications, which resolves the owner from the
+  // database — the client never decides who is an admin, and the broadcast
+  // route checks again anyway.
+  const admin = isOwner ? '<div class="obcard" style="margin-bottom:12px">'
+    +'<div class="obh">'+D.notifAnnounce+'</div>'
+    +'<div class="obhint">'+D.notifAnnounceHint+'</div>'
+    +'<input id="bcTitle" placeholder="'+esc(D.notifTitle)+'" maxlength="200">'
+    +'<textarea id="bcBody" rows="3" placeholder="'+esc(D.notifBody)+'" maxlength="4000"></textarea>'
+    +'<div class="obrow"><button class="sm primary" onclick="sendBroadcast()">'+D.notifSend+'</button></div>'
+    +'<div id="bcMsg" class="obmsg"></div>'
+    +'<div id="bcHist" class="obhint" style="margin-top:10px"></div></div>' : '';
+  box.innerHTML = admin
+    + '<div class="obrow" style="justify-content:space-between;margin-bottom:8px">'
+    + '<b>'+D.notifs+'</b>'
+    + '<button class="sm ghost" onclick="closeNotifs()">'+D.close+'</button></div>'
+    + rows;
+  if(isOwner) loadBroadcasts();
+}
+async function loadBroadcasts(){
+  const j=await api('/api/notifications/broadcasts'); const el=$('bcHist'); if(!el) return;
+  const b=(j&&j.broadcasts)||[];
+  // Counts of real rows: "sent to 0" is a fact worth seeing, not something to
+  // hide behind a success message.
+  el.innerHTML = b.length ? b.slice(0,5).map(function(x){
+    return esc(whenLocal(x.created_at))+' · '+esc(x.title)+' · '+esc(String(x.recipients))+' '+esc(I[lang].notifRecipients);
+  }).join('<br>') : '';
+}
+window.sendBroadcast=async()=>{
+  const m=$('bcMsg'), D=I[lang];
+  const title=($('bcTitle').value||'').trim(), body=($('bcBody').value||'').trim();
+  if(title.length<3){ m.className='obmsg obwarn'; m.textContent=D.notifNeedTitle; return; }
+  m.className='obmsg'; m.textContent='…';
+  const r=await api('/api/notifications/broadcast',{method:'POST',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify({title,body})});
+  if(r&&r.ok){
+    m.className='obmsg obok';
+    m.textContent=D.notifSent.replace('{n}',r.recipients);
+    $('bcTitle').value=''; $('bcBody').value='';
+    // Counts and history refresh; the panel does NOT re-render, so the
+    // confirmation the founder just earned stays on screen.
+    loadNotifs({render:false}); loadBroadcasts();
+  } else {
+    m.className='obmsg obwarn';
+    // "just_sent" is its own message: the founder must know the second tap
+    // did NOT send, rather than wonder whether everyone got it twice.
+    m.textContent = (r&&r.reason==='just_sent') ? D.notifJustSent
+      : ((r&&(r.message||r.error))||D.notifFail);
+  }
+};
+window.closeNotifs=()=>{ notifOpen=false; $('notifPanel').style.display='none'; };
+$('notifBtn').onclick=async()=>{
+  notifOpen=!notifOpen;
+  $('notifPanel').style.display = notifOpen?'':'none';
+  if(!notifOpen) return;
+  const list=await loadNotifs();
+  renderNotifs(list||[]);
+  // OPENING IS READING. There is no second button to miss, and the badge
+  // must come down or it is noise within a day.
+  if(notifUnread>0){
+    await api('/api/notifications/read',{method:'POST'});
+    notifUnread=0; refreshBadge();
+    const c=$('notifCount'); if(c) c.style.display='none';
+  }
 };
 refreshBell();
 apply();render();

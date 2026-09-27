@@ -312,6 +312,32 @@ M.sequelize = {
       for (const k of Object.keys(rp)) if (!['t', 'to', 'froms'].includes(k)) t[k] = rp[k];
       return [[{ id: t.id, outbound_state: t.outbound_state }], {}];
     }
+    if (/FROM lite_broadcasts/.test(sql) && /SELECT id FROM lite_broadcasts/.test(sql)) {
+      const t = String(opts.replacements.t || '').toLowerCase();
+      const cutoff = Date.now() - 60000;
+      const hit = OB.bcasts.find((x) => x.title.toLowerCase() === t && x.at > cutoff);
+      return [hit ? [{ id: hit.id }] : [], {}];
+    }
+    if (/INSERT INTO lite_broadcasts/.test(sql)) {
+      const rp = opts.replacements;
+      const row = { id: OB.bcasts.length + 1, title: rp.ti, body: rp.b,
+        recipients: rp.n, at: Date.now() };
+      OB.bcasts.push(row);
+      return [[{ id: row.id }], {}];
+    }
+    if (/SELECT id, title, body, recipients, created_at FROM lite_broadcasts/.test(sql)) {
+      return [OB.bcasts.slice().reverse(), {}];
+    }
+    if (/SELECT id FROM lite_tenants ORDER BY id/.test(sql)) {
+      return [M.Tenant._rows.map((r) => ({ id: r.id })), {}];
+    }
+    if (/INSERT INTO lite_notifications[\s\S]*SELECT id, 'announcement'/.test(sql)) {
+      const rp = opts.replacements;
+      for (const t2 of M.Tenant._rows) {
+        OB.notifs.push({ tenant_id: t2.id, kind: 'announcement', title: rp.ti, body: rp.b, read_at: null });
+      }
+      return [[], {}];
+    }
     if (/COUNT\(\*\)::int AS n FROM lite_notifications/.test(sql)) {
       const t = opts.replacements.t;
       return [[{ n: OB.notifs.filter((x) => x.tenant_id === t && !x.read_at).length }], {}];
@@ -325,7 +351,7 @@ M.sequelize = {
   },
 };
 // In-memory stand-ins for the outbound tables the dialer reads and writes.
-const OB = { lists: [], contacts: [], calls: [], suppressions: [], wallet: {}, payments: [], notifs: [] };
+const OB = { lists: [], contacts: [], calls: [], suppressions: [], wallet: {}, payments: [], notifs: [], bcasts: [] };
 let OB_CALL_SEQ = 0;
 require.cache[require.resolve(path.join(ROOT, 'src/models.js'))] = { id: 'models', filename: 'models', loaded: true, exports: M };
 
@@ -3262,6 +3288,81 @@ const tenantSeed = (over = {}) => ({
     const src = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
     assert.ok(/b\.enabled === true && t\.outbound_state === 'pending_setup'/.test(src),
       'activation still rides on the default-true enable flag');
+  });
+
+  /* ── THE FOUNDER'S BROADCAST ──────────────────────────────────────────── */
+
+  await t('a BROADCAST reaches every tenant, one row each', async () => {
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const pn = require(path.join(ROOT, 'src/services/pushNotify'));
+    const realPush = pn.pushBadge; pn.pushBadge = async () => ({ ok: true });
+    const before = OB.notifs.length;
+    const tenants = M.Tenant._rows.length;
+    const r = await nt.broadcast({ title: 'Twenty percent off outbound', body: 'This month.', byTenant: 1 });
+    pn.pushBadge = realPush;
+    assert.strictEqual(r.ok, true, JSON.stringify(r));
+    assert.strictEqual(r.recipients, tenants, 'it did not reach every tenant');
+    // ONE ROW EACH is the design: a single shared row would make "read"
+    // global, so the first person to dismiss it clears it for everyone and
+    // no tenant's badge could ever be right.
+    assert.strictEqual(OB.notifs.length, before + tenants, 'it did not write one row per tenant');
+  });
+
+  await t('A DOUBLE TAP DOES NOT NOTIFY EVERY CUSTOMER TWICE', async () => {
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const pn = require(path.join(ROOT, 'src/services/pushNotify'));
+    const realPush = pn.pushBadge; pn.pushBadge = async () => ({ ok: true });
+    await nt.broadcast({ title: 'Double tap test', body: 'x', byTenant: 1 });
+    const before = OB.notifs.length;
+    const again = await nt.broadcast({ title: 'Double tap test', body: 'x', byTenant: 1 });
+    pn.pushBadge = realPush;
+    assert.strictEqual(again.ok, false);
+    // REFUSED, not silently deduped: the founder must know the second one
+    // did not go, rather than wonder whether everyone got it twice.
+    assert.strictEqual(again.reason, 'just_sent');
+    assert.strictEqual(OB.notifs.length, before, 'the second tap wrote rows anyway');
+  });
+
+  await t('a broadcast with no title is refused', async () => {
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const r = await nt.broadcast({ title: '   ', body: 'x', byTenant: 1 });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'no_title');
+  });
+
+  await t('ADMIN IS RESOLVED FROM THE DATABASE, NEVER FROM THE 30-DAY TOKEN', () => {
+    // The session token is signed, so its email is truthful — about who
+    // logged in a month ago. Reading the owner tenant fresh means a changed
+    // founder account takes effect the same day, and a stale token cannot
+    // keep broadcasting to every customer.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/notifications.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function requireOwner'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(/notify\.isOwner\(req\.tenantId\)/.test(body), 'admin is not resolved from the owner tenant');
+    assert.ok(!/req\.user/.test(body), 'admin is read off the session token');
+    assert.ok(/404/.test(body), 'a refusal confirms the admin surface exists');
+  });
+
+  await t('the broadcast route is owner-gated BEFORE it parses a body', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/notifications.js'), 'utf8');
+    const line = src.split('\n').find((l) => l.includes("post('/broadcast'"));
+    assert.ok(line, 'the broadcast route is gone');
+    // PRESENT FIRST, THEN ORDERED. `indexOf` returns -1 when the gate is
+    // absent, and -1 is less than any real index — so the naive ordering
+    // check passed with requireOwner deleted entirely, which is the exact
+    // thing it exists to prevent.
+    const gate = line.indexOf('requireOwner');
+    const body = line.indexOf('express.json');
+    assert.ok(gate > 0, 'the broadcast route is NOT owner-gated at all');
+    assert.ok(body > 0 && gate < body,
+      'a non-owner body is parsed before the gate refuses them');
+  });
+
+  await t('isOwner is false for an ordinary tenant', async () => {
+    const nt = require(path.join(ROOT, 'src/services/notify'));
+    const stranger = await M.Tenant.create({ business_name: 'Not The Founder' });
+    assert.strictEqual(await nt.isOwner(stranger.id), false,
+      'an ordinary subscriber reads as the founder');
   });
 
   ghlMod.call = realCall;

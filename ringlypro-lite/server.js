@@ -231,6 +231,21 @@ async function initDb() {
       read_at TIMESTAMPTZ
     );
     CREATE INDEX IF NOT EXISTS ix_lite_notif_tenant ON lite_notifications(tenant_id, created_at DESC);
+
+    -- WHAT THE FOUNDER SENT EVERYONE, AND HOW MANY GOT IT. The per-tenant
+    -- rows are the delivery; this is the record. Without it "what did I
+    -- announce last month, and did it reach anyone" has no answer, and a
+    -- broadcast that silently reached nobody looks identical to one that
+    -- reached everybody.
+    CREATE TABLE IF NOT EXISTS lite_broadcasts (
+      id SERIAL PRIMARY KEY,
+      sent_by_tenant INTEGER NOT NULL,
+      title VARCHAR(200) NOT NULL,
+      body TEXT,
+      recipients INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS ix_lite_broadcasts_at ON lite_broadcasts(created_at DESC);
   `);
 
   // Fraud-watch alert log: dedupes alerts across restarts, so a redeploy does

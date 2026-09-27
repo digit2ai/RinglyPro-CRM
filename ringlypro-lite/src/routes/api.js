@@ -18,6 +18,11 @@ router.use(requireAuth);
 // requireAuth, so every handler already has req.tenantId from the session.
 router.use('/outbound', require('./outbound'));
 
+// Notifications are not outbound-specific — the add-on was simply the first
+// thing that needed to tell somebody something. Mounted at the top level so
+// the header panel, and the founder's broadcast, have an obvious home.
+router.use('/notifications', require('./notifications'));
+
 /* ── Booking diagnostics (owner-scoped) ────────────────────────────── */
 router.get('/debug/booking', async (req, res) => {
   try {

@@ -131,6 +131,89 @@ async function markRead(tenantId, id) {
   return { ok: true };
 }
 
+/**
+ * Is this tenant the founder's own account?
+ *
+ * RESOLVED FROM THE DATABASE, NEVER FROM THE SESSION TOKEN. The token lasts
+ * 30 days and carries an email, which is signed and therefore truthful — but
+ * truthful about who logged in a month ago. Reading the owner tenant fresh
+ * means that if the founder account ever moves, admin moves with it the same
+ * day, and a stale token cannot keep broadcasting to every customer.
+ */
+async function isOwner(tenantId) {
+  const t = await ownerTenantId();
+  return !!(t && Number(tenantId) === Number(t));
+}
+
+/**
+ * Send one notification to EVERY tenant.
+ *
+ * This is the founder announcing an incentive, a feature or an upgrade, so
+ * it deliberately reaches suspended accounts too: an upgrade offer is most
+ * relevant to somebody who has lapsed.
+ *
+ * ONE ROW PER TENANT IS THE DELIVERY. A single shared row would mean "read"
+ * is global — the first person to dismiss it would clear it for everyone —
+ * and no tenant's badge could ever be right.
+ *
+ * The badge is pushed per tenant, best effort: a push failure for one
+ * customer must not stop the announcement reaching the rest.
+ */
+async function broadcast({ title, body, byTenant }) {
+  const t = String(title || '').trim();
+  if (!t) return { ok: false, reason: 'no_title' };
+
+  // A DOUBLE TAP MUST NOT NOTIFY EVERY CUSTOMER TWICE. Same title within the
+  // minute is refused rather than deduped silently, so the founder knows the
+  // second one did not go.
+  const [dupe] = await sequelize.query(
+    `SELECT id FROM lite_broadcasts
+      WHERE LOWER(title) = LOWER(:t) AND created_at > NOW() - INTERVAL '1 minute' LIMIT 1`,
+    { replacements: { t: t.slice(0, 200) } }
+  );
+  if (dupe && dupe.length) return { ok: false, reason: 'just_sent', broadcast_id: dupe[0].id };
+
+  const [tenants] = await sequelize.query('SELECT id FROM lite_tenants ORDER BY id');
+  const ids = (tenants || []).map((r) => Number(r.id)).filter(Number.isInteger);
+  if (!ids.length) return { ok: false, reason: 'no_tenants' };
+
+  // The rows first, in ONE statement: if the process dies halfway through a
+  // loop, half the customers have been told and half have not, with nothing
+  // recording which.
+  await sequelize.query(
+    `INSERT INTO lite_notifications (tenant_id, kind, title, body)
+     SELECT id, 'announcement', :ti, :b FROM lite_tenants`,
+    { replacements: { ti: t.slice(0, 200), b: body ? String(body).slice(0, 4000) : null } }
+  );
+
+  const [rec] = await sequelize.query(
+    `INSERT INTO lite_broadcasts (sent_by_tenant, title, body, recipients)
+     VALUES (:by, :ti, :b, :n) RETURNING id`,
+    { replacements: { by: byTenant || 0, ti: t.slice(0, 200),
+      b: body ? String(body).slice(0, 4000) : null, n: ids.length } }
+  );
+
+  let pushed = 0;
+  for (const id of ids) {
+    try {
+      await require('./pushNotify').pushBadge(id, { title: t.slice(0, 120), body: body || '' });
+      pushed++;
+    } catch (_) { /* one customer's push must not stop the announcement */ }
+  }
+  return { ok: true, recipients: ids.length, pushed,
+    broadcast_id: rec && rec[0] ? rec[0].id : null };
+}
+
+/** What the founder has announced, most recent first. */
+async function broadcastHistory({ limit = 20 } = {}) {
+  const [rows] = await sequelize.query(
+    `SELECT id, title, body, recipients, created_at FROM lite_broadcasts
+      ORDER BY created_at DESC LIMIT :n`,
+    { replacements: { n: Math.min(100, Math.max(1, limit)) } }
+  );
+  return rows || [];
+}
+
 /* ── THE EVENTS THIS ADD-ON HAS ─────────────────────────────────────────── */
 
 /**
@@ -164,5 +247,6 @@ async function ownerSetupOverdue(tenant, due) {
     `${tenant.business_name || 'Unnamed'} paid and is ${hrs}h past the promised time. They have been told we were notified.`);
 }
 
-module.exports = { notify, notifyOwner, ownerTenantId, ownerEmail, list, markRead, unreadCount,
+module.exports = { notify, notifyOwner, ownerTenantId, ownerEmail, isOwner, broadcast, broadcastHistory,
+  list, markRead, unreadCount,
   ownerSetupPaid, clientOutboundReady, ownerSetupOverdue };

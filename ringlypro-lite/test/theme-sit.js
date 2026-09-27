@@ -239,12 +239,68 @@ function landingTokens() {
         const src = document.documentElement.outerHTML;
         // SPECIFIC. Checking only for the word "notifications" was satisfied
         // by the dismiss call alone, so deleting the fetch that populates the
-        // strip changed nothing and the mutation passed.
-        return { strip: !!document.getElementById('notif'),
-          reads: /api\('\/api\/outbound\/notifications'\)/.test(src),
-          called: /loadNotifs\(\)/.test(src),
+        // panel changed nothing and the mutation passed.
+        return { reads: /api\('\/api\/notifications'\)/.test(src),
+          called: /loadNotifs\(/.test(src),
           dismisses: /notifications\/read/.test(src) };
       });
+      // THE NOTIFICATION SURFACE: header item, panel, and Alerts relocated.
+      const ui = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML.replace(/\s+/g, '');
+        const bell = document.getElementById('bell');
+        return {
+          headerItem: !!document.getElementById('notifBtn'),
+          count: !!document.getElementById('notifCount'),
+          panel: !!document.getElementById('notifPanel'),
+          // The push-permission control is a device PREFERENCE, so it belongs
+          // in Settings; the header now carries the notifications themselves.
+          bellInSettings: !!(bell && bell.closest('#v-settings')),
+          // ONE SURFACE. An earlier version had a strip AND a panel, which is
+          // the same duplicate-card mistake that put "not switched on yet"
+          // directly above "Activate".
+          noStrip: !document.getElementById('notif'),
+          // The compose box must be drawn from a SERVER flag, never decided
+          // by the client.
+          ownerFromServer: /isOwner=!!j\.is_owner/.test(src),
+          openIsReading: /notifications\/read/.test(src),
+        };
+      });
+      t(`${label} notifications live in the header with a count`, () => {
+        assert.ok(ui.headerItem, 'there is no Notifications item in the header');
+        assert.ok(ui.count, 'the header item carries no unread count');
+        assert.ok(ui.panel, 'there is no notification panel');
+        assert.ok(ui.noStrip, 'the old strip is still there alongside the panel');
+      });
+      // A CONFIRMATION MUST SURVIVE THE THING THAT CAUSED IT. Refreshing the
+      // list re-renders the panel's innerHTML, which destroys the compose box
+      // and the "sent to N accounts" message inside it — the founder sent a
+      // broadcast and the confirmation vanished in the tick it appeared.
+      const keepsMsg = await page.evaluate(() => {
+        const src = document.documentElement.outerHTML.replace(/\s+/g, '');
+        return /loadNotifs\(\{render:false\}\);loadBroadcasts\(\)/.test(src);
+      });
+      t(`${label} a broadcast confirmation is not wiped by its own refresh`, () => {
+        assert.ok(keepsMsg, 'sending a broadcast re-renders the panel and destroys the confirmation');
+      });
+
+      t(`${label} Alerts moved to Settings, and admin comes from the server`, () => {
+        assert.ok(ui.bellInSettings, 'the push-permission control is not in Settings');
+        assert.ok(ui.ownerFromServer, 'the client decides who is an admin');
+        assert.ok(ui.openIsReading, 'opening the panel never marks anything read');
+      });
+
+      // AN INVALID DATE MUST RENDER AS NOTHING, not the words "Invalid Date".
+      // new Date(undefined).toLocaleString() does not throw, so the try/catch
+      // that was there could never have caught it.
+      const dates = await page.evaluate(() => {
+        if (typeof whenLocal !== 'function') return null;
+        return [whenLocal(undefined), whenLocal(null), whenLocal(''), whenLocal('not a date')];
+      });
+      t(`${label} an unparseable date renders as nothing`, () => {
+        assert.ok(dates, 'whenLocal is gone');
+        assert.deepStrictEqual(dates, ['', '', '', ''], 'got: ' + JSON.stringify(dates));
+      });
+
       // THE BADGE IS THE DELIVERY. A notification row the icon does not count
       // is a message nobody is told about until they open the app for some
       // other reason.
@@ -256,7 +312,7 @@ function landingTokens() {
         return { combined: /functionrefreshBadge\(\)\{setAppBadge\(\(msgUnread\|\|0\)\+\(notifUnread\|\|0\)\)/.test(src)
             && /msgUnread=j\.unread;refreshBadge\(\)/.test(src)
             && !/setAppBadge\(j\.unread\)/.test(src),
-          notifFeeds: /notifUnread=list\.length;refreshBadge\(\)/.test(src),
+          notifFeeds: /notifUnread=j\.unread\|\|0;refreshBadge\(\)/.test(src),
           dropsOnRead: /notifUnread=0;refreshBadge\(\)/.test(src) };
       });
       t(`${label} the icon badge counts messages AND notifications`, () => {
@@ -266,7 +322,6 @@ function landingTokens() {
       });
 
       t(`${label} unread notifications have somewhere to appear`, () => {
-        assert.ok(notif.strip, 'there is no notification strip in the page');
         assert.ok(notif.reads, 'nothing in the UI fetches the notifications');
         assert.ok(notif.called, 'the notification loader is never invoked');
         assert.ok(notif.dismisses, 'a notification can be shown but never dismissed');

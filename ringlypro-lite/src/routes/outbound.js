@@ -337,13 +337,4 @@ router.get('/calls', async (req, res) => {
   });
 });
 
-/** Dashboard notifications — the channel that works with no email transport. */
-router.get('/notifications', async (req, res) => {
-  res.json({ notifications: await notify.list(req.tenantId, { limit: 20 }) });
-});
-router.post('/notifications/read', async (req, res) => {
-  await notify.markRead(req.tenantId, null);
-  res.json({ ok: true });
-});
-
 module.exports = router;
