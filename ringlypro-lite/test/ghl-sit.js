@@ -1345,6 +1345,27 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual(await M.Appointment.count(), before);
   });
 
+  await t('SLOT VALIDATION IS GRANTED PER TENANT, NOT BY ONE GLOBAL SWITCH', () => {
+    const c = require(path.join(ROOT, 'src/services/ghlCalendar'));
+    const env = process.env.LITE_GHL_APPT_VALIDATE_SLOT;
+    try {
+      delete process.env.LITE_GHL_APPT_VALIDATE_SLOT;
+      // A calendar never proven to have open hours refuses EVERY booking if
+      // HighLevel is allowed to judge, so it is not allowed to.
+      assert.strictEqual(c.validateSlot({ id: 1 }), false, 'an unproven calendar was given the authority');
+      assert.strictEqual(c.validateSlot({ id: 1, ghl_hours_confirmed_at: new Date() }), true,
+        'a calendar with confirmed hours was not trusted');
+      // The override still wins both ways.
+      process.env.LITE_GHL_APPT_VALIDATE_SLOT = '0';
+      assert.strictEqual(c.validateSlot({ ghl_hours_confirmed_at: new Date() }), false, 'forced off was ignored');
+      process.env.LITE_GHL_APPT_VALIDATE_SLOT = '1';
+      assert.strictEqual(c.validateSlot({}), true, 'forced on was ignored');
+    } finally {
+      if (env === undefined) delete process.env.LITE_GHL_APPT_VALIDATE_SLOT;
+      else process.env.LITE_GHL_APPT_VALIDATE_SLOT = env;
+    }
+  });
+
   await t('slot validation at HighLevel is OFF by default, and the reason is written down', () => {
     assert.strictEqual(ghlCalendar.validateSlot(), false);
     const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlCalendar.js'), 'utf8');

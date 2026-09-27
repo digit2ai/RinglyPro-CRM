@@ -195,6 +195,14 @@ async function syncCalendarHours(tenant, creds, { force = false } = {}) {
       : (c.openHours && typeof c.openHours === 'object' ? Object.keys(c.openHours).length : 0);
   } catch (_) { /* reported as unconfirmed below */ }
 
+  // RECORD THAT THIS CALENDAR CAN ANSWER "WHEN ARE YOU FREE?". Slot validation
+  // hands HighLevel the right to refuse a booking, and a calendar with no open
+  // hours refuses EVERY one. So the authority is granted per tenant, only after
+  // the hours were written AND read back, never by a global switch.
+  if (confirmed) {
+    try { await tenant.update({ ghl_hours_confirmed_at: new Date() }); }
+    catch (e) { console.warn('[lite:provisioning] could not record hours confirmation:', e.message); }
+  }
   console.log(`[lite:provisioning] calendar hours set for tenant ${tenant.id}: `
     + `${openHours.map((g) => `${g.daysOfTheWeek.join(',')} ${g.hours[0].openHour}:00-${g.hours[0].closeHour}:00`).join(' | ')}`
     + ` (read back: ${confirmed === null ? 'unconfirmed' : confirmed})`);

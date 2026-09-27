@@ -44,6 +44,9 @@ const Tenant = sequelize.define('LiteTenant', {
   ghl_token_enc: { type: DataTypes.TEXT },          // AES-256-GCM, services/secretbox
   ghl_agent_id: { type: DataTypes.STRING },
   ghl_calendar_id: { type: DataTypes.STRING },
+  // When this calendar was proven to carry open hours. NULL = unproven, and
+  // unproven never gets slot validation.
+  ghl_hours_confirmed_at: { type: DataTypes.DATE },
   // Provisioning is resumable, so the step reached is recorded rather than
   // inferred: pending|claimed|number|calendar|agent|ready|failed
   provisioning_state: { type: DataTypes.STRING, defaultValue: 'pending' },

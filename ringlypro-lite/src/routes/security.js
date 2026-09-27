@@ -76,7 +76,11 @@ router.get('/', async (req, res) => {
     // counter and the last error are surfaced here, where the owner can find
     // them, rather than living only in the logs.
     ghl_calendar_push: (() => { const c = require('../services/ghlCalendar');
-      return { ...c.stats, slot_validation_at_highlevel: c.validateSlot(),
+      // Per tenant now, so a single boolean would be a lie. Report the policy.
+      return { ...c.stats,
+        slot_validation_at_highlevel: (String(process.env.LITE_GHL_APPT_VALIDATE_SLOT || '').trim() === '1') ? 'forced_on'
+          : (String(process.env.LITE_GHL_APPT_VALIDATE_SLOT || '').trim() === '0') ? 'forced_off'
+            : 'per_tenant_when_hours_confirmed',
         version: c.primaryVersion(), version_fallback: c.fallbackVersion() }; })(),
   });
 });

@@ -84,7 +84,22 @@ function _forgetVersion() { resolvedVersion = null; }
  * LITE_GHL_APPT_VALIDATE_SLOT=1 once the tenant's HighLevel calendar carries
  * the same open hours, and HighLevel becomes a real second check.
  */
-function validateSlot() { return String(process.env.LITE_GHL_APPT_VALIDATE_SLOT || '0') === '1'; }
+/**
+ * MAY HIGHLEVEL REFUSE THIS TENANT'S BOOKING?
+ *
+ * `LITE_GHL_APPT_VALIDATE_SLOT` is the global override and still wins in both
+ * directions ('1' forces on, '0' forces off). Unset — the default — it is
+ * decided PER TENANT by whether that calendar was proven to carry open hours:
+ * a calendar with none refuses every booking, which is why this shipped off,
+ * and it stayed off long after the hours bug was fixed because one switch
+ * could not tell a ready tenant from an empty one.
+ */
+function validateSlot(tenant) {
+  const env = String(process.env.LITE_GHL_APPT_VALIDATE_SLOT || '').trim();
+  if (env === '1') return true;
+  if (env === '0') return false;
+  return !!(tenant && tenant.ghl_hours_confirmed_at);
+}
 
 /** A tenant is on the two-way path only once it actually has a HighLevel calendar. */
 function enabledFor(tenant) {
@@ -234,7 +249,7 @@ async function pushAppointment({ tenant, creds, appt, email }) {
           ? `${appt.reason}${appt.caller_name ? ` — ${appt.caller_name}` : ''}`
           : `${appt.caller_name || 'Appointment'} — booked on ${tenant.business_name || 'RinglyPro'}`,
         appointmentStatus: 'confirmed',
-        ignoreFreeSlotValidation: !validateSlot(),
+        ignoreFreeSlotValidation: !validateSlot(tenant),
         toNotify: false,
       },
     }, { clock }).catch((e) => { e.stage = 'create'; throw e; });   // see the catch below

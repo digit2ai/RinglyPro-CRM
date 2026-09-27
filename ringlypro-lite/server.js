@@ -44,6 +44,11 @@ async function initDb() {
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS provisioning_state VARCHAR(32) DEFAULT 'pending';
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS provisioning_error TEXT;
     ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS forwarding_confirmed_at TIMESTAMP WITH TIME ZONE;
+    -- Set only when this tenant's HighLevel calendar had open hours written AND
+    -- read back. It is what licenses slot validation for that tenant: handing
+    -- HighLevel the right to refuse a booking against an EMPTY calendar refuses
+    -- every booking, which is why validation shipped globally off.
+    ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ghl_hours_confirmed_at TIMESTAMP WITH TIME ZONE;
   `);
   // Two-way calendar. `origin` is deliberately left NULL on existing rows —
   // they pre-date the column and their provenance is genuinely unknown, and
