@@ -184,7 +184,17 @@ class GhlProvider {
             // daysOfOfferingDates 5, 7, 10 and 14 and slotsPerDay 4 and 5 are
             // each refused with 422 "Invalid actionParameters" — so the 14/1/4
             // this used to send is why no agent ever got a booking action.
-            actionParameters: { calendarId, daysOfOfferingDates: 3, slotsPerDay: 3, hoursBetweenSlots: 3 },
+            // TWO DAYS, TWO TIMES — measured against the live agent 2026-09-27.
+            // HighLevel accepts a narrow, undocumented set: 5, 7, 10 and 14
+            // days and 4 and 5 slots are all refused (422), and 2/2 had never
+            // been tried until it was. Fewer options means a shorter spoken
+            // list, which is the whole point — a caller cannot hold six times
+            // in their head. An action is IMMUTABLE (no GET, no PATCH), so
+            // changing this for an existing agent is a DELETE then a POST.
+            actionParameters: { calendarId,
+              daysOfOfferingDates: Math.max(1, parseInt(process.env.LITE_GHL_OFFER_DAYS || '2', 10) || 2),
+              slotsPerDay: Math.max(1, parseInt(process.env.LITE_GHL_OFFER_SLOTS || '2', 10) || 2),
+              hoursBetweenSlots: Math.max(1, parseInt(process.env.LITE_GHL_OFFER_GAP_HOURS || '3', 10) || 3) },
           },
         });
         actions.booking = (a && a.id) || 'created';

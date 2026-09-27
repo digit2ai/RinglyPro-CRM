@@ -442,12 +442,32 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual(a.inboundNumber, '+18135550101');
   });
   await t('THE BOOKING ACTION USES THE VALUES HIGHLEVEL ACCEPTS', () => {
-    // Measured against the live API: 3/3/3 is accepted and 14/1/4 - what this
-    // used to send - is refused 422, which is why no agent ever got one.
-    const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');
-    const m = src.match(/actionParameters:\s*\{\s*calendarId,\s*daysOfOfferingDates:\s*(\d+),\s*slotsPerDay:\s*(\d+),\s*hoursBetweenSlots:\s*(\d+)/);
-    assert.ok(m, 'the booking parameters changed shape');
-    assert.deepStrictEqual(m.slice(1, 4), ['3', '3', '3'], 'a value HighLevel refuses is back');
+    // Asserted on the request that was actually SENT, not on the source text —
+    // the values are env-overridable now and a grep would only prove what the
+    // default literal says, not what HighLevel receives.
+    //
+    // Measured against the live API: 2/2/3 and 3/3/3 are accepted; 14/1/4 (what
+    // this once sent), 5, 7, 10 and 14 days and 4 and 5 slots are all refused
+    // 422, which is why no agent ever got a booking action at all.
+    const act = reqs.find((r) => r.path === '/voice-ai/actions' && r.body
+      && r.body.actionType === 'APPOINTMENT_BOOKING');
+    assert.ok(act, 'no booking action was sent');
+    const p = act.body.actionParameters;
+    assert.ok(p.daysOfOfferingDates >= 1 && p.daysOfOfferingDates <= 3,
+      `daysOfOfferingDates ${p.daysOfOfferingDates} is outside the set HighLevel accepts`);
+    assert.ok(p.slotsPerDay >= 1 && p.slotsPerDay <= 3,
+      `slotsPerDay ${p.slotsPerDay} is refused by HighLevel (4 and 5 are 422)`);
+    assert.ok(Number.isInteger(p.hoursBetweenSlots) && p.hoursBetweenSlots >= 1,
+      'hoursBetweenSlots must be a positive integer');
+  });
+
+  await t('the owner gets the SHORT list they asked for by default', () => {
+    // Two days, two times. A caller cannot hold six options in their head, and
+    // the spoken list is what the owner complained about.
+    const act = reqs.find((r) => r.path === '/voice-ai/actions' && r.body
+      && r.body.actionType === 'APPOINTMENT_BOOKING');
+    assert.strictEqual(act.body.actionParameters.daysOfOfferingDates, 2);
+    assert.strictEqual(act.body.actionParameters.slotsPerDay, 2);
   });
   await t('VOICE AI ACTIONS ARE SENT WITH Version v3', () => {
     const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8')
