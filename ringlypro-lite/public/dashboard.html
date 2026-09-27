@@ -220,8 +220,24 @@ async function subscribePush(){
       credentials:'same-origin',body:JSON.stringify({subscription:sub.toJSON?sub.toJSON():sub})});
   }catch(e){ /* push is an enhancement; the app works without it */ }
 }
+// WHY THE ICON BADGE MIGHT NOT BE SHOWING. setAppBadge returns a PROMISE, so
+// the try/catch that used to wrap it caught nothing: when the OS refused —
+// which is what macOS does until the installed app is allowed to badge in
+// System Settings — it failed in total silence and looked like a broken
+// feature. The outcome is recorded and shown on the Alerts button, so the
+// owner can tell "the OS said no" from "the app never tried".
+let badgeState='unknown';
 function setAppBadge(n){
-  try{ if('setAppBadge'in navigator){ n>0?navigator.setAppBadge(n):navigator.clearAppBadge&&navigator.clearAppBadge(); } }catch(e){}
+  if(!('setAppBadge'in navigator)){ badgeState='unsupported'; }
+  else{
+    try{
+      const p = n>0 ? navigator.setAppBadge(n)
+                    : (navigator.clearAppBadge?navigator.clearAppBadge():Promise.resolve());
+      if(p&&p.then) p.then(()=>{badgeState='ok';refreshBell&&refreshBell();})
+                     .catch(e=>{badgeState=(e&&e.name)||'refused';refreshBell&&refreshBell();});
+      else badgeState='ok';
+    }catch(e){ badgeState=(e&&e.name)||'error'; }
+  }
   try{ navigator.serviceWorker&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:'badge',count:n}); }catch(e){}
 }
 function notifyNew(delta){
@@ -492,7 +508,17 @@ async function doRecharge(amt){
 
 // PWA + alerts
 if('serviceWorker'in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
-function refreshBell(){const b=$('bell');if(!('Notification'in window)){b.style.display='none';return}b.style.opacity=Notification.permission==='granted'?'1':'0.5'}
+function refreshBell(){const b=$('bell');if(!b)return;
+  if(!('Notification'in window)){b.style.display='none';return}
+  b.style.opacity=Notification.permission==='granted'?'1':'0.5';
+  // The tooltip says what is actually happening, including an OS refusal.
+  const perm=Notification.permission;
+  b.title = perm!=='granted' ? (lang==='es'?'Toca para activar alertas':'Tap to enable alerts')
+    : badgeState==='ok' ? (lang==='es'?'Alertas activas · contador en el icono OK':'Alerts on · icon badge working')
+    : badgeState==='unsupported' ? (lang==='es'?'Alertas activas · este navegador no pone contador en el icono':'Alerts on · this browser cannot badge the icon')
+    : (lang==='es'?'Alertas activas · el sistema rechazó el contador ('+badgeState+'). En Mac: Ajustes del Sistema > Notificaciones > RinglyPro Lite > Globos.'
+                 : 'Alerts on · the OS refused the icon badge ('+badgeState+'). On Mac: System Settings > Notifications > RinglyPro Lite > Badges.');
+}
 $('bell').onclick=async()=>{
   if(!('Notification'in window)){alert(lang==='es'?'Este dispositivo no admite alertas. Agregue la app a la pantalla de inicio.':'Alerts not supported here. Add the app to your Home Screen first.');return}
   try{const p=await Notification.requestPermission();refreshBell();

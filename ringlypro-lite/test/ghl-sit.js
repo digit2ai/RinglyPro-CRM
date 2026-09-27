@@ -1971,10 +1971,23 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/data\.count/.test(sw), 'the push handler ignores the count the server sends');
   });
 
+  await t('A REFUSED BADGE IS REPORTED, NOT SWALLOWED', () => {
+    // setAppBadge returns a PROMISE, so the try/catch that used to wrap it
+    // caught nothing. When macOS refused, the feature failed in total silence
+    // and read as broken — which is exactly how it was reported.
+    const html = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    const fn = html.slice(html.indexOf('function setAppBadge'), html.indexOf('function notifyNew'));
+    assert.ok(/\.catch\(/.test(fn), 'the setAppBadge promise rejection is still unhandled');
+    assert.ok(/badgeState/.test(fn), 'the outcome is not recorded anywhere the owner can see');
+    // And the owner is told where to fix it on the OS that refuses.
+    assert.ok(/System Settings/.test(html) && /Badges/.test(html),
+      'the tooltip does not say how to allow the badge on macOS');
+  });
+
   await t('the service worker cache was bumped for the push change', () => {
     const sw = fs.readFileSync(path.join(ROOT, 'public/sw.js'), 'utf8');
     const m = sw.match(/const CACHE = 'lite-v(\d+)'/);
-    assert.ok(m && Number(m[1]) >= 11, `sw.js is still on lite-v${m && m[1]}`);
+    assert.ok(m && Number(m[1]) >= 12, `sw.js is still on lite-v${m && m[1]}`);
   });
 
   /* ─── an appointment must say what it is FOR ──────────────────────────── */
