@@ -205,6 +205,21 @@ document.querySelectorAll('nav a').forEach(a=>a.onclick=e=>{e.preventDefault();c
 function fmt(d){return new Date(d).toLocaleString(lang==='es'?'es-CO':'en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}
 
 let lastUnread=null;
+const b64=s=>{const p='='.repeat((4-s.length%4)%4);const r=(s+p).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(r);const a=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)a[i]=raw.charCodeAt(i);return a;};
+async function subscribePush(){
+  try{
+    if(!('serviceWorker'in navigator)||!('PushManager'in window))return;
+    const reg=await navigator.serviceWorker.ready;
+    const r=await fetch('/api/push/key',{credentials:'same-origin'});
+    const j=await r.json().catch(()=>({}));
+    if(!j||!j.available||!j.key)return;               // reported absent, not pretended
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64(j.key)});
+    await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+      credentials:'same-origin',body:JSON.stringify({subscription:sub.toJSON?sub.toJSON():sub})});
+  }catch(e){ /* push is an enhancement; the app works without it */ }
+}
 function setAppBadge(n){
   try{ if('setAppBadge'in navigator){ n>0?navigator.setAppBadge(n):navigator.clearAppBadge&&navigator.clearAppBadge(); } }catch(e){}
   try{ navigator.serviceWorker&&navigator.serviceWorker.controller&&navigator.serviceWorker.controller.postMessage({type:'badge',count:n}); }catch(e){}
@@ -223,6 +238,7 @@ async function loadMessages(){
   const j=await api('/api/messages');if(!j)return;
   const u=$('unread');if(j.unread>0){u.style.display='inline-block';u.textContent=j.unread}else u.style.display='none';
   setAppBadge(j.unread);
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted')subscribePush();
   if(lastUnread!==null&&j.unread>lastUnread){ notifyNew(j.unread-lastUnread); }
   lastUnread=j.unread;
   allMessages=j.messages||[];
@@ -480,7 +496,7 @@ function refreshBell(){const b=$('bell');if(!('Notification'in window)){b.style.
 $('bell').onclick=async()=>{
   if(!('Notification'in window)){alert(lang==='es'?'Este dispositivo no admite alertas. Agregue la app a la pantalla de inicio.':'Alerts not supported here. Add the app to your Home Screen first.');return}
   try{const p=await Notification.requestPermission();refreshBell();
-    if(p==='granted'){setAppBadge(lastUnread||0);}
+    if(p==='granted'){setAppBadge(lastUnread||0);subscribePush();}
     else alert(lang==='es'?'Active las notificaciones en Ajustes del navegador. En iPhone: agregue la app a la pantalla de inicio y vuelva a intentar.':'Enable notifications in browser settings. On iPhone: add the app to your Home Screen, then try again.');
   }catch(e){}
 };

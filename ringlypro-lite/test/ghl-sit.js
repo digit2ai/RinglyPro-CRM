@@ -1753,6 +1753,88 @@ const tenantSeed = (over = {}) => ({
   });
 
 
+  /* ─── web push: the badge on a CLOSED app ────────────────────────────── */
+  section('web push (an in-page badge cannot update a closed icon)');
+
+  const push = require(path.join(ROOT, 'src/services/pushNotify'));
+
+  await t('A SUBSCRIPTION IS NEVER RETURNED BY ANY ENDPOINT', () => {
+    // It is a capability URL: anyone holding it can push to that device.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/api.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    // Test the RETURNED SHAPES, not whether a word appears: `req.body.endpoint`
+    // is an INPUT — the browser naming its own subscription to remove — and the
+    // first version of this test flagged it as a leak.
+    const key = { key: 'BPublicKeyValue', available: true };
+    for (const shape of [key, { ok: true }, { ok: false, error: 'bad_subscription' }]) {
+      const flat = JSON.stringify(shape);
+      for (const secret of ['p256dh', 'auth"', 'https://fcm.googleapis.com']) {
+        assert.ok(!flat.includes(secret), `a response shape carries ${secret}`);
+      }
+    }
+    // And nothing in the service can hand a caller the stored rows.
+    assert.ok(!Object.keys(push).some((k) => /^(list|all|find|get)(Subs|Subscriptions)/i.test(k)),
+      'pushNotify exports a subscription reader: ' + Object.keys(push).join(','));
+    // The SELECT that reads them is used only to SEND, never to return.
+    const svc = fs.readFileSync(path.join(ROOT, 'src/services/pushNotify.js'), 'utf8');
+    const sel = svc.slice(svc.indexOf('SELECT id, endpoint'));
+    assert.ok(sel.indexOf('sendNotification') > 0 && sel.indexOf('sendNotification') < 1200,
+      'the subscription SELECT is not immediately feeding a send');
+    // And the service exposes no reader at all.
+    assert.ok(!Object.keys(push).some((k) => /list|all|get.*sub/i.test(k)),
+      'pushNotify exports something that could list subscriptions: ' + Object.keys(push).join(','));
+  });
+
+  await t('a malformed subscription is refused, not stored', async () => {
+    for (const bad of [null, {}, { endpoint: 'https://x' }, { endpoint: 'https://x', keys: {} }]) {
+      const r = await push.subscribe(1, bad);
+      assert.strictEqual(r.ok, false, 'a subscription with no keys was accepted');
+      assert.strictEqual(r.error, 'bad_subscription');
+    }
+  });
+
+  await t('unsubscribe is TENANT-SCOPED — one tenant cannot unhook another\'s device', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/pushNotify.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function unsubscribe'), src.indexOf('async function unreadCount'));
+    assert.ok(/tenant_id = :t/.test(fn),
+      'unsubscribe deletes by endpoint alone, so a guessed endpoint kills another tenant\'s device');
+  });
+
+  await t('THE COUNT IS A COUNT OF ROWS, never a stored counter', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/pushNotify.js'), 'utf8');
+    assert.ok(/Message\.count\(/.test(src), 'the unread count is not derived from rows');
+    assert.ok(!/badge_count|stored_count|counter\s*\+\+/.test(src), 'a stored counter appeared');
+  });
+
+  await t('no web-push installed is reported, never faked', async () => {
+    // pushBadge must say it cannot, rather than claiming a send.
+    const r = await push.pushBadge(999999).catch((e) => ({ ok: false, threw: e.message }));
+    assert.ok(r.ok === false || r.sent === 0,
+      'pushBadge claimed a send with no devices and no keys: ' + JSON.stringify(r));
+  });
+
+  await t('A PUSH FAILURE NEVER FAILS THE MIRROR', async () => {
+    // The message is the product; the badge is a courtesy. This is the same
+    // rule the owner SMS follows.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/callMirror.js'), 'utf8');
+    const part = src.slice(src.indexOf('pushBadge') - 400, src.indexOf('pushBadge') + 260);
+    assert.ok(/try\s*\{/.test(part) && /catch/.test(part),
+      'the push call is not wrapped — a push outage would lose the message');
+  });
+
+  await t('the service worker reads the count the SERVER actually sends', () => {
+    // It read `data.unread`, which the server has never sent, so the icon
+    // would have shown 1 for ever however many messages were waiting.
+    const sw = fs.readFileSync(path.join(ROOT, 'public/sw.js'), 'utf8');
+    assert.ok(/data\.count/.test(sw), 'the push handler ignores the count the server sends');
+  });
+
+  await t('the service worker cache was bumped for the push change', () => {
+    const sw = fs.readFileSync(path.join(ROOT, 'public/sw.js'), 'utf8');
+    const m = sw.match(/const CACHE = 'lite-v(\d+)'/);
+    assert.ok(m && Number(m[1]) >= 11, `sw.js is still on lite-v${m && m[1]}`);
+  });
+
   /* ─── an appointment must say what it is FOR ──────────────────────────── */
   section('appointment reason (a time and a name is not enough)');
 

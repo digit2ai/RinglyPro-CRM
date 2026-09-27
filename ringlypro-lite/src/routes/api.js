@@ -181,6 +181,37 @@ router.post('/appointments', express.json({ limit: '8kb' }), async (req, res) =>
   }
 });
 
+/**
+ * WEB PUSH — the only thing that reaches a CLOSED app.
+ *
+ * `publicKey` is the one value a browser is given, and it is public by design.
+ * A stored SUBSCRIPTION is a capability URL — anyone holding it can push to
+ * that device — so no endpoint here ever returns one.
+ */
+router.get('/push/key', async (req, res) => {
+  const push = require('../services/pushNotify');
+  try {
+    const key = await push.publicKey();
+    // Absent is reported as absent. A browser that gets null shows the reason
+    // rather than silently never subscribing.
+    return res.json({ key, available: !!key });
+  } catch (e) {
+    return res.json({ key: null, available: false, error: 'unavailable' });
+  }
+});
+
+router.post('/push/subscribe', express.json({ limit: '8kb' }), async (req, res) => {
+  const push = require('../services/pushNotify');
+  const r = await push.subscribe(req.tenantId, req.body && req.body.subscription);
+  return res.status(r.ok ? 201 : 400).json(r);
+});
+
+router.post('/push/unsubscribe', express.json({ limit: '8kb' }), async (req, res) => {
+  const push = require('../services/pushNotify');
+  const r = await push.unsubscribe(req.tenantId, req.body && req.body.endpoint);
+  return res.json(r);
+});
+
 // Cancelling here also cancels it in the tenant's HighLevel calendar, or the
 // slot stays blocked there and the Voice AI stops offering a time the owner
 // has actually freed — the mirror image of the double-booking bug, and the one

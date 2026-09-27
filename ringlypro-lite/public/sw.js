@@ -2,7 +2,7 @@
 // BUMP THIS WHENEVER A SHELL FILE CHANGES. '/dashboard' is precached, so a
 // stale copy is served whenever the network hiccups — which is exactly how a
 // deployed fix can look like it never shipped.
-const CACHE = 'lite-v10';
+const CACHE = 'lite-v11';
 const ASSETS = ['/dashboard', '/apple-touch-icon.png', '/icon-192.png', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
@@ -35,11 +35,15 @@ self.addEventListener('message', (e) => {
   }
 });
 
-// Web Push (optional future): show a notification + bump the badge.
+// Web Push — the only thing that reaches a CLOSED app. The in-page badge
+// cannot update an icon nobody is looking at.
 self.addEventListener('push', (e) => {
   let data = {};
   try { data = e.data ? e.data.json() : {}; } catch (_) {}
-  const count = data.unread || 1;
+  // The server sends `count`. This read `data.unread`, which the server has
+  // never sent, so the badge would have shown 1 for ever however many messages
+  // were waiting. Both are accepted now.
+  const count = (typeof data.count === 'number' ? data.count : data.unread) || 1;
   if ('setAppBadge' in self.registration) self.registration.setAppBadge(count).catch(() => {});
   e.waitUntil(self.registration.showNotification(data.title || 'RinglyPro Lite', {
     body: data.body || 'New message',

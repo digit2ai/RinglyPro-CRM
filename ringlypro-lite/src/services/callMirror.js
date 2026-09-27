@@ -165,6 +165,14 @@ async function storeCallResult(f, { source = 'unknown', notifyOwner = true } = {
     } catch (e) { console.warn('[lite:call-mirror] owner alert not sent:', e.message); }
   }
 
+  // AND THE ICON. The owner alert texts them; this updates the home-screen
+  // badge even with the app closed, which the in-page badge cannot do.
+  // Best effort, like the SMS: a push failure must never fail the mirror.
+  if (wroteMessage || wroteAppointment) {
+    try { await require('./pushNotify').pushBadge(tenantId); }
+    catch (e) { console.warn('[lite:call-mirror] push not sent:', e.message); }
+  }
+
   return { stored: true, call_id: call.id, tenant_id: tenantId,
     message: wroteMessage, appointment: wroteAppointment };
 }

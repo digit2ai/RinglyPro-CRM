@@ -2,9 +2,11 @@
   "name": "ringlypro-lite",
   "version": "1.0.0",
   "private": true,
-  "description": "RinglyPro Lite — forwarded-call AI assistant (US + Colombia). Independent, isolated sibling of RinglyPro CRM. Takes a message or books an appointment when a small-business owner misses a call.",
+  "description": "RinglyPro Lite \u2014 forwarded-call AI assistant (US + Colombia). Independent, isolated sibling of RinglyPro CRM. Takes a message or books an appointment when a small-business owner misses a call.",
   "main": "server.js",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js",
     "check": "node test/syntax-check.js",
@@ -24,6 +26,7 @@
     "sequelize": "^6.37.3",
     "stripe": "^18.5.0",
     "twilio": "^4.23.0",
+    "web-push": "^3.6.7",
     "ws": "^8.18.0"
   }
 }
