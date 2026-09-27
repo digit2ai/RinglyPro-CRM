@@ -186,6 +186,38 @@ function landingTokens() {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     t(`${label} ${p} does not scroll sideways`, () => assert.ok(overflow <= 1, `${overflow}px of horizontal overflow`));
 
+    // THE BOTTOM TABS ARE MEASURED, NOT ASSUMED. A `@media(max-width:700px)`
+    // rule set `padding:0 2px` on the tab links, which WIPED the vertical
+    // padding from the rule above it - so on every phone each tab was one
+    // line of 12px text tall (14px measured) and the label sat hard against
+    // the bottom edge, exactly where the iPhone home indicator is. The CSS
+    // parsed, nothing looked broken in the source, and only a ruler finds it.
+    const nav = await page.evaluate(() => {
+      const n = document.querySelector('nav');
+      if (!n) return null;
+      return [...n.querySelectorAll('a')].map((a) => {
+        const box = a.getBoundingClientRect();
+        const rng = document.createRange(); rng.selectNodeContents(a);
+        const txt = rng.getBoundingClientRect();
+        return { label: a.textContent.trim().slice(0, 14), h: Math.round(box.height),
+          top: Math.round(txt.top - box.top), bottom: Math.round(box.bottom - txt.bottom) };
+      });
+    });
+    if (nav && nav.length) {
+      t(`${label} ${p} bottom tabs are at least 44px tall`, () => {
+        const low = nav.filter((x) => x.h < 44);
+        assert.strictEqual(low.length, 0,
+          low.map((x) => `${x.label} is ${x.h}px`).join(', '));
+      });
+      t(`${label} ${p} bottom tab labels are vertically centred`, () => {
+        // Off-centre means the text is crowding one edge - at the bottom that
+        // is the home indicator, which is what made these hard to tap.
+        const off = nav.filter((x) => Math.abs(x.top - x.bottom) > 4);
+        assert.strictEqual(off.length, 0,
+          off.map((x) => `${x.label} top:${x.top} bottom:${x.bottom}`).join(', '));
+      });
+    }
+
     await page.close(); await ctx.close();
   }
 
