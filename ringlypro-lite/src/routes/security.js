@@ -1574,16 +1574,19 @@ router.post('/booking-offer-probe', express.json({ limit: '4kb' }), async (req, 
   const creds = await accounts.credsFor(tenant);
   const V = String(process.env.LITE_GHL_ACTION_VERSION || 'v3').trim();
 
+  // THERE IS NO `GET /voice-ai/actions`. The agent object carries its actions
+  // INLINE — already recorded at the top of this file, and the first version of
+  // this probe went and asked for the endpoint anyway (404 Cannot GET).
   let actionId = null;
   try {
-    const list = await ghl.call('GET', '/voice-ai/actions',
-      { creds, version: V, query: { agentId: tenant.ghl_agent_id, locationId: creds.locationId } });
-    const arr = (list && (list.actions || list.data)) || (Array.isArray(list) ? list : []);
-    const bk = (Array.isArray(arr) ? arr : []).find((a) =>
-      String(a.actionType || '').toUpperCase() === 'APPOINTMENT_BOOKING');
-    actionId = bk && bk.id;
+    const one = await ghl.call('GET', `/voice-ai/agents/${encodeURIComponent(tenant.ghl_agent_id)}`,
+      { query: { locationId: creds.locationId }, creds });
+    const a = (one && (one.agent || one.data || one)) || {};
+    const bk = (Array.isArray(a.actions) ? a.actions : []).find((x) =>
+      String(x.actionType || x.type || '').toUpperCase() === 'APPOINTMENT_BOOKING');
+    actionId = bk && (bk.id || bk._id);
   } catch (e) {
-    return res.status(502).json({ ok: false, error: 'cannot_list_actions',
+    return res.status(502).json({ ok: false, error: 'cannot_read_agent',
       detail: String(e.message || e).slice(0, 200) });
   }
   if (!actionId) return res.status(404).json({ ok: false, error: 'no_booking_action_on_this_agent' });
