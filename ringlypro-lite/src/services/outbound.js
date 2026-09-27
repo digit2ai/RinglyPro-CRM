@@ -292,6 +292,36 @@ function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
   const rows = splitRows(text);
   if (!rows.length) return { ok: false, error: 'empty_file' };
 
+  // LOOSE TABLE TEXT IS REFUSED BY NAME, because the reason matters more than
+  // the refusal. Text copied straight out of a PDF or a web page is separated
+  // by SPACES, so nothing splits into columns: every row then failed the phone
+  // check and reported "no phone number" - while the phone was sitting right
+  // there in the line. 139 rows of a wrong reason sends the tenant looking for
+  // a problem they do not have. It is not parsed, and that is deliberate:
+  // "Albert Medina Jr Homelife Realty" cannot be split into a person and a
+  // company without guessing, and a guess here greets a caller by the name of
+  // their brokerage. The phone and the email ARE unambiguous, and the message
+  // says so, so the tenant knows the data is fine and only the layout is not.
+  // The test is on the LINE, never on the column count. The first draft asked
+  // whether the row split into columns, which is also false for a plain list of
+  // phone numbers one per line - a perfectly good list that it then refused.
+  // What actually identifies loose table text is a line carrying a phone number
+  // AND several words of other text beside it, with nothing separating them.
+  const looseLine = rows.slice(0, 60).some((r) => {
+    if (r.length > 1) return false;
+    const line = String(r[0] || '');
+    if (!/(?:\+?\d[\d().\-\s]{8,}\d)/.test(line)) return false;
+    const rest = line.replace(/(?:\+?\d[\d().\-\s]{8,}\d)/g, ' ').trim();
+    return rest.split(/\s+/).filter(Boolean).length >= 2;
+  });
+  if (looseLine) {
+    return { ok: false, error: 'not_columns',
+      message: 'The phone numbers are there, but the columns are not - this text is '
+             + 'separated by spaces, so nothing can tell a name from a company. '
+             + 'Paste it into Excel or Google Sheets first, put it in columns '
+             + '(Company, Name, Phone, Email), then copy those columns or save as CSV.' };
+  }
+
   const idx = mapHeaders(rows[0]);
   const hasHeader = idx.phone !== undefined;
   // WHICH COLUMNS WERE UNDERSTOOD, AND WHICH WERE NOT. Reported so the tenant
@@ -307,7 +337,13 @@ function parseList(buf, { defaultCountry = 'US', maxRows = 5000 } = {}) {
     : [];
   // With no recognisable header, assume company, phone, email in that order —
   // and SAY SO, so a mis-ordered file is the tenant's informed choice.
-  const map = hasHeader ? idx : { company: 0, phone: 1, email: 2 };
+  // A single column of phone numbers and nothing else is unambiguous, so it is
+  // read as phones rather than falling through to the company/phone/email
+  // positional guess, where column 1 does not exist and every row is refused
+  // for having "no phone number".
+  const barePhones = !hasHeader && rows.length > 0 && rows.every((r) =>
+    r.length === 1 && /^\s*\+?[\d().\-\s]{7,}\s*$/.test(String(r[0] || '')));
+  const map = hasHeader ? idx : (barePhones ? { phone: 0 } : { company: 0, phone: 1, email: 2 });
   const body = hasHeader ? rows.slice(1) : rows;
 
   const accepted = [], refused = [];

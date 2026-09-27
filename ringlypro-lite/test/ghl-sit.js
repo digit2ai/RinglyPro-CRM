@@ -1817,6 +1817,33 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/CSV/i.test(r.message), 'the refusal does not say what to do instead');
   });
 
+  await t('loose PDF text is refused with the RIGHT reason, not "no phone number"', () => {
+    // Text copied out of a PDF is space-separated: nothing splits into columns,
+    // so every row used to fail the phone check and report "no phone number"
+    // while the phone sat in the line. 139 rows of a wrong reason sends the
+    // tenant hunting a problem they do not have.
+    const loose = Buffer.from(
+      'Ainsley Daux Florida Realty a@b.com 813-546-1954 Creole\n'
+      + 'Albert Medina Jr Homelife Realty j@live.com 813-409-0237 English\n');
+    const r = ob.parseList(loose);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.error, 'not_columns');
+    assert.ok(/are there/i.test(r.message), 'it does not say the numbers ARE present');
+    assert.ok(/CSV|Sheets|Excel/i.test(r.message), 'the refusal does not say what to do instead');
+  });
+
+  await t('a ONE-COLUMN phone list still works - the guard is on the line, not the column count', () => {
+    // The first draft of the guard above asked whether the row split into
+    // columns, which is also false for a plain list of numbers one per line: a
+    // perfectly good list that it then refused. Both shapes must import.
+    for (const body of ['8135550134\n8135550135\n8135550136\n', 'Phone\n8135550134\n8135550135\n']) {
+      const r = ob.parseList(Buffer.from(body));
+      assert.strictEqual(r.ok, true, JSON.stringify(body));
+      assert.ok(r.accepted.length >= 2, 'a bare phone column was not imported: ' + JSON.stringify(body));
+      assert.strictEqual(r.accepted[0].phone, '+18135550134');
+    }
+  });
+
   await t('a trade-named company column is recognised, not silently dropped', () => {
     // A realtor roster says "Brokerage / Agency"; a contractor list says "Firm".
     // An unrecognised header used to become a null with nothing saying so.
