@@ -298,6 +298,12 @@ async function main() {
   try { require('./src/services/ghlCallLogs').start(); }
   catch (e) { console.error('[lite] call-log poller failed to start:', e.message); }
 
+  // AND THE OTHER HALF OF THE MIRROR: the booking itself. A call log carries
+  // no slot, so the call poller cannot create an appointment without inventing
+  // a time; the slot only exists on the calendar, and is read from there.
+  try { require('./src/services/ghlAppointments').start(); }
+  catch (e) { console.error('[lite] appointment poller failed to start:', e.message); }
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);

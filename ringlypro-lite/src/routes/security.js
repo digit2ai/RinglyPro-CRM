@@ -58,6 +58,13 @@ router.get('/', async (req, res) => {
     // workflow that was never configured (or whose signature header is wrong,
     // which is what happened on the first real call) costs a couple of minutes
     // of latency rather than the message itself.
+    // The booking half. Separate from the call poller because the two read
+    // different endpoints and fail independently.
+    ghl_appointment_poller: (() => { const a = require('../services/ghlAppointments');
+      return { ...a.stats,
+        enabled: String(process.env.LITE_GHL_APPT_POLL || '').toLowerCase() !== 'off'
+          && (String(process.env.LITE_GHL_APPT_POLL || '').toLowerCase() === 'on' || process.env.NODE_ENV === 'production'),
+        every_sec: Math.max(60, parseInt(process.env.LITE_GHL_APPT_POLL_SEC || '180', 10) || 180) }; })(),
     ghl_call_poller: (() => { const c = require('../services/ghlCallLogs');
       return { ...c.stats,
         enabled: String(process.env.LITE_GHL_CALL_POLL || '').toLowerCase() !== 'off'
@@ -1512,6 +1519,30 @@ router.get('/calendar-events-probe', async (req, res) => {
     }
   }
   return res.json({ ok: true, tenant: tid, calendar: cal, window_days: days, variants: out });
+});
+
+/**
+ * WHAT IS ON THE HIGHLEVEL CALENDARS, AND HAVE WE MIRRORED IT?
+ * Read-only unless ?import=1. Answers "Lina booked it, why is my Calendar tab
+ * empty" directly, per tenant.
+ */
+router.get('/ghl-appointments', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const appts = require('../services/ghlAppointments');
+  const { Tenant } = require('../models');
+  const doImport = String(req.query.import || '') === '1';
+  const tid = parseInt(req.query.tenant, 10);
+  try {
+    if (Number.isInteger(tid)) {
+      const t = await Tenant.findByPk(tid);
+      if (!t) return res.status(404).json({ ok: false, error: 'no_such_tenant' });
+      const r = await appts.importForTenant(t, { dryRun: !doImport });
+      return res.json({ ok: true, tenant: tid, imported: doImport, ...r });
+    }
+    return res.json({ imported: doImport, ...(await appts.importAll({ dryRun: !doImport })) });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 300) });
+  }
 });
 
 module.exports = router;

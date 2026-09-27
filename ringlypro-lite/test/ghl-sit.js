@@ -189,7 +189,7 @@ global.fetch = async (url, opts = {}) => {
     if (body && body.phoneNumber && !OWNED.includes(body.phoneNumber)) OWNED.push(body.phoneNumber);
     return json(201, { ok: true });
   }
-  if (/^\/calendars\/[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
+  if (/^\/calendars\/(?!events$)[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
     if (scenario.calRead === 'fail') return json(500, { message: 'calendar read down' });
     return json(200, { calendar: { id: p.split('/').pop(), name: 'Cal',
       openHours: scenario.calOpenHours !== undefined ? scenario.calOpenHours : CAL_HOURS } });
@@ -242,6 +242,25 @@ global.fetch = async (url, opts = {}) => {
   }
   // The Voice AI call log: what HighLevel says happened, which is what the
   // poller reads so a message never depends on a webhook action being wired.
+  if (p === '/calendars/events' && (opts.method || 'GET') === 'GET') {
+    if (scenario.eventsFail) return json(scenario.eventsStatus || 500, { message: 'calendar events down' });
+    // THE FAKE PUNISHES AN ISO WINDOW, exactly as the live API does: measured
+    // 2026-09-27, the same request with ISO timestamps answers 200 {events:[]}
+    // — indistinguishable from an empty calendar. Without this the suite would
+    // pass against the bug, which is how the call-log window shipped wrong.
+    const sd = u.searchParams.get('startTime') || '';
+    if (!/^\d+$/.test(sd)) return json(200, { events: [] });
+    // calendarId is required — the live API answers 422 without one.
+    const cid = u.searchParams.get('calendarId');
+    if (!cid) return json(422, { message: 'Either of userId, calendarId or groupId is required' });
+    return json(200, { events: (scenario.events || []).filter((e) => !e.calendarId || e.calendarId === cid
+      || scenario.leakForeignEvent) });
+  }
+  if (/^\/contacts\/[^/]+$/.test(p) && (opts.method || 'GET') === 'GET') {
+    if (scenario.contactReadFails) return json(500, { message: 'contact service down' });
+    return json(200, { contact: { id: p.split('/').pop(), firstName: 'Lina', lastName: 'Stagg',
+      phone: scenario.contactPhone !== undefined ? scenario.contactPhone : '+18134811925' } });
+  }
   if (p === '/voice-ai/dashboard/call-logs' && (opts.method || 'GET') === 'GET') {
     if (scenario.callLogsFail) return json(scenario.callLogsStatus || 500, { message: 'call logs down' });
     // THE FAKE PUNISHES SECONDS, exactly as the live API does: a window sent in
@@ -1676,6 +1695,147 @@ const tenantSeed = (over = {}) => ({
     assert.ok(M.Number._rows.some((n) => n.tenant_id === fresh.id), 'the bought number was lost');
     assert.ok(reqs.some((x) => x.method === 'PUT' && /^\/calendars\//.test(x.path)), 'provisioning never tried to set hours');
     assert.ok(r, 'provision returned nothing');
+  });
+
+
+  /* ─── the appointment mirror: the slot only exists on the calendar ────── */
+  section('appointment mirror (Lina booked it; the Calendar tab was empty)');
+
+  const appts = require(path.join(ROOT, 'src/services/ghlAppointments'));
+  const APT_T = await M.Tenant.create(tenantSeed({ business_name: 'Booked Dental',
+    ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-APT', provisioning_state: 'ready' }));
+  const OTHER_CAL_T = await M.Tenant.create(tenantSeed({ business_name: 'Other Dental',
+    ghl_location_id: 'LOC-APT', ghl_calendar_id: 'CAL-OTHER', provisioning_state: 'ready' }));
+  const APT_CREDS = { token: 'tok-apt', locationId: 'LOC-APT' };
+  const soon = new Date(Date.now() + 3 * 86400000);
+  const evOf = (over = {}) => Object.assign({
+    id: 'EV-1', calendarId: 'CAL-APT', contactId: 'CT-1',
+    appointmentStatus: 'confirmed', deleted: false,
+    startTime: soon.toISOString(),
+    endTime: new Date(soon.getTime() + 30 * 60000).toISOString(),
+    title: '', locationId: 'LOC-APT',
+  }, over);
+
+  await t('A BOOKING MADE BY PHONE REACHES THE CALENDAR TAB', async () => {
+    scenario = { events: [evOf()] };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.ok, true, JSON.stringify(r));
+    assert.strictEqual(r.results[0].stored, true, JSON.stringify(r.results[0]));
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-1');
+    assert.ok(row, 'no appointment row was written');
+    assert.strictEqual(row.tenant_id, APT_T.id);
+    assert.strictEqual(row.status, 'confirmed');
+  });
+
+  await t('...with the caller\'s name and a VALIDATED callback number', async () => {
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-1');
+    assert.strictEqual(row.caller_name, 'Lina Stagg');
+    assert.strictEqual(row.callback_number, '+18134811925');
+  });
+
+  await t('IT IS MARKED origin:ai, so it can never be pushed back', async () => {
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-1');
+    assert.strictEqual(row.origin, 'ai', 'a mirrored booking that is not origin:ai is an echo loop');
+  });
+
+  await t('re-polling stores nothing — one row, whatever the poll count', async () => {
+    const before = M.Appointment._rows.length;
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].reason, 'already_mirrored');
+    assert.strictEqual(M.Appointment._rows.length, before);
+  });
+
+  await t('THE WINDOW IS MILLISECONDS — ISO silently returns an empty calendar', async () => {
+    scenario = { events: [evOf({ id: 'EV-MS' })] }; reqs = [];
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.fetched, 1, 'nothing came back — the window is probably ISO again');
+    const q = reqs.find((x) => x.path === '/calendars/events').query;
+    assert.ok(/^\d+$/.test(q.startTime), `startTime ${q.startTime} is not milliseconds`);
+    assert.ok(Number(q.startTime) > 1e11, 'startTime looks like seconds, not milliseconds');
+    assert.strictEqual(q.calendarId, 'CAL-APT', 'the read must be scoped to this tenant\'s calendar');
+  });
+
+  await t('A CANCELLED BOOKING NEVER APPEARS AS A HELD SLOT', async () => {
+    scenario = { events: [evOf({ id: 'EV-CX', appointmentStatus: 'cancelled' })] };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].stored, false);
+    assert.strictEqual(r.results[0].reason, 'cancelled');
+    assert.ok(!M.Appointment._rows.some((a) => a.ghl_event_id === 'EV-CX'),
+      'a cancelled booking was written as a held slot');
+  });
+
+  await t('a deleted event is treated the same as a cancelled one', async () => {
+    scenario = { events: [evOf({ id: 'EV-DEL', deleted: true })] };
+    await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.ok(!M.Appointment._rows.some((a) => a.ghl_event_id === 'EV-DEL'));
+  });
+
+  await t('A CANCELLATION MADE IN HIGHLEVEL REACHES THE MIRRORED ROW', async () => {
+    // Otherwise the Calendar tab keeps showing a slot the owner has freed and
+    // the agent stops offering a time that is genuinely open.
+    scenario = { events: [evOf({ appointmentStatus: 'cancelled' })] };   // EV-1, now cancelled
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].reason, 'cancelled_upstream');
+    assert.strictEqual(M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-1').status, 'cancelled');
+  });
+
+  await t('AN EVENT ON ANOTHER TENANT\'S CALENDAR IS NEVER FILED HERE', async () => {
+    // One sub-account holds every tenant's calendar, so this is the boundary.
+    scenario = { events: [evOf({ id: 'EV-FOREIGN', calendarId: 'CAL-OTHER' })], leakForeignEvent: true };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].reason, 'foreign_calendar');
+    assert.ok(!M.Appointment._rows.some((a) => a.ghl_event_id === 'EV-FOREIGN' && a.tenant_id === APT_T.id));
+  });
+
+  await t('an unreadable contact still keeps the appointment', async () => {
+    scenario = { events: [evOf({ id: 'EV-NOCT' })], contactReadFails: true };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.results[0].stored, true, 'the booking was lost because a second request failed');
+    const row = M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-NOCT');
+    assert.strictEqual(row.callback_number, null);
+  });
+
+  await t('a contact phone that is not a real number is stored as null', async () => {
+    scenario = { events: [evOf({ id: 'EV-BADPH' })], contactPhone: '<script>x</script>' };
+    await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(M.Appointment._rows.find((a) => a.ghl_event_id === 'EV-BADPH').callback_number, null);
+  });
+
+  await t('a calendar outage is reported as itself, never as "no bookings"', async () => {
+    scenario = { eventsFail: true, eventsStatus: 503 };
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'fetch_failed');
+  });
+
+  await t('a dry run reports what WOULD be mirrored and writes nothing', async () => {
+    scenario = { events: [evOf({ id: 'EV-DRY' })] };
+    const before = M.Appointment._rows.length;
+    const r = await appts.importForTenant(APT_T, { creds: APT_CREDS, dryRun: true });
+    assert.strictEqual(r.results[0].would_store, true);
+    assert.strictEqual(M.Appointment._rows.length, before);
+  });
+
+  await t('THE APPOINTMENT MIRROR CANNOT REACH THE PUSH', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/ghlAppointments.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    assert.ok(!/require\(['"][^'"]*ghlCalendar['"]\)/.test(src), 'it imports the push service');
+    assert.ok(!/bookAppointment/.test(src), 'it books through the pushing path — that is the echo loop');
+    assert.ok(/origin:\s*'ai'/.test(src), 'it does not mark its rows AI-origin');
+  });
+
+  await t('the poller does NOT run outside production unless switched on', () => {
+    const env = process.env.NODE_ENV, flag = process.env.LITE_GHL_APPT_POLL;
+    try {
+      process.env.NODE_ENV = 'development'; delete process.env.LITE_GHL_APPT_POLL;
+      assert.strictEqual(appts.start(), null);
+      process.env.LITE_GHL_APPT_POLL = 'off'; process.env.NODE_ENV = 'production';
+      assert.strictEqual(appts.start(), null, 'off must stop it even in production');
+    } finally {
+      process.env.NODE_ENV = env;
+      if (flag === undefined) delete process.env.LITE_GHL_APPT_POLL; else process.env.LITE_GHL_APPT_POLL = flag;
+      appts.stop();
+    }
   });
 
 
