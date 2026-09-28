@@ -18,6 +18,45 @@ const express = require('express');
 
 function out(status, payload) { return { status, payload }; }
 
+/**
+ * FIND THE SHARED OUTBOUND WORKFLOW BY NAME.
+ *
+ * HighLevel still has no POST/PUT for workflows (verified 2026-09-28: the
+ * public API exposes GET /workflows/ under a readonly scope and the create
+ * endpoint is an open feature request), so one must be built by hand. But Lite
+ * runs every tenant inside ONE shared sub-account, so it only has to exist
+ * ONCE — and then nobody should ever paste its id again.
+ *
+ * TWO REFUSALS, because this decides which workflow dials real people:
+ *  - more than one candidate is refused and both are named, never guessed
+ *    between;
+ *  - a draft is refused, because it accepts the enrollment and does nothing,
+ *    which is indistinguishable from a call nobody answered.
+ */
+async function findSharedWorkflow(t) {
+  const ghl = require('../telephony/ghl');
+  const accounts = require('./ghlAccounts');
+  const pattern = new RegExp(process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME || 'voice\\s*ai\\s*outbound', 'i');
+  let creds = null;
+  try { creds = await accounts.credsFor(t); } catch (_) { creds = null; }
+  if (!creds) creds = ghl.resolve(null);
+  const loc = (creds && creds.locationId) || t.ghl_location_id || ghl.locationId();
+  const list = await ghl.call('GET', '/workflows/', { query: { locationId: loc }, creds });
+  const all = (list && (list.workflows || list.data)) || [];
+  const hits = all.filter((w) => pattern.test(String(w.name || '')));
+  if (!hits.length) return { ok: false, reason: 'no_matching_workflow', pattern: String(pattern) };
+  if (hits.length > 1) {
+    return { ok: false, reason: 'several_matching_workflows',
+      matches: hits.map((w) => ({ id: String(w.id || w._id), name: w.name || null })) };
+  }
+  const w = hits[0];
+  if (w.status && String(w.status).toLowerCase() !== 'published') {
+    return { ok: false, reason: 'workflow_not_published',
+      workflow: { id: String(w.id || w._id), name: w.name || null, status: w.status } };
+  }
+  return { ok: true, id: String(w.id || w._id), name: w.name || null };
+}
+
 async function setOutbound(b) {
   b = b || {};
   if (b.confirm !== true) return out(400, { error: 'confirm_required',
@@ -32,7 +71,16 @@ async function setOutbound(b) {
   if (!t) return out(404, { error: 'no_such_tenant' });
 
   const enable = b.enabled !== false;               // default ON; pass false to switch off
-  const workflowId = b.workflow_id == null ? null : String(b.workflow_id).trim().slice(0, 64);
+  let workflowId = b.workflow_id == null ? null : String(b.workflow_id).trim().slice(0, 64);
+  // 'auto' means: find the shared workflow yourself. This is what removes the
+  // manual step for every client after the first.
+  if (workflowId === 'auto') {
+    const found = await findSharedWorkflow(t).catch((e) => ({ ok: false, reason: 'lookup_failed',
+      detail: String(e.message || e).slice(0, 160) }));
+    if (!found.ok) return out(422, { error: found.reason, ...found, message:
+      'Could not identify the shared outbound workflow automatically. Nothing was changed.' });
+    workflowId = found.id;
+  }
   const patch = {};
   let verified = null;
 
@@ -127,4 +175,4 @@ async function setOutbound(b) {
     reminder: 'Numbers are still NOT checked against the National Do Not Call registry.' });
 }
 
-module.exports = { setOutbound };
+module.exports = { setOutbound, findSharedWorkflow };

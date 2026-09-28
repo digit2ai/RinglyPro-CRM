@@ -2749,6 +2749,57 @@ const tenantSeed = (over = {}) => ({
 
   const obT = await M.Tenant.create({ business_name: 'SIT Outbound', outbound_enabled: false });
 
+  /* ── AUTOMATING THE ONE MANUAL STEP ────────────────────────────────────
+   * HighLevel cannot create a workflow by API (re-verified 2026-09-28), but
+   * Lite runs every tenant in ONE sub-account, so it only has to exist once.
+   * After that nobody should paste an id again. */
+
+  await t('AUTO FINDS THE SHARED WORKFLOW AND ACTIVATES, with no id pasted', async () => {
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'ringlypro\\s*outbound';
+    const au = await M.Tenant.create({ business_name: 'Auto Co', outbound_state: 'pending_setup' });
+    const r = await adminPost({ tenant: au.id, confirm: true, enabled: true, workflow_id: 'auto' });
+    assert.strictEqual(r.status, 200);
+    const j = await r.json();
+    assert.strictEqual(j.workflow_id, 'wf-published-001', 'it did not resolve the shared workflow');
+    assert.strictEqual((await M.Tenant.findByPk(au.id)).outbound_state, 'active');
+  });
+
+  await t('TWO CANDIDATES ARE REFUSED AND BOTH NAMED — never guessed between', async () => {
+    // This decides which workflow dials real people.
+    WF.push({ id: 'wf-published-003', name: 'RinglyPro Outbound (old)', status: 'published' });
+    const amb = await M.Tenant.create({ business_name: 'Ambiguous Co', outbound_state: 'pending_setup' });
+    const r = await adminPost({ tenant: amb.id, confirm: true, enabled: true, workflow_id: 'auto' });
+    assert.strictEqual(r.status, 422);
+    const j = await r.json();
+    assert.strictEqual(j.error, 'several_matching_workflows');
+    assert.strictEqual((j.matches || []).length, 2, 'the candidates were not named');
+    assert.strictEqual((await M.Tenant.findByPk(amb.id)).outbound_state, 'pending_setup');
+    WF.pop();
+  });
+
+  await t('A DRAFT IS NEVER AUTO-SELECTED', async () => {
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'half\\s*built';
+    const dr = await M.Tenant.create({ business_name: 'Draft Co', outbound_state: 'pending_setup' });
+    const r = await adminPost({ tenant: dr.id, confirm: true, enabled: true, workflow_id: 'auto' });
+    assert.strictEqual(r.status, 422);
+    assert.strictEqual((await r.json()).error, 'workflow_not_published');
+    assert.strictEqual((await M.Tenant.findByPk(dr.id)).outbound_state, 'pending_setup');
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'ringlypro\\s*outbound';
+  });
+
+  await t('NO MATCH CHANGES NOTHING — the manual path still works', async () => {
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'nothing\\s*like\\s*this';
+    const nm = await M.Tenant.create({ business_name: 'No Match Co', outbound_state: 'pending_setup',
+      outbound_enabled: false });
+    const r = await adminPost({ tenant: nm.id, confirm: true, enabled: true, workflow_id: 'auto' });
+    assert.strictEqual(r.status, 422);
+    assert.strictEqual((await r.json()).error, 'no_matching_workflow');
+    const after = await M.Tenant.findByPk(nm.id);
+    assert.strictEqual(after.outbound_state, 'pending_setup');
+    assert.ok(!after.outbound_enabled, 'it enabled dialling with no workflow behind it');
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'ringlypro\\s*outbound';
+  });
+
   await t('the outbound switch answers 404 without the admin key, never 401', async () => {
     const r = await fetchReal(baseA, { method: 'GET', headers: {} });
     assert.strictEqual(r.status, 404);
@@ -2957,6 +3008,12 @@ const tenantSeed = (over = {}) => ({
    * something that did not happen.
    */
   const bl = require(path.join(ROOT, 'src/services/outboundBilling'));
+  // THIS SECTION TESTS THE MANUAL PATH, so auto-activation is off for it.
+  // With a shared workflow present, paying now goes straight to active — a
+  // real behaviour change — and the tests below are about what happens when
+  // there is still a human step: the promised time, the owner alert, the
+  // pending state. The straight-through case turns it back on explicitly.
+  process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
   // THE FOUNDER'S OWN ACCOUNT EXISTS HERE, because "the owner is paged" is a
   // behavioural claim and an unresolvable owner silently skips the page.
   const OWNER_T = await M.Tenant.create({ business_name: 'RinglyPro (founder)' });
@@ -3831,6 +3888,65 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId \}\)/.test(body),
       'confirm has its own second copy of the sweep');
     assert.ok(!/checkout\.sessions\.list/.test(body), 'confirm still lists sessions itself');
+  });
+
+  await t('PAYING IS THE WHOLE FLOW once the shared workflow exists', async () => {
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;         // the shipped default
+    // The 24-hour promise and the human step exist only because a workflow
+    // must be built by hand. After the first client there is nothing to do.
+    const pay = await M.Tenant.create({ business_name: 'Straight Through Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: pay.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_straight', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(pay, { id: 'cs_straight', amount_total: 2000 }, {});
+    assert.strictEqual(out.applied, true);
+    assert.strictEqual(out.activated, true, 'it still queued a manual step');
+    assert.strictEqual((await M.Tenant.findByPk(pay.id)).outbound_state, 'active');
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+  });
+
+  await t('A FAILED AUTO-ACTIVATION FALLS BACK, it never reports success', async () => {
+    // If it claimed success when it failed, the client would be told nothing,
+    // the owner would never be paged, and the account would sit inactive with
+    // the money taken — the exact failure this whole evening was about.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;              // shipped default: on
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'nothing\\s*matches\\s*this';
+    const fb = await M.Tenant.create({ business_name: 'Fallback Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: fb.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_fallback', status: 'open', stripe_event_id: null });
+    const before = OB.notifs.length;
+    const out = await bl.applyPayment(fb, { id: 'cs_fallback', amount_total: 2000 }, {});
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'ringlypro\\s*outbound';
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+    assert.strictEqual(out.applied, true);
+    assert.ok(!out.activated, 'a failed auto-activation reported success');
+    assert.ok(out.due_at, 'the client was left with no promised time');
+    assert.strictEqual((await M.Tenant.findByPk(fb.id)).outbound_state, 'pending_setup');
+    const fired = OB.notifs.slice(before);
+    assert.ok(fired.some((n) => n.kind === 'owner_setup_paid'), 'the owner was never paged');
+  });
+
+  await t('findSharedWorkflow REFUSES A DRAFT ITSELF, not only downstream', async () => {
+    // setOutbound checks published too, so removing the check here changes no
+    // outcome — defence in depth is good, and an untested layer is not.
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'half\\s*built';
+    const any = await M.Tenant.findByPk(obT.id);
+    const r = await admin.findSharedWorkflow(any);
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_NAME = 'ringlypro\\s*outbound';
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'workflow_not_published');
+  });
+
+  await t('AUTO-ACTIVATION OFF KEEPS THE MANUAL PATH, and the promise with it', async () => {
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+    const man = await M.Tenant.create({ business_name: 'Manual Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: man.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_manualpath', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(man, { id: 'cs_manualpath', amount_total: 2000 }, {});
+    assert.strictEqual(out.applied, true);
+    assert.ok(!out.activated, 'the env switch did not stop auto-activation');
+    assert.ok(out.due_at, 'the client was not given a promised time');
+    assert.strictEqual((await M.Tenant.findByPk(man.id)).outbound_state, 'pending_setup');
   });
 
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {

@@ -426,6 +426,32 @@ function recoverable(sessions, tenantId, seen) {
  * setup timestamp, tenant still in a payable state); this function re-checks
  * the state atomically so two sweeps cannot both repair.
  */
+/**
+ * TURN IT ON WITHOUT A HUMAN, WHEN THERE IS NOTHING LEFT FOR A HUMAN TO DO.
+ *
+ * The manual step exists only because HighLevel cannot create a workflow by
+ * API. Once the shared sub-account HAS one, published, the operator decision
+ * was already made — when they built it — and making every later client wait
+ * 24 hours for someone to paste an id is a queue with no work in it.
+ *
+ * It stays conservative: a workflow that is missing, ambiguous or draft leaves
+ * the tenant exactly where it was, in pending_setup with the owner alerted, so
+ * the manual path still works and nothing is ever enabled on a guess.
+ * `LITE_OUTBOUND_AUTO_ACTIVATE=off` restores the always-manual behaviour.
+ */
+async function autoActivate(tenant) {
+  if (String(process.env.LITE_OUTBOUND_AUTO_ACTIVATE || '').toLowerCase() === 'off') {
+    return { activated: false, reason: 'off_by_env' };
+  }
+  const admin = require('./outboundAdmin');
+  const r = await admin.setOutbound({ confirm: true, tenant: tenant.id,
+    enabled: true, workflow_id: 'auto' });
+  if (r.status !== 200 || !r.payload || !r.payload.ok) {
+    return { activated: false, reason: (r.payload && r.payload.error) || 'not_activated' };
+  }
+  return { activated: true, workflow: r.payload.workflow_verified || null };
+}
+
 async function applyStrandedSetup(tenant, session) {
   const notify = require('./notify');
   const due = new Date(Date.now() + slaHours() * 3600 * 1000);
@@ -436,6 +462,8 @@ async function applyStrandedSetup(tenant, session) {
 
   console.warn('[lite:outbound] REPAIRED a stranded setup fee for tenant', tenant.id,
     '- paid at Stripe, never applied here. Session', session && session.id);
+  const autoR = await autoActivate(tenant).catch(() => ({ activated: false }));
+  if (autoR.activated) return { applied: true, kind: 'setup', repaired: true, activated: true };
   await notify.notify(tenant.id, 'outbound_setup_paid', 'Outbound setup paid',
     `Your outbound caller will be ready by ${due.toISOString()}. We will let you know the moment it is live.`);
   await notify.ownerSetupPaid(tenant, due).catch(() => {});
@@ -486,6 +514,15 @@ async function applyPayment(tenant, session, { eventId } = {}) {
       `Session ${session.id}, ${amount}c. Refund it in Stripe.`).catch(() => {});
     return { applied: false, reason: 'duplicate_setup', refund_due: true };
   }
+
+  // FINISH IT NOW IF THE SHARED WORKFLOW ALREADY EXISTS. HighLevel cannot
+  // create a workflow by API, but Lite runs every tenant in ONE sub-account, so
+  // after the first client the workflow is already there and published — and
+  // then a 24-hour promise and a human step are both theatre. If it is not
+  // found, nothing changes: the tenant stays pending_setup and the owner gets
+  // the alert exactly as before.
+  const auto = await autoActivate(tenant).catch(() => ({ activated: false }));
+  if (auto.activated) return { applied: true, kind: 'setup', activated: true, workflow: auto.workflow };
 
   await notify.notify(tenant.id, 'outbound_setup_paid', 'Outbound setup paid',
     `Your outbound caller will be ready by ${due.toISOString()}. We will let you know the moment it is live.`);
@@ -547,7 +584,7 @@ async function spendSummary(tenantId, { listId = null } = {}) {
   };
 }
 
-module.exports = { recoverable, applyStrandedSetup,
+module.exports = { recoverable, applyStrandedSetup, autoActivate,
   STATES, transition,
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,
