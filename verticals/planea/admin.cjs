@@ -26,6 +26,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const kb = require('./kb.cjs');
 const dian = require('./dian.cjs');
+const festivos = require('./festivos.cjs');
 // portal/ vive bajo un package.json con "type":"module", así que require() de un .js
 // devuelve un módulo ESM vacío. Se evalúa el MISMO archivo que usa el navegador con un
 // `module` propio: una sola fuente para la tarjeta, el aviso, el servidor y la SIT.
@@ -160,6 +161,11 @@ function ensureTables(sq) {
         SELECT :t, u.id, 'bootstrap' FROM planea_users u
          WHERE lower(u.email) = :o AND NOT EXISTS (SELECT 1 FROM planea_admins WHERE tenant_id = :t)
         ON CONFLICT DO NOTHING`, { replacements: { t: tenant(), o: OWNER_EMAIL } });
+      await sq.query(`CREATE TABLE IF NOT EXISTS planea_reminders (
+        id SERIAL PRIMARY KEY, tenant_id INTEGER NOT NULL DEFAULT 1, user_id INTEGER NOT NULL,
+        fecha DATE NOT NULL, title TEXT NOT NULL, notes TEXT, remind_days INTEGER NOT NULL DEFAULT 7,
+        done BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+      await sq.query('CREATE INDEX IF NOT EXISTS idx_planea_reminders_user ON planea_reminders (tenant_id, user_id, fecha)');
       await kb.ensure(sq);
       await dian.ensure(sq);
     })().catch((e) => { ensured = null; throw e; });
@@ -181,8 +187,11 @@ async function dianTable() {
 }
 
 // Puro, para la SIT. Eventos ordenados por fecha + avisos (lo que viene en los próximos días).
+// Tres orígenes: la meta que el usuario creó, su fecha de renta (dígitos + tabla DIAN validada)
+// y los recordatorios que él mismo escribe. Los FESTIVOS van aparte, no como eventos: son
+// contexto del mes (18 al año llenarían la lista de próximas fechas y taparían lo que importa).
 const GOAL_NOTICE_DAYS = 30;
-function calendarFor(goals, fm, table, today, taxDays) {
+function calendarFor(goals, fm, table, today, taxDays, reminders) {
   const events = [];
   (Array.isArray(goals) ? goals : []).forEach((g) => {
     if (!g || !/^\d{4}-\d{2}-\d{2}$/.test(String(g.fecha_objetivo || '')) || g.estado === 'archivada') return;
@@ -202,11 +211,23 @@ function calendarFor(goals, fm, table, today, taxDays) {
         detail: 'Cédula terminada en ' + d + ' · ' + (table.decree || 'calendario DIAN'), link: '/planea/portal/impuestos' });
     }
   }
+  (Array.isArray(reminders) ? reminders : []).forEach((r) => {
+    if (!r || !/^\d{4}-\d{2}-\d{2}$/.test(String(r.fecha || ''))) return;
+    events.push({ id: 'recordatorio:' + r.id, date: String(r.fecha), origin: 'recordatorio', title: String(r.title || 'Recordatorio').slice(0, 120),
+      detail: String(r.notes || 'Recordatorio tuyo').slice(0, 200), link: '/planea/portal/calendario',
+      remind_days: Number(r.remind_days) || 7, done: r.done === true, editable: true });
+  });
   events.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0));
   const days = (iso) => Math.round((Date.parse(iso + 'T12:00:00Z') - Date.parse(today + 'T12:00:00Z')) / 86400000);
-  const notices = events.filter((e) => { const n = days(e.date); return n >= 0 && n <= (e.origin === 'renta' ? taxDays : GOAL_NOTICE_DAYS) && e.detail !== 'Meta cumplida'; })
+  const lead = (e) => (e.origin === 'renta' ? taxDays : e.origin === 'recordatorio' ? (Number(e.remind_days) || 7) : GOAL_NOTICE_DAYS);
+  const notices = events.filter((e) => { const n = days(e.date); return n >= 0 && n <= lead(e) && e.detail !== 'Meta cumplida' && e.done !== true; })
     .map((e) => Object.assign({}, e, { days_left: days(e.date) }));
-  return { today, events: events.map((e) => Object.assign({}, e, { days_left: days(e.date) })), notices, renta, goal_notice_days: GOAL_NOTICE_DAYS, tax_notice_days: taxDays };
+  // Festivos del año en curso y del siguiente: el usuario puede navegar el mes hacia adelante.
+  const y = +today.slice(0, 4);
+  const holidays = festivos.festivos(y).concat(festivos.festivos(y + 1));
+  return { today, events: events.map((e) => Object.assign({}, e, { days_left: days(e.date) })), notices, renta,
+    holidays, holidays_source: 'Ley 51 de 1983 y Ley 35 de 1939 (calculados, no una lista escrita a mano)',
+    goal_notice_days: GOAL_NOTICE_DAYS, tax_notice_days: taxDays };
 }
 
 function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
@@ -717,6 +738,65 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
+  // ── Recordatorios del usuario (los escribe él, solo él los ve) ──
+  const REM_MAX = 200;
+  const cleanText = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, n);
+  const okDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) && String(v).slice(0, 4) >= '2020' && String(v).slice(0, 4) <= '2100'
+    && new Date(String(v) + 'T12:00:00Z').toISOString().slice(0, 10) === String(v);
+  me.get('/me/reminders', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    try {
+      await ensureTables(db());
+      const [rows] = await db().query("SELECT id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done FROM planea_reminders WHERE tenant_id = :t AND user_id = :u ORDER BY fecha",
+        { replacements: { t: tenant(), u: a.id } });
+      res.set('Cache-Control', 'no-store');
+      res.json({ reminders: rows, max: REM_MAX });
+    } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
+  });
+  me.post('/me/reminders', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    const b = req.body || {};
+    const title = cleanText(b.title, 120), notes = cleanText(b.notes, 500);
+    const rd = Number.isInteger(+b.remind_days) && +b.remind_days >= 0 && +b.remind_days <= 120 ? +b.remind_days : 7;
+    if (!okDate(b.fecha)) return res.status(400).json({ error: 'fecha_invalida', message: 'Elige una fecha válida.' });
+    if (title.length < 2) return res.status(400).json({ error: 'sin_titulo', message: 'Escribe de qué es el recordatorio.' });
+    try {
+      await ensureTables(db());
+      const [[c]] = await db().query('SELECT COUNT(*)::int AS n FROM planea_reminders WHERE tenant_id = :t AND user_id = :u', { replacements: { t: tenant(), u: a.id } });
+      if (c.n >= REM_MAX) return res.status(409).json({ error: 'demasiados', message: 'Ya tienes ' + REM_MAX + ' recordatorios. Borra alguno para crear otro.' });
+      const [[row]] = await db().query(`INSERT INTO planea_reminders (tenant_id, user_id, fecha, title, notes, remind_days)
+        VALUES (:t, :u, :f, :ti, :no, :rd) RETURNING id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done`,
+        { replacements: { t: tenant(), u: a.id, f: b.fecha, ti: title, no: notes || null, rd } });
+      res.json({ ok: true, reminder: row });
+    } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
+  });
+  me.patch('/me/reminders/:id', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    const b = req.body || {};
+    if (b.done !== true && b.done !== false) return res.status(400).json({ error: 'nada_que_cambiar' });
+    try {
+      await ensureTables(db());
+      const [rows] = await db().query("UPDATE planea_reminders SET done = :d WHERE tenant_id = :t AND user_id = :u AND id = :id RETURNING id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done",
+        { replacements: { t: tenant(), u: a.id, id: Number(req.params.id) || 0, d: b.done } });
+      if (!rows.length) return res.status(404).json({ error: 'not_found' });
+      res.json({ ok: true, reminder: rows[0] });
+    } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
+  });
+  me.delete('/me/reminders/:id', async (req, res) => {
+    const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
+    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    try {
+      await ensureTables(db());
+      const [rows] = await db().query('DELETE FROM planea_reminders WHERE tenant_id = :t AND user_id = :u AND id = :id RETURNING id',
+        { replacements: { t: tenant(), u: a.id, id: Number(req.params.id) || 0 } });
+      if (!rows.length) return res.status(404).json({ error: 'not_found' });
+      res.json({ ok: true });
+    } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
+  });
+
   // Público: el calendario DIAN es información pública. Sin tabla VALIDADA -> null, y la
   // app no muestra ninguna fecha (no hay ventana estimada).
   me.get('/tax/calendar', async (req, res) => {
@@ -734,9 +814,12 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
     try {
       res.set('Cache-Control', 'no-store');
+      await ensureTables(db());
       const [rows] = await db().query('SELECT goals, finance_meta FROM planea_profiles WHERE user_id = :u LIMIT 1', { replacements: { u: a.id } });
       const p = rows[0] || {};
-      const out = calendarFor(p.goals, p.finance_meta, await dianTable(), PlaneaTax.todayColombia(), reminderDays());
+      const [rem] = await db().query("SELECT id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done FROM planea_reminders WHERE tenant_id = :t AND user_id = :u ORDER BY fecha",
+        { replacements: { t: tenant(), u: a.id } });
+      const out = calendarFor(p.goals, p.finance_meta, await dianTable(), PlaneaTax.todayColombia(), reminderDays(), rem);
       res.json(out);
     } catch (e) { console.error('[planea-admin] calendar', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
@@ -759,4 +842,4 @@ function health() {
   return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: lastDian ? { year: lastDian.year, decree: lastDian.decree } : null, kb_max_chars: kb.MAX_CHARS() };
 }
 
-module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, readableAnswers, calendarFor, finishInfo, SURVEY, _resetCalendarCache: () => { dian._cache.clear(); lastDian = null; } };
+module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, readableAnswers, calendarFor, festivos, finishInfo, SURVEY, _resetCalendarCache: () => { dian._cache.clear(); lastDian = null; } };

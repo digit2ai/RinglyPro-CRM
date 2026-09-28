@@ -94,3 +94,19 @@ CREATE TABLE IF NOT EXISTS planea_dian_calendars (
 );
 CREATE INDEX IF NOT EXISTS idx_planea_dian_tenant_year ON planea_dian_calendars (tenant_id, year, status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_dian_one_valid ON planea_dian_calendars (tenant_id, year) WHERE status = 'validated';
+
+-- ── Calendario Planea, 28-sep-2026 (pedido de Eduardo) ───────────────────────
+-- Recordatorios que el usuario escribe. Los festivos NO se guardan: se calculan
+-- (verticals/planea/festivos.cjs, Ley 51 de 1983), así el año siguiente ya existe.
+CREATE TABLE IF NOT EXISTS planea_reminders (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL DEFAULT 1,
+  user_id INTEGER NOT NULL,
+  fecha DATE NOT NULL,
+  title TEXT NOT NULL,
+  notes TEXT,
+  remind_days INTEGER NOT NULL DEFAULT 7,
+  done BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_planea_reminders_user ON planea_reminders (tenant_id, user_id, fecha);

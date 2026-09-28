@@ -24,13 +24,26 @@
     </div>
     <div class="cal-grid cal-dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
     <div class="cal-grid" id="cal-days"></div>
-    <div class="cal-legend"><span><i class="dot renta"></i>Renta (DIAN)</span><span><i class="dot meta"></i>Meta</span></div>
+    <div class="cal-legend"><span><i class="dot renta"></i>Renta (DIAN)</span><span><i class="dot meta"></i>Meta</span><span><i class="dot recordatorio"></i>Recordatorio</span><span><i class="dot festivo"></i>Festivo</span></div>
+    <div class="cal-fest" id="cal-fest"></div>
   </div>
 
   <div class="group" style="margin-top:16px"><div class="group-head"><div><div class="gt">Próximas fechas</div><div class="gs">Lo que viene, en orden</div></div></div>
     <div class="group-body" id="cal-list"><div class="cal-empty">Cargando…</div></div></div>
 
-  <p class="cal-foot">Las metas aparecen aquí cuando les pones una fecha objetivo en Mis metas. La fecha de renta sale de los dos últimos dígitos de tu cédula (en Impuestos) y del calendario oficial de la DIAN que Planea valida cada año. Planea te recuerda fechas; no determina si debes declarar.</p>
+  <div class="group" style="margin-top:16px"><div class="group-head"><div><div class="gt">Crear un recordatorio</div><div class="gs">Solo tú lo ves. Aparece en tu calendario y en Inicio cuando se acerque.</div></div></div>
+    <div class="group-body">
+      <div class="rem-grid">
+        <div><label for="rem-date">Fecha</label><input id="rem-date" type="date"></div>
+        <div><label for="rem-days">Avisarme</label><select id="rem-days"><option value="1">1 día antes</option><option value="3">3 días antes</option><option value="7" selected>7 días antes</option><option value="15">15 días antes</option><option value="30">30 días antes</option></select></div>
+      </div>
+      <label for="rem-title">¿De qué es?</label><input id="rem-title" type="text" maxlength="120" placeholder="Ej: pagar el predial">
+      <label for="rem-notes">Nota <span class="rem-opt">opcional</span></label><input id="rem-notes" type="text" maxlength="500" placeholder="Ej: usar el descuento por pago anticipado">
+      <button type="button" id="rem-add" class="rem-btn">Guardar recordatorio</button>
+      <div class="rem-err" id="rem-err"></div><div class="rem-ok" id="rem-ok"></div>
+    </div></div>
+
+  <p class="cal-foot">Las metas aparecen aquí cuando les pones una fecha objetivo en Mis metas. La fecha de renta sale de los dos últimos dígitos de tu cédula (en Impuestos) y del calendario oficial de la DIAN que Planea carga y valida cada año. Los días festivos de Colombia se calculan con la Ley 51 de 1983. Planea te recuerda fechas; no determina si debes declarar ni te cobra nada.</p>
 
 </div></div>
 <style>
@@ -46,7 +59,22 @@
   .cal-day.has{background:var(--card2,#16302a);cursor:pointer}
   .cal-day .dots{display:flex;gap:3px;justify-content:center;margin-top:4px}
   .dot{display:inline-block;width:7px;height:7px;border-radius:50%}
-  .dot.renta{background:#e0954f}.dot.meta{background:var(--green,#3fc06a)}
+  .dot.renta{background:#e0954f}.dot.meta{background:var(--green,#3fc06a)}.dot.recordatorio{background:#6aa9e0}.dot.festivo{background:#b98cd6}
+  .cal-day.fest{box-shadow:inset 0 0 0 1px rgba(185,140,214,.45)}
+  .cal-fest{margin-top:8px;font-size:12.5px;color:var(--mut,#9db3ab);line-height:1.5}
+  .cal-tag.recordatorio{background:#6aa9e0;color:#04120c}
+  .cal-done{font-size:11px;font-weight:700;color:var(--green,#3fc06a)}
+  .cal-acts{margin-left:auto;display:flex;gap:6px;flex-none}
+  .cal-mini{min-height:36px;padding:6px 10px;border-radius:9px;border:1px solid var(--line,#26332e);background:var(--card2,#16302a);color:var(--txt,#eaf1ec);font:inherit;font-size:12.5px;cursor:pointer}
+  .cal-mini.del{color:#e08a8a}
+  .rem-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .group-body label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 6px;color:var(--txt,#eaf1ec)}
+  .rem-opt{font-weight:400;color:var(--mut,#9db3ab)}
+  .group-body input,.group-body select{width:100%;min-height:44px;background:var(--card2,#16302a);border:1.5px solid var(--line,#26332e);border-radius:12px;padding:11px 13px;font:inherit;font-size:16px;color:var(--txt,#eaf1ec);outline:none}
+  .rem-btn{margin-top:14px;width:100%;min-height:48px;background:linear-gradient(90deg,#3fc06a,#17a6a6);color:#04120c;border:none;border-radius:12px;font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+  .rem-err{color:#e08a8a;font-size:13px;min-height:18px;margin-top:8px}.rem-ok{color:var(--green,#3fc06a);font-size:13px;min-height:18px}
+  @media(max-width:700px){.cal-mini{min-height:44px;padding:8px 12px}}
+  @media(max-width:520px){.rem-grid{grid-template-columns:1fr}}
   .cal-legend{display:flex;gap:16px;margin-top:10px;font-size:12.5px;color:var(--mut,#9db3ab)}
   .cal-legend .dot{margin-right:6px}
   .cal-item{display:flex;gap:12px;align-items:flex-start;padding:12px 2px;border-top:1px solid var(--line,#26332e);text-decoration:none;color:var(--txt,#eaf1ec)}
@@ -62,7 +90,7 @@
   .cal-note[hidden]{display:none}
   .cal-foot{font-size:12px;color:var(--mut,#9db3ab);line-height:1.5;margin:14px 0 0}
 </style>
-<script src="/planea/portal/planea-calendario.js?v=1" defer></script>
+<script src="/planea/portal/planea-calendario.js?v=2" defer></script>
 <script src="/planea/portal/planea-nav.js?v=74" defer></script>
 <script src="/planea/portal/maya-chat.js?v=62" defer></script>
 </body>

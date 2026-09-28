@@ -108,6 +108,30 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   ok(adminMod.calendarFor([], {}, tbl, '2026-09-21', 30).renta.status === 'sin_digitos', 'sin dígitos de cédula lo pide');
   ok(adminMod.calendarFor([], { tributario: { cedula2: '67' } }, tbl, '2026-08-01', 30).notices.length === 0, 'la renta lejana no genera aviso todavía');
 
+  // ── 1e. Festivos de Colombia: se CALCULAN, no se escriben a mano ──
+  const FEST = require('./festivos.cjs');
+  const f26 = FEST.festivos(2026), f27 = FEST.festivos(2027);
+  ok(f26.length === 18 && f27.length === 18, 'cada año tiene 18 festivos');
+  ok(new Date(FEST.pascua(2026)).toISOString().slice(0, 10) === '2026-04-05' && new Date(FEST.pascua(2027)).toISOString().slice(0, 10) === '2027-03-28', 'la Pascua se calcula bien');
+  const fd = (n) => (f26.find((x) => x.name === n) || {}).date;
+  ok(fd('Año Nuevo') === '2026-01-01' && fd('Navidad') === '2026-12-25' && fd('Batalla de Boyacá') === '2026-08-07', 'los festivos fijos no se mueven');
+  ok(fd('Jueves Santo') === '2026-04-02' && fd('Viernes Santo') === '2026-04-03', 'Jueves y Viernes Santo no se trasladan');
+  ok(fd('Asunción de la Virgen') === '2026-08-17' && fd('Todos los Santos') === '2026-11-02' && fd('Día de los Reyes Magos') === '2026-01-12', 'los festivos de Emiliani se trasladan al lunes');
+  ok(f26.filter((x) => x.moved).every((x) => new Date(x.date + 'T12:00:00Z').getUTCDay() === 1), 'todo festivo trasladado cae lunes');
+  ok(new Set(f26.map((x) => x.date)).size === 18 && f26.every((x, i) => i === 0 || x.date > f26[i - 1].date), 'sin fechas repetidas y en orden');
+  ok(FEST.festivos(1980).length === 0 && FEST.festivos('x').length === 0, 'un año fuera de rango no inventa festivos');
+
+  // ── 1f. Recordatorios propios en el calendario (puro) ──
+  const rems = [{ id: 7, fecha: '2026-09-25', title: 'Pagar predial', notes: 'Con descuento', remind_days: 7 },
+    { id: 8, fecha: '2026-09-24', title: 'Listo', notes: '', remind_days: 7, done: true },
+    { id: 9, fecha: '2026-12-01', title: 'Lejano', notes: '', remind_days: 3 }];
+  const cr = adminMod.calendarFor([], { tributario: { cedula2: '67' } }, tbl, '2026-09-21', 30, rems);
+  ok(cr.events.filter((e) => e.origin === 'recordatorio').length === 3, 'los recordatorios entran al calendario');
+  ok(cr.notices.some((n) => n.title === 'Pagar predial') && !cr.notices.some((n) => n.title === 'Listo'), 'un recordatorio hecho ya no avisa');
+  ok(!cr.notices.some((n) => n.title === 'Lejano'), 'un recordatorio lejano no avisa todavía');
+  ok(Array.isArray(cr.holidays) && cr.holidays.length === 36 && cr.holidays.some((h) => h.date === '2026-08-17'), 'el calendario trae los festivos de este año y el siguiente');
+  ok(!cr.events.some((e) => e.origin === 'festivo'), 'los festivos no se mezclan con las próximas fechas');
+
   // ── 2. Respuestas sin montos (puro) ─────────────────────────────────────────
   const clean = adminMod.sanitizeAnswers({ edad: '35-44', monto_ingresos: 5200000, montos: { a: 1 }, deudas: 'si', otro: 3500000, texto: '$ 4.500.000', lista: [{ monto_pago: 90000, tipo: 'tc' }] });
   ok(clean.edad === '35-44' && clean.deudas === 'si', 'respuestas normales se conservan');
@@ -384,6 +408,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
       const mc = await call('GET', '/planea/api/v1/me/calendar', { cookie: userCookie });
       ok(mc.status === 200 && mc.body.events.some((e) => e.origin === 'renta') && mc.body.events.some((e) => e.origin === 'meta' && e.title === 'Meta SIT') && mc.body.notices.some((n) => n.title === 'Meta SIT'), 'el Calendario Planea del usuario trae su renta, su meta y el aviso');
       ok((await call('GET', '/planea/api/v1/me/calendar')).status === 401, 'el calendario pide sesión');
+      ok(mc.body.holidays && mc.body.holidays.some((h) => h.name === 'Navidad'), 'el calendario del usuario trae los festivos de Colombia');
       const kp = await adminMod.mayaKnowledge(backend);
       ok(/CALENDARIO TRIBUTARIO DIAN/.test(kp) && /Decreto SIT de 2025/.test(kp), 'Maya recibe la tabla validada');
       const ld2 = await call('POST', '/planea/admin/api/dian', { cookie: ac, body: { year: yr, decree: 'Decreto SIT corregido', text: csvY } });
@@ -393,6 +418,23 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
       await call('POST', '/planea/admin/api/dian/' + ld2.body.calendar.id + '/discard', { cookie: ac });
       ok((await call('GET', '/planea/api/v1/tax/calendar')).body.table === null, 'retirar la tabla validada deja a los usuarios sin fecha');
     } else console.log('  (año ' + yr + ': la tabla de ejemplo cae en fin de semana; validación HTTP NO cubierta)');
+
+    // Recordatorios del usuario: suyos, validados y aislados
+    ok((await call('GET', '/planea/api/v1/me/reminders')).status === 401, 'los recordatorios piden sesión');
+    ok((await call('POST', '/planea/api/v1/me/reminders', { cookie: userCookie, body: { fecha: '2026-02-30', title: 'Fecha imposible' } })).status === 400, 'una fecha que no existe se rechaza');
+    ok((await call('POST', '/planea/api/v1/me/reminders', { cookie: userCookie, body: { fecha: '2026-11-10', title: 'x' } })).status === 400, 'un recordatorio sin título se rechaza');
+    const rem1 = await call('POST', '/planea/api/v1/me/reminders', { cookie: userCookie, body: { fecha: '2026-11-10', title: 'Renovar el SOAT', notes: 'Antes del viaje', remind_days: 15 } });
+    ok(rem1.status === 200 && rem1.body.reminder.fecha === '2026-11-10' && rem1.body.reminder.remind_days === 15, 'se crea un recordatorio con su aviso');
+    const remList = await call('GET', '/planea/api/v1/me/reminders', { cookie: userCookie });
+    ok(remList.status === 200 && remList.body.reminders.length === 1, 'el usuario ve su recordatorio');
+    ok((await call('GET', '/planea/api/v1/me/reminders', { cookie: dropCookie })).body.reminders.length === 0, 'otro usuario no ve el recordatorio ajeno');
+    ok((await call('DELETE', '/planea/api/v1/me/reminders/' + rem1.body.reminder.id, { cookie: dropCookie })).status === 404, 'otro usuario no puede borrar un recordatorio ajeno');
+    ok((await call('PATCH', '/planea/api/v1/me/reminders/' + rem1.body.reminder.id, { cookie: userCookie, body: { done: true } })).body.reminder.done === true, 'el recordatorio se marca como hecho');
+    const calRem = await call('GET', '/planea/api/v1/me/calendar', { cookie: userCookie });
+    ok(calRem.body.events.some((e) => e.origin === 'recordatorio' && e.title === 'Renovar el SOAT'), 'el recordatorio aparece en el calendario');
+    ok(!calRem.body.notices.some((n) => n.title === 'Renovar el SOAT'), 'un recordatorio hecho no genera aviso');
+    ok((await call('DELETE', '/planea/api/v1/me/reminders/' + rem1.body.reminder.id, { cookie: userCookie })).status === 200, 'el dueño sí puede borrarlo');
+    ok((await call('GET', '/planea/api/v1/me/reminders', { cookie: userCookie })).body.reminders.length === 0, 'borrado queda borrado');
 
     // Auditoría
     await new Promise((r) => setTimeout(r, 300));
@@ -426,6 +468,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     server.close();
     const ids = [adminRow.id, admin2Row.id, userRow.id, dropRow.id];
     await sq.query('DELETE FROM planea_dian_calendars WHERE tenant_id = 990918').catch(() => {});
+    await sq.query('DELETE FROM planea_reminders WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_events WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
