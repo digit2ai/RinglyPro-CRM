@@ -4059,12 +4059,61 @@ const tenantSeed = (over = {}) => ({
   });
 
   await t('changing only the daily cap does not activate a paying tenant', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
+    // The guard moved into services/outboundAdmin when the founder-only door
+    // was added; both routes call that one function.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundAdmin.js'), 'utf8');
     assert.ok(/b\.enabled === true && t\.outbound_state === 'pending_setup'/.test(src),
       'activation still rides on the default-true enable flag');
+    // And the founder door must not coerce the flag on the way in, or a
+    // daily-cap-only change would activate a tenant through that door.
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = rt.slice(rt.indexOf("router.post('/admin/enable'"));
+    assert.ok(/enabled: b\.enabled,/.test(fn.slice(0, fn.indexOf('\n});'))),
+      'the founder door defaults the enable flag instead of forwarding it');
   });
 
   /* ── THE FOUNDER'S BROADCAST ──────────────────────────────────────────── */
+
+  await t('THE FOUNDER DOOR AND THE ADMIN KEY REACH ONE WRITER', () => {
+    // Two copies of "verify the workflow, then let a tenant dial real people"
+    // is how one of them loses the published check.
+    const sec = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
+    const ob = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const svc = fs.readFileSync(path.join(ROOT, 'src/services/outboundAdmin.js'), 'utf8');
+    assert.ok(/outboundAdmin'\)\.setOutbound/.test(sec), 'the admin route no longer delegates');
+    assert.ok(/outboundAdmin'\)\.setOutbound/.test(ob), 'the founder door does not delegate');
+    // The verification must live in the service, not in either route.
+    assert.ok(/workflow_not_published/.test(svc), 'the published check is not in the shared writer');
+    assert.ok(!/workflow_not_published/.test(sec) && !/workflow_not_published/.test(ob),
+      'a route kept its own copy of the workflow verification');
+  });
+
+  await t('THE FOUNDER CONTROL IS DRAWN FROM A SERVER FLAG, in both languages', () => {
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.ok(/p\.is_owner/.test(page), 'the control is not gated on the server flag');
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    assert.ok(/is_owner: isOwner/.test(rt), '/plan does not report who the founder is');
+    // Drawing it is a UI decision; allowing it is the route's, re-checked there.
+    const fn = rt.slice(rt.indexOf("router.post('/admin/enable'"));
+    assert.ok(/isOwner\(req\.tenantId\)/.test(fn.slice(0, fn.indexOf('\n});'))),
+      'the acting route trusts the flag instead of re-checking');
+    for (const k of ['obWfId', 'obTurnOn', 'obWfNeed', 'obWfWorking', 'obWfOk', 'obWfFail']) {
+      assert.strictEqual((page.match(new RegExp(k + ':', 'g')) || []).length, 2,
+        'label ' + k + ' is not in both dictionaries');
+    }
+  });
+
+  await t('THE FOUNDER DOOR IS FOUNDER-ONLY, resolved from the database, and 404s', () => {
+    const ob = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = ob.slice(ob.indexOf("router.post('/admin/enable'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/notify\.isOwner\(req\.tenantId\)/.test(body),
+      'the founder door is not gated on the owner tenant');
+    assert.ok(/404/.test(body) && !/403/.test(body),
+      'a refusal confirms the surface exists');
+    assert.ok(!/req\.user/.test(body), 'the gate reads the session token instead of the database');
+    assert.ok(/tooMany/.test(body), 'the founder door has no ceiling');
+  });
 
   await t('a BROADCAST reaches every tenant, one row each', async () => {
     const nt = require(path.join(ROOT, 'src/services/notify'));

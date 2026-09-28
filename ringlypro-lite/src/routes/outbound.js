@@ -290,9 +290,16 @@ router.get('/plan', async (req, res) => {
       { replacements: { t: req.tenantId } });
     openPayments = (c && c[0] && c[0].n) || 0;
   } catch (_) { /* a count is never worth failing the page for */ }
+  // IS THIS THE FOUNDER? Decided on the SERVER and re-checked by the route that
+  // acts, so the flag only decides whether to draw a control, never whether one
+  // is allowed to work.
+  let isOwner = false;
+  try { isOwner = await require('../services/notify').isOwner(req.tenantId); } catch (_) {}
+
   res.json({
     state,
     tenant: req.tenantId,
+    is_owner: isOwner,
     recovery,
     open_payments: openPayments,
     pricing: billing.pricing(),
@@ -454,6 +461,39 @@ router.post('/topup', express.json({ limit: '4kb' }), async (req, res) => {
   } catch (e) {
     res.status(502).json({ error: 'checkout_failed', detail: String(e.message || e).slice(0, 200) });
   }
+});
+
+/**
+ * THE FOUNDER TURNS OUTBOUND ON FROM THE APP.
+ *
+ * HighLevel has no API to create a workflow, so every client needs one manual
+ * step, and it lived behind LITE_ADMIN_KEY and a curl. That is fine for a
+ * script and useless for the person who actually does it — the founder, in the
+ * dashboard, at the moment they finish building the workflow.
+ *
+ * It is the SAME gate in substance, not a weaker one: `notify.isOwner` resolves
+ * the founder tenant FROM THE DATABASE on every call (never from the 30-day
+ * token), the same check that guards broadcasting to every customer. Enabling
+ * outbound is an operator decision and the founder is the operator. Anyone else
+ * gets 404, not 403 — a refusal must not confirm the surface exists.
+ */
+router.post('/admin/enable', express.json({ limit: '4kb' }), async (req, res) => {
+  const notify = require('../services/notify');
+  if (!(await notify.isOwner(req.tenantId))) return res.status(404).json({ error: 'not_found' });
+  if (tooMany(req.tenantId, 'admin_enable', 20)) return res.status(429).json({ error: 'slow_down' });
+  const b = req.body || {};
+  const r = await require('../services/outboundAdmin').setOutbound({
+    confirm: true,
+    tenant: parseInt(b.tenant, 10),
+    // FORWARDED VERBATIM, never defaulted here. The service activates only on
+    // an explicit `enabled === true`, so coercing it would let a call that
+    // changed just the daily cap flip a paying tenant live and tell them their
+    // caller was ready before the operator had finished building it.
+    enabled: b.enabled,
+    workflow_id: b.workflow_id,
+    daily_cap: b.daily_cap,
+  });
+  res.status(r.status).json(r.payload);
 });
 
 /** The call report: what happened, and what it cost. */
