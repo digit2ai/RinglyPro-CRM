@@ -503,6 +503,12 @@ async function main() {
   try { require('./src/services/paymentSweep').start(); }
   catch (e) { console.warn('[lite] payment sweep did not start:', e.message); }
 
+  // RUNNING OUT OF NUMBERS IS SILENT: the next signup hits the 403, stops at
+  // the number step, and nothing says the shelf was empty. A human watching a
+  // count is a workaround on top of a workaround.
+  try { require('./src/services/numberPool').start(); }
+  catch (e) { console.warn('[lite] number pool watch did not start:', e.message); }
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);

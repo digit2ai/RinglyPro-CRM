@@ -66,6 +66,8 @@ router.get('/', async (req, res) => {
     // counter, not a customer surface. Without it "the sweep is deployed" and
     // "the sweep worked" are the same sentence — which is how the webhook went
     // unnoticed for a day.
+    number_pool: await require('../services/numberPool').status().catch((e) => ({
+      ok: false, reason: String(e.message || e).slice(0, 120) })),
     payment_sweep: (() => {
       try { return require('../services/paymentSweep').stats; }
       catch (e) { return { error: String(e.message || e).slice(0, 120) }; }

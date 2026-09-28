@@ -4046,6 +4046,56 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/LITE_OUTBOUND_FOUNDER_UNLIMITED/.test(body), 'the exemption cannot be turned off');
   });
 
+  /* ── THE SPARE-NUMBER SHELF ────────────────────────────────────────────
+   * While HighLevel refuses the API purchase, signup ADOPTS an already-bought
+   * unclaimed number. Running out is silent, so the system watches it. */
+
+  await t('AN UNREADABLE SUB-ACCOUNT IS NOT AN EMPTY SHELF', async () => {
+    // The likeliest cause of the 403 is a missing phone-system scope — which
+    // would also break the listing. Reporting "0 spare" there sends the owner
+    // shopping for numbers to fix a permissions problem.
+    const pool = require(path.join(ROOT, 'src/services/numberPool'));
+    const prov = require(path.join(ROOT, 'src/telephony/ghlProvider'));
+    const real = prov.prototype.ownedNumbers;
+    prov.prototype.ownedNumbers = async () => { throw new Error('403 forbidden'); };
+    const st = await pool.status();
+    prov.prototype.ownedNumbers = real;
+    assert.strictEqual(st.ok, false);
+    assert.strictEqual(st.reason, 'cannot_read_sub_account');
+    assert.ok(!('spare' in st), 'it reported a count it could not know');
+  });
+
+  await t('SPARE MEANS UNCLAIMED — a number a tenant holds is not available', async () => {
+    const pool = require(path.join(ROOT, 'src/services/numberPool'));
+    const prov = require(path.join(ROOT, 'src/telephony/ghlProvider'));
+    const real = prov.prototype.ownedNumbers;
+    const held = await M.Tenant.create({ business_name: 'Holds A Line Co' });
+    await M.Number.create({ tenant_id: held.id, did: '+15615550001', status: 'active' });
+    prov.prototype.ownedNumbers = async () => ['+15615550001', '+15615550002', '+15615550003'];
+    const st = await pool.status();
+    prov.prototype.ownedNumbers = real;
+    assert.strictEqual(st.ok, true);
+    assert.strictEqual(st.owned, 3);
+    assert.strictEqual(st.spare, 2, "a claimed number was counted as available");
+  });
+
+  await t('THE FOUNDER IS TOLD BEFORE THE SHELF IS BARE, and only once per level', async () => {
+    const pool = require(path.join(ROOT, 'src/services/numberPool'));
+    const prov = require(path.join(ROOT, 'src/telephony/ghlProvider'));
+    const real = prov.prototype.ownedNumbers;
+    prov.prototype.ownedNumbers = async () => [];          // nothing spare at all
+    const before = OB.notifs.length;
+    await pool.check();
+    const first = OB.notifs.slice(before);
+    assert.ok(first.some((n) => n.kind === 'number_pool_low'), 'nobody was warned');
+    // A tick or a redeploy must not re-notify a shelf that is still low.
+    await pool.check();
+    const second = OB.notifs.slice(before);
+    assert.strictEqual(second.filter((n) => n.kind === 'number_pool_low').length, 1,
+      'the same shortage was reported twice');
+    prov.prototype.ownedNumbers = real;
+  });
+
   await t('THE CARRIER CONSENT RULE IS STATED BEFORE THE UPLOAD', () => {
     // Measured live 2026-09-28: enrollment succeeds and HighLevel then refuses
     // each call with "No valid consent found". Their consent engine wants a
