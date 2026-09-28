@@ -3890,17 +3890,59 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!/checkout\.sessions\.list/.test(body), 'confirm still lists sessions itself');
   });
 
-  await t('PAYING IS THE WHOLE FLOW once the shared workflow exists', async () => {
+  await t('PAYING IS THE WHOLE FLOW for the tenant the shared workflow dials as', async () => {
     delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;         // the shipped default
     // The 24-hour promise and the human step exist only because a workflow
     // must be built by hand. After the first client there is nothing to do.
     const pay = await M.Tenant.create({ business_name: 'Straight Through Co', outbound_state: 'off' });
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT = String(pay.id);
     OB.payments.push({ id: OB.payments.length + 1, tenant_id: pay.id, kind: 'setup',
       amount_cents: 2000, stripe_session_id: 'cs_straight', status: 'open', stripe_event_id: null });
     const out = await bl.applyPayment(pay, { id: 'cs_straight', amount_total: 2000 }, {});
     assert.strictEqual(out.applied, true);
     assert.strictEqual(out.activated, true, 'it still queued a manual step');
     assert.strictEqual((await M.Tenant.findByPk(pay.id)).outbound_state, 'active');
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+  });
+
+  await t('ANOTHER TENANT IS NEVER AUTO-ACTIVATED ONTO A SHARED CALLER ID', async () => {
+    // callMirror.resolveNumber attributes an inbound call by the number that
+    // was DIALLED, so a prospect returning a call made from a shared line
+    // reaches whoever owns that line — hears their business name, and their
+    // message lands in that client's dashboard while the client who ran the
+    // campaign never learns they called back.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;
+    const mine = await M.Tenant.create({ business_name: 'Owns The Line Co', outbound_state: 'off' });
+    const other = await M.Tenant.create({ business_name: 'Other Client Co', outbound_state: 'off' });
+    process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT = String(mine.id);
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: other.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_otherclient', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(other, { id: 'cs_otherclient', amount_total: 2000 }, {});
+    assert.ok(!out.activated, "another client was put live on someone else's caller ID");
+    assert.strictEqual((await M.Tenant.findByPk(other.id)).outbound_state, 'pending_setup');
+    assert.ok(out.due_at, 'they were left with no promised time either');
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+  });
+
+  await t('AN UNSTATED CALLER ID REFUSES RATHER THAN GUESSING', async () => {
+    // GET /workflows/ returns metadata only, so the from-number cannot be read
+    // back. Unset must mean refuse: guessing mis-routes a real prospect.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    const un = await M.Tenant.create({ business_name: 'Unstated Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: un.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_unstated', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(un, { id: 'cs_unstated', amount_total: 2000 }, {});
+    assert.ok(!out.activated, 'it activated without knowing whose caller ID it is');
+    assert.strictEqual((await M.Tenant.findByPk(un.id)).outbound_state, 'pending_setup');
+    // AND IT SAYS WHICH REFUSAL IT IS. A NaN comparison would also refuse, so
+    // without this the "unstated" branch is covered only by accident and the
+    // operator gets a misleading reason when they come to diagnose it.
+    const why = await bl.autoActivate(un);
+    assert.strictEqual(why.activated, false);
+    assert.strictEqual(why.reason, 'shared_workflow_owner_unknown');
     process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
   });
 

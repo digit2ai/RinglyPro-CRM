@@ -443,6 +443,26 @@ async function autoActivate(tenant) {
   if (String(process.env.LITE_OUTBOUND_AUTO_ACTIVATE || '').toLowerCase() === 'off') {
     return { activated: false, reason: 'off_by_env' };
   }
+  // WHOSE CALLER ID IS IT? A shared workflow dials from ONE number, and
+  // `callMirror.resolveNumber` attributes an inbound call by the number that
+  // was DIALLED — so a prospect returning that call reaches whoever owns the
+  // line, hears THEIR business name, and their message lands in THAT client's
+  // dashboard. The client who actually ran the campaign never learns the
+  // prospect called back, and a stranger's details appear in someone else's
+  // inbox. Sharing one workflow is therefore only safe for the one tenant the
+  // workflow dials as.
+  //
+  // `GET /workflows/` returns metadata only — id, name, status — so the
+  // action's from-number cannot be read back and the owner has to state it
+  // once. UNSET MEANS REFUSE: guessing here mis-routes a real prospect to a
+  // real stranger, and the manual path still works.
+  const ownerTenant = parseInt(process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT || '', 10);
+  if (!Number.isInteger(ownerTenant)) {
+    return { activated: false, reason: 'shared_workflow_owner_unknown' };
+  }
+  if (Number(tenant.id) !== ownerTenant) {
+    return { activated: false, reason: 'shared_caller_id_belongs_to_another_tenant' };
+  }
   const admin = require('./outboundAdmin');
   const r = await admin.setOutbound({ confirm: true, tenant: tenant.id,
     enabled: true, workflow_id: 'auto' });
