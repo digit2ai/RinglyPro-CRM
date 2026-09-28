@@ -145,7 +145,7 @@ figure{margin:0 0 18px}figure img{display:block;width:100%;height:auto;border:1p
 .foot{margin-top:24px;font-size:12px;color:var(--mut)}
 @media print{.actions,#discussBox{display:none}}
 </style></head><body><div class="wrap">
-<div class="top"><div class="logo">DIGIT<span>2</span>AI</div><div class="tag">Propuesta técnico-comercial</div></div>
+<div class="top"><div class="logo">DIGIT<span>2</span>AI</div><div class="tag">${esc(c.doc_label || 'Propuesta técnico-comercial')}</div></div>
 <div class="card">
   <h1>${esc(q.title)}</h1>
   <div class="mut">Para: ${who || '—'} · Fecha: ${esc(c.date || '')}</div>
@@ -164,10 +164,10 @@ figure{margin:0 0 18px}figure img{display:block;width:100%;height:auto;border:1p
 ${shots ? '<div class="card"><h2>' + esc(c.screenshots_heading || 'Así se verá') + '</h2>' + shots + '</div>' : ''}
 <div class="card"><h2>Qué no incluye</h2><ul>${excl}</ul></div>
 <div class="card" id="discussBox">
-  <h2>Siguiente paso</h2>
+  <h2>${esc(c.next_heading || 'Siguiente paso')}</h2>
   ${paid ? '<p class="ok"><b>Pago confirmado por Stripe.</b> Gracias.</p>' : `
   <div class="actions">
-    <button class="pri" id="approveBtn" ${payments ? '' : 'disabled'}>${payments ? 'Aprobar y pagar ' + esc(usd(q.amount_cents)) : 'Aprobar: los pagos en línea no están configurados todavía'}</button>
+    <button class="pri" id="approveBtn" ${payments ? '' : 'disabled'}>${payments ? esc(c.cta_label || 'Aprobar y pagar') + ' ' + esc(usd(q.amount_cents)) : 'Aprobar: los pagos en línea no están configurados todavía'}</button>
     <button class="sec" id="discussBtn" type="button">Quiero discutirlo</button>
   </div>
   <p class="note err" id="payErr" hidden></p>
@@ -189,7 +189,7 @@ ${shots ? '<div class="card"><h2>' + esc(c.screenshots_heading || 'Así se verá
     post('/checkout').then(function(j){
       if (j._ok && j.url) { location.href = j.url; return; }
       var e = document.getElementById('payErr'); e.hidden = false; e.textContent = j.message || 'No se pudo abrir el pago.';
-      ap.disabled = false; ap.textContent = 'Aprobar y pagar';
+      ap.disabled = false; ap.textContent = ${JSON.stringify(c.cta_label || 'Aprobar y pagar')};
     });
   });
   var db = document.getElementById('discussBtn');
