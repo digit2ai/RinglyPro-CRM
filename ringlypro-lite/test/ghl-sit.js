@@ -3991,6 +3991,73 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual((await M.Tenant.findByPk(man.id)).outbound_state, 'pending_setup');
   });
 
+  /* ── THE FOUNDER DOES NOT PREPAY THEMSELVES ───────────────────────────
+   * Billing the founder routes their own money through Stripe and loses ~3%
+   * to credit a wallet they already own. Exactly one tenant is exempt. */
+
+  await t('THE FOUNDER DIALS ON AN EMPTY WALLET', async () => {
+    const own = await M.Tenant.findByPk(OWNER_T.id);
+    assert.strictEqual((await bl.wallet(own.id)).balance_cents, 0, 'the fixture already has funds');
+    const held = await bl.reserve(own.id);
+    assert.strictEqual(held.ok, true, 'the founder was refused on their own account');
+    assert.strictEqual(held.unlimited, true);
+    assert.ok(held.reserved_cents > 0, 'nothing was reserved, so settlement would have nothing to net');
+  });
+
+  await t('EVERY OTHER TENANT STILL PAYS', async () => {
+    const cli = await M.Tenant.create({ business_name: 'Paying Client Co', outbound_state: 'active' });
+    const held = await bl.reserve(cli.id);
+    assert.strictEqual(held.ok, false, 'a client dialled without funding their wallet');
+    assert.strictEqual(held.reason, 'insufficient_credit');
+    assert.strictEqual(await bl.isUnlimited(cli.id), false);
+    // And the dial gate agrees with the wallet, or one of them is decorative.
+    assert.strictEqual((await bl.wallet(cli.id)).can_place_a_call, false);
+  });
+
+  await t('UNLIMITED WAIVES THE REFUSAL, NEVER THE ACCOUNTING', async () => {
+    // Those minutes still cost the owner real money at the carrier; a founder
+    // who cannot see the spend cannot see their own COGS.
+    const own = await M.Tenant.findByPk(OWNER_T.id);
+    const before = (await bl.wallet(own.id)).spent_cents;
+    const held = await bl.reserve(own.id);
+    OB.contacts.push({ id: 9333, tenant_id: own.id, list_id: 5001, phone: '+18135550777', status: 'dialled' });
+    OB.calls.push({ id: ++OB_CALL_SEQ, tenant_id: own.id, contact_id: 9333,
+      enrolled_at: new Date(), reserved_cents: held.reserved_cents, settled_at: null });
+    const id = OB.calls[OB.calls.length - 1].id;
+    const r = await bl.settle(own.id, id, { durationSec: 120, outcome: 'connected' });
+    assert.strictEqual(r.settled, true, 'a founder call was not settled');
+    assert.ok(r.charged_cents > 0, 'a founder call was recorded as free');
+    const after = await bl.wallet(own.id);
+    assert.ok(after.spent_cents > before, 'the spend was not recorded');
+    assert.strictEqual(after.unlimited, true);
+    // The report must show the same figure that moved, as for any tenant.
+    const rep = await bl.callReport(own.id, { limit: 10 });
+    assert.ok(rep.some((x) => x.id === id && x.charged_cents === r.charged_cents),
+      'the founder call is missing from the report or shows a different figure');
+  });
+
+  await t('THE EXEMPTION IS RESOLVED FROM THE DATABASE, never from a request', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function isUnlimited'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(/notify'\)\.isOwner/.test(body), 'the exemption is not the owner-tenant lookup');
+    assert.ok(!/req\.|body|header/i.test(body), 'the exemption can be asked for');
+    // And there is a way to switch it off entirely.
+    assert.ok(/LITE_OUTBOUND_FOUNDER_UNLIMITED/.test(body), 'the exemption cannot be turned off');
+  });
+
+  await t('THE FOUNDER CARD SHOWS SPEND, not a negative balance', () => {
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.ok(/w\.unlimited/.test(page), 'the wallet card does not know about the exemption');
+    for (const k of ['obUnlimited', 'obSpent', 'obUnlimitedWhy']) {
+      assert.strictEqual((page.match(new RegExp(k + ':', 'g')) || []).length, 2,
+        'label ' + k + ' is not in both dictionaries');
+    }
+    // Unlimited must not read as free — the carrier still bills those minutes.
+    assert.ok(/obUnlimitedWhy:"Founder account — no prepayment\. Minutes are still billed/.test(page),
+      'the card implies the minutes are free');
+  });
+
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
     const sm = await M.Tenant.create({ business_name: 'State Co', outbound_state: 'awaiting_setup_payment' });
     const a = await bl.transition(sm.id, ['off', 'awaiting_setup_payment'], 'pending_setup');

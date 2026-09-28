@@ -129,6 +129,7 @@ async function wallet(tenantId) {
   );
   const r = (rows && rows[0]) || {};
   const balance = Number(r.balance_cents) || 0;
+  const unlimited = await isUnlimited(tenantId);
   return {
     balance_cents: balance,
     reserved_cents: Number(r.reserved_cents) || 0,
@@ -136,7 +137,12 @@ async function wallet(tenantId) {
     lifetime_spent_cents: Number(r.lifetime_spent_cents) || 0,
     // What the client actually wants to know, not what the columns hold.
     minutes_left: Math.floor(balance / Math.max(1, pricePerMinCents())),
-    can_place_a_call: balance >= reserveCents(),
+    can_place_a_call: balance >= reserveCents() || unlimited,
+    // Stated, so the founder's own screen never reads as a broken negative
+    // balance — and so the spend stays visible, because unlimited means "no
+    // prepayment", not "free".
+    unlimited,
+    spent_cents: Number(r.lifetime_spent_cents) || 0,
   };
 }
 
@@ -162,6 +168,28 @@ async function credit(tenantId, cents) {
  * one-call balance produce exactly one winner. Returns false when there is
  * not enough; the caller must then NOT enroll.
  */
+/**
+ * THE FOUNDER'S OWN ACCOUNT DOES NOT PREPAY ITSELF.
+ *
+ * Billing the founder means routing their own money through Stripe and losing
+ * roughly 3% on the way, to credit a wallet they already own. So the balance
+ * check is waived — for exactly one tenant.
+ *
+ * IT WAIVES THE REFUSAL, NEVER THE ACCOUNTING. Every call still reserves and
+ * still settles at the real rate, so the call report and the spend summary
+ * stay true and the owner can see what HighLevel is actually costing them.
+ * Unlimited means "no prepayment", not "free": those minutes are still billed
+ * to the owner at roughly $0.13 each.
+ *
+ * RESOLVED FROM THE DATABASE, never from a request and never from a column a
+ * client could set — it is the same owner-tenant lookup that gates
+ * broadcasting to every customer. Every other tenant pays.
+ */
+async function isUnlimited(tenantId) {
+  if (String(process.env.LITE_OUTBOUND_FOUNDER_UNLIMITED || '').toLowerCase() === 'off') return false;
+  try { return await require('./notify').isOwner(tenantId); } catch (_) { return false; }
+}
+
 async function reserve(tenantId) {
   await ensureWallet(tenantId);
   const hold = reserveCents();
@@ -174,7 +202,27 @@ async function reserve(tenantId) {
       RETURNING balance_cents`,
     { replacements: { t: tenantId, hold } }
   );
-  if (!rows || !rows.length) return { ok: false, reason: 'insufficient_credit', needed_cents: hold };
+  if (!rows || !rows.length) {
+    // The founder's own account is not made to prepay itself. The hold is
+    // still recorded so settlement and the call report are unchanged; the
+    // balance simply goes negative, and that negative IS the spend.
+    if (await isUnlimited(tenantId)) {
+      const [f] = await sequelize.query(
+        `UPDATE lite_outbound_credit
+            SET balance_cents = balance_cents - :hold,
+                reserved_cents = reserved_cents + :hold,
+                updated_at = NOW()
+          WHERE tenant_id = :t
+          RETURNING balance_cents`,
+        { replacements: { t: tenantId, hold } }
+      );
+      if (f && f.length) {
+        return { ok: true, reserved_cents: hold, unlimited: true,
+          balance_cents: Number(f[0].balance_cents) || 0 };
+      }
+    }
+    return { ok: false, reason: 'insufficient_credit', needed_cents: hold };
+  }
   return { ok: true, reserved_cents: hold, balance_cents: Number(rows[0].balance_cents) || 0 };
 }
 
@@ -604,7 +652,7 @@ async function spendSummary(tenantId, { listId = null } = {}) {
   };
 }
 
-module.exports = { recoverable, applyStrandedSetup, autoActivate,
+module.exports = { recoverable, applyStrandedSetup, autoActivate, isUnlimited,
   STATES, transition,
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,
