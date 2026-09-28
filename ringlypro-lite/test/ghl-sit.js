@@ -3143,7 +3143,7 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!/req\.body|req\.query|req\.params/.test(body),
       'confirm trusts the request — a public return URL must not be evidence of payment');
     assert.ok(/tenant_id = :t/.test(body), 'confirm is not scoped to the caller\'s own rows');
-    assert.ok(/payment_status !== 'paid'/.test(body),
+    assert.ok(/billing\.recoverable/.test(body),
       'confirm does not check what Stripe itself says about the session');
   });
 
@@ -3298,6 +3298,86 @@ const tenantSeed = (over = {}) => ({
     // And the server has to supply that flag, or the condition is never true.
     const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
     assert.ok(/open_payments: openPayments/.test(rt), '/plan does not report a checkout in flight');
+  });
+
+  /* ── RECOVERING A PAYMENT OUR OWN ROW CANNOT SEE ───────────────────────
+   * The last way $20 can be lost: the row that names the session is missing,
+   * so nothing on our side points at real money. */
+
+  await t("THE OWNER'S OWN SHAPE: one paid session, one unpaid retap", () => {
+    // Measured in Stripe 2026-09-27: tenant 4 paid $20 at 22:00, then tapped
+    // Activate again at 23:48 and abandoned it. Applying the second one would
+    // move the tenant on a checkout nobody paid.
+    const sessions = [
+      { id: 'cs_open_2348', payment_status: 'unpaid', status: 'open', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: '4' } },
+      { id: 'cs_paid_2200', payment_status: 'paid', status: 'complete', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: '4' } },
+    ];
+    const got = bl.recoverable(sessions, 4, new Set());
+    assert.strictEqual(got.length, 1, 'expected exactly the paid session');
+    assert.strictEqual(got[0].session.id, 'cs_paid_2200');
+    assert.strictEqual(got[0].kind, 'setup');
+    assert.strictEqual(got[0].amount_cents, 2000);
+  });
+
+  await t('A PAID SESSION BELONGING TO ANOTHER TENANT IS NEVER ADOPTED', () => {
+    // One Stripe account serves every tenant, so the listing returns everyone's
+    // sessions. Without the tenant check this route would hand any caller the
+    // next client's payment.
+    const sessions = [{ id: 'cs_theirs', payment_status: 'paid', amount_total: 9900,
+      metadata: { kind: 'lite_outbound_topup', tenant_id: '77' } }];
+    assert.strictEqual(bl.recoverable(sessions, 4, new Set()).length, 0);
+    assert.strictEqual(bl.recoverable(sessions, 77, new Set()).length, 1, 'the real owner cannot claim it either');
+  });
+
+  await t('a session already covered by a row is not adopted a second time', () => {
+    const sessions = [{ id: 'cs_known', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: '4' } }];
+    assert.strictEqual(bl.recoverable(sessions, 4, new Set(['cs_known'])).length, 0);
+  });
+
+  await t('AN UNRECOGNISED KIND IS SKIPPED, never guessed into a wallet credit', () => {
+    const sessions = [
+      { id: 'cs_other', payment_status: 'paid', amount_total: 50000,
+        metadata: { kind: 'lite_outbound_something_new', tenant_id: '4' } },
+      { id: 'cs_sub', payment_status: 'paid', amount_total: 2600,
+        metadata: { kind: 'lite_subscription', tenant_id: '4' } },
+      { id: 'cs_none', payment_status: 'paid', amount_total: 2600, metadata: {} },
+      { id: 'cs_zero', payment_status: 'paid', amount_total: 0,
+        metadata: { kind: 'lite_outbound_topup', tenant_id: '4' } },
+    ];
+    assert.deepStrictEqual(bl.recoverable(sessions, 4, new Set()), [],
+      'a session we do not understand was turned into money');
+  });
+
+  await t('the recovered payment goes through the SAME writer, so it cannot double-apply', async () => {
+    const rec = await M.Tenant.create({ business_name: 'Recover Co', outbound_state: 'off' });
+    const sess = { id: 'cs_recover', amount_total: 2000,
+      payment_status: 'paid', metadata: { kind: 'lite_outbound_setup', tenant_id: String(rec.id) } };
+    const cand = bl.recoverable([sess], rec.id, new Set());
+    assert.strictEqual(cand.length, 1);
+    // What the route does: insert the missing row, then hand it to applyPayment.
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: rec.id, kind: cand[0].kind,
+      amount_cents: cand[0].amount_cents, stripe_session_id: sess.id, status: 'open', stripe_event_id: null });
+    const a = await bl.applyPayment(rec, sess, {});
+    assert.strictEqual(a.applied, true);
+    assert.strictEqual((await M.Tenant.findByPk(rec.id)).outbound_state, 'pending_setup');
+    const b = await bl.applyPayment(rec, sess, {});
+    assert.strictEqual(b.applied, false, 'a recovered payment applied twice');
+  });
+
+  await t('THE SWEEP IS A MONEY RULE AND LIVES IN THE SERVICE, not the route', () => {
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = rt.slice(rt.indexOf("router.post('/confirm'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/billing\.recoverable/.test(body), 'the route decides for itself what counts as paid');
+    // The route must not re-implement the checks; that is how two copies drift.
+    assert.ok(!/payment_status/.test(body),
+      'the route inspects payment_status itself — the rule belongs in one place');
+    assert.ok(/ON CONFLICT DO NOTHING/.test(body),
+      'two concurrent confirms could insert the same session twice');
+    assert.ok(/req\.tenantId, seen/.test(body), 'the sweep is not scoped to the caller');
   });
 
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {

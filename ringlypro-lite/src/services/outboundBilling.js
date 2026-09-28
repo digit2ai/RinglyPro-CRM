@@ -379,6 +379,38 @@ async function settleFromCallLog(f, { tenantId, windowMin } = {}) {
  * Idempotent on the payment row: `status <> 'paid'` in the claiming UPDATE
  * means whichever source arrives second is a no-op.
  */
+/**
+ * WHICH OF STRIPE'S SESSIONS BELONG TO THIS TENANT AND ARE REALLY PAID.
+ *
+ * Lives here rather than in the route because it is a money rule, and the
+ * route is not something the suite can drive. Pure: it reaches nothing.
+ *
+ * The tenant comes from `metadata.tenant_id`, which WE wrote when the session
+ * was created, and it must equal the caller's own tenant — a paid session
+ * belonging to somebody else is skipped, never adopted, which matters because
+ * one Stripe account serves every tenant. An unrecognised kind is skipped
+ * rather than guessed into a wallet credit, and the amount is Stripe's own.
+ */
+function recoverable(sessions, tenantId, seen) {
+  const already = seen instanceof Set ? seen : new Set(seen || []);
+  const out = [];
+  for (const sess of (sessions || [])) {
+    if (!sess || !sess.id) continue;
+    const md = sess.metadata || {};
+    if (!String(md.kind || '').startsWith('lite_outbound')) continue;
+    if (String(md.tenant_id) !== String(tenantId)) continue;
+    if (sess.payment_status !== 'paid') continue;   // an open checkout is not a payment
+    if (already.has(sess.id)) continue;             // a row already covers it
+    const kind = md.kind === 'lite_outbound_setup' ? 'setup'
+      : md.kind === 'lite_outbound_topup' ? 'credit' : null;
+    if (!kind) continue;
+    const amount = Math.round(Number(sess.amount_total) || 0);
+    if (!(amount > 0)) continue;
+    out.push({ session: sess, kind, amount_cents: amount });
+  }
+  return out;
+}
+
 async function applyPayment(tenant, session, { eventId } = {}) {
   const notify = require('./notify');
   const [claimed] = await sequelize.query(
@@ -484,7 +516,7 @@ async function spendSummary(tenantId, { listId = null } = {}) {
   };
 }
 
-module.exports = {
+module.exports = { recoverable,
   STATES, transition,
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,

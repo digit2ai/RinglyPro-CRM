@@ -15,6 +15,10 @@ const { sequelize, Tenant } = require('../models');
 const ob = require('../services/outbound');
 const tollFraud = require('../security/tollFraud');
 const billing = require('../services/outboundBilling');
+// How far back the confirm sweep asks Stripe. Long enough that a payment made
+// before somebody next opens the tab is still recovered, short enough that the
+// listing stays one cheap page.
+const ADOPT_DAYS = parseInt(process.env.LITE_OUTBOUND_ADOPT_DAYS || '30', 10) || 30;
 const notify = require('../services/notify');
 
 // A PER-TENANT CEILING ON THE PAID ENDPOINTS. Nothing else in the /api tree
@@ -351,7 +355,11 @@ router.post('/confirm', async (req, res) => {
     let sess = null;
     try { sess = await s.checkout.sessions.retrieve(r.stripe_session_id); }
     catch (e) { continue; }                     // a session Stripe cannot find is not a payment
-    if (!sess || sess.payment_status !== 'paid') continue;
+    // ONE RULE, ONE PLACE. This path knows the session id from our own row, but
+    // what makes it money is the same question the sweep below asks, so it is
+    // asked in the same function — which also means Stripe's own metadata has
+    // to agree that the session is this tenant's, not just our row.
+    if (!billing.recoverable([sess], req.tenantId, new Set()).length) continue;
     try {
       const out = await billing.applyPayment(t, sess, {});
       if (out.applied) applied.push(out);
@@ -359,6 +367,29 @@ router.post('/confirm', async (req, res) => {
       console.warn('[lite:outbound] confirm failed for', r.stripe_session_id, e.message);
     }
   }
+  // AND THE CASE WHERE OUR OWN ROW IS MISSING ENTIRELY. Everything above needs
+  // a `lite_outbound_payments` row to find the session by; if the insert after
+  // the checkout never landed — a crash between the two, a table created after
+  // the session, a row edited away — the money is real and nothing on our side
+  // points at it. So Stripe is asked what it holds for THIS tenant, and
+  // `billing.recoverable` (not this route) decides what counts.
+  try {
+    const seen = new Set((rows || []).map((r) => r.stripe_session_id));
+    const since = Math.floor(Date.now() / 1000) - 60 * 60 * 24 * ADOPT_DAYS;
+    const list = await s.checkout.sessions.list({ limit: 50, created: { gte: since } });
+    for (const cand of billing.recoverable(list.data, req.tenantId, seen)) {
+      // The unique index on stripe_session_id is what makes this safe to race.
+      await sequelize.query(
+        `INSERT INTO lite_outbound_payments (tenant_id, kind, amount_cents, stripe_session_id)
+         VALUES (:t, :k, :a, :s) ON CONFLICT DO NOTHING`,
+        { replacements: { t: req.tenantId, k: cand.kind, a: cand.amount_cents, s: cand.session.id } });
+      const out = await billing.applyPayment(t, cand.session, {});
+      if (out.applied) { out.recovered = true; applied.push(out); }
+    }
+  } catch (e) {
+    console.warn('[lite:outbound] confirm sweep failed:', e.message);
+  }
+
   const fresh = await Tenant.findByPk(req.tenantId);
   res.json({ ok: true, applied, state: fresh.outbound_state,
     wallet: await billing.wallet(req.tenantId) });
