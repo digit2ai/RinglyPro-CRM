@@ -501,6 +501,18 @@ async function loadPlan(){
     }).catch(function(){});
   }
 
+  // WHY DID MY PAYMENT NOT APPLY? Rendered only with ?debug=1, so it is never
+  // customer noise, and inside the authenticated page so there is no second
+  // URL and no question about cookies. Counts only — the server sends no
+  // session id, email or amount.
+  if(/[?&]debug=1/.test(location.search)){
+    const d=p.recovery?JSON.stringify(p.recovery):'(not attempted)';
+    const box=document.createElement('div');
+    box.style.cssText='margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:8px;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-all';
+    box.textContent='tenant '+p.tenant+' · state '+p.state+' · open_payments '+p.open_payments+'\nrecovery '+d;
+    gate.parentNode.insertBefore(box,gate.nextSibling);
+  }
+
   if(p.state==='off'||p.state==='failed_setup'){
     gate.innerHTML='<div class="obh">'+D.obPitchTitle+'</div>'
       +'<div class="obhint">'+D.obPitchBody+'</div>'

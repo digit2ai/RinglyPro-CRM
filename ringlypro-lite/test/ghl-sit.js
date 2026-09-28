@@ -3628,6 +3628,21 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!/cs_|@|amount|email/.test(json), 'the report carries detail, not counts');
   });
 
+  await t('THE DIAGNOSTIC IS OPT-IN AND CARRIES NO DETAIL', () => {
+    // It must never be customer noise, and it must live inside the
+    // authenticated page: a separate URL raised a cookie question instead of
+    // answering the one that mattered.
+    const src = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.ok(/\[\?&\]debug=1/.test(src), 'the diagnostic is not gated behind ?debug=1');
+    // Bounded to the block, not a character count. A wide window kept catching
+    // the neighbouring wallet markup — the third time a fixed-width slice in
+    // this suite has read code it was not testing.
+    const i = src.indexOf('if(/[?&]debug=1/');
+    const blk = src.slice(i, src.indexOf('insertBefore', i) + 40);
+    assert.ok(/p\.recovery/.test(blk) && /p\.tenant/.test(blk), 'it does not show what was asked for');
+    assert.ok(!/stripe_session|amount_cents|email/.test(blk), 'the panel renders detail, not counts');
+  });
+
   await t('the plan endpoint hands that report back to the signed-in tenant', () => {
     const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
     const fn = rt.slice(rt.indexOf("router.get('/plan'"));
