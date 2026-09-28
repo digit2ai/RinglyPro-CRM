@@ -486,6 +486,21 @@ async function loadPlan(){
   }
 
   wal.style.display='none'; gate.style.display='';
+
+  // SELF-HEAL, IN EVERY PAYABLE STATE — not just the waiting one. The tab the
+  // owner came back to after paying read "Activate — $20.00", so their state
+  // was 'off': the reuse branch of /activate had returned an open checkout
+  // without transitioning. A recovery that only fires in the state the bug
+  // skipped is no recovery. It runs only when the server says a checkout is
+  // still open (open_payments), so a tenant who has never paid costs no
+  // Stripe call, and once per page load so it cannot loop.
+  if(p.open_payments>0 && !window.__obConfirmTried){
+    window.__obConfirmTried=true;
+    api('/api/outbound/confirm',{method:'POST'}).then(function(r){
+      if(r&&r.state&&r.state!==p.state) loadOutbound();
+    }).catch(function(){});
+  }
+
   if(p.state==='off'||p.state==='failed_setup'){
     gate.innerHTML='<div class="obh">'+D.obPitchTitle+'</div>'
       +'<div class="obhint">'+D.obPitchBody+'</div>'
@@ -500,17 +515,6 @@ async function loadPlan(){
     gate.innerHTML='<div class="obh">'+D.obPitchTitle+'</div><div class="obhint">'+D.obWaitingPay+'</div>'
       +'<div class="obrow"><button class="sm" onclick="obBuySetup()">'+D.obResumePay+'</button></div>'
       +'<div id="ob_gate_msg" class="obmsg"></div>';
-    // SELF-HEAL. Somebody in this state has an open checkout; if they paid
-    // and the webhook never arrived, nothing else would ever notice. Asking
-    // Stripe once whenever the tab is opened recovers a payment that would
-    // otherwise be lost, without the client doing anything. Guarded so it
-    // cannot loop: one attempt per page load.
-    if(!window.__obConfirmTried){
-      window.__obConfirmTried=true;
-      api('/api/outbound/confirm',{method:'POST'}).then(function(r){
-        if(r&&r.state&&r.state!=='awaiting_setup_payment') loadOutbound();
-      }).catch(function(){});
-    }
   } else if(p.state==='pending_setup'){
     // A DEADLINE THAT HAS PASSED IS NEVER SHOWN AS A PROMISE.
     gate.innerHTML='<div class="obh">'+D.obPitchTitle+'</div>'

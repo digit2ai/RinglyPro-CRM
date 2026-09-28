@@ -237,8 +237,20 @@ router.get('/plan', async (req, res) => {
   const t = await Tenant.findByPk(req.tenantId);
   const state = (t && t.outbound_state) || 'off';
   const w = await billing.wallet(req.tenantId);
+  // IS THERE MONEY IN FLIGHT? One cheap count, so the page knows whether it is
+  // worth asking Stripe. Without it the self-heal would retrieve sessions for
+  // every tenant who has never paid, on every page load.
+  let openPayments = 0;
+  try {
+    const [c] = await sequelize.query(
+      `SELECT COUNT(*)::int AS n FROM lite_outbound_payments
+        WHERE tenant_id = :t AND status = 'open' AND stripe_session_id IS NOT NULL`,
+      { replacements: { t: req.tenantId } });
+    openPayments = (c && c[0] && c[0].n) || 0;
+  } catch (_) { /* a count is never worth failing the page for */ }
   res.json({
     state,
+    open_payments: openPayments,
     pricing: billing.pricing(),
     wallet: w,
     setup_paid_at: t && t.outbound_setup_paid_at,

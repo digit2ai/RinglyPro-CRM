@@ -3283,12 +3283,21 @@ const tenantSeed = (over = {}) => ({
     // Somebody who paid and closed the tab has no ?outbound= to come back
     // with. Without this their money is stuck until a human notices.
     const src = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
-    const i = src.indexOf("awaiting_setup_payment'){");
-    assert.ok(i > 0, 'the awaiting-payment gate is gone');
-    const gate = src.slice(i, i + 1400);
-    assert.ok(/outbound\/confirm/.test(gate),
-      'opening the tab in the awaiting state does not try to confirm');
-    assert.ok(/__obConfirmTried/.test(gate), 'the self-heal is not guarded against looping');
+    const i = src.indexOf('__obConfirmTried');
+    assert.ok(i > 0, 'there is no self-heal at all');
+    const heal = src.slice(i - 900, i + 500);
+    assert.ok(/outbound\/confirm/.test(heal), 'the self-heal does not ask the server to confirm');
+    // IT MUST NOT BE SCOPED TO ONE STATE. The tab the owner came back to read
+    // "Activate — $20.00", so they were in 'off' — the state the /activate
+    // reuse bug left them in. A recovery that only fires in
+    // awaiting_setup_payment would have missed the very case it is for.
+    assert.ok(!/awaiting_setup_payment/.test(heal),
+      'the self-heal only covers one state — it would miss the case it was written for');
+    assert.ok(/open_payments/.test(heal),
+      'the self-heal reaches Stripe for tenants with no payment in flight');
+    // And the server has to supply that flag, or the condition is never true.
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    assert.ok(/open_payments: openPayments/.test(rt), '/plan does not report a checkout in flight');
   });
 
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
