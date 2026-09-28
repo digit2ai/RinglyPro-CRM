@@ -94,7 +94,21 @@ async function run({ tenantId = null, client = null } = {}) {
     if (!byTenant.has(tid)) byTenant.set(tid, []);
     byTenant.get(tid).push(sess);
   }
-  if (!byTenant.size) return { ok: true, tenants: 0, applied: [] };
+  // WHAT THE LISTING ACTUALLY HELD. Counts only — no session id, no email, no
+  // amount — so this can be reported to the signed-in tenant and put in a
+  // screenshot. Without it "nothing was applied" cannot be told apart from
+  // "nothing was found", "found but not yours" and "Stripe was empty".
+  const seen = {
+    scanned: (list.data || []).length,
+    ours: (list.data || []).filter((x) => String(((x && x.metadata) || {}).kind || '')
+      .startsWith('lite_outbound')).length,
+    ours_paid: (list.data || []).filter((x) => String(((x && x.metadata) || {}).kind || '')
+      .startsWith('lite_outbound') && x.payment_status === 'paid').length,
+    tenants_in_metadata: [...new Set((list.data || [])
+      .map((x) => Number(((x && x.metadata) || {}).tenant_id))
+      .filter(Number.isInteger))],
+  };
+  if (!byTenant.size) return { ok: true, tenants: 0, applied: [], seen };
 
   const applied = [];
   for (const [id, sessions] of byTenant) {
@@ -130,7 +144,7 @@ async function run({ tenantId = null, client = null } = {}) {
       }
     }
   }
-  return { ok: true, tenants: byTenant.size, applied };
+  return { ok: true, tenants: byTenant.size, applied, seen };
 }
 
 let timer = null;

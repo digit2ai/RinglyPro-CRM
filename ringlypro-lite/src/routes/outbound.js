@@ -247,6 +247,7 @@ router.get('/plan', async (req, res) => {
   // thing that is always hit, by the page they are already looking at, and
   // `/api/` is never cached. Throttled per tenant, and only while they are in
   // a state where money could be owed — a live tenant never triggers it.
+  let recovery = null;
   const payable = require('../services/paymentSweep').PAYABLE;
   if (payable.includes((t && t.outbound_state) || 'off')) {
     const ps = require('../services/paymentSweep');
@@ -254,7 +255,17 @@ router.get('/plan', async (req, res) => {
       try {
         const r = await ps.run({ tenantId: req.tenantId });
         if (r.applied && r.applied.length) t = await Tenant.findByPk(req.tenantId);
-      } catch (e) { console.warn('[lite:outbound] plan sweep failed:', e.message); }
+        // REPORTED TO THE SIGNED-IN TENANT, about their OWN account: counts and
+        // a reason, never a session id or an amount. Four fixes failed in a row
+        // because "nothing happened" was the only signal available from
+        // outside, and it cannot be told apart from "nothing was found", "found
+        // but tagged to another tenant" or "Stripe was never reached".
+        recovery = { ok: r.ok, reason: r.reason || null,
+          applied: (r.applied || []).length, ...(r.seen || {}) };
+      } catch (e) {
+        recovery = { ok: false, reason: String(e.message || e).slice(0, 120) };
+        console.warn('[lite:outbound] plan sweep failed:', e.message);
+      }
     }
   }
 
@@ -273,6 +284,8 @@ router.get('/plan', async (req, res) => {
   } catch (_) { /* a count is never worth failing the page for */ }
   res.json({
     state,
+    tenant: req.tenantId,
+    recovery,
     open_payments: openPayments,
     pricing: billing.pricing(),
     wallet: w,

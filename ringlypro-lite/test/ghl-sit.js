@@ -3608,6 +3608,34 @@ const tenantSeed = (over = {}) => ({
       'the plan answers with the state from BEFORE the recovery');
   });
 
+  await t('THE RECOVERY REPORTS WHAT IT SAW, in counts and never in detail', async () => {
+    // "Nothing happened" was the only signal from outside, and it cannot be
+    // told apart from "nothing found", "found but tagged to another tenant" or
+    // "Stripe was never reached" — which is why four fixes went out blind.
+    const other = await M.Tenant.create({ business_name: 'Other Co', outbound_state: 'off' });
+    const data = [{ id: 'cs_someone_else', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: '424242' } }];
+    const fake = { checkout: { sessions: { list: async () => ({ data }) } } };
+    const r = await psweep.run({ tenantId: other.id, client: fake });
+    assert.ok(r.seen, 'the run does not report what it saw');
+    assert.strictEqual(r.seen.scanned, 1);
+    assert.strictEqual(r.seen.ours_paid, 1, 'a paid session of ours was not counted');
+    assert.deepStrictEqual(r.seen.tenants_in_metadata, [424242],
+      'the tenant a payment is tagged to is not reported');
+    assert.strictEqual(r.applied.length, 0);
+    // Counts only: nothing that could carry a session id, an email or money.
+    const json = JSON.stringify(r.seen);
+    assert.ok(!/cs_|@|amount|email/.test(json), 'the report carries detail, not counts');
+  });
+
+  await t('the plan endpoint hands that report back to the signed-in tenant', () => {
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = rt.slice(rt.indexOf("router.get('/plan'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/recovery,/.test(body), 'the plan does not report the recovery');
+    assert.ok(/tenant: req\.tenantId/.test(body), 'the plan does not say which tenant it answered for');
+  });
+
   await t('THE SWEEP RUNS WHEREVER THERE IS A STRIPE KEY, not only in production', () => {
     // The other pollers are gated on NODE_ENV because they SPEND money. This
     // one recovers money already paid; gating it on a variable nobody set is
