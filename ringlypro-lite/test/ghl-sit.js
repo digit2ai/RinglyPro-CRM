@@ -3575,20 +3575,68 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!again.applied.some((a) => a.tenant === st.id), 'the repair ran twice');
   });
 
-  await t('A TENANT DELIBERATELY PUT BACK IS NOT "REPAIRED" OVER', async () => {
-    // outbound_setup_paid_at set means the apply DID happen, so a payable state
-    // is somebody's decision, not a failure. Fighting that would undo an
-    // operator every three minutes.
+  await t('A TENANT PUT BACK WITH A STATED REASON IS NOT "REPAIRED" OVER', async () => {
+    // The escape hatch is EXPLICIT. Guessing it from a timestamp is what let a
+    // real paid account sit refused for four deploys; an operator who puts a
+    // client back writes why, and a stated reason is never overridden.
     const back = await M.Tenant.create({ business_name: 'Put Back Co', outbound_state: 'off',
-      outbound_setup_paid_at: new Date() });
+      outbound_state_reason: 'refunded at customer request' });
     OB.payments.push({ id: OB.payments.length + 1, tenant_id: back.id, kind: 'setup',
       amount_cents: 2000, stripe_session_id: 'cs_putback', status: 'paid', stripe_event_id: null });
     const sess = { id: 'cs_putback', payment_status: 'paid', amount_total: 2000,
       metadata: { kind: 'lite_outbound_setup', tenant_id: String(back.id) } };
     const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
-    const r = await psweep.run({ client: fake });
-    assert.ok(!r.applied.some((a) => a.tenant === back.id), 'an operator decision was overridden');
+    const r = await psweep.run({ tenantId: back.id, client: fake });
+    assert.ok(!r.applied.some((a) => a.tenant === back.id), 'a stated operator decision was overridden');
     assert.strictEqual((await M.Tenant.findByPk(back.id)).outbound_state, 'off');
+  });
+
+  await t('A LIVE CLIENT IS NEVER "REPAIRED" BACK TO PENDING', async () => {
+    // The repair reads Stripe every tick, and an active tenant's setup session
+    // stays paid for ever. Without the payable guard the sweep would knock a
+    // working client back to pending_setup every few minutes.
+    const live = await M.Tenant.create({ business_name: 'Live Client Co', outbound_state: 'active' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: live.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_liveclient', status: 'paid', stripe_event_id: null });
+    const sess = { id: 'cs_liveclient', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(live.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    const r = await psweep.run({ tenantId: live.id, client: fake });
+    assert.ok(!r.applied.some((a) => a.tenant === live.id), 'a live client was repaired backwards');
+    assert.strictEqual((await M.Tenant.findByPk(live.id)).outbound_state, 'active');
+    // And the same for one mid-setup, or the owner's queue would churn.
+    const pend = await M.Tenant.create({ business_name: 'Pending Co', outbound_state: 'pending_setup' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: pend.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_pendclient', status: 'paid', stripe_event_id: null });
+    const s2 = { id: 'cs_pendclient', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(pend.id) } };
+    const r2 = await psweep.run({ tenantId: pend.id,
+      client: { checkout: { sessions: { list: async () => ({ data: [s2] }) } } } });
+    assert.ok(!r2.applied.some((a) => a.tenant === pend.id), 'a tenant mid-setup was re-notified');
+    // THE GUARD THAT ACTUALLY HOLDS is inside applyStrandedSetup's own
+    // from-list; the sweep's PAYABLE check is redundant defence, which is why
+    // removing it alone changes no behaviour. Assert the real one directly.
+    const direct = await bl.applyStrandedSetup(live, { id: 'cs_liveclient' });
+    assert.strictEqual(direct.applied, false, 'the repair itself does not refuse a live client');
+    assert.strictEqual(direct.reason, 'not_stranded');
+    assert.strictEqual((await M.Tenant.findByPk(live.id)).outbound_state, 'active');
+  });
+
+  await t('SILENCE IS NOT A DECISION — a paid setup with no reason IS repaired', async () => {
+    // The owner's own shape: the row already claimed, no stated reason, tenant
+    // still payable. Every earlier guard declined this and the money sat.
+    const sil = await M.Tenant.create({ business_name: 'Silent Co', outbound_state: 'off',
+      outbound_setup_paid_at: new Date() });          // even WITH a timestamp
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: sil.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_silent', status: 'paid', stripe_event_id: null });
+    const sess = { id: 'cs_silent', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(sil.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    const r = await psweep.run({ tenantId: sil.id, client: fake });
+    assert.ok(r.applied.some((a) => a.tenant === sil.id && a.repaired),
+      'a paid setup fee with no stated reason was left stranded');
+    assert.strictEqual((await M.Tenant.findByPk(sil.id)).outbound_state, 'pending_setup');
+    assert.strictEqual((await bl.wallet(sil.id)).balance_cents, 0, 'the repair moved money');
   });
 
   await t('LOADING THE PLAN RECOVERS A PAYMENT — the path that is always hit', () => {

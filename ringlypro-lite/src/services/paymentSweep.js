@@ -133,16 +133,28 @@ async function run({ tenantId = null, client = null } = {}) {
           state: t.outbound_state || 'off', paid_at: !!t.outbound_setup_paid_at });
         if (out.applied) { applied.push({ tenant: id, ...out }); stats.applied++; continue; }
 
-        // MONEY TAKEN, ROW MARKED PAID, TENANT NEVER MOVED. applyPayment claims
-        // the row before it transitions, so a transition that failed leaves the
-        // client charged and still looking at "Activate — $20.00" with nothing
-        // that will ever try again. Repaired ONLY when the row is paid and the
-        // tenant carries no setup timestamp, which is what distinguishes a
-        // failed apply from an operator deliberately putting them back.
-        if (out.reason === 'already_applied' && cand.kind === 'setup'
-            && !t.outbound_setup_paid_at && PAYABLE.includes(t.outbound_state || 'off')) {
-          const r = await billing.applyStrandedSetup(t, cand.session);
+        // MONEY TAKEN, TENANT NOT ACTIVATED — REPAIRED ON THE EVIDENCE, NOT ON
+        // A REASON STRING. The first version only repaired when applyPayment
+        // said `already_applied` and the tenant carried no setup timestamp.
+        // Both are guesses about HOW it failed, and on a real account neither
+        // matched: the payment was seen on every run and refused on every run,
+        // for four deploys, while the owner looked at "Activate — $20.00".
+        //
+        // The evidence that matters is simpler and is not a guess: Stripe says
+        // a setup fee for THIS tenant is paid, and this tenant is still in a
+        // state where the setup has not taken effect. That is stranded money
+        // whatever the internal bookkeeping says.
+        //
+        // The escape hatch is explicit rather than inferred: an operator who
+        // deliberately puts a client back writes `outbound_state_reason`, and
+        // a stated reason is never overridden. Silence is not a decision.
+        const fresh = await Tenant.findByPk(id);        // it may have just moved
+        if (cand.kind === 'setup' && fresh
+            && PAYABLE.includes(fresh.outbound_state || 'off')
+            && !fresh.outbound_state_reason) {
+          const r = await billing.applyStrandedSetup(fresh, cand.session);
           if (r.applied) { applied.push({ tenant: id, ...r }); stats.repaired++; }
+          else why.push({ repair: 'refused', reason: r.reason || 'unknown' });
         }
       } catch (e) {
         // One tenant's failure must never stop another's payment being applied.
