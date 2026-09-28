@@ -251,7 +251,11 @@ router.get('/plan', async (req, res) => {
   const payable = require('../services/paymentSweep').PAYABLE;
   if (payable.includes((t && t.outbound_state) || 'off')) {
     const ps = require('../services/paymentSweep');
-    if (!ps.recentlyAsked(req.tenantId, PLAN_SWEEP_MS)) {
+    if (ps.recentlyAsked(req.tenantId, PLAN_SWEEP_MS)) {
+      // SAID, NOT LEFT NULL. A reload inside the throttle window would report
+      // nothing at all, which reads exactly like another silent failure.
+      recovery = { ok: true, skipped: 'checked_recently' };
+    } else {
       try {
         const r = await ps.run({ tenantId: req.tenantId });
         if (r.applied && r.applied.length) t = await Tenant.findByPk(req.tenantId);
