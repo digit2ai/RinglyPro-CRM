@@ -1320,6 +1320,36 @@ const tenantSeed = (over = {}) => ({
     const src = fs.readFileSync(path.join(ROOT, 'src/telephony/ghlProvider.js'), 'utf8');
     assert.ok(/purpose === 'demo' \? 'demo_sms' : 'sms'/.test(src), 'the two budgets were merged');
   });
+  await t('THE DEMO TEXT GOES OUT ON THE DEMO LINE, not the legacy carrier', async () => {
+    // This was the ONE caller that passed no tenant, so it fell through to the
+    // legacy provider — the last routine path depending on an account we have
+    // moved off. The demo tenant owns the number the landing page prints.
+    // THE REAL MODULE, not the suite's stub. The stub exists so a webhook test
+    // never reaches a carrier; here the transport IS what is under test, and
+    // the fake HighLevel below is what catches it.
+    const key = require.resolve(path.join(ROOT, 'src/services/sms.js'));
+    const stub = require.cache[key];
+    delete require.cache[key];
+    const smsSvc = require(key);
+    require.cache[key] = stub;
+    const demoT = await M.Tenant.create({ business_name: 'Demo Line Co', country: 'US',
+      ghl_location_id: 'LOC-SHARED', ghl_token_enc: secretbox.seal('pit-shared') });
+    reqs = [];
+    // The sub-account's owned list moves as the suite runs, and the provider
+    // refuses a from-number it does not hold — correctly. Pin it.
+    GhlProvider._clearOwnedCache();
+    scenario = { ownedOverride: ['+18135550101'] };
+    const r = await smsSvc.sendDemoConfirm(
+      // `to` here is the LINE the demo runs on, and the provider refuses a
+      // from-number the sub-account does not own — correctly, and the fake
+      // enforces it, so this must be one it holds.
+      { tenantId: demoT.id, locale: 'en', businessName: 'Demo Line Co', to: '+18135550101', from: '+18135551111' },
+      { type: 'message', data: {} });
+    assert.strictEqual(r.sent, true, 'the demo text did not send at all: ' + JSON.stringify(r));
+    assert.strictEqual(r.via, 'ghl', 'the demo text still went out on the legacy carrier');
+    scenario = {};
+    assert.ok(reqs.some((x) => x.path === '/conversations/messages'), 'HighLevel never saw it');
+  });
   await t('NO FILE OUTSIDE A PROVIDER REACHES A SEND API', () => {
     const src = fs.readFileSync(path.join(ROOT, 'src/services/sms.js'), 'utf8');
     assert.ok(!/conversations\/messages/.test(src), 'the service reaches the send endpoint directly');

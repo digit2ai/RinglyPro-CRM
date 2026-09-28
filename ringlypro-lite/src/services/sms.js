@@ -26,7 +26,19 @@ async function sendDemoConfirm(ctx, ev) {
       ? `${ctx.businessName} (demo): recibimos su mensaje. Así se le avisaría a su negocio al instante — y su cliente recibe esta confirmación.`
       : `${ctx.businessName} (demo): we got your message. This is how your business is alerted instantly — and your caller gets this confirmation.`;
   } else { return { sent: false, segments: 0 }; }
-  return send({ from: ctx.to, to, body, purpose: 'demo' });   // from is overridden by LITE_SMS_FROM
+
+  // THE DEMO TEXT GOES OUT ON THE DEMO LINE, THROUGH THE SAME PROVIDER AS
+  // EVERYTHING ELSE. This was the ONE caller that passed no tenant, so it fell
+  // to the legacy carrier — the last routine path still depending on it, and
+  // the reason a stale credential there was still worth reporting at all. The
+  // demo tenant owns the number the landing page prints, so passing it sends
+  // from that line: same toll-fraud gate, same separate `demo` budget, one
+  // fewer account to keep alive.
+  let tenant = null;
+  if (ctx && ctx.tenantId) {
+    try { tenant = await require('../models').Tenant.findByPk(ctx.tenantId); } catch (_) { tenant = null; }
+  }
+  return send({ from: ctx.to, to, body, purpose: 'demo', tenant });
 }
 
 /**
