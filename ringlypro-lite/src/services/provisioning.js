@@ -275,14 +275,31 @@ async function runProvision(tenant, opts = {}) {
     // The unclaimed filter is what makes this safe in the shared sub-account,
     // where every tenant's numbers live in one location — without it, a retry
     // would hand this tenant another client's line.
+    let areaMismatch = null;
     let num = await Number.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
     if (!num) {
       try {
         const owned = await new GhlProvider({ creds }).ownedNumbers();
         if (owned.length) {
           const taken = new Set((await Number.findAll({ attributes: ['did'] })).map((r) => r.did));
-          const spare = owned.find((d) => !taken.has(d));
+          const free = owned.filter((d) => !taken.has(d));
+          // HONOUR THE AREA CODE THEY ASKED FOR, OR SAY IT WAS NOT HONOURED.
+          // The BUY path refuses rather than handing a Tampa business a
+          // Michigan line; adopting silently did exactly that, because it took
+          // the first spare whatever its area. So: prefer a spare in the
+          // requested area, and when there is none, still adopt — the purchase
+          // is refused by HighLevel, so the alternative is no number at all —
+          // but record the mismatch so the page can say which number they got
+          // and that it is not the area they asked for.
+          const want = String(opts.areaCode || '').replace(/\D/g, '').slice(0, 3);
+          const spare = (want && free.find((d) => String(d).replace(/\D/g, '').startsWith('1' + want)))
+            || free[0];
           if (spare) {
+            const gotArea = String(spare).replace(/\D/g, '').slice(1, 4);
+            if (want && gotArea !== want) {
+              areaMismatch = { requested: want, assigned: gotArea, did: spare };
+              console.warn(`[lite:provision] adopting ${spare} (${gotArea}) — ${want} was asked for and none was spare`);
+            }
             console.warn(`[lite:provision] adopting ${spare}, already bought and unclaimed — not buying again`);
             num = await Number.create({
               tenant_id: tenant.id, did: spare, country: tenant.country || 'US',
@@ -332,7 +349,12 @@ async function runProvision(tenant, opts = {}) {
     }
 
     await mark(tenant, 'ready');
-    return summary(tenant, { already: false });
+    // A mismatch is reported, never swallowed. The buy path answers 409
+    // NO_NUMBER_IN_AREA rather than handing over a line in the wrong area;
+    // adopting cannot refuse (there is nothing else to give them) so it says
+    // so instead, and the signup page prints it.
+    return summary(tenant, areaMismatch ? { already: false, area_mismatch: areaMismatch }
+      : { already: false });
   } catch (e) {
     // The step reached is preserved; only the error is written. A retry resumes.
     await tenant.update({ provisioning_error: String(e.message || e).slice(0, 500) });

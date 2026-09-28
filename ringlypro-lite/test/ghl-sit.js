@@ -1196,6 +1196,53 @@ const tenantSeed = (over = {}) => ({
     assert.notStrictEqual(n.did, '+18139990001', 'it handed one tenant another tenant\'s line');
   });
 
+  // THE ADOPT PATH HAS TO KEEP THE PROMISE THE BUY PATH MAKES. The buy path
+  // answers 409 NO_NUMBER_IN_AREA rather than handing a Tampa business a
+  // Michigan line with nothing on screen saying so. Adopting ignored the
+  // requested area entirely — same silent substitution, different code path —
+  // which is what the owner saw when the signup page asked for an area code
+  // and then handed over a number in a different one.
+  await t('ADOPTING PREFERS A SPARE IN THE AREA CODE THEY ASKED FOR', async () => {
+    const tn = await M.Tenant.create(tenantSeed({ business_name: 'Wants 727', provisioning_state: 'claimed',
+      ghl_location_id: 'LOC-SHARED', ghl_token_enc: secretbox.seal('pit-shared') }));
+    GhlProvider._clearOwnedCache();
+    // The 727 is NOT first: taking free[0] blindly is exactly the bug.
+    scenario = { ownedOverride: ['+13135550111', '+17275550222', '+16565550333'] };
+    const before = boughtNumbers;
+    const out = await provisioning.provision(tn, { areaCode: '727' });
+    scenario = {};
+    assert.strictEqual(boughtNumbers, before, 'it bought instead of adopting the matching spare');
+    const n = await M.Number.findOne({ where: { tenant_id: tn.id } });
+    assert.strictEqual(n.did, '+17275550222', 'it adopted the wrong area when a matching one was spare');
+    assert.ok(!out.area_mismatch, 'it reported a mismatch that did not happen');
+  });
+  await t('A SPARE IN ANOTHER AREA IS STILL ADOPTED — AND REPORTED, NEVER SILENT', async () => {
+    const tn = await M.Tenant.create(tenantSeed({ business_name: 'Wants 813', provisioning_state: 'claimed',
+      ghl_location_id: 'LOC-SHARED', ghl_token_enc: secretbox.seal('pit-shared') }));
+    GhlProvider._clearOwnedCache();
+    scenario = { ownedOverride: ['+16565554441'] };     // nothing in 813 is spare
+    const out = await provisioning.provision(tn, { areaCode: '813' });
+    scenario = {};
+    const n = await M.Number.findOne({ where: { tenant_id: tn.id } });
+    assert.strictEqual(n.did, '+16565554441', 'it refused the only number it could give them');
+    assert.ok(out.area_mismatch, 'it handed over a different area code and said nothing');
+    assert.strictEqual(out.area_mismatch.requested, '813');
+    assert.strictEqual(out.area_mismatch.assigned, '656');
+    assert.strictEqual(out.area_mismatch.did, '+16565554441');
+  });
+  await t('THE SIGNUP PAGE PRINTS THE MISMATCH, AND THE ROUTE PASSES IT THROUGH', () => {
+    // A field returned by the API that no page reads is a promise in a commit
+    // message. Both ends are asserted because either alone passes silently.
+    const route = fs.readFileSync(path.join(__dirname, '..', 'src', 'routes', 'onboarding.js'), 'utf8');
+    assert.ok(/area_mismatch:\s*out\.area_mismatch/.test(route),
+      '/provision-number does not forward the mismatch');
+    const page = fs.readFileSync(path.join(__dirname, '..', 'public', 'onboarding.html'), 'utf8');
+    assert.ok(/j\.area_mismatch/.test(page), 'the page never reads the mismatch');
+    assert.ok(/areaGot/.test(page) && page.indexOf('areaGot:"') !== page.lastIndexOf('areaGot:"'),
+      'the notice is missing in one of the two languages');
+    assert.ok(/areaNote/.test(page), 'the page has nowhere to print it');
+  });
+
   section('the end-of-call workflow');
   await t('AN AGENT BUILT BEFORE THE WORKFLOW EXISTED CAN BE REPAIRED', async () => {
     scenario = {}; reqs = [];

@@ -95,6 +95,13 @@ router.post('/provision-number', requireAuth, async (req, res) => {
       return res.status(201).json({
         success: true, number: num, provider: 'ghl',
         setup_step: out.state, agent_ready: out.agent_ready, calendar_ready: out.calendar_ready,
+        // WHEN THEY ASKED FOR AN AREA AND DID NOT GET IT, SAY SO ON THE PAGE.
+        // The buy path refuses with NO_NUMBER_IN_AREA; the adopt path cannot
+        // refuse — a spare already-bought number is the only one it can give —
+        // so it hands the number over and tells them which area it is in.
+        // Silently substituting an area is the exact defect the 409 exists to
+        // prevent, and doing it on a different code path is still doing it.
+        area_mismatch: out.area_mismatch || null,
       });
     }
 
