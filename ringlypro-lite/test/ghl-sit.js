@@ -3608,6 +3608,25 @@ const tenantSeed = (over = {}) => ({
       'the plan answers with the state from BEFORE the recovery');
   });
 
+  await t('IT REPORTS WHICH BRANCH EACH CANDIDATE TOOK', async () => {
+    // Four rounds were spent inferring the branch from outside. A candidate
+    // that is seen but not applied now says why, and a tenant that cannot be
+    // loaded says that too, so an empty report is never ambiguous.
+    const br = await M.Tenant.create({ business_name: 'Branch Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: br.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_branch', status: 'paid', stripe_event_id: null });
+    const sess = { id: 'cs_branch', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(br.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    const r = await psweep.run({ tenantId: br.id, client: fake });
+    assert.ok(r.seen.why && r.seen.why.length === 1, 'the branch was not reported');
+    assert.strictEqual(r.seen.why[0].kind, 'setup');
+    assert.ok('reason' in r.seen.why[0] && 'state' in r.seen.why[0] && 'paid_at' in r.seen.why[0],
+      'the report does not carry the reason, the state and whether it was already applied');
+    const json = JSON.stringify(r.seen.why);
+    assert.ok(!/cs_|@|2000/.test(json), 'the branch report carries detail, not flags');
+  });
+
   await t('THE RECOVERY REPORTS WHAT IT SAW, in counts and never in detail', async () => {
     // "Nothing happened" was the only signal from outside, and it cannot be
     // told apart from "nothing found", "found but tagged to another tenant" or

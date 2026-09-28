@@ -111,10 +111,11 @@ async function run({ tenantId = null, client = null } = {}) {
   if (!byTenant.size) return { ok: true, tenants: 0, applied: [], seen };
 
   const applied = [];
+  const why = [];
   for (const [id, sessions] of byTenant) {
     let t = null;
     try { t = await Tenant.findByPk(id); } catch (_) { /* fall through */ }
-    if (!t) continue;                            // a tenant that is gone is not paid
+    if (!t) { why.push({ tenant_lookup: 'failed' }); continue; }  // gone is not paid
     for (const sess of sessions) {
       const cand = billing.recoverable([sess], id, new Set())[0];
       if (!cand) continue;
@@ -125,6 +126,11 @@ async function run({ tenantId = null, client = null } = {}) {
            VALUES (:t, :k, :a, :s) ON CONFLICT DO NOTHING`,
           { replacements: { t: id, k: cand.kind, a: cand.amount_cents, s: cand.session.id } });
         const out = await billing.applyPayment(t, cand.session, {});
+        // WHY A CANDIDATE WAS NOT APPLIED. Four rounds of this were spent
+        // inferring the branch from the outside; the branch says so now.
+        // Flags and enum values only — no session id, no amount.
+        why.push({ kind: cand.kind, reason: out.reason || (out.applied ? 'applied' : 'unknown'),
+          state: t.outbound_state || 'off', paid_at: !!t.outbound_setup_paid_at });
         if (out.applied) { applied.push({ tenant: id, ...out }); stats.applied++; continue; }
 
         // MONEY TAKEN, ROW MARKED PAID, TENANT NEVER MOVED. applyPayment claims
@@ -140,11 +146,12 @@ async function run({ tenantId = null, client = null } = {}) {
         }
       } catch (e) {
         // One tenant's failure must never stop another's payment being applied.
+        why.push({ error: String(e.message || e).slice(0, 90) });
         console.warn('[lite:paysweep] tenant', id, 'failed:', e.message);
       }
     }
   }
-  return { ok: true, tenants: byTenant.size, applied, seen };
+  return { ok: true, tenants: byTenant.size, applied, seen: { ...seen, why } };
 }
 
 let timer = null;
