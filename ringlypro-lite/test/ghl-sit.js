@@ -3540,6 +3540,19 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/LOCK_ID = 9182736(?!45)/.test(raw), 'the sweep shares the dialer advisory lock');
   });
 
+  await t('WHETHER THE SWEEP RAN IS REPORTABLE, and only behind the key', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/security.js'), 'utf8');
+    assert.ok(/payment_sweep:/.test(src), '/internal/security does not report the sweep');
+    // It must be on the ADMIN report, never the open health body.
+    const vr = fs.readFileSync(path.join(ROOT, 'src/routes/voice-relay.js'), 'utf8');
+    assert.ok(!/payment_sweep/.test(vr), 'the sweep counters are on the open health endpoint');
+    const ps = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    const blk = ps.slice(ps.indexOf('const stats = {'), ps.indexOf('};', ps.indexOf('const stats = {')));
+    // Counters and timestamps only: no session id, no tenant, no amount.
+    assert.ok(!/session|tenant|amount_cents/.test(blk),
+      'the reported counters carry a session, a tenant or an amount');
+  });
+
   await t('THE SWEEP USES THE KEY THE CHECKOUT WAS CREATED WITH', () => {
     // The route prefers LITE_STRIPE_SECRET_KEY; reading only STRIPE_SECRET_KEY
     // would point the sweep at a different account from the one holding the money.

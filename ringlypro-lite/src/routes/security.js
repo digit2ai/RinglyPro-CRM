@@ -61,7 +61,15 @@ router.get('/', async (req, res) => {
   } catch (e) { stale = { error: e.message }; }
   const ghlOn = !!(process.env.LITE_GHL_TOKEN && process.env.LITE_GHL_LOCATION_ID);
   res.json({
-    owner_alerts: ownerAlerts, outbound_guard: tollFraud.status(), fraud_watch: fraudWatch.status(), webhook_signature: twilioSig.status(),
+    owner_alerts: ownerAlerts, outbound_guard: tollFraud.status(),
+    // DID THE PAYMENT SWEEP RUN? Behind the key, because it is an operational
+    // counter, not a customer surface. Without it "the sweep is deployed" and
+    // "the sweep worked" are the same sentence — which is how the webhook went
+    // unnoticed for a day.
+    payment_sweep: (() => {
+      try { return require('../services/paymentSweep').stats; }
+      catch (e) { return { error: String(e.message || e).slice(0, 120) }; }
+    })(), fraud_watch: fraudWatch.status(), webhook_signature: twilioSig.status(),
     phones_now_refused: stale,
     // SAID PLAINLY RATHER THAN IMPLIED. outbound_guard's velocity limits cover
     // what OUR provider dials. A HighLevel transfer is placed by HighLevel, so
