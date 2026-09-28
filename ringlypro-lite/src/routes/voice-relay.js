@@ -11,6 +11,7 @@ const crypto = require('crypto');
  *  GET  /voice/transcripts/:callSid — turn-by-turn (auth-gated).
  */
 const express = require('express');
+const BOOTED_AT = new Date().toISOString();
 const router = express.Router();
 const { getProvider, TwilioProvider } = require('../telephony');
 const { getBusinessInfo } = require('../services/booking');
@@ -94,6 +95,15 @@ router.post('/status', twilioSig.middleware, async (req, res) => {
 router.get('/health', async (req, res) => {
   const out = {
     service: 'ringlypro-lite-voice',
+    // WHICH BUILD IS ACTUALLY LIVE. Nothing reported this, so "is the fix
+    // deployed?" could only be answered by finding some string that happened
+    // to differ in a served page — the same blindness that let a cached
+    // console.js sit a version behind for a day. The commit of a PUBLIC repo
+    // is not a secret, and the boot time says whether the instance restarted.
+    build: {
+      commit: String(process.env.RENDER_GIT_COMMIT || '').slice(0, 7) || 'unknown',
+      booted_at: BOOTED_AT,
+    },
     model: process.env.LITE_VOICE_MODEL || 'claude-haiku-4-5-20251001',
     tts: 'Amazon Polly (ConversationRelay)',
     provider: (process.env.LITE_TELEPHONY_PROVIDER || 'twilio'),

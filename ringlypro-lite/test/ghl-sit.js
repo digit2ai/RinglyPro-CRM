@@ -3380,6 +3380,27 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/req\.tenantId, seen/.test(body), 'the sweep is not scoped to the caller');
   });
 
+  await t('THE LIVE BUILD IS REPORTABLE, or "is it deployed?" has no answer', () => {
+    // Nothing reported which commit was running, so verifying a deploy meant
+    // hunting for a string that happened to differ in a served page.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/voice-relay.js'), 'utf8');
+    assert.ok(/RENDER_GIT_COMMIT/.test(src), '/voice/health does not report the build');
+    assert.ok(/booted_at/.test(src), 'nothing says whether the instance restarted');
+    // A commit of a public repo is not a secret. What the block must NOT do is
+    // grow into a dump of the environment, so it is checked for exactly the two
+    // fields. (The first version of this test grepped the whole FILE for
+    // secret-shaped names and flagged the ?check=ghl admin gate, which reads
+    // the key only to COMPARE it — the assertion was wrong, not the code.)
+    // Bounded to the block, not a fixed character count: a wide window ran
+    // past the closing brace and picked up the next field's own env read.
+    const bi = src.indexOf('build: {');
+    const blk = src.slice(bi, src.indexOf('},', bi) + 2);
+    assert.ok(/slice\(0, 7\)/.test(blk), 'the commit is not truncated');
+    const envs = blk.match(/process\.env\.[A-Z_]+/g) || [];
+    assert.deepStrictEqual(envs, ['process.env.RENDER_GIT_COMMIT'],
+      'the build block reads an environment variable other than the commit');
+  });
+
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
     const sm = await M.Tenant.create({ business_name: 'State Co', outbound_state: 'awaiting_setup_payment' });
     const a = await bl.transition(sm.id, ['off', 'awaiting_setup_payment'], 'pending_setup');
