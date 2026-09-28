@@ -57,6 +57,104 @@ async function findSharedWorkflow(t) {
   return { ok: true, id: String(w.id || w._id), name: w.name || null };
 }
 
+/**
+ * THE WORKFLOW A CLIENT OWNS IS THE ONE NAMED AFTER THEIR OWN NUMBER.
+ *
+ * `findSharedWorkflow` above finds ONE workflow for the whole sub-account, and
+ * that is only safe for the single tenant it dials as: `callMirror.resolveNumber`
+ * attributes an inbound call by the number that was DIALLED, so a prospect
+ * returning a call made from a shared line reaches whoever owns that line and
+ * their message lands in that client's dashboard. It does not scale past one
+ * client, which is why every other client needed a human to paste an id.
+ *
+ * So the convention carries the mapping instead: the owner builds each client's
+ * workflow with that client's OWN number in its name, and this finds it. No id
+ * is typed anywhere, and because the workflow is named for the number it dials
+ * from, the caller-ID problem above does not arise.
+ *
+ * MATCHED ON DIGITS, so `+1 656-213-4441`, `(656) 213-4441` and `16562134441`
+ * are the same name. The last ten are accepted as well as the full eleven,
+ * because a US number is written both ways and refusing on that would send the
+ * owner hunting for a typo that is not there.
+ *
+ * FOUR REFUSALS, because this decides which workflow dials real people, and a
+ * wrong one dials a stranger's prospects from a stranger's number:
+ *  - a tenant with no number of their own cannot be matched at all;
+ *  - nothing matching is refused WITH the exact name to use, so the fix is
+ *    readable rather than guessable;
+ *  - two workflows naming the same number are ambiguous, and both are named;
+ *  - a name carrying ANOTHER client's number too is refused, because a single
+ *    workflow cannot belong to two clients and the one-match rule above cannot
+ *    see it — that check is what stops "Outbound 656... and 656..." being
+ *    silently handed to whichever tenant asked first.
+ * A draft is refused last, exactly as the shared path refuses it.
+ */
+function digitsOf(v) { return String(v == null ? '' : v).replace(/\D+/g, ''); }
+
+/** Both forms a US number is written in. Never an empty string, which matches everything. */
+function numberKeys(did) {
+  const d = digitsOf(did);
+  if (!d) return [];
+  const keys = [d];
+  if (d.length === 11 && d.startsWith('1')) keys.push(d.slice(1));
+  return keys;
+}
+
+function nameHolds(name, did) {
+  const n = digitsOf(name);
+  if (!n) return false;
+  return numberKeys(did).some((k) => k.length >= 7 && n.includes(k));
+}
+
+/** The name the owner must give the workflow in HighLevel, printed wherever it is needed. */
+function expectedWorkflowName(did) {
+  const tpl = process.env.LITE_GHL_OUTBOUND_WORKFLOW_TEMPLATE || 'RinglyPro Outbound {number}';
+  return tpl.replace('{number}', String(did || ''));
+}
+
+async function findWorkflowForTenant(t) {
+  const ghl = require('../telephony/ghl');
+  const accounts = require('./ghlAccounts');
+  const { Number: NumberModel } = require('../models');
+
+  const own = await NumberModel.findOne({ where: { tenant_id: t.id, status: 'active' } });
+  const did = own && own.did;
+  if (!did) return { ok: false, reason: 'tenant_has_no_number' };
+
+  let creds = null;
+  try { creds = await accounts.credsFor(t); } catch (_) { creds = null; }
+  if (!creds) creds = ghl.resolve(null);
+  const loc = (creds && creds.locationId) || t.ghl_location_id || ghl.locationId();
+  const list = await ghl.call('GET', '/workflows/', { query: { locationId: loc }, creds });
+  const all = (list && (list.workflows || list.data)) || [];
+
+  const expected = expectedWorkflowName(did);
+  const hits = all.filter((w) => nameHolds(w.name, did));
+  if (!hits.length) {
+    return { ok: false, reason: 'no_workflow_for_number', number: String(did), expected_name: expected,
+      seen: all.slice(0, 40).map((w) => w.name || null) };
+  }
+  if (hits.length > 1) {
+    return { ok: false, reason: 'several_workflows_for_number', number: String(did), expected_name: expected,
+      matches: hits.map((w) => ({ id: String(w.id || w._id), name: w.name || null })) };
+  }
+
+  const w = hits[0];
+  // A workflow whose name carries somebody else's line as well belongs to
+  // neither of them. Read every active number once rather than per candidate.
+  const others = await NumberModel.findAll({ where: { status: 'active' }, attributes: ['did', 'tenant_id'] });
+  const clash = others.find((r) => Number(r.tenant_id) !== Number(t.id) && nameHolds(w.name, r.did));
+  if (clash) {
+    return { ok: false, reason: 'workflow_names_another_client', number: String(did),
+      expected_name: expected, workflow: { id: String(w.id || w._id), name: w.name || null } };
+  }
+  if (w.status && String(w.status).toLowerCase() !== 'published') {
+    return { ok: false, reason: 'workflow_not_published', number: String(did), expected_name: expected,
+      workflow: { id: String(w.id || w._id), name: w.name || null, status: w.status } };
+  }
+  return { ok: true, id: String(w.id || w._id), name: w.name || null, number: String(did) };
+}
+
 async function setOutbound(b) {
   b = b || {};
   if (b.confirm !== true) return out(400, { error: 'confirm_required',
@@ -75,11 +173,33 @@ async function setOutbound(b) {
   // 'auto' means: find the shared workflow yourself. This is what removes the
   // manual step for every client after the first.
   if (workflowId === 'auto') {
-    const found = await findSharedWorkflow(t).catch((e) => ({ ok: false, reason: 'lookup_failed',
+    // THE CLIENT'S OWN WORKFLOW FIRST, named after their own number. This is
+    // what removes the manual paste for every client, and it needs no
+    // environment variable: a workflow named for a number dials from that
+    // number, so the caller ID is right by construction.
+    const mine = await findWorkflowForTenant(t).catch((e) => ({ ok: false, reason: 'lookup_failed',
       detail: String(e.message || e).slice(0, 160) }));
-    if (!found.ok) return out(422, { error: found.reason, ...found, message:
-      'Could not identify the shared outbound workflow automatically. Nothing was changed.' });
-    workflowId = found.id;
+    if (mine.ok) {
+      workflowId = mine.id;
+    } else {
+      // THE SINGLE SHARED WORKFLOW IS THE FALLBACK. It is deliberately NOT
+      // gated here: this door is an operator holding the admin key or the
+      // founder in their own dashboard, asking for it explicitly. The
+      // caller-ID guard belongs on the path that fires with nobody watching
+      // (`outboundBilling.autoActivate`), which is where it lives.
+      const found = await findSharedWorkflow(t).catch((e) => ({ ok: false, reason: 'lookup_failed',
+        detail: String(e.message || e).slice(0, 160) }));
+      if (!found.ok) {
+        // The per-tenant refusal is the more useful one to read when the
+        // tenant HAS a number, because it names the workflow to create.
+        const best = mine.reason === 'tenant_has_no_number' ? found : mine;
+        return out(422, { error: best.reason, ...best, message:
+          best.expected_name
+            ? `No workflow names this client's number. Create one in HighLevel called "${best.expected_name}" and publish it. Nothing was changed.`
+            : 'Could not identify the outbound workflow automatically. Nothing was changed.' });
+      }
+      workflowId = found.id;
+    }
   }
   const patch = {};
   let verified = null;
@@ -175,4 +295,4 @@ async function setOutbound(b) {
     reminder: 'Numbers are still NOT checked against the National Do Not Call registry.' });
 }
 
-module.exports = { setOutbound, findSharedWorkflow };
+module.exports = { setOutbound, findSharedWorkflow, findWorkflowForTenant, expectedWorkflowName };

@@ -223,13 +223,33 @@ async function broadcastHistory({ limit = 20 } = {}) {
  */
 async function ownerSetupPaid(tenant, due) {
   const when = due ? new Date(due).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'not set';
+  // THE NUMBER, READ FROM WHERE IT ACTUALLY LIVES. This line used to read
+  // `tenant.ringlypro_number || tenant.did` — neither is a column on the
+  // tenant — so every one of these alerts said "none on file" for the ONE fact
+  // the owner needs to do the job it is asking them to do.
+  let did = null;
+  try {
+    const { Number: NumberModel } = require('../models');
+    const row = await NumberModel.findOne({ where: { tenant_id: tenant.id, status: 'active' } });
+    did = row && row.did;
+  } catch (_) { did = null; }
+
+  // AND THE EXACT NAME TO GIVE THE WORKFLOW, because that name is what makes
+  // the rest automatic: the system finds a workflow by the client's own number
+  // in its name and wires it up with nobody pasting an id. Getting the name
+  // right IS the whole manual step now, so it is printed rather than
+  // remembered.
+  let expected = null;
+  try { expected = did ? require('./outboundAdmin').expectedWorkflowName(did) : null; } catch (_) {}
+
   return notifyOwner('owner_setup_paid',
     `Outbound setup paid — tenant ${tenant.id}`,
     [`${tenant.business_name || 'Unnamed business'} paid for outbound. Build their HighLevel workflow.`,
-      `Their number: ${tenant.ringlypro_number || tenant.did || 'none on file'}`,
+      `Their number: ${did || 'none on file'}`,
+      expected ? `Name it EXACTLY: ${expected}` : 'They have no number yet, so it cannot be named for one.',
+      'Publish it, and it goes live on its own within a few minutes. Nothing to paste.',
       `GHL location: ${tenant.ghl_location_id || 'none'} · agent: ${tenant.ghl_agent_id || 'none'}`,
       `Promised by: ${when}`,
-      `Then: POST /internal/security/outbound {"confirm":true,"enabled":true,"tenant":${tenant.id},"workflow_id":"<id>"}`,
     ].join('\n'));
 }
 

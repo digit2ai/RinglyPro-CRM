@@ -277,6 +277,30 @@ router.get('/plan', async (req, res) => {
     }
   }
 
+  // WAITING ON A WORKFLOW? ASK AGAIN WHILE THEY ARE LOOKING AT THE SCREEN.
+  //
+  // The timer already retries, but a client who has just been told "ready
+  // within 24 hours" opens this tab the moment they get the notification, and
+  // finding it still waiting when the workflow was published a minute ago is
+  // the whole difference between a product that completes itself and one that
+  // needs somebody to remember. Throttled per tenant like the payment sweep,
+  // and only in the one state where it can do anything.
+  let setup = null;
+  if ((t && t.outbound_state) === 'pending_setup') {
+    const forcedSetup = String(req.query.debug || '') === '1';
+    if (!forcedSetup && tooMany(req.tenantId, 'setup_resume', 2)) {
+      setup = { skipped: 'checked_recently' };
+    } else {
+      try {
+        const r = (await billing.resumePendingSetups({ tenantId: req.tenantId }))[0] || null;
+        if (r && r.activated) t = await Tenant.findByPk(req.tenantId);
+        setup = r ? { activated: !!r.activated, reason: r.reason || null } : null;
+      } catch (e) {
+        setup = { activated: false, reason: String(e.message || e).slice(0, 120) };
+      }
+    }
+  }
+
   const state = (t && t.outbound_state) || 'off';
   const w = await billing.wallet(req.tenantId);
   // IS THERE MONEY IN FLIGHT? One cheap count, so the page knows whether it is
@@ -301,6 +325,7 @@ router.get('/plan', async (req, res) => {
     tenant: req.tenantId,
     is_owner: isOwner,
     recovery,
+    setup,
     open_payments: openPayments,
     pricing: billing.pricing(),
     wallet: w,

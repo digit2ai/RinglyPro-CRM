@@ -52,7 +52,7 @@ function recentlyAsked(tenantId, everyMs) {
   return false;
 }
 
-const stats = { runs: 0, applied: 0, repaired: 0, last_at: null, last_error: null };
+const stats = { runs: 0, applied: 0, repaired: 0, activated: 0, last_at: null, last_error: null };
 
 /**
  * @param {object} opts
@@ -197,6 +197,19 @@ function start() {
       if (r.applied && r.applied.length) {
         console.log(`[lite:paysweep] applied ${r.applied.length} unconfirmed payment(s)`);
       }
+      // AND FINISH ANY SETUP WHOSE WORKFLOW NOW EXISTS. It rides this tick
+      // rather than owning a timer because it shares the property that
+      // justifies this one: it must not depend on anybody opening a tab. It is
+      // NOT inside run() — that function is about Stripe, and a Stripe outage
+      // returns early, which would stop a client going live for a reason that
+      // has nothing to do with them.
+      try {
+        const live = (await billing.resumePendingSetups({})).filter((x) => x.activated);
+        if (live.length) {
+          stats.activated += live.length;
+          console.log(`[lite:paysweep] ${live.length} client(s) went live — their workflow now exists`);
+        }
+      } catch (e) { console.warn('[lite:paysweep] resume failed:', e.message); }
     } catch (e) {
       stats.last_error = String(e.message || e).slice(0, 200);
       console.warn('[lite:paysweep] tick failed:', e.message);

@@ -491,33 +491,86 @@ async function autoActivate(tenant) {
   if (String(process.env.LITE_OUTBOUND_AUTO_ACTIVATE || '').toLowerCase() === 'off') {
     return { activated: false, reason: 'off_by_env' };
   }
-  // WHOSE CALLER ID IS IT? A shared workflow dials from ONE number, and
-  // `callMirror.resolveNumber` attributes an inbound call by the number that
-  // was DIALLED — so a prospect returning that call reaches whoever owns the
-  // line, hears THEIR business name, and their message lands in THAT client's
-  // dashboard. The client who actually ran the campaign never learns the
-  // prospect called back, and a stranger's details appear in someone else's
-  // inbox. Sharing one workflow is therefore only safe for the one tenant the
-  // workflow dials as.
-  //
-  // `GET /workflows/` returns metadata only — id, name, status — so the
-  // action's from-number cannot be read back and the owner has to state it
-  // once. UNSET MEANS REFUSE: guessing here mis-routes a real prospect to a
-  // real stranger, and the manual path still works.
-  const ownerTenant = parseInt(process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT || '', 10);
-  if (!Number.isInteger(ownerTenant)) {
-    return { activated: false, reason: 'shared_workflow_owner_unknown' };
-  }
-  if (Number(tenant.id) !== ownerTenant) {
-    return { activated: false, reason: 'shared_caller_id_belongs_to_another_tenant' };
-  }
   const admin = require('./outboundAdmin');
+
+  // THE CLIENT'S OWN WORKFLOW, named after their own number. No caller-ID
+  // question arises here: a workflow named for a number dials from that
+  // number, so a prospect who calls back reaches the client who rang them.
+  // This is the path that lets every client activate itself.
+  const mine = await admin.findWorkflowForTenant(tenant)
+    .catch(() => ({ ok: false, reason: 'lookup_failed' }));
+
+  let workflowId = 'auto';
+  if (mine.ok) {
+    workflowId = mine.id;
+  } else {
+    // FALLING BACK TO THE ONE SHARED WORKFLOW — WHOSE CALLER ID IS IT? A shared
+    // workflow dials from ONE number, and `callMirror.resolveNumber` attributes
+    // an inbound call by the number that was DIALLED. So a prospect returning
+    // that call reaches whoever owns the line, hears THEIR business name, and
+    // their message lands in THAT client's dashboard; the client who ran the
+    // campaign never learns they called back, and a stranger's details appear
+    // in someone else's inbox.
+    //
+    // `GET /workflows/` returns metadata only — id, name, status — so the
+    // action's from-number cannot be read back and the owner states it once.
+    // UNSET MEANS REFUSE: this fires with nobody watching, and guessing
+    // mis-routes a real prospect to a real stranger. The manual path still
+    // works, and naming the workflow after the client's number avoids this
+    // branch entirely.
+    const ownerTenant = parseInt(process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT || '', 10);
+    if (!Number.isInteger(ownerTenant)) {
+      return { activated: false, reason: 'shared_workflow_owner_unknown', expected: mine.expected_name || null };
+    }
+    if (Number(tenant.id) !== ownerTenant) {
+      return { activated: false, reason: 'shared_caller_id_belongs_to_another_tenant',
+        expected: mine.expected_name || null };
+    }
+  }
+
   const r = await admin.setOutbound({ confirm: true, tenant: tenant.id,
-    enabled: true, workflow_id: 'auto' });
+    enabled: true, workflow_id: workflowId });
   if (r.status !== 200 || !r.payload || !r.payload.ok) {
     return { activated: false, reason: (r.payload && r.payload.error) || 'not_activated' };
   }
   return { activated: true, workflow: r.payload.workflow_verified || null };
+}
+
+/**
+ * THE MOMENT THE WORKFLOW EXISTS, THE CLIENT GOES LIVE — WITH NOBODY ACTING.
+ *
+ * `autoActivate` runs once, at the instant the setup fee lands. If the owner
+ * had not built that client's workflow yet (the ordinary case: they are told
+ * to build it BY that payment), the tenant is parked in `pending_setup` and
+ * nothing ever looked again — so finishing the HighLevel side left the client
+ * waiting until a human remembered to paste an id, which is the manual step
+ * this whole path exists to remove.
+ *
+ * This re-asks. It is deliberately the SAME `autoActivate`, so a tenant can
+ * never reach `active` by a route with fewer checks, and one tenant's failure
+ * is caught per tenant: a HighLevel outage for one client must not stop the
+ * next one going live.
+ *
+ * Bounded per pass, because it costs one HighLevel request per waiting client
+ * per tick. Waiting clients are few by definition — a client leaves this state
+ * the first time it succeeds.
+ */
+async function resumePendingSetups({ tenantId = null, limit = 25 } = {}) {
+  const { Tenant } = require('../models');
+  const where = { outbound_state: 'pending_setup' };
+  if (tenantId) where.id = tenantId;
+  let rows = [];
+  try { rows = await Tenant.findAll({ where, limit }); } catch (_) { return []; }
+  const out = [];
+  for (const t of rows) {
+    try {
+      const r = await autoActivate(t);
+      out.push({ tenant: t.id, activated: !!r.activated, reason: r.reason || null });
+    } catch (e) {
+      out.push({ tenant: t.id, activated: false, reason: String(e.message || e).slice(0, 90) });
+    }
+  }
+  return out;
 }
 
 async function applyStrandedSetup(tenant, session) {
@@ -652,7 +705,7 @@ async function spendSummary(tenantId, { listId = null } = {}) {
   };
 }
 
-module.exports = { recoverable, applyStrandedSetup, autoActivate, isUnlimited,
+module.exports = { recoverable, applyStrandedSetup, autoActivate, resumePendingSetups, isUnlimited,
   STATES, transition,
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,

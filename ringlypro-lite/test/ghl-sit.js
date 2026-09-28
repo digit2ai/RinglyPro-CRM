@@ -4014,6 +4014,186 @@ const tenantSeed = (over = {}) => ({
     assert.ok(fired.some((n) => n.kind === 'owner_setup_paid'), 'the owner was never paged');
   });
 
+  /* ── THE WORKFLOW NAMED AFTER THE CLIENT'S OWN NUMBER ──────────────────
+   * The shared workflow only ever suited ONE tenant, because it dials from one
+   * line and a returned call is attributed by the number that was dialled. So
+   * every other client needed a human to build a workflow AND paste its id.
+   * Naming each workflow after that client's own number removes the paste and
+   * fixes the caller ID at the same time — the workflow dials from the number
+   * it is named for.
+   */
+  const perTenant = async (biz, did) => {
+    const tt = await M.Tenant.create({ business_name: biz, outbound_state: 'off' });
+    await M.Number.create({ tenant_id: tt.id, did, status: 'active', provider: 'ghl' });
+    return tt;
+  };
+
+  await t("A CLIENT'S OWN WORKFLOW IS FOUND BY THEIR OWN NUMBER — nothing is pasted", async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c1 = await perTenant('Named Co', '+16562134441');
+    WF.push({ id: 'wf-per-001', name: 'RinglyPro Outbound +16562134441', status: 'published' });
+    const r = await admin.findWorkflowForTenant(c1);
+    assert.strictEqual(r.ok, true, r.reason);
+    assert.strictEqual(r.id, 'wf-per-001');
+  });
+
+  await t('THE NUMBER IS MATCHED ON DIGITS, so the formatting in the name does not matter', async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c = await perTenant('Formatted Co', '+18135550142');
+    WF.push({ id: 'wf-per-fmt', name: 'RinglyPro Outbound (813) 555-0142', status: 'published' });
+    const r = await admin.findWorkflowForTenant(c);
+    assert.strictEqual(r.ok, true, r.reason);
+    assert.strictEqual(r.id, 'wf-per-fmt');
+  });
+
+  await t('NOTHING MATCHING IS REFUSED WITH THE EXACT NAME TO USE, never guessed', async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c = await perTenant('Unnamed Co', '+19415550001');
+    const r = await admin.findWorkflowForTenant(c);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'no_workflow_for_number');
+    assert.strictEqual(r.expected_name, 'RinglyPro Outbound +19415550001',
+      'the refusal does not say what to call it, so the fix is guesswork');
+  });
+
+  await t('TWO WORKFLOWS FOR ONE NUMBER ARE AMBIGUOUS — both named, neither chosen', async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c = await perTenant('Twice Co', '+17275550222');
+    WF.push({ id: 'wf-dup-a', name: 'RinglyPro Outbound +17275550222', status: 'published' });
+    WF.push({ id: 'wf-dup-b', name: 'Old RinglyPro Outbound +17275550222', status: 'published' });
+    const r = await admin.findWorkflowForTenant(c);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'several_workflows_for_number');
+    assert.strictEqual(r.matches.length, 2);
+  });
+
+  await t("A WORKFLOW NAMING TWO CLIENTS BELONGS TO NEITHER", async () => {
+    // The one-match rule cannot see this: it is ONE workflow, matching ONE
+    // search. Without the check it would be handed to whichever client asked
+    // first, and would then dial that client's list from the other's line.
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const a = await perTenant('Pair A Co', '+13055550111');
+    const b = await perTenant('Pair B Co', '+13055550222');
+    WF.push({ id: 'wf-pair', name: 'Outbound +13055550111 and +13055550222', status: 'published' });
+    const ra = await admin.findWorkflowForTenant(a);
+    const rb = await admin.findWorkflowForTenant(b);
+    assert.strictEqual(ra.ok, false); assert.strictEqual(ra.reason, 'workflow_names_another_client');
+    assert.strictEqual(rb.ok, false); assert.strictEqual(rb.reason, 'workflow_names_another_client');
+  });
+
+  await t('A DRAFT NAMED CORRECTLY IS STILL REFUSED', async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c = await perTenant('Draft Named Co', '+14045550333');
+    WF.push({ id: 'wf-per-draft', name: 'RinglyPro Outbound +14045550333', status: 'draft' });
+    const r = await admin.findWorkflowForTenant(c);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'workflow_not_published');
+  });
+
+  await t('A TENANT WITH NO NUMBER CANNOT BE MATCHED, and says so', async () => {
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const c = await M.Tenant.create({ business_name: 'No Line Co', outbound_state: 'off' });
+    const r = await admin.findWorkflowForTenant(c);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'tenant_has_no_number');
+  });
+
+  await t("PAYING IS THE WHOLE FLOW FOR ANY CLIENT WHOSE WORKFLOW IS NAMED — no env var", async () => {
+    // This is the change: before it, only the ONE tenant named in
+    // LITE_GHL_OUTBOUND_WORKFLOW_TENANT could activate itself.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    const c = await perTenant('Self Serve Co', '+16195550777');
+    WF.push({ id: 'wf-self-serve', name: 'RinglyPro Outbound +16195550777', status: 'published' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: c.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_selfserve', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(c, { id: 'cs_selfserve', amount_total: 2000 }, {});
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+    assert.strictEqual(out.applied, true);
+    assert.strictEqual(out.activated, true, 'a named workflow still needed a human');
+    const fresh = await M.Tenant.findByPk(c.id);
+    assert.strictEqual(fresh.outbound_state, 'active');
+    assert.strictEqual(fresh.outbound_workflow_id, 'wf-self-serve');
+  });
+
+  await t('A CLIENT GOES LIVE WHEN THE WORKFLOW APPEARS, WITH NOBODY ACTING', async () => {
+    // The owner is told to build the workflow BY the payment, so the ordinary
+    // case is that it does not exist yet. Nothing looked again before this, so
+    // finishing the HighLevel side left the client waiting on a human.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    const c = await perTenant('Later Co', '+12105550888');
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: c.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_later', status: 'open', stripe_event_id: null });
+    const paid = await bl.applyPayment(c, { id: 'cs_later', amount_total: 2000 }, {});
+    assert.ok(!paid.activated, 'it activated before the workflow existed');
+    assert.strictEqual((await M.Tenant.findByPk(c.id)).outbound_state, 'pending_setup');
+
+    // The owner now builds it in HighLevel. Nobody touches RinglyPro.
+    WF.push({ id: 'wf-later', name: 'RinglyPro Outbound +12105550888', status: 'published' });
+    const res = await bl.resumePendingSetups({ tenantId: c.id });
+    process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off';
+    assert.strictEqual(res.length, 1);
+    assert.strictEqual(res[0].activated, true, res[0].reason);
+    const fresh = await M.Tenant.findByPk(c.id);
+    assert.strictEqual(fresh.outbound_state, 'active');
+    assert.strictEqual(fresh.outbound_workflow_id, 'wf-later');
+  });
+
+  await t("ONE CLIENT'S OUTAGE DOES NOT STARVE THE NEXT ONE", async () => {
+    // A real outage THROWS — a sub-account that cannot be read, a socket that
+    // dies mid-list. Without a try/catch per tenant the whole pass dies on the
+    // first one, and every client behind it keeps waiting for a workflow that
+    // already exists. The injection is what makes this test able to fail; an
+    // earlier version only used a client with no workflow, which returns
+    // cleanly and proves nothing about isolation.
+    delete process.env.LITE_OUTBOUND_AUTO_ACTIVATE;
+    delete process.env.LITE_GHL_OUTBOUND_WORKFLOW_TENANT;
+    const admin = require(path.join(ROOT, 'src/services/outboundAdmin'));
+    const bad = await perTenant('Broken Co', '+15035550999');
+    const good = await perTenant('Fine Co', '+15035551000');
+    WF.push({ id: 'wf-broken', name: 'RinglyPro Outbound +15035550999', status: 'published' });
+    WF.push({ id: 'wf-fine', name: 'RinglyPro Outbound +15035551000', status: 'published' });
+    await bad.update({ outbound_state: 'pending_setup' });
+    await good.update({ outbound_state: 'pending_setup' });
+
+    // Thrown from setOutbound, which autoActivate does NOT wrap — the lookup
+    // has its own .catch, so injecting there would prove nothing about this
+    // loop. This is the shape of a write failing: the database refusing an
+    // update, a column missing.
+    const realSet = admin.setOutbound;
+    admin.setOutbound = async (b2) => {
+      if (Number(b2.tenant) === Number(bad.id)) throw new Error('write failed');
+      return realSet(b2);
+    };
+    let res;
+    try { res = await bl.resumePendingSetups({}); }
+    finally { admin.setOutbound = realSet; process.env.LITE_OUTBOUND_AUTO_ACTIVATE = 'off'; }
+    const b = res.find((r) => r.tenant === bad.id);
+    assert.ok(b && !b.activated && /write failed/.test(String(b.reason)),
+      'the failing tenant was not reported as failing');
+
+    const g = res.find((r) => r.tenant === good.id);
+    assert.ok(g && g.activated, 'a client with a ready workflow was skipped because another threw');
+    assert.strictEqual((await M.Tenant.findByPk(bad.id)).outbound_state, 'pending_setup');
+  });
+
+  await t('THE OWNER ALERT PRINTS THE REAL NUMBER AND THE EXACT NAME', async () => {
+    // It used to read `tenant.ringlypro_number || tenant.did` — neither is a
+    // column — so every alert said "none on file" for the one fact the owner
+    // needs to do what it is asking them to do.
+    const c = await perTenant('Alerted Co', '+14085551234');
+    const before = OB.notifs.length;
+    await require(path.join(ROOT, 'src/services/notify'))
+      .ownerSetupPaid(await M.Tenant.findByPk(c.id), new Date());
+    const fired = OB.notifs.slice(before).find((n) => n.kind === 'owner_setup_paid');
+    assert.ok(fired, 'the owner was not alerted at all');
+    assert.ok(/\+14085551234/.test(fired.body), 'the alert does not carry their number');
+    assert.ok(/RinglyPro Outbound \+14085551234/.test(fired.body),
+      'the alert does not say what to name the workflow, which is now the whole manual step');
+    assert.ok(!/none on file/.test(fired.body));
+  });
+
   await t('findSharedWorkflow REFUSES A DRAFT ITSELF, not only downstream', async () => {
     // setOutbound checks published too, so removing the check here changes no
     // outcome — defence in depth is good, and an untested layer is not.
