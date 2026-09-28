@@ -46,13 +46,22 @@ const stats = { runs: 0, applied: 0, last_at: null, last_error: null };
  * @param {number} [opts.tenantId] restrict to one tenant (the /confirm path)
  * @param {object} [opts.client]   injected Stripe client (tests)
  */
-async function run({ tenantId = null, client = null } = {}) {
+async function run({ tenantId = null, client = null, always = false } = {}) {
   const s = client || stripe();
   if (!s) return { ok: false, reason: 'payments_not_configured', applied: [] };
 
   // THE CHEAP QUESTION FIRST. With nothing outstanding this costs one indexed
-  // count and NO Stripe call, so the poller is free on a quiet account.
-  const [pend] = await sequelize.query(
+  // count and NO Stripe call, so the unattended poller is free on a quiet
+  // account.
+  //
+  // `always` EXISTS BECAUSE THIS GATE IS DRIVEN BY OUR OWN ROWS, and the one
+  // case worth recovering hardest is the row being missing altogether — then
+  // the gate returns nothing and the tenant is skipped, which is a narrower
+  // guarantee than "recovers a payment our own row cannot see". So the
+  // /confirm path, where a person is present and the work is bounded to one
+  // tenant and rate limited, asks Stripe regardless. The poller does not, or a
+  // quiet account would pay for a listing every few minutes for ever.
+  const [pend] = always && tenantId ? [[{ tenant_id: tenantId }]] : await sequelize.query(
     `SELECT DISTINCT tenant_id FROM lite_outbound_payments
       WHERE status = 'open' AND stripe_session_id IS NOT NULL
         AND created_at > NOW() - (:d || ' days')::interval

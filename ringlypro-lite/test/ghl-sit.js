@@ -354,7 +354,12 @@ M.sequelize = {
     if (/INSERT INTO lite_outbound_payments/.test(sql)) {
       const rp = opts.replacements;
       OB.payments.push({ id: OB.payments.length + 1, tenant_id: rp.t,
-        kind: /'setup'/.test(sql) ? 'setup' : 'credit', amount_cents: rp.a,
+        // THE BOUND PARAMETER WINS. Reading the kind out of the SQL TEXT was
+        // right only while every caller inlined a literal: the sweep binds :k,
+        // so a recovered SETUP fee was stored as a wallet CREDIT and the tenant
+        // never moved — visible in the suite, impossible in Postgres. Sixth
+        // time this harness has differed from the database it stands in for.
+        kind: rp.k || (/'setup'/.test(sql) ? 'setup' : 'credit'), amount_cents: rp.a,
         stripe_session_id: rp.s, status: 'open', stripe_event_id: null });
       return [[], {}];
     }
@@ -3513,6 +3518,31 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!r.applied.some((x) => x.tenant === 999777), 'money was applied to a tenant that is gone');
   });
 
+  await t('A PAID SESSION WITH NO ROW OF OURS IS STILL RECOVERED WHEN ASKED', async () => {
+    // The last hole: the gate is driven by OUR rows, so a missing row meant the
+    // tenant was skipped entirely — narrower than "recovers what our row cannot
+    // see". /confirm passes always:true, because a person is present.
+    const nr = await M.Tenant.create({ business_name: 'No Row Co', outbound_state: 'awaiting_setup_payment' });
+    const sess = { id: 'cs_no_row', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(nr.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    // No lite_outbound_payments row exists for this tenant at all.
+    assert.ok(!OB.payments.some((x) => x.tenant_id === nr.id), 'the fixture already has a row');
+    const skipped = await psweep.run({ tenantId: nr.id, client: fake });
+    assert.strictEqual(skipped.tenants, 0, 'the row-driven gate found something it should not');
+    const asked = await psweep.run({ tenantId: nr.id, client: fake, always: true });
+    assert.ok(asked.applied.some((a) => a.tenant === nr.id), 'the payment was not recovered');
+    assert.strictEqual((await M.Tenant.findByPk(nr.id)).outbound_state, 'pending_setup');
+  });
+
+  await t('THE UNATTENDED POLLER DOES NOT ASK STRIPE ON A QUIET ACCOUNT', () => {
+    // It runs for ever; `always` must not leak into the timer path.
+    const raw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    const tick = raw.slice(raw.indexOf('const tick = async'), raw.indexOf('timer = setInterval'));
+    assert.ok(/run\(\{\}\)/.test(tick), 'the poller does not call run with an empty scope');
+    assert.ok(!/always/.test(tick), 'the poller forces a Stripe listing every tick');
+  });
+
   await t('STRIPE BEING UNREACHABLE IS REPORTED, never read as "nothing to apply"', async () => {
     const dn = await M.Tenant.create({ business_name: 'Down Co', outbound_state: 'awaiting_setup_payment' });
     OB.payments.push({ id: OB.payments.length + 1, tenant_id: dn.id, kind: 'setup',
@@ -3567,8 +3597,8 @@ const tenantSeed = (over = {}) => ({
     const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
     const fn = rt.slice(rt.indexOf("router.post('/confirm'"));
     const body = fn.slice(0, fn.indexOf('\n});'));
-    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId \}\)/.test(body),
-      'confirm has its own second copy of the sweep');
+    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId, always: true \}\)/.test(body),
+      'confirm has its own second copy of the sweep, or no longer asks Stripe when our row is missing');
     assert.ok(!/checkout\.sessions\.list/.test(body), 'confirm still lists sessions itself');
   });
 

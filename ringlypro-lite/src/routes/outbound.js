@@ -368,7 +368,7 @@ router.post('/confirm', async (req, res) => {
   // services/paymentSweep so that applying a payment does not depend on
   // somebody opening a tab, and so there is ONE copy of the rule.
   try {
-    const sw = await require('../services/paymentSweep').run({ tenantId: req.tenantId });
+    const sw = await require('../services/paymentSweep').run({ tenantId: req.tenantId, always: true });
     for (const a of (sw.applied || [])) applied.push({ ...a, recovered: true });
   } catch (e) {
     console.warn('[lite:outbound] confirm sweep failed:', e.message);
