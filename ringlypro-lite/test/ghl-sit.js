@@ -4046,6 +4046,26 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/LITE_OUTBOUND_FOUNDER_UNLIMITED/.test(body), 'the exemption cannot be turned off');
   });
 
+  await t('THE CARRIER CONSENT RULE IS STATED BEFORE THE UPLOAD', () => {
+    // Measured live 2026-09-28: enrollment succeeds and HighLevel then refuses
+    // each call with "No valid consent found". Their consent engine wants a
+    // per-contact opt-in captured in a form, survey or booking page naming
+    // voice calls, and there is NO API to record one — so a lawful basis on
+    // our side is necessary and not sufficient. Without this on screen a
+    // client uploads a list and watches every number fail silently.
+    const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    assert.strictEqual((page.match(/obConsentGhl:/g) || []).length, 2,
+      'the carrier consent rule is not in both dictionaries');
+    assert.ok(/data-i="obConsentGhl"/.test(page), 'it is never rendered');
+    // It sits with the consent question, not buried elsewhere.
+    const i = page.indexOf('id="ob_consent"');
+    assert.ok(page.indexOf('obConsentGhl', i) - i < 1500 && page.indexOf('obConsentGhl', i) > i,
+      'the rule is not shown beside the consent question');
+    // And it must not imply we can fix it for them.
+    const en = page.match(/obConsentGhl:"([^"]+)"/)[1];
+    assert.ok(/not enough|refused/i.test(en), 'the wording does not say a number without it is refused');
+  });
+
   await t('THE FOUNDER CARD SHOWS SPEND, not a negative balance', () => {
     const page = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
     assert.ok(/w\.unlimited/.test(page), 'the wallet card does not know about the exemption');
