@@ -3591,6 +3591,45 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual((await M.Tenant.findByPk(back.id)).outbound_state, 'off');
   });
 
+  await t('LOADING THE PLAN RECOVERS A PAYMENT — the path that is always hit', () => {
+    // The webhook needs a secret, the timer needs a process that started it,
+    // the admin endpoint needs a key, and a button needs the browser to have
+    // picked up new JavaScript rather than a cached shell. /api/ is never
+    // cached and the page always calls this, so this is the reliable one.
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = rt.slice(rt.indexOf("router.get('/plan'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId \}\)/.test(body)
+      || /ps\.run\(\{ tenantId: req\.tenantId \}\)/.test(body),
+      'loading the plan does not try to recover a payment');
+    assert.ok(/recentlyAsked/.test(body), 'the plan endpoint would list Stripe on every load');
+    assert.ok(/PAYABLE/.test(body), 'a live tenant would trigger a Stripe listing');
+    assert.ok(/await Tenant\.findByPk\(req\.tenantId\)/.test(body.slice(body.indexOf('r.applied'))),
+      'the plan answers with the state from BEFORE the recovery');
+  });
+
+  await t('THE SWEEP RUNS WHEREVER THERE IS A STRIPE KEY, not only in production', () => {
+    // The other pollers are gated on NODE_ENV because they SPEND money. This
+    // one recovers money already paid; gating it on a variable nobody set is
+    // how $20 sat unapplied while three fixes shipped.
+    const raw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    // COMMENTS STRIPPED: the function EXPLAINS why it does not read NODE_ENV,
+    // and this is the fourth time a check of this shape has flagged its own
+    // explanation in this suite.
+    const fn = raw.slice(raw.indexOf('function start()'), raw.indexOf('const tick ='))
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/[^\n]*/gm, '');
+    assert.ok(!/NODE_ENV/.test(fn), 'the payment sweep is gated on NODE_ENV');
+    assert.ok(/=== 'off'/.test(fn), 'there is no way to switch it off');
+  });
+
+  await t('the throttle lets the first ask through and holds the second', () => {
+    const psw = require(path.join(ROOT, 'src/services/paymentSweep'));
+    const id = 987654;
+    assert.strictEqual(psw.recentlyAsked(id, 60000), false, 'the first ask was blocked');
+    assert.strictEqual(psw.recentlyAsked(id, 60000), true, 'a second ask went straight through');
+    assert.strictEqual(psw.recentlyAsked(id, 0), false, 'the window is not honoured');
+  });
+
   await t('THE POLLER SWEEPS EVERY TENANT, not one', () => {
     const raw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
     const tick = raw.slice(raw.indexOf('const tick = async'), raw.indexOf('timer = setInterval'));

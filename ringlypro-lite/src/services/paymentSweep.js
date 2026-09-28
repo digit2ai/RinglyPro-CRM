@@ -42,6 +42,16 @@ function stripe() {
   return require('stripe')(key);
 }
 
+// Per-tenant floor between listings, so the plan endpoint can ask on every
+// visit without paying for a Stripe call each time.
+const lastAsk = new Map();
+function recentlyAsked(tenantId, everyMs) {
+  const at = lastAsk.get(tenantId) || 0;
+  if (Date.now() - at < everyMs) return true;
+  lastAsk.set(tenantId, Date.now());
+  return false;
+}
+
 const stats = { runs: 0, applied: 0, repaired: 0, last_at: null, last_error: null };
 
 /**
@@ -126,9 +136,13 @@ async function run({ tenantId = null, client = null } = {}) {
 let timer = null;
 
 function start() {
+  // DEFAULT ON WHEREVER THERE IS A STRIPE KEY. The other pollers are gated on
+  // NODE_ENV === 'production' because they place calls and cost money; this one
+  // RECOVERS money a client has already paid, and gating it on an environment
+  // variable nobody set is how the owner's own $20 sat unapplied while three
+  // separate fixes shipped. `LITE_PAYMENT_SWEEP=off` still stops it.
   const flag = String(process.env.LITE_PAYMENT_SWEEP || '').toLowerCase();
   if (flag === 'off') { console.log('[lite:paysweep] off by env'); return null; }
-  if (flag !== 'on' && process.env.NODE_ENV !== 'production') return null;
   if (!stripeKey()) {
     console.log('[lite:paysweep] no Stripe key — not started');
     return null;
@@ -168,4 +182,4 @@ function start() {
   return timer;
 }
 
-module.exports = { run, start, stats, LOCK_ID };
+module.exports = { run, start, stats, LOCK_ID, recentlyAsked, PAYABLE };

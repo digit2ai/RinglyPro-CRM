@@ -15,6 +15,8 @@ const { sequelize, Tenant } = require('../models');
 const ob = require('../services/outbound');
 const tollFraud = require('../security/tollFraud');
 const billing = require('../services/outboundBilling');
+// How often the plan endpoint may ask Stripe for one tenant, at most.
+const PLAN_SWEEP_MS = Math.max(15, parseInt(process.env.LITE_PLAN_SWEEP_SEC || '60', 10) || 60) * 1000;
 const notify = require('../services/notify');
 
 // A PER-TENANT CEILING ON THE PAID ENDPOINTS. Nothing else in the /api tree
@@ -234,7 +236,28 @@ function publicUrl() {
  * changing the env changes every screen with no redeploy.
  */
 router.get('/plan', async (req, res) => {
-  const t = await Tenant.findByPk(req.tenantId);
+  let t = await Tenant.findByPk(req.tenantId);
+
+  // LOADING THIS TAB IS ENOUGH TO RECOVER A PAYMENT.
+  //
+  // Everything else that could apply it has a way of not being there: the
+  // webhook needs a secret, the timer needs a process that started it, the
+  // admin endpoint needs a key, and a button needs the browser to have picked
+  // up new JavaScript rather than a cached shell. This endpoint is the one
+  // thing that is always hit, by the page they are already looking at, and
+  // `/api/` is never cached. Throttled per tenant, and only while they are in
+  // a state where money could be owed — a live tenant never triggers it.
+  const payable = require('../services/paymentSweep').PAYABLE;
+  if (payable.includes((t && t.outbound_state) || 'off')) {
+    const ps = require('../services/paymentSweep');
+    if (!ps.recentlyAsked(req.tenantId, PLAN_SWEEP_MS)) {
+      try {
+        const r = await ps.run({ tenantId: req.tenantId });
+        if (r.applied && r.applied.length) t = await Tenant.findByPk(req.tenantId);
+      } catch (e) { console.warn('[lite:outbound] plan sweep failed:', e.message); }
+    }
+  }
+
   const state = (t && t.outbound_state) || 'off';
   const w = await billing.wallet(req.tenantId);
   // IS THERE MONEY IN FLIGHT? One cheap count, so the page knows whether it is
