@@ -497,6 +497,12 @@ async function main() {
   try { require('./src/services/outboundDialer').start(); }
   catch (e) { console.error('[lite] outbound dialer failed to start:', e.message); }
 
+  // PAYMENTS ARE SWEPT SEPARATELY FROM DIALLING. A client who has paid but has
+  // no workflow yet is exactly the client whose dialer is off, so putting this
+  // in the dialer's tick would mean turning dialling off stops applying money.
+  try { require('./src/services/paymentSweep').start(); }
+  catch (e) { console.warn('[lite] payment sweep did not start:', e.message); }
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`[lite] RinglyPro Lite listening on :${PORT}`);
     console.log(`[lite] voice webhook → POST /voice/incoming ; ws → /voice-relay/ws`);

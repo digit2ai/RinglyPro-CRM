@@ -386,6 +386,15 @@ M.sequelize = {
       if (rp.e) row.stripe_event_id = rp.e;
       return [[{ id: row.id, kind: row.kind, amount_cents: row.amount_cents }], {}];
     }
+    if (/SELECT DISTINCT tenant_id FROM lite_outbound_payments/.test(sql)) {
+      const rp = opts.replacements || {};
+      const scoped = /tenant_id = :t/.test(sql);
+      const ids = [...new Set(OB.payments
+        .filter((x) => x.status === 'open' && x.stripe_session_id
+          && (!scoped || x.tenant_id === rp.t))
+        .map((x) => x.tenant_id))].sort((a, b) => a - b);
+      return [ids.map((tenant_id) => ({ tenant_id })), {}];
+    }
     if (/SELECT stripe_session_id FROM lite_outbound_payments/.test(sql)) {
       const rp = opts.replacements;
       const onlySetup = /kind = 'setup'/.test(sql);
@@ -3375,9 +3384,12 @@ const tenantSeed = (over = {}) => ({
     // The route must not re-implement the checks; that is how two copies drift.
     assert.ok(!/payment_status/.test(body),
       'the route inspects payment_status itself — the rule belongs in one place');
-    assert.ok(/ON CONFLICT DO NOTHING/.test(body),
-      'two concurrent confirms could insert the same session twice');
-    assert.ok(/req\.tenantId, seen/.test(body), 'the sweep is not scoped to the caller');
+    assert.ok(!/INSERT INTO lite_outbound_payments/.test(body),
+      'the route inserts payment rows as well as the sweep');
+    const sw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    assert.ok(/ON CONFLICT DO NOTHING/.test(sw),
+      'two concurrent sweeps could insert the same session twice');
+    assert.ok(/recoverable\(list\.data, id, new Set\(\)\)/.test(sw), 'the sweep is not scoped per tenant');
   });
 
   await t('THE LIVE BUILD IS REPORTABLE, or "is it deployed?" has no answer', () => {
@@ -3399,6 +3411,152 @@ const tenantSeed = (over = {}) => ({
     const envs = blk.match(/process\.env\.[A-Z_]+/g) || [];
     assert.deepStrictEqual(envs, ['process.env.RENDER_GIT_COMMIT'],
       'the build block reads an environment variable other than the commit');
+  });
+
+  /* ── THE PAYMENT IS APPLIED WITH NOBODY WATCHING ───────────────────────
+   * /confirm needs somebody to open the tab. This is the same money, applied
+   * by the server on a timer. */
+
+  const psweep = require(path.join(ROOT, 'src/services/paymentSweep'));
+
+  await t('AN UNCONFIRMED PAYMENT IS APPLIED WITH NO TAB OPEN', async () => {
+    const un = await M.Tenant.create({ business_name: 'Unattended Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: un.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_sweep_1', status: 'open', stripe_event_id: null });
+    const fake = { checkout: { sessions: { list: async () => ({ data: [
+      { id: 'cs_sweep_1', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(un.id) } }] }) } } };
+    const r = await psweep.run({ client: fake });
+    assert.ok(r.ok, 'the sweep did not run');
+    assert.ok(r.applied.some((a) => a.tenant === un.id), 'the payment was not applied');
+    assert.strictEqual((await M.Tenant.findByPk(un.id)).outbound_state, 'pending_setup');
+  });
+
+  await t('NOTHING OUTSTANDING COSTS NO STRIPE CALL', async () => {
+    // The poller runs every few minutes for ever; on a quiet account it must be
+    // one indexed query and nothing else.
+    let calls = 0;
+    const fake = { checkout: { sessions: { list: async () => { calls++; return { data: [] }; } } } };
+    const quiet = await M.Tenant.create({ business_name: 'Quiet Co' });
+    const r = await psweep.run({ tenantId: quiet.id, client: fake });
+    assert.strictEqual(r.tenants, 0);
+    assert.strictEqual(calls, 0, 'the sweep asked Stripe with nothing outstanding');
+  });
+
+  await t("a scoped sweep applies ONE tenant's payment and never the neighbour's", async () => {
+    const a = await M.Tenant.create({ business_name: 'Sweep A', outbound_state: 'awaiting_setup_payment' });
+    const b = await M.Tenant.create({ business_name: 'Sweep B', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: a.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_sw_a', status: 'open', stripe_event_id: null });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: b.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_sw_b', status: 'open', stripe_event_id: null });
+    const data = [
+      { id: 'cs_sw_a', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(a.id) } },
+      { id: 'cs_sw_b', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(b.id) } },
+    ];
+    const fake = { checkout: { sessions: { list: async () => ({ data }) } } };
+    const r = await psweep.run({ tenantId: a.id, client: fake });
+    assert.deepStrictEqual(r.applied.map((x) => x.tenant), [a.id],
+      "a scoped sweep applied another tenant's payment");
+    assert.strictEqual((await M.Tenant.findByPk(b.id)).outbound_state, 'awaiting_setup_payment',
+      "the neighbour's tenant row was moved");
+  });
+
+  await t('ONE TENANT FAILING DOES NOT STARVE THE REST', async () => {
+    const ok1 = await M.Tenant.create({ business_name: 'Ok One', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: ok1.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_ok1', status: 'open', stripe_event_id: null });
+    // A row whose apply throws must not stop the tenant after it being paid.
+    const boom = await M.Tenant.create({ business_name: 'Boom Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: boom.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_boom', status: 'open', stripe_event_id: null });
+    const data = [
+      { id: 'cs_boom', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(boom.id) } },
+      { id: 'cs_ok1', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(ok1.id) } },
+    ];
+    const fake = { checkout: { sessions: { list: async () => ({ data }) } } };
+    const realApply = bl.applyPayment;
+    bl.applyPayment = async (t2, sess, o) => {
+      if (sess.id === 'cs_boom') throw new Error('deliberate failure');
+      return realApply(t2, sess, o);
+    };
+    let r;
+    try { r = await psweep.run({ client: fake }); }
+    finally { bl.applyPayment = realApply; }
+    assert.ok(r && r.ok, 'one tenant failing aborted the whole pass');
+    assert.ok(r.applied.some((x) => x.tenant === ok1.id), 'the good tenant was skipped');
+  });
+
+  await t('A PAYMENT ROW WHOSE TENANT IS GONE IS SKIPPED, not thrown', async () => {
+    // The row outlives the tenant if an account is removed, and the ids come
+    // from the ROWS. Throwing here would stop every later tenant's payment.
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: 999777, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_orphan', status: 'open', stripe_event_id: null });
+    const live = await M.Tenant.create({ business_name: 'Live Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: live.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_live_after_orphan', status: 'open', stripe_event_id: null });
+    const data = [
+      { id: 'cs_orphan', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: '999777' } },
+      { id: 'cs_live_after_orphan', payment_status: 'paid', amount_total: 2000,
+        metadata: { kind: 'lite_outbound_setup', tenant_id: String(live.id) } },
+    ];
+    const fake = { checkout: { sessions: { list: async () => ({ data }) } } };
+    const r = await psweep.run({ client: fake });
+    assert.ok(r.ok, 'an orphaned payment row aborted the pass');
+    assert.ok(r.applied.some((x) => x.tenant === live.id),
+      'a tenant after the orphan never got their payment');
+    assert.ok(!r.applied.some((x) => x.tenant === 999777), 'money was applied to a tenant that is gone');
+  });
+
+  await t('STRIPE BEING UNREACHABLE IS REPORTED, never read as "nothing to apply"', async () => {
+    const dn = await M.Tenant.create({ business_name: 'Down Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: dn.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_down', status: 'open', stripe_event_id: null });
+    const fake = { checkout: { sessions: { list: async () => { throw new Error('network down'); } } } };
+    const r = await psweep.run({ tenantId: dn.id, client: fake });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'stripe_unreachable');
+    assert.strictEqual((await M.Tenant.findByPk(dn.id)).outbound_state, 'awaiting_setup_payment');
+  });
+
+  await t('SWEEPING PAYMENTS IS NOT GATED ON DIALLING', () => {
+    // A client who has paid but has no workflow yet is exactly the client whose
+    // dialer is off. Putting this in the dialer's tick would mean turning
+    // dialling off stops applying money.
+    const raw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    // COMMENTS STRIPPED FIRST: the file EXPLAINS why it is not coupled to the
+    // dialer, and a check of this shape has flagged its own explanation before.
+    const strip = (x) => x.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/[^\n]*/gm, '');
+    assert.ok(!/LITE_OUTBOUND_DIALER/.test(strip(raw)), 'the payment sweep reads the dialer switch');
+    const dialer = strip(fs.readFileSync(path.join(ROOT, 'src/services/outboundDialer.js'), 'utf8'));
+    assert.ok(!/paymentSweep/.test(dialer), 'the sweep was folded into the dialer tick');
+    const boot = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+    assert.ok(/paymentSweep'\)\.start\(\)/.test(boot), 'the sweep is never started');
+    assert.ok(/LOCK_ID = 9182736(?!45)/.test(raw), 'the sweep shares the dialer advisory lock');
+  });
+
+  await t('THE SWEEP USES THE KEY THE CHECKOUT WAS CREATED WITH', () => {
+    // The route prefers LITE_STRIPE_SECRET_KEY; reading only STRIPE_SECRET_KEY
+    // would point the sweep at a different account from the one holding the money.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const want = /LITE_STRIPE_SECRET_KEY \|\| process\.env\.STRIPE_SECRET_KEY/;
+    assert.ok(want.test(src), 'the sweep does not read the same key, in the same order, as the checkout');
+    assert.ok(want.test(rt));
+  });
+
+  await t('/confirm delegates to the same sweep, so there is one copy of the rule', () => {
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = rt.slice(rt.indexOf("router.post('/confirm'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId \}\)/.test(body),
+      'confirm has its own second copy of the sweep');
+    assert.ok(!/checkout\.sessions\.list/.test(body), 'confirm still lists sessions itself');
   });
 
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
