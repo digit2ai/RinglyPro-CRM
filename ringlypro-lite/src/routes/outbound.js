@@ -251,7 +251,11 @@ router.get('/plan', async (req, res) => {
   const payable = require('../services/paymentSweep').PAYABLE;
   if (payable.includes((t && t.outbound_state) || 'off')) {
     const ps = require('../services/paymentSweep');
-    if (ps.recentlyAsked(req.tenantId, PLAN_SWEEP_MS)) {
+    // AN EXPLICIT ASK IS NEVER THROTTLED. A person adding ?debug=1 is asking
+    // "why did this not apply", and answering "we checked recently" is the
+    // non-answer that cost another round trip.
+    const forced = String(req.query.debug || '') === '1';
+    if (!forced && ps.recentlyAsked(req.tenantId, PLAN_SWEEP_MS)) {
       // SAID, NOT LEFT NULL. A reload inside the throttle window would report
       // nothing at all, which reads exactly like another silent failure.
       recovery = { ok: true, skipped: 'checked_recently' };

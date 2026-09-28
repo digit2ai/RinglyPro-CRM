@@ -465,7 +465,9 @@ function whenLocal(iso){
  * into this page, so changing the env changes the screen.
  */
 async function loadPlan(){
-  const p=await api('/api/outbound/plan'); if(!p) return null;
+  // Forward ?debug=1 so an explicit ask reaches the server and skips the throttle.
+  const dbg=/[?&]debug=1/.test(location.search)?'?debug=1':'';
+  const p=await api('/api/outbound/plan'+dbg); if(!p) return null;
   const gate=$('ob_gate'), wal=$('ob_wallet'), D=I[lang];
   const perMin=money(p.pricing.price_per_min_cents), fee=money(p.pricing.setup_fee_cents);
   const live = p.state==='active';
