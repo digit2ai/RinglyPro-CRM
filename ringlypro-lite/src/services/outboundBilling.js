@@ -411,6 +411,37 @@ function recoverable(sessions, tenantId, seen) {
   return out;
 }
 
+/**
+ * THE SETUP FEE WAS TAKEN AND THE TENANT NEVER MOVED.
+ *
+ * `applyPayment` claims the payment row BEFORE it transitions, so a transition
+ * that fails leaves the row marked paid, the client charged, and the dashboard
+ * still offering "Activate — $20.00" with nothing that will ever try again.
+ * This is that repair, and it is deliberately NOT part of applyPayment: that
+ * function's claim is what makes a replay a no-op, and loosening it would let a
+ * webhook retry re-apply money.
+ *
+ * IT MOVES STATE ONLY. No wallet is credited and no row is re-claimed — the
+ * money already moved, once. The caller decides it is warranted (row paid, no
+ * setup timestamp, tenant still in a payable state); this function re-checks
+ * the state atomically so two sweeps cannot both repair.
+ */
+async function applyStrandedSetup(tenant, session) {
+  const notify = require('./notify');
+  const due = new Date(Date.now() + slaHours() * 3600 * 1000);
+  const moved = await transition(tenant.id,
+    ['off', 'awaiting_setup_payment', 'failed_setup'], 'pending_setup',
+    { outbound_setup_paid_at: new Date(), outbound_setup_due_at: due, outbound_state_reason: null });
+  if (!moved.moved) return { applied: false, reason: 'not_stranded' };
+
+  console.warn('[lite:outbound] REPAIRED a stranded setup fee for tenant', tenant.id,
+    '- paid at Stripe, never applied here. Session', session && session.id);
+  await notify.notify(tenant.id, 'outbound_setup_paid', 'Outbound setup paid',
+    `Your outbound caller will be ready by ${due.toISOString()}. We will let you know the moment it is live.`);
+  await notify.ownerSetupPaid(tenant, due).catch(() => {});
+  return { applied: true, kind: 'setup', repaired: true, due_at: due };
+}
+
 async function applyPayment(tenant, session, { eventId } = {}) {
   const notify = require('./notify');
   const [claimed] = await sequelize.query(
@@ -516,7 +547,7 @@ async function spendSummary(tenantId, { listId = null } = {}) {
   };
 }
 
-module.exports = { recoverable,
+module.exports = { recoverable, applyStrandedSetup,
   STATES, transition,
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,

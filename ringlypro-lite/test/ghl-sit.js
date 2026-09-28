@@ -353,6 +353,16 @@ M.sequelize = {
     // idempotent, which is exactly the bug it must not have.
     if (/INSERT INTO lite_outbound_payments/.test(sql)) {
       const rp = opts.replacements;
+      // HONOUR THE UNIQUE INDEX. uq_lite_ob_pay_session makes a second insert
+      // for the same session a no-op under ON CONFLICT DO NOTHING; the fake
+      // pushed a DUPLICATE open row, which the next applyPayment then claimed
+      // — so a payment already settled looked freshly applied, and a tenant an
+      // operator had deliberately put back was silently moved again. Seventh
+      // time this harness has been laxer than the database it stands in for.
+      if (/ON CONFLICT DO NOTHING/.test(sql) && rp.s
+          && OB.payments.some((x) => x.stripe_session_id === rp.s)) {
+        return [[], {}];
+      }
       OB.payments.push({ id: OB.payments.length + 1, tenant_id: rp.t,
         // THE BOUND PARAMETER WINS. Reading the kind out of the SQL TEXT was
         // right only while every caller inlined a literal: the sweep binds :k,
@@ -3394,7 +3404,7 @@ const tenantSeed = (over = {}) => ({
     const sw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
     assert.ok(/ON CONFLICT DO NOTHING/.test(sw),
       'two concurrent sweeps could insert the same session twice');
-    assert.ok(/recoverable\(list\.data, id, new Set\(\)\)/.test(sw), 'the sweep is not scoped per tenant');
+    assert.ok(/recoverable\(\[sess\], id, new Set\(\)\)/.test(sw), 'the sweep is not scoped per tenant');
   });
 
   await t('THE LIVE BUILD IS REPORTABLE, or "is it deployed?" has no answer', () => {
@@ -3437,15 +3447,24 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual((await M.Tenant.findByPk(un.id)).outbound_state, 'pending_setup');
   });
 
-  await t('NOTHING OUTSTANDING COSTS NO STRIPE CALL', async () => {
-    // The poller runs every few minutes for ever; on a quiet account it must be
-    // one indexed query and nothing else.
+  await t('ONE LISTING PER TICK, AND NOTHING OF OURS MEANS NOTHING APPLIED', async () => {
+    // This DELIBERATELY costs a Stripe call even when quiet. The cheap version
+    // asked our own rows first and therefore could not see the one payment
+    // worth recovering — the one whose row was never written. One account-wide
+    // listing per tick is the price of not depending on our own bookkeeping.
     let calls = 0;
-    const fake = { checkout: { sessions: { list: async () => { calls++; return { data: [] }; } } } };
-    const quiet = await M.Tenant.create({ business_name: 'Quiet Co' });
-    const r = await psweep.run({ tenantId: quiet.id, client: fake });
-    assert.strictEqual(r.tenants, 0);
-    assert.strictEqual(calls, 0, 'the sweep asked Stripe with nothing outstanding');
+    const fake = { checkout: { sessions: { list: async () => {
+      calls++;
+      return { data: [
+        { id: 'cs_someone_elses_product', payment_status: 'paid', amount_total: 9900,
+          metadata: { kind: 'lite_subscription', tenant_id: '4' } },
+        { id: 'cs_no_metadata', payment_status: 'paid', amount_total: 100, metadata: {} },
+      ] };
+    } } } };
+    const r = await psweep.run({ client: fake });
+    assert.strictEqual(calls, 1, 'the sweep made more than one listing');
+    assert.strictEqual(r.tenants, 0, 'a session that is not ours was counted');
+    assert.deepStrictEqual(r.applied, []);
   });
 
   await t("a scoped sweep applies ONE tenant's payment and never the neighbour's", async () => {
@@ -3518,29 +3537,64 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!r.applied.some((x) => x.tenant === 999777), 'money was applied to a tenant that is gone');
   });
 
-  await t('A PAID SESSION WITH NO ROW OF OURS IS STILL RECOVERED WHEN ASKED', async () => {
-    // The last hole: the gate is driven by OUR rows, so a missing row meant the
-    // tenant was skipped entirely — narrower than "recovers what our row cannot
-    // see". /confirm passes always:true, because a person is present.
-    const nr = await M.Tenant.create({ business_name: 'No Row Co', outbound_state: 'awaiting_setup_payment' });
+  await t('A PAID SESSION WITH NO ROW OF OURS IS RECOVERED — the owner\'s own case', async () => {
+    // The reuse branch of /activate returned an existing checkout URL and
+    // inserted nothing, so the client paid against a session we had no record
+    // of. Anything driven by our rows skips them for ever.
+    const nr = await M.Tenant.create({ business_name: 'No Row Co', outbound_state: 'off' });
     const sess = { id: 'cs_no_row', payment_status: 'paid', amount_total: 2000,
       metadata: { kind: 'lite_outbound_setup', tenant_id: String(nr.id) } };
     const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
-    // No lite_outbound_payments row exists for this tenant at all.
     assert.ok(!OB.payments.some((x) => x.tenant_id === nr.id), 'the fixture already has a row');
-    const skipped = await psweep.run({ tenantId: nr.id, client: fake });
-    assert.strictEqual(skipped.tenants, 0, 'the row-driven gate found something it should not');
-    const asked = await psweep.run({ tenantId: nr.id, client: fake, always: true });
-    assert.ok(asked.applied.some((a) => a.tenant === nr.id), 'the payment was not recovered');
+    const r = await psweep.run({ client: fake });
+    assert.ok(r.applied.some((a) => a.tenant === nr.id), 'the payment was not recovered');
     assert.strictEqual((await M.Tenant.findByPk(nr.id)).outbound_state, 'pending_setup');
+    assert.ok(OB.payments.some((x) => x.stripe_session_id === 'cs_no_row' && x.status === 'paid'),
+      'the missing row was not written');
   });
 
-  await t('THE UNATTENDED POLLER DOES NOT ASK STRIPE ON A QUIET ACCOUNT', () => {
-    // It runs for ever; `always` must not leak into the timer path.
+  await t('A SETUP FEE TAKEN BUT NEVER APPLIED IS REPAIRED', async () => {
+    // applyPayment claims the row BEFORE it transitions, so a failed
+    // transition leaves the client charged, the row 'paid', and the dashboard
+    // still offering "Activate — $20.00" with nothing that will retry.
+    const st = await M.Tenant.create({ business_name: 'Stranded Co', outbound_state: 'off' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: st.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_stranded', status: 'paid', stripe_event_id: null });
+    const sess = { id: 'cs_stranded', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(st.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    const before = OB.notifs.length;
+    const r = await psweep.run({ client: fake });
+    assert.ok(r.applied.some((a) => a.tenant === st.id && a.repaired), 'the stranded fee was not repaired');
+    assert.strictEqual((await M.Tenant.findByPk(st.id)).outbound_state, 'pending_setup');
+    const fired = OB.notifs.slice(before);
+    assert.ok(fired.some((n) => n.kind === 'owner_setup_paid'), 'nobody was told to build the workflow');
+    // AND IT IS NOT A SECOND CHARGE: no wallet movement, and it cannot repeat.
+    assert.strictEqual((await bl.wallet(st.id)).balance_cents, 0, 'the repair credited a wallet');
+    const again = await psweep.run({ client: fake });
+    assert.ok(!again.applied.some((a) => a.tenant === st.id), 'the repair ran twice');
+  });
+
+  await t('A TENANT DELIBERATELY PUT BACK IS NOT "REPAIRED" OVER', async () => {
+    // outbound_setup_paid_at set means the apply DID happen, so a payable state
+    // is somebody's decision, not a failure. Fighting that would undo an
+    // operator every three minutes.
+    const back = await M.Tenant.create({ business_name: 'Put Back Co', outbound_state: 'off',
+      outbound_setup_paid_at: new Date() });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: back.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_putback', status: 'paid', stripe_event_id: null });
+    const sess = { id: 'cs_putback', payment_status: 'paid', amount_total: 2000,
+      metadata: { kind: 'lite_outbound_setup', tenant_id: String(back.id) } };
+    const fake = { checkout: { sessions: { list: async () => ({ data: [sess] }) } } };
+    const r = await psweep.run({ client: fake });
+    assert.ok(!r.applied.some((a) => a.tenant === back.id), 'an operator decision was overridden');
+    assert.strictEqual((await M.Tenant.findByPk(back.id)).outbound_state, 'off');
+  });
+
+  await t('THE POLLER SWEEPS EVERY TENANT, not one', () => {
     const raw = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
     const tick = raw.slice(raw.indexOf('const tick = async'), raw.indexOf('timer = setInterval'));
     assert.ok(/run\(\{\}\)/.test(tick), 'the poller does not call run with an empty scope');
-    assert.ok(!/always/.test(tick), 'the poller forces a Stripe listing every tick');
   });
 
   await t('STRIPE BEING UNREACHABLE IS REPORTED, never read as "nothing to apply"', async () => {
@@ -3597,8 +3651,8 @@ const tenantSeed = (over = {}) => ({
     const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
     const fn = rt.slice(rt.indexOf("router.post('/confirm'"));
     const body = fn.slice(0, fn.indexOf('\n});'));
-    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId, always: true \}\)/.test(body),
-      'confirm has its own second copy of the sweep, or no longer asks Stripe when our row is missing');
+    assert.ok(/paymentSweep'\)\.run\(\{ tenantId: req\.tenantId \}\)/.test(body),
+      'confirm has its own second copy of the sweep');
     assert.ok(!/checkout\.sessions\.list/.test(body), 'confirm still lists sessions itself');
   });
 
@@ -3810,7 +3864,11 @@ const tenantSeed = (over = {}) => ({
     // Lives in outboundBilling now, not the webhook: the confirm poll can
     // land a duplicate too, so the refund notice belongs with the writer.
     const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
-    const dup = src.slice(src.indexOf('if (!moved.moved)'));
+    // ANCHORED INSIDE applyPayment. applyStrandedSetup has its own
+    // `if (!moved.moved)` and sits above it, so an unanchored slice read the
+    // wrong function and reported a refund notice that was not there.
+    const fn = src.slice(src.indexOf('async function applyPayment'));
+    const dup = fn.slice(fn.indexOf('if (!moved.moved)'));
     const body = dup.slice(0, dup.indexOf('  }'));
     assert.ok(/REFUND DUE|refund/i.test(body), 'a second paid setup fee is silently kept');
     assert.ok(/notify\.notify/.test(body), 'the client is not told they were charged twice');
