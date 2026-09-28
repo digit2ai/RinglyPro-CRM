@@ -338,6 +338,64 @@ M.sequelize = {
       }
       return [[], {}];
     }
+    // WHO THE FOUNDER IS. Without this branch ownerTenantId() reads null, the
+    // owner notification is skipped, and every test about "the owner is told
+    // to build the workflow" passes for the wrong reason — which is exactly
+    // how a paying client ends up waiting for somebody who was never paged.
+    if (/SELECT tenant_id FROM lite_users WHERE LOWER\(email\)/.test(sql)) {
+      const e = String(opts.replacements.e || '').toLowerCase();
+      const hit = M.User._rows.find((u) => String(u.email || '').toLowerCase() === e);
+      return [hit ? [{ tenant_id: hit.tenant_id }] : [], {}];
+    }
+    // ── THE PAYMENT ROWS ────────────────────────────────────────────────
+    // Backed for real because the default `[[], {}]` would make every claim
+    // read as "nothing to apply" — so a broken applyPayment would look
+    // idempotent, which is exactly the bug it must not have.
+    if (/INSERT INTO lite_outbound_payments/.test(sql)) {
+      const rp = opts.replacements;
+      OB.payments.push({ id: OB.payments.length + 1, tenant_id: rp.t,
+        kind: /'setup'/.test(sql) ? 'setup' : 'credit', amount_cents: rp.a,
+        stripe_session_id: rp.s, status: 'open', stripe_event_id: null });
+      return [[], {}];
+    }
+    if (/UPDATE lite_outbound_payments/.test(sql) && /status = 'paid'/.test(sql)) {
+      const rp = opts.replacements;
+      // HONOUR EVERY PREDICATE AS WRITTEN. Dropping the tenant one here would
+      // let a forged session id apply to somebody else's row and the suite
+      // would never notice; dropping `status <> 'paid'` would make a replay
+      // credit a wallet twice inside a test that claims it cannot.
+      // READ THE PREDICATES OFF THE SQL, never hardcode them. Spelling them
+      // out here made the harness more permissive than Postgres: deleting
+      // `AND tenant_id = :t` or `AND status <> 'paid'` from the service left
+      // the suite green, so the two tests guarding a cross-tenant apply and a
+      // replayed credit both passed without being able to fail. Sixth time
+      // this trap has been hit in this file.
+      const scoped = /tenant_id = :t/.test(sql);
+      const onlyUnpaid = /status <> 'paid'/.test(sql);
+      const row = OB.payments.find((x) => x.stripe_session_id === rp.s
+        && (!scoped || x.tenant_id === rp.t)
+        && (!onlyUnpaid || x.status !== 'paid'));
+      if (!row) return [[], {}];
+      // The unique index on the event id is what stops one Stripe event
+      // being applied through two rows; the fake enforces it too.
+      if (rp.e && OB.payments.some((x) => x.stripe_event_id === rp.e)) {
+        const err = new Error('duplicate key value violates unique constraint "uq_lite_ob_pay_event"');
+        throw err;
+      }
+      row.status = 'paid'; row.confirmed_at = new Date();
+      if (rp.e) row.stripe_event_id = rp.e;
+      return [[{ id: row.id, kind: row.kind, amount_cents: row.amount_cents }], {}];
+    }
+    if (/SELECT stripe_session_id FROM lite_outbound_payments/.test(sql)) {
+      const rp = opts.replacements;
+      const onlySetup = /kind = 'setup'/.test(sql);
+      const scoped2 = /tenant_id = :t/.test(sql);
+      const rows = OB.payments.filter((x) => (!scoped2 || x.tenant_id === rp.t)
+        && x.status === 'open'
+        && x.stripe_session_id && (!onlySetup || x.kind === 'setup'))
+        .sort((a, b) => b.id - a.id).slice(0, 5);
+      return [rows.map((x) => ({ stripe_session_id: x.stripe_session_id })), {}];
+    }
     if (/COUNT\(\*\)::int AS n FROM lite_notifications/.test(sql)) {
       const t = opts.replacements.t;
       return [[{ n: OB.notifs.filter((x) => x.tenant_id === t && !x.read_at).length }], {}];
@@ -2875,6 +2933,10 @@ const tenantSeed = (over = {}) => ({
    * something that did not happen.
    */
   const bl = require(path.join(ROOT, 'src/services/outboundBilling'));
+  // THE FOUNDER'S OWN ACCOUNT EXISTS HERE, because "the owner is paged" is a
+  // behavioural claim and an unresolvable owner silently skips the page.
+  const OWNER_T = await M.Tenant.create({ business_name: 'RinglyPro (founder)' });
+  await M.User.create({ tenant_id: OWNER_T.id, email: 'mstagg@digit2ai.com' });
   process.env.LITE_OUTBOUND_COST_PER_MIN_USD = '0.13';
   process.env.LITE_OUTBOUND_MARKUP = '2';
   process.env.LITE_OUTBOUND_RESERVE_MIN = '5';
@@ -3063,6 +3125,170 @@ const tenantSeed = (over = {}) => ({
     assert.ok(/charged_cents/.test(body));
     assert.ok(!/chargeForSeconds|pricePerMinCents/.test(body),
       'the report recomputes a price — it must read the settled figure');
+  });
+
+  /* ── PAYING AND ACTUALLY GETTING IT ────────────────────────────────────
+   * The first live activation: the owner paid by Apple Pay, Stripe returned
+   * them to the dashboard, and NOTHING had happened — the webhook was the
+   * only path to their money and it had not delivered. They were then offered
+   * "Activate — $20.00" again. These tests are that failure. */
+
+  await t('CONFIRM READS NOTHING FROM THE REQUEST — the return URL is public', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = src.slice(src.indexOf("router.post('/confirm'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    // Anyone can visit the success URL, with any query string they like. If
+    // the handler believed a session id from the browser, a stranger could
+    // apply somebody else's payment — or their own, twice.
+    assert.ok(!/req\.body|req\.query|req\.params/.test(body),
+      'confirm trusts the request — a public return URL must not be evidence of payment');
+    assert.ok(/tenant_id = :t/.test(body), 'confirm is not scoped to the caller\'s own rows');
+    assert.ok(/payment_status !== 'paid'/.test(body),
+      'confirm does not check what Stripe itself says about the session');
+  });
+
+  await t('BOTH PATHS SHARE ONE WRITER, so whichever arrives first wins and the other is a no-op', () => {
+    const wh = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks.js'), 'utf8');
+    const fn = wh.slice(wh.indexOf('async function handleOutbound'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    // Two copies of "credit the wallet and move the state" drift the moment
+    // one learns something the other does not, and which one runs depends on
+    // whether a webhook secret happens to be set.
+    assert.ok(/billing\.applyPayment/.test(body), 'the webhook does not delegate to the shared writer');
+    assert.ok(!/credit\(|transition\(/.test(body), 'the webhook has its own second copy of the money logic');
+    const ob = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const cf = ob.slice(ob.indexOf("router.post('/confirm'"));
+    assert.ok(/billing\.applyPayment/.test(cf.slice(0, cf.indexOf('\n});'))),
+      'confirm does not use the same writer as the webhook');
+  });
+
+  await t('a paid session moves the tenant and tells the owner to build the workflow', async () => {
+    const pay = await M.Tenant.create({ business_name: 'Paid Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: pay.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_paid_1', status: 'open', stripe_event_id: null });
+    const before = OB.notifs.length;
+    const out = await bl.applyPayment(pay, { id: 'cs_paid_1', amount_total: 2000 }, { eventId: 'evt_1' });
+    assert.strictEqual(out.applied, true);
+    assert.strictEqual(out.kind, 'setup');
+    const fresh = await M.Tenant.findByPk(pay.id);
+    assert.strictEqual(fresh.outbound_state, 'pending_setup', 'paying did not move the tenant');
+    assert.ok(fresh.outbound_setup_due_at, 'no promised time was recorded');
+    const fired = OB.notifs.slice(before);
+    assert.ok(fired.some((n) => n.tenant_id === pay.id && n.kind === 'outbound_setup_paid'),
+      'the client was not told their payment landed');
+    assert.ok(fired.some((n) => n.kind === 'owner_setup_paid'),
+      'the owner was not told to build the workflow — the client would wait for ever');
+  });
+
+  await t('APPLYING THE SAME SESSION TWICE CHANGES NOTHING', async () => {
+    // The webhook and the confirm poll can both reach a session. The second
+    // one must be a no-op, not a second $20 or a second wallet credit.
+    const twice = await M.Tenant.create({ business_name: 'Twice Co', outbound_state: 'active' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: twice.id, kind: 'credit',
+      amount_cents: 5000, stripe_session_id: 'cs_twice', status: 'open', stripe_event_id: null });
+    const a = await bl.applyPayment(twice, { id: 'cs_twice', amount_total: 5000 }, {});
+    const b = await bl.applyPayment(twice, { id: 'cs_twice', amount_total: 5000 }, {});
+    assert.strictEqual(a.applied, true);
+    assert.strictEqual(b.applied, false, 'the same payment was applied twice');
+    assert.strictEqual((await bl.wallet(twice.id)).balance_cents, 5000,
+      'the wallet was credited twice for one payment');
+  });
+
+  await t('one Stripe EVENT cannot be applied through two rows', async () => {
+    const ev = await M.Tenant.create({ business_name: 'Event Co', outbound_state: 'active' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: ev.id, kind: 'credit',
+      amount_cents: 1000, stripe_session_id: 'cs_ev_a', status: 'open', stripe_event_id: null });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: ev.id, kind: 'credit',
+      amount_cents: 1000, stripe_session_id: 'cs_ev_b', status: 'open', stripe_event_id: null });
+    await bl.applyPayment(ev, { id: 'cs_ev_a', amount_total: 1000 }, { eventId: 'evt_same' });
+    const second = await bl.applyPayment(ev, { id: 'cs_ev_b', amount_total: 1000 }, { eventId: 'evt_same' });
+    assert.strictEqual(second.applied, false, 'a replayed event credited a second row');
+    assert.strictEqual((await bl.wallet(ev.id)).balance_cents, 1000);
+  });
+
+  await t('CREDITING MORE THAN ARRIVED IS REFUSED — the smaller of the two figures wins', async () => {
+    const sm = await M.Tenant.create({ business_name: 'Small Co', outbound_state: 'active' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: sm.id, kind: 'credit',
+      amount_cents: 20000, stripe_session_id: 'cs_small', status: 'open', stripe_event_id: null });
+    // Our row says $200; Stripe says $1 arrived. Believe Stripe.
+    await bl.applyPayment(sm, { id: 'cs_small', amount_total: 100 }, {});
+    assert.strictEqual((await bl.wallet(sm.id)).balance_cents, 100,
+      'the wallet was credited our own figure rather than what Stripe took');
+  });
+
+  await t('a session belonging to ANOTHER tenant applies nothing', async () => {
+    const mine = await M.Tenant.create({ business_name: 'Mine Co', outbound_state: 'active' });
+    const yours = await M.Tenant.create({ business_name: 'Yours Co', outbound_state: 'active' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: yours.id, kind: 'credit',
+      amount_cents: 9900, stripe_session_id: 'cs_yours', status: 'open', stripe_event_id: null });
+    const out = await bl.applyPayment(mine, { id: 'cs_yours', amount_total: 9900 }, {});
+    assert.strictEqual(out.applied, false, 'one tenant applied another tenant\'s payment');
+    assert.strictEqual((await bl.wallet(mine.id)).balance_cents, 0);
+    assert.strictEqual((await bl.wallet(yours.id)).balance_cents, 0, 'the real owner lost the credit too');
+  });
+
+  await t('PAYING THE SETUP FEE TWICE IS REPORTED FOR REFUND, never swallowed', async () => {
+    const dup = await M.Tenant.create({ business_name: 'Dup Co', outbound_state: 'awaiting_setup_payment' });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: dup.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_dup_1', status: 'open', stripe_event_id: null });
+    OB.payments.push({ id: OB.payments.length + 1, tenant_id: dup.id, kind: 'setup',
+      amount_cents: 2000, stripe_session_id: 'cs_dup_2', status: 'open', stripe_event_id: null });
+    await bl.applyPayment(dup, { id: 'cs_dup_1', amount_total: 2000 }, {});
+    const before = OB.notifs.length;
+    const out = await bl.applyPayment(dup, { id: 'cs_dup_2', amount_total: 2000 }, {});
+    assert.strictEqual(out.refund_due, true, 'a second setup charge was absorbed silently');
+    const fired = OB.notifs.slice(before);
+    assert.ok(fired.some((n) => n.kind === 'outbound_duplicate_fee' && n.tenant_id === dup.id),
+      'the client was not told they were charged twice');
+    assert.ok(fired.some((n) => n.kind === 'owner_refund_due'),
+      'nobody was told to issue the refund');
+  });
+
+  await t('A SECOND TAP ON ACTIVATE STILL LEAVES A PAYABLE STATE', () => {
+    // The reuse branch returned the open checkout URL and skipped the
+    // transition, so the tenant stayed 'off' and the tab kept offering
+    // "Activate — $20.00" to somebody who already had a checkout open.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const fn = src.slice(src.indexOf("router.post('/activate'"), src.indexOf("router.post('/confirm'"));
+    const reuse = fn.slice(fn.indexOf('reused: true') - 900, fn.indexOf('reused: true'));
+    assert.ok(/billing\.transition/.test(reuse),
+      'the reuse path does not move the tenant — the tab will re-offer Activate');
+  });
+
+  await t('THE CLIENT LANDS ON OUTBOUND AFTER PAYING, and the URL is cleaned', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    // Stripe sent them back to whatever tab was last open (Messages), so the
+    // payment looked like it had failed and they were about to pay again.
+    const i = src.indexOf('[?&]outbound=');
+    assert.ok(i > 0, 'nothing handles the Stripe return');
+    const h = src.slice(i, i + 1600);
+    assert.ok(/data-view="outbound"/.test(h), 'the return does not switch to the Outbound tab');
+    assert.ok(/replaceState/.test(h), 'the URL is not cleaned — a refresh would re-run the return');
+    assert.ok(/outbound\/confirm/.test(h), 'the return does not ask the server to confirm');
+    assert.ok(/obConfirmSlow/.test(h),
+      'a payment that has not cleared shows nothing — the client would pay twice');
+    // And the success URL must actually carry the parameter the page reads.
+    // EVERY success URL, not just one. The first version of this check passed
+    // with the activate URL stripped, because the topup URL still matched.
+    const rt = fs.readFileSync(path.join(ROOT, 'src/routes/outbound.js'), 'utf8');
+    const urls = rt.match(/success_url:[^\n]*/g) || [];
+    assert.ok(urls.length >= 2, 'expected a success URL for both the setup fee and a top-up');
+    for (const u of urls) {
+      assert.ok(/outbound=/.test(u),
+        'Stripe is told to return to a URL the dashboard does not recognise: ' + u.trim());
+    }
+  });
+
+  await t('AN UNCONFIRMED PAYMENT SELF-HEALS when the tab is opened', () => {
+    // Somebody who paid and closed the tab has no ?outbound= to come back
+    // with. Without this their money is stuck until a human notices.
+    const src = fs.readFileSync(path.join(ROOT, 'public/dashboard.html'), 'utf8');
+    const i = src.indexOf("awaiting_setup_payment'){");
+    assert.ok(i > 0, 'the awaiting-payment gate is gone');
+    const gate = src.slice(i, i + 1400);
+    assert.ok(/outbound\/confirm/.test(gate),
+      'opening the tab in the awaiting state does not try to confirm');
+    assert.ok(/__obConfirmTried/.test(gate), 'the self-heal is not guarded against looping');
   });
 
   await t('the state machine is a compare-and-swap, so a webhook retry cannot double-activate', async () => {
@@ -3270,7 +3496,9 @@ const tenantSeed = (over = {}) => ({
   });
 
   await t('a duplicate setup fee is raised for refund, never pocketed', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'src/routes/webhooks.js'), 'utf8');
+    // Lives in outboundBilling now, not the webhook: the confirm poll can
+    // land a duplicate too, so the refund notice belongs with the writer.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/outboundBilling.js'), 'utf8');
     const dup = src.slice(src.indexOf('if (!moved.moved)'));
     const body = dup.slice(0, dup.indexOf('  }'));
     assert.ok(/REFUND DUE|refund/i.test(body), 'a second paid setup fee is silently kept');

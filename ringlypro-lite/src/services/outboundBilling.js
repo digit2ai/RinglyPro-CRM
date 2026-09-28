@@ -361,6 +361,75 @@ async function settleFromCallLog(f, { tenantId, windowMin } = {}) {
   return Object.assign({ claimed: true, tenant_id: rows[0].tenant_id, call_row: rows[0].id }, r);
 }
 
+/**
+ * APPLY A PAID STRIPE SESSION. ONE WRITER, TWO SOURCES.
+ *
+ * The webhook calls this, and so does the return-from-Stripe confirm. Two
+ * copies of "a payment arrived" would drift the moment one learned something
+ * the other did not — the same rule callMirror follows for call results.
+ *
+ * WHY A SECOND SOURCE EXISTS AT ALL: the webhook is not reliable enough to be
+ * the only path to somebody's money. It needs STRIPE_WEBHOOK_SECRET set, the
+ * endpoint registered, and Stripe's delivery to succeed. When any of those is
+ * missing the client pays and NOTHING happens — which is exactly what
+ * happened on the first live activation. The confirm path asks Stripe itself
+ * whether the session is paid, so a misconfigured webhook is a latency
+ * problem rather than lost money.
+ *
+ * Idempotent on the payment row: `status <> 'paid'` in the claiming UPDATE
+ * means whichever source arrives second is a no-op.
+ */
+async function applyPayment(tenant, session, { eventId } = {}) {
+  const notify = require('./notify');
+  const [claimed] = await sequelize.query(
+    `UPDATE lite_outbound_payments
+        SET status = 'paid', confirmed_at = NOW(), stripe_event_id = COALESCE(:e, stripe_event_id)
+      WHERE stripe_session_id = :s AND tenant_id = :t AND status <> 'paid'
+      RETURNING id, kind, amount_cents`,
+    { replacements: { s: session.id, t: tenant.id, e: eventId || null } }
+  ).catch((e) => {
+    if (/uq_lite_ob_pay_event|duplicate key/i.test(String(e.message || e))) return [[]];
+    throw e;
+  });
+  if (!claimed || !claimed.length) return { applied: false, reason: 'already_applied' };
+
+  const row = claimed[0];
+  // The amount is OUR row's, never the event's — but if Stripe's own figure
+  // is smaller, take the smaller. Crediting more than arrived is the one
+  // direction that costs real money.
+  let amount = Number(row.amount_cents) || 0;
+  const paid = Number(session.amount_total);
+  if (Number.isFinite(paid) && paid > 0 && paid < amount) amount = paid;
+
+  if (row.kind === 'credit') {
+    await credit(tenant.id, amount);
+    await notify.notify(tenant.id, 'outbound_funded', 'Funds added',
+      `$${(amount / 100).toFixed(2)} added to your outbound balance.`);
+    return { applied: true, kind: 'credit', amount_cents: amount };
+  }
+
+  const due = new Date(Date.now() + slaHours() * 3600 * 1000);
+  const moved = await transition(tenant.id,
+    ['off', 'awaiting_setup_payment', 'failed_setup'], 'pending_setup',
+    { outbound_setup_paid_at: new Date(), outbound_setup_due_at: due, outbound_state_reason: null });
+  if (!moved.moved) {
+    // Paid twice for one setup. Raised on both surfaces so it is refunded,
+    // not discovered in an audit months later.
+    console.warn('[lite:outbound] DUPLICATE setup fee for tenant', tenant.id, '— refund due');
+    await notify.notify(tenant.id, 'outbound_duplicate_fee', 'Duplicate setup fee',
+      'You were charged the setup fee twice. We have been notified and will refund it.');
+    await notify.notifyOwner('owner_refund_due',
+      `REFUND DUE — duplicate setup fee, tenant ${tenant.id}`,
+      `Session ${session.id}, ${amount}c. Refund it in Stripe.`).catch(() => {});
+    return { applied: false, reason: 'duplicate_setup', refund_due: true };
+  }
+
+  await notify.notify(tenant.id, 'outbound_setup_paid', 'Outbound setup paid',
+    `Your outbound caller will be ready by ${due.toISOString()}. We will let you know the moment it is live.`);
+  await notify.ownerSetupPaid(tenant, due).catch(() => {});
+  return { applied: true, kind: 'setup', due_at: due };
+}
+
 /* ── WHAT THE CLIENT SEES ────────────────────────────────────────────────── */
 
 /** The per-call report. Only facts: no outcome is invented for a missing log. */
@@ -420,5 +489,5 @@ module.exports = {
   pricing, pricePerMinCents, setupFeeCents, minTopupCents, reserveCents, reserveMin,
   slaHours, chargeForSeconds, costPerMinUsd, markup,
   ensureWallet, wallet, credit, reserve, release, settle, sweepStaleReserves,
-  callReport, spendSummary, settleFromCallLog,
+  callReport, spendSummary, settleFromCallLog, applyPayment,
 };

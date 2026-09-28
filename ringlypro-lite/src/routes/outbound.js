@@ -63,6 +63,10 @@ router.get('/status', async (req, res) => {
     calling_hours: `${ob.startHour()}:00–${ob.endHour()}:00 in each contact's own timezone`,
     consent_bases: ob.CONSENT_BASES,
     // STATED, NOT IMPLIED. Scrubbing needs an FTC SAN the owner does not have.
+    // Visible rather than assumed: with no webhook secret set, Stripe's
+    // confirmation is refused and the /confirm path above is the ONLY thing
+    // applying payments.
+    webhook_confirms: !!(process.env.LITE_STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET),
     national_dnc_scrub: false,
     national_dnc_note: 'Numbers are NOT checked against the National Do Not Call registry. That needs an FTC Subscription Account Number. Only your own do-not-call list is applied.',
   });
@@ -270,7 +274,13 @@ router.post('/activate', async (req, res) => {
     if (open && open.length && open[0].stripe_session_id) {
       try {
         const prev = await s.checkout.sessions.retrieve(open[0].stripe_session_id);
-        if (prev && prev.status === 'open' && prev.url) return res.json({ url: prev.url, reused: true });
+        if (prev && prev.status === 'open' && prev.url) {
+          // TRANSITION HERE TOO. Returning early skipped it, so a second tap
+          // on Activate left the tenant in 'off' — and the tab then offered
+          // "Activate — $20.00" to somebody with a live checkout open.
+          await billing.transition(req.tenantId, ['off', 'failed_setup'], 'awaiting_setup_payment');
+          return res.json({ url: prev.url, reused: true });
+        }
       } catch (_) { /* fall through and make a new one */ }
     }
 
@@ -292,6 +302,54 @@ router.post('/activate', async (req, res) => {
   } catch (e) {
     res.status(502).json({ error: 'checkout_failed', detail: String(e.message || e).slice(0, 200) });
   }
+});
+
+/**
+ * CONFIRM A PAYMENT BY ASKING STRIPE, not by believing the browser.
+ *
+ * The return URL cannot be trusted — anyone can visit it — so this does not
+ * read a single thing from the request. It finds THIS TENANT's open payment
+ * rows, retrieves each session from Stripe with the server key, and applies
+ * only the ones Stripe itself reports as paid.
+ *
+ * WHY IT EXISTS: the webhook was the only path to somebody's money, and it
+ * needs the secret set, the endpoint registered and Stripe's delivery to
+ * succeed. When any of those is missing the client pays and NOTHING happens
+ * — which is what happened on the first live activation. With this, a
+ * misconfigured webhook is a latency problem instead of lost money.
+ */
+router.post('/confirm', async (req, res) => {
+  // It reaches Stripe, so it gets the same kind of ceiling as the routes
+  // that mint sessions — generous, because a legitimate poll after paying
+  // makes several calls in a row.
+  if (tooMany(req.tenantId, 'confirm', 30)) return res.status(429).json({ error: 'slow_down' });
+  const t = await Tenant.findByPk(req.tenantId);
+  if (!t) return res.status(404).json({ error: 'no_tenant' });
+  const s = stripe();
+  if (!s) return res.status(503).json({ error: 'payments_not_configured' });
+
+  const [rows] = await sequelize.query(
+    `SELECT stripe_session_id FROM lite_outbound_payments
+      WHERE tenant_id = :t AND status = 'open' AND stripe_session_id IS NOT NULL
+      ORDER BY id DESC LIMIT 5`,
+    { replacements: { t: req.tenantId } }
+  );
+  const applied = [];
+  for (const r of (rows || [])) {
+    let sess = null;
+    try { sess = await s.checkout.sessions.retrieve(r.stripe_session_id); }
+    catch (e) { continue; }                     // a session Stripe cannot find is not a payment
+    if (!sess || sess.payment_status !== 'paid') continue;
+    try {
+      const out = await billing.applyPayment(t, sess, {});
+      if (out.applied) applied.push(out);
+    } catch (e) {
+      console.warn('[lite:outbound] confirm failed for', r.stripe_session_id, e.message);
+    }
+  }
+  const fresh = await Tenant.findByPk(req.tenantId);
+  res.json({ ok: true, applied, state: fresh.outbound_state,
+    wallet: await billing.wallet(req.tenantId) });
 });
 
 /** Add funds. Any amount at or above the floor. */
