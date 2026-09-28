@@ -28,6 +28,24 @@ const Tenant = sequelize.define('LiteTenant', {
   subscription_status: { type: DataTypes.STRING, defaultValue: 'trialing' }, // trialing|active|past_due|canceled|suspended
   trial_ends_at: { type: DataTypes.DATE },
   suspended_at: { type: DataTypes.DATE },           // answering suspended (failed payment)
+  // OUTBOUND CALLING (the paid add-on). THESE MUST BE DECLARED HERE.
+  // The columns are created by the idempotent ALTERs in server.js, and for a
+  // while they existed ONLY there — so Sequelize never selected them and every
+  // `tenant.outbound_state` read `undefined`. The dashboard coalesces that to
+  // 'off', so a client who had paid, and whose row really said 'pending_setup',
+  // was shown "Activate — $20.00" for ever; `transition()` uses raw SQL against
+  // the real column, so it correctly found nothing to move and every recovery
+  // path reported "seen, not applied". That cost a whole evening of chasing the
+  // payment logic, which was right the entire time.
+  // A column added by an ALTER must be added to the model in the same change.
+  outbound_enabled: { type: DataTypes.BOOLEAN, defaultValue: false },
+  outbound_workflow_id: { type: DataTypes.STRING(64) },
+  outbound_daily_cap: { type: DataTypes.INTEGER, defaultValue: 50 },
+  outbound_state: { type: DataTypes.STRING(24), defaultValue: 'off' },
+  outbound_state_reason: { type: DataTypes.STRING(200) },
+  outbound_setup_paid_at: { type: DataTypes.DATE },
+  outbound_setup_due_at: { type: DataTypes.DATE },
+  outbound_activated_at: { type: DataTypes.DATE },
   // Minute banking:
   //  rollover_minutes = unused INCLUDED minutes carried from prior periods.
   //  purchased_minutes = prepaid overage minutes bought via recharge (do not expire).

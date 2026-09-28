@@ -3675,6 +3675,34 @@ const tenantSeed = (over = {}) => ({
     assert.ok(!/cs_|@|2000/.test(json), 'the branch report carries detail, not flags');
   });
 
+  await t('EVERY COLUMN THE ALTERS CREATE IS DECLARED ON THE MODEL', () => {
+    // THE BUG THAT COST AN ENTIRE EVENING. The outbound columns were created
+    // by the idempotent ALTERs in server.js and declared nowhere else, so
+    // Sequelize never selected them: `tenant.outbound_state` read `undefined`,
+    // the dashboard coalesced it to 'off', and a client whose row really said
+    // 'pending_setup' was shown "Activate — $20.00" for ever. Meanwhile
+    // transition() uses RAW SQL against the real column, so it correctly found
+    // nothing to move and every recovery path reported "seen, not applied" —
+    // sending five fixes at payment logic that was right the whole time.
+    // READ THE REAL SOURCE, not M.Tenant: this suite replaces src/models.js
+    // with an in-memory fake, so asking the fake what it declares tests the
+    // harness and not the product — the first version of this check did
+    // exactly that and reported every column as missing.
+    const boot = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+    const msrc = fs.readFileSync(path.join(ROOT, 'src/models.js'), 'utf8');
+    const di = msrc.indexOf("const Tenant = sequelize.define('LiteTenant', {");
+    const blk = msrc.slice(di, msrc.indexOf('\n});', di));
+    const declared = new Set([...blk.matchAll(/^ {2}([a-z_]+):\s*\{/gm)].map((m) => m[1]));
+    assert.ok(declared.size > 10, 'the model scan found nothing — the regex has drifted');
+    const created = [...boot.matchAll(/ALTER TABLE lite_tenants ADD COLUMN IF NOT EXISTS ([a-z_]+)/g)]
+      .map((m) => m[1]);
+    assert.ok(created.length >= 8, 'the ALTER scan found nothing — the regex has drifted');
+    const missing = created.filter((c) => !declared.has(c));
+    assert.deepStrictEqual(missing, [],
+      'columns exist in the database but not on the model, so every read of them is undefined: '
+      + missing.join(', '));
+  });
+
   await t('THE RECOVERY REPORTS WHAT IT SAW, in counts and never in detail', async () => {
     // "Nothing happened" was the only signal from outside, and it cannot be
     // told apart from "nothing found", "found but tagged to another tenant" or
