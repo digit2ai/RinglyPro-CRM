@@ -536,6 +536,30 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
+  // UNA INSTRUCCIÓN ESCRITA EN EL CHAT SE GUARDA SOLA (Eduardo, 29-sep-2026: "las dos
+  // secciones deben enseñar"). Conversar seguía sin enseñar nada, y eso ya se explicó en
+  // pantalla; lo que faltaba es que escribir "de ahora en adelante responde X" hiciera lo
+  // que cualquiera espera. Se guarda SOLO cuando el texto es una instrucción: una pregunta
+  // nunca se guarda, porque llenaría el conocimiento de Maya con las pruebas del admin.
+  // El admin lo ve marcado en el chat y puede deshacerlo con un toque (desactivar).
+  const INSTR = [
+    /\b(de ahora en adelante|a partir de ahora|de aquí en adelante|desde ahora)\b/i,
+    /\b(siempre|nunca|jamás)\b[^?]*$/i,
+    /\b(recuerda|ten en cuenta|toma nota|anota|apunta|aprende|memoriza|guarda) que\b/i,
+    /\b(debes|tienes que|hay que|deberías|no debes|no puedes) (responder|decir|contestar|explicar|usar|hablar|mencionar|recomendar|sugerir)\b/i,
+    /\b(cuando (te )?pregunten|si (te )?preguntan|cada vez que (te )?pregunten)\b/i,
+    /\b(responde|contesta|explica|di|dile|usa|habla) (siempre|así|de esta forma|de esta manera|en|con)\b/i,
+    /\b(no (respondas|digas|menciones|recomiendes|uses))\b/i,
+    /\b(la regla es|la política es|la norma es|corrige|corrección:)\b/i,
+  ];
+  function looksLikeInstruction(text) {
+    const t = String(text || '').trim();
+    if (t.length < 25 || t.length > 4000) return false;          // muy corto no es una instrucción
+    if (/^(qué|que|quién|quien|cuál|cual|cuándo|cuando|cómo|como|dónde|donde|por qué|porque|cuánto|cuanto|sabes|puedes|me puedes|explícame|explicame|dime)\b/i.test(t) && t.indexOf('?') >= 0) return false;
+    if (/\?\s*$/.test(t) && !INSTR[0].test(t)) return false;      // termina en pregunta: no se guarda
+    return INSTR.some((re) => re.test(t));
+  }
+
   // ── Entrenar a Maya: chat del admin + corrección que queda como regla ──
   // El chat usa la MISMA instrucción de la app, las reglas y documentos activos y el
   // calendario DIAN validado: lo que el admin ve es lo que vería un usuario. Nada del chat
@@ -555,7 +579,16 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
       const system = mayaSystem() + kb.promptBlock(await kb.activeText(db(), tenant())) + dian.knowledgeBlock(await dianTable());
       const r = await askMaya(system, null, msgs);
       audit(req, req.admin.email, 'admin.train_chat', r.ok ? 'success' : 'model_error', { turns: msgs.length });
-      res.json(r);
+      // La instrucción se guarda aunque el modelo falle: enseñar no depende de que Maya conteste.
+      const last = msgs[msgs.length - 1].content;
+      let saved = null;
+      if (looksLikeInstruction(last)) {
+        const name = 'Instrucción: ' + last.replace(/\s+/g, ' ').slice(0, 80);
+        const up = await kb.upload(db(), { tenant: tenant(), name, filename: 'escrito-en-entrenar.md', buf: Buffer.from(last, 'utf8'), by: req.admin.email });
+        audit(req, req.admin.email, 'admin.train_autosave', up.status === 200 ? 'success' : up.error, up.doc ? { id: up.doc.id, name: up.doc.name, version: up.doc.version } : null);
+        saved = up.status === 200 ? { id: up.doc.id, name: up.doc.name, version: up.doc.version, replaced: up.replaced === true } : { error: up.message || up.error };
+      }
+      res.json(Object.assign({}, r, { saved }));
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
   api.post('/train/rule', async (req, res) => {

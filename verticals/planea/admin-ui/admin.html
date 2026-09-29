@@ -100,6 +100,8 @@
   .msg.user .acts{justify-content:flex-end}
   .msg.user .acts button.ok{color:#cfe6dc;border-color:rgba(255,255,255,.45)}
   .keptnote{margin-top:6px;font-size:12.5px;color:var(--green);max-width:85%}
+  .keptnote.mut{color:var(--mut)}
+  .keptnote .undo{min-height:32px;padding:4px 10px;margin-left:6px;font:inherit;font-size:12px;background:transparent;color:var(--mut);border:1px solid var(--line);border-radius:8px;cursor:pointer}
   .warnbox{border:1px solid var(--amber);background:#fdf6ec;border-radius:10px;padding:12px 14px;font-size:14px;margin:0 0 12px;line-height:1.5}
   @media(max-width:760px){.msg .acts button{min-height:44px;padding:10px 14px}.msg .b{max-width:100%}}
   .fix{margin-top:8px;max-width:85%;border:1px solid var(--amber);border-radius:10px;padding:10px;background:#fff}
@@ -176,7 +178,7 @@
 
     <div id="tab-train" class="card" hidden>
       <h2>Entrenar a Maya</h2>
-      <div class="warnbox"><b>Conversar aquí no le enseña nada a Maya.</b> Lo que escribes en el chat se pierde al cerrar la conversación. Maya solo aprende cuando tocas un botón debajo de un mensaje: <b>Está bien, guardar así</b>, <b>Está mal, corregir</b> o <b>Guardar esta instrucción</b>. Eso crea una regla con tu nombre y la fecha, queda en Conocimiento de Maya y Maya la aplica con todos los usuarios en menos de un minuto.</div>
+      <div class="warnbox"><b>Aquí también se enseña.</b> Si escribes una instrucción ("de ahora en adelante responde…", "recuerda que…", "nunca digas…"), se guarda sola en el conocimiento de Maya y ella la aplica con todos los usuarios; verás el aviso debajo de tu mensaje y puedes deshacerlo con un toque. Una <b>pregunta</b> no se guarda: es solo una prueba. Y si una respuesta está bien o está mal, guárdala o corrígela con los botones que aparecen debajo de ella.</div>
       <p class="mut">Aquí Maya responde con las mismas reglas, documentos y calendario DIAN que en la app, así que ves exactamente lo que vería un usuario antes de que lo vea.</p>
       <div class="chat" id="chatBox"><div class="mut" id="chatEmpty">Escribe una pregunta para empezar.</div></div>
       <label for="chatQ">Tu mensaje</label>
@@ -530,7 +532,9 @@
     box.innerHTML = CHAT.map(function (m, i) {
       if (m.role === 'user') {
         return '<div class="msg user"><span class="b">' + esc(m.content) + '</span>' +
-          (m.kept ? '<div class="keptnote">Guardado como conocimiento: «' + esc(m.kept) + '»</div>'
+          (m.kept ? '<div class="keptnote">Guardado en el conocimiento de Maya: «' + esc(m.kept) + '»' +
+                      (m.keptId ? ' <button type="button" class="undo" data-undo="' + i + '">Deshacer</button>' : '') + '</div>'
+                  : m.undone ? '<div class="keptnote mut">Se deshizo: Maya ya no lo lee.</div>'
                   : '<div class="acts"><button type="button" class="ok" data-know="' + i + '" title="Guarda este texto tal cual, para que Maya lo lea siempre">Guardar esta instrucción</button></div>') + '</div>';
       }
       var fix = '';
@@ -554,6 +558,8 @@
     call('POST', '/train/chat', { messages: hist }).then(function (r) {
       $('chatBtn').disabled = false; $('chatBtn').textContent = 'Enviar';
       if (r._status !== 200) { $('chatErr').textContent = r.message || r.error || 'No se pudo enviar.'; CHAT.pop(); $('chatQ').value = q; renderChat(); return; }
+      if (r.saved && r.saved.id) { for (var u = CHAT.length - 1; u >= 0; u--) if (CHAT[u].role === 'user') { CHAT[u].kept = r.saved.name; CHAT[u].keptId = r.saved.id; break; } loadKb(); }
+      else if (r.saved && r.saved.error) $('chatErr').textContent = 'No se pudo guardar la instrucción: ' + r.saved.error;
       if (!r.ok) { CHAT.push({ role: 'maya', content: r.reason || 'Sin respuesta.', error: true }); }
       else CHAT.push({ role: 'maya', content: r.reply });
       renderChat();
@@ -574,6 +580,15 @@
       call('POST', '/train/rule', { question: q, correction: CHAT[i].content, confirmed: true }).then(function (r) {
         if (r._status !== 200) { t.disabled = false; t.textContent = 'Está bien, guardar así'; $('chatErr').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
         CHAT[i].kept = r.doc.name; renderChat(); loadKb();
+      });
+      return;
+    }
+    if (t.hasAttribute('data-undo')) {
+      i = +t.getAttribute('data-undo');
+      t.disabled = true;
+      call('POST', '/kb/' + CHAT[i].keptId + '/deactivate').then(function (r) {
+        if (r._status !== 200) { t.disabled = false; $('chatErr').textContent = r.message || 'No se pudo deshacer.'; return; }
+        CHAT[i].kept = null; CHAT[i].keptId = null; CHAT[i].undone = true; renderChat(); loadKb();
       });
       return;
     }
