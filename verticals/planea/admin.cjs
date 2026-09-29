@@ -561,7 +561,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   api.post('/train/rule', async (req, res) => {
     try {
       const b = req.body || {};
-      const r = await kb.addRule(db(), { tenant: tenant(), question: b.question, wrong: b.wrong_answer, correction: b.correction, by: req.admin.email });
+      const r = await kb.addRule(db(), { tenant: tenant(), question: b.question, wrong: b.wrong_answer, correction: b.correction, by: req.admin.email, confirmed: b.confirmed === true });
       audit(req, req.admin.email, 'admin.train_rule', r.status === 200 ? 'success' : r.error, r.doc ? { id: r.doc.id, name: r.doc.name, version: r.doc.version } : null);
       if (r.status !== 200) return res.status(r.status).json({ error: r.error, message: r.message });
       res.json({ ok: true, doc: r.doc, replaced: r.replaced });

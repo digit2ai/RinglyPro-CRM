@@ -372,6 +372,14 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     let kt = await kb.activeText(sq, 990918);
     ok(/CORRECCIONES DEL EQUIPO/.test(kt) && /no indica un porcentaje fijo/.test(kt) && !/Ahorra el 50/.test(kt), 'Maya recibe la corrección y nunca la respuesta equivocada');
     ok(kt.indexOf('CORRECCIONES DEL EQUIPO') === 0, 'las correcciones van antes que los documentos');
+    const keep = await call('POST', '/planea/admin/api/train/rule', { cookie: ac, body: { question: '¿Qué es el Puntaje Planea?', correction: 'Va de 0 a 100 y se calcula con ocho pilares.', confirmed: true } });
+    ok(keep.status === 200 && /^Respuesta aprobada:/.test(keep.body.doc.name), 'aprobar una respuesta buena la guarda como regla, no como corrección');
+    const keepRow = await call('GET', '/planea/admin/api/kb/' + keep.body.doc.id, { cookie: ac });
+    ok(keepRow.body.doc.meta.confirmed === true && !keepRow.body.doc.meta.wrong_answer, 'una respuesta aprobada no guarda ninguna respuesta equivocada');
+    kb._cache.clear();
+    ok(/ocho pilares/.test(await kb.activeText(sq, 990918)), 'la respuesta aprobada llega a Maya como regla');
+    await call('POST', '/planea/admin/api/kb/' + keep.body.doc.id + '/deactivate', { cookie: ac });
+
     const ed = await call('POST', '/planea/admin/api/kb/' + rule.body.doc.id + '/edit', { cookie: ac, body: { text: 'Cuando pregunten cuánto ahorrar: Planea no fija un porcentaje; muestra el propio con ingresos y gastos.' } });
     ok(ed.status === 200 && ed.body.doc.version === 2 && ed.body.doc.kind === 'rule', 'editar una regla crea una versión nueva');
     const oldV = await call('GET', '/planea/admin/api/kb/' + rule.body.doc.id, { cookie: ac });

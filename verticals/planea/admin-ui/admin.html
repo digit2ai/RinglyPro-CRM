@@ -94,7 +94,14 @@
   .msg.user{align-items:flex-end}.msg.user .b{background:var(--brand);color:#fff}
   .msg.maya .b{background:#fff;border:1px solid var(--line)}
   .msg .acts{margin-top:4px}
-  .msg .acts button{min-height:32px;padding:4px 10px;font-size:12.5px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:8px}
+  .msg .acts{display:flex;gap:8px;flex-wrap:wrap}
+  .msg .acts button{min-height:36px;padding:6px 12px;font-size:12.5px;background:transparent;color:var(--red);border:1px solid var(--red);border-radius:8px}
+  .msg .acts button.ok{color:var(--green);border-color:var(--green)}
+  .msg.user .acts{justify-content:flex-end}
+  .msg.user .acts button.ok{color:#cfe6dc;border-color:rgba(255,255,255,.45)}
+  .keptnote{margin-top:6px;font-size:12.5px;color:var(--green);max-width:85%}
+  .warnbox{border:1px solid var(--amber);background:#fdf6ec;border-radius:10px;padding:12px 14px;font-size:14px;margin:0 0 12px;line-height:1.5}
+  @media(max-width:760px){.msg .acts button{min-height:44px;padding:10px 14px}.msg .b{max-width:100%}}
   .fix{margin-top:8px;max-width:85%;border:1px solid var(--amber);border-radius:10px;padding:10px;background:#fff}
   .fix.saved{border-color:var(--green)}
   .kind{font-size:11px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:6px;background:#eceff0;color:var(--mut)}
@@ -169,7 +176,8 @@
 
     <div id="tab-train" class="card" hidden>
       <h2>Entrenar a Maya</h2>
-      <p class="mut">Conversa con Maya como lo haría un usuario: responde con sus mismas reglas, las correcciones y documentos activos y el calendario DIAN validado. Si una respuesta está mal, toca <b>Marcar como incorrecta</b> y escribe la respuesta correcta. La corrección se guarda como una <b>regla</b> con tu nombre y la fecha, aparece en Conocimiento de Maya (donde se puede ver, editar o desactivar) y Maya la aplica desde la siguiente conversación con cualquier usuario. La conversación no se guarda; solo la corrección.</p>
+      <div class="warnbox"><b>Conversar aquí no le enseña nada a Maya.</b> Lo que escribes en el chat se pierde al cerrar la conversación. Maya solo aprende cuando tocas un botón debajo de un mensaje: <b>Está bien, guardar así</b>, <b>Está mal, corregir</b> o <b>Guardar esta instrucción</b>. Eso crea una regla con tu nombre y la fecha, queda en Conocimiento de Maya y Maya la aplica con todos los usuarios en menos de un minuto.</div>
+      <p class="mut">Aquí Maya responde con las mismas reglas, documentos y calendario DIAN que en la app, así que ves exactamente lo que vería un usuario antes de que lo vea.</p>
       <div class="chat" id="chatBox"><div class="mut" id="chatEmpty">Escribe una pregunta para empezar.</div></div>
       <label for="chatQ">Tu mensaje</label>
       <textarea id="chatQ" rows="2" maxlength="2000" placeholder="Ej: ¿Cuándo tengo que declarar renta si mi cédula termina en 45?"></textarea>
@@ -520,12 +528,20 @@
     var box = $('chatBox');
     if (!CHAT.length) { box.innerHTML = '<div class="mut">Escribe una pregunta para empezar.</div>'; return; }
     box.innerHTML = CHAT.map(function (m, i) {
-      if (m.role === 'user') return '<div class="msg user"><span class="b">' + esc(m.content) + '</span></div>';
+      if (m.role === 'user') {
+        return '<div class="msg user"><span class="b">' + esc(m.content) + '</span>' +
+          (m.kept ? '<div class="keptnote">Guardado como conocimiento: «' + esc(m.kept) + '»</div>'
+                  : '<div class="acts"><button type="button" class="ok" data-know="' + i + '" title="Guarda este texto tal cual, para que Maya lo lea siempre">Guardar esta instrucción</button></div>') + '</div>';
+      }
       var fix = '';
       if (m.fixOpen) fix = '<div class="fix' + (m.saved ? ' saved' : '') + '">' + (m.saved ? '<b>Regla guardada.</b> <span class="mut">' + esc(m.saved) + '</span>' :
         '<label for="fx-' + i + '">Respuesta correcta</label><textarea id="fx-' + i + '" rows="3" maxlength="4000" placeholder="Escribe cómo debe responder Maya"></textarea>' +
         '<div style="margin-top:8px"><button class="btn small" data-fsave="' + i + '">Guardar corrección</button> <button class="btn small warn" data-fcancel="' + i + '">Cancelar</button></div><div class="err" id="fxe-' + i + '"></div>') + '</div>';
-      return '<div class="msg maya"><span class="b">' + esc(m.content) + '</span>' + (m.error ? '' : (m.fixOpen ? '' : '<div class="acts"><button type="button" data-fix="' + i + '">Marcar como incorrecta</button></div>')) + fix + '</div>';
+      var acts = (m.error || m.fixOpen || m.saved) ? '' :
+        '<div class="acts"><button type="button" class="ok" data-keep="' + i + '" title="Maya responderá así de aquí en adelante">Está bien, guardar así</button>' +
+        '<button type="button" data-fix="' + i + '">Está mal, corregir</button></div>';
+      var kept = m.kept ? '<div class="keptnote">Regla guardada: «' + esc(m.kept) + '». Maya responderá así con todos los usuarios.</div>' : '';
+      return '<div class="msg maya"><span class="b">' + esc(m.content) + '</span>' + acts + kept + fix + '</div>';
     }).join('');
     box.scrollTop = box.scrollHeight;
   }
@@ -550,6 +566,29 @@
     var t = e.target.closest && e.target.closest('button'); if (!t) return;
     var i;
     if (t.hasAttribute('data-fix')) { i = +t.getAttribute('data-fix'); CHAT[i].fixOpen = true; renderChat(); var ta = $('fx-' + i); if (ta) ta.focus(); return; }
+    if (t.hasAttribute('data-keep')) {
+      i = +t.getAttribute('data-keep');
+      var q = ''; for (var j = i - 1; j >= 0; j--) if (CHAT[j].role === 'user') { q = CHAT[j].content; break; }
+      if (!q) { $('chatErr').textContent = 'No encuentro la pregunta de esta respuesta.'; return; }
+      t.disabled = true; t.textContent = 'Guardando…';
+      call('POST', '/train/rule', { question: q, correction: CHAT[i].content, confirmed: true }).then(function (r) {
+        if (r._status !== 200) { t.disabled = false; t.textContent = 'Está bien, guardar así'; $('chatErr').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
+        CHAT[i].kept = r.doc.name; renderChat(); loadKb();
+      });
+      return;
+    }
+    if (t.hasAttribute('data-know')) {
+      i = +t.getAttribute('data-know');
+      var txt = CHAT[i].content.trim();
+      if (txt.length < 20) { $('chatErr').textContent = 'Escribe al menos 20 caracteres para guardarlo como conocimiento.'; return; }
+      var nm = 'Instrucción: ' + txt.replace(/\s+/g, ' ').slice(0, 80);
+      t.disabled = true; t.textContent = 'Guardando…';
+      call('POST', '/kb', { name: nm, filename: 'escrito-en-entrenar.md', data_b64: 'data:text/markdown;base64,' + btoa(unescape(encodeURIComponent(txt))) }).then(function (r) {
+        if (r._status !== 200) { t.disabled = false; t.textContent = 'Guardar esta instrucción'; $('chatErr').textContent = r.message || r.error || 'No se pudo guardar.'; return; }
+        CHAT[i].kept = r.doc.name; renderChat(); loadKb();
+      });
+      return;
+    }
     if (t.hasAttribute('data-fcancel')) { i = +t.getAttribute('data-fcancel'); CHAT[i].fixOpen = false; renderChat(); return; }
     if (t.hasAttribute('data-fsave')) {
       i = +t.getAttribute('data-fsave');
