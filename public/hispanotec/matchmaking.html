@@ -3,194 +3,180 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matchmaking Digital · Hispanotec</title>
+<title>Recorrido de la Plataforma · Hispanotec</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/hispatec/logo-hispanotec.svg">
 <style>
 :root{
-  --navy:#0a1f4a; --navy2:#0f2a5e; --primary:#1a3d8f; --blue:#2855ab;
-  --gold:#ffc107; --gold2:#ffd54f; --ink:#0f172a; --mut:#5b6b85; --line:#e2e8f0;
-  --bg:#f4f7fc; --card:#ffffff; --green:#16a34a; --red:#dc2626; --teal:#0e9f8e;
+  --navy:#0a1f4a; --side:#1e2638; --primary:#1a3d8f; --blue:#2855ab;
+  --gold:#ffc107; --ink:#0f172a; --mut:#5b6b85; --line:#e2e8f0;
+  --bg:#f4f7fc; --green:#16a34a; --red:#dc2626;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--navy);overflow:hidden}
-/* top bar */
-.top{position:fixed;inset:0 0 auto 0;height:64px;background:var(--navy);display:flex;align-items:center;gap:18px;padding:0 24px;z-index:10;border-bottom:1px solid rgba(255,255,255,.08)}
-.brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:16px;white-space:nowrap}
-.brand img{height:34px;width:34px;background:#fff;border-radius:8px;padding:3px}
+.top{position:fixed;inset:0 0 auto 0;height:60px;background:var(--navy);display:flex;align-items:center;gap:16px;padding:0 22px;z-index:10;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:15px;white-space:nowrap}
+.brand img{height:32px;width:32px;background:#fff;border-radius:8px;padding:3px}
 .brand b{color:var(--gold)}
 .steps{display:flex;gap:5px;flex:1;justify-content:safe center;overflow-x:auto;scrollbar-width:none}
 .steps::-webkit-scrollbar{display:none}
-.steps button{border:1px solid rgba(255,255,255,.18);background:transparent;color:#b9c6e0;border-radius:999px;padding:5px 10px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.steps button{border:1px solid rgba(255,255,255,.18);background:transparent;color:#b9c6e0;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .steps button.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 .steps button.done{color:#fff;border-color:rgba(255,193,7,.55)}
 .count{color:#b9c6e0;font-size:13px;font-weight:700;white-space:nowrap}
-/* stage */
-.stage{position:fixed;inset:64px 0 58px 0}
-.slide{position:absolute;inset:0;padding:34px 5vw;overflow-y:auto;opacity:0;pointer-events:none;transform:translateX(30px);transition:opacity .45s ease,transform .45s ease;background:var(--bg)}
+.stage{position:fixed;inset:60px 0 56px 0}
+.slide{position:absolute;inset:0;padding:26px 3.5vw;overflow-y:auto;opacity:0;pointer-events:none;transform:translateX(30px);transition:opacity .45s ease,transform .45s ease;background:var(--bg)}
 .slide.on{opacity:1;pointer-events:auto;transform:none}
-.slide.dark{background:radial-gradient(1200px 600px at 80% -10%,#2855ab 0%,transparent 60%),linear-gradient(135deg,var(--navy) 0%,var(--primary) 100%);color:#fff}
-.wrap{max-width:1240px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;justify-content:center}
-.kicker{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}
-.dark .kicker{color:var(--gold)}
-.kicker .n{background:var(--gold);color:var(--navy);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;letter-spacing:0;font-size:16px}
-h1{font-size:clamp(34px,5vw,64px);line-height:1.08;font-weight:900;letter-spacing:-.02em}
-h2{font-size:clamp(28px,3.4vw,44px);line-height:1.12;font-weight:900;letter-spacing:-.015em;margin-bottom:10px}
-.lead{font-size:clamp(17px,1.6vw,22px);color:var(--mut);max-width:880px;line-height:1.5;margin-bottom:26px}
-.dark .lead{color:#d3ddf0}
-.gold{color:var(--gold)}
-.grid{display:grid;gap:18px}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
-.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 30px rgba(10,31,74,.06)}
-.dark .card{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);box-shadow:none}
-.card h3{font-size:19px;font-weight:800;margin-bottom:8px}
-.card p{color:var(--mut);font-size:15.5px;line-height:1.5}
-.dark .card p{color:#d3ddf0}
-.ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:#e8eefb;color:var(--primary);margin-bottom:14px}
-.dark .ico{background:rgba(255,193,7,.16);color:var(--gold)}
-.ico svg{width:24px;height:24px}
-.pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em}
-.p-blue{background:#e8eefb;color:var(--primary)} .p-gold{background:#fff4d1;color:#8a6200}
-.p-green{background:#dcfce7;color:#166534} .p-gray{background:#eef2f7;color:#475569}
-.stat{font-size:clamp(34px,4vw,56px);font-weight:900;color:var(--primary);line-height:1}
-.dark .stat{color:var(--gold)}
-.statl{font-size:14px;font-weight:700;color:var(--mut);margin-top:6px;text-transform:uppercase;letter-spacing:.06em}
-.dark .statl{color:#c7d3ea}
-/* flow on cover */
-.flow{display:flex;align-items:stretch;gap:0;margin-top:34px;flex-wrap:wrap}
-.flow .f{flex:1;min-width:150px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:16px;border-radius:14px;position:relative;margin-right:22px}
-.flow .f:last-child{margin-right:0}
-.flow .f:not(:last-child)::after{content:"";position:absolute;right:-18px;top:50%;border:8px solid transparent;border-left-color:var(--gold);transform:translateY(-50%)}
-.flow .f b{display:block;color:var(--gold);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
-.flow .f span{font-size:15px;font-weight:700}
-/* profile mock */
-.prof{display:flex;gap:16px;align-items:flex-start}
-.avatar{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--blue));color:#fff;font-weight:900;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.tag{background:#eef2f7;border-radius:8px;padding:4px 9px;font-size:13px;font-weight:600;color:#334155}
-.tag.b{background:#e8eefb;color:var(--primary)}
-.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px}
-.row:last-child{border-bottom:0}
-.row span:first-child{color:var(--mut)}
-.row span:last-child{font-weight:700;text-align:right}
-/* bars */
-.bars{display:flex;flex-direction:column;gap:9px}
-.bar{display:grid;grid-template-columns:170px 1fr 44px;align-items:center;gap:10px;font-size:14px;font-weight:600}
-.bar .t{height:14px;background:#e8eefb;border-radius:8px;overflow:hidden}
-.bar .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--blue));border-radius:8px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.slide.dark{background:radial-gradient(1100px 560px at 85% -10%,#2855ab 0%,transparent 60%),linear-gradient(135deg,var(--navy) 0%,var(--primary) 100%);color:#fff}
+.wrap{max-width:1380px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;justify-content:center}
+.story{display:grid;grid-template-columns:minmax(300px,31%) 1fr;gap:30px;align-items:center}
+.stepno{display:inline-flex;align-items:center;gap:10px;font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}
+.stepno .n{background:var(--gold);color:var(--navy);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;letter-spacing:0;font-size:19px}
+.story h2{font-size:clamp(26px,2.5vw,38px);line-height:1.12;font-weight:900;letter-spacing:-.015em;margin-bottom:14px}
+.story p.t{font-size:17px;color:var(--mut);line-height:1.55;margin-bottom:16px}
+.actor{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:16px}
+.actor .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--blue));color:#fff;font-weight:900;display:grid;place-items:center;flex:0 0 auto}
+.actor .av.o{background:linear-gradient(135deg,#0e9f8e,#12b8a6)}
+.actor b{display:block;font-size:15.5px}
+.actor small{color:var(--mut);font-size:13px}
+.pts{list-style:none;display:grid;gap:9px}
+.pts li{display:flex;gap:10px;font-size:15.5px;line-height:1.45}
+.pts li::before{content:"";flex:0 0 8px;height:8px;margin-top:7px;border-radius:50%;background:var(--gold)}
+.browser{border-radius:14px;overflow:hidden;box-shadow:0 24px 60px rgba(10,31,74,.22);border:1px solid #cfd8e6;background:#fff}
+.bbar{background:#e9eef5;padding:9px 12px;display:flex;align-items:center;gap:8px}
+.bbar i{width:11px;height:11px;border-radius:50%;background:#ff5f57}
+.bbar i:nth-child(2){background:#febc2e}.bbar i:nth-child(3){background:#28c840}
+.bbar span{flex:1;margin-left:10px;background:#fff;border-radius:7px;padding:5px 12px;font-size:12.5px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app{display:grid;grid-template-columns:190px 1fr;min-height:540px}
+.side{background:var(--side);color:#cbd5e1;padding:14px 0;display:flex;flex-direction:column}
+.side .lg{display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0 14px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:6px}
+.side .lg img{width:54px;height:54px;background:#fff;border-radius:12px;padding:6px}
+.side .lg b{color:#fff;font-size:13px;font-weight:800}.side .lg b em{color:var(--gold);font-style:normal}
+.side .it{padding:8px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.side .it.on{background:#1b2d5c;color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.side .it .bd{margin-left:auto;background:var(--red);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;font-weight:800}
+.side .me{margin-top:auto;padding:12px 16px 2px;border-top:1px solid rgba(255,255,255,.08)}
+.side .me b{display:block;color:#fff;font-size:13px}.side .me small{color:var(--gold);font-size:10.5px;font-weight:800;letter-spacing:.08em}
+.main{background:#f8fafc;padding:18px 20px;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.ph h3{font-size:21px;font-weight:800}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.panel h4{font-size:15px;font-weight:800;margin-bottom:6px}
+.mut{color:var(--mut)} .sm{font-size:12.5px}
+.btn{display:inline-block;border-radius:8px;padding:7px 13px;font-size:12.5px;font-weight:800;border:1px solid transparent}
+.btn.p{background:var(--primary);color:#fff}.btn.o{border-color:#cbd5e1;color:#334155;background:#fff}
+.btn.g{background:var(--green);color:#fff}.btn.y{background:var(--gold);color:var(--navy)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+.pl-y{background:#fff4d1;color:#8a6200}.pl-g{background:#dcfce7;color:#166534}.pl-b{background:#e8eefb;color:var(--primary)}.pl-x{background:#eef2f7;color:#475569}
+.fld{margin-bottom:10px}.fld label{display:block;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:4px}
+.fld .in{border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13px;background:#fff;line-height:1.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:#e8eefb;color:var(--primary);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}.kv span:first-child{color:var(--mut)}.kv span:last-child{font-weight:700;text-align:right}
+.rl{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rl:last-child{border-bottom:0}
+.rl .i{width:24px;height:24px;border-radius:6px;background:var(--navy);color:var(--gold);font-weight:900;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+.rl b{display:block;font-size:13.5px}.rl small{color:var(--mut);font-size:12px}
+.cand{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.cand:last-child{border-bottom:0}.cand b{color:var(--primary)}
+.scan{height:6px;border-radius:6px;background:#e8eefb;overflow:hidden;margin:8px 0 4px}
+.scan i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--gold));transition:width 2.2s ease}
+.slide.on .scan i{width:100%}
+.why{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.why div{border-radius:10px;padding:9px;color:#fff;font-size:11.5px;font-weight:700}
+.why b{display:block;font-size:17px}
+.w1{background:#1a3d8f}.w2{background:#0e9f8e}.w3{background:#7c3aed}.w4{background:#b8860b}
+.mem{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;margin-bottom:7px}
+.mem .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--blue));color:#fff;font-weight:900;display:grid;place-items:center;font-size:12px;flex:0 0 auto}
+.mem b{display:block;font-size:13px}.mem small{color:var(--mut);font-size:11.5px}
+.mem.open{border-style:dashed;background:#fffdf5}.mem.open .av{background:#fff4d1;color:#8a6200}
+.mem.new{border-color:var(--green);background:#f0fdf4;animation:pop .7s ease}
+@keyframes pop{0%{transform:scale(.95);opacity:.2}100%{transform:none;opacity:1}}
+.mem .r{margin-left:auto}
+.timer{display:flex;gap:8px}
+.timer div{background:var(--navy);color:#fff;border-radius:10px;padding:7px 10px;text-align:center;min-width:58px}
+.timer b{display:block;font-size:20px;color:var(--gold);line-height:1}
+.timer span{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#c7d3ea}
+.bars{display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:140px 1fr 30px;gap:8px;align-items:center;font-size:12px;font-weight:600}
+.bar .t{height:9px;background:#e8eefb;border-radius:6px;overflow:hidden}
+.bar .t i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--blue));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
 .bar b{text-align:right;color:var(--primary)}
-/* roles */
-.role{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
-.role:last-child{border-bottom:0}
-.role .i{width:30px;height:30px;border-radius:8px;background:var(--navy);color:var(--gold);font-weight:900;display:grid;place-items:center;flex:0 0 auto;font-size:14px}
-.role h4{font-size:16px;font-weight:800}
-.role small{display:block;color:var(--mut);font-size:13.5px;margin-top:3px;line-height:1.45}
-/* formula */
-.formula{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:6px 0 20px}
-.fx{border-radius:14px;padding:18px;color:#fff;position:relative;overflow:hidden}
-.fx .w{font-size:40px;font-weight:900;line-height:1}
-.fx .l{font-size:15px;font-weight:800;margin-top:6px}
-.fx .d{font-size:13px;opacity:.88;margin-top:6px;line-height:1.4}
-.fx1{background:linear-gradient(135deg,#1a3d8f,#2855ab)} .fx2{background:linear-gradient(135deg,#0e9f8e,#12b8a6)}
-.fx3{background:linear-gradient(135deg,#7c3aed,#9f67ff)} .fx4{background:linear-gradient(135deg,#b8860b,#e0a800)}
-.calc{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
-.check{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:15px}
-.check:last-child{border-bottom:0}
-.ok{color:var(--green);font-weight:800}
-.total{display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;border-radius:14px;padding:16px 20px;margin-top:14px}
-.total b{font-size:34px;color:var(--gold)}
-/* invite table */
-table{width:100%;border-collapse:collapse;font-size:14.5px}
-th{text-align:left;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding:10px 10px;border-bottom:2px solid var(--line)}
-td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
-td.sc{font-weight:900;color:var(--primary);white-space:nowrap}
-tr.acc td{background:#f0fdf4}
-.who{font-weight:700}
-.who small{display:block;color:var(--mut);font-weight:500;font-size:12.5px}
-/* team */
-.member{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid var(--line)}
-.member .avatar{width:44px;height:44px;font-size:15px}
-.member h4{font-size:15.5px;font-weight:800}
-.member small{color:var(--mut);font-size:13px;display:block}
-.member.open{border-style:dashed;background:#fffdf5}
-.member.open .avatar{background:#fff4d1;color:#8a6200}
-.timer{display:flex;gap:10px;margin-top:10px}
-.timer div{background:var(--navy);color:#fff;border-radius:12px;padding:12px 14px;text-align:center;min-width:78px}
-.timer b{display:block;font-size:30px;color:var(--gold);line-height:1}
-.timer span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#c7d3ea}
-/* gauge */
-.gauge{position:relative;width:230px;height:230px;margin:0 auto}
+.big{display:flex;align-items:center;justify-content:space-between;background:var(--navy);color:#fff;border-radius:10px;padding:9px 14px;margin-top:10px;font-size:13px}
+.big b{font-size:24px;color:var(--gold)}
+.gauge{position:relative;width:150px;height:150px;margin:4px auto}
 .gauge svg{transform:rotate(-90deg)}
 .gauge .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.gauge .v b{font-size:52px;font-weight:900;color:var(--navy);line-height:1}
-.gauge .v span{display:block;font-size:13px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
-.pct{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
-.pct div{flex:1;text-align:center;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px}
-.pct b{display:block;font-size:20px;color:var(--primary)}
-.pct span{font-size:12px;color:var(--mut);font-weight:700}
-/* search mock */
-.search{display:flex;gap:10px;background:#fff;border:2px solid var(--primary);border-radius:14px;padding:12px 16px;font-size:18px;align-items:center;margin-bottom:14px}
-.search svg{width:22px;height:22px;color:var(--primary);flex:0 0 auto}
-.res{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
-.res:last-child{border-bottom:0}
-.res b{color:var(--primary);font-size:18px}
-.rfq{padding:12px 0;border-bottom:1px solid var(--line)}
-.rfq:last-child{border-bottom:0}
-.rfq h4{font-size:15.5px;font-weight:800}
-.rfq small{color:var(--mut);font-size:13px}
-/* timeline */
-.tl{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:6px}
-.tl .card{position:relative;padding-top:30px}
-.tl .card .dot{position:absolute;top:-14px;left:22px;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:900;display:grid;place-items:center;font-size:14px;border:3px solid var(--bg)}
-.demo{margin-top:18px;font-size:12.5px;color:var(--mut)}
-.dark .demo{color:#aebcd8}
-/* bottom nav */
-.nav{position:fixed;inset:auto 0 0 0;height:58px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:10;border-top:1px solid rgba(255,255,255,.08)}
+.gauge .v b{font-size:32px;font-weight:900;color:var(--navy);line-height:1}
+.gauge .v span{display:block;font-size:10.5px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.pct{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.pct div{text-align:center;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:11px;color:var(--mut);font-weight:700}
+.pct b{display:block;font-size:14px;color:var(--primary)}
+.sig{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.sig:last-child{border-bottom:0}
+.sig .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;flex:0 0 auto}
+.sig .ck.w{background:#e2e8f0;color:#64748b}
+.sig em{margin-left:auto;font-family:"Brush Script MT","Segoe Script",cursive;font-size:18px;color:#1e3a8a;font-style:normal}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+.tabs span{padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--mut)}
+.tabs span.on{color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px}
+.ms{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ms:last-child{border-bottom:0}.ms .m{background:#e8eefb;color:var(--primary);font-weight:900;border-radius:8px;text-align:center;padding:4px 0;font-size:12px}
+.task{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 0}
+.task input{accent-color:var(--primary)}
+.offer{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.offer.best{border-color:var(--green);box-shadow:0 0 0 2px rgba(22,163,74,.15)}
+.offer .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.offer .h b{font-size:13.5px}.offer .pr{font-size:17px;font-weight:900;color:var(--primary);white-space:nowrap}
+.offer p{font-size:12px;color:var(--mut);margin-top:4px;line-height:1.4}
+.cap{font-size:11.5px;color:var(--mut);margin-top:8px;text-align:right}
+.hero h1{font-size:clamp(34px,4.6vw,62px);line-height:1.08;font-weight:900;letter-spacing:-.02em}
+.gold{color:var(--gold)}
+.lead{font-size:clamp(17px,1.5vw,21px);color:#d3ddf0;max-width:860px;line-height:1.5;margin:16px 0 26px}
+.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cast>div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:18px;display:flex;gap:12px;align-items:center}
+.cast .av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#fff,#dbe5f7);color:var(--navy);font-weight:900;display:grid;place-items:center;flex:0 0 auto}
+.cast b{display:block;font-size:16px}.cast small{color:#c7d3ea;font-size:13px}
+.path{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-top:26px}
+.path div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 8px;font-size:13px;font-weight:700;text-align:center}
+.path div b{display:block;color:var(--gold);font-size:20px;margin-bottom:4px}
+.qr{background:#fff;border-radius:18px;padding:14px;text-align:center;width:210px}
+.qr img{width:180px;height:180px;display:block}
+.qr b{display:block;color:var(--navy);margin-top:6px;font-size:14px}
+.nav{position:fixed;inset:auto 0 0 0;height:56px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 22px;z-index:10;border-top:1px solid rgba(255,255,255,.08)}
 .nav button{background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-weight:800;font-size:14px;cursor:pointer}
 .nav button:disabled{opacity:.35;cursor:default}
 .nav button.next{background:var(--gold);color:var(--navy)}
 .progress{flex:1;height:4px;background:rgba(255,255,255,.12);margin:0 22px;border-radius:4px;overflow:hidden}
 .progress i{display:block;height:100%;background:var(--gold);width:0;transition:width .4s}
 .hint{color:#8fa0c4;font-size:12px;margin-right:16px;white-space:nowrap}
-.qr{background:#fff;border-radius:18px;padding:16px;text-align:center;width:220px}
-.qr img{width:188px;height:188px;display:block}
-.qr b{display:block;color:var(--navy);margin-top:6px;font-size:14px}
 @media (max-width:1560px){.brand span{display:none}}
-@media (min-width:981px) and (max-height:1000px){
-  .slide{padding:20px 4vw}
-  h2{font-size:clamp(26px,2.7vw,36px);margin-bottom:6px}
-  .lead{font-size:17px;margin-bottom:14px}
-  .kicker{margin-bottom:8px}
-  .card{padding:16px}
-  .grid{gap:14px}
-  .formula{margin-bottom:14px}
-  .fx{padding:14px} .fx .w{font-size:32px}
-  td{padding:6px 10px} th{padding:6px 10px}
-  .check{padding:7px 0} .row{padding:6px 0}
-  .total{padding:10px 16px;margin-top:10px} .total b{font-size:28px}
-  .member{padding:8px} .grid[style*="gap:10px"]{gap:8px!important}
-  .gauge{width:190px;height:190px} .gauge svg{width:190px;height:190px} .gauge .v b{font-size:42px}
-  .bars{gap:7px}
-  .demo{margin-top:10px}
-  .timer div{padding:8px 12px} .timer b{font-size:24px}
+@media (min-width:1101px) and (max-height:960px){
+  .slide{padding:16px 3vw}
+  .app{min-height:0}
+  .main{padding:14px 16px}
+  .story p.t{font-size:16px;margin-bottom:12px}
+  .panel{padding:11px 13px;margin-bottom:9px}
+  .actor{padding:9px 12px;margin-bottom:12px}
+  .ph{margin-bottom:10px}
+  .mem{padding:6px 10px;margin-bottom:6px}
 }
-@media (max-width:980px){
-  .g3,.g4,.formula,.tl{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .g2,.calc{grid-template-columns:1fr}
+@media (max-width:1100px){
+  .story{grid-template-columns:1fr}
+  .path{grid-template-columns:repeat(3,1fr)}
   .count,.hint{display:none}
-  .bar{grid-template-columns:120px 1fr 38px}
 }
-@media (max-width:600px){
-  .g3,.g4,.formula,.tl{grid-template-columns:1fr}
-  .brand span{display:none}
-  .slide{padding:24px 16px}
-  .flow .f{margin-right:0;margin-bottom:12px;min-width:100%}
-  .flow .f::after{display:none}
+@media (max-width:700px){
+  .app{grid-template-columns:1fr}.side{display:none}
+  .two,.why{grid-template-columns:1fr 1fr}
+  .cast{grid-template-columns:1fr}
+  .slide{padding:18px 14px}
+  .two{grid-template-columns:1fr}
 }
-@media (prefers-reduced-motion:reduce){.slide,.bar .t i{transition:none}}
+@media (prefers-reduced-motion:reduce){.slide,.bar .t i,.scan i{transition:none}.mem.new{animation:none}}
 </style>
 </head>
 <body>
@@ -201,342 +187,372 @@ tr.acc td{background:#f0fdf4}
   <div class="count" id="count"></div>
 </header>
 
-<main class="stage" id="stage">
+<main class="stage">
 
-<!-- 0 COVER -->
 <section class="slide dark" data-step="Inicio">
-  <div class="wrap">
-    <div class="kicker">Hispanotec · Camara Virtual</div>
-    <h1>Matchmaking digital:<br>de la <span class="gold">idea</span> al <span class="gold">equipo</span> que la ejecuta</h1>
-    <p class="lead" style="margin-top:18px">Una red de empresas y profesionales hispanos donde cada proyecto encuentra, con inteligencia artificial, a los socios que tienen la capacidad exacta para hacerlo realidad.</p>
-    <div class="grid g3" style="margin-top:6px">
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg></div><h3>Proyecto → Empresa</h3><p>Un proyecto publica los roles que necesita y el sistema invita a las empresas que mejor encajan.</p></div>
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10M7 7l3-3M7 7l3 3M17 17H7m10 0-3-3m3 3-3 3"/></svg></div><h3>Empresa → Empresa</h3><p>Solicitudes de cotización y búsqueda inteligente de proveedores, clientes y aliados.</p></div>
-      <div class="card"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div><h3>Profesional → Proyecto</h3><p>Especialistas independientes se suman a proyectos donde su experiencia marca la diferencia.</p></div>
+  <div class="wrap hero">
+    <div class="stepno" style="color:var(--gold)">Recorrido de la plataforma</div>
+    <h1>Un proyecto, de la <span class="gold">idea</span><br>al <span class="gold">equipo</span> que lo ejecuta</h1>
+    <p class="lead">Seguimos a Rodrigo Soto, exportador de aguacate Hass en Colombia, desde que propone su proyecto hasta que su equipo internacional trabaja en él.</p>
+    <div class="cast">
+      <div><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Valle del Café S.A.S. · Colombia · Proponente</small></span></div>
+      <div><span class="av">LL</span><span><b>Lucía Lara Soto</b><small>Ancla Ibérica S.A. · España · Naviera invitada</small></span></div>
+      <div><span class="av">+4</span><span><b>El resto del equipo</b><small>Agronomía, cadena de frío, FDA, tecnología</small></span></div>
     </div>
   </div>
 </section>
 
-<!-- 1 PROBLEM -->
-<section class="slide" data-step="El reto">
-  <div class="wrap">
-    <div class="kicker">El reto</div>
-    <h2>Las oportunidades se pierden por no saber quién puede hacerlas</h2>
-    <p class="lead">En una cámara hay cientos de empresas con capacidades complementarias. Sin un sistema, los proyectos dependen de a quién conoce cada uno.</p>
-    <div class="grid g3">
-      <div class="card"><h3>Directorios estáticos</h3><p>Una lista de nombres no dice qué produce cada empresa, en qué país opera ni qué certificaciones tiene.</p></div>
-      <div class="card"><h3>Equipos armados a mano</h3><p>Formar un consorcio de cuatro o cinco especialidades en tres países toma meses de llamadas y correos.</p></div>
-      <div class="card"><h3>Sin medir la viabilidad</h3><p>Los proyectos arrancan sin saber si el presupuesto, el plazo y el equipo tienen sentido juntos.</p></div>
+<section class="slide" data-step="1 · Propone">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">1</span>Rodrigo propone un proyecto</div>
+      <div class="actor"><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Proponente · Valle del Café S.A.S.</small></span></div>
+      <h2>Describe su idea en dos párrafos</h2>
+      <p class="t">Desde <b>Proyectos → + New Project</b>, Rodrigo cuenta qué quiere construir, en qué sector, con qué presupuesto y en qué países.</p>
+      <ul class="pts"><li>No necesita saber a quién buscar.</li><li>No necesita redactar un plan de negocio.</li><li>Pulsa un botón y la IA hace el resto.</li></ul>
     </div>
-    <div class="card" style="margin-top:18px;border-left:6px solid var(--gold)">
-      <h3>La respuesta de Hispanotec</h3>
-      <p>Perfiles estructurados, un motor de matching que explica cada puntuación, invitaciones automáticas y una medición de viabilidad antes de invertir un euro.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 2 PROFILE -->
-<section class="slide" data-step="1 · Perfil">
-  <div class="wrap">
-    <div class="kicker"><span class="n">1</span>Registro y perfil</div>
-    <h2>Cada miembro publica lo que sabe hacer</h2>
-    <p class="lead">El perfil no es una tarjeta de visita: es la materia prima del matching. Sector, país, especialidad, productos, servicios y certificaciones.</p>
-    <div class="grid g2">
-      <div class="card">
-        <div class="prof">
-          <div class="avatar">BG</div>
-          <div>
-            <h3 style="margin-bottom:2px">Beatriz Guerrero López</h3>
-            <p>Directora · Semilla Llanera S.A.S. · Colombia</p>
-            <div class="tags"><span class="tag b">agricultura</span><span class="tag">aguacate Hass</span><span class="tag">GlobalG.A.P.</span><span class="tag">Español · Inglés</span></div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Proyectos</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Nuevo Proyecto P2B</h3><span class="pill pl-b">Paso 1 de 2</span></div>
+          <div class="panel">
+            <div class="fld"><label>VISIÓN</label><div class="in">Queremos una red de centros de acopio con frío continuo para que los productores de aguacate Hass del Eje Cafetero exporten directamente a importadores en Valencia y Miami, sin intermediarios y con trazabilidad por lote.<br><br>Es para pequeños y medianos productores que hoy pierden entre el 20 y el 30 % de la fruta por falta de frío y de empaque certificado.</div></div>
+            <div class="two">
+              <div class="fld"><label>SECTOR</label><div class="in">Agricultura</div></div>
+              <div class="fld"><label>NIVEL DE PRESUPUESTO</label><div class="in">Mediano ($200k – $1M)</div></div>
+            </div>
+            <div class="fld"><label>PAÍSES</label><div class="chips"><span class="chip">Colombia</span><span class="chip">Spain</span><span class="chip">United States</span></div></div>
+            <span class="btn p">Generar Plan de Negocio con IA</span>
           </div>
+          <div class="cap">Pantalla recreada · datos de demostración</div>
         </div>
-        <div style="margin-top:16px">
-          <div class="row"><span>Productos</span><span>Aguacate Hass exportación, aguacate orgánico, pulpa congelada</span></div>
-          <div class="row"><span>Servicios</span><span>Manejo poscosecha, empaque certificado</span></div>
-          <div class="row"><span>Certificaciones</span><span>GlobalG.A.P., Rainforest Alliance</span></div>
-          <div class="row"><span>Mercados</span><span>Colombia, España, Estados Unidos</span></div>
-          <div class="row"><span>Índice de confianza</span><span>0,86</span></div>
-        </div>
-      </div>
-      <div class="grid" style="align-content:start">
-        <div class="card"><h3>Persona</h3><p>Profesionales independientes: especialidad, años de experiencia, idiomas y país.</p></div>
-        <div class="card"><h3>Empresa</h3><p>Ficha de empresa con productos, servicios, certificaciones, países atendidos y tamaño.</p></div>
-        <div class="card"><h3>Confianza</h3><p>Cada miembro tiene un índice de confianza que crece con la verificación y la actividad en la red.</p></div>
-      </div>
-    </div>
-    <p class="demo">Ejemplo con datos de demostración.</p>
-  </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 3 DIRECTORY -->
-<section class="slide" data-step="2 · Directorio">
-  <div class="wrap">
-    <div class="kicker"><span class="n">2</span>Directorio inteligente</div>
-    <h2>Una red que se puede buscar por capacidades</h2>
-    <p class="lead">Todos los perfiles alimentan un directorio común, filtrable por sector, país y especialidad.</p>
-    <div class="grid g4" style="margin-bottom:18px">
-      <div class="card"><div class="stat">508</div><div class="statl">Miembros activos</div></div>
-      <div class="card"><div class="stat">154</div><div class="statl">Empresas con ficha</div></div>
-      <div class="card"><div class="stat">17</div><div class="statl">Sectores</div></div>
-      <div class="card"><div class="stat">4</div><div class="statl">Países</div></div>
+<section class="slide" data-step="2 · Plan con IA">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">2</span>La IA redacta el plan</div>
+      <div class="actor"><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Revisa y publica</small></span></div>
+      <h2>De dos párrafos a un plan con seis roles</h2>
+      <p class="t">La plataforma genera el plan de negocio completo: resumen, presupuesto, cronograma, riesgos y, sobre todo, <b>los roles que el equipo necesita</b>.</p>
+      <ul class="pts"><li>Cada rol pide un sector, unos países y unas habilidades.</li><li>Rodrigo puede editarlo antes de publicar.</li><li>Al publicar se abre una convocatoria de 30 días.</li></ul>
     </div>
-    <div class="grid g2">
-      <div class="card">
-        <h3 style="margin-bottom:14px">Miembros por sector</h3>
-        <div class="bars" data-bars>
-          <div class="bar"><span>Agricultura</span><span class="t"><i data-w="100"></i></span><b>70</b></div>
-          <div class="bar"><span>Tecnología</span><span class="t"><i data-w="89"></i></span><b>62</b></div>
-          <div class="bar"><span>Construcción</span><span class="t"><i data-w="87"></i></span><b>61</b></div>
-          <div class="bar"><span>Logística</span><span class="t"><i data-w="79"></i></span><b>55</b></div>
-          <div class="bar"><span>Comercio exterior</span><span class="t"><i data-w="54"></i></span><b>38</b></div>
-          <div class="bar"><span>Alimentos y bebidas</span><span class="t"><i data-w="50"></i></span><b>35</b></div>
-          <div class="bar"><span>Manufactura</span><span class="t"><i data-w="43"></i></span><b>30</b></div>
-          <div class="bar"><span>Energía</span><span class="t"><i data-w="43"></i></span><b>30</b></div>
-          <div class="bar"><span>Finanzas</span><span class="t"><i data-w="36"></i></span><b>25</b></div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Plan del proyecto</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3 style="font-size:17px">Cadena de frío para exportar aguacate Hass de Colombia a España y EE. UU.</h3></div>
+          <div class="two">
+            <div class="panel">
+              <h4>Resumen</h4>
+              <div class="kv"><span>Presupuesto</span><span>USD 350.000 – 650.000</span></div>
+              <div class="kv"><span>Estimado</span><span>USD 480.000</span></div>
+              <div class="kv"><span>Plazo</span><span>8 – 16 meses</span></div>
+              <div class="kv"><span>Países</span><span>CO · ES · US</span></div>
+              <div class="kv"><span>Riesgos identificados</span><span>3 con mitigación</span></div>
+              <div style="margin-top:12px"><span class="btn o">Editar plan</span> <span class="btn y">Publicar</span></div>
+            </div>
+            <div class="panel">
+              <h4>Roles requeridos</h4>
+              <div class="rl"><span class="i">1</span><span><b>Líder agronómico y de certificación</b><small>Agricultura · Colombia</small></span></div>
+              <div class="rl"><span class="i">2</span><span><b>Operador de cadena de frío</b><small>Logística · Colombia, España</small></span></div>
+              <div class="rl"><span class="i">3</span><span><b>Agente naviero y de aduanas</b><small>Logística · España, EE. UU.</small></span></div>
+              <div class="rl"><span class="i">4</span><span><b>Especialista en exportación y FDA</b><small>Comercio exterior · EE. UU., Colombia</small></span></div>
+              <div class="rl"><span class="i">5</span><span><b>Plataforma de trazabilidad</b><small>Tecnología · Colombia, México</small></span></div>
+              <div class="rl"><span class="i">6</span><span><b>Arquitecto de IA y plataforma</b><small>Tecnología · España, EE. UU.</small></span></div>
+            </div>
+          </div>
+          <div class="cap">Pantalla recreada · datos de demostración</div>
         </div>
-      </div>
-      <div class="card">
-        <h3 style="margin-bottom:14px">Miembros por país</h3>
-        <div class="bars" data-bars>
-          <div class="bar"><span>España</span><span class="t"><i data-w="100"></i></span><b>146</b></div>
-          <div class="bar"><span>México</span><span class="t"><i data-w="92"></i></span><b>135</b></div>
-          <div class="bar"><span>Colombia</span><span class="t"><i data-w="89"></i></span><b>130</b></div>
-          <div class="bar"><span>Estados Unidos</span><span class="t"><i data-w="61"></i></span><b>89</b></div>
-        </div>
-        <p style="margin-top:18px">Además: consultoría, marketing digital, salud, legal, turismo, educación, bienes raíces y ciberseguridad.</p>
-      </div>
-    </div>
-    <p class="demo">Cifras de la red con datos de demostración.</p>
-  </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 4 PROJECT -->
-<section class="slide" data-step="3 · Proyecto">
-  <div class="wrap">
-    <div class="kicker"><span class="n">3</span>Proponer un proyecto</div>
-    <h2>La IA convierte una idea en un plan con roles</h2>
-    <p class="lead">El miembro describe su idea en pocas líneas. El sistema genera el plan: resumen, presupuesto, cronograma, riesgos y, lo más importante, los roles que el equipo necesita.</p>
-    <div class="grid g2">
-      <div class="card">
-        <span class="pill p-gold">RECRUITING</span>
-        <h3 style="margin-top:10px;font-size:22px">Cadena de frío para exportar aguacate Hass de Colombia a España y EE. UU.</h3>
-        <p style="margin-top:6px">Centros de acopio con manejo poscosecha y frío continuo que conectan productores del Eje Cafetero con importadores en Valencia y Miami, con trazabilidad por lote.</p>
-        <div style="margin-top:14px">
-          <div class="row"><span>Presupuesto</span><span>USD 350.000 – 650.000 (estimado 480.000)</span></div>
-          <div class="row"><span>Plazo</span><span>8 – 16 meses (estimado 12)</span></div>
-          <div class="row"><span>Países</span><span>Colombia · España · Estados Unidos</span></div>
-          <div class="row"><span>Sectores implicados</span><span>5</span></div>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Roles que necesita el proyecto</h3>
-        <div class="role"><div class="i">1</div><div><h4>Líder agronómico y de certificación</h4><small>Agricultura · Colombia · aguacate Hass, GlobalG.A.P., poscosecha</small></div></div>
-        <div class="role"><div class="i">2</div><div><h4>Operador de cadena de frío</h4><small>Logística · Colombia, España · contenedores reefer, logística refrigerada</small></div></div>
-        <div class="role"><div class="i">3</div><div><h4>Agente naviero y de aduanas</h4><small>Logística · España, EE. UU. · transporte marítimo, aduanas, carga</small></div></div>
-        <div class="role"><div class="i">4</div><div><h4>Especialista en exportación y FDA</h4><small>Comercio exterior · EE. UU., Colombia · certificación FDA</small></div></div>
-        <div class="role"><div class="i">5</div><div><h4>Plataforma de trazabilidad</h4><small>Tecnología · blockchain, IoT y sensores, plataformas SaaS</small></div></div>
-        <div class="role"><div class="i">6</div><div><h4>Arquitecto de IA y plataforma</h4><small>Tecnología · inteligencia artificial, integración de APIs</small></div></div>
-      </div>
+<section class="slide" data-step="3 · Match">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">3</span>La plataforma hace el match</div>
+      <div class="actor"><span class="av">IA</span><span><b>Motor de matching</b><small>Automático, al publicar</small></span></div>
+      <h2>Compara cada rol con los 508 miembros de la red</h2>
+      <p class="t">Para cada rol puntúa a todos los miembros y elige a los <b>tres mejores</b>. Una persona recibe como máximo una invitación por proyecto.</p>
+      <ul class="pts"><li>Sector 40 % · Región 20 % · Habilidades 30 % · Confianza 10 %.</li><li>La puntuación se puede explicar, criterio por criterio.</li><li>Todo ocurre en segundos.</li></ul>
     </div>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Invitaciones enviadas</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Candidatos por rol</h3><span class="pill pl-y">Recruiting</span></div>
+          <div class="panel" style="padding-bottom:8px"><div class="sm mut">Analizando 508 perfiles en 17 sectores y 4 países…</div><div class="scan"><i></i></div></div>
+          <div class="two">
+            <div class="panel">
+              <h4 style="font-size:13px">Rol 2 · Operador de cadena de frío</h4>
+              <div class="cand"><span>Fernando Galindo Lozano · CO</span><b>96,3 %</b></div>
+              <div class="cand"><span>Lucía Ibáñez · CO</span><b>88,5 %</b></div>
+              <div class="cand"><span>Marcela Guerrero Campos · CO</span><b>88,3 %</b></div>
+            </div>
+            <div class="panel">
+              <h4 style="font-size:13px">Rol 3 · Agente naviero y de aduanas</h4>
+              <div class="cand"><span>Lucía Lara Soto · ES</span><b>99,5 %</b></div>
+              <div class="cand"><span>Antonio Acosta · ES</span><b>98,2 %</b></div>
+              <div class="cand"><span>Adriana Castillo Duarte · US</span><b>96,5 %</b></div>
+            </div>
+            <div class="panel">
+              <h4 style="font-size:13px">Rol 4 · Exportación y FDA</h4>
+              <div class="cand"><span>Pilar Romero · CO</span><b>99,4 %</b></div>
+              <div class="cand"><span>Andrea León Figueroa · CO</span><b>98,7 %</b></div>
+              <div class="cand"><span>Claudia Marín Restrepo · US</span><b>97,6 %</b></div>
+            </div>
+            <div class="panel">
+              <h4 style="font-size:13px">Rol 5 · Plataforma de trazabilidad</h4>
+              <div class="cand"><span>Gonzalo Lozano González · CO</span><b>99,0 %</b></div>
+              <div class="cand"><span>Fernanda Navarro Vega · CO</span><b>89,4 %</b></div>
+              <div class="cand"><span>Jorge Londoño · CO</span><b>88,7 %</b></div>
+            </div>
+          </div>
+          <div class="cap">Puntuaciones calculadas por la plataforma · datos de demostración</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 5 MATCHING ENGINE -->
-<section class="slide" data-step="4 · Matching">
-  <div class="wrap">
-    <div class="kicker"><span class="n">4</span>Motor de matching</div>
-    <h2>Cada candidato recibe una puntuación que se puede explicar</h2>
-    <p class="lead">El motor compara cada rol con cada perfil de la red. No es una caja negra: la puntuación se compone de cuatro criterios con peso fijo.</p>
-    <div class="formula">
-      <div class="fx fx1"><div class="w">40%</div><div class="l">Sector</div><div class="d">¿El miembro trabaja en el sector que pide el rol?</div></div>
-      <div class="fx fx2"><div class="w">20%</div><div class="l">Región</div><div class="d">¿Opera en uno de los países del rol?</div></div>
-      <div class="fx fx3"><div class="w">30%</div><div class="l">Habilidades</div><div class="d">Cuántas habilidades requeridas aparecen en su perfil.</div></div>
-      <div class="fx fx4"><div class="w">10%</div><div class="l">Confianza</div><div class="d">Su índice de confianza en la red.</div></div>
+<section class="slide" data-step="4 · Bandeja">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">4</span>La invitación llega a su bandeja</div>
+      <div class="actor"><span class="av o">LL</span><span><b>Lucía Lara Soto</b><small>Ancla Ibérica S.A. · Almería, España</small></span></div>
+      <h2>Lucía no buscó el proyecto: el proyecto la encontró a ella</h2>
+      <p class="t">En <b>Invitaciones</b> ve quién la invita, para qué rol y <b>por qué encaja</b>. Puede leer el plan completo antes de decidir.</p>
+      <ul class="pts"><li>Encaje del 99,5 % para el rol de naviera y aduanas.</li><li>Aceptar, rechazar o ver el plan.</li><li>Los otros dos candidatos del rol reciben la misma invitación.</li></ul>
     </div>
-    <div class="calc">
-      <div class="card">
-        <span class="pill p-blue">ROL 3 · AGENTE NAVIERO Y DE ADUANAS</span>
-        <h3 style="margin-top:10px">Lucía Lara Soto · Ancla Ibérica S.A. · España</h3>
-        <div style="margin-top:8px">
-          <div class="check"><span>Sector: logística</span><span class="ok">sí · 0,40</span></div>
-          <div class="check"><span>Región: España está en la lista del rol</span><span class="ok">sí · 0,20</span></div>
-          <div class="check"><span>Habilidades: transporte, aduanas, agenciamiento de carga</span><span class="ok">3 de 3 · 0,30</span></div>
-          <div class="check"><span>Confianza: 0,95 × 10 %</span><span class="ok">0,095</span></div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Invitaciones</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it">Proyectos</div><div class="it on">Invitaciones <span class="bd">1</span></div><div class="it">Intercambio</div>
+          <div class="me"><b>Lucía Lara Soto</b><small>EMPRESARIAL</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Invitaciones</h3></div>
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+              <div><b style="font-size:15px">Cadena de frío para exportar aguacate Hass de Colombia a España y EE. UU.</b><div class="sm mut" style="margin-top:3px">Proyecto #10047 · Invitado por: Rodrigo Soto · Valle del Café S.A.S.</div></div>
+              <span class="pill pl-b">Pendiente</span>
+            </div>
+            <div style="border:1px solid var(--line);border-radius:10px;margin-top:12px;padding:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px"><b>Agente naviero y de aduanas</b><div class="sm mut">Score: 99,5 % · Logística · España, EE. UU.</div></div>
+              <span class="btn p">Aceptar este rol</span><span class="btn o">Rechazar</span>
+            </div>
+            <div style="margin-top:10px"><span class="btn o">Ver Plan</span></div>
+          </div>
+          <div class="panel">
+            <h4>Por qué encajas</h4>
+            <div class="why">
+              <div class="w1"><b>0,40</b>Sector logística</div>
+              <div class="w2"><b>0,20</b>Opera en España</div>
+              <div class="w3"><b>0,30</b>3 de 3 habilidades</div>
+              <div class="w4"><b>0,095</b>Confianza 0,95</div>
+            </div>
+          </div>
+          <div class="cap">Pantalla recreada · datos de demostración</div>
         </div>
-        <div class="total"><span>Puntuación de encaje</span><b>99,5 %</b></div>
-      </div>
-      <div class="card">
-        <h3>Por qué importa</h3>
-        <p style="margin-bottom:12px">El proponente ve por qué alguien fue elegido, y el candidato ve por qué recibió la invitación.</p>
-        <div class="row"><span>Candidatos evaluados por rol</span><span>toda la red</span></div>
-        <div class="row"><span>Tiempo de cálculo</span><span>segundos</span></div>
-        <div class="row"><span>Criterios</span><span>sector, región, habilidades, confianza</span></div>
-        <div class="row"><span>Resultado</span><span>ranking por rol</span></div>
-      </div>
-    </div>
-    <p class="demo">Ejemplo con datos de demostración.</p>
-  </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 6 INVITATIONS -->
-<section class="slide" data-step="5 · Invitaciones">
-  <div class="wrap">
-    <div class="kicker"><span class="n">5</span>Invitaciones automáticas</div>
-    <h2>Los tres mejores candidatos de cada rol reciben una invitación</h2>
-    <p class="lead">Una sola invitación por persona y por proyecto: cada candidato se asigna al rol donde mejor encaja, para que nadie acapare el equipo.</p>
-    <div class="card" style="overflow-x:auto">
-      <table>
-        <thead><tr><th>Rol</th><th>Candidato</th><th>País</th><th>Encaje</th><th>Estado</th></tr></thead>
-        <tbody>
-          <tr class="acc"><td>Líder agronómico</td><td class="who">Beatriz Guerrero López<small>Semilla Llanera S.A.S.</small></td><td>Colombia</td><td class="sc">89,4 %</td><td><span class="pill p-green">ACEPTADA</span></td></tr>
-          <tr><td></td><td class="who">Valentina Santos<small>Profesional independiente</small></td><td>Colombia</td><td class="sc">89,1 %</td><td><span class="pill p-gray">PENDIENTE</span></td></tr>
-          <tr class="acc"><td>Operador de cadena de frío</td><td class="who">Fernando Galindo Lozano<small>Conecta Andina S.A.S.</small></td><td>Colombia</td><td class="sc">96,3 %</td><td><span class="pill p-green">ACEPTADA</span></td></tr>
-          <tr><td></td><td class="who">Lucía Ibáñez<small>Profesional independiente</small></td><td>Colombia</td><td class="sc">88,5 %</td><td><span class="pill p-gray">PENDIENTE</span></td></tr>
-          <tr class="acc"><td>Agente naviero y de aduanas</td><td class="who">Lucía Lara Soto<small>Ancla Ibérica S.A.</small></td><td>España</td><td class="sc">99,5 %</td><td><span class="pill p-green">ACEPTADA</span></td></tr>
-          <tr><td></td><td class="who">Adriana Castillo Duarte<small>Carga Americas LLC</small></td><td>EE. UU.</td><td class="sc">96,5 %</td><td><span class="pill p-gray">PENDIENTE</span></td></tr>
-          <tr class="acc"><td>Exportación y FDA</td><td class="who">Pilar Romero<small>Profesional independiente</small></td><td>Colombia</td><td class="sc">99,4 %</td><td><span class="pill p-green">ACEPTADA</span></td></tr>
-          <tr><td>Plataforma de trazabilidad</td><td class="who">Gonzalo Lozano González<small>Lógica Antioqueña S.A.S.</small></td><td>Colombia</td><td class="sc">99,0 %</td><td><span class="pill p-gray">PENDIENTE</span></td></tr>
-          <tr><td>Arquitecto de IA</td><td class="who">Manuel Stagg<small>Digit2AI</small></td><td>España</td><td class="sc">90,0 %</td><td><span class="pill p-gray">PENDIENTE</span></td></tr>
-        </tbody>
-      </table>
+<section class="slide" data-step="5 · Acepta">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">5</span>Lucía acepta y entra al equipo</div>
+      <div class="actor"><span class="av o">LL</span><span><b>Lucía Lara Soto</b><small>Se une como naviera y agente de aduanas</small></span></div>
+      <h2>El equipo crece con cada aceptación</h2>
+      <p class="t">Al aceptar, Lucía aparece en el equipo del proyecto. Sus otras invitaciones pendientes en este proyecto se cierran solas.</p>
+      <ul class="pts"><li>Rodrigo ve el equipo actualizarse al momento.</li><li>Los roles abiertos siguen con sus invitaciones.</li><li>La convocatoria dura 30 días.</li></ul>
     </div>
-    <p class="demo">Extracto real del proyecto de ejemplo; candidatos con datos de demostración.</p>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Proyecto #10047</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Equipo (4 miembros)</h3><div class="timer"><div><b>29</b><span>días</span></div><div><b>22</b><span>horas</span></div><div><b>54</b><span>min</span></div></div></div>
+          <div class="mem"><span class="av">BG</span><span><b>Beatriz Guerrero López</b><small>Líder agronómico · Semilla Llanera S.A.S. · Colombia</small></span><span class="r pill pl-g">Aceptado</span></div>
+          <div class="mem"><span class="av">FG</span><span><b>Fernando Galindo Lozano</b><small>Cadena de frío · Conecta Andina S.A.S. · Colombia</small></span><span class="r pill pl-g">Aceptado</span></div>
+          <div class="mem new"><span class="av">LL</span><span><b>Lucía Lara Soto</b><small>Naviero y aduanas · Ancla Ibérica S.A. · España</small></span><span class="r pill pl-g">Recién aceptado</span></div>
+          <div class="mem"><span class="av">PR</span><span><b>Pilar Romero</b><small>Exportación y FDA · Colombia</small></span><span class="r pill pl-g">Aceptado</span></div>
+          <div class="mem open"><span class="av">?</span><span><b>Plataforma de trazabilidad</b><small>3 invitaciones pendientes</small></span><span class="r pill pl-y">Abierto</span></div>
+          <div class="mem open"><span class="av">?</span><span><b>Arquitecto de IA y plataforma</b><small>1 invitación pendiente</small></span><span class="r pill pl-y">Abierto</span></div>
+          <div class="cap">Pantalla recreada · datos de demostración</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 7 TEAM -->
-<section class="slide" data-step="6 · Equipo">
-  <div class="wrap">
-    <div class="kicker"><span class="n">6</span>El equipo se forma</div>
-    <h2>Quien acepta, entra al equipo; los roles abiertos siguen buscando</h2>
-    <p class="lead">El proyecto tiene 30 días de convocatoria. Cuando todos los roles quedan cubiertos, la convocatoria se cierra sola y el proyecto pasa a ejecución.</p>
-    <div class="grid g2">
-      <div class="card">
-        <h3 style="margin-bottom:12px">Equipo actual · 4 de 6 roles</h3>
-        <div class="grid" style="gap:10px">
-          <div class="member"><div class="avatar">BG</div><div><h4>Beatriz Guerrero López</h4><small>Líder agronómico · Colombia</small></div></div>
-          <div class="member"><div class="avatar">FG</div><div><h4>Fernando Galindo Lozano</h4><small>Cadena de frío · Colombia</small></div></div>
-          <div class="member"><div class="avatar">LL</div><div><h4>Lucía Lara Soto</h4><small>Naviero y aduanas · España</small></div></div>
-          <div class="member"><div class="avatar">PR</div><div><h4>Pilar Romero</h4><small>Exportación y FDA · Colombia</small></div></div>
-          <div class="member open"><div class="avatar">?</div><div><h4>Plataforma de trazabilidad</h4><small>3 invitaciones pendientes</small></div></div>
-          <div class="member open"><div class="avatar">?</div><div><h4>Arquitecto de IA y plataforma</h4><small>1 invitación pendiente</small></div></div>
-        </div>
-      </div>
-      <div class="grid" style="align-content:start">
-        <div class="card">
-          <h3>Convocatoria abierta</h3>
-          <div class="timer"><div><b>29</b><span>días</span></div><div><b>22</b><span>horas</span></div><div><b>54</b><span>min</span></div></div>
-        </div>
-        <div class="card"><h3>Equipo multinacional</h3><p>Colombia y España ya están representadas; los roles abiertos admiten México y Estados Unidos.</p></div>
-        <div class="card"><h3>Cierre automático</h3><p>Al cubrir el último rol, la convocatoria se cierra, se genera el espacio de trabajo y se reparten hitos y tareas.</p></div>
-      </div>
+<section class="slide" data-step="6 · Viabilidad">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">6</span>Equipo completo, viabilidad medida</div>
+      <div class="actor"><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Los 6 roles están cubiertos</small></span></div>
+      <h2>La convocatoria se cierra sola</h2>
+      <p class="t">Cuando el último rol acepta, el proyecto pasa a <b>Fully staffed</b> y la plataforma mide si plan, equipo y presupuesto encajan.</p>
+      <ul class="pts"><li>Índice de Preparación para la Inversión (IRS): 8 dimensiones.</li><li>Monte Carlo: 10.000 simulaciones de coste y plazo.</li><li>Seis socios de tres países, sin una sola llamada en frío.</li></ul>
     </div>
-    <p class="demo">Ejemplo con datos de demostración.</p>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Proyecto #10047 · Evaluación</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Equipo (6 de 6)</h3><span class="pill pl-g">Fully staffed</span></div>
+          <div class="two">
+            <div class="panel">
+              <h4>IRS · Preparación para la inversión</h4>
+              <div class="bars" data-bars>
+                <div class="bar"><span>Regulatorio y legal</span><span class="t"><i data-w="100"></i></span><b>100</b></div>
+                <div class="bar"><span>Experiencia del equipo</span><span class="t"><i data-w="81"></i></span><b>81</b></div>
+                <div class="bar"><span>Modelo de negocio</span><span class="t"><i data-w="70"></i></span><b>70</b></div>
+                <div class="bar"><span>Encaje bancario</span><span class="t"><i data-w="66"></i></span><b>66</b></div>
+                <div class="bar"><span>Escalabilidad</span><span class="t"><i data-w="55"></i></span><b>55</b></div>
+                <div class="bar"><span>Tracción de mercado</span><span class="t"><i data-w="40"></i></span><b>40</b></div>
+                <div class="bar"><span>Viabilidad financiera</span><span class="t"><i data-w="30"></i></span><b>30</b></div>
+                <div class="bar"><span>Impacto ESG</span><span class="t"><i data-w="0"></i></span><b>0</b></div>
+              </div>
+              <div class="big"><span>IRS · Promising</span><b>53</b></div>
+            </div>
+            <div class="panel">
+              <h4>Monte Carlo · 10.000 simulaciones</h4>
+              <div class="gauge"><svg width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="62" fill="none" stroke="#e8eefb" stroke-width="14"/><circle class="arc" cx="75" cy="75" r="62" fill="none" stroke="#16a34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="389.6" stroke-dashoffset="389.6" data-v="0.945" style="transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)"/></svg><div class="v"><div><b>94 %</b><span>viabilidad</span></div></div></div>
+              <div class="pct"><div><b>USD 412 k</b>P10</div><div><b>USD 492 k</b>P50</div><div><b>USD 579 k</b>P90</div></div>
+              <div class="sm mut" style="margin-top:8px">Semáforo verde: coste y plazo dentro del rango del plan.</div>
+            </div>
+          </div>
+          <div class="cap">Calculado por la plataforma con el equipo completo · datos de demostración</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 8 VIABILITY -->
-<section class="slide" data-step="7 · Viabilidad">
-  <div class="wrap">
-    <div class="kicker"><span class="n">7</span>Viabilidad medida</div>
-    <h2>Antes de invertir: ¿el plan, el equipo y el presupuesto encajan?</h2>
-    <p class="lead">Dos mediciones automáticas: el Índice de Preparación para la Inversión (IRS) y una simulación Monte Carlo de coste y plazo.</p>
-    <div class="grid g2">
-      <div class="card">
-        <h3>IRS · 8 dimensiones</h3>
-        <div class="bars" data-bars style="margin-top:12px">
-          <div class="bar"><span>Regulatorio y legal</span><span class="t"><i data-w="100"></i></span><b>100</b></div>
-          <div class="bar"><span>Experiencia del equipo</span><span class="t"><i data-w="85"></i></span><b>85</b></div>
-          <div class="bar"><span>Encaje bancario</span><span class="t"><i data-w="73"></i></span><b>73</b></div>
-          <div class="bar"><span>Modelo de negocio</span><span class="t"><i data-w="70"></i></span><b>70</b></div>
-          <div class="bar"><span>Escalabilidad</span><span class="t"><i data-w="55"></i></span><b>55</b></div>
-          <div class="bar"><span>Tracción de mercado</span><span class="t"><i data-w="40"></i></span><b>40</b></div>
-          <div class="bar"><span>Viabilidad financiera</span><span class="t"><i data-w="30"></i></span><b>30</b></div>
-          <div class="bar"><span>Impacto ESG</span><span class="t"><i data-w="0"></i></span><b>0</b></div>
-        </div>
-        <div class="total"><span>IRS del proyecto · Promising</span><b>55</b></div>
-      </div>
-      <div class="card">
-        <h3>Monte Carlo · 10.000 simulaciones</h3>
-        <div class="gauge" style="margin-top:10px">
-          <svg width="230" height="230" viewBox="0 0 230 230"><circle cx="115" cy="115" r="96" fill="none" stroke="#e8eefb" stroke-width="20"/><circle id="gaugeArc" cx="115" cy="115" r="96" fill="none" stroke="#16a34a" stroke-width="20" stroke-linecap="round" stroke-dasharray="603.2" stroke-dashoffset="603.2" style="transition:stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1)"/></svg>
-          <div class="v"><div><b>89 %</b><span>viabilidad</span></div></div>
-        </div>
-        <div class="pct">
-          <div><b>USD 413 k</b><span>P10</span></div>
-          <div><b>USD 491 k</b><span>P50</span></div>
-          <div><b>USD 579 k</b><span>P90</span></div>
-        </div>
-        <p style="margin-top:12px">Coste final simulado con el rango de presupuesto, el plazo y la solidez del equipo actual.</p>
-      </div>
+<section class="slide" data-step="7 · Firma">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">7</span>Reunión final y firma del plan</div>
+      <div class="actor"><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Agenda la reunión con los 6 socios</small></span></div>
+      <h2>Un acuerdo que queda registrado</h2>
+      <p class="t">Rodrigo agenda la reunión final desde la plataforma y cada socio recibe la invitación de calendario. Después, <b>cada uno firma el plan</b> con su nombre.</p>
+      <ul class="pts"><li>Queda constancia de quién firmó y qué versión.</li><li>Si el plan cambia, se versiona.</li><li>Con todas las firmas, el proyecto pasa a ejecución.</li></ul>
     </div>
-    <p class="demo">Calculado por la plataforma sobre el proyecto de ejemplo; el IRS sube a medida que se completa el equipo.</p>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Proyecto #10047 · Firma</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="ph"><h3>Reunión final y firma</h3><span class="pill pl-y">Pending signoff</span></div>
+          <div class="panel" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+            <div style="background:var(--navy);color:#fff;border-radius:10px;padding:8px 14px;text-align:center"><div style="font-size:11px;color:var(--gold);font-weight:800">OCT</div><div style="font-size:24px;font-weight:900;line-height:1">15</div></div>
+            <div style="flex:1;min-width:180px"><b>Reunión final del equipo</b><div class="sm mut">Videollamada · 10:00 Colombia · 17:00 España · 6 socios</div></div>
+            <span class="btn o">Añadir a calendario (.ics)</span>
+          </div>
+          <div class="panel">
+            <h4>Firmas del plan · versión 1</h4>
+            <div class="sig"><span class="ck">✓</span><span>Rodrigo Soto · Proponente</span><em>Rodrigo Soto</em></div>
+            <div class="sig"><span class="ck">✓</span><span>Beatriz Guerrero López · Agronomía</span><em>Beatriz Guerrero</em></div>
+            <div class="sig"><span class="ck">✓</span><span>Fernando Galindo Lozano · Cadena de frío</span><em>Fernando Galindo</em></div>
+            <div class="sig"><span class="ck">✓</span><span>Lucía Lara Soto · Naviera y aduanas</span><em>Lucía Lara</em></div>
+            <div class="sig"><span class="ck">✓</span><span>Pilar Romero · Exportación y FDA</span><em>Pilar Romero</em></div>
+            <div class="sig"><span class="ck w">…</span><span>Gonzalo Lozano González · Trazabilidad</span><span class="btn p" style="margin-left:auto">Firmar</span></div>
+          </div>
+          <div class="cap">Pantalla recreada · escenario ilustrativo</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 9 B2B -->
-<section class="slide" data-step="8 · B2B">
-  <div class="wrap">
-    <div class="kicker"><span class="n">8</span>Empresa con empresa</div>
-    <h2>Buscar socios y pedir cotizaciones dentro de la red</h2>
-    <p class="lead">No todo es un proyecto. Una empresa puede buscar un aliado en lenguaje natural o publicar una solicitud de cotización para que respondan los miembros con capacidad.</p>
-    <div class="grid g2">
-      <div class="card">
-        <h3>Match con IA</h3>
-        <div class="search" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>socio de logística en México</div>
-        <div class="res"><span><b style="font-size:15px;color:var(--ink)">Ancla del Bajío S.A. de C.V.</b><br><small style="color:var(--mut)">Logística · México</small></span><b>97</b></div>
-        <div class="res"><span><b style="font-size:15px;color:var(--ink)">Carga Maya S.A. de C.V.</b><br><small style="color:var(--mut)">Logística · México</small></span><b>97</b></div>
-        <div class="res"><span><b style="font-size:15px;color:var(--ink)">Pilar Sonorense S.A. de C.V.</b><br><small style="color:var(--mut)">Construcción · México</small></span><b>95</b></div>
-        <p style="margin-top:10px">Solo aparecen quienes tienen esa capacidad y operan en ese país.</p>
-      </div>
-      <div class="card">
-        <h3>Intercambio · 15 solicitudes abiertas</h3>
-        <div class="rfq"><h4>Contenedores reefer para 40 envíos de aguacate a Valencia</h4><small>Logística · Colombia, España · USD 120.000 – 160.000</small></div>
-        <div class="rfq"><h4>Paneles de concreto prefabricado para 120 viviendas</h4><small>Construcción · México · USD 400.000 – 550.000</small></div>
-        <div class="rfq"><h4>Sistema de riego por goteo para 300 hectáreas de olivar</h4><small>Agricultura · España · EUR 180.000 – 240.000</small></div>
-        <div class="rfq"><h4>Instalación solar de 500 kW en nave industrial</h4><small>Energía · México, EE. UU. · USD 380.000 – 450.000</small></div>
-      </div>
+<section class="slide" data-step="8 · Ejecución">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">8</span>El espacio de trabajo del equipo</div>
+      <div class="actor"><span class="av">6</span><span><b>El equipo completo</b><small>Colombia · España · Estados Unidos</small></span></div>
+      <h2>El cronograma del plan se convierte en trabajo</h2>
+      <p class="t">Cada proyecto firmado tiene un espacio privado: los hitos del plan, tareas con responsable, mensajes del equipo y documentos.</p>
+      <ul class="pts"><li>Todo el equipo ve el mismo avance.</li><li>Conversación y documentos en un solo lugar.</li><li>Los cambios al plan quedan versionados.</li></ul>
     </div>
-    <p class="demo">Ejemplo con datos de demostración.</p>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Espacio de trabajo</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it on">Proyectos</div><div class="it">Invitaciones</div><div class="it">Intercambio</div>
+          <div class="me"><b>Lucía Lara Soto</b><small>EMPRESARIAL</small></div></div>
+        <div class="main">
+          <div class="ph"><h3 style="font-size:17px">Cadena de frío · aguacate Hass</h3><span class="pill pl-g">Executing</span></div>
+          <div class="tabs"><span>Resumen</span><span class="on">Hitos</span><span>Tareas</span><span>Mensajes</span><span>Documentos</span></div>
+          <div class="two">
+            <div class="panel">
+              <h4>Hitos</h4>
+              <div class="ms"><span class="m">M1</span><span>Equipo núcleo conformado</span><span class="pill pl-g">Hecho</span></div>
+              <div class="ms"><span class="m">M4</span><span>Piloto en operación</span><span class="pill pl-b">En curso</span></div>
+              <div class="ms"><span class="m">M8</span><span>Operación estable</span><span class="pill pl-x">Pendiente</span></div>
+              <div class="ms"><span class="m">M12</span><span>Listo para escalar</span><span class="pill pl-x">Pendiente</span></div>
+            </div>
+            <div class="panel">
+              <h4>Tareas de esta semana</h4>
+              <label class="task"><input type="checkbox" checked disabled> Certificar centro de acopio · Beatriz</label>
+              <label class="task"><input type="checkbox" checked disabled> Reservar primeros 4 reefers · Lucía</label>
+              <label class="task"><input type="checkbox" disabled> Registro FDA del empaque · Pilar</label>
+              <label class="task"><input type="checkbox" disabled> Sensores de temperatura por lote · Gonzalo</label>
+              <label class="task"><input type="checkbox" disabled> Primer envío Cartagena → Valencia · Fernando</label>
+            </div>
+          </div>
+          <div class="cap">Pantalla recreada · escenario ilustrativo</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 10 EXECUTION -->
-<section class="slide" data-step="9 · Ejecución">
-  <div class="wrap">
-    <div class="kicker"><span class="n">9</span>Del acuerdo a la ejecución</div>
-    <h2>Un espacio de trabajo privado para cada equipo</h2>
-    <p class="lead">Con el equipo completo, el proyecto deja de ser una convocatoria y se convierte en una operación con reunión final, firma y seguimiento.</p>
-    <div class="tl">
-      <div class="card"><span class="dot">1</span><h3>Reunión final</h3><p>Se agenda con todos los socios desde la plataforma, con invitación de calendario.</p></div>
-      <div class="card"><span class="dot">2</span><h3>Firma del plan</h3><p>Cada socio firma el plan; queda registrado quién aceptó qué versión.</p></div>
-      <div class="card"><span class="dot">3</span><h3>Hitos y tareas</h3><p>El cronograma del plan se convierte en hitos y tareas con responsable.</p></div>
-      <div class="card"><span class="dot">4</span><h3>Mensajería y documentos</h3><p>Conversación de equipo y documentos del proyecto en un mismo lugar.</p></div>
-      <div class="card"><span class="dot">5</span><h3>Enmiendas</h3><p>Los cambios al plan quedan versionados y visibles para todo el equipo.</p></div>
+<section class="slide" data-step="9 · Cotización B2B">
+  <div class="wrap"><div class="story">
+    <div>
+      <div class="stepno"><span class="n">9</span>Empresa con empresa: la cotización</div>
+      <div class="actor"><span class="av">RS</span><span><b>Rodrigo Soto</b><small>Necesita contenedores reefer</small></span></div>
+      <h2>Rodrigo pide precio y la red responde</h2>
+      <p class="t">En <b>Intercambio</b> publica una solicitud de cotización. Las navieras y agentes de carga de la red envían su propuesta, y Rodrigo compara y acepta una.</p>
+      <ul class="pts"><li>Precio, plazo y condiciones lado a lado.</li><li>Solo responden miembros de la red.</li><li>Al aceptar una, la solicitud se cierra.</li></ul>
     </div>
-  </div>
+    <div class="browser"><div class="bbar"><i></i><i></i><i></i><span>camaravirtual.app/cv-105/dashboard · Intercambio</span></div>
+      <div class="app">
+        <div class="side"><div class="lg"><img src="/hispatec/logo-hispanotec.svg" alt=""><b>Camara <em>Virtual</em></b></div>
+          <div class="it">Panel</div><div class="it">Bandeja</div><div class="it">Mi Perfil</div><div class="it">Directorio</div><div class="it">Match con IA</div><div class="it">Proyectos</div><div class="it">Invitaciones</div><div class="it on">Intercambio</div>
+          <div class="me"><b>Rodrigo Soto</b><small>MIEMBRO</small></div></div>
+        <div class="main">
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><b style="font-size:15px">Contenedores reefer para 40 envíos de aguacate a Valencia</b><span class="pill pl-g">Abierta</span></div>
+            <div class="sm mut" style="margin-top:4px">Logística · Colombia, España · USD 120.000 – 160.000 · 40 reefer de 40 pies, 5-7 °C, 12 meses</div>
+          </div>
+          <h4 style="font-size:14px;margin:6px 0 8px">3 propuestas recibidas</h4>
+          <div class="offer best"><div class="h"><b>Puerto Llanera S.A.S. · Colombia</b><span class="pr">USD 129.500</span></div><p>Consolidación en Cartagena, inspección fitosanitaria coordinada y espacio garantizado para los 40 envíos · 16 días puerto a puerto</p><div style="margin-top:6px"><span class="btn g">Aceptar propuesta</span></div></div>
+          <div class="offer"><div class="h"><b>Mar Levante S.A. · España</b><span class="pr">USD 138.000</span></div><p>Salida semanal Cartagena → Valencia, registro de temperatura por lote y despacho aduanero en destino incluido · 14 días puerto a puerto</p></div>
+          <div class="offer"><div class="h"><b>Flete Castellana S.A. · España</b><span class="pr">USD 151.000</span></div><p>Puerta a puerta desde la finca hasta el almacén del importador en Valencia, con cadena de frío continua y seguro · 18 días puerta a puerta</p></div>
+          <div class="cap">Pantalla recreada · datos de demostración</div>
+        </div>
+      </div></div>
+  </div></div>
 </section>
 
-<!-- 11 CLOSE -->
 <section class="slide dark" data-step="Resumen">
-  <div class="wrap">
-    <div class="kicker">En resumen</div>
-    <h2>De una idea a un equipo verificado, en días y no en meses</h2>
-    <div class="flow">
-      <div class="f"><b>1 · Perfil</b><span>Capacidades estructuradas</span></div>
-      <div class="f"><b>2 · Proyecto</b><span>Plan con roles por IA</span></div>
-      <div class="f"><b>3 · Matching</b><span>Puntuación explicable</span></div>
-      <div class="f"><b>4 · Equipo</b><span>Invitaciones y aceptación</span></div>
-      <div class="f"><b>5 · Viabilidad</b><span>IRS y Monte Carlo</span></div>
-      <div class="f"><b>6 · Ejecución</b><span>Espacio de trabajo</span></div>
+  <div class="wrap hero">
+    <div class="stepno" style="color:var(--gold)">En resumen</div>
+    <h1 style="font-size:clamp(30px,3.6vw,50px)">De una idea a un equipo verificado,<br>en días y no en meses</h1>
+    <div class="path">
+      <div><b>1</b>Propone</div><div><b>2</b>Plan con IA</div><div><b>3</b>Match</div><div><b>4</b>Bandeja</div><div><b>5</b>Acepta</div><div><b>6</b>Viabilidad</div><div><b>7</b>Firma</div><div><b>8</b>Ejecución</div><div><b>9</b>Cotización</div>
     </div>
-    <div style="display:flex;gap:30px;align-items:center;margin-top:36px;flex-wrap:wrap">
+    <div style="display:flex;gap:30px;align-items:center;margin-top:34px;flex-wrap:wrap">
       <div class="qr"><img src="/api/chamber-qr/cv-105.svg" alt="Código QR para unirse a Hispanotec" onerror="this.parentNode.style.display='none'"><b>Únete a Hispanotec</b></div>
-      <div>
-        <p class="lead" style="margin-bottom:10px">Escanea el código o entra en</p>
-        <div style="font-size:clamp(22px,2.6vw,34px);font-weight:900;color:var(--gold)">camaravirtual.app/cv-105</div>
-      </div>
+      <div><p class="lead" style="margin:0 0 8px">Escanea el código o entra en</p><div style="font-size:clamp(22px,2.6vw,34px);font-weight:900;color:var(--gold)">camaravirtual.app/cv-105</div></div>
     </div>
   </div>
 </section>
@@ -565,11 +581,15 @@ tr.acc td{background:#f0fdf4}
 
   function animate(s){
     s.querySelectorAll('[data-bars] i').forEach(function(i){ i.style.width = '0'; });
-    requestAnimationFrame(function(){ setTimeout(function(){
+    s.querySelectorAll('.arc').forEach(function(a){ a.style.strokeDashoffset = a.getAttribute('stroke-dasharray'); });
+    s.querySelectorAll('.mem.new').forEach(function(m){ m.style.animation = 'none'; void m.offsetWidth; m.style.animation = ''; });
+    setTimeout(function(){
       s.querySelectorAll('[data-bars] i').forEach(function(i){ i.style.width = i.getAttribute('data-w') + '%'; });
-      var arc = s.querySelector('#gaugeArc');
-      if (arc) { arc.style.strokeDashoffset = 603.2; setTimeout(function(){ arc.style.strokeDashoffset = 603.2 * (1 - 0.89); }, 60); }
-    }, 120); });
+      s.querySelectorAll('.arc').forEach(function(a){
+        var L = parseFloat(a.getAttribute('stroke-dasharray'));
+        a.style.strokeDashoffset = L * (1 - parseFloat(a.getAttribute('data-v')));
+      });
+    }, 150);
   }
 
   function go(i){
@@ -605,7 +625,7 @@ tr.acc td{background:#f0fdf4}
     var dx = e.changedTouches[0].clientX - tx; tx = null;
     if (Math.abs(dx) > 60) go(idx + (dx < 0 ? 1 : -1));
   });
-  window.addEventListener('hashchange', function(){ var n = parseInt(location.hash.replace('#',''),10); if (!isNaN(n) && n - 1 !== idx) go(n - 1); });
+  window.addEventListener('hashchange', function(){ var n = parseInt(location.hash.replace('#',''), 10); if (!isNaN(n) && n - 1 !== idx) go(n - 1); });
   var start = parseInt((location.hash || '').replace('#', ''), 10);
   go(isNaN(start) ? 0 : start - 1);
 })();

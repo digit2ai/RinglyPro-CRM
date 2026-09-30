@@ -484,6 +484,55 @@ async function acceptTopMatches(chamberId) {
   } catch (e) { await t.rollback(); throw e; }
 }
 
+// The walkthrough deck (public/hispanotec/matchmaking.html) tells one story:
+// Rodrigo Soto proposes the avocado cold-chain project, and in step 9 posts an
+// RFQ for reefer containers that three shipping firms answer. This makes the
+// data say exactly that, so what the audience sees live matches the deck.
+// Idempotent; everything touched is a demo row.
+async function storyData(chamberId) {
+  const one = async (sql, bind) => (await sequelize.query(sql, { bind, type: QueryTypes.SELECT }))[0];
+  const proj = await one(`SELECT p.id, p.proposer_member_id FROM projects p JOIN members m ON m.id = p.proposer_member_id
+     WHERE p.chamber_id=$1 AND p.title LIKE 'Cadena de frío para exportar aguacate%' AND m.email LIKE $2`, [chamberId, `%@${DEMO_DOMAIN}`]);
+  if (!proj) { console.log('story: avocado project not found'); return; }
+  const rod = await one(`SELECT m.id, m.first_name, m.company_name, c.id AS cid FROM members m LEFT JOIN companies c ON c.owner_member_id=m.id AND c.chamber_id=m.chamber_id WHERE m.id=$1`, [proj.proposer_member_id]);
+  const t = await sequelize.transaction();
+  try {
+    const q = (sql, bind) => sequelize.query(sql, { bind, transaction: t });
+    await q(`UPDATE members SET sub_specialty=$1, bio=$2, updated_at=NOW() WHERE id=$3`, [
+      'Productora y exportadora de aguacate Hass · manejo poscosecha y certificación GlobalG.A.P.',
+      `${rod.first_name} dirige ${rod.company_name}, productora y exportadora de aguacate Hass con fincas en el Eje Cafetero y sede en Medellín. Productos: aguacate Hass calibre exportación, aguacate orgánico y pulpa de aguacate congelada. Servicios: manejo poscosecha y empaque certificado GlobalG.A.P. Busca abrir mercado directo en España y Estados Unidos.`,
+      rod.id]);
+    if (rod.cid) {
+      await q(`UPDATE companies SET description=$1, capabilities=$2::text[], certifications=$3::text[], updated_at=NOW() WHERE id=$4`, [
+        'Productora y exportadora de aguacate Hass con fincas en el Eje Cafetero.',
+        ['aguacate Hass calibre exportación', 'aguacate orgánico', 'pulpa de aguacate congelada', 'manejo poscosecha', 'empaque certificado GlobalG.A.P.'],
+        ['GlobalG.A.P.', 'Rainforest Alliance'], rod.cid]);
+    }
+    const rfq = await one(`SELECT id FROM rfqs WHERE chamber_id=$1 AND title LIKE 'Contenedores reefer%'`, [chamberId]);
+    if (rfq) {
+      await q(`UPDATE rfqs SET requester_member_id=$1, company_id=$2, description=$3, updated_at=NOW() WHERE id=$4`, [
+        rod.id, rod.cid,
+        'Buscamos naviera o agente de carga para 40 envíos en contenedor reefer de 40 pies, Cartagena → Valencia, a lo largo de 12 meses. Temperatura controlada a 5-7 °C, trazabilidad por lote y documentación fitosanitaria.',
+        rfq.id]);
+      const offers = [
+        ['Mar Levante S.A.', 'Fletes Cartagena → Valencia con salida semanal, reefer de 40 pies con registro de temperatura por lote y despacho aduanero en destino incluido.', 138000, '14 días puerto a puerto'],
+        ['Puerto Llanera S.A.S.', 'Consolidación en Cartagena, inspección fitosanitaria coordinada y reserva de espacio garantizada para los 40 envíos.', 129500, '16 días puerto a puerto'],
+        ['Flete Castellana S.A.', 'Servicio puerta a puerta desde finca hasta el almacén del importador en Valencia, con cadena de frío continua y seguro de carga.', 151000, '18 días puerta a puerta'],
+      ];
+      for (const [company, text, price, eta] of offers) {
+        const who = await one(`SELECT m.id, c.id AS cid FROM members m JOIN companies c ON c.owner_member_id=m.id WHERE m.chamber_id=$1 AND c.name=$2 AND m.email LIKE $3`, [chamberId, company, `%@${DEMO_DOMAIN}`]);
+        if (!who) continue;
+        const has = await one(`SELECT id FROM rfq_responses WHERE chamber_id=$1 AND rfq_id=$2 AND responder_member_id=$3`, [chamberId, rfq.id, who.id]);
+        if (has) continue;
+        await q(`INSERT INTO rfq_responses (chamber_id, rfq_id, responder_member_id, company_id, proposal_text, price_quote, currency, delivery_timeline, status, created_at, updated_at)
+                 VALUES ($1,$2,$3,$4,$5,$6,'USD',$7,'submitted',NOW(),NOW())`, [chamberId, rfq.id, who.id, who.cid, text, price, eta]);
+      }
+    }
+    await t.commit();
+    console.log(`story: ${rod.first_name} is the avocado exporter proposing project ${proj.id}; reefer RFQ is his with 3 offers`);
+  } catch (e) { await t.rollback(); throw e; }
+}
+
 (async () => {
   const [chamber] = await sequelize.query(`SELECT id FROM chambers WHERE slug = :s`,
     { replacements: { s: SLUG }, type: QueryTypes.SELECT });
@@ -492,6 +541,7 @@ async function acceptTopMatches(chamberId) {
 
   if (RESET_ONLY) { await reset(chamberId); return; }
   if (args.has('--accept')) { await acceptTopMatches(chamberId); return; }
+  if (args.has('--story')) { await storyData(chamberId); return; }
   if (!DRY) {
     const existing = await demoMemberIds(chamberId);
     if (existing.length && !RESEED) {
@@ -501,5 +551,5 @@ async function acceptTopMatches(chamberId) {
     if (existing.length) await reset(chamberId);
   }
   await seed(chamberId);
-  if (!DRY) await acceptTopMatches(chamberId);
+  if (!DRY) { await acceptTopMatches(chamberId); await storyData(chamberId); }
 })().then(() => process.exit(0)).catch((e) => { console.error('FAILED:', e.message); process.exit(1); });
