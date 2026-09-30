@@ -840,7 +840,7 @@ router.get('/members', authMiddleware, async (req, res) => {
     if (country) { conditions.push('m.country = :country'); replacements.country = country; }
     if (region_id) { conditions.push('m.region_id = :region_id'); replacements.region_id = parseInt(region_id); }
     if (search) {
-      conditions.push("(m.first_name ILIKE :search OR m.last_name ILIKE :search OR m.email ILIKE :search OR m.company_name ILIKE :search)");
+      conditions.push("(m.first_name ILIKE :search OR m.last_name ILIKE :search OR m.email ILIKE :search OR m.company_name ILIKE :search OR m.sub_specialty ILIKE :search)");
       replacements.search = `%${search}%`;
     }
     const where = 'WHERE ' + conditions.join(' AND ');
@@ -855,7 +855,13 @@ router.get('/members', authMiddleware, async (req, res) => {
        ORDER BY m.last_name, m.first_name LIMIT :limit OFFSET :offset`,
       { replacements, type: QueryTypes.SELECT }
     );
-    return res.json({ success: true, data: { members, pagination: { page: parseInt(page), limit: parseInt(limit) } } });
+    const [{ total }] = await sequelize.query(
+      `SELECT COUNT(*)::int AS total FROM members m ${where}`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    const lim = parseInt(limit) || 50;
+    return res.json({ success: true, data: { members, pagination: {
+      page: Math.max(1, parseInt(page)), limit: lim, total, total_pages: Math.max(1, Math.ceil(total / lim)) } } });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

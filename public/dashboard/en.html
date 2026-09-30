@@ -1470,7 +1470,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       document.getElementById('dirAddMemberBtn').addEventListener('click', showAddMemberModal);
     }
 
-    async function searchDir() {
+    var dirPage = 1;
+    async function searchDir(page) {
+      dirPage = page || 1;
       var params = new URLSearchParams();
       var s = document.getElementById('dirSearch').value.trim();
       var r = document.getElementById('dirRegion').value;
@@ -1478,7 +1480,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       if (s) params.set('search', s);
       if (r) params.set('region_id', r);
       if (sec) params.set('sector', sec);
-      params.set('limit', '50');
+      params.set('limit', '48');
+      params.set('page', String(dirPage));
 
       var out = document.getElementById('dirResults');
       out.innerHTML = '<div class="loading">Loading...</div>';
@@ -1516,8 +1519,14 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
           h += '</div>';
         });
         h += '</div>';
-        if (res.data.pagination) h += '<p class="text-muted text-sm mt-12">'+res.data.pagination.total+' members found (page '+res.data.pagination.page+' of '+res.data.pagination.total_pages+')</p>';
+        var pg = res.data.pagination;
+        if (pg && pg.total != null) {
+          var pager = '<div class="dirPager" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0">'+'<button class="btn btn-outline btn-sm dirPrev"'+(pg.page<=1?' disabled':'')+'>&larr; Previous</button>'+'<span class="text-muted text-sm">'+pg.total+' members · page '+pg.page+' of '+pg.total_pages+'</span>'+'<button class="btn btn-outline btn-sm dirNext"'+(pg.page>=pg.total_pages?' disabled':'')+'>Next &rarr;</button></div>';
+          h = pager + h + pager;
+        }
         out.innerHTML = h;
+        out.querySelectorAll('.dirPrev').forEach(function(b){ b.addEventListener('click', function(){ searchDir(dirPage - 1); window.scrollTo(0,0); }); });
+        out.querySelectorAll('.dirNext').forEach(function(b){ b.addEventListener('click', function(){ searchDir(dirPage + 1); window.scrollTo(0,0); }); });
 
         out.querySelectorAll('.result-card').forEach(function(card) {
           card.addEventListener('click', function() { showMemberModal(this.dataset.memberId); });
@@ -1543,7 +1552,7 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
             if (!confirm('Delete member "' + mname + '" (' + memail + ')?\n\nSoft delete -- the member will not be able to log in. Their content stays attributed.')) return;
             try {
               var dr = await apiFetch('/admin/members/' + mid, 'DELETE');
-              if (dr.success) { searchDir(); }
+              if (dr.success) { searchDir(dirPage); }
               else alert(dr.error || 'Delete failed');
             } catch(e2) { alert(e2.message); }
           });
@@ -1616,10 +1625,10 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
       w.onload = function() { setTimeout(function(){ w.focus(); w.print(); }, 250); };
     }
 
-    document.getElementById('dirBtn').addEventListener('click', searchDir);
+    document.getElementById('dirBtn').addEventListener('click', function(){ searchDir(1); });
     document.getElementById('dirPrintBtn').addEventListener('click', printDir);
-    document.getElementById('dirSearch').addEventListener('keypress', function(e){ if(e.key==='Enter') searchDir(); });
-    searchDir();
+    document.getElementById('dirSearch').addEventListener('keypress', function(e){ if(e.key==='Enter') searchDir(1); });
+    searchDir(1);
   }
 
   async function showMemberModal(id) {
