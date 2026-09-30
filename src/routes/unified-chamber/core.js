@@ -1914,25 +1914,79 @@ router.put('/admin/members/:id/membership', authMiddleware, requireAdmin, async 
 // =====================================================================
 // AI MATCHING
 // =====================================================================
+// Partner search. It used to ignore the query entirely and return the top
+// members by trust score with a constant similarity of 0.5, so "socio de
+// logística en México" and "abogado en Madrid" gave the same list.
+//
+// Now: deterministic keyword relevance. The query is accent-folded, stop
+// words dropped, and each remaining term is matched by its first 6 letters
+// (a crude stem: logística/logístico/logistics all hit "logist") against the
+// member's sector, specialty, bio, company, country and the capabilities of
+// any company they own. similarity = share of query terms found. No model,
+// no embedding, nothing invented: a term that is not in the profile does not
+// count. The sector select and country box are hard filters.
+// gini_correction stays 1.0 because no correction is applied here.
+const MATCH_STOP = new Set(('de del la las el los en con para por que una uno un y o a al se su sus mi me yo ' +
+  'busco buscamos necesito necesitamos quiero socio socios socia partner partners empresa empresas ' +
+  'alguien persona experiencia proveedor proveedores the and for with in of to a an i we need looking ' +
+  'someone company companies experience provider').split(/\s+/));
+const COUNTRY_WORDS = {
+  'spain': 'spain espana espanol espanola', 'mexico': 'mexico mexicano mexicana',
+  'colombia': 'colombia colombiano colombiana',
+  'united states': 'united states estados unidos eeuu usa america florida texas miami'
+};
+const COUNTRY_TERMS = new Set(Object.values(COUNTRY_WORDS).join(' ').split(' '));
+function foldText(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
 router.post('/match', authMiddleware, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.body.limit) || 10, 50);
+    const sector = req.body.sector ? String(req.body.sector) : null;
+    const country = req.body.country ? foldText(req.body.country).trim() : null;
     const members = await sequelize.query(
-      `SELECT id AS member_id, first_name, last_name, email, company_name, sector, country,
-              trust_score, membership_type, region_id
-       FROM members
-       WHERE chamber_id = :c AND status='active' AND id != :me
-       ORDER BY trust_score DESC LIMIT :limit`,
-      { replacements: { c: req.chamber_id, me: req.member.id, limit }, type: QueryTypes.SELECT }
+      `SELECT m.id AS member_id, m.first_name, m.last_name, m.email, m.company_name, m.sector, m.country,
+              m.trust_score, m.membership_type, m.region_id, m.sub_specialty, m.bio,
+              (SELECT string_agg(array_to_string(co.capabilities, ' '), ' ')
+                 FROM companies co WHERE co.chamber_id = m.chamber_id AND co.owner_member_id = m.id) AS capabilities
+       FROM members m
+       WHERE m.chamber_id = :c AND m.status = 'active' AND m.id != :me
+         AND (CAST(:sector AS text) IS NULL OR m.sector = :sector)`,
+      { replacements: { c: req.chamber_id, me: req.member.id, sector }, type: QueryTypes.SELECT }
     );
-    const results = members.map(m => ({
-      ...m,
-      trust_score: parseFloat(m.trust_score),
-      similarity_score: 0.5,
-      gini_correction: 1.0,
-      final_score: parseFloat(m.trust_score)
-    }));
-    return res.json({ success: true, data: { results, total_candidates: results.length } });
+
+    const terms = [...new Set(foldText(req.body.query_text).split(/[^a-z0-9]+/)
+      .filter(w => w.length >= 3 && !MATCH_STOP.has(w)))];
+
+    let scored = members.map(m => {
+      const ctry = foldText(m.country);
+      const hay = foldText([m.sector, String(m.sector || '').replace(/_/g, ' '), m.sub_specialty, m.bio,
+        m.company_name, m.capabilities].join(' '));
+      // A country word ("México", "España") matches the member's OWN country,
+      // never a bio that merely mentions it ("atiende España y México").
+      const own = (COUNTRY_WORDS[ctry] || ctry).split(' ');
+      const hits = terms.filter(t => COUNTRY_TERMS.has(t)
+        ? own.some(w => w.startsWith(t.slice(0, 6)))
+        : hay.includes(t.slice(0, 6))).length;
+      const trust = parseFloat(m.trust_score) || 0;
+      const similarity = terms.length ? hits / terms.length : 0.5;
+      const { bio, sub_specialty, capabilities, ...pub } = m;
+      return {
+        ...pub, sub_specialty,
+        trust_score: trust,
+        similarity_score: Math.round(similarity * 1000) / 1000,
+        matched_terms: hits,
+        gini_correction: 1.0,
+        final_score: Math.round((terms.length ? 0.75 * similarity + 0.25 * trust : trust) * 1000) / 1000,
+        _ctry: ctry
+      };
+    });
+    if (country) scored = scored.filter(r => r._ctry.includes(country) || country.includes(r._ctry) ||
+      (COUNTRY_WORDS[r._ctry] || '').includes(country));
+    if (terms.length) scored = scored.filter(r => r.matched_terms > 0);
+    scored.sort((a, b) => b.final_score - a.final_score || b.trust_score - a.trust_score);
+    const results = scored.slice(0, limit).map(({ _ctry, ...r }) => r);
+    return res.json({ success: true, data: { results, total_candidates: scored.length, query_terms: terms } });
   } catch (err) { return res.status(500).json({ success: false, error: err.message }); }
 });
 

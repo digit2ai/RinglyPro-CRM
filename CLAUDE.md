@@ -2116,6 +2116,17 @@ UPDATE chambers SET theme_config = COALESCE(theme_config,'{}'::jsonb) || '{"publ
 
 CORS is already open globally (`app.use(cors())` in `src/app.js`), so cross-origin fetch from any WordPress host works with no per-domain allowlist.
 
+## cv-105 (Hispanotec) demo directory — FICTIONAL DATA, remove after the demo
+
+Seeded 2026-09-30 for the Hispanotec audience demo (2026-10-01): **500 fictional members** (154 company owners + individual specialists) across 17 sectors, only in Spain / Colombia / Mexico / United States; **154 company profiles** (products, services, certifications in `companies.capabilities`); **10 multi-sector projects** in `recruiting`; **15 open RFQs**; and 147 match invitations **computed by the platform's own matcher** (`lib/scoring.js`, same greedy rule as `invite-matches`) plus the IRS from `lib/project-irs-scorer.js` — no score was typed in. IRS reads "Early Stage" because no team has accepted yet; it rises as invitations are accepted.
+
+- `node scripts/seed-cv105-demo.js [--dry|--reseed|--reset]` · catalogue in `scripts/cv105-demo-catalog.js` · check with `node scripts/test-cv105-demo.js` → **18/18**.
+- **A DEMO ROW IS FOUND BY ITS MEMBER'S EMAIL** (`@demo-hispanotec.test`, a reserved TLD so nothing can be delivered); projects, RFQs, companies and invitations all hang off a demo member, and `--reset` deletes along that chain only. The invitation pool is demo members only, so **no real member was invited to a demo project**.
+- Demo accounts carry a bcrypt hash of a **random password nobody knows** — 500 logins with a published password would let anyone read the real members' directory.
+- Project roles' `required_skills` are drawn from the SAME per-sector skill pool the bios are built from, because the matcher hits a skill by its first 8 characters inside bio/specialty/company. A skill no bio contains matches nobody.
+- **`POST /:slug/api/match` WAS A STUB** — it ignored the query, sector and country and returned the top members by trust score with a constant similarity of 0.5. It now scores deterministically: accent-folded query, stop words dropped, each term matched by its first 6 letters against sector, specialty, bio, company and owned-company capabilities; a **country word matches the member's own country, never a bio that merely mentions it**; sector and country are hard filters; a query nothing matches returns an empty list; `gini_correction` stays 1.0 because none is applied. Applies to every chamber, not just cv-105.
+- Also repaired: project 10044's title carried Cyrillic look-alike letters ("Hispaно").
+
 ## Chamber ↔ WordPress member sync (pull or push)
 
 **Purpose:** two-way integration between a chamber and a WordPress site, with an explicit choice of who is the system of record. `theme_config.wp_sync.direction` is **`pull`** (WordPress owns members, CamaraVirtual follows) **or `push`** (CamaraVirtual owns members, WordPress follows) — never both. Running both is an echo loop (CV writes → WP fires `profile_update` → webhook writes back to CV → …), so `/wp/sync` refuses in push mode, `/wp/push` refuses in pull mode, the inbound webhook 409s in push mode, and the companion plugin suppresses its own outbound webhook while applying a CV write. This is separate from the read-only directory above, which involves no member records at all.
