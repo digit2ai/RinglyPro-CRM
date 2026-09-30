@@ -7,6 +7,7 @@
  *   node scripts/seed-cv105-demo.js --reseed   delete the demo rows, then seed again
  *   node scripts/seed-cv105-demo.js --reset    delete the demo rows only
  *   node scripts/seed-cv105-demo.js --dry      build everything in memory, write nothing
+ *   node scripts/seed-cv105-demo.js --accept   top match per role accepts (leaves 1-2 roles open)
  *
  * What it writes into chamber cv-105 ONLY:
  *   500 fictional members (150 company owners + 350 individual specialists)
@@ -422,6 +423,67 @@ async function seed(chamberId) {
   } catch (e) { await t.rollback(); throw e; }
 }
 
+
+// Accept the best-matched pending invitation for some roles of each demo
+// project, with exactly the effects of POST /projects/:id/invitations/:inv/respond
+// {action:'accept'}: invitation -> accepted, a project_members row, and the
+// member's other pending invites on that project removed. The fictional
+// members cannot sign in, so without this every team reads "0 miembros".
+// At least one role per project is left open, so the project stays in
+// 'recruiting' (filling every role would auto-close it and run the cascade).
+async function acceptTopMatches(chamberId) {
+  const ids = await demoMemberIds(chamberId);
+  if (!ids.length) { console.log('accept: no demo rows'); return; }
+  const projects = await sequelize.query(
+    `SELECT * FROM projects WHERE chamber_id = :c AND proposer_member_id IN (:ids) ORDER BY id`,
+    { replacements: { c: chamberId, ids }, type: QueryTypes.SELECT });
+  const t = await sequelize.transaction();
+  const report = [];
+  try {
+    for (let pi = 0; pi < projects.length; pi++) {
+      const proj = projects[pi];
+      const roles = (proj.plan_json && proj.plan_json.team_roles_required) || [];
+      const toFill = Math.max(1, roles.length - 1 - (pi % 2));   // n-1 or n-2 roles
+      let filled = 0;
+      for (let ri = 0; ri < roles.length && filled < toFill; ri++) {
+        const [has] = await sequelize.query(
+          `SELECT id FROM project_members WHERE chamber_id=:c AND project_id=:p AND role_index=:ri`,
+          { replacements: { c: chamberId, p: proj.id, ri }, type: QueryTypes.SELECT, transaction: t });
+        if (has) { filled++; continue; }
+        const [inv] = await sequelize.query(
+          `SELECT * FROM project_invitations WHERE chamber_id=:c AND project_id=:p AND role_index=:ri AND status='pending'
+           ORDER BY match_score DESC LIMIT 1`,
+          { replacements: { c: chamberId, p: proj.id, ri }, type: QueryTypes.SELECT, transaction: t });
+        if (!inv) continue;
+        await sequelize.query(
+          `UPDATE project_invitations SET status='accepted', responded_at=NOW() WHERE chamber_id=:c AND id=:id`,
+          { replacements: { c: chamberId, id: inv.id }, transaction: t });
+        await sequelize.query(
+          `INSERT INTO project_members (chamber_id, project_id, member_id, role, role_title, role_index, invitation_id, joined_at)
+           VALUES (:c, :p, :m, 'collaborator', :rt, :ri, :inv, NOW())`,
+          { replacements: { c: chamberId, p: proj.id, m: inv.member_id, rt: inv.role_title, ri, inv: inv.id }, transaction: t });
+        await sequelize.query(
+          `DELETE FROM project_invitations WHERE chamber_id=:c AND project_id=:p AND member_id=:m AND status='pending' AND id<>:inv`,
+          { replacements: { c: chamberId, p: proj.id, m: inv.member_id, inv: inv.id }, transaction: t });
+        filled++;
+      }
+      const team = await sequelize.query(
+        `SELECT pm.member_id, m.trust_score, false AS is_proposer FROM project_members pm JOIN members m ON m.id=pm.member_id
+         WHERE pm.chamber_id=:c AND pm.project_id=:p`,
+        { replacements: { c: chamberId, p: proj.id }, type: QueryTypes.SELECT, transaction: t });
+      const irs = await irsScorer.scoreProject(proj, team, { useAi: false });
+      await sequelize.query(
+        `UPDATE projects SET irs_score=$1, irs_components=$2::jsonb, irs_evidence=$3::jsonb, irs_grade=$4, irs_computed_at=NOW()
+         WHERE chamber_id=$5 AND id=$6`,
+        { bind: [irs.score, JSON.stringify(irs.components), JSON.stringify({ ai: irs.ai, base_score: irs.base_score, auto: 'demo_seed_accept' }),
+          irs.grade, chamberId, proj.id], transaction: t });
+      report.push({ id: proj.id, title: clip(proj.title, 55), roles: roles.length, team: team.length, open: roles.length - filled, irs: `${irs.score_100} ${irs.grade}` });
+    }
+    await t.commit();
+    console.table(report);
+  } catch (e) { await t.rollback(); throw e; }
+}
+
 (async () => {
   const [chamber] = await sequelize.query(`SELECT id FROM chambers WHERE slug = :s`,
     { replacements: { s: SLUG }, type: QueryTypes.SELECT });
@@ -429,6 +491,7 @@ async function seed(chamberId) {
   const chamberId = chamber.id;
 
   if (RESET_ONLY) { await reset(chamberId); return; }
+  if (args.has('--accept')) { await acceptTopMatches(chamberId); return; }
   if (!DRY) {
     const existing = await demoMemberIds(chamberId);
     if (existing.length && !RESEED) {
@@ -438,4 +501,5 @@ async function seed(chamberId) {
     if (existing.length) await reset(chamberId);
   }
   await seed(chamberId);
+  if (!DRY) await acceptTopMatches(chamberId);
 })().then(() => process.exit(0)).catch((e) => { console.error('FAILED:', e.message); process.exit(1); });
