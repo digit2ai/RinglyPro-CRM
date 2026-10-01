@@ -247,6 +247,12 @@ router.post('/draft', authMiddleware, async (req, res) => {
     return res.status(201).json({ success: true, data: { project_id: result[0].id, plan_json: plan, usage } });
   } catch (err) {
     console.error('[unified plan-draft]', err.message);
+    // The model account being out of credit is an operator problem, not the
+    // member's: say so in plain words instead of showing the raw API body.
+    if (/credit balance is too low|billing/i.test(String(err.message))) {
+      return res.status(503).json({ success: false, code: 'ai_credit_exhausted',
+        error: 'El asistente de IA no está disponible en este momento (la cuenta de IA de la plataforma no tiene saldo). Tu texto no se ha perdido: inténtalo de nuevo más tarde o avisa al administrador.' });
+    }
     return res.status(500).json({ success: false, error: err.message });
   }
 });
