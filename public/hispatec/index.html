@@ -697,6 +697,26 @@
     font-size: 13px;
   }
 
+
+  /* Top bar holds only the two calls to action + language (owner request 2026-10-01).
+     The section links live in the footer. Always visible, so no hamburger. */
+  .header-nav.hdr-actions { display: flex !important; flex-direction: row !important; position: static !important;
+    background: none !important; padding: 0 !important; gap: 12px; }
+  .header-nav a.hdr-btn { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 700;
+    padding: 9px 18px; border-radius: 9px; white-space: nowrap; display: inline-block; line-height: 1.2; }
+  .header-nav a.hdr-join { background: var(--gold); color: #0e2f4f; border: 2px solid var(--gold); }
+  .header-nav a.hdr-join:hover { background: #fff; border-color: #fff; color: #0e2f4f; }
+  .header-nav a.hdr-login { color: #fff; border: 2px solid rgba(255,255,255,0.45); }
+  .header-nav a.hdr-login:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.08); }
+  @media (max-width: 860px) { .header-logo > span { display: none; } }
+  @media (max-width: 520px) {
+    .header { padding: 0 12px; }
+    .header-nav.hdr-actions { gap: 6px; }
+    .header-nav a.hdr-btn { font-size: 12.5px; padding: 8px 10px; }
+    .header-logo img { height: 34px !important; }
+    .header-nav a.hdr-join .long { display: none; }
+  }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 1024px) {
     .tiers-grid { grid-template-columns: repeat(3, 1fr); }
@@ -954,22 +974,12 @@
 <header class="header" id="header">
   <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:11px;"><img src="https://aiagent.ringlypro.com/hispatec/logo-hispanotec.svg" alt="HISPANOTEC" style="height:42px;width:auto;display:block;background:#fff;border-radius:8px;padding:3px;"><span style="font-weight:800;letter-spacing:2px;font-size:18px;color:#fff;">HISPANOTEC <span style="color:var(--gold);">DIGITAL</span></span></a>
   <nav>
-    <ul class="header-nav" id="navMenu">
-      <li><a href="#ecosistema" data-es="Ecosistema" data-en="Ecosystem">Ecosistema</a></li>
-      <li><a href="#flujo" data-es="Flujo" data-en="Flow">Flujo</a></li>
-      <li><a href="#modulos" data-es="Módulos" data-en="Modules">Módulos</a></li>
-      <li><a href="#como-funciona" data-es="Cómo Trabajamos" data-en="How We Work">Cómo Trabajamos</a></li>
-      <li><a href="#soporte" data-es="Soporte" data-en="Support">Soporte</a></li>
-      <li><a href="#tecnología" data-es="Tecnología" data-en="Technology">Tecnología</a></li>
-      <li><a href="#acceder" data-es="Acceder" data-en="Access">Acceder</a></li>
-      <li><a href="#jobup" data-es="JobUp" data-en="JobUp">JobUp</a></li>
-      <li><a href="https://www.camaravirtual.app/cv-105/login" target="_blank" rel="noopener" style="color:var(--gold);font-weight:600;" data-es="Iniciar Sesión" data-en="Log In">Iniciar Sesión</a></li>
+    <ul class="header-nav hdr-actions" id="navMenu">
+      <li><a href="https://www.camaravirtual.app/cv-105" target="_blank" rel="noopener" class="hdr-btn hdr-join" data-es="Únete<span class='long'> a Hispanotec Digital</span>" data-en="Join<span class='long'> Hispanotec Digital</span>">Únete<span class="long"> a Hispanotec Digital</span></a></li>
+      <li><a href="https://www.camaravirtual.app/cv-105/login" target="_blank" rel="noopener" class="hdr-btn hdr-login" data-es="Iniciar Sesión" data-en="Log In">Iniciar Sesión</a></li>
       <li><button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button></li>
     </ul>
   </nav>
-  <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu()">
-    <span></span><span></span><span></span>
-  </button>
 </header>
 
 <!-- ═══════ HERO ═══════ -->
@@ -1574,22 +1584,6 @@
     } else {
       header.classList.remove('scrolled');
     }
-  });
-
-  /* ── MOBILE MENU ── */
-  window.toggleMobileMenu = function() {
-    var nav = document.getElementById('navMenu');
-    var btn = document.getElementById('mobileMenuBtn');
-    nav.classList.toggle('open');
-    btn.classList.toggle('active');
-  };
-
-  // Close mobile menu on link click
-  document.querySelectorAll('.header-nav a').forEach(function(link) {
-    link.addEventListener('click', function() {
-      document.getElementById('navMenu').classList.remove('open');
-      document.getElementById('mobileMenuBtn').classList.remove('active');
-    });
   });
 
   /* ── REGISTRATION FORM ── */
