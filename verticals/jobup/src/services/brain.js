@@ -77,6 +77,7 @@ function noteFailure(e) {
 
 function health() {
   return {
+    paused: !aiOn(),   // true = JobUp makes no Anthropic call (JOBUP_AI / AI_DEFAULT)
     key_present: Boolean(process.env.ANTHROPIC_API_KEY),
     sdk_loaded: Boolean(anthropic()),
     model: MODEL,
