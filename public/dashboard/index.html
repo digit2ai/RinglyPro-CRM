@@ -417,6 +417,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   .result-cards { grid-template-columns:1fr; }
   .pricing-grid { grid-template-columns:1fr; }
 }
+
+  .pick-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:190px;overflow-y:auto;padding:8px;border:1px solid var(--gray-200,#e2e8f0);border-radius:8px;background:#fff}
+  .pick-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1px solid var(--gray-300,#cbd5e1);border-radius:999px;font-size:13px;font-weight:600;color:#334155;cursor:pointer;user-select:none;text-transform:none;letter-spacing:0;margin:0}
+  .pick-chip input{position:absolute;opacity:0;width:0;height:0}
+  .pick-chip.on{background:var(--primary,#1a3d8f);border-color:var(--primary,#1a3d8f);color:#fff}
+  .pick-chip:focus-within{outline:2px solid var(--primary,#1a3d8f);outline-offset:1px}
+  .pick-search{width:100%;margin:0 0 6px 0}
+  .pick-count{float:right;color:var(--primary,#1a3d8f);font-size:12px;text-transform:none;letter-spacing:0}
+  @media (max-width:700px){.pick-chip{padding:9px 12px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -2832,6 +2841,68 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     loadThread();
   }
 
+  // Multi-select as tap-to-toggle chips (2026-10-01). A <select multiple>
+  // needs Cmd/Ctrl-click, which nobody finds and phones cannot do. Values stay
+  // the canonical ones the server expects (sector slugs, English country names);
+  // only the labels are Spanish.
+  var PAIS_ES = { 'Argentina':'Argentina','Austria':'Austria','Belgium':'Bélgica','Belize':'Belice','Bolivia':'Bolivia',
+    'Brazil':'Brasil','Bulgaria':'Bulgaria','Canada':'Canadá','Chile':'Chile','Colombia':'Colombia','Costa Rica':'Costa Rica',
+    'Croatia':'Croacia','Cuba':'Cuba','Cyprus':'Chipre','Czech Republic':'República Checa','Denmark':'Dinamarca',
+    'Dominican Republic':'República Dominicana','Ecuador':'Ecuador','El Salvador':'El Salvador','Estonia':'Estonia',
+    'Finland':'Finlandia','France':'Francia','Germany':'Alemania','Greece':'Grecia','Guatemala':'Guatemala','Guyana':'Guyana',
+    'Haiti':'Haití','Honduras':'Honduras','Hungary':'Hungría','Iceland':'Islandia','Ireland':'Irlanda','Italy':'Italia',
+    'Jamaica':'Jamaica','Latvia':'Letonia','Lithuania':'Lituania','Luxembourg':'Luxemburgo','Malta':'Malta','Mexico':'México',
+    'Netherlands':'Países Bajos','Nicaragua':'Nicaragua','Norway':'Noruega','Panama':'Panamá','Paraguay':'Paraguay','Peru':'Perú',
+    'Philippines':'Filipinas','Poland':'Polonia','Portugal':'Portugal','Puerto Rico':'Puerto Rico','Romania':'Rumanía',
+    'Slovakia':'Eslovaquia','Slovenia':'Eslovenia','Spain':'España','Suriname':'Surinam','Sweden':'Suecia','Switzerland':'Suiza',
+    'Trinidad and Tobago':'Trinidad y Tobago','Turkey':'Turquía','Ukraine':'Ucrania','United Kingdom':'Reino Unido',
+    'United States':'Estados Unidos','Uruguay':'Uruguay','Venezuela':'Venezuela' };
+  var PAIS_ALIAS = { 'espana':'Spain','españa':'Spain','mexico':'Mexico','méxico':'Mexico','estados unidos':'United States','usa':'United States' };
+  function homeCountryList() {
+    var c = _chamberInfo && _chamberInfo.country ? String(_chamberInfo.country).trim() : '';
+    var v = PAIS_ALIAS[c.toLowerCase()] || (CHAMBER_COUNTRIES.indexOf(c) !== -1 ? c : '');
+    return v ? [v] : [];
+  }
+  function countryPickList() {
+    var home = homeCountryList();
+    var list = CHAMBER_COUNTRIES.map(function(c){ return { v:c, t:PAIS_ES[c] || c }; });
+    list.sort(function(a,b){ return a.t.localeCompare(b.t,'es'); });
+    if (home.length) list.sort(function(a,b){ return (b.v===home[0]) - (a.v===home[0]); });
+    return list;
+  }
+  function pickChips(name, items, selected) {
+    var sel = (selected || []).map(String);
+    var h = '<div class="pick-chips" data-pick="'+esc(name)+'">';
+    items.forEach(function(it) {
+      var on = sel.indexOf(String(it.v)) !== -1;
+      h += '<label class="pick-chip'+(on?' on':'')+'" data-t="'+esc(String(it.t).toLowerCase())+'">'
+        + '<input type="checkbox" name="'+esc(name)+'" value="'+esc(it.v)+'"'+(on?' checked':'')+'>'+esc(it.t)+'</label>';
+    });
+    return h + '</div>';
+  }
+  function wirePickChips(name, countId, searchId) {
+    var box = document.querySelector('.pick-chips[data-pick="'+name+'"]');
+    if (!box) return;
+    var count = document.getElementById(countId);
+    function upd() {
+      var n = 0;
+      box.querySelectorAll('input').forEach(function(i){ i.parentNode.classList.toggle('on', i.checked); if (i.checked) n++; });
+      if (count) count.textContent = n ? (n + (n === 1 ? ' elegido' : ' elegidos')) : '';
+    }
+    box.addEventListener('change', upd); upd();
+    if (searchId) {
+      var s = document.getElementById(searchId);
+      if (s) s.addEventListener('input', function() {
+        var q = s.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+        box.querySelectorAll('.pick-chip').forEach(function(l){
+          var t = l.getAttribute('data-t').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          var v = l.querySelector('input').value.toLowerCase();
+          l.style.display = (!q || t.indexOf(q) !== -1 || v.indexOf(q) !== -1 || l.classList.contains('on')) ? '' : 'none';
+        });
+      });
+    }
+  }
+
   function showNewProjectForm() {
     // P2B Stage 0 Wizard - Step 1: Vision input
     var html = '<h2 style="margin-bottom:8px">Nuevo Proyecto P2B</h2>';
@@ -2841,24 +2912,36 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<div class="form-group full"><label>Vision (50-1500 caracteres, ~2 parrafos)</label>';
     html += '<textarea name="vision" rows="6" required minlength="50" maxlength="1500" ';
     html += 'placeholder="Parrafo 1: Que estas construyendo? Por que ahora?\nParrafo 2: Para quien es? Como escala a traves de la red de camaras?"></textarea></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Nivel de Presupuesto</label><select name="budget_tier" required>';
     html += '<option value="small">Pequeno ($50k-$200k)</option>';
     html += '<option value="medium" selected>Mediano ($200k-$1M)</option>';
     html += '<option value="large">Grande ($1M+)</option></select></div>';
-    html += '<div class="form-group full"><label>Paises (manten Ctrl/Cmd para elegir varios)</label><select name="countries" multiple size="6" required>'+countryOptionsMulti()+'</select></div>';
+    html += '<div class="form-group full"><label>Sectores <span class="text-muted" style="text-transform:none;font-weight:500">(elige uno o varios)</span> <span id="npSecCount" class="pick-count"></span></label>'+pickChips('np_sectors', SECTORS.map(function(x){return {v:x.v,t:x.label};}), [])+'</div>';
+    html += '<div class="form-group full"><label>Países <span class="text-muted" style="text-transform:none;font-weight:500">(elige uno o varios)</span> <span id="npCtyCount" class="pick-count"></span></label>'
+      + '<input type="search" id="npCtySearch" class="pick-search" placeholder="Buscar país..." autocomplete="off">'
+      + pickChips('np_countries', countryPickList(), homeCountryList())+'</div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generar Plan de Negocio con IA</button></div>';
     html += '</form>';
     openModal(html);
+    wirePickChips('np_sectors', 'npSecCount');
+    wirePickChips('np_countries', 'npCtyCount', 'npCtySearch');
 
     document.getElementById('newProjForm').addEventListener('submit', async function(ev) {
       ev.preventDefault();
       var fd = new FormData(this);
+      var sectors = fd.getAll('np_sectors').filter(Boolean);
+      var countries = fd.getAll('np_countries').filter(Boolean);
+      var msgEl = document.getElementById('newProjMsg');
+      if (!sectors.length || !countries.length) {
+        if (msgEl) msgEl.innerHTML = '<div class="error-msg">Elige al menos un sector y al menos un país.</div>';
+        return;
+      }
       var body = {
         vision: fd.get('vision'),
-        sector: fd.get('sector'),
+        sector: sectors[0],
+        sectors: sectors,
         budget_tier: fd.get('budget_tier'),
-        countries: fd.getAll('countries').filter(Boolean)
+        countries: countries
       };
       var stopDrafting = showDraftingOverlay('Generando tu plan');
 
@@ -4980,7 +5063,6 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var html = '<h2 style="margin-bottom:16px">Registrar Empresa</h2><div id="compMsg"></div>';
     html += '<form id="compForm" class="form-grid">';
     html += '<div class="form-group"><label>Name</label><input name="name" required></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="2"></textarea></div>';
     html += '<div class="form-group"><label>Employees</label><input name="employee_count" type="number"></div>';
     html += '<div class="form-group"><label>Revenue Range</label><select name="annual_revenue_range"><option value="">Select</option><option value="<100K">&lt;100K</option><option value="100K-1M">100K-1M</option><option value="1M-10M">1M-10M</option><option value="10M+">10M+</option></select></div>';
@@ -5048,7 +5130,6 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<form id="rfqForm" class="form-grid">';
     html += '<div class="form-group full"><label>Titulo</label><input name="title" required></div>';
     html += '<div class="form-group full"><label>Descripcion</label><textarea name="description" rows="3" required></textarea></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Rango de Presupuesto</label><input name="budget_range" placeholder="$10K - $50K"></div>';
     html += '<div class="form-group"><label>Fecha Limite</label><input name="deadline" type="date"></div>';
     html += '<div class="form-group"><label>Idiomas Objetivo</label>'+languageCheckboxes([])+'</div>';
@@ -5243,7 +5324,6 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<form id="oppForm" class="form-grid">';
     html += '<div class="form-group full"><label>Title</label><input name="title" required></div>';
     html += '<div class="form-group full"><label>Description</label><textarea name="description" rows="3" required></textarea></div>';
-    html += '<div class="form-group"><label>Sector</label><select name="sector" required>'+sectorOptions()+'</select></div>';
     html += '<div class="form-group"><label>Type</label><select name="type"><option value="partnership">Partnership</option><option value="investment">Investment</option><option value="employment">Employment</option><option value="joint_venture">Joint Venture</option></select></div>';
     html += '<div class="form-group"><label>Location</label><input name="location" placeholder="Orlando, FL"></div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary">Publish</button></div>';

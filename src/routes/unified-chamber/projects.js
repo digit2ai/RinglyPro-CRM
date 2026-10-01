@@ -200,7 +200,12 @@ router.post('/', authMiddleware, async (req, res) => {
 // =====================================================================
 router.post('/draft', authMiddleware, async (req, res) => {
   try {
-    const { vision, sector, countries, budget_tier } = req.body;
+    const { vision, countries, budget_tier } = req.body;
+    // Several sectors may be chosen. The column holds one (the first, the
+    // primary); the full list travels in plan_json.sectors and to the planner.
+    const sectorsArr = (Array.isArray(req.body.sectors) ? req.body.sectors : [req.body.sector])
+      .map(x => String(x || '').trim()).filter(Boolean).slice(0, 10);
+    const sector = sectorsArr[0] || null;
     if (!vision || vision.trim().length < 50) {
       return res.status(400).json({ success: false, error: 'vision must be at least 50 chars' });
     }
@@ -209,8 +214,9 @@ router.post('/draft', authMiddleware, async (req, res) => {
     }
 
     const { plan, usage } = await planGenerator.generatePlan({
-      vision: vision.trim(), sector, countries, budget_tier
+      vision: vision.trim(), sector: sectorsArr.length ? sectorsArr.join(', ') : sector, countries, budget_tier
     });
+    if (plan && typeof plan === 'object' && sectorsArr.length) plan.sectors = sectorsArr;
 
     const countriesArray = Array.isArray(countries) ? countries : [];
     const countriesSql = countriesArray.length > 0
