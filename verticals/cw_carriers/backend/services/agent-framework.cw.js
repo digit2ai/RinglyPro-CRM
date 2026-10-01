@@ -62,6 +62,7 @@ class FreightMindAgent {
         messages[0].content += `\n\nContext from other agents:\n${JSON.stringify(context.agentData, null, 2)}`;
       }
 
+      require('../../../../src/config/anthropic-flags').assertAnthropic('cw_carriers'); // soft switch
       const response = await this.anthropic.messages.create({
         model: this.model,
         max_tokens: 4096,

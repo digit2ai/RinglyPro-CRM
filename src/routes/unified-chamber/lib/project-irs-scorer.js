@@ -273,6 +273,7 @@ async function maybeAiAdjust(plan, project, team, components, baseScore) {
       ),
       base_irs: Math.round(baseScore * 100) / 100
     };
+    require('../../../config/anthropic-flags').assertAnthropic('camaravirtual'); // soft switch
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 350,

@@ -273,6 +273,7 @@ async function generateWithAI(context, apiKey) {
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
 
+  require('../../../../src/config/anthropic-flags').assertAnthropic('msk_intelligence'); // soft switch
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 2000,

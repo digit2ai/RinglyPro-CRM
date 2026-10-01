@@ -1456,6 +1456,7 @@ router.post('/', requireAuth, async (req, res) => {
     // Agentic loop: call model → execute tools → call again until stop_reason !== 'tool_use'
     const MAX_TURNS = 10;
     for (let turn = 0; turn < MAX_TURNS; turn++) { // max 6 tool roundtrips
+      require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
       const response = await anthropic.messages.create({
         model: SONNET_MODEL,
         max_tokens: 4096,
@@ -1529,6 +1530,7 @@ router.post('/', requireAuth, async (req, res) => {
     // of silence — AND so we never persist an unfulfilled tool_use block.
     if (stopReason === 'tool_use') {
       try {
+        require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
         const synth = await anthropic.messages.create({
           model: SONNET_MODEL,
           max_tokens: 2048,

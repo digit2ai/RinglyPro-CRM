@@ -24,7 +24,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 const MODEL = process.env.CASEGUARD_MODEL || 'claude-sonnet-5';
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-const anthropic = API_KEY ? new Anthropic({ apiKey: API_KEY }) : null;
+// Soft switch: src/config/anthropic-flags.js (key 'caseguard'). Disabled = the labelled heuristic path below.
+const anthropic = (API_KEY && require('../../../../src/config/anthropic-flags').anthropicEnabled('caseguard')) ? new Anthropic({ apiKey: API_KEY }) : null;
 
 function activeModel() { return anthropic ? MODEL : 'heuristic-fallback'; }
 function hasAI() { return !!anthropic; }

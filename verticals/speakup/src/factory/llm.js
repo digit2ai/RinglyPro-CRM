@@ -18,7 +18,9 @@ try { Anthropic = require('@anthropic-ai/sdk'); } catch (e) { Anthropic = null; 
 
 const subscription = require('./claude-subscription');
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-let client = (API_KEY && Anthropic) ? new Anthropic({ apiKey: API_KEY }) : null;
+// Soft switch: src/config/anthropic-flags.js (key 'speakup'). Off = no API client and no
+// subscription CLI, so every caller takes its labelled heuristic/offline path.
+let client = (API_KEY && Anthropic && require('../../../../src/config/anthropic-flags').anthropicEnabled('speakup')) ? new Anthropic({ apiKey: API_KEY }) : null;
 
 const MODELS = {
   intel: process.env.SPEAKUP_INTEL_MODEL || 'claude-sonnet-5',

@@ -35,6 +35,7 @@ Entity extraction examples:
 
 async function parseCommand(userInput) {
   try {
+    require('../../../../src/config/anthropic-flags').assertAnthropic('cw_carriers'); // soft switch
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,

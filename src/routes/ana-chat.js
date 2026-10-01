@@ -124,7 +124,7 @@ router.post('/chat', async (req, res) => {
 
     const lastUser = [...messages].reverse().find((m) => m.role === 'user');
 
-    if (!isConfigured()) {
+    if (!isConfigured() || !require('../config/anthropic-flags').anthropicEnabled('abelardo')) {
       return res.json({ reply: heuristicReply(lastUser && lastUser.content), source: 'heuristic' });
     }
 

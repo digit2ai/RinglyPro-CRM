@@ -31,6 +31,36 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 - **Deploy time**: ~2 minutes
 - **Trigger**: `git push origin main`
 
+## ANTHROPIC SOFT SWITCH — per-vertical registry (owner decision 2026-10-01)
+
+**`src/config/anthropic-flags.js` is the single place that says whether a vertical may call Anthropic.** Soft disable: no Anthropic code, SDK, prompt, key or model mapping was removed. Each gated call site asks `anthropicEnabled('<key>')` (or `assertAnthropic('<key>')` right before the call, so the site's OWN existing error/heuristic path runs), and `switchedOff('<key>')` for paths that reach Anthropic without the API key (SpeakUp's subscription CLI).
+
+**"Activate Anthropic on X" is ONE step:** change that key's `status` from `'disabled'` to `'enabled'` in the registry and deploy — or set `ANTHROPIC_ENABLED_<KEY>=true` on Render (no deploy; the env var always wins). Several at once = several keys.
+
+| Key | Names | Status | Covers |
+|---|---|---|---|
+| abelardo | Abelardo | DISABLED | /api/ana/chat |
+| buyersline | BuyersLine | DISABLED | incentiva llm.aiEnabled() (also INCENTIVA_AI=on) + persona |
+| camaravirtual | CamaraVirtual | DISABLED | chamber /projects/draft (unified + legacy), trust-verifier, IRS scorer, persona — shared by every cv-*/vc-* chamber |
+| caseguard | Case Guard | DISABLED | case-brain.js |
+| cw_carriers | CW_Carriers, FreightMind AI | DISABLED | nlp, crm-agent, collector, agent-framework run() |
+| enruta | ENRUTA | DISABLED | persona enruta |
+| hispatec | Hispatec | DISABLED | hispanotec assistant + enriquecer |
+| intuitive | Intuitive | DISABLED | chat, hospital-research-agent (Opus), annual-report-ingester |
+| jobmd | JobMD | DISABLED | legacy architect only — live jobmd.io = JobUp engine, paused by JOBUP_AI |
+| lawncopilot | LawnCoPilot | DISABLED | web orb/chat (phone = shared RinglyPro engine, untouched) |
+| levelup | LevelUp | DISABLED | llm.js + persona |
+| msk_intelligence | MSK Intelligence, ImagingMindAI | DISABLED | imaging (vision) + copilot |
+| ordergopro | OrderGoPro | DISABLED | /api/ordergopro/chat |
+| pacccfl / pcci | PACCCFL / PCCI | DISABLED | personas (chamber AI follows camaravirtual) |
+| ronin | Ronin Brotherhood | DISABLED | persona |
+| speakup | SpeakUp | DISABLED | factory llm.js, subscription CLI, ai-editor, Claude Code runner (GitHub Actions build not gated) |
+| surgicalmind | SurgicalMind | DISABLED | persona (app = intuitive) |
+| — | AIHotelTalent, BDT/ComplianceMind, Cali CityLab, Calcáreos, Deportivo Cali, Doctor Picante, Hit Promotional, Horacio José Serpa, JumpCoach, Kancho AI, MaraMed, PINAXIS, RoundShare, Spark AI, Store Health AI, TunjoRacing/IMSA | NONE | no Anthropic usage found |
+| planea | Planea | SKIPPED | verticals/planea IS planea.vip (live): untouched pending owner confirmation |
+
+**Deliberately NOT gated (shared with non-targets):** `chamber-template/lib/plan-generator.js` (also digit2ai-projects — gated at the chamber routes instead), `src/services/conversationRelayAgent.js` (RinglyPro phone engine), the voice route for any persona not listed. Proof: `node scripts/test-anthropic-flags.js` → **47/47** (fake key + SDK trap: 0 calls from targets, non-target persona veritas still calls; every key reactivates by env; guards present; shared files ungated).
+
 ## Voice on the WEB: the own-stack orb (replaced ElevenLabs ConvAI everywhere)
 
 Every browser voice surface in the repo used to embed `<elevenlabs-convai>` — a hosted agent per product, configured by hand in their dashboard, billed per conversation minute. That is gone. The three layers ElevenLabs bundled are now unbundled and ours:

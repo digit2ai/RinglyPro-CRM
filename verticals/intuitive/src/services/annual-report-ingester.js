@@ -143,6 +143,7 @@ async function extractProcedures(rawText) {
 
     const anthropic = getAnthropic();
 
+    require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,

@@ -65,6 +65,7 @@ async function proponer(ficha) {
   try {
     const Anthropic = require('@anthropic-ai/sdk');
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    require('../../config/anthropic-flags').assertAnthropic('hispatec'); // soft switch
     const r = await client.messages.create({
       model: MODEL, max_tokens: 900, system: SYSTEM,
       messages: [{ role: 'user', content:

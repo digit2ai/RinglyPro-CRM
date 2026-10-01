@@ -50,6 +50,7 @@ let lastError = null;
 function token() { return process.env.CLAUDE_CODE_OAUTH_TOKEN || ''; }
 function provider() { return String(process.env.SPEAKUP_CHAT_PROVIDER || 'auto').toLowerCase(); }
 function available() {
+  if (require('../../../../src/config/anthropic-flags').switchedOff('speakup')) return false; // soft switch
   if (provider() === 'api') return false;
   return !!token() && !!findBin();
 }

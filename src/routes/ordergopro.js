@@ -447,6 +447,7 @@ Your responses should:
 User question: ${message}`;
 
     // Call Claude AI API
+    require('../config/anthropic-flags').assertAnthropic('ordergopro'); // soft switch
     const claudeResponse = await axios.post(
       'https://api.anthropic.com/v1/messages',
       {

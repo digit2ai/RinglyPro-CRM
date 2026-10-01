@@ -540,6 +540,7 @@ COMPETITIVE LANDSCAPE -- BE EXHAUSTIVE:
 
 - Return ONLY the JSON object`;
 
+  require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
   const message = await getAnthropic().messages.create({
     model: OPUS_MODEL,
     max_tokens: 5000,
@@ -598,6 +599,7 @@ YOUR VALIDATION CHECKLIST:
 CORRECT any values that fail these checks. Return the corrected JSON with a "checker_corrections" field (array of strings).
 Return ONLY valid JSON.`;
 
+  require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
   const message = await getAnthropic().messages.create({
     model: OPUS_MODEL,
     max_tokens: 5000,
@@ -1056,6 +1058,7 @@ IMPORTANT:
 
     let realSurgeons = [];
     try {
+      require('../../../../src/config/anthropic-flags').assertAnthropic('intuitive'); // soft switch
       const surgeonMsg = await getAnthropic().messages.create({
         model: OPUS_MODEL,
         max_tokens: 3000,

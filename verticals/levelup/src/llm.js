@@ -18,6 +18,8 @@ let injected = null; // SIT injects a fake client here
 function getClient() {
   if (injected) return injected;
   if (!process.env.ANTHROPIC_API_KEY) return null;
+  // Soft switch: src/config/anthropic-flags.js (key 'levelup'). Off = the labelled heuristic paths.
+  if (!require('../../../src/config/anthropic-flags').anthropicEnabled('levelup')) return null;
   if (!client) {
     const Anthropic = require('@anthropic-ai/sdk');
     client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

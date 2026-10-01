@@ -213,6 +213,7 @@ router.post('/draft', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'vision must be under 1500 chars' });
     }
 
+    require('../../config/anthropic-flags').assertAnthropic('camaravirtual'); // soft switch (chamber only; plan-generator is shared)
     const { plan, usage } = await planGenerator.generatePlan({
       vision: vision.trim(), sector: sectorsArr.length ? sectorsArr.join(', ') : sector, countries, budget_tier
     });
@@ -249,6 +250,10 @@ router.post('/draft', authMiddleware, async (req, res) => {
     console.error('[unified plan-draft]', err.message);
     // The model account being out of credit is an operator problem, not the
     // member's: say so in plain words instead of showing the raw API body.
+    if (err.code === 'ANTHROPIC_DISABLED') {
+      return res.status(503).json({ success: false, code: 'ai_disabled',
+        error: 'La generación de planes con IA está pausada en esta plataforma. Inténtalo más tarde o avisa al administrador.' });
+    }
     if (/credit balance is too low|billing/i.test(String(err.message))) {
       return res.status(503).json({ success: false, code: 'ai_credit_exhausted',
         error: 'El asistente de IA no está disponible en este momento (la cuenta de IA de la plataforma no tiene saldo). Inténtalo de nuevo más tarde o avisa al administrador.' });

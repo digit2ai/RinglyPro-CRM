@@ -17,7 +17,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 
 const MODEL = process.env.SPEAKUP_MODEL || 'claude-haiku-4-5-20251001';
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-const anthropic = API_KEY ? new Anthropic({ apiKey: API_KEY }) : null;
+// Soft switch: src/config/anthropic-flags.js (key 'speakup'). Off = the labelled heuristic path.
+const anthropic = (API_KEY && require('../../../../src/config/anthropic-flags').anthropicEnabled('speakup')) ? new Anthropic({ apiKey: API_KEY }) : null;
 
 function activeModel() { return anthropic ? MODEL : 'heuristic-fallback'; }
 

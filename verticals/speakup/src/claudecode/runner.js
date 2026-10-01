@@ -274,6 +274,9 @@ function buildPrompt(run, priorTurns, opts) {
 let queryCache = null;
 async function loadQuery() {
   if (queryCache) return queryCache;
+  if (require('../../../../src/config/anthropic-flags').switchedOff('speakup')) { // soft switch: a run reports this as its failure reason
+    const e = new Error('Anthropic is disabled for speakup (soft switch: src/config/anthropic-flags.js)'); e.code = 'ANTHROPIC_DISABLED'; throw e;
+  }
   try {
     const mod = await import('@anthropic-ai/claude-agent-sdk');
     queryCache = (mod && (mod.query || (mod.default && mod.default.query))) || null;

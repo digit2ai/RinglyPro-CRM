@@ -245,8 +245,14 @@ router.post('/chat', async (req, res) => {
 
   // Per-persona kill switch: personas listed here never reach the model
   // (default: buyersline, paused 2026-10-01). Set VOICE_AGENT_MODEL_OFF='' to clear.
-  const modelOff = new Set(String(process.env.VOICE_AGENT_MODEL_OFF ?? 'buyersline').split(/[,\s]+/).filter(Boolean));
-  if (!isConfigured() || modelOff.has(agent.id)) {
+  const modelOff = new Set(String(process.env.VOICE_AGENT_MODEL_OFF ?? '').split(/[,\s]+/).filter(Boolean));
+  // Personas that belong to a vertical in the Anthropic registry follow that
+  // vertical's soft switch (src/config/anthropic-flags.js). Others: unchanged.
+  const PERSONA_VERTICAL = { camaravirtual: 'camaravirtual', pacccfl: 'pacccfl', pcci: 'pcci', enruta: 'enruta',
+    ronin: 'ronin', surgicalmind: 'surgicalmind', buyersline: 'buyersline', levelup: 'levelup' };
+  const flags = require('../config/anthropic-flags');
+  const verticalOff = PERSONA_VERTICAL[agent.id] && !flags.anthropicEnabled(PERSONA_VERTICAL[agent.id]);
+  if (!isConfigured() || modelOff.has(agent.id) || verticalOff) {
     // Sin modelo no hay consulta posible: un agente con herramientas que
     // responde de memoria es peor que uno que admite que no puede mirar.
     if (agent.tools) {

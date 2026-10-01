@@ -186,6 +186,7 @@ async function responder({ mensajes, contexto, rol, usuario }) {
       + 'no consta, y así debes decirlo:\n'
       + JSON.stringify((contexto && contexto.filas) || [], null, 1).slice(0, 12000);
 
+    require('../../config/anthropic-flags').assertAnthropic('hispatec'); // soft switch
     const r = await client.messages.create({
       model: MODEL, max_tokens: 1200, system: sistema,
       messages: (mensajes || []).slice(-10).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) })),

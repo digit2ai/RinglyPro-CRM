@@ -408,6 +408,7 @@ module.exports = function createProjectRoutes(config) {
         return res.status(400).json({ success: false, error: 'vision must be under 1500 chars' });
       }
 
+      require('../../src/config/anthropic-flags').assertAnthropic('camaravirtual'); // soft switch (chamber only; plan-generator is shared)
       const { plan, usage } = await planGenerator.generatePlan({
         vision: vision.trim(),
         sector,

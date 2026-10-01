@@ -11,6 +11,7 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://offline:offli
 delete process.env.ANTHROPIC_API_KEY;
 delete process.env.CLAUDE_API_KEY;
 process.env.SPEAKUP_FACTORY_POLLER = 'off';
+process.env.ANTHROPIC_ENABLED_SPEAKUP = 'true'; // the suite tests the ENABLED paths; the soft switch itself is checked by scripts/test-anthropic-flags.js
 
 const fs = require('fs');
 const path = require('path');

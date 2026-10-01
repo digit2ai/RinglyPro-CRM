@@ -67,6 +67,7 @@ async function scoreProspect(prospect) {
  */
 async function enrichProspect(companyName, basicInfo = {}) {
   try {
+    require('../../../../src/config/anthropic-flags').assertAnthropic('cw_carriers'); // soft switch
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
@@ -223,6 +224,7 @@ async function suggestProspects(count = 10) {
        GROUP BY origin, destination ORDER BY loads DESC LIMIT 10`
     );
 
+    require('../../../../src/config/anthropic-flags').assertAnthropic('cw_carriers'); // soft switch
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1000,

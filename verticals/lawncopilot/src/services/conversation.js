@@ -19,7 +19,8 @@ const brain = require('../mcp/brain');
 const { AgentSession } = require('../models');
 
 const MODEL = () => process.env.LAWNCOPILOT_VOICE_MODEL || 'claude-haiku-4-5-20251001';
-const hasLLM = () => !!process.env.ANTHROPIC_API_KEY;
+// Soft switch: src/config/anthropic-flags.js (key 'lawncopilot'). Off = the scripted driver below.
+const hasLLM = () => !!process.env.ANTHROPIC_API_KEY && require('../../../../src/config/anthropic-flags').anthropicEnabled('lawncopilot');
 
 // ── Session state ──────────────────────────────────────────────────────────
 async function loadSession(tenant_id, session_id) {

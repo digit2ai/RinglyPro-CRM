@@ -84,6 +84,7 @@ async function callModel(prompt) {
   try { Anthropic = require('@anthropic-ai/sdk'); }
   catch (e) { return null; }
   const client = new Anthropic({ apiKey: key });
+  require('../../../../src/config/anthropic-flags').assertAnthropic('jobmd'); // soft switch
   const res = await client.messages.create({
     model: MODEL,
     max_tokens: 12000,

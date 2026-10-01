@@ -43,6 +43,7 @@ Always set a meaningful reply message that confirms the action being taken.`;
 
 async function parseNLP(userInput) {
   try {
+    require('../../../../src/config/anthropic-flags').assertAnthropic('cw_carriers'); // soft switch
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 800,
