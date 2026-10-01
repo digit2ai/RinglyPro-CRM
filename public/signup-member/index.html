@@ -85,9 +85,9 @@
     <div class="pw-mismatch" id="pwMismatch"></div>
     <div class="row">
       <div>
-        <label for="country">Pais</label>
+        <label for="country">País</label>
         <select id="country">
-          <option value="">-- Selecciona un pais --</option>
+          <option value="">-- Selecciona un país --</option>
           <option>Argentina</option><option>Austria</option><option>Belgium</option><option>Belize</option>
           <option>Bolivia</option><option>Brazil</option><option>Bulgaria</option><option>Canada</option>
           <option>Chile</option><option>Colombia</option><option>Costa Rica</option><option>Croatia</option>
@@ -202,6 +202,47 @@
   document.getElementById('loginLink').href = '/' + slug + '/login';
   document.getElementById('backLink').href = '/' + slug;
 
+  // Country names in Spanish. The VALUE stays the canonical English name,
+  // because the server validates against that list (CHAMBER_COUNTRIES); only
+  // the label changes. The chamber's own country goes first and is
+  // preselected, so a Spanish chamber does not hide Spain under "S".
+  var PAIS_ES = { 'Argentina':'Argentina','Austria':'Austria','Belgium':'Bélgica','Belize':'Belice','Bolivia':'Bolivia',
+    'Brazil':'Brasil','Bulgaria':'Bulgaria','Canada':'Canadá','Chile':'Chile','Colombia':'Colombia','Costa Rica':'Costa Rica',
+    'Croatia':'Croacia','Cuba':'Cuba','Cyprus':'Chipre','Czech Republic':'República Checa','Denmark':'Dinamarca',
+    'Dominican Republic':'República Dominicana','Ecuador':'Ecuador','El Salvador':'El Salvador','Estonia':'Estonia',
+    'Finland':'Finlandia','France':'Francia','Germany':'Alemania','Greece':'Grecia','Guatemala':'Guatemala','Guyana':'Guyana',
+    'Haiti':'Haití','Honduras':'Honduras','Hungary':'Hungría','Iceland':'Islandia','Ireland':'Irlanda','Italy':'Italia',
+    'Jamaica':'Jamaica','Latvia':'Letonia','Lithuania':'Lituania','Luxembourg':'Luxemburgo','Malta':'Malta','Mexico':'México',
+    'Netherlands':'Países Bajos','Nicaragua':'Nicaragua','Norway':'Noruega','Panama':'Panamá','Paraguay':'Paraguay','Peru':'Perú',
+    'Philippines':'Filipinas','Poland':'Polonia','Portugal':'Portugal','Puerto Rico':'Puerto Rico','Romania':'Rumanía',
+    'Slovakia':'Eslovaquia','Slovenia':'Eslovenia','Spain':'España','Suriname':'Surinam','Sweden':'Suecia','Switzerland':'Suiza',
+    'Trinidad and Tobago':'Trinidad y Tobago','Turkey':'Turquía','Ukraine':'Ucrania','United Kingdom':'Reino Unido',
+    'United States':'Estados Unidos','Uruguay':'Uruguay','Venezuela':'Venezuela' };
+  var PAIS_ALIAS = { 'espana':'Spain','españa':'Spain','spain':'Spain','mexico':'Mexico','méxico':'Mexico',
+    'estados unidos':'United States','usa':'United States','united states':'United States','colombia':'Colombia' };
+  function setupCountries(home) {
+    var sel = document.getElementById('country');
+    if (!sel) return;
+    var opts = Array.prototype.slice.call(sel.options).filter(function (o) { return o.value !== '' || o.text.indexOf('--') !== 0; });
+    var first = sel.options[0];
+    var list = opts.map(function (o) { var v = o.value || o.text; return { v: v, t: PAIS_ES[v] || v }; });
+    list.sort(function (a, b) { return a.t.localeCompare(b.t, 'es'); });
+    var homeV = home ? (PAIS_ALIAS[String(home).toLowerCase().trim()] || (PAIS_ES[home] ? home : null)) : null;
+    var current = sel.value;
+    sel.innerHTML = '';
+    sel.appendChild(first);
+    if (homeV) {
+      var h = list.filter(function (x) { return x.v === homeV; })[0];
+      if (h) {
+        var oh = document.createElement('option'); oh.value = h.v; oh.textContent = h.t; sel.appendChild(oh);
+        var sep = document.createElement('option'); sep.disabled = true; sep.textContent = '──────────'; sel.appendChild(sep);
+      }
+    }
+    list.forEach(function (x) { var o = document.createElement('option'); o.value = x.v; o.textContent = x.t; sel.appendChild(o); });
+    sel.value = current || homeV || '';
+  }
+  setupCountries(null);
+
   var paymentWaived = false;
   var chamberShortName = '';
 
@@ -214,6 +255,7 @@
       document.getElementById('chamberName').textContent = 'Unete a ' + j.data.name;
       if (j.data.logo_url) document.getElementById('brandLogo').src = j.data.logo_url;
       chamberShortName = j.data.name || '';
+      setupCountries(j.data.country);
       paymentWaived = !!j.data.payment_waived;
       if (paymentWaived) {
         var banner = document.getElementById('feeBanner');
