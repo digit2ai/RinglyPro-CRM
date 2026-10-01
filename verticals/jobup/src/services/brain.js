@@ -21,8 +21,21 @@ const RATE_OUT = 5.0;
 const RATE_CACHE_READ = 0.1;
 const RATE_CACHE_WRITE = 1.25;
 
+// ---- SOFT PAUSE (owner decision 2026-10-01) ---------------------------------
+// JobUp is paused: it makes NO Anthropic call. This file is the only one in
+// JobUp that reaches a model, so this one switch covers the daily job hunt,
+// résumé reading, teasers, the assistant, ReachUp, video briefs and self-heal.
+// Every caller already handles "no model" (labelled heuristic / is_simulated).
+//
+// TO REACTIVATE ("activate JobUp.dev"): change AI_DEFAULT to 'on' below and
+// deploy — or set JOBUP_AI=on on Render with no code change. JOBUP_AI, when
+// set, always wins over the default.
+const AI_DEFAULT = 'off';
+function aiOn() { return String(process.env.JOBUP_AI || AI_DEFAULT).toLowerCase() === 'on'; }
+
 let client = null;
 function anthropic() {
+  if (!aiOn()) return null;
   if (!process.env.ANTHROPIC_API_KEY) return null;
   if (client) return client;
   try {
@@ -36,7 +49,7 @@ function anthropic() {
 }
 
 function enabled() {
-  return Boolean(process.env.ANTHROPIC_API_KEY) && Boolean(anthropic());
+  return aiOn() && Boolean(process.env.ANTHROPIC_API_KEY) && Boolean(anthropic());
 }
 
 // ---- WHY THE LAST CALL FAILED ----------------------------------------------
@@ -88,7 +101,7 @@ async function probe({ maxAgeMs = 60000 } = {}) {
   }
   const c = anthropic();
   if (!c) {
-    const r = { ok: false, reason: 'no ANTHROPIC_API_KEY', model: MODEL };
+    const r = { ok: false, reason: aiOn() ? 'no ANTHROPIC_API_KEY' : 'paused (JOBUP_AI off)', model: MODEL };
     probeCache = { at: Date.now(), result: r };
     return r;
   }
@@ -121,7 +134,7 @@ function costOf(usage) {
 // Ask for JSON. `cachedPrefix` is the stable block (resume + settings).
 async function json({ system, cachedPrefix, prompt, maxTokens = 1024, model = MODEL }) {
   const c = anthropic();
-  if (!c) return { ok: false, reason: 'no ANTHROPIC_API_KEY', is_simulated: true, cost_usd: 0 };
+  if (!c) return { ok: false, reason: aiOn() ? 'no ANTHROPIC_API_KEY' : 'paused (JOBUP_AI off)', is_simulated: true, cost_usd: 0 };
 
   const systemBlocks = [];
   if (system) systemBlocks.push({ type: 'text', text: system });
@@ -158,4 +171,4 @@ async function json({ system, cachedPrefix, prompt, maxTokens = 1024, model = MO
   }
 }
 
-module.exports = { json, enabled, health, probe, costOf, MODEL, TEASER_MODEL, RATE_IN, RATE_OUT };
+module.exports = { aiOn, json, enabled, health, probe, costOf, MODEL, TEASER_MODEL, RATE_IN, RATE_OUT };

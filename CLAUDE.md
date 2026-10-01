@@ -1120,6 +1120,8 @@ What Discovery substitutes is the front: the Department asks a CEO to describe t
 
 Self-contained vertical at `verticals/jobup/`. Finds and scores real jobs against a subscriber's actual résumé, gives them a public CV site recruiters and their AI can read, and drafts outreach they approve before anything sends. Own Sequelize via `src/db.js`; shares the CRM database, so every table carries the `ju_` prefix. Reuses the CRM's keyless `/api/tts/edge` for voice — the voice layer is NOT duplicated.
 
+**JOBUP IS PAUSED: NO ANTHROPIC CALLS (owner decision 2026-10-01). TO "ACTIVATE JOBUP.DEV" IS ONE STEP:** in `verticals/jobup/src/services/brain.js` change `const AI_DEFAULT = 'off'` to `'on'` and deploy — or set `JOBUP_AI=on` on Render (no deploy; `JOBUP_AI` always wins over the default). `brain.js` is the ONLY file in JobUp that reaches a model, so the one switch (`aiOn()`, checked in `anthropic()` and `enabled()`) covers the daily Hunter scoring (~$44 measured in September 2026, ~$1.45/day for 20 subscribers), résumé reading, teasers, the assistant, ReachUp, video briefs and self-heal; every caller already takes its labelled no-model path (`is_simulated`, reason `paused (JOBUP_AI off)`). Nothing else was removed: the scheduler, subscribers, billing and pages keep running.
+
 **IT ANSWERS ON THREE ROOTS, AND THAT IS THE THING TO GET RIGHT.**
 
 | Root | Base | Served by |
