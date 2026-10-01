@@ -6,7 +6,12 @@
  */
 
 let client = null;
-function configured() { return !!process.env.ANTHROPIC_API_KEY; }
+// MASTER SWITCH (owner decision 2026-10-01): BuyersLine makes NO Anthropic call
+// unless INCENTIVA_AI=on. The project is paused, and its morning research refresh
+// was the main daily Anthropic cost in September 2026. Every model path in this
+// vertical checks aiEnabled(); with it off they all take their labelled no-model path.
+function aiEnabled() { return process.env.INCENTIVA_AI === 'on' && !!process.env.ANTHROPIC_API_KEY; }
+function configured() { return aiEnabled(); }
 
 function getClient() {
   if (!configured()) return null;
@@ -33,4 +38,4 @@ async function json(opts) {
   try { return JSON.parse(m[0]); } catch (e) { return null; }
 }
 
-module.exports = { configured, text, json };
+module.exports = { aiEnabled, configured, text, json };

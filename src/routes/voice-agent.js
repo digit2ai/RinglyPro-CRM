@@ -243,7 +243,10 @@ router.post('/chat', async (req, res) => {
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const askedText = lastUser ? lastUser.content : '';
 
-  if (!isConfigured()) {
+  // Per-persona kill switch: personas listed here never reach the model
+  // (default: buyersline, paused 2026-10-01). Set VOICE_AGENT_MODEL_OFF='' to clear.
+  const modelOff = new Set(String(process.env.VOICE_AGENT_MODEL_OFF ?? 'buyersline').split(/[,\s]+/).filter(Boolean));
+  if (!isConfigured() || modelOff.has(agent.id)) {
     // Sin modelo no hay consulta posible: un agente con herramientas que
     // responde de memoria es peor que uno que admite que no puede mirar.
     if (agent.tools) {

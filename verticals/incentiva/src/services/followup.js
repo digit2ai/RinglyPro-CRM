@@ -305,7 +305,7 @@ async function detectChanges(tenantId) {
 /** Re-run research weekly for areas that active, consented leads chose communities in (uses the monthly research cap). */
 async function refreshAreas(tenantId, { limit = 3 } = {}) {
   const days = Number(process.env.INCENTIVA_FOLLOWUP_REFRESH_DAYS || 7);
-  if (!days || !process.env.ANTHROPIC_API_KEY || process.env.INCENTIVA_RESEARCH === 'off') return 0;
+  if (!days || !require('./llm').aiEnabled() || process.env.INCENTIVA_RESEARCH === 'off') return 0;
   const areas = await db.q(`SELECT DISTINCT ON (r.cache_key) r.cache_key, r.zip, r.city, r.county, r.area_label FROM nca_leads l
     JOIN nca_research_runs r ON r.id = l.research_run_id AND r.tenant_id = l.tenant_id
     WHERE l.tenant_id = :t AND l.status NOT IN ('closed','lost') AND l.agent_agreement_signed = false AND l.created_at > now() - interval '90 days'

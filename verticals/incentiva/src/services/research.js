@@ -263,6 +263,7 @@ One row per builder/community that is actually selling in the area. Do NOT add r
 /* ---------- model runner (streams progress) ---------- */
 
 async function modelRunner(area, { onProgress, signal }) {
+  if (!require('./llm').aiEnabled()) throw new Error('BuyersLine AI is switched off (INCENTIVA_AI)');
   const Anthropic = require('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const today = nyToday();
@@ -448,7 +449,7 @@ async function startOrGet(tenantId, area, { allowFresh = true, force = false, tr
   if (existing) return { run: existing, fresh: false };
   if (!allowFresh) return { run: null, fresh: false, limited: true };
 
-  const hasModel = !!(runner || process.env.ANTHROPIC_API_KEY) && process.env.INCENTIVA_RESEARCH !== 'off';
+  const hasModel = (!!runner || require('./llm').aiEnabled()) && process.env.INCENTIVA_RESEARCH !== 'off';
   const created = await db.exec(`INSERT INTO nca_research_runs (tenant_id, token, cache_key, zip, area_label, city, county, state, status, source, expires_at, trigger) VALUES (:t, :tok, :k, :zip, :label, :city, :county, :state, 'running', :src, now() + interval '1 hour', :trig) RETURNING *`, {
     t: tenantId, tok: token(18), k: key, zip: area.zip || null, label: area.label || area.input || null, city: area.city || null, county: area.county || null, state: area.state || 'FL',
     src: hasModel ? 'model' : 'registry', trig: ['buyer', 'daily', 'admin'].includes(trigger) ? trigger : 'buyer'
@@ -522,6 +523,7 @@ async function publicRun(tenantId, runToken, criteria = {}, settings = null) {
  */
 async function dailyRefresh(tenantId, { now = new Date(), force = false } = {}) {
   if (process.env.INCENTIVA_RESEARCH_DAILY === 'off') return { skipped: 'off' };
+  if (!runner && !require('./llm').aiEnabled()) return { skipped: 'ai_off' };
   const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }).format(now)) % 24;
   if (!force && (hour < 6 || hour >= 10)) return { skipped: 'not_morning' };
   const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
