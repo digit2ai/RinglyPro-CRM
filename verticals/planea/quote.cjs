@@ -162,7 +162,7 @@ figure{margin:0 0 18px}figure img{display:block;width:100%;height:auto;border:1p
 </div>
 <div class="card"><h2>${esc(c.items_heading || "Qué incluye")}</h2><ul>${items}</ul></div>
 ${shots ? '<div class="card"><h2>' + esc(c.screenshots_heading || 'Así se verá') + '</h2>' + shots + '</div>' : ''}
-<div class="card"><h2>Qué no incluye</h2><ul>${excl}</ul></div>
+<div class="card"><h2>${esc(c.not_included_heading || "Qué no incluye")}</h2><ul>${excl}</ul></div>
 <div class="card" id="discussBox">
   <h2>${esc(c.next_heading || 'Siguiente paso')}</h2>
   ${paid ? '<p class="ok"><b>Pago confirmado por Stripe.</b> Gracias.</p>' : `
