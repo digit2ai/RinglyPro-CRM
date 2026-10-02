@@ -366,9 +366,9 @@ function lineRows(c, q) {
   if (!lines.length) return '';
   const sum = lines.reduce((a, l) => a + (Number(l.hours) || 0), 0);
   if (Math.abs(sum - Number(q.hours)) > 0.001) return '';
-  return lines.map(l => '<tr><td>' + esc(l.label || '') + '<div class="mut">' + esc(String(l.hours).replace('.', ',')) + ' h</div></td><td class="n">' +
+  return lines.map(l => '<tr><td>' + esc(l.label || '') + '<div class="mut">' + esc(String(l.hours).replace('.', ',')) + ' h' + (l.detail ? ' · ' + esc(l.detail) : '') + '</div></td><td class="n">' +
     esc(usd(Math.round(Number(l.hours) * q.rate_cents))) + '</td></tr>').join('') +
-    (Array.isArray(c.free_lines) ? c.free_lines.map(t => '<tr><td>' + esc(t) + '</td><td class="n">Sin costo</td></tr>').join('') : '');
+    (Array.isArray(c.free_lines) ? c.free_lines.map(t => '<tr><td>' + esc(typeof t === 'string' ? t : t.label) + (t && t.detail ? '<div class="mut">' + esc(t.detail) + '</div>' : '') + '</td><td class="n">Sin costo</td></tr>').join('') : '');
 }
 
 module.exports = { build, create, ensure, findByToken, hashToken, TOKEN_RE };
