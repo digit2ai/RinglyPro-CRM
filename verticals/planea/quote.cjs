@@ -155,6 +155,7 @@ figure{margin:0 0 18px}figure img{display:block;width:100%;height:auto;border:1p
 <div class="card">
   <h2>Valor</h2>
   <table>
+    ${lineRows(c, q)}
     <tr><td>${esc(c.hours_label || 'Tiempo de desarrollo')}${c.delivery ? '<div class="mut">' + esc(c.delivery) + '</div>' : (w.start && w.end ? '<div class="mut">Del ' + esc(w.start) + ' al ' + esc(w.end) + '</div>' : '')}</td><td class="n">${esc(hours)} h</td></tr>
     <tr class="tot"><td>Total</td><td class="n">${esc(usd(q.amount_cents))}</td></tr>
   </table>
@@ -356,6 +357,18 @@ function build({ db, stripe } = {}) {
   });
 
   return router;
+}
+
+// Desglose opcional por línea (content.lines = [{label, hours}]). Solo se muestra si la suma de
+// horas coincide con las horas de la fila: un desglose que no cuadra con el total no se publica.
+function lineRows(c, q) {
+  const lines = Array.isArray(c.lines) ? c.lines : [];
+  if (!lines.length) return '';
+  const sum = lines.reduce((a, l) => a + (Number(l.hours) || 0), 0);
+  if (Math.abs(sum - Number(q.hours)) > 0.001) return '';
+  return lines.map(l => '<tr><td>' + esc(l.label || '') + '<div class="mut">' + esc(String(l.hours).replace('.', ',')) + ' h</div></td><td class="n">' +
+    esc(usd(Math.round(Number(l.hours) * q.rate_cents))) + '</td></tr>').join('') +
+    (Array.isArray(c.free_lines) ? c.free_lines.map(t => '<tr><td>' + esc(t) + '</td><td class="n">Sin costo</td></tr>').join('') : '');
 }
 
 module.exports = { build, create, ensure, findByToken, hashToken, TOKEN_RE };
