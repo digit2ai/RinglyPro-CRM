@@ -30,7 +30,7 @@ const RATE_CACHE_WRITE = 1.25;
 // TO REACTIVATE ("activate JobUp.dev"): change AI_DEFAULT to 'on' below and
 // deploy — or set JOBUP_AI=on on Render with no code change. JOBUP_AI, when
 // set, always wins over the default.
-const AI_DEFAULT = 'off';
+const AI_DEFAULT = 'on';
 function aiOn() { return String(process.env.JOBUP_AI || AI_DEFAULT).toLowerCase() === 'on'; }
 
 let client = null;
