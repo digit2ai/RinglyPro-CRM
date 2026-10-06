@@ -1071,6 +1071,8 @@ function build() {
       await Item.destroy({ where: { user_id: a.id } }).catch(function () {});
       if (ItemH) await ItemH.destroy({ where: { user_id: a.id } }).catch(function () {});
       if (SaludH) await SaludH.destroy({ where: { user_id: a.id } }).catch(function () {});
+      // Los textos que Maya escribió para esta persona se van con la cuenta.
+      await sequelize.query('DELETE FROM planea_maya_texts WHERE user_id = :u', { replacements: { u: a.id } }).catch(function () {});
       await Profile.destroy({ where: { user_id: a.id } }).catch(function () {});
       await User.destroy({ where: { id: a.id } }).catch(function () {});
       res.clearCookie(COOKIE, { path: '/' }); res.clearCookie('planea_user', { path: '/' });
