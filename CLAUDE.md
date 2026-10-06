@@ -54,7 +54,7 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 | ordergopro | OrderGoPro | DISABLED | /api/ordergopro/chat |
 | pacccfl / pcci | PACCCFL / PCCI | DISABLED | personas (chamber AI follows camaravirtual) |
 | ronin | Ronin Brotherhood | DISABLED | persona |
-| speakup | SpeakUp | DISABLED | factory llm.js, subscription CLI, ai-editor, Claude Code runner (GitHub Actions build not gated) |
+| speakup | SpeakUp / AutoDev | **ENABLED 2026-10-06** (owner request; runs on the Claude subscription token, not the API account) | factory llm.js, subscription CLI, ai-editor, Claude Code runner (GitHub Actions build not gated) |
 | surgicalmind | SurgicalMind | DISABLED | persona (app = intuitive) |
 | — | AIHotelTalent, BDT/ComplianceMind, Cali CityLab, Calcáreos, Deportivo Cali, Doctor Picante, Hit Promotional, Horacio José Serpa, JumpCoach, Kancho AI, MaraMed, PINAXIS, RoundShare, Spark AI, Store Health AI, TunjoRacing/IMSA | NONE | no Anthropic usage found |
 | planea | Planea | SKIPPED | verticals/planea IS planea.vip (live): untouched pending owner confirmation |

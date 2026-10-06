@@ -63,7 +63,8 @@ const REGISTRY = {
     sites: ['voice persona pcci'], off_behaviour: 'heuristic', note: 'Its chamber (cv-3) platform AI follows camaravirtual.' },
   ronin:            { status: 'disabled', names: ['Ronin Brotherhood'], disabled_on: D,
     sites: ['voice persona ronin'], off_behaviour: 'heuristic', note: 'Own code has no Anthropic; its ElevenLabs widget is configured in ElevenLabs.' },
-  speakup:          { status: 'disabled', names: ['SpeakUp'], disabled_on: D,
+  // ENABLED 2026-10-06 (owner request): AutoDev runs on the Claude subscription token, not the API account.
+  speakup:          { status: 'enabled', names: ['SpeakUp'], disabled_on: D,
     sites: ['src/factory/llm.js (API client)', 'src/factory/claude-subscription.js available() (subscription CLI: chat, research, planner)', 'src/services/ai-editor.js', 'src/claudecode/runner.js (Claude Code tab)'],
     off_behaviour: 'labelled heuristic/offline replies; Claude Code runs fail with the reason',
     note: 'The GitHub Actions build job (.github/speakup) runs only when the owner approves a plan; it is not gated here.' },

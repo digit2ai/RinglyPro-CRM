@@ -48,7 +48,7 @@ const flags = require('../src/config/anthropic-flags');
   // ---- 1. registry ----------------------------------------------------------
   const reg = flags.registry();
   const off = reg.filter((r) => r.effective === 'disabled').map((r) => r.key);
-  ok(off.length === 18, '18 verticals are switched off (' + off.length + ')');
+  ok(off.length === 17, '17 verticals are switched off (' + off.length + ')'); // speakup enabled 2026-10-06
   ok(reg.find((r) => r.key === 'planea').status === 'skipped' && flags.anthropicEnabled('planea'), 'Planea is skipped and untouched');
   ok(flags.anthropicEnabled('veritas') && flags.anthropicEnabled('ringlypro_lite'), 'a vertical not in the registry is unchanged');
   for (const k of off) {
@@ -88,9 +88,15 @@ const flags = require('../src/config/anthropic-flags');
   const inc = require('../verticals/incentiva/src/services/llm.js');
   ok(!inc.aiEnabled(), 'BuyersLine llm is off');
   const ed = require('../verticals/speakup/src/services/ai-editor.js');
-  ok(ed.activeModel() === 'heuristic-fallback', 'SpeakUp ai-editor is on its heuristic path');
+  // SpeakUp follows the registry: enabled 2026-10-06, so its paths are asserted OFF only while the key is off.
   const sub = require('../verticals/speakup/src/factory/claude-subscription.js');
-  ok(!sub.available(), 'SpeakUp subscription CLI path is off');
+  if (flags.anthropicEnabled('speakup')) {
+    ok(ed.activeModel() !== 'heuristic-fallback', 'SpeakUp ai-editor has a model (speakup is enabled)');
+    ok(!flags.switchedOff('speakup'), 'SpeakUp subscription CLI path is not switched off');
+  } else {
+    ok(ed.activeModel() === 'heuristic-fallback', 'SpeakUp ai-editor is on its heuristic path');
+    ok(!sub.available(), 'SpeakUp subscription CLI path is off');
+  }
   const irs = require('../src/routes/unified-chamber/lib/project-irs-scorer.js');
   const scored = await irs.scoreProject({ plan_json: { title: 't', team_roles_required: [] } }, [], { useAi: true });
   ok(scored && scored.ai && scored.ai.used === false, 'CamaraVirtual IRS scorer keeps the deterministic score, no AI');
