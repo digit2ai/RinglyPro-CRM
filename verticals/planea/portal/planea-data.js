@@ -80,7 +80,7 @@
   }
   function mayaMatch(d, prof) {
     if (!d || !d.texts || !d.facts || d.composed_by !== 'maya' || !prof || prof.sin_diagnostico) return false;
-    return d.facts.score === prof.planea_score && d.facts.rango === prof.rango && d.facts.principal === prioKey(prof);
+    return d.facts.score === prof.planea_score && (d.facts.rango_motor || d.facts.rango) === prof.rango && d.facts.principal === prioKey(prof);
   }
   function slot(k) { var t = mayaT && mayaT[k]; return typeof t === 'string' && t ? t : ''; }
   // Antes de volver a pintar se devuelve cada hueco a su texto fijo, para que un texto de
@@ -106,6 +106,10 @@
     mayaTexts().then(function (d) {
       // Maya está escribiendo ahora mismo: se vuelve a pedir UNA vez, sin recargar la página.
       if (d && d.pending && !mayaRetry) { mayaRetry = true; setTimeout(function () { window.__plMT = null; loadMaya(prof); }, 9000); }
+      // Nombre del nivel que enseñó Planea (p. ej. «Consolidando» en vez de «Sólido»): se
+      // muestra aunque Maya no haya escrito textos, porque no depende del modelo.
+      var rn = d && d.facts && d.facts.rango_motor === prof.rango && d.facts.score === prof.planea_score && typeof d.facts.rango === 'string' ? d.facts.rango : '';
+      if (rn && rn !== prof.rango_mostrar) { prof.rango_mostrar = rn; restoreMaya(); try { fillScalars(prof); } catch (e) {} }
       var ok = mayaMatch(d, prof);
       if (!ok) { restoreMaya(); try { fillScalars(prof); } catch (e) {} }
       mayaT = ok ? d.texts : null;
@@ -237,7 +241,7 @@
       case 'nombre': return prof.nombre || '';
       case 'saludo': return prof.nombre ? 'Hola, ' + prof.nombre : 'Hola';
       case 'score': return sin || prof.planea_score == null ? '—' : String(prof.planea_score);
-      case 'rango': return sin ? 'Sin diagnóstico' : (prof.rango || '—');
+      case 'rango': return sin ? 'Sin diagnóstico' : (prof.rango_mostrar || prof.rango || '—');
       case 'patrimonio_total':
       case 'patrimonio_neto': return cop(prof.patrimonio_neto_cop || 0);
       case 'activos_total': return cop(prof.activos_total_cop || 0);

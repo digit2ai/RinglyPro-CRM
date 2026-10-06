@@ -39,7 +39,31 @@ const PILAR_ALIAS = {
 };
 // Rangos §7 del Documento Maestro: los mismos cortes que planea-motor.js y planea-data.js.
 const RANGOS = [[35, 'Punto de partida'], [52, 'Construyendo'], [68, 'En camino'], [83, 'Sólido'], [100, 'Planeado']];
-function rangoDe(s) { for (let i = 0; i < RANGOS.length; i++) if (s <= RANGOS[i][0]) return RANGOS[i][1]; return 'Planeado'; }
+function rangoIdx(s) { for (let i = 0; i < RANGOS.length; i++) if (s <= RANGOS[i][0]) return i; return RANGOS.length - 1; }
+function rangoDe(s) { return RANGOS[rangoIdx(s)][1]; }
+// NOMBRES DE LOS NIVELES ENSEÑADOS POR PLANEA. El motor decide en qué nivel cae un puntaje
+// (los cortes 35 / 52 / 68 / 83 no se tocan); el NOMBRE con que se muestra ese nivel lo puede
+// enseñar Planea escribiéndolo junto a su tramo exacto, por ejemplo «Consolidando (69–83)».
+// Se lee del entrenamiento con una regla fija, sin modelo: solo vale un nombre pegado a uno
+// de los cinco tramos del motor, y manda la última vez que aparece. Así el nombre nuevo sale
+// en la app aunque Maya no esté disponible, y nadie puede inventar un nivel que no existe.
+const TRAMOS = [[0, 35], [36, 52], [53, 68], [69, 83], [84, 100]];
+function rangoNames(kbText) {
+  const names = RANGOS.map((r) => r[1]);
+  const re = /([A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ ]{1,34}?)\s*\(\s*(\d{1,3})\s*(?:[–—-]|a|al|hasta)\s*(\d{1,3})\s*(?:puntos)?\s*\)/g;
+  let m;
+  while ((m = re.exec(String(kbText || '')))) {
+    const i = TRAMOS.findIndex((t) => t[0] === +m[2] && t[1] === +m[3]);
+    if (i < 0) continue;
+    // El nombre empieza en su primera mayúscula: «y Planeado» -> «Planeado», «el nivel Consolidando» -> «Consolidando».
+    let n = m[1].replace(/\s+/g, ' ').trim();
+    const up = n.search(/[A-ZÀ-ÖØ-Þ]/);
+    n = (up > 0 ? n.slice(up) : n.replace(/^(?:y|e|o)\s+/i, '')).trim();
+    if (n.length < 3 || n.length > 30 || n.split(' ').length > 4) continue;
+    names[i] = n.charAt(0).toUpperCase() + n.slice(1);
+  }
+  return names;
+}
 
 const BIENVENIDA = (n) => 'Hola' + (n ? ' ' + n : '') + ', soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?';
 
@@ -86,7 +110,7 @@ function safeFirstName(full) {
 // FICHA DE HECHOS. Sale del perfil guardado del usuario en sesión, nunca del cuerpo de la
 // petición. El puntaje lo calcula el navegador y el servidor solo lo guarda: por eso aquí
 // se RECHAZA todo lo que esté fuera de rango en vez de confiar en ello.
-function factsFrom(fullName, scoreData) {
+function factsFrom(fullName, scoreData, names) {
   const sd = scoreData && typeof scoreData === 'object' ? scoreData : null;
   const nombre = safeFirstName(fullName);
   if (!sd || sd.score == null) return { ok: false, why: 'sin_puntaje', nombre };
@@ -102,11 +126,13 @@ function factsFrom(fullName, scoreData) {
   }
   const secundario = PILARES.indexOf(pr.secundario) >= 0 && pr.secundario !== pr.principal ? pr.secundario : null;
   const s = Math.round(score);
-  return { ok: true, nombre, score: s, rango: rangoDe(s), principal: pr.principal, secundario, pilares };
+  // rango = el nombre que se MUESTRA (el que enseñó Planea, o el del motor); rango_motor = el del motor.
+  const nm = Array.isArray(names) && names.length === RANGOS.length ? names : RANGOS.map((r) => r[1]);
+  return { ok: true, nombre, score: s, rango: nm[rangoIdx(s)], rango_motor: rangoDe(s), rangos: nm, principal: pr.principal, secundario, pilares };
 }
-function factsHash(f) { return sha(JSON.stringify([f.nombre, f.score, f.rango, f.principal, f.secundario, PILARES.map((k) => f.pilares[k])])); }
+function factsHash(f) { return sha(JSON.stringify([f.nombre, f.score, f.rango_motor || f.rango, f.principal, f.secundario, PILARES.map((k) => f.pilares[k])])); }
 // Lo que la página necesita para decidir si un texto corresponde a lo que tiene en pantalla.
-function publicFacts(f) { return f && f.ok ? { nombre: f.nombre, score: f.score, rango: f.rango, principal: f.principal, secundario: f.secundario } : { nombre: (f && f.nombre) || '' }; }
+function publicFacts(f) { return f && f.ok ? { nombre: f.nombre, score: f.score, rango: f.rango, rango_motor: f.rango_motor || f.rango, principal: f.principal, secundario: f.secundario } : { nombre: (f && f.nombre) || '' }; }
 
 // Un separador de miles se quita (1.500 -> 1500); un decimal se conserva (1,5 -> 1.5), para
 // que «1,5» no se confunda con un 15 permitido.
@@ -145,7 +171,8 @@ function verifySlot(slot, raw, f, kbNumbers) {
   // Rango: si nombra un rango, tiene que ser el del usuario.
   // Solo cuenta como rango cuando va como NOMBRE (con mayúscula, como lo escribe la app):
   // «un ahorro sólido» o «estás construyendo» son palabras comunes, no un rango.
-  for (const r of RANGOS) if (r[1] !== f.rango && text.indexOf(r[1]) >= 0) return { ok: false, why: 'rango_equivocado' };
+  // Cuentan los nombres del motor Y los que enseñó Planea: el único válido es el que se muestra.
+  for (const n of RANGOS.map((r) => r[1]).concat(f.rangos || [])) if (n !== f.rango && text.indexOf(n) >= 0) return { ok: false, why: 'rango_equivocado' };
   if (slot.req === 'rango' && ft.indexOf(fold(f.rango)) < 0) return { ok: false, why: 'falta_el_rango' };
   if (slot.req === 'prioridad' && !mentions(ft, f.principal)) return { ok: false, why: 'falta_el_area_prioritaria' };
   if (slot.req === 'bienvenida') {
@@ -237,7 +264,7 @@ function ensure(sq) {
 
 const isOff = () => String(process.env.PLANEA_MAYA_TEXTS || '').toLowerCase() === 'off';
 const dailyData = () => Math.max(0, parseInt(process.env.PLANEA_MAYA_TEXTS_DAILY || '1', 10) || 0);
-const dailyMax = () => Math.max(1, parseInt(process.env.PLANEA_MAYA_TEXTS_MAX_DAILY || '6', 10) || 6);
+const dailyMax = () => Math.max(1, parseInt(process.env.PLANEA_MAYA_TEXTS_MAX_DAILY || '20', 10) || 20);
 const KEEP = 5;
 
 // Monta GET /me/maya-texts en el router del usuario y devuelve la vista previa del admin.
@@ -291,11 +318,13 @@ function mount(me, ctx) {
       const sq = db();
       const [rows] = await sq.query('SELECT u.full_name AS uname, p.full_name AS pname, p.score_data FROM planea_users u LEFT JOIN planea_profiles p ON p.user_id = u.id WHERE u.id = :u LIMIT 1', { replacements: { u: a.id } });
       if (!rows.length) return res.status(401).json({ error: 'unauthorized' });
-      const f = factsFrom(rows[0].pname || rows[0].uname, rows[0].score_data);
+      // El entrenamiento se lee ANTES de armar la ficha: de ahí salen los nombres de los niveles,
+      // que se muestran aunque los textos de Maya estén apagados o el modelo no responda.
+      const kbText = await knowledge();
+      const f = factsFrom(rows[0].pname || rows[0].uname, rows[0].score_data, rangoNames(kbText));
       if (isOff()) return res.json(fixedPayload(f, 'apagado'));
       if (!f.ok) return res.json(fixedPayload(f, f.why));
       await ensure(sq);
-      const kbText = await knowledge();
       const fh = factsHash(f), kv = sha(kbText);
       const [cur] = await sq.query('SELECT texts, facts, facts_hash, kb_version, rejected FROM planea_maya_texts WHERE tenant_id = :t AND user_id = :u AND is_current LIMIT 1', { replacements: { t: tenant(), u: a.id } });
       const row = cur[0] || null;
@@ -320,7 +349,10 @@ function mount(me, ctx) {
       // Un texto escrito para OTRA ficha (otro puntaje u otra área) no se muestra: se
       // devuelven los fijos hasta que termine la reescritura.
       if (!sameFacts) return res.json(Object.assign(fixedPayload(f, 'ficha_cambio'), { pending }));
-      const texts = {}; SLOTS.forEach((s) => { texts[s.key] = typeof row.texts[s.key] === 'string' ? row.texts[s.key] : null; });
+      // Lo guardado se REVISA otra vez contra la ficha de hoy: un texto escrito con un nombre de
+      // nivel que Planea ya cambió no se muestra mientras llega el nuevo (queda el fijo).
+      const kbNums = numbersIn(kbText);
+      const texts = {}; SLOTS.forEach((s) => { const t = row.texts[s.key]; texts[s.key] = typeof t === 'string' && verifySlot(s, t, f, kbNums).ok ? t : null; });
       if (!texts.chat_bienvenida) texts.chat_bienvenida = BIENVENIDA(f.nombre);
       res.json({ texts, facts: publicFacts(f), composed_by: 'maya', stale: !fresh, pending });
     } catch (e) { console.error('[planea-maya-texts]', e.message); res.json(fixedPayload(null, 'error')); }
@@ -334,9 +366,10 @@ function mount(me, ctx) {
     const seg = PILARES.indexOf(s.secundario) >= 0 && s.secundario !== prin ? s.secundario : (prin === 'ahorro' ? 'deuda' : 'ahorro');
     const score = Number.isFinite(+s.score) && +s.score >= 0 && +s.score <= 100 ? Math.round(+s.score) : 62;
     const pilares = {}; PILARES.forEach((k, i) => { pilares[k] = k === prin ? 38 : k === seg ? 50 : [72, 80, 64, 76, 58, 70, 66, 74][i]; });
-    const f = { ok: true, nombre: safeFirstName(s.nombre) || 'Camila', score, rango: rangoDe(score), principal: prin, secundario: seg, pilares };
-    if (isOff()) return { ok: false, reason: 'apagado', facts: publicFacts(f) };
     const kbText = await knowledge();
+    const nm = rangoNames(kbText);
+    const f = { ok: true, nombre: safeFirstName(s.nombre) || 'Camila', score, rango: nm[rangoIdx(score)], rango_motor: rangoDe(score), rangos: nm, principal: prin, secundario: seg, pilares };
+    if (isOff()) return { ok: false, reason: 'apagado', facts: publicFacts(f) };
     const r = await compose({ facts: f, system: systemFor(f), knowledge: kbText, model: mayaModel, fetchImpl });
     const slots = SLOTS.map((sl) => ({ key: sl.key, donde: sl.donde, actual: sl.pilar ? ((loadHallazgo()[sl.pilar] || [])[band(f.pilares[sl.pilar])] || '') : (sl.ref ? sl.ref(f) : ''),
       maya: r.ok ? r.texts[sl.key] : null, rechazado: r.ok ? (r.rejected[sl.key] || null) : null }));
@@ -347,4 +380,4 @@ function mount(me, ctx) {
 
 function status() { return { off: isOff(), daily_data: dailyData(), daily_max: dailyMax(), slots: SLOTS.length }; }
 
-module.exports = { mount, compose, verifySlot, factsFrom, factsHash, numbersIn, rangoDe, safeFirstName, tidy, ensure, status, SLOTS, PILARES, PILAR_LABEL, BIENVENIDA, fixedPayload, taskBlock };
+module.exports = { rangoNames, rangoIdx, mount, compose, verifySlot, factsFrom, factsHash, numbersIn, rangoDe, safeFirstName, tidy, ensure, status, SLOTS, PILARES, PILAR_LABEL, BIENVENIDA, fixedPayload, taskBlock };

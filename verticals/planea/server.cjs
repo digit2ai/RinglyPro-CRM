@@ -38,6 +38,7 @@ const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 let planeaBackend = null;
 try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
 const planeaAdmin = require('./admin.cjs');
+const mayaTextsMod = require('./maya-texts.cjs');
 const taxNotify = require('./tax-notify.cjs');
 const planeaQuote = require('./quote.cjs');
 
@@ -302,6 +303,7 @@ METAS Y CALENDARIO — LO QUE PUEDES HACER POR EL USUARIO
 
 TEXTOS DE LAS PANTALLAS
 - Los mensajes de Inicio, los de Puntaje Planea (Hallazgos de Maya), el aviso de Mis metas y el saludo de este chat también los redactas tú, con lo que el equipo de Planea te enseña.
+- Los NOMBRES de los niveles del Puntaje Planea también los puede cambiar el equipo de Planea: basta con que te los enseñen junto a su tramo de puntos, por ejemplo "Consolidando (69–83)". Desde ese momento la app muestra ese nombre (en el anillo del puntaje, en Inicio y en Puntaje Planea) la próxima vez que el usuario la abra, y tú usas ese nombre y no el anterior. Los tramos de puntos no cambian.
 - Si te preguntan si esos textos se pueden cambiar, la respuesta es SÍ: el equipo de Planea los ajusta enseñándote en "Entrenar a Maya" o en "Conocimiento de Maya", y el cambio se ve en la pantalla. No digas que dependen del backend ni que hay que reportarlo al equipo de desarrollo.
 
 PREGUNTAS GUIADAS — no esperes a que el usuario decida qué contarte
@@ -392,6 +394,9 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
     let profile = (req.body && req.body.profile && typeof req.body.profile === 'object' && !Array.isArray(req.body.profile)) ? req.body.profile : {};
     try { if (JSON.stringify(profile).length > 8000) profile = {}; } catch (e) { profile = {}; }
     profile = Object.assign({}, profile, { nombre: ctx.nombre || undefined });
+    // El nombre del nivel es el que enseñó Planea (si enseñó uno), no el del motor.
+    const kbTxt = await planeaAdmin.mayaKnowledge(planeaBackend);
+    if (Number.isFinite(+profile.planea_score) && profile.planea_score != null) profile.rango = mayaTextsMod.rangoNames(kbTxt)[mayaTextsMod.rangoIdx(Math.round(+profile.planea_score))];
     delete profile.email;
     if (!KEY) {
       return res.json({
@@ -416,7 +421,7 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
         max_tokens: 380,
         // Las reglas escritas aquí primero; los documentos que sube el equipo de Planea
         // (módulo administrativo) van después, como contexto, sin poder anularlas.
-        system: buildMayaSystem(profile, mayaContextBlock(ctx)) + await planeaAdmin.mayaKnowledge(planeaBackend),
+        system: buildMayaSystem(profile, mayaContextBlock(ctx)) + kbTxt,
         messages: clean,
       }),
     });

@@ -179,9 +179,12 @@
       }
       window.__plMT.then(function (d) {
         if (d && d.pending && !applyMayaTexts.retried) { applyMayaTexts.retried = true; setTimeout(function () { applyMayaTexts(r, true); }, 9000); }
-        if (!d || !d.texts || !d.facts || d.composed_by !== 'maya' || !r) return;
+        if (!d || !d.facts || !r) return;
         var prin = r.prioridad && r.prioridad.principal;
-        if (d.facts.score !== r.score || d.facts.rango !== (r.rango && r.rango.name) || d.facts.principal !== prin) return;
+        if (d.facts.score !== r.score || (d.facts.rango_motor || d.facts.rango) !== (r.rango && r.rango.name) || d.facts.principal !== prin) return;
+        // Nombre del nivel que enseñó Planea: no depende de que Maya haya escrito textos.
+        if (typeof d.facts.rango === 'string' && d.facts.rango) document.querySelectorAll('[data-dg-rango]').forEach(function (el) { el.textContent = d.facts.rango; });
+        if (!d.texts || d.composed_by !== 'maya') return;
         document.querySelectorAll('[data-dg-maya]').forEach(function (el) {
           var t = d.texts[el.getAttribute('data-dg-maya')];
           if (typeof t === 'string' && t) el.textContent = t;
@@ -256,7 +259,7 @@
       '<div class="dg-ringwrap"><svg viewBox="0 0 156 156"><circle cx="78" cy="78" r="63" fill="none" stroke="var(--line)" stroke-width="11"/>' +
       '<circle id="dg-ring" cx="78" cy="78" r="63" fill="none" stroke="' + color + '" stroke-width="11" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '" transform="rotate(-90 78 78)"/></svg>' +
       '<div class="dg-res-num"><b id="dg-score">0</b><small>PLANEA</small></div></div>' +
-      '<div class="dg-res-badge" style="border-color:' + color + ';color:' + color + '">' + esc(r.rango.name) + '</div>' +
+      '<div class="dg-res-badge" style="border-color:' + color + ';color:' + color + '" data-dg-rango="1">' + esc(r.rango.name) + '</div>' +
       renderProgress(r.score) +
       // §9.2 CAPA 2 — Hallazgos de Maya: lectura principal + orden de prioridad. Va en su
       // propio bloque, separado del detalle por área (§11.1 denominación «Hallazgos de Maya» + «IA»).

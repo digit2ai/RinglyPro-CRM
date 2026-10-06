@@ -565,6 +565,14 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(v('chat_bienvenida', MT.BIENVENIDA('Camila')).ok && !v('chat_bienvenida', 'Hola, soy Maya, tu agente de planeación financiera.').ok, 'la bienvenida debe llevar el nombre');
     ok(!v('inicio_rango', 'Estás en Sólido, sigue así.').ok && v('inicio_rango', 'Estás en En camino.').ok, 'un rango que no es el del usuario se rechaza');
     ok(!v('inicio_prioridad', 'Baja tu deuda en $500.000 este mes.').ok && !v('inicio_prioridad', '<b>Tu deuda</b> es lo primero.').ok && !v('inicio_prioridad', 'x'.repeat(400)).ok, 'montos, HTML y textos largos se rechazan');
+    // Nombres de los niveles enseñados por Planea (regla fija, sin modelo)
+    const KBN = 'cambia los nombres de los niveles a: Punto de partida (0–35), Construyendo (36–52), Avanzando (53–68), Consolidando (69–83) y Planeado (84–100).';
+    const nm = MT.rangoNames(KBN);
+    ok(nm.join('|') === 'Punto de partida|Construyendo|Avanzando|Consolidando|Planeado', 'los nombres de nivel se leen del entrenamiento junto a su tramo');
+    ok(MT.rangoNames('').join('|') === 'Punto de partida|Construyendo|En camino|Sólido|Planeado' && MT.rangoNames('Fantasma (10-20) y Raro (69–90)').join('|') === MT.rangoNames('').join('|'), 'sin entrenamiento quedan los del motor, y un tramo que no existe no crea un nivel');
+    const f76 = MT.factsFrom('Eduardo Ruiz', { score: 76, pilares: facts.pilares, prioridad: { principal: 'deuda' } }, nm);
+    ok(f76.rango === 'Consolidando' && f76.rango_motor === 'Sólido' && MT.factsHash(f76) === MT.factsHash(MT.factsFrom('Eduardo Ruiz', { score: 76, pilares: facts.pilares, prioridad: { principal: 'deuda' } })), 'el nivel se muestra con el nombre nuevo, y cambiar el nombre es un cambio de entrenamiento, no de datos');
+    ok(MT.verifySlot(SL('inicio_rango'), 'Estás en Consolidando.', f76, []).ok && !MT.verifySlot(SL('inicio_rango'), 'Estás en Sólido.', f76, []).ok && !MT.verifySlot(SL('inicio_resumen'), 'Con tu deuda al día pasarás a Planeado.', f76, []).ok, 'un texto con el nombre viejo o con otro nivel se rechaza');
     const fakeModel = (obj) => async () => ({ ok: true, json: async () => ({ content: [{ text: typeof obj === 'string' ? obj : JSON.stringify(obj) }] }) });
     process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
     const mix = await MT.compose({ facts, system: 'S', knowledge: '', model: 'm', fetchImpl: fakeModel({ inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Sube tu puntaje 20 puntos pagando tu deuda.', metas_prioridad: 'Tu prioridad es tu deuda. Ponte una meta y te acompaño.' }) });
@@ -620,12 +628,25 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(tr.body.composed_by === 'maya' && tr.body.stale === true && tr.body.pending === true, 'un cambio de entrenamiento marca los textos como viejos y reescribe aunque el tope de datos esté gastado');
     await waitFor(async () => (await rowsOf(userRow.id)).filter((r) => r.cause === 'training').length === 1); await clearLock();
     // Techo duro: 6 por día entre todas las causas
-    for (let i = 0; i < 6; i++) await sq.query("INSERT INTO planea_maya_texts (tenant_id, user_id, is_current, cause, texts, facts, facts_hash, kb_version) VALUES (990918, :u, FALSE, 'training', '{}', '{}', 'x', 'x')", { replacements: { u: userRow.id } });
+    for (let i = 0; i < 20; i++) await sq.query("INSERT INTO planea_maya_texts (tenant_id, user_id, is_current, cause, texts, facts, facts_hash, kb_version) VALUES (990918, :u, FALSE, 'training', '{}', '{}', 'x', 'x')", { replacements: { u: userRow.id } });
     await kb.upload(sq, { tenant: 990918, name: 'SIT regla de textos', filename: 'r.md', buf: Buffer.from('Di siempre lo primero es tu deuda, versión dos.', 'utf8'), by: ADMIN_EMAIL }).catch(() => {});
     kb._cache.delete(990918);
     const n3 = textsCalls; const ceil = await mtGet(userCookie); await new Promise((r) => setTimeout(r, 300));
     ok(ceil.body.pending === false && textsCalls === n3, 'el techo duro del día frena también los cambios de entrenamiento');
     ok((await rowsOf(userRow.id)).filter((r) => r.is_current).length === 1, 'hay una sola fila vigente por usuario');
+    // Nombres de nivel por HTTP: salen aunque Maya no escriba, y un texto guardado con el nombre viejo no se muestra
+    await sq.query("UPDATE planea_kb_docs SET active = FALSE WHERE tenant_id = 990918 AND name <> 'SIT regla de textos'");
+    const upN = await kb.upload(sq, { tenant: 990918, name: 'SIT niveles', filename: 'n.md', buf: Buffer.from('Niveles: En ruta (53–68), Consolidando (69–83).', 'utf8'), by: ADMIN_EMAIL });
+    if (!upN || !upN.doc) console.log('   carga SIT niveles:', JSON.stringify(upN).slice(0, 200));
+    kb._cache.delete(990918);
+    await sq.query("UPDATE planea_maya_texts SET texts = jsonb_set(texts, '{inicio_rango}', '\"Estás en En camino.\"') WHERE tenant_id = 990918 AND user_id = :u AND is_current", { replacements: { u: userRow.id } });
+    const nv = await mtGet(userCookie);
+    ok(nv.body.facts.rango === 'En ruta' && nv.body.facts.rango_motor === 'En camino' && nv.body.texts.inicio_rango === null, 'el nombre de nivel enseñado llega a la app, y el texto guardado con el nombre viejo deja de mostrarse');
+    process.env.PLANEA_MAYA_TEXTS = 'off';
+    ok((await mtGet(userCookie)).body.facts.rango === 'En ruta', 'el nombre de nivel sale aunque los textos de Maya estén apagados');
+    delete process.env.PLANEA_MAYA_TEXTS;
+    const pdSrc = fs.readFileSync(path.join(__dirname, 'portal', 'planea-data.js'), 'utf8');
+    ok(/prof\.rango_mostrar \|\| prof\.rango/.test(pdSrc) && /data-dg-rango/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-diagnostico.js'), 'utf8')), 'Inicio y Puntaje Planea muestran el nombre de nivel enseñado');
     // Vista previa del admin
     textsReply = { inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 99 puntos pagando tu deuda.' };
     const before = (await sq.query('SELECT COUNT(*)::int AS n FROM planea_maya_texts WHERE tenant_id = 990918'))[0][0].n;
