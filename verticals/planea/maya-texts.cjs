@@ -50,12 +50,15 @@ const SLOTS = [
   { key: 'inicio_rango', max: 90, donde: 'Inicio, tarjeta del puntaje (dice en qué rango está)', req: 'rango', ref: (f) => 'Estás en ' + f.rango + '.' },
   { key: 'inicio_rango_nota', max: 150, donde: 'Inicio, nota pequeña debajo del rango', ref: () => 'Base de la encuesta: cambiará según registres tus datos.' },
   { key: 'inicio_prioridad', max: 230, donde: 'Inicio, bloque "Lo más importante para ti" (el nombre del área ya va como título encima)', solo: 'prioridad', ref: () => 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.' },
-  { key: 'puntaje_apertura', max: 270, donde: 'Puntaje Planea, lectura principal de "Hallazgos de Maya"', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => (f.nombre ? f.nombre + ', ' : '') + 'tu mayor palanca ahora es ' + low(f.principal) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.' },
-  { key: 'puntaje_empieza', max: 120, donde: 'Puntaje Planea, línea de orden debajo de la lectura principal', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => 'Empieza por ' + low(f.principal) + (f.secundario ? ', y luego ' + low(f.secundario) : '') + '.' },
+  { key: 'puntaje_apertura', max: 270, donde: 'Puntaje Planea, lectura principal de "Hallazgos de Maya"', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => (f.nombre ? f.nombre + ', ' : '') + 'tu mayor palanca ahora es ' + tuyo(f.principal) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.' },
+  { key: 'puntaje_empieza', max: 120, donde: 'Puntaje Planea, línea de orden debajo de la lectura principal', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => 'Empieza por ' + tuyo(f.principal).replace(/^tus? /, '') + (f.secundario ? ', y luego ' + tuyo(f.secundario).replace(/^tus? /, '') : '') + '.' },
 ].concat(PILARES.map((k) => ({ key: 'puntaje_pilar_' + k, max: 260, pilar: k, donde: 'Puntaje Planea, hallazgo de la tarjeta "' + PILAR_LABEL[k] + '"' })), [
   { key: 'metas_prioridad', max: 190, donde: 'Mis metas, aviso que invita a crear una meta en el área prioritaria', req: 'prioridad', solo: 'prioridad', ref: (f) => 'Tu prioridad es ' + PILAR_LABEL[f.principal] + '. Ponte una meta en esta área y Maya te acompaña.' },
   { key: 'chat_bienvenida', max: 230, donde: 'Chat, primer mensaje cada vez que el usuario abre el chat', req: 'bienvenida', ref: (f) => BIENVENIDA(f.nombre) },
 ]);
+// Igual que la pantalla de Puntaje Planea («tu ahorro», «tu protección»).
+const TUYO = { ahorro: 'tu ahorro', flujo: 'tu flujo de caja', deuda: 'tu deuda', retiro: 'tu retiro', seguros: 'tu protección', inversion: 'tu inversión', impuestos: 'tus impuestos', patrimonio: 'tu patrimonio' };
+function tuyo(k) { return TUYO[k] || low(k); }
 function low(k) { return (PILAR_LABEL[k] || k || '').toLowerCase(); }
 
 // Hallazgos fijos por pilar, leídos del MISMO archivo que usa el navegador, para darle a
