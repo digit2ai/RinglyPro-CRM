@@ -6,7 +6,7 @@ https://aiagent.ringlypro.com/conference/
 ## Pages
 - /conference/            Overview hub
 - /conference/program/    Run of show for ONE HOUR (clock times computed from startTime in config.js)
-- /conference/keynote/    22-slide deck, 60 minutes. Arrows or space to move, P presenter view (second window, synced), N notes overlay, F full screen, T start timer, L language
+- /conference/keynote/    22-slide deck, 60 minutes. Arrows or space to move, P presenter view (second window, synced), N notes overlay, F full screen, T start timer, C show or hide the time bar, L language
 - /conference/script/     Word-for-word speaker script with timing and cut versions (printable)
 - /conference/build/      Live build guide for the presenter: record, choose, the build prompt, what to do if it fails
 - /conference/join/       Audience page behind the QR code: the app built live (once appUrl is set), the hour, a prompt builder
