@@ -71,6 +71,12 @@ html[lang="en"] .v-mcp tspan.es,html[lang="es"] .v-mcp tspan.en{display:none}
 .v-rules{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5vw;max-width:80rem;counter-reset:r}
 .v-rules li{counter-increment:r}
 .v-rules li::before{content:counter(r);font-family:var(--display);font-weight:800;color:var(--signal);font-size:2.2em;line-height:1}
+/* the animated MCP brain from digit2ai.com, loaded only when its slide is on screen */
+.slide.brain h1{font-size:clamp(1.5rem,3.1vw,3.4rem);max-width:none;margin-bottom:1.5vh}
+.v-brain{height:min(60vh,calc(86vw*7/12));aspect-ratio:12/7;max-width:100%;border-radius:1rem;overflow:hidden;background:#070a12;box-shadow:0 1.5vh 5vh rgba(0,0,0,.35)}
+.v-brain iframe{width:100%;height:100%;border:0;display:block}
+.slide.join h1{font-size:clamp(1.9rem,4.4vw,4.6rem);max-width:26ch}
+.v-join .v-cap{margin-top:1.5vh;max-width:30ch}
 .v-join{display:flex;align-items:center;gap:4vw}
 .v-join img{background:var(--white);padding:1.2rem;border-radius:1rem;width:min(36vh,30vw);height:auto}
 .v-url{font-family:var(--display);font-weight:600;font-size:clamp(1.2rem,2.4vw,2.2rem);overflow-wrap:anywhere}
@@ -200,6 +206,7 @@ body.presenter .pv{display:grid;grid-template-columns:2fr 1fr}
     document.querySelectorAll("#progress div").forEach(function(d,k){ d.className = (k+1<sec)?"done":(k+1===sec?"cur":""); });
     if(from!=="remote" && startTime()) store("bwa-slide-at", String(Date.now()));
     if(history.replaceState) history.replaceState(null,"","#"+(idx+1));
+    var fr = deck.querySelector('.slide.on iframe[data-src]'); if(fr && !fr.getAttribute("src")) fr.setAttribute("src", fr.getAttribute("data-src"));
     renderNotes();
     if(S[idx].kind==="reveal"){ var idea = store("bwa-idea")||""; document.getElementById("ideaEcho").textContent = idea; }
     if(chan && from!=="remote") chan.postMessage({type:"go", i:idx});
@@ -298,7 +305,7 @@ body.presenter .pv{display:grid;grid-template-columns:2fr 1fr}
   var x0=null; deck.addEventListener("touchstart",function(e){x0=e.touches[0].clientX;},{passive:true});
   deck.addEventListener("touchend",function(e){ if(x0===null) return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>50) show(idx+(dx<0?1:-1)); x0=null; });
 
-  var vu=document.querySelector(".v-url"); if(vu) vu.textContent=E.joinUrl.replace(/^https?:\/\//,"").replace(/\/$/,"");
+  document.querySelectorAll(".v-url").forEach(function(vu){ vu.textContent = String(E[vu.getAttribute("data-url")||"joinUrl"]||"").replace(/^https?:\/\//,"").replace(/\/$/,""); });
   show(idx,"remote"); tick(); setInterval(tick, 1000);
 })();
 </script>

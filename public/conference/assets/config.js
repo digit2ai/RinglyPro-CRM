@@ -9,6 +9,7 @@ window.EVENT = {
   venue: "VENUE NAME HERE",
   siteUrl: "https://aiagent.ringlypro.com/conference/",
   joinUrl: "https://aiagent.ringlypro.com/conference/join/",
+  signupUrl: "https://aiagent.ringlypro.com/conference/signup/",   // the form behind the QR on the last slide (assets/qr-signup.svg encodes this)
   audience: { en: "26 to 30 people, mostly 18 to 20", es: "26 a 30 personas, en su mayoría de 18 a 20 años" },
   recorderUrl: "https://autodev.digit2ai.com/speakup/meetings",   // where the idea session is recorded (presenter only, needs login)
   appUrl: "",                      // the app built live. Paste the link here after the build and push: the join page shows it.

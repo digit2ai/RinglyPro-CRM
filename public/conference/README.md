@@ -10,6 +10,7 @@ https://aiagent.ringlypro.com/conference/
 - /conference/script/     Word-for-word speaker script with timing and cut versions (printable)
 - /conference/build/      Live build guide for the presenter: record, choose, the build prompt, what to do if it fails
 - /conference/join/       Audience page behind the QR code: the app built live (once appUrl is set), the hour, a prompt builder
+- /conference/signup/     Form behind the QR on the LAST slide: join the Visionarium AI Engineering Solutions team. Posts to /api/conference/signup, which saves a contact under CRM client 15 (src/routes/conference-signup.js). Under 18 needs a parent or guardian and their consent; under 13 is refused.
 - /conference/checklist/  Pre-event checklist (saved per device)
 - /conference/qr/         Printable QR card
 
@@ -26,3 +27,6 @@ If the join URL changes, regenerate `assets/qr-join.svg` (python: `segno.make(UR
 
 ## Format (changed 2026-10-06)
 One hour, one app built with the whole room. No teams and no workshop. The idea session is recorded (AutoDev + Fieldy), the AI proposes the best idea and the room decides, RinglyPro Architect builds it in VS Code with Claude while the talk continues (minutes 17 to 40), and the room opens and tests it before the close. Slide minutes in `assets/slides.js` must add up to 60.
+
+Slide 12 embeds the animated MCP brain from digit2ai.com (`/ringlypro-architect-factory.html?embed=stage`), loaded only when that slide is shown. It needs a connection.
+If the sign-up URL changes, regenerate `assets/qr-signup.svg` and update `signupUrl` in config.js.

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2430E0">
+<meta name="robots" content="noindex">
+<title>Join the team | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-inset-bottom,0px)}
+.top{display:flex;justify-content:space-between;align-items:center;padding:calc(1rem + env(safe-area-inset-top,0px)) 1.25rem 0;max-width:40rem;margin:0 auto}
+.top .brand{font-size:1.1rem}
+.j{max-width:40rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+.j h1{font-size:clamp(2.2rem,10vw,3.4rem);line-height:.98;letter-spacing:-.03em;margin:.5rem 0 1rem}
+.j>p{color:var(--mist)}
+.panel{background:var(--paper);color:var(--ink);border-radius:1rem;padding:1.25rem;margin-top:1.5rem}
+.panel p{color:#4A4F86}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.9rem}
+.field label{font-weight:700;font-size:.95rem}
+.field input{font:inherit;font-size:1rem;padding:.75rem .8rem;border:2px solid var(--line);border-radius:.5rem;background:var(--white);color:var(--ink);min-height:3rem;width:100%}
+.field input:focus{border-color:var(--cobalt);outline:none}
+.field.bad input{border-color:#B00020}
+.field .err{color:#B00020;font-size:.9rem;font-weight:700;min-height:0}
+.check{display:flex;gap:.7rem;align-items:flex-start;margin:.4rem 0 1rem;font-size:.95rem;cursor:pointer}
+.check input{width:1.5rem;height:1.5rem;flex:none;margin-top:.1rem;accent-color:var(--cobalt)}
+.check.bad{color:#B00020;font-weight:700}
+.parent{border-top:2px solid var(--line);margin-top:.6rem;padding-top:1rem}
+.parent h2{font-size:1.2rem;margin:0 0 .4rem}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.send{width:100%;font-size:1.1rem;min-height:3.25rem}
+.send[disabled]{opacity:.6;cursor:default}
+.msg{font-weight:700;margin:.9rem 0 0;min-height:1.4em;color:#B00020}
+.done h2{margin:0 0 .5rem;font-size:1.6rem}
+.fine{font-size:.85rem;color:var(--mist);margin-top:1.25rem}
+@media (max-width:420px){.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><span class="brand" data-ev="title"></span><button class="lang-btn" type="button"></button></div>
+<main class="j">
+  <h1><span class="en">Join the AI Engineering Solutions team at Visionarium</span><span class="es">Únete al equipo de AI Engineering Solutions de Visionarium</span></h1>
+  <p><span class="en">You saw an app go from an idea to the internet in one hour. If you want to learn to build this way, leave your details and we will contact you.</span><span class="es">Viste una app pasar de una idea a internet en una hora. Si quieres aprender a construir así, deja tus datos y te contactamos.</span></p>
+
+  <form class="panel" id="form" novalidate>
+    <div class="row2">
+      <div class="field" data-f="first_name"><label for="first_name"><span class="en">First name</span><span class="es">Nombre</span></label><input id="first_name" name="first_name" autocomplete="given-name" maxlength="50" required><span class="err"></span></div>
+      <div class="field" data-f="last_name"><label for="last_name"><span class="en">Last name</span><span class="es">Apellido</span></label><input id="last_name" name="last_name" autocomplete="family-name" maxlength="50" required><span class="err"></span></div>
+    </div>
+    <div class="field" data-f="email"><label for="email"><span class="en">Email</span><span class="es">Correo</span></label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" maxlength="120" required><span class="err"></span></div>
+    <div class="field" data-f="phone"><label for="phone"><span class="en">Phone number</span><span class="es">Teléfono</span></label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required><span class="err"></span></div>
+    <div class="field" data-f="age"><label for="age"><span class="en">Age</span><span class="es">Edad</span></label><input id="age" name="age" inputmode="numeric" pattern="[0-9]*" maxlength="3" required style="max-width:8rem"><span class="err"></span></div>
+
+    <div class="parent" id="parent" hidden>
+      <h2><span class="en">Parent or guardian</span><span class="es">Padre, madre o acudiente</span></h2>
+      <p><span class="en">You are under 18, so we need an adult's permission before we contact you. Please fill this in with them.</span><span class="es">Eres menor de 18 años, así que necesitamos el permiso de un adulto antes de contactarte. Llena esto junto con esa persona.</span></p>
+      <div class="field" data-f="parent_name"><label for="parent_name"><span class="en">Their full name</span><span class="es">Su nombre completo</span></label><input id="parent_name" name="parent_name" maxlength="50"><span class="err"></span></div>
+      <div class="field" data-f="parent_email"><label for="parent_email"><span class="en">Their email</span><span class="es">Su correo</span></label><input id="parent_email" name="parent_email" type="email" inputmode="email" autocapitalize="off" maxlength="120"><span class="err"></span></div>
+      <div class="field" data-f="parent_phone"><label for="parent_phone"><span class="en">Or their phone number</span><span class="es">O su teléfono</span></label><input id="parent_phone" name="parent_phone" type="tel" inputmode="tel" maxlength="30"><span class="err"></span></div>
+      <label class="check" data-f="parent_consent"><input type="checkbox" id="parent_consent"><span><span class="en">I am the parent or legal guardian, and I give permission for DIGIT2AI and Visionarium to contact my child and me about this program.</span><span class="es">Soy el padre, la madre o el acudiente legal, y autorizo a DIGIT2AI y a Visionarium a contactarnos a mi hijo o hija y a mí sobre este programa.</span></span></label>
+    </div>
+
+    <label class="check" data-f="consent"><input type="checkbox" id="consent"><span><span class="en">I agree that DIGIT2AI and Visionarium may contact me by email, phone or text about this program.</span><span class="es">Acepto que DIGIT2AI y Visionarium me contacten por correo, teléfono o mensaje de texto sobre este programa.</span></span></label>
+
+    <div class="hp" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+
+    <button class="btn signal send" type="submit" id="send"><span class="en">Send</span><span class="es">Enviar</span></button>
+    <p class="msg" id="msg" role="alert"></p>
+  </form>
+
+  <div class="panel done" id="done" hidden>
+    <h2><span class="en">Got it. Thank you.</span><span class="es">Recibido. Gracias.</span></h2>
+    <p><span class="en">We will contact you about the next step. Nothing else is needed from you tonight.</span><span class="es">Te contactaremos con el siguiente paso. No necesitas hacer nada más esta noche.</span></p>
+    <p style="margin:0"><a class="btn" href="../join/"><span class="en">See the app we built</span><span class="es">Ver la app que construimos</span></a></p>
+  </div>
+
+  <p class="fine"><span class="en">We use these details only to contact you about this program. We do not sell them or share them outside DIGIT2AI and Visionarium. To have them removed, write to info@digit2ai.com.</span><span class="es">Usamos estos datos solo para contactarte sobre este programa. No los vendemos ni los compartimos fuera de DIGIT2AI y Visionarium. Para que los eliminemos, escribe a info@digit2ai.com.</span></p>
+  <p style="font-size:.9rem;margin-top:1rem"><span data-ev="host"></span> | Visionarium</p>
+</main>
+<script>
+(function(){
+  var form = document.getElementById("form"), msg = document.getElementById("msg"), send = document.getElementById("send");
+  var T = {
+    en:{ first_name:"Enter your first name, letters only.", last_name:"Enter your last name, letters only.", email:"Enter a valid email.", phone:"Enter a phone number with area code.", age:"Enter your age in numbers.",
+         consent:"Tick the box so we can contact you.", parent_name:"Enter your parent or guardian's name.", parent_email:"That email does not look right.", parent_phone:"That phone number does not look right.",
+         parent_contact:"Add your parent or guardian's email or phone.", parent_consent:"Your parent or guardian needs to tick this box.",
+         too_young:"You need to be 13 or older to use this form. Ask a parent or guardian to write to info@digit2ai.com.", rate_limited:"Too many tries from this connection. Wait a few minutes and try again.",
+         not_saved:"We could not save this. Please tell the presenter.", error:"Something went wrong on our side. Please try again.", offline:"No connection. Check the Wi-Fi and try again.", fix:"Please check the fields marked in red." },
+    es:{ first_name:"Escribe tu nombre, solo letras.", last_name:"Escribe tu apellido, solo letras.", email:"Escribe un correo válido.", phone:"Escribe un teléfono con código de área.", age:"Escribe tu edad en números.",
+         consent:"Marca la casilla para que podamos contactarte.", parent_name:"Escribe el nombre de tu padre, madre o acudiente.", parent_email:"Ese correo no parece correcto.", parent_phone:"Ese teléfono no parece correcto.",
+         parent_contact:"Agrega el correo o el teléfono de tu padre, madre o acudiente.", parent_consent:"Tu padre, madre o acudiente debe marcar esta casilla.",
+         too_young:"Debes tener 13 años o más para usar este formulario. Pídele a tu padre, madre o acudiente que escriba a info@digit2ai.com.", rate_limited:"Demasiados intentos desde esta conexión. Espera unos minutos e inténtalo de nuevo.",
+         not_saved:"No pudimos guardar esto. Por favor avísale al presentador.", error:"Algo falló de nuestro lado. Inténtalo de nuevo.", offline:"Sin conexión. Revisa el Wi-Fi e inténtalo de nuevo.", fix:"Revisa los campos marcados en rojo." }
+  };
+  function t(k){ return (T[BWA.lang()]||T.en)[k] || T.en[k] || ""; }
+  function val(id){ return document.getElementById(id).value.trim(); }
+  var age = document.getElementById("age"), parent = document.getElementById("parent");
+  function isMinor(){ var n = parseInt(age.value,10); return /^\d{1,3}$/.test(age.value.trim()) && n < 18; }
+  function syncParent(){ parent.hidden = !isMinor(); }
+  age.addEventListener("input", syncParent);
+
+  var shown = [];
+  function clear(){ document.querySelectorAll(".bad").forEach(function(e){ e.classList.remove("bad"); }); document.querySelectorAll(".err").forEach(function(e){ e.textContent=""; }); msg.textContent=""; shown=[]; }
+  function mark(fields, top){
+    shown = fields.slice();
+    fields.forEach(function(f){
+      var key = f==="parent_contact" ? "parent_email" : f;
+      var el = document.querySelector('[data-f="'+key+'"]'); if(!el) return;
+      el.classList.add("bad"); var e = el.querySelector(".err"); if(e) e.textContent = t(f);
+    });
+    msg.textContent = top || t("fix");
+    var first = document.querySelector(".bad input"); if(first) first.focus();
+  }
+  document.addEventListener("langchange", function(){ if(shown.length){ var s=shown.slice(); clear(); mark(s); } });
+
+  form.addEventListener("submit", function(e){
+    e.preventDefault(); clear();
+    var minor = isMinor();
+    var body = { first_name:val("first_name"), last_name:val("last_name"), email:val("email"), phone:val("phone"), age:val("age"),
+                 consent:document.getElementById("consent").checked, lang:BWA.lang(), website:val("website") };
+    if(minor){ body.parent_name=val("parent_name"); body.parent_email=val("parent_email"); body.parent_phone=val("parent_phone"); body.parent_consent=document.getElementById("parent_consent").checked; }
+    /* the server decides; this only saves a round trip for the obvious blanks */
+    var miss = []; ["first_name","last_name","email","phone","age"].forEach(function(k){ if(!body[k]) miss.push(k); });
+    if(!body.consent) miss.push("consent");
+    if(minor){ if(!body.parent_name) miss.push("parent_name"); if(!body.parent_email && !body.parent_phone) miss.push("parent_contact"); if(!body.parent_consent) miss.push("parent_consent"); }
+    if(miss.length){ mark(miss); return; }
+    send.disabled = true;
+    fetch("/api/conference/signup", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) })
+      .then(function(r){ return r.json().catch(function(){ return { success:false, code:"error" }; }); })
+      .then(function(d){
+        send.disabled = false;
+        if(d && d.success){ form.hidden = true; document.getElementById("done").hidden = false; window.scrollTo(0,0); return; }
+        if(d && d.code==="invalid" && d.fields && d.fields.length) return mark(d.fields);
+        if(d && d.code==="too_young"){ mark(["age"], t("too_young")); document.querySelector('[data-f="age"] .err').textContent=""; return; }
+        msg.textContent = t((d && d.code) || "error") || t("error");
+      })
+      .catch(function(){ send.disabled = false; msg.textContent = t("offline"); });
+  });
+})();
+</script>
+</body>
+</html>

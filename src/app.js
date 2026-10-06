@@ -1916,6 +1916,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
+app.use('/api/conference', require('./routes/conference-signup')); // Build With AI: public sign-up form -> contacts (client 15)
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
 app.use('/api/cv-engine', require('./routes/cv-engine')); // Multi-tenant CV Talent Engine (auth, analytics, opportunities, AI broadcast)
 app.use('/api/agent', require('./routes/cv-agent').router); // Phase 2 — public agent surface (resume.json, A2A card, MCP) per CV candidate

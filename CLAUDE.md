@@ -2106,6 +2106,19 @@ Browser → /agromercado/api/v1/* (Express Router) → Sequelize → PostgreSQL 
 FX poller (09:00/13:00) → AGROMERCADO_FX_SOURCE_URL → am_fx_rates ← /divisas/convert
 Bid POST → ACID txn (row-lock auction) → recompute P_min (ln formula) → am_bids → SSE broadcast to lot subscribers
 
+## Build With AI conference kit (`/conference/`) and its sign-up form
+
+Static kit in `public/conference/` (served by `express.static`); how to run it is in `public/conference/README.md`. **Format (owner, 2026-10-06): ONE hour, no teams, one app built live with the room** — ideas recorded with AutoDev + Fieldy, the best one built with `/ringlypro-architect` in VS Code while the talk continues. Slide minutes in `assets/slides.js` must add up to 60; `keynote/` shows a time-left bar (C hides it) and the presenter view adds the per-slide countdown. Slide 12 frames the animated MCP brain (`/ringlypro-architect-factory.html?embed=stage`), loaded only when that slide is shown.
+
+**The last slide's QR opens `/conference/signup/`, which posts to `POST /api/conference/signup` (`src/routes/conference-signup.js`) and saves a row in the CRM `contacts` table under client 15.** Public and unauthenticated, so the rules live in the route, not the page:
+- **MINORS:** under 18 is stored only with a parent or guardian's name, a way to reach them and an explicit consent tick; under 13 is refused (403). The note says the consent is **not verified**. Nothing is sent to anyone.
+- **Every stored value is validated to a narrow character set** (names are letters only, no free-text field exists), because `notes` is rendered in the CRM for a signed-in owner.
+- **`contacts.email` and `contacts.phone` are unique across ALL clients.** An existing client-15 contact gets a note and tags appended and is never overwritten; a value held by another client gets a generic 409 and that row is never read back or changed.
+- **The per-address limit is 60 per 10 minutes on purpose:** a whole room signs up from ONE venue Wi-Fi address. The first draft's 8 would have locked the audience out.
+- The route-level `express.json` cap is dead code behind the global 500mb parser, so the body size is checked by hand. Queries pass `logging:false`.
+
+Test: `node scripts/test-conference-signup.js` → **57/57**, no database (in-memory contacts) plus the form and both slides in a browser. Env: `CONFERENCE_CLIENT_ID` (15) · `CONFERENCE_SIGNUP_PER_10MIN` (60) · `CONFERENCE_SIGNUP_PER_HOUR` (300).
+
 ## Sandbox (`/sandbox/`) — the corporate palette, in one file, for scratch pages
 
 `public/sandbox/index.html` + `public/sandbox/theme.css`, served by `express.static` (no route claims the path — the static mount is what answers). A scratch page carrying one sentence, now wearing the DIGIT2AI look.

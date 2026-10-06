@@ -269,20 +269,22 @@ La misma IA. Ahora conectada. Esa es la diferencia entre un cerebro en un frasco
 Y esta es la parte que quiero que recuerden: cuando una IA puede actuar sobre tus cuentas, tú decides qué puede tocar. Más poder significa más responsabilidad. Eso aplica para ustedes esta noche y para cualquier empresa que use esto.` }
 },
 /* 12 */ {
-  sec: 6, min: 2, kind: "org",
-  visual: '<div class="v-org"><div class="o-top"><span class="en">You: the goal</span><span class="es">Tú: la meta</span></div><div class="o-mid">RinglyPro Architect<small><span class="en">chief orchestrator</span><span class="es">orquestador principal</span></small></div><div class="o-row"><div><span class="en">Triage</span><span class="es">Triaje</span></div><div><span class="en">Premortem</span><span class="es">Premortem</span></div><div><span class="en">Build</span><span class="es">Construcción</span></div><div><span class="en">Test</span><span class="es">Pruebas</span></div><div><span class="en">Deploy</span><span class="es">Despliegue</span></div><div><span class="en">AI Readiness</span><span class="es">Preparación para IA</span></div></div></div>',
-  en: { title: "The DIGIT2AI Neural Intelligence Network", body: "An org chart staffed by specialized AI agents, built on MCP.",
+  sec: 6, min: 2, kind: "brain",
+  visual: '<div class="v-brain"><iframe data-src="/ringlypro-architect-factory.html?embed=stage" title="DIGIT2AI MCP Brain, animated diagram" loading="lazy" tabindex="-1"></iframe></div>',
+  en: { title: "The DIGIT2AI Neural Intelligence Network", body: "",
     notes: `At DIGIT2AI, we took this idea and asked a bigger question: what if a whole company's org chart could be staffed with AI agents?
 That's the DIGIT2AI Neural Intelligence Network. It's built on MCP.
-Picture an org chart. At the top is a human. You. The person with the goal.
+[POINT AT THE DIAGRAM: THE BRAIN IN THE CENTER, THE AGENTS AROUND IT, THE LINES LIGHTING UP AS WORK MOVES.]
+This is the live picture from our own site. Read it like an org chart. At the top is a human. You. The person with the goal.
 Under you is a chief orchestrator, the RinglyPro Architect.
 And under the Architect are departments of specialized agents. One triages ideas and scores whether they're worth building. One runs a premortem: it imagines how the project could fail before we even start, so we can prevent it. One builds. One tests. One deploys. One helps business leaders get ready to adopt AI.
 Each agent is good at one thing. Together they work like a company. Today that's {AGENTS}.`,
     cut: "Merge slides 13 and 14 into one sentence: one contractor, many specialists, running in a loop until it works. Then go to slide 15." },
-  es: { title: "La Red de Inteligencia Neuronal de DIGIT2AI", body: "Un organigrama formado por agentes de IA especializados, construido sobre MCP.",
+  es: { title: "La Red de Inteligencia Neuronal de DIGIT2AI", body: "",
     notes: `En DIGIT2AI tomamos esta idea y nos hicimos una pregunta más grande: ¿y si el organigrama completo de una empresa pudiera estar formado por agentes de IA?
 Eso es la Red de Inteligencia Neuronal de DIGIT2AI. Está construida sobre MCP.
-Imaginen un organigrama. Arriba está un humano. Tú. La persona con la meta.
+[SEÑALA EL DIAGRAMA: EL CEREBRO EN EL CENTRO, LOS AGENTES ALREDEDOR, LAS LÍNEAS QUE SE ENCIENDEN CUANDO EL TRABAJO SE MUEVE.]
+Esta es la imagen en vivo de nuestro propio sitio. Léanla como un organigrama. Arriba está un humano. Tú. La persona con la meta.
 Debajo de ti hay un orquestador principal, el RinglyPro Architect.
 Y debajo del Architect hay departamentos de agentes especializados. Uno hace el triaje de ideas y califica si vale la pena construirlas. Otro hace un premortem: imagina cómo podría fracasar el proyecto antes de empezar, para prevenirlo. Uno construye. Uno prueba. Uno despliega. Uno ayuda a líderes de empresas a prepararse para adoptar IA.
 Cada agente es bueno en una sola cosa. Juntos trabajan como una empresa. Hoy eso es {AGENTS}.`,
@@ -464,22 +466,30 @@ Ese último paso es el que casi todos se saltan. No se lo salten.`,
 },
 /* 22 */ {
   sec: 9, min: 2.5, kind: "join",
-  visual: '<div class="v-join"><img src="../assets/qr-join.svg" alt="QR code to the event page" width="320" height="320"><p class="v-url"></p></div>',
-  en: { title: "Scan before you leave", body: "The app we built tonight, the prompt template, and how to build your own.",
-    notes: `Take out your phone and scan this code. It opens the event page.
-There you will find the link to the app we built tonight, the template to write your own prompt, and the four rules.
+  visual: '<div class="v-join"><img src="../assets/qr-signup.svg" alt="QR code to the sign-up form" width="320" height="320"><div><p class="v-url" data-url="signupUrl"></p><p class="v-cap"><span class="en">Name, email, phone and age. Under 18: fill it in with a parent or guardian.</span><span class="es">Nombre, correo, teléfono y edad. Menores de 18: llénalo con tu padre, madre o acudiente.</span></p></div></div>',
+  en: { title: "Join the AI Engineering Solutions team at Visionarium", body: "Scan, leave your details, and we will contact you.",
+    notes: `One hour ago this app did not exist. It started as something one of you said out loud.
+The distance between an idea and a working product has never been this short. What you do with that is up to you.
+[PAUSE]
+If you want to keep going, there is a place for you. At Visionarium we are forming the AI Engineering Solutions team: people your age learning to build exactly the way you saw tonight.
+Take out your phone and scan this code. It opens a short form: your name, your email, your phone and your age.
+If you are under eighteen, the form asks for a parent or guardian. Fill it in with them. We do not contact anyone under eighteen without that permission.
 [WAIT UNTIL MOST PHONES ARE DOWN.]
-One hour ago this app did not exist. It started as something one of you said out loud.
-That is the whole message. The distance between an idea and a working product has never been this short. What you do with that is up to you.
+After you send it, the same page gives you the link to the app we built tonight and the template to write your own prompt.
 Thank you.
-[GROUP PHOTO.]` },
-  es: { title: "Escanea antes de irte", body: "La app que construimos esta noche, la plantilla del prompt y cómo construir la tuya.",
-    notes: `Saquen su teléfono y escaneen este código. Abre la página del evento.
-Ahí van a encontrar el enlace a la app que construimos esta noche, la plantilla para escribir su propio prompt y las cuatro reglas.
+[GROUP PHOTO.]`,
+    cut: "Say the invitation in one sentence, leave the QR on screen, take the photo." },
+  es: { title: "Únete al equipo de AI Engineering Solutions de Visionarium", body: "Escanea, deja tus datos y te contactamos.",
+    notes: `Hace una hora esta app no existía. Empezó como algo que uno de ustedes dijo en voz alta.
+La distancia entre una idea y un producto que funciona nunca había sido tan corta. Lo que hagan con eso depende de ustedes.
+[PAUSA]
+Si quieren seguir, hay un lugar para ustedes. En Visionarium estamos formando el equipo de AI Engineering Solutions: personas de su edad aprendiendo a construir exactamente como lo vieron esta noche.
+Saquen su teléfono y escaneen este código. Abre un formulario corto: su nombre, su correo, su teléfono y su edad.
+Si son menores de dieciocho años, el formulario pide a su padre, madre o acudiente. Llénenlo con esa persona. No contactamos a ningún menor de dieciocho sin ese permiso.
 [ESPERA A QUE LA MAYORÍA BAJE EL TELÉFONO.]
-Hace una hora esta app no existía. Empezó como algo que uno de ustedes dijo en voz alta.
-Ese es todo el mensaje. La distancia entre una idea y un producto que funciona nunca había sido tan corta. Lo que hagan con eso depende de ustedes.
+Después de enviarlo, la misma página les da el enlace a la app que construimos esta noche y la plantilla para escribir su propio prompt.
 Gracias.
-[FOTO DE GRUPO.]` }
+[FOTO DE GRUPO.]`,
+    cut: "Di la invitación en una oración, deja el QR en pantalla y toma la foto." }
 }
 ];
