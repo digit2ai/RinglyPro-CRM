@@ -72,6 +72,9 @@
     else $('cal-note').hidden = true;
   }
 
+  // Maya pudo agregar o quitar una fecha desde el chat: se vuelve a leer sin recargar.
+  window.addEventListener('planea:datos', function () { try { load(false); } catch (e) {} });
+
   function load(first) {
     return api('GET', '/me/calendar').then(function (j) {
       if (j._status === 401) { location.href = '/planea/login'; return; }

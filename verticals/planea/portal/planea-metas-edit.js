@@ -184,7 +184,8 @@
       if (act === 'delete' && !confirm('¿Eliminar esta meta?')) return;
       b.disabled = true;
       var op = act === 'delete' ? PlaneaSB.goalDelete(id) : PlaneaSB.goalUpdate(id, { estado: act });
-      op.then(function () { location.reload(); }).catch(function () { b.disabled = false; alert('No se pudo actualizar la meta.'); });
+      // Si la meta ya no existe (se borró en otra pestaña o la quitó Maya), se recarga igual.
+      op.then(function () { location.reload(); }).catch(function () { if (act === 'delete') { location.reload(); return; } b.disabled = false; alert('No se pudo actualizar la meta.'); });
     });
     if (window.PlaneaSB && PlaneaSB.loggedIn()) PlaneaSB.person().then(function (pr) { person = pr; }).catch(function () {});
   }

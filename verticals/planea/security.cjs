@@ -129,6 +129,16 @@ function makeLimiter(windowMs, limit, msg, tag) {
     handler: (req, res) => res.status(429).json({ error: msg }),
   });
 }
+// Contador compartido para límites que no son por IP (por ejemplo, por usuario en el chat
+// de Maya). Usa el MISMO almacén en Postgres que los límites de ingreso, así que el tope
+// es uno solo entre todas las instancias. Devuelve cuántos golpes lleva la ventana.
+async function countHit(key, windowMs) {
+  const store = Object.create(sharedStore);
+  store.windowMs = windowMs;
+  const r = await store.increment(String(key).slice(0, 190));
+  return r.totalHits;
+}
+async function clearHit(key) { await sharedStore.resetKey(String(key).slice(0, 190)); }
 const loginLimiter = makeLimiter(15 * 60 * 1000, 12, 'Demasiados intentos de ingreso. Espera 15 minutos e inténtalo de nuevo.', 'login');
 const signupLimiter = makeLimiter(60 * 60 * 1000, 8, 'Demasiadas cuentas creadas desde esta conexión. Intenta más tarde.', 'signup');
 const resetLimiter = makeLimiter(60 * 60 * 1000, 6, 'Demasiadas solicitudes de restablecimiento. Espera una hora.', 'reset');
@@ -217,7 +227,7 @@ function ipHash(req) {
 module.exports = {
   headers, CSP,
   useDatabase,
-  loginLimiter, signupLimiter, resetLimiter,
+  loginLimiter, signupLimiter, resetLimiter, countHit, clearHit,
   LOCK_AFTER, LOCK_MINUTES, lockRemaining,
   passwordIssue,
   encrypt, decrypt, hashToken, randomToken, safeEqual,

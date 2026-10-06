@@ -288,7 +288,7 @@
     // Maya button
     var maya = document.createElement('button');
     maya.className = 'chatbot';
-    maya.setAttribute('aria-label', 'Abrir chat con Maya, tu guía financiera IA');
+    maya.setAttribute('aria-label', 'Abrir chat con Maya, tu agente de planeación financiera');
     maya.innerHTML = '<span class="orbe"><img src="' + BASE + 'images/maya.png" alt="Maya" aria-hidden="true"></span><span class="txt-short">Maya IA</span><span class="txt"><span class="t1">Maya IA</span></span>';
     document.body.appendChild(maya);
 

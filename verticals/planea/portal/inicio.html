@@ -97,7 +97,7 @@
   <!-- Bloque 1 · Saludo (§16) — texto plano, sin tarjeta (como la referencia). -->
   <div class="greet">
     <h1 data-pl="saludo">Hola</h1>
-    <p class="greet-sub" data-pl="resumen">Tus finanzas, en un solo lugar.</p>
+    <p class="greet-sub" data-pl="resumen" data-pl-maya="inicio_resumen">Tus finanzas, en un solo lugar.</p>
   </div>
 
   <!-- Avisos del Calendario Planea (renta + metas con fecha). Vacío hasta que aplique. -->
@@ -118,8 +118,8 @@
         <div class="pb-right">
           <img class="pb-bird" src="/planea/portal/planea-bird-engrave.png" alt="" aria-hidden="true">
           <div class="pb-text">
-            <div class="pb-estas">Estás en <b data-pl="rango">—</b>.</div>
-            <p class="pb-note">Base de la encuesta: cambiará según registres tus datos.</p>
+            <div class="pb-estas" data-pl-maya="inicio_rango">Estás en <b data-pl="rango">—</b>.</div>
+            <p class="pb-note" data-pl-maya="inicio_rango_nota">Base de la encuesta: cambiará según registres tus datos.</p>
             <a class="pb-link" href="/planea/portal/diagnostico">Ver el detalle →</a>
           </div>
         </div>
@@ -137,7 +137,7 @@
     <div class="sec-head"><div><h2>Lo más importante para ti</h2><div class="sub">Tu prioridad en este momento</div></div><span class="badge">Prioridad</span></div>
     <div class="prio-card">
       <div class="prio-nm" data-pl="prioridad_nombre">Tu diagnóstico</div>
-      <p class="prio-tx" data-pl="prioridad_texto">Haz tu diagnóstico Planea para saber por dónde empezar.</p>
+      <p class="prio-tx" data-pl="prioridad_texto" data-pl-maya="inicio_prioridad">Haz tu diagnóstico Planea para saber por dónde empezar.</p>
       <a class="btn primary" data-pl-href="prioridad" href="/planea/portal/diagnostico">Ir a esta área →</a>
     </div>
   </section>
@@ -165,9 +165,9 @@
   </section>
 
 </div></div>
-<script src="/planea/portal/planea-nav.js?v=74" defer></script>
-<script src="/planea/portal/planea-data.js?v=68" defer></script>
-<script src="/planea/portal/maya-chat.js?v=62" defer></script>
+<script src="/planea/portal/planea-nav.js?v=75" defer></script>
+<script src="/planea/portal/planea-goals.js?v=1" defer></script><script src="/planea/portal/planea-data.js?v=69" defer></script>
+<script src="/planea/portal/maya-chat.js?v=63" defer></script>
 <script src="/planea/portal/planea-tax.js?v=1" defer></script>
 <script src="/planea/portal/planea-avisos.js?v=1" defer></script>
 </body>

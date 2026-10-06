@@ -38,6 +38,16 @@ function loadPlaneaTax() {
   return m.exports;
 }
 const PlaneaTax = loadPlaneaTax();
+// La regla de «meta cumplida» es UNA: la misma del navegador (portal/planea-goals.js).
+function loadPlaneaGoals() {
+  const src = fs.readFileSync(path.join(__dirname, 'portal', 'planea-goals.js'), 'utf8');
+  const m = { exports: {} };
+  new Function('module', 'window', 'self', src)(m, undefined, undefined);
+  if (typeof m.exports.completa !== 'function') throw new Error('planea-goals.js no cargó');
+  return m.exports;
+}
+const PlaneaGoals = loadPlaneaGoals();
+const mayaTexts = require('./maya-texts.cjs');
 
 // Las 20 preguntas de la encuesta, leídas del MISMO archivo que usa el navegador, para
 // mostrar al admin la pregunta y la opción elegida en palabras, no en códigos.
@@ -196,7 +206,9 @@ function calendarFor(goals, fm, table, today, taxDays, reminders) {
   (Array.isArray(goals) ? goals : []).forEach((g) => {
     if (!g || !/^\d{4}-\d{2}-\d{2}$/.test(String(g.fecha_objetivo || '')) || g.estado === 'archivada') return;
     events.push({ id: 'meta:' + (g.id || g.name), date: g.fecha_objetivo, origin: 'meta', title: String(g.name || 'Meta').slice(0, 120),
-      detail: g.estado === 'cumplida' ? 'Meta cumplida' : 'Fecha objetivo de tu meta', link: '/planea/portal/metas' });
+      // «Cumplida» con la MISMA regla de la pantalla: marcada a mano o con el monto alcanzado.
+      // Antes solo se miraba el estado guardado y una meta al 100 % seguía avisando.
+      detail: PlaneaGoals.completa(g) ? 'Meta cumplida' : 'Fecha objetivo de tu meta', link: '/planea/portal/metas' });
   });
   const t = fm && fm.tributario, d = t ? String(t.cedula2 || '').replace(/\D/g, '').slice(-2) : '';
   let renta;
@@ -234,6 +246,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   const db = () => (backend && backend.db ? backend.db() : null);
   dbRef = db;
   const ready = () => !!(backend && backend.status && backend.status().ready && db());
+  let previewTexts = null; // lo fija el montaje de maya-texts, más abajo
 
   async function audit(req, email, event, outcome, meta) {
     try {
@@ -696,12 +709,38 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
   });
 
+  // ── Vista previa: cómo escribe Maya los textos de pantalla con el entrenamiento actual ──
+  // Misma redacción y misma revisión que ve un usuario, sobre una ficha de EJEMPLO. No
+  // lee ni guarda datos de ningún usuario real. Con tope por hora y en la auditoría.
+  const previewHits = new Map();
+  api.post('/maya-texts/preview', async (req, res) => {
+    try {
+      const now = Date.now(), hits = (previewHits.get(req.admin.uid) || []).filter((t) => now - t < 3600e3);
+      if (hits.length >= 12) return res.status(429).json({ error: 'demasiadas', message: 'Máximo 12 vistas previas por hora.' });
+      hits.push(now); previewHits.set(req.admin.uid, hits);
+      if (typeof previewTexts !== 'function') return res.status(503).json({ error: 'sin_maya', message: 'La vista previa no está conectada a Maya en este servidor.' });
+      kb._cache.delete(tenant()); // siempre con lo último que se enseñó
+      const b = req.body || {};
+      const out = await previewTexts({ principal: b.principal, secundario: b.secundario, score: b.score, nombre: b.nombre });
+      audit(req, req.admin.email, 'admin.maya_texts_preview', out.ok ? 'success' : String(out.reason || 'error').slice(0, 30), { principal: out.facts && out.facts.principal });
+      res.json(out);
+    } catch (e) { (console.error('[planea-admin]', e.message), res.status(500).json({ error: 'error_interno' })); }
+  });
+
   admin.use('/api', api);
 
   // ── Rutas del usuario (sesión normal de Planea) ─────────────────────────────
   const me = express.Router();
   me.use(express.json({ limit: '4kb' }));
   const userOf = (req) => (backend && backend.authUser ? backend.authUser(req) : null);
+  // Una acción que el usuario le pidió a Maya (y confirmó) deja rastro: solo el id, sin montos.
+  const viaMaya = (req) => String(req.headers['x-planea-via'] || '') === 'maya';
+  function auditUser(req, a, event, meta) {
+    const sq = db(); if (!sq) return;
+    sq.query(`INSERT INTO planea_audit_log (user_id, email, event, outcome, ip_hash, user_agent, meta, created_at)
+              VALUES (:u, :e, :ev, 'success', :ip, :ua, CAST(:m AS JSONB), NOW())`,
+      { replacements: { u: a.id, e: a.email || null, ev: String(event).slice(0, 60), ip: sec.ipHash(req), ua: String(req.headers['user-agent'] || '').slice(0, 250), m: JSON.stringify(meta || null) } }).catch(() => {});
+  }
 
   me.post('/me/events', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
@@ -802,6 +841,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
       const [[row]] = await db().query(`INSERT INTO planea_reminders (tenant_id, user_id, fecha, title, notes, remind_days)
         VALUES (:t, :u, :f, :ti, :no, :rd) RETURNING id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done`,
         { replacements: { t: tenant(), u: a.id, f: b.fecha, ti: title, no: notes || null, rd } });
+      if (viaMaya(req)) auditUser(req, a, 'maya.recordatorio_crear', { id: row.id });
       res.json({ ok: true, reminder: row });
     } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
@@ -826,6 +866,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
       const [rows] = await db().query('DELETE FROM planea_reminders WHERE tenant_id = :t AND user_id = :u AND id = :id RETURNING id',
         { replacements: { t: tenant(), u: a.id, id: Number(req.params.id) || 0 } });
       if (!rows.length) return res.status(404).json({ error: 'not_found' });
+      if (viaMaya(req)) auditUser(req, a, 'maya.recordatorio_quitar', { id: rows[0].id });
       res.json({ ok: true });
     } catch (e) { console.error('[planea-admin] reminders', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
@@ -857,6 +898,14 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     } catch (e) { console.error('[planea-admin] calendar', e.message); res.status(500).json({ error: 'error_interno' }); }
   });
 
+  // ── Textos de pantalla que redacta Maya (maya-texts.cjs) ──
+  const texts = mayaTexts.mount(me, {
+    db, tenant, userOf, ready, sec, mayaModel, fetchImpl,
+    mayaSystem: (p) => (typeof mayaSystem === 'function' ? mayaSystem(p) : ''),
+    knowledge: async () => { await ensureTables(db()); return kb.promptBlock(await kb.activeText(db(), tenant())) + dian.knowledgeBlock(await dianTable()); },
+  });
+  previewTexts = texts.preview;
+
   return { admin, me };
 }
 
@@ -872,7 +921,7 @@ async function mayaKnowledge(backend) {
 }
 
 function health() {
-  return { configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: lastDian ? { year: lastDian.year, decree: lastDian.decree } : null, kb_max_chars: kb.MAX_CHARS() };
+  return { maya_texts: mayaTexts.status(), configured: !!secret(), admins: adminCount, admins_source: 'planea_admins', dian_table: lastDian ? { year: lastDian.year, decree: lastDian.decree } : null, kb_max_chars: kb.MAX_CHARS() };
 }
 
-module.exports = { PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, readableAnswers, calendarFor, festivos, finishInfo, SURVEY, _resetCalendarCache: () => { dian._cache.clear(); lastDian = null; } };
+module.exports = { PlaneaGoals, PlaneaTax, dianTable, build, mayaKnowledge, health, sanitizeAnswers, readableAnswers, calendarFor, festivos, finishInfo, SURVEY, _resetCalendarCache: () => { dian._cache.clear(); lastDian = null; } };

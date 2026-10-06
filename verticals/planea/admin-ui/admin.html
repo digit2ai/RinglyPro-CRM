@@ -223,6 +223,19 @@
         <div class="err" id="typeErr"></div><div class="ok" id="typeOk"></div>
       </div>
 
+      <div class="probe" id="prevBox">
+        <h2>Ver cómo escribe Maya</h2>
+        <p class="mut">Los mensajes de Inicio, de Puntaje Planea (Hallazgos de Maya), el aviso de Mis metas y el saludo del chat los redacta Maya con lo que le enseñas aquí. Esta vista previa usa una persona de ejemplo (no es un usuario real y no guarda nada) y muestra cada texto: el fijo de hoy, el que escribe Maya y, si alguno no pasó la revisión, por qué. Un texto que no pasa la revisión no se muestra al usuario: en su lugar queda el fijo.</p>
+        <div class="grid">
+          <div><label for="prevPil">Prioridad del ejemplo</label>
+            <select id="prevPil"><option value="deuda">Deuda</option><option value="ahorro">Ahorro</option><option value="flujo">Flujo de Caja</option><option value="retiro">Retiro / Pensión</option><option value="seguros">Seguros</option><option value="inversion">Inversión</option><option value="impuestos">Impuestos</option><option value="patrimonio">Patrimonio y Sucesión</option></select></div>
+          <div><label for="prevScore">Puntaje del ejemplo</label><input id="prevScore" type="number" min="0" max="100" value="62"></div>
+        </div>
+        <div style="margin-top:12px"><button class="btn" type="button" id="prevBtn">Ver cómo escribe Maya</button></div>
+        <div class="err" id="prevErr"></div>
+        <div id="prevOut"></div>
+      </div>
+
       <div class="probe" id="dianBox">
       <h2>Calendario DIAN (tabla anual de vencimientos)</h2>
       <p class="mut">Esta tabla es la <b>única</b> fuente de fechas de renta de Planea: el aviso de Inicio, Impuestos, el Calendario Planea, los correos y Maya. Mientras no haya una tabla <b>validada</b> del año en curso, a los usuarios no se les muestra ninguna fecha. Se carga una vez al año.</p>
@@ -263,7 +276,34 @@
   }
   function show(id) { ['login', 'closed', 'app'].forEach(function (s) { $(s).hidden = s !== id; }); $('soloWrap').hidden = id === 'app'; }
 
+  // Vista previa de los textos de Maya (persona de ejemplo; no guarda nada).
+  function prevRun() {
+    var b = $('prevBtn'); b.disabled = true; b.textContent = 'Maya está escribiendo…';
+    $('prevErr').textContent = ''; $('prevOut').innerHTML = '';
+    call('POST', '/maya-texts/preview', { principal: $('prevPil').value, score: +$('prevScore').value }).then(function (r) {
+      b.disabled = false; b.textContent = 'Ver cómo escribe Maya';
+      if (r._status === 429) { $('prevErr').textContent = r.message || 'Demasiadas vistas previas. Intenta más tarde.'; return; }
+      if (!r.slots) {
+        var why = { apagado: 'Los textos de Maya están apagados en el servidor (PLANEA_MAYA_TEXTS=off). Los usuarios ven los textos fijos.',
+          sin_clave: 'El servidor no tiene la clave del modelo. Los usuarios ven los textos fijos.' }[r.reason];
+        $('prevErr').textContent = why || r.message || 'No se pudo generar la vista previa. Los usuarios siguen viendo los textos fijos.'; return;
+      }
+      var f = r.facts || {};
+      var head = '<p class="mut">Ejemplo: ' + esc(f.nombre) + ', puntaje ' + esc(f.score) + ' (' + esc(f.rango) + '), prioridad ' + esc(f.principal) + ', luego ' + esc(f.secundario) + '.' +
+        (r.ok ? '' : ' Maya no respondió (' + esc(r.reason || 'error') + '): se muestran solo los textos fijos.') + '</p>';
+      var rows = r.slots.map(function (s) {
+        var estado = s.maya ? '<span class="tag">Texto de Maya</span>' : (s.rechazado ? '<span class="tag" style="background:#fde8e8;color:#9b1c1c">No pasó la revisión</span>' : '<span class="tag">Texto fijo</span>');
+        return '<tr><td><b>' + esc(s.donde) + '</b><div class="mut">' + esc(s.key) + '</div></td>' +
+          '<td>' + esc(s.actual || '—') + '</td>' +
+          '<td>' + (s.maya ? esc(s.maya) : '<span class="mut">Se muestra el texto fijo.</span>') + (s.rechazado ? '<div class="err" style="margin-top:4px">' + esc(s.rechazado) + '</div>' : '') + '</td>' +
+          '<td>' + estado + '</td></tr>';
+      }).join('');
+      $('prevOut').innerHTML = head + '<div class="tw"><table><tr><th>Dónde aparece</th><th>Texto fijo de hoy</th><th>Lo que escribe Maya</th><th>Estado</th></tr>' + rows + '</table></div>';
+    }).catch(function () { b.disabled = false; b.textContent = 'Ver cómo escribe Maya'; $('prevErr').textContent = 'No se pudo conectar. Intenta de nuevo.'; });
+  }
+
   function boot() {
+    if ($('prevBtn') && !$('prevBtn').__on) { $('prevBtn').__on = true; $('prevBtn').addEventListener('click', prevRun); }
     call('GET', '/me').then(function (r) {
       if (r._status === 503) { $('closedMsg').textContent = r.message || 'El módulo no está disponible todavía.'; return show('closed'); }
       if (r._status !== 200) return show('login');
@@ -614,7 +654,7 @@
       call('POST', '/train/rule', { question: q, wrong_answer: CHAT[i].content, correction: corr }).then(function (r) {
         t.disabled = false;
         if (r._status !== 200) { $('fxe-' + i).textContent = r.message || r.error || 'No se pudo guardar.'; return; }
-        CHAT[i].saved = '«' + r.doc.name + '», versión ' + r.doc.version + '. Maya la aplica desde la siguiente conversación (en menos de un minuto). Se puede editar o desactivar en Conocimiento de Maya.';
+        CHAT[i].saved = '«' + r.doc.name + '», versión ' + r.doc.version + '. Maya la aplica en el chat desde la siguiente conversación (en menos de un minuto) y en los textos de Inicio, Puntaje Planea y Mis metas la próxima vez que cada usuario abra la app. Se puede editar o desactivar en Conocimiento de Maya.';
         renderChat();
       });
     }

@@ -182,7 +182,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
   // Modelo FALSO: registra la instrucción recibida y responde según traiga o no documentos.
   const mayaCalls = [];
   const chatCalls = [];
-  const fakeFetch = async (url, opt) => { const b = JSON.parse(opt.body); if (b.messages.length > 1 || /entrenamiento/.test(b.messages[0].content)) { chatCalls.push(b); return { ok: true, json: async () => ({ content: [{ text: 'Respuesta de entrenamiento' }] }) }; } mayaCalls.push(b.system); return { ok: true, json: async () => ({ content: [{ text: /DOCUMENTOS DE CONOCIMIENTO/.test(b.system) ? 'Según el documento: versión dos. <accion>{}</accion>' : 'No tengo ese dato.' }] }) }; };
+  let textsReply = null, textsCalls = 0, textsSystem = '';
+  const fakeFetch = async (url, opt) => { const b = JSON.parse(opt.body); if (b.messages[0].content === 'Escribe los textos.') { textsCalls++; textsSystem = b.system; return { ok: true, json: async () => ({ content: [{ text: typeof textsReply === 'string' ? textsReply : JSON.stringify(textsReply || {}) }] }) }; } if (b.messages.length > 1 || /entrenamiento/.test(b.messages[0].content)) { chatCalls.push(b); return { ok: true, json: async () => ({ content: [{ text: 'Respuesta de entrenamiento' }] }) }; } mayaCalls.push(b.system); return { ok: true, json: async () => ({ content: [{ text: /DOCUMENTOS DE CONOCIMIENTO/.test(b.system) ? 'Según el documento: versión dos. <accion>{}</accion>' : 'No tengo ese dato.' }] }) }; };
   const built = adminMod.build({ backend, sec, mayaSystem: () => 'REGLAS BASE DE MAYA', mayaModel: 'fake-model', fetchImpl: fakeFetch });
   app.use('/planea/admin', built.admin);
   app.use('/planea/api/v1', built.me);
@@ -459,6 +460,185 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok((await call('DELETE', '/planea/api/v1/me/reminders/' + rem1.body.reminder.id, { cookie: userCookie })).status === 200, 'el dueño sí puede borrarlo');
     ok((await call('GET', '/planea/api/v1/me/reminders', { cookie: userCookie })).body.reminders.length === 0, 'borrado queda borrado');
 
+    // ══ MAYA: UNA SOLA VOZ (2-oct-2026) ════════════════════════════════════════
+    {
+    const MT = require('./maya-texts.cjs');
+    const G = adminMod.PlaneaGoals;
+    // Contador y regla compartida (puro)
+    ok(G.resumen([]) === '0 activas' && G.resumen(['activa']) === '1 activa' && G.resumen(['activa', 'activa']) === '2 activas', 'contador: 0 activas, 1 activa, 2 activas');
+    ok(G.resumen(['activa', 'cumplida']) === '1 activa · 1 cumplida' && G.resumen(['cumplida', 'cumplida']) === '0 activas · 2 cumplidas', 'contador: dice activas y cumplidas, con singular y plural');
+    const cal100 = adminMod.calendarFor([{ id: 'g1', name: 'Al cien', fecha_objetivo: '2026-09-25', target_amount: 1000, current_savings: 1000, estado: 'activa' },
+      { id: 'g2', name: 'A medias', fecha_objetivo: '2026-09-26', target_amount: 1000, current_savings: 400, estado: 'activa' }], {}, null, '2026-09-21', 30);
+    ok(!cal100.notices.some((n) => n.title === 'Al cien') && cal100.notices.some((n) => n.title === 'A medias'), 'una meta al 100 % no genera aviso; una a medias sí');
+    ok(/window\.PlaneaGoals\.estado/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-data.js'), 'utf8')) && /PlaneaGoals\.completa/.test(adminSrc), 'pantalla y servidor usan la misma regla de meta cumplida');
+
+    // Metas: reparación de una meta vieja creada por Maya (sin id, sin estado, monto en otro campo)
+    await sq.query("UPDATE planea_profiles SET goals = CAST(:g AS JSONB) WHERE user_id = :u", { replacements: { u: userRow.id, g: JSON.stringify([{ name: 'Pagar póliza SIT', target: 900000, current: 0, created_at: new Date().toISOString() }]) } });
+    const prof1 = await call('GET', '/planea/api/v1/me/profile', { cookie: userCookie });
+    const old = (prof1.body.goals || [])[0] || {};
+    ok(old.id && old.estado === 'activa' && old.target_amount === 900000, 'una meta vieja sin id se repara al leer el perfil (id, estado, monto)');
+    const prof2 = await call('GET', '/planea/api/v1/me/profile', { cookie: userCookie });
+    ok(prof2.body.goals[0].id === old.id, 'la reparación se guarda una sola vez (el id no cambia)');
+    ok((await call('DELETE', '/planea/api/v1/me/goals/' + old.id, { cookie: dropCookie })).status === 404, 'otro usuario no puede borrar esa meta (404)');
+    ok((await call('DELETE', '/planea/api/v1/me/goals/' + old.id, { cookie: userCookie })).status === 200, 'la meta reparada ya se puede eliminar a mano');
+    ok((await call('DELETE', '/planea/api/v1/me/goals/' + old.id, { cookie: userCookie })).status === 404, 'eliminar una meta que no existe responde 404');
+    const chatSrc = fs.readFileSync(path.join(__dirname, 'portal', 'maya-chat.js'), 'utf8');
+    ok(/fetch\('\/planea\/api\/v1\/me\/goals', \{ method: 'POST'/.test(chatSrc) && !/target: a\.objetivo/.test(chatSrc), 'el chat crea metas por POST /me/goals, no reescribiendo el perfil');
+    ok(!/tu asistente|guía financiera IA'|>Tu guía financiera IA</.test(chatSrc.replace(/\/\/[^\n]*/g, '')) && /Tu agente de planeación financiera/.test(chatSrc), 'el chat se presenta como agente de planeación financiera');
+    ok(/soy Maya, tu agente de planeación financiera\. ¿Cómo te puedo ayudar hoy\?/.test(chatSrc), 'la bienvenida fija es el texto exacto de Planea');
+
+    // Chat de Maya: sesión, tope, identidad y acciones (servidor real + modelo falso)
+    const realFetch = global.fetch; const hadKey = process.env.ANTHROPIC_API_KEY;
+    let chatReply = 'Hola.', chatSeen = [];
+    process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
+    global.fetch = async (url, opt) => {
+      if (String(url).indexOf('api.anthropic.com') >= 0) { const b = JSON.parse(opt.body); chatSeen.push(b); return { ok: true, status: 200, json: async () => ({ content: [{ text: chatReply }] }), text: async () => '' }; }
+      return realFetch(url, opt);
+    };
+    const app2 = express(); app2.set('trust proxy', true); app2.use('/planea', require('./server.cjs'));
+    const server2 = http.createServer(app2); await new Promise((r) => server2.listen(0, '127.0.0.1', r));
+    const base2 = 'http://127.0.0.1:' + server2.address().port;
+    const chat = async (cookie, body) => { const r = await realFetch(base2 + '/planea/api/v1/maya/chat', { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, cookie ? { Cookie: cookie } : {}), body: JSON.stringify(body) }); return { status: r.status, body: await r.json().catch(() => ({})) }; };
+    try {
+      const c401 = await chat(null, { messages: [{ role: 'user', content: 'hola' }] });
+      ok(c401.status === 401 && chatSeen.length === 0, 'el chat de Maya sin sesión responde 401 y no llama al modelo');
+      const gA = await call('POST', '/planea/api/v1/me/goals', { cookie: userCookie, body: { name: 'Meta de SIT', target_amount: 500000, current_savings: 0, fecha_objetivo: '2027-03-01' } });
+      const gB = await call('POST', '/planea/api/v1/me/goals', { cookie: dropCookie, body: { name: 'Meta ajena', target_amount: 1 } });
+      const rA = await call('POST', '/planea/api/v1/me/reminders', { cookie: userCookie, body: { title: 'Pagar el predial', fecha: '2027-02-01' } });
+      const myGoal = gA.body.goal.id, otherGoal = gB.body.goal.id, myRem = rA.body.reminder.id;
+      ok(!!myGoal && gA.body.goal.estado === 'activa' && gA.body.goal.target_amount === 500000, 'una meta creada por la vía del chat nace con id, estado y monto');
+      chatReply = 'Listo. <propuesta>{"accion":"meta_eliminar","id":"' + myGoal + '"}</propuesta><propuesta>{"accion":"meta_eliminar","id":"' + otherGoal + '"}</propuesta>' +
+        '<propuesta>{"accion":"meta_cumplir","id":"g-inventado"}</propuesta><propuesta>{"accion":"renta_quitar","id":"renta"}</propuesta><propuesta>{"accion":"recordatorio_quitar","id":"renta:2026"}</propuesta>' +
+        '<propuesta>{"accion":"recordatorio_crear","titulo":"Fecha mala","fecha":"2027-02-31"}</propuesta><propuesta>{"accion":"recordatorio_quitar","id":' + myRem + '}</propuesta>';
+      const c1 = await chat(userCookie, { messages: [{ role: 'user', content: 'borra mi meta' }], profile: { nombre: 'Intruso', email: 'otro@example.test', user_id: dropRow.id } });
+      const acc = c1.body.acciones || [];
+      ok(c1.status === 200 && acc.length === 2 && acc[0].id === myGoal && acc[1].id === myRem, 'solo pasan las acciones sobre ids del propio usuario');
+      ok(!acc.some((a) => a.id === otherGoal), 'una acción sobre la meta de otro usuario se descarta');
+      ok(!acc.some((a) => /inventado|renta/.test(String(a.id))) && !acc.some((a) => a.titulo === 'Fecha mala'), 'un id desconocido, la fecha de renta y una fecha que no existe se descartan');
+      ok(!/propuesta|accion/.test(c1.body.reply), 'las etiquetas no llegan al texto que ve el usuario');
+      const sys = chatSeen[chatSeen.length - 1].system;
+      ok(sys.indexOf(myGoal) >= 0 && sys.indexOf('Pagar el predial') >= 0 && sys.indexOf(otherGoal) < 0, 'Maya recibe las metas y recordatorios del usuario en sesión, no los de otro');
+      ok(/El usuario se llama SIT\b/.test(sys) || (sys.indexOf('SIT') >= 0 && sys.indexOf('Intruso') < 0), 'el nombre sale de la sesión, no del perfil que manda el navegador');
+      ok(sys.indexOf('Intruso') < 0 && sys.indexOf('otro@example.test') < 0, 'un perfil en el cuerpo no cambia de quién habla Maya');
+      ok(/FECHA DE HOY \(Colombia\): \d{4}-\d{2}-\d{2}/.test(sys) && !/como un asistente/.test(sys), 'Maya conoce la fecha de hoy y ya no se describe como asistente');
+      chatReply = 'Va. <propuesta>{"modulo":"meta","nombre":"Viaje a Cartagena","fecha":"2027-06-30","pilar":"ahorro"}</propuesta><propuesta>{"modulo":"gasto","nombre":"Sin monto"}</propuesta>';
+      const c2 = await chat(userCookie, { messages: [{ role: 'user', content: 'quiero una meta' }] });
+      ok(c2.body.proposals.length === 1 && c2.body.proposals[0].modulo === 'meta' && c2.body.proposals[0].fecha === '2027-06-30' && c2.body.proposals[0].pilar === 'ahorro', 'una meta puede ir sin monto, con fecha y área; un gasto sin monto no');
+      // La acción confirmada usa los endpoints de siempre y queda en la bitácora
+      const via = async (m, p, body) => { const r = await realFetch(base + p, { method: m, headers: { 'Content-Type': 'application/json', Cookie: userCookie, 'X-Planea-Via': 'maya', 'X-Forwarded-For': SIT_IP }, body: body ? JSON.stringify(body) : undefined }); return r.status; };
+      ok(await via('PATCH', '/planea/api/v1/me/goals/' + myGoal, { estado: 'cumplida' }) === 200 && await via('DELETE', '/planea/api/v1/me/goals/' + myGoal) === 200, 'cumplir y eliminar una meta por la vía de Maya funciona');
+      ok(await via('DELETE', '/planea/api/v1/me/reminders/' + myRem) === 200 && await via('DELETE', '/planea/api/v1/me/goals/' + otherGoal) === 404, 'quitar un recordatorio funciona; la meta de otro sigue respondiendo 404');
+      await new Promise((r) => setTimeout(r, 400));
+      const [mAud] = await sq.query("SELECT event, meta::text AS m FROM planea_audit_log WHERE user_id = :u AND event LIKE 'maya.%'", { replacements: { u: userRow.id } }).catch(async () => sq.query("SELECT event, '' AS m FROM planea_audit_log WHERE user_id = :u AND event LIKE 'maya.%'", { replacements: { u: userRow.id } }));
+      const mEv = mAud.map((r) => r.event);
+      ok(['maya.meta_cumplir', 'maya.meta_eliminar', 'maya.recordatorio_quitar'].every((e) => mEv.indexOf(e) >= 0), 'cada acción de Maya queda en la bitácora');
+      ok(!mAud.some((r) => /500000|target_amount/.test(r.m || '')), 'la bitácora de Maya guarda ids, nunca montos');
+      // Tope por usuario
+      process.env.PLANEA_MAYA_CHAT_PER_10MIN = '3';
+      await sq.query("DELETE FROM planea_rate_limits WHERE key LIKE :k", { replacements: { k: '%maya-chat|' + dropRow.id } });
+      let last = 0, calls0 = chatSeen.length; chatReply = 'ok';
+      for (let i = 0; i < 5; i++) last = (await chat(dropCookie, { messages: [{ role: 'user', content: 'hola ' + i }] })).status;
+      ok(last === 429 && chatSeen.length - calls0 === 3, 'el tope por usuario corta el chat (429) y deja de llamar al modelo');
+      delete process.env.PLANEA_MAYA_CHAT_PER_10MIN;
+      const srvSrc = fs.readFileSync(path.join(__dirname, 'server.cjs'), 'utf8');
+      const chatRoute = srvSrc.slice(srvSrc.indexOf("router.post('/api/v1/maya/chat'"), srvSrc.indexOf("res.json({ reply: reply || 'Listo.'"));
+      ok(!/INSERT INTO|\.create\(|\.save\(|writeFile|appendFile/.test(chatRoute), 'la ruta del chat no guarda la conversación');
+    } finally {
+      global.fetch = realFetch; server2.close();
+      if (hadKey) process.env.ANTHROPIC_API_KEY = hadKey; else delete process.env.ANTHROPIC_API_KEY;
+    }
+
+    // Textos de Maya: verificación por hueco (modelo falso inyectado)
+    const facts = MT.factsFrom('Camila Ríos', { score: 62, pilares: { ahorro: 70, flujo: 66, deuda: 38, retiro: 58, seguros: 50, inversion: 64, impuestos: 72, patrimonio: 60 }, prioridad: { principal: 'deuda', secundario: 'seguros' } });
+    ok(facts.ok && facts.nombre === 'Camila' && facts.rango === 'En camino', 'la ficha sale del puntaje guardado (nombre, rango, prioridad)');
+    ok(!MT.factsFrom('X', { score: 140, pilares: {}, prioridad: { principal: 'deuda' } }).ok && !MT.factsFrom('X', { score: 50, pilares: facts.pilares, prioridad: { principal: 'criptomonedas' } }).ok && !MT.factsFrom('X', null).ok, 'una ficha fuera de límites se rechaza');
+    ok(MT.safeFirstName('<script>alert(1)</script>') === '' || !/[<>()]/.test(MT.safeFirstName('<script>alert(1)</script>')), 'un nombre raro no entra a la ficha');
+    const SL = (k) => MT.SLOTS.find((x) => x.key === k);
+    const v = (k, t, kbn) => MT.verifySlot(SL(k), t, facts, kbn || []);
+    ok(v('inicio_resumen', 'Camila, tu mayor oportunidad hoy está en tu deuda.').ok, 'un texto correcto pasa');
+    ok(!v('inicio_resumen', 'Tu deuda puede bajar un 35 por ciento este año.').ok, 'un número inventado se rechaza');
+    ok(!v('inicio_resumen', 'Con tu deuda te faltan cincuenta millones.').ok && !v('inicio_resumen', 'Tu deuda baja un veinte por ciento.').ok && v('inicio_prioridad', 'Tu deuda es el primero de dos pasos.').ok, 'una cifra escrita en palabras se rechaza; «dos pasos» no');
+    ok(v('puntaje_pilar_ahorro', 'Tu ahorro va sólido: 70 de 100.').ok && !MT.numbersIn('1,5').includes('15'), '«sólido» como palabra común pasa, «de 100» pasa y un decimal no se confunde');
+    ok(v('inicio_resumen', 'Con tu deuda, sigue la regla 35 de Planea.', MT.numbersIn('La regla 35 de Planea')).ok, 'un número que viene del entrenamiento se acepta');
+    ok(!v('inicio_resumen', 'Hoy tu mayor palanca es tu ahorro.').ok && !v('inicio_resumen', 'Hoy tu deuda y tu inversión son tu palanca.').ok, 'un pilar equivocado se rechaza');
+    ok(!v('chat_bienvenida', 'Hola Camila, soy Maya, tu asistente. ¿Cómo te ayudo?').ok && !v('chat_bienvenida', 'Hola Camila, soy Maya, tu guía financiera IA.').ok, '«tu asistente» y «tu guía financiera IA» se rechazan');
+    ok(v('chat_bienvenida', MT.BIENVENIDA('Camila')).ok && !v('chat_bienvenida', 'Hola, soy Maya, tu agente de planeación financiera.').ok, 'la bienvenida debe llevar el nombre');
+    ok(!v('inicio_rango', 'Estás en Sólido, sigue así.').ok && v('inicio_rango', 'Estás en En camino.').ok, 'un rango que no es el del usuario se rechaza');
+    ok(!v('inicio_prioridad', 'Baja tu deuda en $500.000 este mes.').ok && !v('inicio_prioridad', '<b>Tu deuda</b> es lo primero.').ok && !v('inicio_prioridad', 'x'.repeat(400)).ok, 'montos, HTML y textos largos se rechazan');
+    const fakeModel = (obj) => async () => ({ ok: true, json: async () => ({ content: [{ text: typeof obj === 'string' ? obj : JSON.stringify(obj) }] }) });
+    process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
+    const mix = await MT.compose({ facts, system: 'S', knowledge: '', model: 'm', fetchImpl: fakeModel({ inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Sube tu puntaje 20 puntos pagando tu deuda.', metas_prioridad: 'Tu prioridad es tu deuda. Ponte una meta y te acompaño.' }) });
+    ok(mix.ok && mix.texts.inicio_resumen && mix.texts.metas_prioridad && mix.texts.inicio_prioridad === null && mix.rejected.inicio_prioridad, 'un hueco malo no descarta los buenos, y el rechazo queda registrado');
+    ok((await MT.compose({ facts, system: 'S', knowledge: '', fetchImpl: fakeModel('no soy json') })).ok === false, 'una respuesta que no es JSON no produce textos');
+    delete process.env.ANTHROPIC_API_KEY;
+    ok((await MT.compose({ facts, system: 'S', knowledge: '', fetchImpl: fakeModel({}) })).reason === 'sin_clave', 'sin clave del modelo no se redacta nada');
+    if (hadKey) process.env.ANTHROPIC_API_KEY = hadKey;
+
+    // Textos de Maya por HTTP: fijos, redacción en segundo plano, topes y aislamiento
+    const fullSd = { score: 62, rango: 'En camino', pilares: facts.pilares, prioridad: { principal: 'deuda', secundario: 'seguros' }, answers: {}, history: [] };
+    const mtGet = (cookie) => call('GET', '/planea/api/v1/me/maya-texts', { cookie });
+    const clearLock = () => sq.query("DELETE FROM planea_rate_limits WHERE key LIKE '%maya-texts|990918:%'");
+    await sq.query("DELETE FROM planea_rate_limits WHERE key LIKE '%maya-texts-dia|990918:%'");
+    const waitFor = async (fn) => { for (let i = 0; i < 40; i++) { if (await fn()) return true; await new Promise((r) => setTimeout(r, 150)); } return false; };
+    const rowsOf = async (u) => (await sq.query('SELECT cause, is_current, texts FROM planea_maya_texts WHERE tenant_id = 990918 AND user_id = :u ORDER BY id', { replacements: { u } }))[0];
+    ok((await mtGet(null)).status === 401, 'los textos de Maya piden sesión');
+    const bad = await mtGet(userCookie);   // score_data incompleto (sin prioridad)
+    ok(bad.status === 200 && bad.body.composed_by === 'fixed' && bad.body.texts.inicio_resumen === null && /soy Maya, tu agente de planeación financiera/.test(bad.body.texts.chat_bienvenida), 'una ficha incompleta devuelve los textos fijos');
+    await sq.query('UPDATE planea_profiles SET score_data = CAST(:s AS JSONB) WHERE user_id = :u', { replacements: { u: userRow.id, s: JSON.stringify(fullSd) } });
+    const keyBefore = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+    const noKey = await mtGet(userCookie);
+    ok(noKey.body.composed_by === 'fixed' && !noKey.body.pending && textsCalls === 0, 'sin clave del modelo: textos fijos y ninguna llamada');
+    process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
+    process.env.PLANEA_MAYA_TEXTS = 'off';
+    ok((await mtGet(userCookie)).body.reason === 'apagado' && textsCalls === 0, 'el interruptor PLANEA_MAYA_TEXTS=off devuelve los fijos');
+    delete process.env.PLANEA_MAYA_TEXTS;
+    textsReply = { inicio_resumen: 'SIT, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 40 puntos pagando tu deuda.', chat_bienvenida: 'Hola SIT, soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?' };
+    const first = await mtGet(userCookie);
+    ok(first.body.composed_by === 'fixed' && first.body.pending === true, 'la primera vez responde de inmediato con los fijos y redacta en segundo plano');
+    ok(await waitFor(async () => (await rowsOf(userRow.id)).length === 1), 'la redacción queda guardada');
+    await clearLock();
+    const second = await mtGet(userCookie);
+    ok(second.body.composed_by === 'maya' && second.body.texts.inicio_resumen === 'SIT, hoy lo primero es tu deuda.' && second.body.texts.inicio_prioridad === null && !second.body.stale, 'en la siguiente carga llega el texto de Maya; el hueco rechazado queda en null (texto fijo)');
+    ok(/TAREA DE ESTE MENSAJE/.test(textsSystem) && /REGLAS BASE DE MAYA/.test(textsSystem), 'Maya redacta con sus reglas y con la tarea de pantalla');
+    ok((await mtGet(dropCookie)).body.texts.inicio_resumen === null, 'otro usuario no ve los textos de este');
+    const n1 = textsCalls; await mtGet(userCookie); await new Promise((r) => setTimeout(r, 300));
+    ok(textsCalls === n1, 'si nada cambió no se vuelve a llamar al modelo');
+    // Cambio de DATOS: 1 por día
+    const sdB = Object.assign({}, fullSd, { score: 64 }); const sdC = Object.assign({}, fullSd, { score: 66 });
+    await sq.query('UPDATE planea_profiles SET score_data = CAST(:s AS JSONB) WHERE user_id = :u', { replacements: { u: userRow.id, s: JSON.stringify(sdB) } });
+    const chg = await mtGet(userCookie);
+    ok(chg.body.composed_by === 'fixed' && chg.body.pending === true, 'al cambiar el puntaje no se muestra el texto viejo: fijos mientras se reescribe');
+    await waitFor(async () => (await rowsOf(userRow.id)).length === 2); await clearLock();
+    await sq.query('UPDATE planea_profiles SET score_data = CAST(:s AS JSONB) WHERE user_id = :u', { replacements: { u: userRow.id, s: JSON.stringify(sdC) } });
+    const n2 = textsCalls; const capped = await mtGet(userCookie); await new Promise((r) => setTimeout(r, 300));
+    ok(capped.body.pending === false && textsCalls === n2 && capped.body.composed_by === 'fixed', 'un segundo cambio de datos el mismo día no reescribe (tope diario)');
+    await sq.query('UPDATE planea_profiles SET score_data = CAST(:s AS JSONB) WHERE user_id = :u', { replacements: { u: userRow.id, s: JSON.stringify(sdB) } });
+    // Cambio de ENTRENAMIENTO: nunca lo frena el tope de datos
+    await kb.upload(sq, { tenant: 990918, name: 'SIT regla de textos', filename: 'r.md', buf: Buffer.from('Di siempre lo primero es tu deuda.', 'utf8'), by: ADMIN_EMAIL }).catch(() => {});
+    kb._cache.delete(990918);
+    const tr = await mtGet(userCookie);
+    ok(tr.body.composed_by === 'maya' && tr.body.stale === true && tr.body.pending === true, 'un cambio de entrenamiento marca los textos como viejos y reescribe aunque el tope de datos esté gastado');
+    await waitFor(async () => (await rowsOf(userRow.id)).filter((r) => r.cause === 'training').length === 1); await clearLock();
+    // Techo duro: 6 por día entre todas las causas
+    for (let i = 0; i < 6; i++) await sq.query("INSERT INTO planea_maya_texts (tenant_id, user_id, is_current, cause, texts, facts, facts_hash, kb_version) VALUES (990918, :u, FALSE, 'training', '{}', '{}', 'x', 'x')", { replacements: { u: userRow.id } });
+    await kb.upload(sq, { tenant: 990918, name: 'SIT regla de textos', filename: 'r.md', buf: Buffer.from('Di siempre lo primero es tu deuda, versión dos.', 'utf8'), by: ADMIN_EMAIL }).catch(() => {});
+    kb._cache.delete(990918);
+    const n3 = textsCalls; const ceil = await mtGet(userCookie); await new Promise((r) => setTimeout(r, 300));
+    ok(ceil.body.pending === false && textsCalls === n3, 'el techo duro del día frena también los cambios de entrenamiento');
+    ok((await rowsOf(userRow.id)).filter((r) => r.is_current).length === 1, 'hay una sola fila vigente por usuario');
+    // Vista previa del admin
+    textsReply = { inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 99 puntos pagando tu deuda.' };
+    const before = (await sq.query('SELECT COUNT(*)::int AS n FROM planea_maya_texts WHERE tenant_id = 990918'))[0][0].n;
+    const pv = await call('POST', '/planea/admin/api/maya-texts/preview', { cookie: ac, body: { principal: 'deuda', score: 62 } });
+    ok(pv.status === 200 && pv.body.slots.length === MT.SLOTS.length && pv.body.slots.find((x) => x.key === 'inicio_resumen').maya && pv.body.slots.find((x) => x.key === 'inicio_prioridad').rechazado, 'la vista previa muestra cada hueco, el texto de Maya y por qué se rechazó uno');
+    ok((await sq.query('SELECT COUNT(*)::int AS n FROM planea_maya_texts WHERE tenant_id = 990918'))[0][0].n === before, 'la vista previa no guarda nada');
+    ok((await call('POST', '/planea/admin/api/maya-texts/preview', { cookie: userCookie, body: {} })).status === 404, 'un usuario normal no abre la vista previa');
+    if (keyBefore) process.env.ANTHROPIC_API_KEY = keyBefore; else delete process.env.ANTHROPIC_API_KEY;
+    const mtSrc = fs.readFileSync(path.join(__dirname, 'maya-texts.cjs'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    ok(!/planea_items|finance_meta|ingresos_data|gastos_data|assets_data|liabilities_data|seguros_data|retiro_data|net_worth|\.value\b|\.monthly\b/.test(mtSrc), 'los textos de Maya no leen montos ni datos financieros');
+    ok(!/messages\s*:\s*req\.body|INSERT INTO (?!planea_maya_texts)/.test(mtSrc) && !/sendgrid|twilio|nodemailer/i.test(mtSrc), 'los textos de Maya no guardan conversaciones ni envían nada');
+    }
+
     // Auditoría
     await new Promise((r) => setTimeout(r, 300));
     const [aud] = await sq.query('SELECT DISTINCT event FROM planea_audit_log WHERE lower(email) = :e', { replacements: { e: ADMIN_EMAIL } });
@@ -495,6 +675,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('DELETE FROM planea_events WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_nps WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_kb_docs WHERE tenant_id = 990918').catch(() => {});
+    await sq.query('DELETE FROM planea_maya_texts WHERE tenant_id = 990918').catch(() => {});
+    await sq.query("DELETE FROM planea_rate_limits WHERE key LIKE '%maya-texts|990918:%' OR key LIKE '%maya-texts-dia|990918:%' OR key LIKE :a OR key LIKE :b", { replacements: { a: '%maya-chat|' + userRow.id, b: '%maya-chat|' + dropRow.id } }).catch(() => {});
     await sq.query('DELETE FROM planea_admins WHERE tenant_id = 990918').catch(() => {});
     await sq.query('DELETE FROM planea_notifications WHERE tenant_id = 990918').catch(() => {});
     await sq.query("DELETE FROM planea_audit_log WHERE email LIKE 'sit-mvp-%' OR user_id IN (:ids)", { replacements: { ids } }).catch(() => {});

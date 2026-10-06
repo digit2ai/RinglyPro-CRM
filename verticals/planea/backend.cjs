@@ -578,6 +578,9 @@ function build() {
       if (!u) return res.status(401).json({ error: 'unauthorized' });
       let p = await Profile.findOne({ where: { user_id: u.id } });
       if (!p) p = await Profile.create({ user_id: u.id, full_name: u.full_name, goals: [] });
+      // Repara una sola vez las metas guardadas incompletas (ver normGoals).
+      const ng = normGoals(p.goals);
+      if (ng.changed) { p.goals = ng.goals; p.changed('goals', true); await p.save(); }
 
       // ARCHITECTURE: Mi Puntaje (score_data, the survey benchmark) lives on the
       // profile; the actual-data modules are independent ROWS in planea_items. They
@@ -647,7 +650,7 @@ function build() {
       if (b.progress_data !== undefined) p.progress_data = b.progress_data;
       if (Array.isArray(b.assets_data)) p.assets_data = b.assets_data;
       if (Array.isArray(b.liabilities_data)) p.liabilities_data = b.liabilities_data;
-      if (Array.isArray(b.goals)) p.goals = b.goals;
+      if (Array.isArray(b.goals)) { p.goals = normGoals(b.goals).goals; p.changed('goals', true); }
       if (Array.isArray(b.seguros_data)) p.seguros_data = b.seguros_data;
       if (Array.isArray(b.retiro_data)) p.retiro_data = b.retiro_data;
       if (Array.isArray(b.ingresos_data)) p.ingresos_data = b.ingresos_data;
@@ -672,6 +675,28 @@ function build() {
     if (m.employer === true || m.employer === 'true') out.employer = true;
     return out;
   }
+  // REPARACIÓN DE METAS. El chat de Maya guardaba las metas reescribiendo el perfil, sin
+  // id, sin estado y con el monto en `target` / `current`. La pantalla solo dibuja los
+  // botones de una meta que tiene id y lee `target_amount`, así que esas metas quedaban
+  // «sin monto» y sin forma de archivarlas ni eliminarlas. Aquí se les da id y estado y se
+  // pasa el monto al campo correcto. Es idempotente: una meta sana no cambia.
+  function normGoals(list) {
+    let changed = false;
+    const out = (Array.isArray(list) ? list : []).filter(function (g) { return g && typeof g === 'object'; }).map(function (g, i) {
+      const n = Object.assign({}, g);
+      // Id DETERMINISTA: dos lecturas a la vez del mismo perfil le dan el mismo id a la misma meta.
+      if (!n.id) { n.id = 'g' + require('crypto').createHash('sha256').update(String(n.name || n.nombre || '') + '|' + String(n.created_at || '') + '|' + i).digest('hex').slice(0, 12); changed = true; }
+      if (['activa', 'cumplida', 'archivada'].indexOf(n.estado) < 0) { n.estado = 'activa'; changed = true; }
+      if (!(Number(n.target_amount) > 0) && Number(n.target) > 0) { n.target_amount = Number(n.target); changed = true; }
+      if (!(Number(n.current_savings) > 0) && Number(n.current) > 0) { n.current_savings = Number(n.current); changed = true; }
+      if (n.name == null && n.nombre != null) { n.name = String(n.nombre).slice(0, 120); changed = true; }
+      return n;
+    });
+    if (out.length !== (Array.isArray(list) ? list.length : 0)) changed = true;
+    return { goals: out, changed: changed };
+  }
+  // Una acción pedida a Maya llega con esta cabecera: queda en la auditoría (solo el id).
+  function viaMaya(req) { return String(req.headers['x-planea-via'] || '') === 'maya'; }
   // §17.2 — pilar de una meta: solo los 8 pilares oficiales; cualquier otra cosa → null.
   const PILAR_KEYS = ['ahorro', 'flujo', 'deuda', 'retiro', 'seguros', 'inversion', 'impuestos', 'patrimonio'];
   function sanPilar(v) { return PILAR_KEYS.indexOf(String(v)) >= 0 ? String(v) : null; }
@@ -987,7 +1012,8 @@ function build() {
       p.goals = goals;
       p.changed('goals', true);
       await p.save();
-      res.json({ success: true, goals });
+      if (viaMaya(req)) audit(req, 'maya.meta_crear', 'success', { user_id: a.id, meta: { id: goals[goals.length - 1].id } });
+      res.json({ success: true, goals, goal: goals[goals.length - 1] });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -1013,6 +1039,7 @@ function build() {
       if (b.monthly_saving != null) g.monthly_saving = Number(b.monthly_saving) || 0;
       goals[i] = g;
       p.goals = goals; p.changed('goals', true); await p.save();
+      if (viaMaya(req)) audit(req, 'maya.meta_' + (b.estado === 'cumplida' ? 'cumplir' : b.estado === 'archivada' ? 'archivar' : 'editar'), 'success', { user_id: a.id, meta: { id: String(g.id) } });
       res.json({ success: true, goal: g, goals });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
@@ -1026,7 +1053,9 @@ function build() {
       const p = await Profile.findOne({ where: { user_id: a.id } });
       const goals = Array.isArray(p && p.goals) ? p.goals.slice() : [];
       const next = goals.filter(function (x) { return x && String(x.id) !== String(req.params.id); });
+      if (next.length === goals.length) return res.status(404).json({ error: 'not_found' });
       p.goals = next; p.changed('goals', true); await p.save();
+      if (viaMaya(req)) audit(req, 'maya.meta_eliminar', 'success', { user_id: a.id, meta: { id: String(req.params.id).slice(0, 40) } });
       res.json({ success: true, goals: next });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });

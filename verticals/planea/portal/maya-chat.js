@@ -241,10 +241,10 @@
   function makeFab() {
     var b = document.createElement('button');
     b.className = 'maya-fab';
-    b.setAttribute('aria-label', 'Abrir chat con Maya, tu guía financiera IA');
+    b.setAttribute('aria-label', 'Abrir chat con Maya, tu agente de planeación financiera');
     b.innerHTML =
       '<span class="orb"><img src="/planea/portal/images/maya.png" alt="Maya" aria-hidden="true"></span>' +
-      '<span class="txt"><span class="l1">Pregúntale a Maya</span><br><span class="l2">Tu guía financiera IA</span></span>';
+      '<span class="txt"><span class="l1">Pregúntale a Maya</span><br><span class="l2">Tu agente de planeación financiera</span></span>';
     b.addEventListener('click', toggle);
     document.body.appendChild(b);
     return b;
@@ -258,7 +258,7 @@
     wrap.innerHTML =
       '<div class="maya-head">' +
         '<span class="orb"><img src="/planea/portal/images/maya.png" alt="Maya"></span>' +
-        '<div><div class="t1">Maya</div><div class="t2">Tu guía financiera IA</div></div>' +
+        '<div><div class="t1">Maya</div><div class="t2">Tu agente de planeación financiera</div></div>' +
         '<span class="sp"></span>' +
         '<button class="hf" title="Conversar en manos libres" aria-label="Hablar con Maya en manos libres" aria-pressed="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2M6 8v8M10 5v14M14 8v8M18 10v4M22 12h0"/></svg></button>' +
         '<button class="voz on" title="Voz de Maya" aria-label="Activar o silenciar la voz de Maya">&#128266;</button>' +
@@ -362,36 +362,55 @@
     var pending = BUCKET_FLOW.filter(function (b) { return b.k === 'meta' ? !hasMeta : filled.indexOf(b.k) < 0; });
     return { onboarded: onboarded, next: pending[0] || null, allDone: onboarded && pending.length === 0 };
   }
-  function openingLine(p, comoHablar) {
-    var nom = p.nombre ? ' ' + p.nombre : '';
-    var st = flowState(p);
-    if (!st.onboarded) {
-      return 'Hola' + nom + ', soy Maya, tu asistente. Antes de todo, terminemos tu cuestionario Mi Puntaje para conocer tu punto de partida. Cuando lo completes, te ayudo a registrar el resto, paso a paso. ' + comoHablar;
-    }
-    if (st.allDone) {
-      return 'Hola' + nom + ', soy Maya. Ya tienes tu foto financiera completa. ¿Quieres actualizar algún dato o revisar tu Salud Financiera? ' + comoHablar;
-    }
-    return 'Hola' + nom + ', soy Maya, tu asistente. Ya con tu puntaje listo, vamos llenando tu foto financiera paso a paso. ' + st.next.q + ' ' + comoHablar;
+  // BIENVENIDA. Es SIEMPRE el texto que Planea entrenó, cada vez que se abre el chat:
+  // «Hola {nombre}, soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?».
+  // Si Maya ya redactó su saludo (y pasó la verificación del servidor) se usa ese; si no,
+  // este mismo texto fijo. Nunca «tu asistente» ni «tu guía financiera IA».
+  function bienvenidaFija(p) {
+    var n = (p && p.nombre) ? String(p.nombre).replace(/[^A-Za-zÀ-ÖØ-öø-ÿ'’ -]/g, '').trim().slice(0, 40) : '';
+    return 'Hola' + (n ? ' ' + n : '') + ', soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?';
   }
-  function greet() {
-    if (els.body.childElementCount === 0) {
-      var comoHablar = VOICE_ENABLED ? 'Escríbeme o toca el micrófono y hablamos.' : 'Escríbeme por aquí.';
-      addMsg('maya', openingLine(profile(), comoHablar));
+  function mayaTexts() {
+    if (!window.__plMT) {
+      window.__plMT = fetch('/planea/api/v1/me/maya-texts', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }
+    return window.__plMT;
+  }
+  var greeted = false;
+  function greet() {
+    if (greeted || els.body.childElementCount !== 0) return;
+    greeted = true;
+    var done = false;
+    function put(t) { if (done) return; done = true; if (els.body.childElementCount === 0) addMsg('maya', t); }
+    // No se deja al usuario mirando un chat vacío si el servidor tarda.
+    var timer = setTimeout(function () { put(bienvenidaFija(profile())); }, 1200);
+    mayaTexts().then(function (d) {
+      clearTimeout(timer);
+      var t = d && d.texts && typeof d.texts.chat_bienvenida === 'string' ? d.texts.chat_bienvenida : '';
+      put(t || bienvenidaFija(profile()));
+    });
   }
 
   // Maya puede registrar datos por chat: ejecuta las acciones que devuelve el
   // backend contra los endpoints ya autenticados (sesión httpOnly), y confirma.
   var MOD_LABEL = { ingreso: 'Ingresos', gasto: 'Gastos', ahorro: 'Ahorro', deuda: 'Deuda', inversion: 'Inversión', seguros: 'Seguros', retiro: 'Retiro', meta: 'Mis metas' };
   function copMx(n) { return '$' + Number(n || 0).toLocaleString('es-CO'); }
+  // Toda acción que el usuario le confirmó a Maya viaja con esta cabecera, para que el
+  // servidor la deje en la bitácora (qué se hizo y sobre qué id; nunca montos).
+  var VIA = { 'Content-Type': 'application/json', 'X-Planea-Via': 'maya' };
+  // Una meta creada por Maya entra por la MISMA puerta que una creada a mano
+  // (POST /me/goals): así nace con id, estado y el monto en los campos que la pantalla lee.
   function saveGoal(a) {
-    return fetch('/planea/api/v1/me/profile', { credentials: 'include' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (d) {
-        var goals = (d && Array.isArray(d.goals)) ? d.goals.slice() : [];
-        goals.push({ name: a.nombre, target: a.objetivo || a.monto, current: a.objetivo ? a.monto : 0, created_at: new Date().toISOString() });
-        return fetch('/planea/api/v1/me/profile', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goals: goals }) });
-      });
+    var body = { name: a.nombre, target_amount: a.objetivo || a.monto || 0, current_savings: a.objetivo ? (a.monto || 0) : 0 };
+    if (a.pilar) body.pilar = a.pilar;
+    if (a.fecha) body.fecha_objetivo = a.fecha;
+    return fetch('/planea/api/v1/me/goals', { method: 'POST', credentials: 'include', headers: VIA, body: JSON.stringify(body) })
+      .then(function (r) { if (!r.ok) throw new Error('save'); return r.json(); });
+  }
+  function refreshPage() {
+    try { if (window.PlaneaData && typeof window.PlaneaData.reload === 'function') window.PlaneaData.reload(); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('planea:datos')); } catch (e) {}
   }
   function runActions(actions) {
     var jobs = actions.map(function (a) {
@@ -402,7 +421,7 @@
       }).then(function (r) { if (!r.ok) throw new Error('save'); return a; });
     });
     return Promise.all(jobs).then(function (done) {
-      var txt = done.map(function (a) { return a.nombre + ' ' + copMx(a.monto) + ' en ' + (MOD_LABEL[a.modulo] || a.modulo); }).join('; ');
+      var txt = done.map(function (a) { return a.nombre + (a.monto ? ' ' + copMx(a.monto) : '') + ' en ' + (MOD_LABEL[a.modulo] || a.modulo); }).join('; ');
       addMsg('maya', 'Registrado: ' + txt + '. Ya quedó guardado en tu cuenta.');
       // Avanza el acompañamiento EN VIVO: marca el bucket como lleno en el perfil que
       // se envía a Maya cada turno, para que no vuelva a pedir lo ya registrado y siga
@@ -417,7 +436,7 @@
           });
         }
       } catch (e) {}
-      if (window.PlaneaData && typeof window.PlaneaData.reload === 'function') window.PlaneaData.reload();
+      refreshPage();
     }).catch(function () {
       addMsg('maya', 'No pude guardar ese dato. Inicia sesión e inténtalo de nuevo.');
     });
@@ -426,30 +445,84 @@
   // HU-2 · Confirmación antes de guardar. Maya PROPONE; el usuario aprueba con
   // botones (Sí/No) o de viva voz ("sí"/"no"). Nada se guarda sin confirmación.
   var pendingProposals = [];
+  var pendingAcciones = [];
   function clearProposalCard() {
     var c = els.body && els.body.querySelector('.maya-confirm');
     if (c) c.remove();
     pendingProposals = [];
+    pendingAcciones = [];
   }
   function confirmProposals() {
-    var list = pendingProposals.slice();
+    var list = pendingProposals.slice(), acc = pendingAcciones.slice();
     clearProposalCard();
     if (list.length) runActions(list);
+    if (acc.length) runAcciones(acc);
+  }
+  // Metas y calendario. Maya solo PROPONE; aquí, tras el Sí del usuario, se llama a los
+  // endpoints que ya existían, con la sesión del propio usuario. No hay otra vía de escritura.
+  var ACC_TXT = {
+    meta_cumplir: ['Marcar como cumplida la meta', 'Meta marcada como cumplida'],
+    meta_archivar: ['Archivar la meta', 'Meta archivada'],
+    meta_eliminar: ['Eliminar la meta', 'Meta eliminada'],
+    recordatorio_crear: ['Agregar al calendario', 'Recordatorio agregado'],
+    recordatorio_quitar: ['Quitar del calendario', 'Recordatorio quitado']
+  };
+  function fechaCorta(f) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(f || ''));
+    if (!m) return '';
+    var MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return (+m[3]) + ' ' + MES[(+m[2]) - 1] + ' ' + m[1];
+  }
+  function accionUna(a) {
+    var id = encodeURIComponent(String(a.id == null ? '' : a.id)), o = { credentials: 'include', headers: VIA };
+    if (a.accion === 'meta_cumplir') { o.method = 'PATCH'; o.body = JSON.stringify({ estado: 'cumplida' }); return fetch('/planea/api/v1/me/goals/' + id, o); }
+    if (a.accion === 'meta_archivar') { o.method = 'PATCH'; o.body = JSON.stringify({ estado: 'archivada' }); return fetch('/planea/api/v1/me/goals/' + id, o); }
+    if (a.accion === 'meta_eliminar') { o.method = 'DELETE'; return fetch('/planea/api/v1/me/goals/' + id, o); }
+    if (a.accion === 'recordatorio_crear') { o.method = 'POST'; o.body = JSON.stringify({ title: a.titulo, fecha: a.fecha }); return fetch('/planea/api/v1/me/reminders', o); }
+    if (a.accion === 'recordatorio_quitar') { o.method = 'DELETE'; return fetch('/planea/api/v1/me/reminders/' + id, o); }
+    return Promise.reject(new Error('accion'));
+  }
+  function runAcciones(list) {
+    var ok = [], bad = 0;
+    return list.reduce(function (p, a) {
+      return p.then(function () { return accionUna(a); })
+        .then(function (r) { if (r && r.ok) ok.push(a); else bad += 1; })
+        .catch(function () { bad += 1; });
+    }, Promise.resolve()).then(function () {
+      if (ok.length) {
+        addMsg('maya', 'Listo. ' + ok.map(function (a) {
+          return (ACC_TXT[a.accion] || ['', 'Hecho'])[1] + ': ' + a.etiqueta + (a.accion === 'recordatorio_crear' ? ' (' + fechaCorta(a.fecha) + ')' : '');
+        }).join('. ') + '.');
+        try {
+          var pr = window.PLANEA_PROFILE;
+          if (pr && pr.metas) ok.forEach(function (a) { if (a.accion === 'meta_eliminar') pr.metas = pr.metas.filter(function (m) { return m.nombre !== a.etiqueta; }); });
+        } catch (e) {}
+        refreshPage();
+      }
+      if (bad) addMsg('maya', 'No pude hacer ' + (bad === 1 ? 'un cambio' : bad + ' cambios') + '. Puede que ya no exista. Revísalo en la pantalla e inténtalo de nuevo.');
+    });
   }
   function rejectProposals() {
     clearProposalCard();
-    addMsg('maya', 'Listo, no lo registro. Dime cómo lo corrijo.');
+    addMsg('maya', 'Listo, no hago ningún cambio. Dime cómo lo corrijo.');
   }
-  function renderProposals(proposals) {
-    pendingProposals = proposals.slice();
+  function renderProposals(proposals, acciones) {
+    var old = els.body && els.body.querySelector('.maya-confirm');
+    if (old) old.remove();
+    pendingProposals = (proposals || []).slice();
+    pendingAcciones = (acciones || []).filter(function (a) { return a && ACC_TXT[a.accion]; });
+    if (!pendingProposals.length && !pendingAcciones.length) return;
     var wrap = document.createElement('div');
     wrap.className = 'maya-msg m maya-confirm';
-    var resumen = proposals.map(function (p) {
-      return '<div class="mc-item"><b>' + esc(p.nombre) + '</b> ' + copMx(p.monto) + ' en ' + esc(MOD_LABEL[p.modulo] || p.modulo) +
-        (p.cuota ? ' (cuota ' + copMx(p.cuota) + ')' : '') + '</div>';
+    var resumen = pendingProposals.map(function (p) {
+      return '<div class="mc-item"><b>' + esc(p.nombre) + '</b> ' + (p.monto ? copMx(p.monto) + ' ' : '') + 'en ' + esc(MOD_LABEL[p.modulo] || p.modulo) +
+        (p.cuota ? ' (cuota ' + copMx(p.cuota) + ')' : '') + (p.fecha ? ' · ' + esc(fechaCorta(p.fecha)) : '') + '</div>';
+    }).join('') + pendingAcciones.map(function (a) {
+      return '<div class="mc-item">' + esc(ACC_TXT[a.accion][0]) + ' <b>' + esc(a.etiqueta) + '</b>' + (a.fecha ? ' · ' + esc(fechaCorta(a.fecha)) : '') + '</div>';
     }).join('');
+    var soloAcc = !pendingProposals.length;
     wrap.innerHTML = resumen +
-      '<div class="mc-btns"><button type="button" class="mc-yes">Sí, registrar</button>' +
+      '<div class="mc-btns"><button type="button" class="mc-yes">' + (soloAcc ? 'Sí, hazlo' : 'Sí, registrar') + '</button>' +
       '<button type="button" class="mc-no">No</button></div>';
     wrap.querySelector('.mc-yes').addEventListener('click', confirmProposals);
     wrap.querySelector('.mc-no').addEventListener('click', rejectProposals);
@@ -461,7 +534,13 @@
   var YES_RE = /^\s*(s[ií]|s[ií]\s|claro|dale|hazlo|reg[ií]stralo|reg[ií]stra|confirmo|correcto|as[ií] es|ok|okay|de una)\b/i;
   var NO_RE = /^\s*(no|nop|cancela|espera|mejor no|as[ií] no|est[aá] mal)\b/i;
   function handleConfirmReply(text) {
-    if (!pendingProposals.length) return false;
+    if (!pendingProposals.length && !pendingAcciones.length) return false;
+    // Cumplir, archivar, eliminar o quitar NO se confirma con una frase que solo empieza por
+    // «sí» («si puedes, mejor archívala»): hace falta el botón o un sí que sea toda la frase.
+    if (pendingAcciones.length && !/^\s*(s[ií]|s[ií],? ?hazlo|s[ií],? ?por favor|hazlo|confirmo|dale)\s*[.!]*\s*$/i.test(text)) {
+      if (NO_RE.test(text)) { addMsg('user', text); rejectProposals(); return true; }
+      return false;
+    }
     if (YES_RE.test(text)) { addMsg('user', text); confirmProposals(); return true; }
     if (NO_RE.test(text)) { addMsg('user', text); rejectProposals(); return true; }
     return false; // no es sí/no claro → deja que Maya lo maneje (aclaración)
@@ -496,6 +575,7 @@
 
     fetch(API, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages: history.slice(-12), profile: prof })
     })
@@ -507,7 +587,10 @@
         addMsg('maya', reply);
         if (data && data.actions && data.actions.length) runActions(data.actions);
         // HU-2: propuestas requieren confirmación Sí/No (no guarda todavía).
-        if (data && data.proposals && data.proposals.length) renderProposals(data.proposals);
+        // Una propuesta vieja no sobrevive a una respuesta nueva de Maya: si esta no trae
+        // nada que confirmar, la tarjeta anterior se retira (un «sí» posterior no la ejecuta).
+        if (data && ((data.proposals && data.proposals.length) || (data.acciones && data.acciones.length))) renderProposals(data.proposals || [], data.acciones || []);
+        else clearProposalCard();
         if (opts.onReply) opts.onReply(reply);
         else if (speaking) speak(reply);
       })
@@ -638,7 +721,7 @@
     if (!els.panel.classList.contains('abierto')) open();
     handsFree = true; hfEmpty = 0; updateHF(); unlockAudio();
     if (els.sug) els.sug.style.display = 'none';
-    var g = openingLine(profile(), VOICE_ENABLED ? 'Cuéntame por voz cuando quieras.' : '');
+    var g = bienvenidaFija(profile());
     addMsg('maya', g); history.push({ role: 'assistant', content: g });
     hfSpeakThenListen(g);
   }

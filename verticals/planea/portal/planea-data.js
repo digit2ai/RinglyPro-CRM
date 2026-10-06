@@ -50,11 +50,67 @@
   // §17.3 — estado de una meta: manual (cumplida/archivada) o DERIVADO (cumplida al
   // alcanzar el monto, vencida al pasar la fecha objetivo sin cumplirse; si no, activa).
   function todayISO() { return new Date().toISOString().slice(0, 10); }
+  // La regla vive en planea-goals.js (la misma que usa el servidor para los avisos).
   function goalEstado(g) {
+    if (window.PlaneaGoals) return window.PlaneaGoals.estado(g, todayISO());
     if (g.estado === 'cumplida' || g.estado === 'archivada') return g.estado;
     if (num(g.target_amount) > 0 && num(g.current_savings) >= num(g.target_amount)) return 'cumplida';
     if (g.fecha_objetivo && String(g.fecha_objetivo) < todayISO()) return 'vencida';
     return 'activa';
+  }
+  function metasResumen(prof) {
+    var est = (prof.metas || []).map(function (m) { return m.estado; });
+    if (window.PlaneaGoals) return window.PlaneaGoals.resumen(est);
+    var n = est.filter(function (e) { return e === 'activa'; }).length;
+    return n + (n === 1 ? ' activa' : ' activas');
+  }
+
+  // ── TEXTOS DE MAYA ─────────────────────────────────────────────────────────
+  // Los mensajes de Inicio y de Mis metas los redacta Maya en el servidor (con lo que
+  // Planea le enseña) y allá se verifican. Aquí solo se COLOCAN, y solo si los hechos con
+  // que se escribieron son los que esta página muestra. Si no hay texto, o no coincide,
+  // queda el texto fijo de siempre. Siempre como texto plano (textContent), nunca HTML.
+  var mayaT = null;
+  function mayaTexts() {
+    if (!window.__plMT) {
+      window.__plMT = fetch('/planea/api/v1/me/maya-texts', { credentials: 'include' })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    return window.__plMT;
+  }
+  function mayaMatch(d, prof) {
+    if (!d || !d.texts || !d.facts || d.composed_by !== 'maya' || !prof || prof.sin_diagnostico) return false;
+    return d.facts.score === prof.planea_score && d.facts.rango === prof.rango && d.facts.principal === prioKey(prof);
+  }
+  function slot(k) { var t = mayaT && mayaT[k]; return typeof t === 'string' && t ? t : ''; }
+  // Antes de volver a pintar se devuelve cada hueco a su texto fijo, para que un texto de
+  // Maya escrito con datos viejos nunca quede en pantalla si los datos cambiaron.
+  function restoreMaya() {
+    document.querySelectorAll('[data-pl-maya]').forEach(function (el) {
+      if (el.__plFijo != null) { el.innerHTML = el.__plFijo; el.__plFijo = null; }
+    });
+  }
+  function applyMaya() {
+    if (!mayaT) return;
+    document.querySelectorAll('[data-pl-maya]').forEach(function (el) {
+      var t = slot(el.getAttribute('data-pl-maya'));
+      if (!t) return;
+      if (el.__plFijo == null) el.__plFijo = el.innerHTML;
+      el.textContent = t;
+    });
+    var inv = slot('metas_prioridad');
+    if (inv) document.querySelectorAll('.meta-invi').forEach(function (a) { a.textContent = inv; });
+  }
+  var mayaRetry = false;
+  function loadMaya(prof) {
+    mayaTexts().then(function (d) {
+      // Maya está escribiendo ahora mismo: se vuelve a pedir UNA vez, sin recargar la página.
+      if (d && d.pending && !mayaRetry) { mayaRetry = true; setTimeout(function () { window.__plMT = null; loadMaya(prof); }, 9000); }
+      var ok = mayaMatch(d, prof);
+      if (!ok) { restoreMaya(); try { fillScalars(prof); } catch (e) {} }
+      mayaT = ok ? d.texts : null;
+      applyMaya();
+    });
   }
   function mapGoal(g) {
     return {
@@ -194,6 +250,7 @@
       case 'ahorro_total': return cop(prof.ahorro_total_cop || 0);
       case 'inversion_total': return cop(prof.inversion_total_cop || 0);
       case 'metas_count': return String((prof.metas || []).filter(function (m) { return m.estado === 'activa'; }).length);
+      case 'metas_resumen': return metasResumen(prof);
       case 'disponible_total': return cop(prof.disponible_cop || 0);
       case 'tasa_ahorro': return prof.tasa_ahorro == null ? '—' : prof.tasa_ahorro + '%';
       case 'resumen': return resumenLine(prof);
@@ -400,6 +457,7 @@
   }
 
   function render(prof) {
+    try { restoreMaya(); } catch (e) {}
     try { fillScalars(prof); } catch (e) {}
     try { fillRing(prof); } catch (e) {}
     try { fillBars(prof); } catch (e) {}
@@ -407,6 +465,7 @@
     try { fillHrefs(prof); } catch (e) {}
     try { fillInsight(prof); } catch (e) {}
     try { updateNav(prof); } catch (e) {}
+    try { applyMaya(); loadMaya(prof); } catch (e) {}
     document.body.classList.add('pl-data-ready');
     try { window.dispatchEvent(new CustomEvent('planea:profile', { detail: prof })); } catch (e) {}
   }
@@ -552,6 +611,14 @@
       render(emptyProfile()); // not logged in → CLEAN empty state, never demo
     });
   }
+
+  // Vuelve a leer los datos y a pintar la página SIN recargarla (lo usa Maya después de
+  // crear, cumplir, archivar o eliminar una meta, para no cerrar el chat).
+  function reload() {
+    return buildProfileFromBackend().then(function (prof) { render(prof); }).catch(function () {});
+  }
+  window.PlaneaData = window.PlaneaData || {};
+  window.PlaneaData.reload = reload;
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

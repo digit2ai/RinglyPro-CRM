@@ -167,6 +167,29 @@
   }
 
   // ── RENDER: resultado (§9) — número + rango + Hallazgos de Maya + 8 tarjetas ───
+  // TEXTOS DE MAYA. Los «Hallazgos de Maya» los redacta Maya en el servidor con lo que
+  // Planea le enseña, y allá se verifican. Aquí solo se colocan (como texto plano) y solo
+  // si se escribieron con el MISMO puntaje, rango y prioridad que muestra esta pantalla.
+  // Sin texto, o si no coincide, queda el texto fijo que ya está pintado.
+  function applyMayaTexts(r, fresh) {
+    try {
+      if (fresh || !window.__plMT) {
+        window.__plMT = fetch('/planea/api/v1/me/maya-texts', { credentials: 'include' })
+          .then(function (x) { return x.ok ? x.json() : null; }).catch(function () { return null; });
+      }
+      window.__plMT.then(function (d) {
+        if (d && d.pending && !applyMayaTexts.retried) { applyMayaTexts.retried = true; setTimeout(function () { applyMayaTexts(r, true); }, 9000); }
+        if (!d || !d.texts || !d.facts || d.composed_by !== 'maya' || !r) return;
+        var prin = r.prioridad && r.prioridad.principal;
+        if (d.facts.score !== r.score || d.facts.rango !== (r.rango && r.rango.name) || d.facts.principal !== prin) return;
+        document.querySelectorAll('[data-dg-maya]').forEach(function (el) {
+          var t = d.texts[el.getAttribute('data-dg-maya')];
+          if (typeof t === 'string' && t) el.textContent = t;
+        });
+      });
+    } catch (e) {}
+  }
+
   function renderResult(r) {
     var nombre = profile ? profile.nombre : '';
     var C = 2 * Math.PI * 63, color = r.rango.color;
@@ -218,7 +241,7 @@
         '<div class="dg-pex-body">' +
           '<div class="dg-pex-ref">Meta de referencia: ' + esc(REFERENCIA[k] || '') + '</div>' +
           metaHtml +
-          '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span>' + esc(hallazgo(k, v)) + '</span></div>' +
+          '<div class="dg-pex-maya"><img class="dg-pex-av" src="/planea/portal/images/maya.png" alt="Maya"><span data-dg-maya="puntaje_pilar_' + k + '">' + esc(hallazgo(k, v)) + '</span></div>' +
           '<div class="dg-pex-acts"><a class="dg-pex-btn" href="/planea/portal/' + SECCION[k] + '">Registrar más información</a>' +
             '<a class="dg-pex-btn ghost" href="/planea/portal/metas">Añadir o editar meta</a></div>' +
           interes +
@@ -226,7 +249,7 @@
       '</details>';
     }).join('');
     // §9.2 capa 2 — orden de prioridad (principal, luego secundario).
-    var ordenHtml = prin ? '<p class="dg-orden">Empieza por <b>' + esc((PILAR_LOWER[prin] || '').replace(/^tu[s]? /, '')) + '</b>' + (seg ? ', y luego ' + esc((PILAR_LOWER[seg] || '').replace(/^tu[s]? /, '')) : '') + '.</p>' : '';
+    var ordenHtml = prin ? '<p class="dg-orden" data-dg-maya="puntaje_empieza">Empieza por <b>' + esc((PILAR_LOWER[prin] || '').replace(/^tu[s]? /, '')) + '</b>' + (seg ? ', y luego ' + esc((PILAR_LOWER[seg] || '').replace(/^tu[s]? /, '')) : '') + '.</p>' : '';
 
     return '<div class="dg-card dg-result">' +
       '<div class="dg-res-tag">TU PUNTAJE PLANEA</div>' +
@@ -238,7 +261,7 @@
       // §9.2 CAPA 2 — Hallazgos de Maya: lectura principal + orden de prioridad. Va en su
       // propio bloque, separado del detalle por área (§11.1 denominación «Hallazgos de Maya» + «IA»).
       '<div class="dg-res-sub dg-hallazgos-h">Hallazgos de Maya <span class="dg-ia">IA</span></div>' +
-      '<div class="dg-insight"><p class="dg-ins-p">' + apertura + '</p>' + ordenHtml + '</div>' +
+      '<div class="dg-insight"><p class="dg-ins-p" data-dg-maya="puntaje_apertura">' + apertura + '</p>' + ordenHtml + '</div>' +
       // §9.2 CAPA 3 — Detalle por área: las 8 tarjetas (capa distinta, encabezado propio).
       '<div class="dg-res-sub">Detalle por área</div>' +
       '<div class="dg-pex-list">' + pilaresHtml + '</div>' +
@@ -380,6 +403,7 @@
   function showResult(r, opts) {
     current = 'result';
     root.innerHTML = renderResult(r);
+    applyMayaTexts(r, false);
     var hr = document.querySelector('.dg-hd'); if (hr) hr.style.display = 'none';
     window.scrollTo({ top: 0, behavior: 'smooth' });
     var C = 2 * Math.PI * 63, ring = document.getElementById('dg-ring');
@@ -434,6 +458,7 @@
     PlaneaSB.mePut({ score_data: entry })
       .then(function () {
         var el = document.getElementById('dg-saved'); if (el) el.textContent = 'Puntaje Planea guardado en tu perfil.';
+        applyMayaTexts(r, true);   // ya guardado: pide a Maya los textos de ESTE puntaje
         if (willTransfer) transferirMontos();   // §5.2: pasa los montos exactos a sus secciones (una vez)
         try { localStorage.setItem('planea-onboarded', '1'); } catch (e) {}
         track({ done: true });
