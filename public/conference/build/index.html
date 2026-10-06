@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Live build guide | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+.toc{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1.5rem}
+.toc a{color:var(--white)}
+.steps{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:5fr 7fr 5fr 23fr 11fr 9fr;gap:4px}
+.steps li{background:var(--white);border-top:6px solid var(--cobalt);padding:.8rem;font-size:.95rem;margin:0}
+.steps li:nth-child(4){border-top-color:var(--signal)}
+.steps b{display:block;font-family:var(--display)}
+pre.prompt{white-space:pre-wrap;background:var(--ink);color:var(--white);padding:1.25rem;border-radius:.6rem;font-family:var(--body);font-size:1rem;line-height:1.6;margin:0 0 .6rem}
+.copyrow{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+.copyrow .ok{color:#0A7A3C;font-weight:700}
+.fix dt{font-family:var(--display);font-weight:600;font-size:1.1rem;margin-top:1.25rem}
+.fix dd{margin:.3rem 0 0}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem;list-style:none;padding:0}
+.ideas li{background:var(--white);border:1px solid var(--line);padding:1rem 1.2rem;margin:0}
+.ideas b{display:block;font-family:var(--display);font-size:1.1rem}
+.ideas span{color:#4A4F86;font-size:.95rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="site-header" data-root="../" data-page="build/"></header>
+<div class="hero"><div class="wrap">
+  <h1><span class="en">Live build guide</span><span class="es">Guía de la construcción en vivo</span></h1>
+  <p class="lede"><span class="en">For the presenter. How one idea from the room becomes a live app in an hour: record, choose, build in VS Code with RinglyPro Architect, reveal, improve.</span><span class="es">Para el presentador. Cómo una idea del público se convierte en una app en vivo en una hora: grabar, escoger, construir en VS Code con RinglyPro Architect, revelar, mejorar.</span></p>
+  <nav class="toc no-print" aria-label="Sections">
+    <a href="#hour"><span class="en">The hour</span><span class="es">La hora</span></a>
+    <a href="#record"><span class="en">1. Record</span><span class="es">1. Grabar</span></a>
+    <a href="#choose"><span class="en">2. Choose</span><span class="es">2. Escoger</span></a>
+    <a href="#build"><span class="en">3. Build</span><span class="es">3. Construir</span></a>
+    <a href="#reveal"><span class="en">4. Reveal and improve</span><span class="es">4. Revelar y mejorar</span></a>
+    <a href="#backup"><span class="en">Backup ideas</span><span class="es">Ideas de respaldo</span></a>
+    <a href="#trouble"><span class="en">If something fails</span><span class="es">Si algo falla</span></a>
+  </nav>
+</div></div>
+<main><div class="wrap">
+
+<h2 id="hour" style="margin-top:0"><span class="en">The 60 minutes</span><span class="es">Los 60 minutos</span></h2>
+<ol class="steps">
+  <li><b>0:00, 5 min</b><span class="en">Who we are, the plan</span><span class="es">Quiénes somos, el plan</span></li>
+  <li><b>0:05, 7 min</b><span class="en">Ideas, recorded</span><span class="es">Ideas, grabadas</span></li>
+  <li><b>0:12, 5 min</b><span class="en">Choose and send</span><span class="es">Escoger y enviar</span></li>
+  <li><b>0:17, 23 min</b><span class="en">It builds while you talk: AI now, the shift, MCP, the network, why build this way</span><span class="es">Se construye mientras hablas: la IA hoy, el cambio, MCP, la red, por qué construir así</span></li>
+  <li><b>0:40, 11 min</b><span class="en">Reveal, break it, one change</span><span class="es">Revelar, romperla, un cambio</span></li>
+  <li><b>0:51, 9 min</b><span class="en">Reality check, close</span><span class="es">Pies en la tierra, cierre</span></li>
+</ol>
+<p class="note read"><span class="en">The build must be sent by minute 17. Everything before that can be shortened; the 23 minutes of building cannot.</span><span class="es">La construcción debe enviarse antes del minuto 17. Todo lo anterior se puede acortar; los 23 minutos de construcción no.</span></p>
+
+<div class="read">
+
+<h2 id="record"><span class="en">1. Record the ideas (slide 3)</span><span class="es">1. Grabar las ideas (diapositiva 3)</span></h2>
+<ul>
+  <li><span class="en">Open the recorder on the phone: </span><span class="es">Abre la grabadora en el teléfono: </span><a data-href="recorderUrl" href="#" target="_blank" rel="noopener">AutoDev</a><span class="en">. Start a new meeting. Start Fieldy too; it is the second copy.</span><span class="es">. Inicia una reunión nueva. Inicia Fieldy también; es la segunda copia.</span></li>
+  <li><span class="en">Say out loud that you are recording, and why. Anyone who prefers not to be recorded just listens during this part.</span><span class="es">Di en voz alta que estás grabando, y por qué. Quien prefiera no quedar grabado solo escucha durante esta parte.</span></li>
+  <li><span class="en">Repeat every idea into the phone in one sentence. The phone transcribes on the device and hears you far better than it hears the room.</span><span class="es">Repite cada idea al teléfono en una oración. El teléfono transcribe en el dispositivo y te escucha mucho mejor a ti que al salón.</span></li>
+  <li><span class="en">Ask one question per idea: who is it for, or what should it do first.</span><span class="es">Haz una pregunta por idea: para quién es, o qué debería hacer primero.</span></li>
+  <li><span class="en">Do not record names. Say "the idea from the back row", not the person's name.</span><span class="es">No grabes nombres. Di "la idea de la última fila", no el nombre de la persona.</span></li>
+</ul>
+
+<h2 id="choose"><span class="en">2. Choose the best idea (slide 4)</span><span class="es">2. Escoger la mejor idea (diapositiva 4)</span></h2>
+<p><span class="en">Stop the recording, open the meeting, and ask this. Read the answer to the room. The AI proposes; the room and you decide.</span><span class="es">Detén la grabación, abre la reunión y pregunta esto. Lee la respuesta al público. La IA propone; el público y tú deciden.</span></p>
+<pre class="prompt en" id="p-choose-en">List every app idea mentioned in this recording, one line each.
+Then choose the single best one to build live in 20 minutes, using these rules:
+- small: three features at most
+- for a real group of people we can name
+- no login, no payments, no personal data
+- works on a phone and is easy to show in 10 seconds
+Give me: the chosen idea in one sentence, who it is for, the three features, and one line on why you chose it over the others.</pre>
+<pre class="prompt es" id="p-choose-es">Haz una lista de todas las ideas de apps que se mencionaron en esta grabación, una línea por idea.
+Luego escoge la mejor para construir en vivo en 20 minutos, con estas reglas:
+- pequeña: máximo tres funciones
+- para un grupo real de personas que podamos nombrar
+- sin inicio de sesión, sin pagos, sin datos personales
+- funciona en un teléfono y se puede mostrar en 10 segundos
+Dame: la idea escogida en una oración, para quién es, las tres funciones, y una línea sobre por qué la escogiste sobre las demás.</pre>
+<div class="copyrow no-print"><button class="btn" type="button" data-copy="p-choose"><span class="en">Copy question</span><span class="es">Copiar pregunta</span></button><span class="ok" aria-live="polite"></span></div>
+<p class="note"><span class="en">If the transcript is poor, use the Fieldy summary. If both are poor, choose from your own notes and tell the room that is what you did. Do not present a choice as the AI's when it was yours.</span><span class="es">Si la transcripción salió mal, usa el resumen de Fieldy. Si los dos salieron mal, escoge de tus propias notas y dile al público que eso hiciste. No presentes como elección de la IA una que fue tuya.</span></p>
+
+<h2 id="build"><span class="en">3. Build it (slide 4, then slides 5 to 16)</span><span class="es">3. Construirla (diapositiva 4, luego diapositivas 5 a 16)</span></h2>
+<p><span class="en">In VS Code with Claude, on the repo. Fill in the four blanks from the AI's answer, send it, and press "Start build clock" on the slide.</span><span class="es">En VS Code con Claude, en el repositorio. Llena los cuatro espacios con la respuesta de la IA, envíalo y presiona "Iniciar reloj de construcción" en la diapositiva.</span></p>
+<pre class="prompt" id="p-build">/ringlypro-architect loop
+
+Build this app live, in front of a room. It has to be online in about 15 minutes.
+
+THE IDEA: [one sentence]
+WHO IT IS FOR: [who]
+THREE FEATURES, AND ONLY THESE:
+1. [feature 1]
+2. [feature 2]
+3. [feature 3]
+
+RULES FOR THIS BUILD
+- One small self-contained sub-app in its own new folder under client-builds/. Touch nothing else.
+- No login, no payments, no personal data. Load realistic sample data so it is easy to show.
+- Keep data in the browser. No new database tables, no model calls, no external keys.
+- Phone first. English and Spanish toggle. No emojis.
+- Keep it small on purpose: a short test, then commit, push to main, and wait for the deploy.
+- The last line of your reply is the live URL, checked, and nothing else.</pre>
+<div class="copyrow no-print"><button class="btn" type="button" data-copy="p-build"><span class="en">Copy build prompt</span><span class="es">Copiar prompt de construcción</span></button><span class="ok" aria-live="polite"></span></div>
+<ul>
+  <li><span class="en">Leave VS Code alone while you talk. Glance at it once, around slide 14.</span><span class="es">No toques VS Code mientras hablas. Míralo una vez, cerca de la diapositiva 14.</span></li>
+  <li><span class="en">If it asks a question, answer "yes, continue" and keep going.</span><span class="es">Si hace una pregunta, responde "sí, continúa" y sigue.</span></li>
+  <li><span class="en">A push takes about two minutes to go live. Count that in.</span><span class="es">Un push tarda unos dos minutos en quedar en vivo. Cuéntalo.</span></li>
+</ul>
+
+<h2 id="reveal"><span class="en">4. Reveal and improve (slides 17 and 18)</span><span class="es">4. Revelar y mejorar (diapositivas 17 y 18)</span></h2>
+<ul>
+  <li><span class="en">Show the end of the run in VS Code first, then open the live link on the projector.</span><span class="es">Muestra primero el final de la ejecución en VS Code, luego abre el enlace en vivo en el proyector.</span></li>
+  <li><span class="en">Put the link on screen so everyone opens it on their phone.</span><span class="es">Pon el enlace en pantalla para que todos la abran en su teléfono.</span></li>
+  <li><span class="en">Take three or four comments and pick one change that is small and visible. Send it in one sentence.</span><span class="es">Toma tres o cuatro comentarios y escoge un cambio pequeño y visible. Envíalo en una oración.</span></li>
+  <li><span class="en">After the event: paste the link into <code>appUrl</code> in <code>assets/config.js</code> and push. The audience page then shows it.</span><span class="es">Después del evento: pega el enlace en <code>appUrl</code> en <code>assets/config.js</code> y haz push. La página del público lo muestra.</span></li>
+</ul>
+<p><span class="en">Good change requests are specific:</span><span class="es">Las buenas solicitudes de cambio son específicas:</span></p>
+<ul>
+  <li><span class="en">"Sort the list so the nearest date is first."</span><span class="es">"Ordena la lista para que la fecha más cercana salga primero."</span></li>
+  <li><span class="en">"Add a search box above the list that filters as you type."</span><span class="es">"Agrega un buscador arriba de la lista que filtre mientras escribes."</span></li>
+  <li><span class="en">"Make the main button bigger and move it to the bottom of the screen on phones."</span><span class="es">"Haz el botón principal más grande y muévelo a la parte de abajo en teléfonos."</span></li>
+</ul>
+</div>
+
+<h2 id="backup"><span class="en">Backup ideas, if the room is quiet</span><span class="es">Ideas de respaldo, por si el público no participa</span></h2>
+<p class="read"><span class="en">Each one is three features on purpose. Read two and ask which one they would use.</span><span class="es">Cada una tiene tres funciones a propósito. Lee dos y pregunta cuál usarían.</span></p>
+<ol class="ideas">
+  <li><b><span class="en">Study sprint planner</span><span class="es">Planificador de estudio</span></b><span class="en">Assignments with due dates, a "do today" list, a weekly progress bar.</span><span class="es">Tareas con fecha de entrega, una lista de "hoy", una barra de progreso semanal.</span></li>
+  <li><b><span class="en">Campus event finder</span><span class="es">Buscador de eventos del campus</span></b><span class="en">Post an event, filter by category and day, mark "I'm going".</span><span class="es">Publicar un evento, filtrar por categoría y día, marcar "voy".</span></li>
+  <li><b><span class="en">Shift swap board</span><span class="es">Tablero de cambio de turnos</span></b><span class="en">Post a shift that needs cover, someone takes it, both see it confirmed.</span><span class="es">Publicar un turno que necesita reemplazo, alguien lo toma, ambos lo ven confirmado.</span></li>
+  <li><b><span class="en">Roommate chore rotation</span><span class="es">Rotación de tareas del apartamento</span></b><span class="en">List chores and roommates, rotate each week, mark done.</span><span class="es">Lista de tareas y compañeros, rotación semanal, marcar como hecha.</span></li>
+  <li><b><span class="en">Lost and found board</span><span class="es">Tablero de objetos perdidos</span></b><span class="en">Post a found item, search by word or place, mark returned.</span><span class="es">Publicar un objeto encontrado, buscar por palabra o lugar, marcar como devuelto.</span></li>
+</ol>
+
+<div class="read">
+<h2 id="trouble"><span class="en">If something fails</span><span class="es">Si algo falla</span></h2>
+<dl class="fix">
+  <dt><span class="en">The recording did not capture the room</span><span class="es">La grabación no captó al público</span></dt>
+  <dd><span class="en">Use the Fieldy summary. If that is poor too, read your own notes of the ideas into a new recording in thirty seconds, or choose by hand and say so.</span><span class="es">Usa el resumen de Fieldy. Si también salió mal, lee tus propias notas de las ideas en una grabación nueva de treinta segundos, o escoge a mano y dilo.</span></dd>
+  <dt><span class="en">AutoDev answers "no model"</span><span class="es">AutoDev responde "no model"</span></dt>
+  <dd><span class="en">Paste the transcript into Claude in VS Code with the same question. Same result, one extra step.</span><span class="es">Pega la transcripción en Claude dentro de VS Code con la misma pregunta. Mismo resultado, un paso más.</span></dd>
+  <dt><span class="en">The AI chooses an idea that is too big</span><span class="es">La IA escoge una idea demasiado grande</span></dt>
+  <dd><span class="en">Keep the idea and cut it to three features in front of the room. That cut is a lesson by itself.</span><span class="es">Conserva la idea y recórtala a tres funciones frente al público. Ese recorte es una lección por sí solo.</span></dd>
+  <dt><span class="en">The build is still running at minute 40</span><span class="es">La construcción sigue corriendo en el minuto 40</span></dt>
+  <dd><span class="en">Show what it is doing, do the reality check slides first, and come back to the reveal.</span><span class="es">Muestra lo que está haciendo, haz primero las diapositivas de "pies en la tierra" y vuelve a la revelación.</span></dd>
+  <dt><span class="en">The build failed or the page is broken</span><span class="es">La construcción falló o la página está rota</span></dt>
+  <dd><span class="en">Show the error. Say it is why the check step exists. Ask for the fix in one sentence, then open the fallback app and say that it is the fallback.</span><span class="es">Muestra el error. Di que por eso existe el paso de revisar. Pide el arreglo en una oración, luego abre la app de respaldo y di que es el respaldo.</span></dd>
+  <dt><span class="en">The Wi-Fi drops</span><span class="es">Se cae el Wi-Fi</span></dt>
+  <dd><span class="en">Switch the laptop to the phone hotspot. The slides keep working offline.</span><span class="es">Pasa la laptop al hotspot del teléfono. Las diapositivas siguen funcionando sin conexión.</span></dd>
+</dl>
+</div>
+
+</div></main>
+<script>
+(function(){
+  document.querySelectorAll("[data-copy]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var id = b.getAttribute("data-copy"), L = BWA.lang();
+      var el = document.getElementById(id) || document.getElementById(id+"-"+L);
+      var t = el.textContent, ok = b.parentNode.querySelector(".ok");
+      function done(){ ok.textContent = L==="es" ? "Copiado." : "Copied."; setTimeout(function(){ ok.textContent=""; }, 2500); }
+      function fallback(){ var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){ ok.textContent = L==="es" ? "No se pudo copiar." : "Copy failed."; } ta.remove(); }
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, fallback); } else fallback();
+    });
+  });
+})();
+</script>
+</body>
+</html>

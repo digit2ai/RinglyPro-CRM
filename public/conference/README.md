@@ -5,16 +5,16 @@ https://aiagent.ringlypro.com/conference/
 
 ## Pages
 - /conference/            Overview hub
-- /conference/program/    Run of show (clock times computed from startTime in config.js)
-- /conference/keynote/    18-slide deck. Arrows or space to move, P presenter view (second window, synced), N notes overlay, F full screen, T start timer, L language
+- /conference/program/    Run of show for ONE HOUR (clock times computed from startTime in config.js)
+- /conference/keynote/    22-slide deck, 60 minutes. Arrows or space to move, P presenter view (second window, synced), N notes overlay, F full screen, T start timer, L language
 - /conference/script/     Word-for-word speaker script with timing and cut versions (printable)
-- /conference/workshop/   Facilitator and participant guide
-- /conference/join/       Mobile page behind the QR code: team picker, prompt builder, Factory and SpeakUp links
+- /conference/build/      Live build guide for the presenter: record, choose, the build prompt, what to do if it fails
+- /conference/join/       Audience page behind the QR code: the app built live (once appUrl is set), the hour, a prompt builder
 - /conference/checklist/  Pre-event checklist (saved per device)
 - /conference/qr/         Printable QR card
 
 ## Edit before the event
-`assets/config.js`: date, startTime, venue, factoryUrl, agentCount.
+`assets/config.js`: date, startTime, venue, agentCount. After the live build, set `appUrl` and push so the audience page shows the app.
 Slide text and the script share one source: `assets/slides.js`.
 If the join URL changes, regenerate `assets/qr-join.svg` (python: `segno.make(URL, error="m").save("assets/qr-join.svg", scale=10, border=2, dark="#0C1150", omitsize=True)`).
 
@@ -23,3 +23,6 @@ If the join URL changes, regenerate `assets/qr-join.svg` (python: `segno.make(UR
 2. Confirm Express serves `public/` statically with directory index (default `express.static` does).
 3. Commit "Add Build With AI conference kit", push to main, wait for Render auto-deploy.
 4. Verify live: every page returns 200, /conference/sw.js returns 200, the QR resolves to /conference/join/, keynote arrows work, presenter view syncs, Spanish toggle works on every page.
+
+## Format (changed 2026-10-06)
+One hour, one app built with the whole room. No teams and no workshop. The idea session is recorded (AutoDev + Fieldy), the AI proposes the best idea and the room decides, RinglyPro Architect builds it in VS Code with Claude while the talk continues (minutes 17 to 40), and the room opens and tests it before the close. Slide minutes in `assets/slides.js` must add up to 60.

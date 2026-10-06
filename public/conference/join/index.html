@@ -5,7 +5,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2430E0">
-<title>Join | Build With AI</title>
+<title>Audience page | Build With AI</title>
 <link rel="stylesheet" href="../assets/site.css">
 <script src="../assets/config.js"></script>
 <script src="../assets/site.js"></script>
@@ -44,34 +44,40 @@ body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-in
 <body>
 <div class="top"><span class="brand" data-ev="title"></span><button class="lang-btn" type="button"></button></div>
 <main class="j">
-  <h1><span class="en">You're in. Let's build.</span><span class="es">Ya estás dentro. A construir.</span></h1>
-  <p><span class="en">Keep this page open. It has your team, your prompt, and the link to the Factory.</span><span class="es">Mantén esta página abierta. Tiene tu equipo, tu prompt y el enlace a la Factory.</span></p>
+  <h1><span class="en">One hour. One app. Built by all of us.</span><span class="es">Una hora. Una app. Construida entre todos.</span></h1>
+  <p><span class="en">Keep this page open. The app we build tonight appears here, with everything you need to build your own.</span><span class="es">Mantén esta página abierta. La app que construimos esta noche aparece aquí, con todo lo que necesitas para construir la tuya.</span></p>
 
-  <h2><span class="en">Your team</span><span class="es">Tu equipo</span></h2>
-  <div class="teams" id="teams" role="group" aria-label="Team number"></div>
-  <p class="picked" id="picked" aria-live="polite"></p>
-
-  <h2><span class="en">Roles</span><span class="es">Roles</span></h2>
-  <div class="roles">
-    <div><strong><span class="en">Product Lead</span><span class="es">Líder de Producto</span></strong><span class="en">Owns the idea, decides</span><span class="es">Dueño de la idea, decide</span></div>
-    <div><strong><span class="en">Prompt Writer</span><span class="es">Redactor de Prompts</span></strong><span class="en">Writes and sends prompts</span><span class="es">Escribe y envía prompts</span></div>
-    <div><strong><span class="en">Tester</span><span class="es">Probador</span></strong><span class="en">Tries to break it</span><span class="es">Intenta romperla</span></div>
-    <div><strong><span class="en">Presenter</span><span class="es">Presentador</span></strong><span class="en">Gives the 3-minute demo</span><span class="es">Da la demostración de 3 min</span></div>
+  <h2><span class="en">The app we built</span><span class="es">La app que construimos</span></h2>
+  <div class="panel" id="appBox">
+    <p id="appWait"><span class="en">Not live yet. The link shows up here when the build finishes. Pull down to refresh.</span><span class="es">Todavía no está en vivo. El enlace aparece aquí cuando termine la construcción. Desliza hacia abajo para actualizar.</span></p>
+    <div id="appLive" hidden>
+      <p style="font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--ink);margin:0 0 .6rem" id="appName"></p>
+      <div class="acts"><a class="btn signal" id="appLink" href="#" target="_blank" rel="noopener"><span class="en">Open the app</span><span class="es">Abrir la app</span></a></div>
+      <p style="margin:.8rem 0 0"><span class="en">Try to break it. Then tell us what is missing.</span><span class="es">Intenta romperla. Luego dinos qué le falta.</span></p>
+    </div>
   </div>
 
-  <h2><span class="en">The next 90 minutes</span><span class="es">Los próximos 90 minutos</span></h2>
+  <h2><span class="en">The hour</span><span class="es">La hora</span></h2>
   <ol class="agenda">
-    <li><b>15 min</b><span class="en">Pick roles and an idea, write your prompt</span><span class="es">Escoger roles e idea, escribir el prompt</span></li>
-    <li><b>25 min</b><span class="en">Send it to the Factory, get your first live version</span><span class="es">Enviarlo a la Factory, obtener la primera versión en vivo</span></li>
-    <li><b>25 min</b><span class="en">Test it, improve it, rehearse</span><span class="es">Probarla, mejorarla, ensayar</span></li>
-    <li><b>20 min</b><span class="en">Showcase: 3 minutes per team</span><span class="es">Presentaciones: 3 minutos por equipo</span></li>
-    <li><b>5 min</b><span class="en">Close</span><span class="es">Cierre</span></li>
+    <li><b>5 min</b><span class="en">Who we are, and the plan</span><span class="es">Quiénes somos, y el plan</span></li>
+    <li><b>12 min</b><span class="en">Your ideas, recorded. The AI proposes the best one and we decide</span><span class="es">Sus ideas, grabadas. La IA propone la mejor y nosotros decidimos</span></li>
+    <li><b>23 min</b><span class="en">Agents build it while we talk about AI, MCP and agent networks</span><span class="es">Los agentes la construyen mientras hablamos de IA, MCP y redes de agentes</span></li>
+    <li><b>11 min</b><span class="en">We open it, you break it, we fix one thing live</span><span class="es">La abrimos, ustedes la rompen, arreglamos una cosa en vivo</span></li>
+    <li><b>9 min</b><span class="en">Reality check and close</span><span class="es">Con los pies en la tierra y cierre</span></li>
   </ol>
-  <p style="margin-top:1rem"><a href="../workshop/#ideas" style="color:var(--white)"><span class="en">See the 10 app ideas</span><span class="es">Ver las 10 ideas de apps</span></a></p>
 
-  <h2 id="builder"><span class="en">Build your prompt</span><span class="es">Arma tu prompt</span></h2>
+  <h2><span class="en">A good idea for tonight</span><span class="es">Una buena idea para esta noche</span></h2>
+  <div class="roles">
+    <div><strong><span class="en">Small</span><span class="es">Pequeña</span></strong><span class="en">Three features, not ten</span><span class="es">Tres funciones, no diez</span></div>
+    <div><strong><span class="en">For someone real</span><span class="es">Para alguien real</span></strong><span class="en">You can name who would use it</span><span class="es">Puedes decir quién la usaría</span></div>
+    <div><strong><span class="en">No accounts</span><span class="es">Sin cuentas</span></strong><span class="en">No login, no payments, no personal data</span><span class="es">Sin inicio de sesión, pagos ni datos personales</span></div>
+    <div><strong><span class="en">Easy to show</span><span class="es">Fácil de mostrar</span></strong><span class="en">It works on a phone in ten seconds</span><span class="es">Funciona en un teléfono en diez segundos</span></div>
+  </div>
+  <p style="margin-top:1rem;font-size:.95rem"><span class="en">The idea session is recorded so the AI can read it. If you would rather not be recorded, just listen during that part.</span><span class="es">La sesión de ideas se graba para que la IA pueda leerla. Si prefieres no quedar grabado, solo escucha durante esa parte.</span></p>
+
+  <h2 id="builder"><span class="en">Write your own prompt</span><span class="es">Escribe tu propio prompt</span></h2>
   <div class="panel">
-    <p><span class="en">Fill in the blanks. Keep it to three features. Show it to the facilitator, then send it.</span><span class="es">Llena los espacios. Máximo tres funciones. Muéstraselo al facilitador y luego envíalo.</span></p>
+    <p><span class="en">For after tonight. Fill in the blanks and keep it to three features. Then paste it into an AI coding tool.</span><span class="es">Para después de esta noche. Llena los espacios, máximo tres funciones. Luego pégalo en una herramienta de IA para programar.</span></p>
     <div class="field"><label for="f-name"><span class="en">App name</span><span class="es">Nombre de la app</span></label><input id="f-name" data-k="name"></div>
     <div class="field"><label for="f-who"><span class="en">Who is it for?</span><span class="es">¿Para quién es?</span></label><input id="f-who" data-k="who"></div>
     <div class="field"><label for="f-prob"><span class="en">What problem do they have?</span><span class="es">¿Qué problema tienen?</span></label><input id="f-prob" data-k="prob"></div>
@@ -82,15 +88,13 @@ body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-in
     <div id="out" aria-live="polite"></div>
     <div class="acts">
       <button class="btn" type="button" id="copy"><span class="en">Copy prompt</span><span class="es">Copiar prompt</span></button>
-      <a class="btn signal" data-href="factoryUrl" href="#" target="_blank" rel="noopener"><span class="en">Open the Factory</span><span class="es">Abrir la Factory</span></a>
-      <a class="btn alt" data-href="speakupUrl" href="#" target="_blank" rel="noopener"><span class="en">Say it in SpeakUp</span><span class="es">Decirlo en SpeakUp</span></a>
     </div>
     <p class="ok" id="ok" aria-live="polite"></p>
   </div>
 
   <h2><span class="en">After today</span><span class="es">Después de hoy</span></h2>
   <ul class="res">
-    <li><span class="en">This week, talk to five people about the problem your app solves. Ask what annoys them most. That is your next prompt.</span><span class="es">Esta semana, habla con cinco personas sobre el problema que resuelve tu app. Pregúntales qué es lo que más les molesta. Ese es tu siguiente prompt.</span></li>
+    <li><span class="en">This week, talk to five people about a problem they really have. Ask what annoys them most. That is your next prompt.</span><span class="es">Esta semana, habla con cinco personas sobre un problema que de verdad tienen. Pregúntales qué es lo que más les molesta. Ese es tu siguiente prompt.</span></li>
     <li><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener"><span class="en">Learn how MCP works</span><span class="es">Aprende cómo funciona MCP</span></a></li>
     <li><a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener"><span class="en">Get better at writing prompts</span><span class="es">Aprende a escribir mejores prompts</span></a></li>
     <li><span class="en">Remember the four rules: verify, protect data, be honest about AI use, own the result.</span><span class="es">Recuerda las cuatro reglas: verifica, protege los datos, sé honesto sobre el uso de IA, responde por el resultado.</span></li>
@@ -99,13 +103,19 @@ body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-in
 </main>
 <script>
 (function(){
-  var E = window.EVENT, KEYT="bwa-team", KEYP="bwa-prompt";
+  var E = window.EVENT, KEYP="bwa-prompt";
   function st(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){ return null; } }
-  var teams = document.getElementById("teams"), picked = document.getElementById("picked");
-  for(var n=1;n<=(E.teams||6);n++){ var b=document.createElement("button"); b.type="button"; b.textContent=n; b.dataset.n=n; teams.appendChild(b); }
-  function showTeam(){ var t=st(KEYT); teams.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.n===t)); });
-    picked.textContent = t ? (BWA.lang()==="es" ? "Estás en el Equipo "+t+"." : "You're on Team "+t+".") : (BWA.lang()==="es" ? "Toca el número de tu equipo." : "Tap your team number."); }
-  teams.addEventListener("click", function(e){ var n=e.target.dataset && e.target.dataset.n; if(n){ st(KEYT,n); showTeam(); } });
+
+  /* the app built live: shown only when appUrl is set in config.js, and only if it is an http(s) link */
+  function showApp(){
+    var u = String(E.appUrl||"").trim();
+    if(!/^https?:\/\//i.test(u)) return;
+    document.getElementById("appWait").hidden = true;
+    document.getElementById("appLive").hidden = false;
+    document.getElementById("appLink").href = u;
+    var n = E.appName && (E.appName[BWA.lang()] || E.appName.en);
+    document.getElementById("appName").textContent = n || u.replace(/^https?:\/\//,"").replace(/\/$/,"");
+  }
 
   var inputs = document.querySelectorAll("input[data-k]"), saved = {};
   try{ saved = JSON.parse(st(KEYP)||"{}"); }catch(e){}
@@ -120,10 +130,10 @@ body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-in
     else t = "Build a web app called "+v("name")+".\nIt is for "+v("who")+" who "+v("prob")+".\n\nCore features (only these three):\n1. "+v("f1")+"\n2. "+v("f2")+"\n3. "+v("f3")+"\n\nLook and feel: "+v("look")+".\nIt must work well on a phone.\nDo not include logins, payments, or real personal data. Load it with realistic sample data so it is easy to demo.";
     document.getElementById("out").textContent = t; return t;
   }
-  document.addEventListener("langchange", function(){ var L=BWA.lang(); inputs.forEach(function(i){ i.placeholder = ph[L][i.dataset.k]; }); build(); showTeam(); });
+  document.addEventListener("langchange", function(){ var L=BWA.lang(); inputs.forEach(function(i){ i.placeholder = ph[L][i.dataset.k]; }); build(); showApp(); });
   document.getElementById("copy").addEventListener("click", function(){
     var t = build(), ok = document.getElementById("ok"), L = BWA.lang();
-    function done(){ ok.textContent = L==="es" ? "Prompt copiado. Pégalo en la Factory." : "Prompt copied. Paste it into the Factory."; }
+    function done(){ ok.textContent = L==="es" ? "Prompt copiado." : "Prompt copied."; }
     if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, fallback); } else fallback();
     function fallback(){ var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){ ok.textContent = L==="es" ? "No se pudo copiar. Mantén presionado el texto para copiarlo." : "Copy failed. Press and hold the text to copy it."; } ta.remove(); }
   });

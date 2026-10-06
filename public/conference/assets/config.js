@@ -9,8 +9,9 @@ window.EVENT = {
   venue: "VENUE NAME HERE",
   siteUrl: "https://aiagent.ringlypro.com/conference/",
   joinUrl: "https://aiagent.ringlypro.com/conference/join/",
-  factoryUrl: "https://autodev.digit2ai.com",          // confirm the Factory entry URL for workshop teams
-  speakupUrl: "https://autodev.digit2ai.com/speakup",
-  teams: 6,
-  agentCount: { en: "an 83-agent workforce: 8 core agents plus 75 specialists", es: "una fuerza de 83 agentes: 8 agentes centrales y 75 especialistas" }
+  audience: { en: "26 to 30 people, mostly 18 to 20", es: "26 a 30 personas, en su mayoría de 18 a 20 años" },
+  recorderUrl: "https://autodev.digit2ai.com/speakup/meetings",   // where the idea session is recorded (presenter only, needs login)
+  appUrl: "",                      // the app built live. Paste the link here after the build and push: the join page shows it.
+  appName: { en: "", es: "" },     // optional: its name, shown on the join page
+  agentCount: { en: "a 102-agent workforce: 14 core agents plus 88 specialists", es: "una fuerza de 102 agentes: 14 agentes centrales y 88 especialistas" }
 };

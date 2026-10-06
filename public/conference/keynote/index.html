@@ -22,9 +22,11 @@ body{background:var(--cobalt);color:var(--white);overflow:hidden}
 .slide.title .body{color:var(--white);font-size:clamp(1.3rem,2.6vw,2.4rem)}
 .v-title-meta{display:flex;flex-direction:column;gap:.3rem;color:var(--mist);font-size:clamp(1rem,1.6vw,1.4rem)}
 .v-title-meta span:first-child{color:var(--white);font-weight:700}
+.v-chips{list-style:none;padding:0;margin:3vh 0 0;display:flex;flex-wrap:wrap;gap:1vw}
+.v-chips li{border:2px solid var(--mist);border-radius:999px;padding:1vh 1.6vw;margin:0;font-size:clamp(.9rem,1.6vw,1.4rem)}
 
 /* section progress: sections are a real sequence */
-.progress{position:fixed;left:7vw;right:7vw;bottom:4vh;display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem}
+.progress{position:fixed;left:7vw;right:7vw;bottom:4vh;display:grid;grid-template-columns:repeat(9,1fr);gap:.5rem}
 .progress div{border-top:4px solid rgba(255,255,255,.25);padding-top:.4rem;font-size:clamp(.7rem,1vw,.95rem);color:var(--mist)}
 .progress div.done{border-top-color:var(--mist)}
 .progress div.cur{border-top-color:var(--signal);color:var(--white)}
@@ -158,6 +160,7 @@ body.presenter .pv{display:grid;grid-template-columns:2fr 1fr}
       ((s.en.body)?'<p class="body">'+both(s,"body")+'</p>':'')+
       '<div class="visual">'+s.visual+'</div></section>';
   }).join("");
+  document.getElementById("progress").style.gridTemplateColumns = "repeat("+SEC.length+",1fr)";
   document.getElementById("progress").innerHTML = SEC.map(function(x){ return '<div><span class="en">'+x.en+'</span><span class="es">'+x.es+'</span></div>'; }).join("");
 
   function fmt(ms){ var t=Math.max(0,Math.floor(ms/1000)); return Math.floor(t/60)+":"+("0"+(t%60)).slice(-2); }

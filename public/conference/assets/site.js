@@ -13,8 +13,8 @@
     ["program/", {en:"Program",es:"Programa"}],
     ["keynote/", {en:"Keynote",es:"Conferencia"}],
     ["script/", {en:"Script",es:"Guion"}],
-    ["workshop/", {en:"Workshop",es:"Taller"}],
-    ["join/", {en:"Join",es:"Unirse"}],
+    ["build/", {en:"Live build",es:"Construcción en vivo"}],
+    ["join/", {en:"Audience page",es:"Página del público"}],
     ["checklist/", {en:"Checklist",es:"Lista previa"}]
   ];
   document.addEventListener("DOMContentLoaded", function(){

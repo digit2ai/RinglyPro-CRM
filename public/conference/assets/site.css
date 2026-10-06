@@ -31,7 +31,7 @@ html[lang="es"] .en{display:none!important}
 .nav a{color:var(--mist);text-decoration:none;font-size:.95rem;padding:.2rem 0;border-bottom:2px solid transparent}
 .nav a:hover{color:var(--white)}
 .nav a[aria-current="page"]{color:var(--white);border-bottom-color:var(--signal)}
-.lang-btn{font:inherit;font-size:.9rem;background:transparent;color:var(--white);border:1.5px solid var(--mist);border-radius:999px;padding:.3rem .9rem;cursor:pointer}
+.lang-btn{font:inherit;font-size:.9rem;background:transparent;color:var(--white);border:1.5px solid var(--mist);border-radius:999px;padding:.3rem .9rem;cursor:pointer;min-height:2.75rem}
 .lang-btn:hover{border-color:var(--white)}
 
 /* page title area */

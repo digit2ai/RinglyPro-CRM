@@ -20,12 +20,12 @@ td small{display:block;color:#4A4F86}
 <header id="site-header" data-root="../" data-page="program/"></header>
 <div class="hero"><div class="wrap">
   <h1><span class="en">Run of show</span><span class="es">Programa minuto a minuto</span></h1>
-  <p class="lede"><span class="en">Two hours: a 30-minute keynote, then a 90-minute build workshop. Every block has an owner and a plan for when it runs late.</span><span class="es">Dos horas: una conferencia de 30 minutos y luego un taller de construcción de 90 minutos. Cada bloque tiene un responsable y un plan por si se atrasa.</span></p>
+  <p class="lede"><span class="en">One hour. One app, built with the whole room while the talk goes on. Every block has an owner and a plan for when it runs late.</span><span class="es">Una hora. Una app, construida con todo el salón mientras sigue la charla. Cada bloque tiene un responsable y un plan por si se atrasa.</span></p>
   <div class="meta">
     <div><span class="en">Date</span><span class="es">Fecha</span><strong data-ev="date"></strong></div>
-    <div><span class="en">Keynote starts</span><span class="es">Inicio de la conferencia</span><strong id="startClock"></strong></div>
+    <div><span class="en">Starts</span><span class="es">Inicio</span><strong id="startClock"></strong></div>
     <div><span class="en">Venue</span><span class="es">Lugar</span><strong data-ev="venue"></strong></div>
-    <div><span class="en">Audience</span><span class="es">Público</span><strong><span class="en">26 to 30 people, mostly 18 to 20</span><span class="es">26 a 30 personas, en su mayoría de 18 a 20 años</span></strong></div>
+    <div><span class="en">Audience</span><span class="es">Público</span><strong data-ev="audience"></strong></div>
   </div>
 </div></div>
 <main><div class="wrap">
@@ -35,66 +35,67 @@ td small{display:block;color:#4A4F86}
   </table></div>
   <div class="qr-side">
     <img src="../assets/qr-join.svg" alt="QR code to the join page">
-    <div><strong><span class="en">Participant page</span><span class="es">Página para participantes</span></strong><p class="muted" data-ev="joinUrl" style="word-break:break-all"></p><a href="../qr/"><span class="en">Open printable QR</span><span class="es">Abrir QR para imprimir</span></a></div>
+    <div><strong><span class="en">Audience page</span><span class="es">Página del público</span></strong><p class="muted" data-ev="joinUrl" style="word-break:break-all"></p><a href="../qr/"><span class="en">Open printable QR</span><span class="es">Abrir QR para imprimir</span></a></div>
   </div>
 </div></main>
 <script>
 var B = [
  {part:{en:"Before doors",es:"Antes de abrir"}},
  {t:-30,d:20,b:{en:"Room setup",es:"Montaje del salón"},o:{en:"Manny + helper",es:"Manny + asistente"},
-  ob:{en:"Projector, sound and Wi-Fi working. Factory smoke test passes with one small build.",es:"Proyector, sonido y Wi-Fi funcionando. La prueba rápida de la Factory pasa con una construcción pequeña."},
-  m:{en:"Laptop, HDMI or USB-C adapter, power strip, phone hotspot, keynote open in presenter view, fallback app links.",es:"Laptop, adaptador HDMI o USB-C, multitoma, hotspot del teléfono, conferencia abierta en vista de presentador, enlaces de apps de respaldo."},
-  l:{en:"Skip music and decor. Projector and the Factory test come first.",es:"Omite música y decoración. Primero el proyector y la prueba de la Factory."}},
- {t:-10,d:10,b:{en:"Doors open",es:"Apertura de puertas"},o:{en:"Helper",es:"Asistente"},
-  ob:{en:"Greet people, seat them at six mixed tables, QR on screen so they open the join page early.",es:"Recibir a la gente, sentarla en seis mesas mezcladas, QR en pantalla para que abran la página desde temprano."},
-  m:{en:"Printed QR at each table, Wi-Fi password posted.",es:"QR impreso en cada mesa, contraseña de Wi-Fi visible."},
-  l:{en:"Start the keynote on time anyway. Latecomers scan the QR at their table.",es:"Empieza la conferencia a tiempo igual. Los que lleguen tarde escanean el QR de su mesa."}},
- {part:{en:"Part 1: Keynote (30 min)",es:"Parte 1: Conferencia (30 min)"}},
- {t:0,d:2,b:{en:"Welcome and hook",es:"Bienvenida y gancho"},o:{en:"Manny",es:"Manny"},
-  ob:{en:"Take one idea from the room and start a live Factory build. Press the build clock on slide 2.",es:"Tomar una idea del público e iniciar una construcción en vivo en la Factory. Presionar el reloj en la diapositiva 2."},
-  m:{en:"Slides 1 and 2, phone logged into the Factory.",es:"Diapositivas 1 y 2, teléfono con sesión iniciada en la Factory."},
-  l:{en:"Use a pre-chosen idea instead of asking the room.",es:"Usa una idea preparada en vez de pedirla al público."}},
- {t:2,d:5,b:{en:"What AI is now",es:"Qué es la IA hoy"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Projector, sound and Wi-Fi working. VS Code open on the repo with Claude signed in. One small test build runs to the end.",es:"Proyector, sonido y Wi-Fi funcionando. VS Code abierto en el repositorio con Claude conectado. Una construcción pequeña de prueba llega hasta el final."},
+  m:{en:"Laptop, HDMI or USB-C adapter, power strip, phone hotspot, keynote open in presenter view, fallback app link.",es:"Laptop, adaptador HDMI o USB-C, multitoma, hotspot del teléfono, conferencia abierta en vista de presentador, enlace de la app de respaldo."},
+  l:{en:"Skip music and decor. Projector and the test build come first.",es:"Omite música y decoración. Primero el proyector y la construcción de prueba."}},
+ {t:-10,d:10,b:{en:"Doors open, recorders ready",es:"Apertura de puertas, grabadoras listas"},o:{en:"Helper; Manny",es:"Asistente; Manny"},
+  ob:{en:"Seat people close to the front. AutoDev signed in on the phone with a new meeting ready, Fieldy charged and on.",es:"Sentar a la gente cerca del frente. AutoDev con sesión iniciada en el teléfono y una reunión nueva lista, Fieldy cargado y encendido."},
+  m:{en:"Phone on a stand near you, Fieldy, Wi-Fi password posted.",es:"Teléfono en un soporte cerca de ti, Fieldy, contraseña de Wi-Fi visible."},
+  l:{en:"Start on time anyway.",es:"Empieza a tiempo igual."}},
+ {part:{en:"Part 1: Welcome and ideas (17 min)",es:"Parte 1: Bienvenida e ideas (17 min)"}},
+ {t:0,d:3,b:{en:"Who I am and what DIGIT2AI does",es:"Quién soy y qué hace DIGIT2AI"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Introduce yourself, the company and the three kinds of work we do.",es:"Presentarte, presentar la empresa y los tres tipos de trabajo que hacemos."},
+  m:{en:"Slide 1.",es:"Diapositiva 1."},l:{en:"Name, one sentence, next slide.",es:"Nombre, una oración, siguiente diapositiva."}},
+ {t:3,d:2,b:{en:"Tonight we build one app together",es:"Esta noche construimos una app entre todos"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Explain the five steps of the hour and that it is live, so it may fail.",es:"Explicar los cinco pasos de la hora y que es en vivo, así que puede fallar."},
+  m:{en:"Slide 2.",es:"Diapositiva 2."},l:{en:"Read the five steps only.",es:"Lee solo los cinco pasos."}},
+ {t:5,d:7,b:{en:"Ideas from the room, recorded",es:"Ideas del público, grabadas"},o:{en:"Manny; everyone",es:"Manny; todos"},
+  ob:{en:"Say that you are recording. Collect ideas and repeat each one into the phone in one sentence.",es:"Decir que estás grabando. Recoger ideas y repetir cada una al teléfono en una oración."},
+  m:{en:"Slide 3, AutoDev recording, Fieldy, backup idea list.",es:"Diapositiva 3, grabación en AutoDev, Fieldy, lista de ideas de respaldo."},
+  l:{en:"Take four ideas in two minutes.",es:"Toma cuatro ideas en dos minutos."}},
+ {t:12,d:5,b:{en:"The AI proposes, we decide, the build starts",es:"La IA propone, decidimos, empieza la construcción"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Ask AutoDev for the best idea, confirm with the room, send the build prompt to RinglyPro Architect in VS Code, start the build clock.",es:"Pedirle a AutoDev la mejor idea, confirmar con el público, enviar el prompt de construcción a RinglyPro Architect en VS Code, iniciar el reloj."},
+  m:{en:"Slide 4, live build guide open in a tab, VS Code.",es:"Diapositiva 4, guía de construcción en vivo abierta en una pestaña, VS Code."},
+  l:{en:"Skip the vote. The build must start by minute 17.",es:"Omite la votación. La construcción debe empezar antes del minuto 17."}},
+ {part:{en:"Part 2: While it builds (23 min)",es:"Parte 2: Mientras se construye (23 min)"}},
+ {t:17,d:5,b:{en:"What AI is now",es:"Qué es la IA hoy"},o:{en:"Manny",es:"Manny"},
   ob:{en:"Chatbot vs agent. The agent loop: goal, plan, tools, check, repeat.",es:"Chatbot vs agente. El ciclo del agente: meta, plan, herramientas, revisar, repetir."},
-  m:{en:"Slides 3 and 4.",es:"Diapositivas 3 y 4."},l:{en:"Drop the cooking analogy.",es:"Omite la analogía de la cocina."}},
- {t:7,d:6,b:{en:"The shift",es:"El cambio"},o:{en:"Manny",es:"Manny"},
+  m:{en:"Slides 5 and 6.",es:"Diapositivas 5 y 6."},l:{en:"Drop the cooking analogy.",es:"Omite la analogía de la cocina."}},
+ {t:22,d:5,b:{en:"The shift",es:"El cambio"},o:{en:"Manny",es:"Manny"},
   ob:{en:"From writing code to describing outcomes. Which skills gain value. Starting something at 19.",es:"De escribir código a describir resultados. Qué habilidades ganan valor. Emprender a los 19."},
-  m:{en:"Slides 5 to 7.",es:"Diapositivas 5 a 7."},l:{en:"Drop the personal story on slide 7.",es:"Omite la historia personal de la diapositiva 7."}},
- {t:13,d:4,b:{en:"MCP explained",es:"MCP explicado"},o:{en:"Manny",es:"Manny"},
+  m:{en:"Slides 7 to 9.",es:"Diapositivas 7 a 9."},l:{en:"Drop the personal story on slide 9.",es:"Omite la historia personal de la diapositiva 9."}},
+ {t:27,d:4,b:{en:"MCP explained",es:"MCP explicado"},o:{en:"Manny",es:"Manny"},
   ob:{en:"MCP as a USB port for AI. Brain in a jar vs brain with hands.",es:"MCP como un puerto USB para la IA. Cerebro en un frasco vs cerebro con manos."},
-  m:{en:"Slides 8 and 9.",es:"Diapositivas 8 y 9."},l:{en:"Skip slide 9.",es:"Omite la diapositiva 9."}},
- {t:17,d:7,b:{en:"Neural Intelligence Network and reveal",es:"Red de Inteligencia Neuronal y revelación"},o:{en:"Manny",es:"Manny"},
-  ob:{en:"The agent org chart, the Architect, the build loop, SpeakUp to Factory. Open the live build.",es:"El organigrama de agentes, el Architect, el ciclo de construcción, SpeakUp a la Factory. Abrir la construcción en vivo."},
-  m:{en:"Slides 10 to 14, the live build link, fallback app link.",es:"Diapositivas 10 a 14, enlace de la construcción en vivo, enlace de la app de respaldo."},
-  l:{en:"Merge slides 11 and 12 into one sentence.",es:"Une las diapositivas 11 y 12 en una oración."}},
- {t:24,d:3,b:{en:"Reality check",es:"Con los pies en la tierra"},o:{en:"Manny",es:"Manny"},
+  m:{en:"Slides 10 and 11.",es:"Diapositivas 10 y 11."},l:{en:"Skip slide 11.",es:"Omite la diapositiva 11."}},
+ {t:31,d:9,b:{en:"The agent network and why build this way",es:"La red de agentes y por qué construir así"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"The agent org chart, the Architect, the build loop, the path the idea took tonight, and the five benefits.",es:"El organigrama de agentes, el Architect, el ciclo de construcción, el camino que recorrió la idea esta noche y los cinco beneficios."},
+  m:{en:"Slides 12 to 16. Glance at VS Code once to check the build.",es:"Diapositivas 12 a 16. Mira VS Code una vez para revisar la construcción."},
+  l:{en:"Merge slides 13 and 14 into one sentence. Read the five benefits only.",es:"Une las diapositivas 13 y 14 en una oración. Lee solo los cinco beneficios."}},
+ {part:{en:"Part 3: The app (11 min)",es:"Parte 3: La app (11 min)"}},
+ {t:40,d:5,b:{en:"The reveal",es:"La revelación"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Show the build finishing in VS Code and open the live link. Everyone opens it on their phone.",es:"Mostrar la construcción terminando en VS Code y abrir el enlace en vivo. Todos la abren en su teléfono."},
+  m:{en:"Slide 17, VS Code, the live link, fallback app link.",es:"Diapositiva 17, VS Code, el enlace en vivo, enlace de la app de respaldo."},
+  l:{en:"If it is still building, do the reality check first and come back.",es:"Si todavía está construyendo, haz primero \"con los pies en la tierra\" y vuelve."}},
+ {t:45,d:6,b:{en:"Break it, then one change live",es:"Rómpanla, y un cambio en vivo"},o:{en:"Everyone; Manny",es:"Todos; Manny"},
+  ob:{en:"The room tests it and says what is wrong. Send one small change and show it when it lands.",es:"El público la prueba y dice qué está mal. Enviar un cambio pequeño y mostrarlo cuando llegue."},
+  m:{en:"Slide 18, VS Code.",es:"Diapositiva 18, VS Code."},
+  l:{en:"Send the change and do not wait for it.",es:"Envía el cambio y no lo esperes."}},
+ {part:{en:"Part 4: Reality check and close (9 min)",es:"Parte 4: Pies en la tierra y cierre (9 min)"}},
+ {t:51,d:5,b:{en:"Reality check",es:"Con los pies en la tierra"},o:{en:"Manny",es:"Manny"},
   ob:{en:"What AI is bad at and four rules: verify, protect data, be honest, own the result.",es:"En qué es mala la IA y cuatro reglas: verifica, protege los datos, sé honesto, responde por el resultado."},
-  m:{en:"Slides 15 and 16.",es:"Diapositivas 15 y 16."},l:{en:"Read the four rules only. Never cut this section entirely.",es:"Lee solo las cuatro reglas. Nunca elimines esta sección por completo."}},
- {t:27,d:3,b:{en:"Your turn",es:"Tu turno"},o:{en:"Manny",es:"Manny"},
-  ob:{en:"Explain teams and roles, everyone scans the QR, count off into six teams.",es:"Explicar equipos y roles, todos escanean el QR, contar para formar seis equipos."},
-  m:{en:"Slides 17 and 18.",es:"Diapositivas 17 y 18."},l:{en:"Skip the roles. They are on the join page.",es:"Omite los roles. Están en la página de unirse."}},
- {part:{en:"Part 2: Workshop (90 min)",es:"Parte 2: Taller (90 min)"}},
- {t:30,d:15,b:{en:"Sprint 0: team, idea, prompt",es:"Sprint 0: equipo, idea, prompt"},o:{en:"Teams; Manny approves prompts",es:"Equipos; Manny aprueba los prompts"},
-  ob:{en:"Assign roles, choose an idea, fill in the prompt template. Every prompt gets a quick scope check before it is sent.",es:"Asignar roles, escoger una idea, llenar la plantilla del prompt. Cada prompt pasa una revisión rápida de alcance antes de enviarse."},
-  m:{en:"Join page, workshop guide, printed prompt cards.",es:"Página de unirse, guía del taller, tarjetas impresas del prompt."},
-  l:{en:"Assign ideas from the list directly. No debating.",es:"Asigna ideas de la lista directamente. Sin debate."}},
- {t:45,d:25,b:{en:"Sprint 1: first build",es:"Sprint 1: primera construcción"},o:{en:"Teams; Manny rotates",es:"Equipos; Manny rota"},
-  ob:{en:"Each team sends its prompt to the Factory and gets a first live version. While it builds, the Tester writes a test list and the Presenter drafts the demo.",es:"Cada equipo envía su prompt a la Factory y obtiene una primera versión en vivo. Mientras se construye, el Probador escribe una lista de pruebas y el Presentador prepara la demostración."},
-  m:{en:"Factory access for six teams, status board on paper or whiteboard.",es:"Acceso a la Factory para seis equipos, tablero de estado en papel o pizarra."},
-  l:{en:"If the Factory queue is slow, hand the team its fallback app and move on to testing it.",es:"Si la cola de la Factory va lenta, dale al equipo su app de respaldo y pasen a probarla."}},
- {t:70,d:25,b:{en:"Sprint 2: test and improve",es:"Sprint 2: probar y mejorar"},o:{en:"Teams",es:"Equipos"},
-  ob:{en:"Tester breaks it, team sends one or two specific change requests, Presenter rehearses.",es:"El Probador la rompe, el equipo envía una o dos solicitudes de cambio específicas, el Presentador ensaya."},
-  m:{en:"Iteration examples in the workshop guide.",es:"Ejemplos de iteración en la guía del taller."},
-  l:{en:"Cap every team at one change request.",es:"Limita a cada equipo a una sola solicitud de cambio."}},
- {t:95,d:20,b:{en:"Showcase",es:"Presentaciones"},o:{en:"Presenters; Manny hosts",es:"Presentadores; Manny conduce"},
-  ob:{en:"Each team gets 3 minutes: the problem, a live demo, what they would build next.",es:"Cada equipo tiene 3 minutos: el problema, una demostración en vivo, qué construirían después."},
-  m:{en:"Projector input that teams can use, or teams share links to the presenter laptop.",es:"Entrada del proyector para los equipos, o los equipos comparten enlaces a la laptop del presentador."},
-  l:{en:"Cut to 2 minutes per team.",es:"Reduce a 2 minutos por equipo."}},
- {t:115,d:5,b:{en:"Close",es:"Cierre"},o:{en:"Manny",es:"Manny"},
-  ob:{en:"What to do this week, where the resources are, group photo.",es:"Qué hacer esta semana, dónde están los recursos, foto de grupo."},
-  m:{en:"Join page, section 'After today'.",es:"Página de unirse, sección 'Después de hoy'."},
-  l:{en:"Two sentences and the photo.",es:"Dos oraciones y la foto."}},
- {t:120,d:0,b:{en:"End",es:"Fin"},o:{en:"",es:""},ob:{en:"",es:""},m:{en:"",es:""},l:{en:"",es:""}}
+  m:{en:"Slides 19 and 20.",es:"Diapositivas 19 y 20."},l:{en:"Read the four rules only. Never cut this section entirely.",es:"Lee solo las cuatro reglas. Nunca elimines esta sección por completo."}},
+ {t:56,d:4,b:{en:"Your turn and close",es:"Tu turno y cierre"},o:{en:"Manny",es:"Manny"},
+  ob:{en:"Four steps for this week, everyone scans the QR, group photo.",es:"Cuatro pasos para esta semana, todos escanean el QR, foto de grupo."},
+  m:{en:"Slides 21 and 22, audience page.",es:"Diapositivas 21 y 22, página del público."},
+  l:{en:"QR on screen, two sentences and the photo.",es:"QR en pantalla, dos oraciones y la foto."}},
+ {t:60,d:0,b:{en:"End",es:"Fin"},o:{en:"",es:""},ob:{en:"",es:""},m:{en:"",es:""},l:{en:"",es:""}}
 ];
 (function(){
   var st = (EVENT.startTime||"18:00").split(":"), base = (+st[0])*60 + (+st[1]);

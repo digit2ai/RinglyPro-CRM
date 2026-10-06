@@ -31,38 +31,43 @@
 var G = [
  {g:{en:"Configuration",es:"Configuración"}, items:[
   {en:"Set date, start time and venue in assets/config.js",es:"Definir fecha, hora de inicio y lugar en assets/config.js"},
-  {en:"Confirm the Factory URL teams will use (factoryUrl in config.js)",es:"Confirmar el URL de la Factory que usarán los equipos (factoryUrl en config.js)"},
-  {en:"Confirm the agent count on slide 10 (agentCount in config.js)",es:"Confirmar el número de agentes en la diapositiva 10 (agentCount en config.js)"},
+  {en:"Confirm the agent count on slide 12 (agentCount in config.js)",es:"Confirmar el número de agentes en la diapositiva 12 (agentCount en config.js)"},
   {en:"Scan the QR on the live site and confirm it opens /conference/join/",es:"Escanear el QR en el sitio en vivo y confirmar que abre /conference/join/"}]},
- {g:{en:"Factory and capacity",es:"Factory y capacidad"}, items:[
-  {en:"Factory access ready for 6 teams (accounts or a shared team login)",es:"Acceso a la Factory listo para 6 equipos (cuentas o un acceso compartido por equipo)"},
-  {en:"Run 6 builds at the same time and record how long they take",es:"Correr 6 construcciones al mismo tiempo y anotar cuánto tardan",note:{en:"If the slowest takes more than 15 minutes, plan to hand out fallback apps early.",es:"Si la más lenta tarda más de 15 minutos, planea entregar las apps de respaldo temprano."}},
-  {en:"Model API rate limits and spending cap checked for 6 teams plus the live keynote build",es:"Límites de uso y tope de gasto de la API del modelo revisados para 6 equipos más la construcción en vivo"},
-  {en:"Workshop builds go to a separate repo or namespace, never to production tenants or data",es:"Las construcciones del taller van a un repositorio o espacio separado, nunca a clientes ni datos de producción"},
-  {en:"Render plan can hold 6 or more new services that night",es:"El plan de Render soporta 6 o más servicios nuevos esa noche"},
-  {en:"Decide when workshop apps get shut down, and put a reminder on your calendar",es:"Decidir cuándo se apagan las apps del taller y poner un recordatorio en el calendario"}]},
+ {g:{en:"Recording the ideas",es:"Grabación de las ideas"}, items:[
+  {en:"AutoDev signed in on the phone, and a test recording in the real room gives a readable transcript",es:"AutoDev con sesión iniciada en el teléfono, y una grabación de prueba en el salón real da una transcripción legible",note:{en:"The phone hears the presenter far better than the room. Plan to repeat every idea out loud.",es:"El teléfono escucha al presentador mucho mejor que al salón. Planea repetir cada idea en voz alta."}},
+  {en:"In that test meeting, the question from the live build guide returns one clear idea",es:"En esa reunión de prueba, la pregunta de la guía de construcción en vivo devuelve una idea clara"},
+  {en:"Fieldy charged, recording, and its summary reachable from the laptop",es:"Fieldy cargado, grabando, y su resumen accesible desde la laptop"},
+  {en:"A sentence ready to tell the room they are being recorded, and why",es:"Una frase lista para decirle al público que se está grabando, y por qué"}]},
+ {g:{en:"The live build",es:"La construcción en vivo"}, items:[
+  {en:"VS Code opens the repo and Claude is signed in on the presenter laptop",es:"VS Code abre el repositorio y Claude tiene sesión iniciada en la laptop del presentador"},
+  {en:"Run the build prompt from the guide with a sample idea and time it from send to live link",es:"Correr el prompt de construcción de la guía con una idea de ejemplo y medir el tiempo desde enviar hasta el enlace en vivo",note:{en:"You have 23 minutes on stage. If the rehearsal takes more than 18, make the prompt smaller.",es:"Tienes 23 minutos en el escenario. Si el ensayo tarda más de 18, haz el prompt más pequeño."}},
+  {en:"Rehearse one small change request on that sample app and time it",es:"Ensayar una solicitud de cambio pequeña sobre esa app de ejemplo y medir el tiempo"},
+  {en:"Claude usage limit checked, so the build cannot stop halfway",es:"Límite de uso de Claude revisado, para que la construcción no se detenga a la mitad"},
+  {en:"The live build cannot touch client data or production tenants",es:"La construcción en vivo no puede tocar datos de clientes ni cuentas de producción"},
+  {en:"Decide when the event app is taken down, and put a reminder on your calendar",es:"Decidir cuándo se apaga la app del evento y poner un recordatorio en el calendario"}]},
  {g:{en:"Fallbacks",es:"Respaldos"}, items:[
-  {en:"A working fallback app built for each of the 10 ideas",es:"Una app de respaldo funcionando para cada una de las 10 ideas"},
-  {en:"Fallback for the keynote hook build, in case the live one fails",es:"Respaldo para la construcción en vivo del gancho, por si falla"},
-  {en:"Screen recording of the full pipeline (talk, Factory, live link) saved offline",es:"Grabación de pantalla del flujo completo (hablar, Factory, enlace en vivo) guardada sin conexión"},
+  {en:"A working fallback app, built before the event, with its link saved",es:"Una app de respaldo funcionando, construida antes del evento, con su enlace guardado"},
+  {en:"Five backup ideas written down, in case the room is quiet",es:"Cinco ideas de respaldo escritas, por si el público no participa"},
+  {en:"Screen recording of a full build (prompt, agents working, live link) saved offline",es:"Grabación de pantalla de una construcción completa (prompt, agentes trabajando, enlace en vivo) guardada sin conexión"},
   {en:"Phone hotspot tested with the laptop",es:"Hotspot del teléfono probado con la laptop"}]},
  {g:{en:"Room and equipment",es:"Salón y equipo"}, items:[
   {en:"Projector input tested with your laptop and adapter",es:"Entrada del proyector probada con tu laptop y adaptador"},
   {en:"Presenter view tested on two screens (press P in the keynote)",es:"Vista de presentador probada en dos pantallas (presiona P en la conferencia)"},
-  {en:"Microphone, power strips, six tables",es:"Micrófono, multitomas, seis mesas"},
+  {en:"VS Code font size readable from the back row",es:"Tamaño de letra de VS Code legible desde la última fila"},
+  {en:"Microphone, power strip, phone stand",es:"Micrófono, multitoma, soporte para el teléfono"},
   {en:"Wi-Fi name and password posted where everyone can see it",es:"Nombre y contraseña del Wi-Fi visibles para todos"}]},
  {g:{en:"Print",es:"Impresión"}, items:[
-  {en:"One QR card per table (open the printable QR page)",es:"Una tarjeta con QR por mesa (abre la página de QR para imprimir)"},
+  {en:"QR cards for the room (open the printable QR page)",es:"Tarjetas con QR para el salón (abre la página de QR para imprimir)"},
   {en:"Speaker script printed as a backup",es:"Guion del presentador impreso como respaldo"},
-  {en:"Prompt template cards, one per team",es:"Tarjetas con la plantilla del prompt, una por equipo"}]},
+  {en:"Live build guide printed, with the two prompts",es:"Guía de construcción en vivo impresa, con los dos prompts"}]},
  {g:{en:"Day of",es:"El día del evento"}, items:[
-  {en:"Full keynote rehearsal with the timer",es:"Ensayo completo de la conferencia con el reloj"},
-  {en:"Pick a backup idea for the hook in case the room is quiet",es:"Escoger una idea de respaldo para el gancho por si el público no participa"},
+  {en:"Full rehearsal with the timer: 60 minutes",es:"Ensayo completo con el reloj: 60 minutos"},
   {en:"Reset the keynote timer and build clock before doors open",es:"Reiniciar el reloj de la conferencia y el de construcción antes de abrir puertas"},
-  {en:"Open every page once on the presenter laptop so it works offline",es:"Abrir cada página una vez en la laptop para que funcione sin conexión"}]}
+  {en:"Open every page once on the presenter laptop so it works offline",es:"Abrir cada página una vez en la laptop para que funcione sin conexión"},
+  {en:"After the build: paste the app link into appUrl in config.js and push, so the audience page shows it",es:"Después de la construcción: pegar el enlace de la app en appUrl en config.js y hacer push, para que la página del público lo muestre"}]}
 ];
 (function(){
-  var KEY="bwa-checklist", s={}; try{ s=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+  var KEY="bwa-checklist-v2", s={}; try{ s=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
   function bi(o){ return '<span class="en">'+o.en+'</span><span class="es">'+o.es+'</span>'; }
   var html="", total=0;

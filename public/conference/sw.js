@@ -1,6 +1,6 @@
 /* Build With AI: network first, cache fallback, so pages work offline after the first visit and edits show up immediately when online. */
-var CACHE = "bwa-v1";
-var FILES = ["./","program/","keynote/","script/","workshop/","join/","checklist/","qr/",
+var CACHE = "bwa-v2";
+var FILES = ["./","program/","keynote/","script/","build/","join/","checklist/","qr/",
   "assets/site.css","assets/site.js","assets/config.js","assets/slides.js","assets/qr-join.svg"];
 self.addEventListener("install", function(e){ e.waitUntil(caches.open(CACHE).then(function(c){ return c.addAll(FILES); }).catch(function(){})); self.skipWaiting(); });
 self.addEventListener("activate", function(e){ e.waitUntil(caches.keys().then(function(ks){ return Promise.all(ks.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);})); })); self.clients.claim(); });
