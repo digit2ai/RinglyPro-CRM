@@ -187,7 +187,7 @@
     fondo_emergencia: 'Al mismo tiempo, tu fondo de emergencia es tu punto más firme: ya cuentas con un respaldo disponible para imprevistos.',
     estabilidad: 'Al mismo tiempo, la estabilidad de tu ingreso es tu punto más firme: tienes una base predecible sobre la cual planear.',
   };
-  var CIERRE = 'Soy Maya, tu guía financiera IA. Entre más completo esté tu perfil, mejor podemos construir tu plan financiero juntos. Vamos paso a paso.';
+  var CIERRE = 'Soy Maya, tu agente de planeación financiera. Entre más completo esté tu perfil, mejor podemos construir tu plan financiero juntos. Vamos paso a paso.';
   var ADVERTENCIA = 'Planea presenta información con fines educativos e informativos. No constituye asesoría ni recomendación de productos financieros. Las decisiones sobre tus finanzas son siempre tuyas.';
   var CTA_TEXTO = {
     deuda: 'Para afinar esto necesito conocer tus deudas con más detalle: con qué entidades las tienes y en qué condiciones. El costo de cada deuda cambia por completo el orden en que conviene atenderlas.',
