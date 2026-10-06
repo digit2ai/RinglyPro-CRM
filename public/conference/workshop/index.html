@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workshop guide | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+.toc{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;margin-top:1.5rem}
+.toc a{color:var(--white)}
+.sprints{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:15fr 25fr 25fr 20fr 5fr;gap:4px}
+.sprints li{background:var(--white);border-top:6px solid var(--cobalt);padding:.8rem;font-size:.95rem;margin:0}
+.sprints li:nth-child(4){border-top-color:var(--signal)}
+.sprints b{display:block;font-family:var(--display)}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(19rem,1fr));gap:1rem;list-style:none;padding:0;counter-reset:i}
+.ideas li{background:var(--white);border:1px solid var(--line);padding:1rem 1.2rem;margin:0}
+.ideas h3{margin:0 0 .3rem;font-size:1.15rem}
+.ideas p{margin:0 0 .5rem;color:#4A4F86;font-size:.95rem}
+.ideas ul{margin:0;font-size:.95rem}
+pre.prompt{white-space:pre-wrap;background:var(--ink);color:var(--white);padding:1.25rem;border-radius:.6rem;font-family:var(--body);font-size:1rem;line-height:1.6}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.vs>div{background:var(--white);padding:1rem 1.2rem;border-top:6px solid #B00020}
+.vs>div.good{border-top-color:#0A7A3C}
+.fix dt{font-family:var(--display);font-weight:600;font-size:1.1rem;margin-top:1.25rem}
+.fix dd{margin:.3rem 0 0}
+@media (max-width:760px){.sprints{grid-template-columns:1fr}.vs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header id="site-header" data-root="../" data-page="workshop/"></header>
+<div class="hero"><div class="wrap">
+  <h1><span class="en">Workshop guide</span><span class="es">Guía del taller</span></h1>
+  <p class="lede"><span class="en">90 minutes. Six teams. Each team describes an app in plain language, the Factory builds it, and the team tests it and shows it live.</span><span class="es">90 minutos. Seis equipos. Cada equipo describe una app en lenguaje normal, la Factory la construye, y el equipo la prueba y la muestra en vivo.</span></p>
+  <nav class="toc no-print" aria-label="Sections">
+    <a href="#sprints"><span class="en">Sprints</span><span class="es">Sprints</span></a>
+    <a href="#roles"><span class="en">Teams and roles</span><span class="es">Equipos y roles</span></a>
+    <a href="#ideas"><span class="en">App ideas</span><span class="es">Ideas de apps</span></a>
+    <a href="#prompt"><span class="en">Prompt template</span><span class="es">Plantilla del prompt</span></a>
+    <a href="#speakup">SpeakUp</a>
+    <a href="#facilitator"><span class="en">Facilitator guide</span><span class="es">Guía del facilitador</span></a>
+    <a href="#trouble"><span class="en">Troubleshooting</span><span class="es">Solución de problemas</span></a>
+  </nav>
+</div></div>
+<main><div class="wrap">
+
+<h2 id="sprints" style="margin-top:0"><span class="en">The 90 minutes</span><span class="es">Los 90 minutos</span></h2>
+<ol class="sprints">
+  <li><b><span class="en">Sprint 0, 15 min</span><span class="es">Sprint 0, 15 min</span></b><span class="en">Roles, idea, prompt</span><span class="es">Roles, idea, prompt</span></li>
+  <li><b><span class="en">Sprint 1, 25 min</span><span class="es">Sprint 1, 25 min</span></b><span class="en">Send to the Factory, get a first live version</span><span class="es">Enviar a la Factory, obtener la primera versión en vivo</span></li>
+  <li><b><span class="en">Sprint 2, 25 min</span><span class="es">Sprint 2, 25 min</span></b><span class="en">Break it, fix it, rehearse</span><span class="es">Romperla, arreglarla, ensayar</span></li>
+  <li><b><span class="en">Showcase, 20 min</span><span class="es">Presentaciones, 20 min</span></b><span class="en">3 minutes per team</span><span class="es">3 minutos por equipo</span></li>
+  <li><b><span class="en">Close</span><span class="es">Cierre</span></b>5</li>
+</ol>
+
+<div class="read">
+<h3><span class="en">Sprint 0: team, idea, prompt (15 min)</span><span class="es">Sprint 0: equipo, idea, prompt (15 min)</span></h3>
+<p class="en">Pick your four roles in two minutes. Choose one idea from the list below, or bring your own if it passes the scoping checklist. Fill in the prompt template together. Show it to the facilitator before you send it.</p>
+<p class="es">Escojan sus cuatro roles en dos minutos. Elijan una idea de la lista, o traigan la suya si pasa la lista de alcance. Llenen la plantilla del prompt juntos. Muéstrensela al facilitador antes de enviarla.</p>
+<h3><span class="en">Sprint 1: first build (25 min)</span><span class="es">Sprint 1: primera construcción (25 min)</span></h3>
+<p class="en">The Prompt Writer sends the prompt to the Factory once. Do not resend while it builds. While you wait, the Tester writes five things to try, and the Presenter drafts the 3-minute demo. When the link arrives, open it on a phone and a laptop.</p>
+<p class="es">El Redactor de Prompts envía el prompt a la Factory una sola vez. No lo reenvíen mientras se construye. Mientras esperan, el Probador escribe cinco cosas para probar y el Presentador prepara la demostración de 3 minutos. Cuando llegue el enlace, ábranlo en un teléfono y en una laptop.</p>
+<h3><span class="en">Sprint 2: test and improve (25 min)</span><span class="es">Sprint 2: probar y mejorar (25 min)</span></h3>
+<p class="en">The Tester runs the list and tries to break it. The Product Lead picks the one or two changes that matter most. Send each change as its own specific request. Stop changing things 5 minutes before the showcase and rehearse.</p>
+<p class="es">El Probador corre su lista e intenta romperla. El Líder de Producto escoge uno o dos cambios que más importan. Envíen cada cambio como una solicitud específica por separado. Dejen de cambiar cosas 5 minutos antes de las presentaciones y ensayen.</p>
+<h3><span class="en">Showcase (3 min per team)</span><span class="es">Presentaciones (3 min por equipo)</span></h3>
+<p class="en">30 seconds: who it is for and what problem it solves. 2 minutes: live demo. 30 seconds: what you would build next.</p>
+<p class="es">30 segundos: para quién es y qué problema resuelve. 2 minutos: demostración en vivo. 30 segundos: qué construirían después.</p>
+</div>
+
+<h2 id="roles"><span class="en">Teams and roles</span><span class="es">Equipos y roles</span></h2>
+<div class="read">
+<p class="en">Six teams of four or five. In a team of five, the fifth person is a second Tester.</p>
+<p class="es">Seis equipos de cuatro o cinco. En un equipo de cinco, la quinta persona es un segundo Probador.</p>
+<dl class="fix">
+  <dt><span class="en">Product Lead</span><span class="es">Líder de Producto</span></dt>
+  <dd><span class="en">Owns the idea. Breaks ties. Decides which three features make the cut and which change goes first.</span><span class="es">Es dueño de la idea. Desempata. Decide qué tres funciones entran y qué cambio va primero.</span></dd>
+  <dt><span class="en">Prompt Writer</span><span class="es">Redactor de Prompts</span></dt>
+  <dd><span class="en">Turns the idea into a clear prompt, sends it to the Factory, and writes every change request.</span><span class="es">Convierte la idea en un prompt claro, lo envía a la Factory y escribe cada solicitud de cambio.</span></dd>
+  <dt><span class="en">Tester</span><span class="es">Probador</span></dt>
+  <dd><span class="en">Writes a test list while the app builds, then tries to break it on a phone and a laptop. Reports exactly what happened.</span><span class="es">Escribe una lista de pruebas mientras se construye la app y luego intenta romperla en un teléfono y en una laptop. Reporta exactamente qué pasó.</span></dd>
+  <dt><span class="en">Presenter</span><span class="es">Presentador</span></dt>
+  <dd><span class="en">Prepares and gives the 3-minute demo. Keeps the team on time.</span><span class="es">Prepara y da la demostración de 3 minutos. Mantiene al equipo a tiempo.</span></dd>
+</dl>
+</div>
+
+<h2 id="ideas"><span class="en">Ten app ideas, sized for one hour</span><span class="es">Diez ideas de apps, a la medida de una hora</span></h2>
+<p class="read"><span class="en">Each idea is three features on purpose. Small and working beats big and broken.</span><span class="es">Cada idea tiene tres funciones a propósito. Pequeña y funcionando es mejor que grande y rota.</span></p>
+<ol class="ideas">
+  <li><h3><span class="en">Study sprint planner</span><span class="es">Planificador de estudio</span></h3><p><span class="en">For students juggling deadlines</span><span class="es">Para estudiantes con muchas fechas de entrega</span></p><ul><li><span class="en">Add assignments with due dates</span><span class="es">Agregar tareas con fecha de entrega</span></li><li><span class="en">"Do today" list sorted by urgency</span><span class="es">Lista de "hoy" ordenada por urgencia</span></li><li><span class="en">Mark done with a progress bar</span><span class="es">Marcar como hecha con barra de progreso</span></li></ul></li>
+  <li><h3><span class="en">Campus event finder</span><span class="es">Buscador de eventos del campus</span></h3><p><span class="en">For students who miss what's happening</span><span class="es">Para estudiantes que se pierden lo que pasa</span></p><ul><li><span class="en">Post an event: title, date, place, category</span><span class="es">Publicar un evento: título, fecha, lugar, categoría</span></li><li><span class="en">Filter by category and date</span><span class="es">Filtrar por categoría y fecha</span></li><li><span class="en">"I'm going" counter</span><span class="es">Contador de "voy a ir"</span></li></ul></li>
+  <li><h3><span class="en">Student budget tracker</span><span class="es">Control de presupuesto estudiantil</span></h3><p><span class="en">For anyone living on a part-time paycheck</span><span class="es">Para quien vive de un sueldo de medio tiempo</span></p><ul><li><span class="en">Log income and expenses</span><span class="es">Registrar ingresos y gastos</span></li><li><span class="en">Totals by category for the month</span><span class="es">Totales por categoría del mes</span></li><li><span class="en">Warning when over a weekly limit</span><span class="es">Alerta al pasar un límite semanal</span></li></ul></li>
+  <li><h3><span class="en">Gym log</span><span class="es">Registro del gimnasio</span></h3><p><span class="en">For people tracking their training</span><span class="es">Para quien lleva control de su entrenamiento</span></p><ul><li><span class="en">Log exercise, sets, reps, weight</span><span class="es">Registrar ejercicio, series, repeticiones, peso</span></li><li><span class="en">History per exercise</span><span class="es">Historial por ejercicio</span></li><li><span class="en">Personal best highlighted</span><span class="es">Récord personal resaltado</span></li></ul></li>
+  <li><h3><span class="en">Side-hustle landing page</span><span class="es">Página para tu emprendimiento</span></h3><p><span class="en">For a tutoring, haircut, or photo business</span><span class="es">Para tutorías, cortes de pelo o fotografía</span></p><ul><li><span class="en">Services with prices</span><span class="es">Servicios con precios</span></li><li><span class="en">Booking request form</span><span class="es">Formulario para pedir cita</span></li><li><span class="en">Reviews section</span><span class="es">Sección de reseñas</span></li></ul></li>
+  <li><h3><span class="en">Shift swap board</span><span class="es">Tablero de cambio de turnos</span></h3><p><span class="en">For coworkers at a part-time job</span><span class="es">Para compañeros de un trabajo de medio tiempo</span></p><ul><li><span class="en">Post a shift that needs cover</span><span class="es">Publicar un turno que necesita reemplazo</span></li><li><span class="en">Someone claims it</span><span class="es">Alguien lo toma</span></li><li><span class="en">Status: open, claimed, confirmed</span><span class="es">Estado: abierto, tomado, confirmado</span></li></ul></li>
+  <li><h3><span class="en">Roommate chore rotation</span><span class="es">Rotación de tareas del apartamento</span></h3><p><span class="en">For shared apartments</span><span class="es">Para apartamentos compartidos</span></p><ul><li><span class="en">List chores and roommates</span><span class="es">Lista de tareas y compañeros</span></li><li><span class="en">Rotates automatically each week</span><span class="es">Rota automáticamente cada semana</span></li><li><span class="en">Mark done, see who's behind</span><span class="es">Marcar hecha, ver quién está atrasado</span></li></ul></li>
+  <li><h3><span class="en">Cheap recipe box</span><span class="es">Recetario económico</span></h3><p><span class="en">For cooking on a budget</span><span class="es">Para cocinar con poco presupuesto</span></p><ul><li><span class="en">Save recipes with cost per serving</span><span class="es">Guardar recetas con costo por porción</span></li><li><span class="en">Search by ingredient you have</span><span class="es">Buscar por ingrediente que tienes</span></li><li><span class="en">Build a shopping list</span><span class="es">Armar una lista de compras</span></li></ul></li>
+  <li><h3><span class="en">Club sign-up and attendance</span><span class="es">Inscripción y asistencia del club</span></h3><p><span class="en">For a student club or team</span><span class="es">Para un club o equipo estudiantil</span></p><ul><li><span class="en">Members sign up</span><span class="es">Los miembros se inscriben</span></li><li><span class="en">Check in at each meeting</span><span class="es">Registrar asistencia en cada reunión</span></li><li><span class="en">Attendance count per member</span><span class="es">Conteo de asistencia por miembro</span></li></ul></li>
+  <li><h3><span class="en">Lost and found board</span><span class="es">Tablero de objetos perdidos</span></h3><p><span class="en">For a campus or building</span><span class="es">Para un campus o edificio</span></p><ul><li><span class="en">Post a found item with description and place</span><span class="es">Publicar un objeto encontrado con descripción y lugar</span></li><li><span class="en">Search the list</span><span class="es">Buscar en la lista</span></li><li><span class="en">Mark as returned</span><span class="es">Marcar como devuelto</span></li></ul></li>
+</ol>
+
+<div class="read">
+<h3><span class="en">Bring your own idea: scoping checklist</span><span class="es">Trae tu propia idea: lista de alcance</span></h3>
+<ul>
+  <li><span class="en">You can say who it is for in one sentence.</span><span class="es">Puedes decir para quién es en una oración.</span></li>
+  <li><span class="en">It has exactly three features. Everything else goes on a "later" list.</span><span class="es">Tiene exactamente tres funciones. Todo lo demás va a una lista de "después".</span></li>
+  <li><span class="en">No logins, no payments, no real personal data. Use sample data.</span><span class="es">Sin inicio de sesión, sin pagos, sin datos personales reales. Usa datos de ejemplo.</span></li>
+  <li><span class="en">You can demo it in two minutes.</span><span class="es">Puedes mostrarla en dos minutos.</span></li>
+  <li><span class="en">It does not copy someone else's brand or app.</span><span class="es">No copia la marca ni la app de otra persona.</span></li>
+</ul>
+</div>
+
+<h2 id="prompt"><span class="en">Prompt template</span><span class="es">Plantilla del prompt</span></h2>
+<div class="read">
+<pre class="prompt en">Build a web app called [NAME].
+It is for [WHO] who [PROBLEM THEY HAVE].
+
+Core features (only these three):
+1. [FEATURE 1]
+2. [FEATURE 2]
+3. [FEATURE 3]
+
+Look and feel: [STYLE, for example clean, dark, playful; main colors].
+It must work well on a phone.
+Do not include logins, payments, or real personal data. Load it with realistic sample data so it is easy to demo.</pre>
+<pre class="prompt es">Construye una app web llamada [NOMBRE].
+Es para [QUIÉN] que [PROBLEMA QUE TIENE].
+
+Funciones principales (solo estas tres):
+1. [FUNCIÓN 1]
+2. [FUNCIÓN 2]
+3. [FUNCIÓN 3]
+
+Estilo: [POR EJEMPLO limpio, oscuro, divertido; colores principales].
+Debe funcionar bien en un teléfono.
+No incluyas inicio de sesión, pagos ni datos personales reales. Cárgala con datos de ejemplo realistas para que sea fácil de mostrar.</pre>
+<p><a href="../join/#builder"><span class="en">Use the fill-in version on the join page</span><span class="es">Usa la versión para llenar en la página de unirse</span></a></p>
+
+<h3><span class="en">Weak prompt vs strong prompt</span><span class="es">Prompt débil vs prompt fuerte</span></h3>
+</div>
+<div class="vs">
+  <div><strong><span class="en">Weak</span><span class="es">Débil</span></strong>
+    <p class="en">"Make an app like Instagram but for students."</p><p class="es">"Haz una app como Instagram pero para estudiantes."</p>
+    <p class="muted"><span class="en">Too big, no clear user, no features, borrows someone else's brand.</span><span class="es">Demasiado grande, sin usuario claro, sin funciones, usa la marca de otro.</span></p></div>
+  <div class="good"><strong><span class="en">Strong</span><span class="es">Fuerte</span></strong>
+    <p class="en">"Build a web app called DueToday. It is for college students who forget deadlines. Features: 1. add assignments with class and due date, 2. a 'do today' list sorted by what's due soonest, 3. mark done with a progress bar for the week. Clean, white background, blue accents. Works on a phone. No logins. Load 8 sample assignments."</p>
+    <p class="es">"Construye una app web llamada EntregaHoy. Es para universitarios que olvidan sus fechas de entrega. Funciones: 1. agregar tareas con materia y fecha, 2. una lista de 'hoy' ordenada por lo que vence primero, 3. marcar como hecha con una barra de progreso semanal. Limpia, fondo blanco, detalles en azul. Funciona en teléfono. Sin inicio de sesión. Carga 8 tareas de ejemplo."</p></div>
+</div>
+<div class="vs" style="margin-top:1rem">
+  <div><strong><span class="en">Weak change request</span><span class="es">Solicitud de cambio débil</span></strong><p class="en">"Make it better."</p><p class="es">"Mejórala."</p></div>
+  <div class="good"><strong><span class="en">Strong change request</span><span class="es">Solicitud de cambio fuerte</span></strong><p class="en">"On the 'do today' list, move overdue assignments to the top and show them in red."</p><p class="es">"En la lista de 'hoy', pon las tareas vencidas arriba y muéstralas en rojo."</p></div>
+</div>
+
+<h2 id="speakup"><span class="en">Option: say it instead of typing it</span><span class="es">Opción: dilo en vez de escribirlo</span></h2>
+<div class="read">
+<ol>
+  <li><span class="en">The Product Lead opens SpeakUp and starts recording.</span><span class="es">El Líder de Producto abre SpeakUp y empieza a grabar.</span></li>
+  <li><span class="en">Talk for about two minutes, following the template: name, who it is for, the problem, three features, look and feel. English or Spanish both work.</span><span class="es">Hablen unos dos minutos siguiendo la plantilla: nombre, para quién es, el problema, tres funciones, estilo. Sirve en inglés o en español.</span></li>
+  <li><span class="en">Read the transcript. Fix anything it misheard.</span><span class="es">Lean la transcripción. Corrijan lo que haya entendido mal.</span></li>
+  <li><span class="en">Use "Send to Factory".</span><span class="es">Usen "Send to Factory".</span></li>
+</ol>
+<p><a data-href="speakupUrl" href="#"><span class="en">Open SpeakUp</span><span class="es">Abrir SpeakUp</span></a></p>
+</div>
+
+<h2 id="facilitator"><span class="en">Facilitator guide</span><span class="es">Guía del facilitador</span></h2>
+<div class="read">
+<h3><span class="en">Before the session</span><span class="es">Antes de la sesión</span></h3>
+<p><span class="en">Complete the</span><span class="es">Completa la</span> <a href="../checklist/"><span class="en">pre-event checklist</span><span class="es">lista previa al evento</span></a>. <span class="en">The non-negotiables: six concurrent builds tested, workshop builds isolated from production, and a working fallback app for each of the ten ideas.</span><span class="es">Lo indispensable: seis construcciones simultáneas probadas, construcciones del taller aisladas de producción y una app de respaldo funcionando para cada una de las diez ideas.</span></p>
+<h3><span class="en">During Sprint 0</span><span class="es">Durante el Sprint 0</span></h3>
+<p><span class="en">Approve every prompt before it goes out. Check: one-sentence user, exactly three features, no logins, no payments, no real data. Send it back if not. This 30-second check prevents most failed builds.</span><span class="es">Aprueba cada prompt antes de enviarlo. Revisa: usuario en una oración, exactamente tres funciones, sin inicio de sesión, sin pagos, sin datos reales. Devuélvelo si no cumple. Esta revisión de 30 segundos evita la mayoría de construcciones fallidas.</span></p>
+<h3><span class="en">During Sprints 1 and 2</span><span class="es">Durante los Sprints 1 y 2</span></h3>
+<p><span class="en">Keep a status board with six rows: prompt sent, building, live, iterating, ready. Visit each team about every four minutes. Look for the team that has gone quiet; that is usually the stuck one. If a build has not returned in 15 minutes, give the team its fallback app so it keeps moving.</span><span class="es">Lleva un tablero de estado con seis filas: prompt enviado, construyendo, en vivo, iterando, listo. Visita cada equipo cada cuatro minutos más o menos. Busca al equipo que se quedó callado; casi siempre es el que está atascado. Si una construcción no ha regresado en 15 minutos, dale al equipo su app de respaldo para que siga avanzando.</span></p>
+<h3><span class="en">During the showcase</span><span class="es">Durante las presentaciones</span></h3>
+<p><span class="en">Hold a visible timer. Clap at 3 minutes. After each demo, ask one question: "Who would use this first?" Celebrate failures that were handled well as loudly as clean demos.</span><span class="es">Ten un cronómetro visible. Aplaude a los 3 minutos. Después de cada demostración, haz una pregunta: "¿Quién la usaría primero?" Celebra los fallos bien manejados con la misma fuerza que las demostraciones perfectas.</span></p>
+<h3><span class="en">After the session</span><span class="es">Después de la sesión</span></h3>
+<p><span class="en">Decide in advance how long workshop apps stay online, tell participants, and shut them down on that date.</span><span class="es">Decide con anticipación cuánto tiempo estarán en línea las apps del taller, avísales a los participantes y apágalas en esa fecha.</span></p>
+</div>
+
+<h2 id="trouble"><span class="en">Troubleshooting</span><span class="es">Solución de problemas</span></h2>
+<dl class="fix read">
+  <dt><span class="en">The build failed</span><span class="es">La construcción falló</span></dt>
+  <dd><span class="en">Read the error out loud as a team. Remove one feature from the prompt and send it again. Tell the facilitator; if it fails twice, switch to the fallback app and spend Sprint 2 improving that.</span><span class="es">Lean el error en voz alta como equipo. Quiten una función del prompt y envíenlo de nuevo. Avísenle al facilitador; si falla dos veces, cambien a la app de respaldo y usen el Sprint 2 para mejorarla.</span></dd>
+  <dt><span class="en">The build is taking a long time</span><span class="es">La construcción se está demorando</span></dt>
+  <dd><span class="en">Do not send it again; duplicates slow everyone down. Use the time for the test list and the demo script.</span><span class="es">No la vuelvan a enviar; los duplicados hacen todo más lento para todos. Usen el tiempo para la lista de pruebas y el guion de la demostración.</span></dd>
+  <dt><span class="en">It works, but not the way we wanted</span><span class="es">Funciona, pero no como queríamos</span></dt>
+  <dd><span class="en">Write one specific change per request: where on the screen, what should happen, what it should look like.</span><span class="es">Escriban un cambio específico por solicitud: en qué parte de la pantalla, qué debe pasar y cómo debe verse.</span></dd>
+  <dt><span class="en">The Wi-Fi dropped</span><span class="es">Se cayó el Wi-Fi</span></dt>
+  <dd><span class="en">The facilitator turns on the backup hotspot. This guide and the join page keep working offline once you have opened them.</span><span class="es">El facilitador activa el hotspot de respaldo. Esta guía y la página de unirse siguen funcionando sin conexión una vez que las hayan abierto.</span></dd>
+  <dt><span class="en">We can't agree on an idea</span><span class="es">No nos ponemos de acuerdo en la idea</span></dt>
+  <dd><span class="en">Two minutes, then the Product Lead decides. Put the other idea on your "later" list.</span><span class="es">Dos minutos y luego decide el Líder de Producto. Pongan la otra idea en su lista de "después".</span></dd>
+  <dt><span class="en">We're stuck and don't know what to change</span><span class="es">Estamos atascados y no sabemos qué cambiar</span></dt>
+  <dd><span class="en">Hand the phone to someone from another team for one minute and watch what confuses them. Fix that.</span><span class="es">Denle el teléfono a alguien de otro equipo por un minuto y observen qué lo confunde. Arreglen eso.</span></dd>
+</dl>
+
+</div></main>
+</body>
+</html>

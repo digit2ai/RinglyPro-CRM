@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2430E0">
+<title>Join | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+body{background:var(--cobalt);color:var(--white);padding-bottom:env(safe-area-inset-bottom,0px)}
+.top{display:flex;justify-content:space-between;align-items:center;padding:calc(1rem + env(safe-area-inset-top,0px)) 1.25rem 0;max-width:40rem;margin:0 auto}
+.top .brand{font-size:1.1rem}
+.j{max-width:40rem;margin:0 auto;padding:1.5rem 1.25rem 3rem}
+.j h1{font-size:clamp(2.6rem,12vw,4rem);line-height:.95;letter-spacing:-.03em;margin:.5rem 0 1rem}
+.j h2{font-size:1.5rem;margin:2.5rem 0 .8rem}
+.j p{color:var(--mist)}
+.teams{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.teams button{font:inherit;font-family:var(--display);font-weight:800;font-size:1.6rem;padding:1rem 0;border-radius:.8rem;border:2px solid var(--mist);background:transparent;color:var(--white);cursor:pointer}
+.teams button[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:var(--ink)}
+.picked{margin-top:.8rem;font-weight:700;color:var(--white)}
+.agenda{list-style:none;padding:0;margin:0}
+.agenda li{display:flex;gap:1rem;padding:.6rem 0;border-bottom:1px solid rgba(201,205,255,.35)}
+.agenda b{font-family:var(--display);min-width:4.5rem}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.roles div{border:2px solid var(--mist);border-radius:.8rem;padding:.8rem;font-size:.95rem;color:var(--mist)}
+.roles strong{display:block;color:var(--white);font-family:var(--display)}
+.panel{background:var(--paper);color:var(--ink);border-radius:1rem;padding:1.25rem}
+.panel p{color:#4A4F86}
+.field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.9rem}
+.field label{font-weight:700;font-size:.95rem}
+.field input{font:inherit;padding:.7rem .8rem;border:2px solid var(--line);border-radius:.5rem;background:var(--white);color:var(--ink)}
+.field input:focus{border-color:var(--cobalt);outline:none}
+#out{white-space:pre-wrap;background:var(--ink);color:var(--white);border-radius:.6rem;padding:1rem;font-size:.95rem;line-height:1.55;margin:1rem 0}
+.acts{display:flex;flex-wrap:wrap;gap:.6rem}
+.acts .btn{flex:1 1 auto;text-align:center}
+.ok{color:#0A7A3C;font-weight:700;min-height:1.4em;margin:.5rem 0 0}
+.res a{color:var(--white)}
+.res li{margin-bottom:.8rem;color:var(--mist)}
+</style>
+</head>
+<body>
+<div class="top"><span class="brand" data-ev="title"></span><button class="lang-btn" type="button"></button></div>
+<main class="j">
+  <h1><span class="en">You're in. Let's build.</span><span class="es">Ya estás dentro. A construir.</span></h1>
+  <p><span class="en">Keep this page open. It has your team, your prompt, and the link to the Factory.</span><span class="es">Mantén esta página abierta. Tiene tu equipo, tu prompt y el enlace a la Factory.</span></p>
+
+  <h2><span class="en">Your team</span><span class="es">Tu equipo</span></h2>
+  <div class="teams" id="teams" role="group" aria-label="Team number"></div>
+  <p class="picked" id="picked" aria-live="polite"></p>
+
+  <h2><span class="en">Roles</span><span class="es">Roles</span></h2>
+  <div class="roles">
+    <div><strong><span class="en">Product Lead</span><span class="es">Líder de Producto</span></strong><span class="en">Owns the idea, decides</span><span class="es">Dueño de la idea, decide</span></div>
+    <div><strong><span class="en">Prompt Writer</span><span class="es">Redactor de Prompts</span></strong><span class="en">Writes and sends prompts</span><span class="es">Escribe y envía prompts</span></div>
+    <div><strong><span class="en">Tester</span><span class="es">Probador</span></strong><span class="en">Tries to break it</span><span class="es">Intenta romperla</span></div>
+    <div><strong><span class="en">Presenter</span><span class="es">Presentador</span></strong><span class="en">Gives the 3-minute demo</span><span class="es">Da la demostración de 3 min</span></div>
+  </div>
+
+  <h2><span class="en">The next 90 minutes</span><span class="es">Los próximos 90 minutos</span></h2>
+  <ol class="agenda">
+    <li><b>15 min</b><span class="en">Pick roles and an idea, write your prompt</span><span class="es">Escoger roles e idea, escribir el prompt</span></li>
+    <li><b>25 min</b><span class="en">Send it to the Factory, get your first live version</span><span class="es">Enviarlo a la Factory, obtener la primera versión en vivo</span></li>
+    <li><b>25 min</b><span class="en">Test it, improve it, rehearse</span><span class="es">Probarla, mejorarla, ensayar</span></li>
+    <li><b>20 min</b><span class="en">Showcase: 3 minutes per team</span><span class="es">Presentaciones: 3 minutos por equipo</span></li>
+    <li><b>5 min</b><span class="en">Close</span><span class="es">Cierre</span></li>
+  </ol>
+  <p style="margin-top:1rem"><a href="../workshop/#ideas" style="color:var(--white)"><span class="en">See the 10 app ideas</span><span class="es">Ver las 10 ideas de apps</span></a></p>
+
+  <h2 id="builder"><span class="en">Build your prompt</span><span class="es">Arma tu prompt</span></h2>
+  <div class="panel">
+    <p><span class="en">Fill in the blanks. Keep it to three features. Show it to the facilitator, then send it.</span><span class="es">Llena los espacios. Máximo tres funciones. Muéstraselo al facilitador y luego envíalo.</span></p>
+    <div class="field"><label for="f-name"><span class="en">App name</span><span class="es">Nombre de la app</span></label><input id="f-name" data-k="name"></div>
+    <div class="field"><label for="f-who"><span class="en">Who is it for?</span><span class="es">¿Para quién es?</span></label><input id="f-who" data-k="who"></div>
+    <div class="field"><label for="f-prob"><span class="en">What problem do they have?</span><span class="es">¿Qué problema tienen?</span></label><input id="f-prob" data-k="prob"></div>
+    <div class="field"><label for="f-1"><span class="en">Feature 1</span><span class="es">Función 1</span></label><input id="f-1" data-k="f1"></div>
+    <div class="field"><label for="f-2"><span class="en">Feature 2</span><span class="es">Función 2</span></label><input id="f-2" data-k="f2"></div>
+    <div class="field"><label for="f-3"><span class="en">Feature 3</span><span class="es">Función 3</span></label><input id="f-3" data-k="f3"></div>
+    <div class="field"><label for="f-look"><span class="en">Look and feel</span><span class="es">Estilo</span></label><input id="f-look" data-k="look"></div>
+    <div id="out" aria-live="polite"></div>
+    <div class="acts">
+      <button class="btn" type="button" id="copy"><span class="en">Copy prompt</span><span class="es">Copiar prompt</span></button>
+      <a class="btn signal" data-href="factoryUrl" href="#" target="_blank" rel="noopener"><span class="en">Open the Factory</span><span class="es">Abrir la Factory</span></a>
+      <a class="btn alt" data-href="speakupUrl" href="#" target="_blank" rel="noopener"><span class="en">Say it in SpeakUp</span><span class="es">Decirlo en SpeakUp</span></a>
+    </div>
+    <p class="ok" id="ok" aria-live="polite"></p>
+  </div>
+
+  <h2><span class="en">After today</span><span class="es">Después de hoy</span></h2>
+  <ul class="res">
+    <li><span class="en">This week, talk to five people about the problem your app solves. Ask what annoys them most. That is your next prompt.</span><span class="es">Esta semana, habla con cinco personas sobre el problema que resuelve tu app. Pregúntales qué es lo que más les molesta. Ese es tu siguiente prompt.</span></li>
+    <li><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener"><span class="en">Learn how MCP works</span><span class="es">Aprende cómo funciona MCP</span></a></li>
+    <li><a href="https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener"><span class="en">Get better at writing prompts</span><span class="es">Aprende a escribir mejores prompts</span></a></li>
+    <li><span class="en">Remember the four rules: verify, protect data, be honest about AI use, own the result.</span><span class="es">Recuerda las cuatro reglas: verifica, protege los datos, sé honesto sobre el uso de IA, responde por el resultado.</span></li>
+  </ul>
+  <p style="margin-top:2rem;font-size:.9rem"><span data-ev="host"></span> | <span data-ev="presenter"></span></p>
+</main>
+<script>
+(function(){
+  var E = window.EVENT, KEYT="bwa-team", KEYP="bwa-prompt";
+  function st(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){ return null; } }
+  var teams = document.getElementById("teams"), picked = document.getElementById("picked");
+  for(var n=1;n<=(E.teams||6);n++){ var b=document.createElement("button"); b.type="button"; b.textContent=n; b.dataset.n=n; teams.appendChild(b); }
+  function showTeam(){ var t=st(KEYT); teams.querySelectorAll("button").forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.n===t)); });
+    picked.textContent = t ? (BWA.lang()==="es" ? "Estás en el Equipo "+t+"." : "You're on Team "+t+".") : (BWA.lang()==="es" ? "Toca el número de tu equipo." : "Tap your team number."); }
+  teams.addEventListener("click", function(e){ var n=e.target.dataset && e.target.dataset.n; if(n){ st(KEYT,n); showTeam(); } });
+
+  var inputs = document.querySelectorAll("input[data-k]"), saved = {};
+  try{ saved = JSON.parse(st(KEYP)||"{}"); }catch(e){}
+  inputs.forEach(function(i){ i.value = saved[i.dataset.k]||""; i.addEventListener("input", build); });
+  var ph = { en:{name:"DueToday",who:"college students",prob:"forget their deadlines",f1:"add assignments with class and due date",f2:"a 'do today' list sorted by what's due soonest",f3:"mark done with a weekly progress bar",look:"clean, white background, blue accents"},
+             es:{name:"EntregaHoy",who:"estudiantes universitarios",prob:"olvidan sus fechas de entrega",f1:"agregar tareas con materia y fecha",f2:"una lista de 'hoy' ordenada por lo que vence primero",f3:"marcar como hecha con una barra de progreso semanal",look:"limpia, fondo blanco, detalles en azul"} };
+  function v(k){ var el=document.querySelector('[data-k="'+k+'"]'); return el.value.trim() || "["+el.placeholder+"]"; }
+  function build(){
+    var d={}; inputs.forEach(function(i){ d[i.dataset.k]=i.value; }); st(KEYP, JSON.stringify(d));
+    var L = BWA.lang(), t;
+    if(L==="es") t = "Construye una app web llamada "+v("name")+".\nEs para "+v("who")+" que "+v("prob")+".\n\nFunciones principales (solo estas tres):\n1. "+v("f1")+"\n2. "+v("f2")+"\n3. "+v("f3")+"\n\nEstilo: "+v("look")+".\nDebe funcionar bien en un teléfono.\nNo incluyas inicio de sesión, pagos ni datos personales reales. Cárgala con datos de ejemplo realistas para que sea fácil de mostrar.";
+    else t = "Build a web app called "+v("name")+".\nIt is for "+v("who")+" who "+v("prob")+".\n\nCore features (only these three):\n1. "+v("f1")+"\n2. "+v("f2")+"\n3. "+v("f3")+"\n\nLook and feel: "+v("look")+".\nIt must work well on a phone.\nDo not include logins, payments, or real personal data. Load it with realistic sample data so it is easy to demo.";
+    document.getElementById("out").textContent = t; return t;
+  }
+  document.addEventListener("langchange", function(){ var L=BWA.lang(); inputs.forEach(function(i){ i.placeholder = ph[L][i.dataset.k]; }); build(); showTeam(); });
+  document.getElementById("copy").addEventListener("click", function(){
+    var t = build(), ok = document.getElementById("ok"), L = BWA.lang();
+    function done(){ ok.textContent = L==="es" ? "Prompt copiado. Pégalo en la Factory." : "Prompt copied. Paste it into the Factory."; }
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done, fallback); } else fallback();
+    function fallback(){ var ta=document.createElement("textarea"); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); done(); }catch(e){ ok.textContent = L==="es" ? "No se pudo copiar. Mantén presionado el texto para copiarlo." : "Copy failed. Press and hold the text to copy it."; } ta.remove(); }
+  });
+})();
+</script>
+</body>
+</html>

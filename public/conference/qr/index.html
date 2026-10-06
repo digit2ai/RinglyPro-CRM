@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join QR | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+body{background:var(--white)}
+.card{max-width:34rem;margin:0 auto;padding:3rem 1.5rem;text-align:center}
+.card h1{font-size:clamp(2.6rem,9vw,4rem);color:var(--cobalt)}
+.card img{width:100%;max-width:22rem;height:auto;margin:1.5rem auto;display:block}
+.card .u{font-family:var(--display);font-weight:600;word-break:break-all}
+.tools{position:fixed;top:1rem;right:1rem;display:flex;gap:.5rem}
+.tools .lang-btn{color:var(--ink);border-color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="tools no-print"><button class="btn" type="button" onclick="window.print()"><span class="en">Print</span><span class="es">Imprimir</span></button><button class="lang-btn" type="button"></button></div>
+<div class="card">
+  <h1 data-ev="title"></h1>
+  <p style="font-size:1.3rem"><span class="en">Scan to join your team</span><span class="es">Escanea para unirte a tu equipo</span></p>
+  <img src="../assets/qr-join.svg" alt="QR code to the join page">
+  <p class="u" data-ev="joinUrl"></p>
+</div>
+</body>
+</html>

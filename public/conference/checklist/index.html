@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pre-event checklist | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<style>
+.grp{margin-top:2.5rem}
+.grp h2{margin:0 0 .8rem;font-size:1.5rem}
+.item{display:flex;gap:.8rem;align-items:flex-start;background:var(--white);border:1px solid var(--line);padding:.8rem 1rem;margin-bottom:-1px;cursor:pointer}
+.item input{width:1.3rem;height:1.3rem;margin-top:.15rem;accent-color:var(--cobalt);flex:none}
+.item.done span{color:#7A7FB0;text-decoration:line-through}
+.item small{display:block;color:#4A4F86;text-decoration:none}
+.count{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--signal)}
+</style>
+</head>
+<body>
+<header id="site-header" data-root="../" data-page="checklist/"></header>
+<div class="hero"><div class="wrap">
+  <h1><span class="en">Pre-event checklist</span><span class="es">Lista previa al evento</span></h1>
+  <p class="lede"><span class="en">Check things off as you verify them. Progress is saved on this device.</span><span class="es">Marca cada punto a medida que lo verificas. El avance se guarda en este dispositivo.</span></p>
+  <p style="margin-top:1rem"><span class="count" id="count"></span></p>
+</div></div>
+<main><div class="wrap read" id="list"></div>
+<div class="wrap no-print" style="margin-top:2rem"><button class="btn alt" type="button" id="reset"><span class="en">Clear all checks</span><span class="es">Borrar todas las marcas</span></button></div></main>
+<script>
+var G = [
+ {g:{en:"Configuration",es:"Configuración"}, items:[
+  {en:"Set date, start time and venue in assets/config.js",es:"Definir fecha, hora de inicio y lugar en assets/config.js"},
+  {en:"Confirm the Factory URL teams will use (factoryUrl in config.js)",es:"Confirmar el URL de la Factory que usarán los equipos (factoryUrl en config.js)"},
+  {en:"Confirm the agent count on slide 10 (agentCount in config.js)",es:"Confirmar el número de agentes en la diapositiva 10 (agentCount en config.js)"},
+  {en:"Scan the QR on the live site and confirm it opens /conference/join/",es:"Escanear el QR en el sitio en vivo y confirmar que abre /conference/join/"}]},
+ {g:{en:"Factory and capacity",es:"Factory y capacidad"}, items:[
+  {en:"Factory access ready for 6 teams (accounts or a shared team login)",es:"Acceso a la Factory listo para 6 equipos (cuentas o un acceso compartido por equipo)"},
+  {en:"Run 6 builds at the same time and record how long they take",es:"Correr 6 construcciones al mismo tiempo y anotar cuánto tardan",note:{en:"If the slowest takes more than 15 minutes, plan to hand out fallback apps early.",es:"Si la más lenta tarda más de 15 minutos, planea entregar las apps de respaldo temprano."}},
+  {en:"Model API rate limits and spending cap checked for 6 teams plus the live keynote build",es:"Límites de uso y tope de gasto de la API del modelo revisados para 6 equipos más la construcción en vivo"},
+  {en:"Workshop builds go to a separate repo or namespace, never to production tenants or data",es:"Las construcciones del taller van a un repositorio o espacio separado, nunca a clientes ni datos de producción"},
+  {en:"Render plan can hold 6 or more new services that night",es:"El plan de Render soporta 6 o más servicios nuevos esa noche"},
+  {en:"Decide when workshop apps get shut down, and put a reminder on your calendar",es:"Decidir cuándo se apagan las apps del taller y poner un recordatorio en el calendario"}]},
+ {g:{en:"Fallbacks",es:"Respaldos"}, items:[
+  {en:"A working fallback app built for each of the 10 ideas",es:"Una app de respaldo funcionando para cada una de las 10 ideas"},
+  {en:"Fallback for the keynote hook build, in case the live one fails",es:"Respaldo para la construcción en vivo del gancho, por si falla"},
+  {en:"Screen recording of the full pipeline (talk, Factory, live link) saved offline",es:"Grabación de pantalla del flujo completo (hablar, Factory, enlace en vivo) guardada sin conexión"},
+  {en:"Phone hotspot tested with the laptop",es:"Hotspot del teléfono probado con la laptop"}]},
+ {g:{en:"Room and equipment",es:"Salón y equipo"}, items:[
+  {en:"Projector input tested with your laptop and adapter",es:"Entrada del proyector probada con tu laptop y adaptador"},
+  {en:"Presenter view tested on two screens (press P in the keynote)",es:"Vista de presentador probada en dos pantallas (presiona P en la conferencia)"},
+  {en:"Microphone, power strips, six tables",es:"Micrófono, multitomas, seis mesas"},
+  {en:"Wi-Fi name and password posted where everyone can see it",es:"Nombre y contraseña del Wi-Fi visibles para todos"}]},
+ {g:{en:"Print",es:"Impresión"}, items:[
+  {en:"One QR card per table (open the printable QR page)",es:"Una tarjeta con QR por mesa (abre la página de QR para imprimir)"},
+  {en:"Speaker script printed as a backup",es:"Guion del presentador impreso como respaldo"},
+  {en:"Prompt template cards, one per team",es:"Tarjetas con la plantilla del prompt, una por equipo"}]},
+ {g:{en:"Day of",es:"El día del evento"}, items:[
+  {en:"Full keynote rehearsal with the timer",es:"Ensayo completo de la conferencia con el reloj"},
+  {en:"Pick a backup idea for the hook in case the room is quiet",es:"Escoger una idea de respaldo para el gancho por si el público no participa"},
+  {en:"Reset the keynote timer and build clock before doors open",es:"Reiniciar el reloj de la conferencia y el de construcción antes de abrir puertas"},
+  {en:"Open every page once on the presenter laptop so it works offline",es:"Abrir cada página una vez en la laptop para que funcione sin conexión"}]}
+];
+(function(){
+  var KEY="bwa-checklist", s={}; try{ s=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+  function bi(o){ return '<span class="en">'+o.en+'</span><span class="es">'+o.es+'</span>'; }
+  var html="", total=0;
+  G.forEach(function(g,a){ html += '<section class="grp"><h2>'+bi(g.g)+'</h2>';
+    g.items.forEach(function(it,b){ var id=a+"-"+b; total++;
+      html += '<label class="item'+(s[id]?' done':'')+'"><input type="checkbox" data-id="'+id+'"'+(s[id]?' checked':'')+'><span>'+bi(it)+(it.note?'<small>'+bi(it.note)+'</small>':'')+'</span></label>'; });
+    html += '</section>'; });
+  var list=document.getElementById("list"); list.innerHTML=html;
+  function count(){ var d=Object.keys(s).filter(function(k){return s[k];}).length; document.getElementById("count").innerHTML = d+" / "+total+' <span class="en">done</span><span class="es">listos</span>'; }
+  list.addEventListener("change", function(e){ var id=e.target.dataset.id; s[id]=e.target.checked; e.target.parentNode.classList.toggle("done", e.target.checked); save(); count(); });
+  document.getElementById("reset").onclick=function(){ s={}; save(); list.querySelectorAll("input").forEach(function(i){ i.checked=false; i.parentNode.classList.remove("done"); }); count(); };
+  count();
+})();
+</script>
+</body>
+</html>

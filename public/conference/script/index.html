@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Speaker script | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<script src="../assets/slides.js"></script>
+<style>
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;border-bottom:3px solid var(--ink);padding-bottom:.4rem}
+.sec-head h2{margin:0}
+.sec-head .range{font-family:var(--display);font-weight:600;color:var(--cobalt)}
+.cue{display:grid;grid-template-columns:5.5rem 1fr;gap:1.25rem;padding:1.5rem 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.cue .t{font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--cobalt)}
+.cue .t small{display:block;font-family:var(--body);font-weight:400;font-size:.85rem;color:#4A4F86}
+.cue h3{margin:0 0 .6rem;font-size:1.2rem}
+.say{white-space:pre-line;font-size:1.15rem;line-height:1.65;max-width:44rem}
+.cutnote{margin-top:1rem}
+@media (max-width:600px){.cue{grid-template-columns:1fr;gap:.25rem}}
+</style>
+</head>
+<body>
+<header id="site-header" data-root="../" data-page="script/"></header>
+<div class="hero"><div class="wrap">
+  <h1><span class="en">Speaker script</span><span class="es">Guion del presentador</span></h1>
+  <p class="lede"><span class="en">Word for word, slide by slide, with timing marks. Text in brackets is a stage direction, not something to say. Each section has a cut version if you run long.</span><span class="es">Palabra por palabra, diapositiva por diapositiva, con marcas de tiempo. El texto entre corchetes es una indicación, no algo para decir. Cada sección tiene una versión corta por si se alarga.</span></p>
+  <p style="margin-top:1.5rem" class="no-print"><button class="btn signal" type="button" onclick="window.print()"><span class="en">Print script</span><span class="es">Imprimir guion</span></button></p>
+</div></div>
+<main><div class="wrap" id="out"></div></main>
+<script>
+(function(){
+  var S = window.SLIDES, SEC = window.SECTIONS, E = window.EVENT, out = document.getElementById("out");
+  function fmt(m){ var s=Math.round(m*60); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
+  function esc(t){ return String(t).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  function render(){
+    var html = "", t = 0;
+    SEC.forEach(function(sec, k){
+      var items = S.map(function(s,i){return {s:s,i:i};}).filter(function(x){return x.s.sec===k+1;});
+      var start = t, dur = items.reduce(function(a,x){return a+x.s.min;},0);
+      html += '<section><div class="sec-head"><h2><span class="en">'+(k+1)+'. '+sec.en+'</span><span class="es">'+(k+1)+'. '+sec.es+'</span></h2><span class="range">'+fmt(start)+' – '+fmt(start+dur)+'</span></div>';
+      items.forEach(function(x){
+        var s=x.s;
+        ["en","es"].forEach(function(L){
+          var o=s[L];
+          html += '<div class="cue '+L+'"><div class="t">'+fmt(t)+'<small>'+(L==="es"?"Diap. ":"Slide ")+(x.i+1)+' | '+s.min+' min</small></div><div><h3>'+esc(o.title)+'</h3><div class="say">'+esc(o.notes).replace("{AGENTS}", esc(E.agentCount[L]))+'</div>'+
+            (o.cut?'<div class="note cutnote"><strong>'+(L==="es"?"Versión corta: ":"Cut version: ")+'</strong>'+esc(o.cut)+'</div>':'')+'</div></div>';
+        });
+        t += s.min;
+      });
+      html += '</section>';
+    });
+    out.innerHTML = html;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

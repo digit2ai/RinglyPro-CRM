@@ -1,0 +1,73 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap");
+
+:root{
+  --cobalt:#2430E0;      /* brand field: blueprint blue */
+  --ink:#0C1150;         /* deep navy for text on light, panels on blue */
+  --paper:#F5F6FF;       /* page background for reading pages */
+  --mist:#C9CDFF;        /* secondary text on blue */
+  --signal:#FFD93B;      /* current / action / attention */
+  --line:#D6D9F5;        /* rules on light */
+  --white:#FFFFFF;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", "Verdana", "Segoe UI", system-ui, sans-serif;
+  --s1:.25rem;--s2:.5rem;--s3:1rem;--s4:1.5rem;--s5:2.5rem;--s6:4rem;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:var(--body);font-size:1.0625rem;line-height:1.55;color:var(--ink);background:var(--paper)}
+a{color:var(--cobalt)}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+img,svg{max-width:100%}
+
+/* language toggle: content is written twice, CSS shows one */
+html[lang="en"] .es{display:none!important}
+html[lang="es"] .en{display:none!important}
+
+/* header band */
+.band{background:var(--cobalt);color:var(--white)}
+.band-inner{max-width:72rem;margin:0 auto;padding:var(--s3) var(--s4);display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:1.25rem;letter-spacing:-.01em;color:var(--white);text-decoration:none}
+.nav{display:flex;gap:var(--s3);flex-wrap:wrap;flex:1}
+.nav a{color:var(--mist);text-decoration:none;font-size:.95rem;padding:.2rem 0;border-bottom:2px solid transparent}
+.nav a:hover{color:var(--white)}
+.nav a[aria-current="page"]{color:var(--white);border-bottom-color:var(--signal)}
+.lang-btn{font:inherit;font-size:.9rem;background:transparent;color:var(--white);border:1.5px solid var(--mist);border-radius:999px;padding:.3rem .9rem;cursor:pointer}
+.lang-btn:hover{border-color:var(--white)}
+
+/* page title area */
+.hero{background:var(--cobalt);color:var(--white);padding:var(--s5) 0 var(--s6)}
+.wrap{max-width:72rem;margin:0 auto;padding:0 var(--s4)}
+.read{max-width:46rem}
+h1,h2,h3{font-family:var(--display);line-height:1.08;letter-spacing:-.02em;margin:0 0 var(--s3)}
+h1{font-size:clamp(2.4rem,6vw,4.5rem);font-weight:800}
+h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;margin-top:var(--s6)}
+h3{font-size:1.25rem;font-weight:600;margin-top:var(--s5)}
+.lede{font-size:1.25rem;color:var(--mist);max-width:40rem;margin:0}
+main{padding:var(--s5) 0 var(--s6)}
+p{margin:0 0 var(--s3)}
+ul,ol{padding-left:1.25rem;margin:0 0 var(--s3)}
+li{margin-bottom:.35rem}
+.muted{color:#4A4F86}
+.note{border-left:4px solid var(--signal);background:var(--white);padding:var(--s3) var(--s4);margin:var(--s4) 0}
+
+/* buttons */
+.btn{display:inline-block;font:inherit;font-weight:700;text-decoration:none;cursor:pointer;border-radius:.6rem;padding:.75rem 1.25rem;border:2px solid var(--ink);background:var(--ink);color:var(--white)}
+.btn.alt{background:transparent;color:var(--ink)}
+.btn.signal{background:var(--signal);border-color:var(--signal);color:var(--ink)}
+
+/* tables scroll inside their own box */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:52rem;background:var(--white)}
+th,td{text-align:left;vertical-align:top;padding:.75rem;border-bottom:1px solid var(--line);font-size:.95rem}
+th{font-family:var(--display);font-weight:600;background:var(--ink);color:var(--white)}
+td.time{font-family:var(--display);font-weight:800;font-size:1.1rem;white-space:nowrap}
+tr.part td{background:#E8EAFF;font-family:var(--display);font-weight:800}
+
+@media print{
+  .band,.lang-btn,.no-print{display:none!important}
+  .hero{background:none;color:var(--ink);padding:0}
+  .lede{color:var(--ink)}
+  body{background:#fff;font-size:11pt}
+  h2{margin-top:1.5rem;break-after:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

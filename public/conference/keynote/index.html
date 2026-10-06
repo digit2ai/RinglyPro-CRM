@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22%3E%3Crect width=%2210%22 height=%2210%22 rx=%222%22 fill=%22%232430E0%22/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Keynote | Build With AI</title>
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/config.js"></script>
+<script src="../assets/site.js"></script>
+<script src="../assets/slides.js"></script>
+<style>
+html,body{height:100%}
+body{background:var(--cobalt);color:var(--white);overflow:hidden}
+.deck{position:relative;height:100%;width:100%}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;padding:6vh 7vw 12vh}
+.slide.on{display:flex}
+.slide .num{position:absolute;top:4vh;left:7vw;font-family:var(--display);font-weight:600;color:var(--mist);font-size:clamp(.9rem,1.4vw,1.2rem)}
+.slide h1{font-size:clamp(2.2rem,5.4vw,5.6rem);max-width:22ch;margin-bottom:2.5vh}
+.slide .body{font-size:clamp(1.1rem,2vw,1.8rem);color:var(--mist);max-width:42ch;margin:0 0 4vh}
+.slide.title h1{font-size:clamp(3.5rem,11vw,11rem);line-height:.92;letter-spacing:-.04em;max-width:none}
+.slide.title .body{color:var(--white);font-size:clamp(1.3rem,2.6vw,2.4rem)}
+.v-title-meta{display:flex;flex-direction:column;gap:.3rem;color:var(--mist);font-size:clamp(1rem,1.6vw,1.4rem)}
+.v-title-meta span:first-child{color:var(--white);font-weight:700}
+
+/* section progress: sections are a real sequence */
+.progress{position:fixed;left:7vw;right:7vw;bottom:4vh;display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem}
+.progress div{border-top:4px solid rgba(255,255,255,.25);padding-top:.4rem;font-size:clamp(.7rem,1vw,.95rem);color:var(--mist)}
+.progress div.done{border-top-color:var(--mist)}
+.progress div.cur{border-top-color:var(--signal);color:var(--white)}
+
+/* visuals */
+.v-split{display:grid;grid-template-columns:1fr 1fr;gap:2.5vw;max-width:70rem}
+.v-col{border:2px solid var(--mist);border-radius:1rem;padding:3vh 2.5vw;font-size:clamp(1rem,1.9vw,1.7rem)}
+.v-col.on{background:var(--white);color:var(--ink);border-color:var(--white)}
+.v-col h3{font-size:clamp(1.3rem,2.6vw,2.4rem);margin:0 0 1.5vh}
+.v-col ul{list-style:none;padding:0;margin:0}.v-col li{margin:.6vh 0}
+.v-col p{margin:0}.v-quote{font-style:italic}
+.v-loop{list-style:none;counter-reset:s;display:flex;flex-wrap:wrap;gap:1.2vw;padding:0;margin:0}
+.v-loop li{counter-increment:s;display:flex;align-items:center;gap:.8vw;font-size:clamp(1.1rem,2.3vw,2.2rem);border:2px solid var(--mist);border-radius:999px;padding:1.4vh 2vw 1.4vh 1vw}
+.v-loop li::before{content:counter(s);display:grid;place-items:center;width:2.2em;height:2.2em;border-radius:50%;background:var(--signal);color:var(--ink);font-family:var(--display);font-weight:800;font-size:.8em}
+.v-loop li:last-child{border-style:dashed}
+.v-cap{margin-top:3vh;color:var(--mist);font-size:clamp(1rem,1.8vw,1.6rem)}
+.v-stack{list-style:none;padding:0;margin:0;max-width:60rem}
+.v-stack li{font-size:clamp(1.2rem,2.5vw,2.3rem);border-left:6px solid var(--signal);padding:.6vh 0 .6vh 1.5vw;margin:1.4vh 0}
+.v-stack.warn li{border-left-color:var(--mist)}
+.v-mcp{width:auto;max-width:62vw;height:46vh}
+.v-mcp .ln line{stroke:var(--mist);stroke-width:2.5}
+.v-mcp .hub{fill:var(--white)}
+.v-mcp .hubt{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:40px;text-anchor:middle}
+.v-mcp .hubs{fill:var(--cobalt);font-family:var(--display);font-weight:800;font-size:20px;text-anchor:middle}
+.v-mcp .tool rect{fill:var(--cobalt);stroke:var(--white);stroke-width:2.5}
+.v-mcp .tool text{fill:var(--white);font-family:var(--body);font-size:18px;text-anchor:middle}
+html[lang="en"] .v-mcp tspan.es,html[lang="es"] .v-mcp tspan.en{display:none}
+.v-org{width:100%;display:flex;flex-direction:column;align-items:center;gap:2.4vh;font-size:clamp(.95rem,1.7vw,1.5rem);max-width:72rem}
+.v-org>div:not(.o-row),.o-row div{border:2px solid var(--mist);border-radius:.8rem;padding:1.2vh 1.6vw;text-align:center}
+.v-org .o-top{background:var(--signal);color:var(--ink);border-color:var(--signal)!important;font-weight:700}
+.v-org .o-mid{background:var(--white);color:var(--ink);border-color:var(--white)!important;font-family:var(--display);font-weight:800;font-size:1.3em}
+.v-org small,.v-flow small,.v-pipe small{display:block;font-family:var(--body);font-weight:400;font-size:.65em;opacity:.8}
+.o-row{display:grid;grid-template-columns:repeat(6,1fr);gap:1vw;width:100%}
+.v-flow,.v-pipe{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2.4vw;list-style:none;padding:0;margin:0;max-width:76rem;font-size:clamp(1rem,1.9vw,1.7rem)}
+.v-flow div,.v-pipe li{position:relative;border:2px solid var(--mist);border-radius:.8rem;padding:2vh 1.2vw;text-align:center}
+.v-flow div:not(:last-child)::after,.v-pipe li:not(:last-child)::after{content:"";position:absolute;right:calc(-2.4vw + 2px);top:50%;width:calc(2.4vw - 4px);border-top:3px solid var(--signal)}
+.v-flow .on{background:var(--white);color:var(--ink);border-color:var(--white)}
+.v-pipe li:last-child{background:var(--signal);color:var(--ink);border-color:var(--signal);font-weight:700}
+.v-roles{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5vw;max-width:76rem}
+.v-roles div,.v-rules li{border:2px solid var(--mist);border-radius:.8rem;padding:2vh 1.4vw;font-size:clamp(.95rem,1.6vw,1.4rem);display:flex;flex-direction:column;gap:.8vh}
+.v-roles b,.v-rules b{font-family:var(--display);font-size:1.3em}
+.v-rules{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5vw;max-width:80rem;counter-reset:r}
+.v-rules li{counter-increment:r}
+.v-rules li::before{content:counter(r);font-family:var(--display);font-weight:800;color:var(--signal);font-size:2.2em;line-height:1}
+.v-join{display:flex;align-items:center;gap:4vw}
+.v-join img{background:var(--white);padding:1.2rem;border-radius:1rem;width:min(36vh,30vw);height:auto}
+.v-url{font-family:var(--display);font-weight:600;font-size:clamp(1.2rem,2.4vw,2.2rem);overflow-wrap:anywhere}
+.v-hook{display:flex;flex-direction:column;gap:2vh;max-width:60rem}
+.v-hook label{color:var(--mist);font-size:clamp(.9rem,1.4vw,1.2rem)}
+.v-hook input{font:inherit;font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,3vw,2.8rem);background:transparent;color:var(--white);border:0;border-bottom:3px solid var(--signal);padding:.4rem 0}
+.v-hook input::placeholder{color:rgba(255,255,255,.4)}
+.v-btn{align-self:flex-start;font:inherit;font-weight:700;background:var(--signal);color:var(--ink);border:0;border-radius:.6rem;padding:.8rem 1.4rem;cursor:pointer;font-size:clamp(.9rem,1.4vw,1.2rem)}
+.v-clock{font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,3vw,2.6rem);color:var(--signal)}
+.v-clock.big{font-size:clamp(3rem,10vw,9rem);line-height:1}
+.v-idea{font-family:var(--display);font-weight:600;font-size:clamp(1.4rem,3vw,2.8rem);margin:0 0 2vh;max-width:30ch}
+
+/* notes overlay for single-screen use */
+.notes-panel{position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:auto;background:var(--paper);color:var(--ink);padding:1rem 7vw 1.5rem;font-size:1.05rem;white-space:pre-line;display:none;z-index:5;border-top:4px solid var(--signal)}
+body.show-notes .notes-panel{display:block}
+.controls{position:fixed;top:3vh;right:3vw;display:flex;gap:.5rem;z-index:6;opacity:.35}
+.controls:hover,.controls:focus-within{opacity:1}
+.controls button{font:inherit;font-size:.85rem;background:transparent;color:var(--white);border:1.5px solid var(--mist);border-radius:999px;padding:.3rem .8rem;cursor:pointer}
+
+/* presenter view */
+body.presenter{background:var(--paper);color:var(--ink);overflow:auto}
+body.presenter .deck,body.presenter .progress,body.presenter .controls{display:none}
+.pv{display:none;max-width:80rem;margin:0 auto;padding:1.5rem;gap:1.5rem}
+body.presenter .pv{display:grid;grid-template-columns:2fr 1fr}
+.pv h1{font-size:2rem;margin:.2rem 0 1rem}
+.pv .pnotes{white-space:pre-line;font-size:1.35rem;line-height:1.6}
+.pv .cut{margin-top:1.5rem;border-left:4px solid var(--signal);background:var(--white);padding:.8rem 1rem}
+.pv aside{display:flex;flex-direction:column;gap:1rem}
+.pv .box{background:var(--white);border:1px solid var(--line);border-radius:.8rem;padding:1rem}
+.pv .big{font-family:var(--display);font-weight:800;font-size:3rem;line-height:1}
+.pv .status.behind{color:#B00020}.pv .status.ahead{color:#0A7A3C}
+.pv .row{display:flex;gap:.5rem;flex-wrap:wrap}
+@media (max-width:800px){.v-split,.v-roles,.v-rules{grid-template-columns:1fr}.o-row{grid-template-columns:repeat(3,1fr)}.v-flow,.v-pipe{grid-auto-flow:row}.v-flow div::after,.v-pipe li::after{display:none}body.presenter .pv{grid-template-columns:1fr}.v-join{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck" aria-live="polite"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="notes-panel" id="notesPanel"></div>
+<div class="controls no-print">
+  <button type="button" id="btnNotes">Notes (N)</button>
+  <button type="button" id="btnPresenter">Presenter view (P)</button>
+  <button type="button" id="btnFull">Full screen (F)</button>
+  <button type="button" class="lang-btn"></button>
+</div>
+
+<div class="pv" id="pv">
+  <section>
+    <div class="row muted" id="pvMeta"></div>
+    <h1 id="pvTitle"></h1>
+    <div class="pnotes" id="pvNotes"></div>
+    <div class="cut" id="pvCut" hidden></div>
+  </section>
+  <aside>
+    <div class="box"><div class="muted"><span class="en">Elapsed</span><span class="es">Transcurrido</span></div><div class="big" id="pvElapsed">0:00</div><div class="status" id="pvStatus"></div></div>
+    <div class="box"><div class="muted"><span class="en">Next slide</span><span class="es">Siguiente diapositiva</span></div><div id="pvNext" style="font-weight:700;font-size:1.2rem"></div></div>
+    <div class="box row">
+      <button class="btn alt" type="button" id="pvPrev"><span class="en">Previous</span><span class="es">Anterior</span></button>
+      <button class="btn" type="button" id="pvNextBtn"><span class="en">Next</span><span class="es">Siguiente</span></button>
+      <button class="btn alt" type="button" id="pvReset"><span class="en">Reset timer</span><span class="es">Reiniciar reloj</span></button>
+      <button class="btn alt lang-btn" type="button"></button>
+    </div>
+    <p class="muted" style="font-size:.9rem"><span class="en">Keys: arrows or space to move, T starts the timer, L switches language. This window controls the projector window.</span><span class="es">Teclas: flechas o espacio para avanzar, T inicia el reloj, L cambia el idioma. Esta ventana controla la del proyector.</span></p>
+  </aside>
+</div>
+
+<script>
+(function(){
+  var S = window.SLIDES, SEC = window.SECTIONS, E = window.EVENT;
+  var presenter = /[?&]view=presenter/.test(location.search);
+  if(presenter) document.body.classList.add("presenter");
+  var deck = document.getElementById("deck");
+  var idx = Math.max(0, Math.min(S.length-1, (parseInt((location.hash||"").slice(1),10)||1)-1));
+  var starts = []; S.reduce(function(acc,s,i){ starts[i]=acc; return acc+s.min; },0);
+  var chan = ("BroadcastChannel" in window) ? new BroadcastChannel("bwa-keynote") : null;
+
+  function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){ return null; } }
+  function esc(t){ return String(t).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  function fill(t){ return esc(t).replace("{AGENTS}", BWA.t(E.agentCount)); }
+  function both(o,k){ return '<span class="en">'+o.en[k]+'</span><span class="es">'+o.es[k]+'</span>'; }
+
+  /* render all slides now, before site.js fills data-ev fields on DOMContentLoaded */
+  deck.innerHTML = S.map(function(s,i){
+    return '<section class="slide '+(s.kind||"")+'" data-i="'+i+'" aria-label="Slide '+(i+1)+'">'+
+      '<div class="num">'+(i+1)+' / '+S.length+'</div>'+
+      '<h1>'+both(s,"title")+'</h1>'+
+      ((s.en.body)?'<p class="body">'+both(s,"body")+'</p>':'')+
+      '<div class="visual">'+s.visual+'</div></section>';
+  }).join("");
+  document.getElementById("progress").innerHTML = SEC.map(function(x){ return '<div><span class="en">'+x.en+'</span><span class="es">'+x.es+'</span></div>'; }).join("");
+
+  function fmt(ms){ var t=Math.max(0,Math.floor(ms/1000)); return Math.floor(t/60)+":"+("0"+(t%60)).slice(-2); }
+  function startTime(){ return parseInt(store("bwa-timer")||"0",10); }
+
+  function show(i, from){
+    idx = Math.max(0, Math.min(S.length-1, i));
+    deck.querySelectorAll(".slide").forEach(function(el){ el.classList.toggle("on", +el.dataset.i===idx); });
+    var sec = S[idx].sec;
+    document.querySelectorAll("#progress div").forEach(function(d,k){ d.className = (k+1<sec)?"done":(k+1===sec?"cur":""); });
+    if(history.replaceState) history.replaceState(null,"","#"+(idx+1));
+    renderNotes();
+    if(S[idx].kind==="reveal"){ var idea = store("bwa-idea")||""; document.getElementById("ideaEcho").textContent = idea; }
+    if(chan && from!=="remote") chan.postMessage({type:"go", i:idx});
+  }
+  function renderNotes(){
+    var s = S[idx], L = BWA.lang(), o = s[L]||s.en;
+    var cutTxt = o.cut ? ((L==="es"?"Versión corta: ":"Cut version: ")+o.cut) : "";
+    document.getElementById("notesPanel").textContent = (idx+1)+". "+o.title+"\n\n"+fill(o.notes).replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")+(cutTxt?"\n\n"+cutTxt:"");
+    if(presenter){
+      document.getElementById("pvMeta").textContent = (L==="es"?"Diapositiva ":"Slide ")+(idx+1)+" / "+S.length+"   |   "+SEC[s.sec-1][L]+"   |   "+(L==="es"?"ventana objetivo ":"target window ")+fmt(starts[idx]*60000)+"–"+fmt((starts[idx]+s.min)*60000)+(L==="es"?" del tiempo transcurrido":" elapsed");
+      document.getElementById("pvTitle").textContent = o.title;
+      document.getElementById("pvNotes").innerHTML = fill(o.notes);
+      var c = document.getElementById("pvCut"); c.hidden = !o.cut; c.textContent = cutTxt;
+      var n = S[idx+1]; document.getElementById("pvNext").textContent = n ? (idx+2)+". "+(n[L]||n.en).title : (L==="es"?"Fin de la conferencia":"End of keynote");
+    }
+  }
+  function tick(){
+    var st = startTime(), now = Date.now();
+    if(presenter){
+      var el = st? now-st : 0;
+      document.getElementById("pvElapsed").textContent = fmt(el);
+      var stat = document.getElementById("pvStatus"), L = BWA.lang();
+      if(!st){ stat.textContent = L==="es"?"Presiona T para iniciar":"Press T to start"; stat.className="status"; }
+      else{
+        var lo = starts[idx]*60000, hi = (starts[idx]+S[idx].min)*60000;
+        if(el > hi+30000){ stat.textContent = (L==="es"?"Atrasado ":"Behind by ")+fmt(el-hi); stat.className="status behind"; }
+        else if(el < lo-60000){ stat.textContent = (L==="es"?"Adelantado ":"Ahead by ")+fmt(lo-el); stat.className="status ahead"; }
+        else { stat.textContent = L==="es"?"A tiempo":"On time"; stat.className="status"; }
+      }
+    }
+    var b = parseInt(store("bwa-build")||"0",10);
+    var txt = b ? fmt(now-b) : "";
+    var h = document.getElementById("clockHook"); if(h) h.textContent = b ? ((BWA.lang()==="es"?"Construyendo desde hace ":"Building for ")+txt) : "";
+    var r = document.getElementById("clockReveal"); if(r) r.textContent = b ? txt : "--:--";
+  }
+  function startTimer(){ store("bwa-timer", String(Date.now())); if(chan) chan.postMessage({type:"timer"}); }
+
+  function key(e){
+    var t = e.target; if(t && (t.tagName==="INPUT"||t.tagName==="TEXTAREA")) { if(e.key==="Escape") t.blur(); return; }
+    var k = e.key;
+    if(["ArrowRight","PageDown"," ","Enter"].indexOf(k)>-1){ e.preventDefault(); if(!startTime()) startTimer(); show(idx+1); }
+    else if(["ArrowLeft","PageUp","Backspace"].indexOf(k)>-1){ e.preventDefault(); show(idx-1); }
+    else if(k==="Home") show(0); else if(k==="End") show(S.length-1);
+    else if(k==="n"||k==="N") document.body.classList.toggle("show-notes");
+    else if(k==="p"||k==="P") openPresenter();
+    else if(k==="f"||k==="F") full();
+    else if(k==="t"||k==="T") startTimer();
+    else if(k==="l"||k==="L") BWA.setLang(BWA.lang()==="en"?"es":"en");
+  }
+  function openPresenter(){ window.open(location.pathname+"?view=presenter#"+(idx+1),"bwa-presenter","width=1200,height=800"); }
+  function full(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } else { document.exitFullscreen(); } }
+
+  document.addEventListener("keydown", key);
+  document.addEventListener("langchange", function(){ renderNotes(); var i=document.getElementById("ideaInput"); if(i) i.placeholder = BWA.lang()==="es"?"Escribe la idea aquí":"Type the idea here"; });
+  if(chan) chan.onmessage = function(m){ if(m.data.type==="go") show(m.data.i,"remote"); if(m.data.type==="lang" && m.data.l!==BWA.lang()) BWA.setLang(m.data.l); };
+  document.addEventListener("langchange", function(e){ if(chan) chan.postMessage({type:"lang", l:e.detail}); });
+
+  document.getElementById("btnNotes").onclick = function(){ document.body.classList.toggle("show-notes"); };
+  document.getElementById("btnPresenter").onclick = openPresenter;
+  document.getElementById("btnFull").onclick = full;
+  document.getElementById("pvPrev").onclick = function(){ show(idx-1); };
+  document.getElementById("pvNextBtn").onclick = function(){ if(!startTime()) startTimer(); show(idx+1); };
+  document.getElementById("pvReset").onclick = function(){ store("bwa-timer","0"); };
+
+  var idea = document.getElementById("ideaInput");
+  idea.value = store("bwa-idea")||"";
+  idea.addEventListener("input", function(){ store("bwa-idea", idea.value); });
+  document.getElementById("startClock").onclick = function(){ store("bwa-idea", idea.value); store("bwa-build", String(Date.now())); tick(); };
+
+  var x0=null; deck.addEventListener("touchstart",function(e){x0=e.touches[0].clientX;},{passive:true});
+  deck.addEventListener("touchend",function(e){ if(x0===null) return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>50) show(idx+(dx<0?1:-1)); x0=null; });
+
+  var vu=document.querySelector(".v-url"); if(vu) vu.textContent=E.joinUrl.replace(/^https?:\/\//,"").replace(/\/$/,"");
+  show(idx,"remote"); tick(); setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
