@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Labora · Triage</title>
+<style>
+:root{--bg:#f5f7fa;--card:#fff;--ink:#14213a;--mut:#56657d;--line:#dde3ec;--acc:#0b6bcb;--ok:#0a7f4f;--warn:#a15c00;--bad:#b3261e;--okbg:#e6f5ee;--warnbg:#fff3df;--badbg:#fdeaea}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.page{max-width:920px;margin:0 auto;padding:28px 16px 60px}
+header{border-bottom:3px solid var(--acc);padding-bottom:16px;margin-bottom:22px}
+.kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);font-weight:700}
+h1{font-size:28px;line-height:1.2;margin:6px 0 6px}
+.sub{color:var(--mut);font-size:15px}
+h2{font-size:20px;margin:34px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:0 0 12px}
+ul{margin:0 0 12px;padding-left:20px}
+li{margin-bottom:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.score{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.num{font-size:54px;font-weight:800;line-height:1;color:var(--acc)}
+.num small{font-size:20px;color:var(--mut);font-weight:600}
+.pill{display:inline-block;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.alta{background:var(--badbg);color:var(--bad)}
+.media{background:var(--warnbg);color:var(--warn)}
+.baja{background:var(--okbg);color:var(--ok)}
+.poc{background:var(--warnbg);color:var(--warn);font-size:14px;padding:6px 16px}
+.flag h3{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:700;margin-top:8px}
+.note{background:#eef4fb;border-left:4px solid var(--acc);border-radius:6px;padding:12px 14px;font-size:14px;color:#2b3b55;margin:12px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#eef2f7}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+@media(max-width:680px){.cols{grid-template-columns:1fr}h1{font-size:23px}.num{font-size:44px}}
+@media print{body{background:#fff}.card{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="kicker">Digit2AI · Triage de proyecto</div>
+  <h1>Labora: empleabilidad y gestión laboral para cargos operativos</h1>
+  <div class="sub">Servicios y Tecnología Laboral S.A.S. · Cali, Colombia · Evaluado el 7 de octubre de 2026</div>
+</header>
+
+<div class="note">
+  <strong>Alcance de este análisis.</strong> Se evaluó únicamente la <em>Adenda al Master Document</em> (5 de octubre de 2026, 4 páginas). El Master Document completo no se revisó, así que el modelo de ingresos, el equipo y el plan de lanzamiento no están evaluados. Este documento no incluye costos ni precios de desarrollo.
+</div>
+
+<h2>1. Puntaje y recomendación</h2>
+<div class="card score">
+  <div class="num">7<small> / 10</small></div>
+  <div>
+    <span class="pill poc">Recomendación: POC</span>
+    <p style="margin-top:10px">Vale la pena avanzar con una prueba de concepto acotada, no con el producto completo.</p>
+  </div>
+</div>
+
+<div class="cols">
+  <div class="card">
+    <h3>A favor</h3>
+    <ul>
+      <li>El dolor es real y se puede medir: la rotación en cargos operativos. La adenda ya define los indicadores (permanencia a 90 días, 6 y 12 meses; tiempo y costo por contratación).</li>
+      <li>Quien paga es la empresa y el beneficio se expresa en dinero. Para la persona es gratis, que además es lo que exige la ley.</li>
+      <li>Encaja con lo que Digit2AI ya tiene construido: motor de vacantes y emparejamiento, perfil a partir de voz, asistente de voz en español.</li>
+      <li>La adenda es honesta: reconoce a los competidores, corrige su propia afirmación de la sección 2 y admite que probablemente necesita una autorización.</li>
+      <li>Hay un canal de entrada concreto: empresas de Cali y fundaciones, con el aprendizaje de Compromiso Valle.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>En contra</h3>
+    <ul>
+      <li>Mercado ocupado. HoyTrabajas atiende el mismo público y Magneto365 ya ofrece registro por audio y afinidad con IA. La tecnología sola no diferencia.</li>
+      <li>La diferencia declarada, "gestión laboral integral" con nómina y terminaciones, es un producto mucho más grande y más regulado que una bolsa de empleo.</li>
+      <li>Hay una autorización estatal pendiente de confirmar que puede bloquear el lanzamiento.</li>
+      <li>Es un mercado de dos lados: sin vacantes no llegan candidatos y sin candidatos no llegan empresas.</li>
+      <li>La cifra central (reemplazar a un trabajador cuesta de 3 a 6 salarios) viene de una fuente secundaria: Buk citando a ACRIP.</li>
+    </ul>
+  </div>
+</div>
+
+<p><strong>Por qué 7 y no más:</strong> la promesa de reducir la rotación todavía no está demostrada con datos propios, y la autorización como prestador del Servicio Público de Empleo no está resuelta. Con una empresa piloto midiendo permanencia y la consulta legal cerrada, el puntaje sube.</p>
+
+<h2>2. Regulaciones</h2>
+<div class="note">
+  Esta lista es un mapa de riesgos para llevar a un abogado laboral y de datos en Colombia. No es un concepto jurídico. Las normas se citan de memoria profesional y de la propia adenda; cada una debe confirmarse en su texto vigente antes de tomar decisiones.
+</div>
+
+<div class="card flag">
+  <h3>Autorización como prestador del Servicio Público de Empleo <span class="pill alta">Alta</span></h3>
+  <p>Decreto 1072 de 2015, modificado por el Decreto 1823 de 2020; Resolución 1481 de 2014; Ley 1636 de 2013. La gestión y colocación de empleo solo la prestan personas jurídicas autorizadas. La adenda ya lo reconoce como probable.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Si conectar candidatos con vacantes de terceros cuenta como gestión y colocación. Lo más probable es que sí.</li>
+    <li>Cuánto tarda el trámite y si se puede operar un piloto mientras se obtiene.</li>
+    <li>Las obligaciones que trae: sistema de información compatible, informes estadísticos a la Unidad, reglamento de prestación del servicio.</li>
+    <li>Si operar como proveedor de software para la empresa (que gestiona sus propias vacantes) queda fuera de la norma. Esto define cómo se diseña el piloto.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Riesgo de ser tratada como empresa de servicios temporales o intermediación laboral <span class="pill alta">Alta</span></h3>
+  <p>Ley 50 de 1990 y Decreto 4369 de 2006. Si Labora llega a gestionar nómina, beneficios y terminaciones, hay que dejar claro que el empleador es siempre la empresa cliente y que Labora no suministra personal.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Que el contrato y el producto traten a Labora como software y servicio de apoyo, nunca como empleador ni como quien envía trabajadores en misión.</li>
+    <li>Qué parte de "terminaciones" es solo registro y qué parte sería asesoría legal, que tiene sus propias reglas.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Protección de datos personales y habeas data <span class="pill alta">Alta</span></h3>
+  <p>Ley 1581 de 2012 y Decreto 1377 de 2013. Labora trata hojas de vida, documentos de identidad, historia laboral y notas de voz. La adenda ya lo incluye.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Autorización previa, expresa e informada, entendible para una persona que tal vez se registra por voz.</li>
+    <li>Política de tratamiento con finalidades claras: para qué se usa el perfil y con qué empresas se comparte.</li>
+    <li>Si aplica el Registro Nacional de Bases de Datos ante la SIC según el tamaño de la sociedad.</li>
+    <li>Quién es responsable y quién es encargado cuando la empresa cliente usa la base laboral.</li>
+    <li>Cómo se atienden las solicitudes de consulta, corrección y eliminación.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Datos sensibles: la voz y lo que la persona cuenta <span class="pill media">Media</span></h3>
+  <p>Ley 1581 de 2012, artículos 5 y 6. Una nota de voz puede ser dato biométrico si se usa para identificar a alguien, y en una hoja de vida hablada aparecen con facilidad datos de salud, familia o afiliación.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Si el audio se guarda o solo el texto. Guardar menos reduce el riesgo.</li>
+    <li>Que no se use la voz para identificar a la persona.</li>
+    <li>Cómo se filtra lo sensible antes de que llegue al perfil que ve la empresa.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Decisiones automatizadas y sesgo en la selección <span class="pill media">Media</span></h3>
+  <p>Orientaciones de la SIC sobre inteligencia artificial y datos personales (Circular Externa 002 de 2024) y principio de no discriminación en el empleo. Un porcentaje de afinidad puede discriminar por edad, género, barrio u origen sin que nadie lo decida.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Que la IA ordene y explique, pero que la decisión de contratar la tome una persona.</li>
+    <li>Que el candidato pueda saber por qué no fue seleccionado. La adenda ya promete retroalimentación; aquí se vuelve obligación práctica.</li>
+    <li>Que el puntaje no use variables protegidas ni sustitutos de ellas.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Envío de datos fuera de Colombia <span class="pill media">Media</span></h3>
+  <p>Ley 1581 de 2012, artículo 26, y Decreto 1377 de 2013. Los servidores y los modelos de IA que usaría la plataforma están fuera del país.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Contrato de transmisión de datos con cada proveedor de nube y de IA.</li>
+    <li>Que la autorización del titular mencione el tratamiento en el exterior.</li>
+    <li>Que los proveedores de IA no entrenen sus modelos con estos datos.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Verificación del perfil y antecedentes <span class="pill media">Media</span></h3>
+  <p>La adenda promete un perfil "verificable". Verificar experiencia, estudios o antecedentes exige autorización específica y fuentes legítimas.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Qué se verifica exactamente y contra qué fuente.</li>
+    <li>Que no se use un antecedente para descartar a alguien de forma automática.</li>
+    <li>Que la plataforma nunca marque como "verificado" algo que solo declaró el candidato.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Nómina, seguridad social y nómina electrónica <span class="pill media">Media</span></h3>
+  <p>Aplica solo si Labora llega a ofrecer nómina: liquidación de aportes (PILA), nómina electrónica ante la DIAN y prestaciones. Un error aquí genera sanciones para la empresa cliente.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Si conviene integrar un proveedor de nómina existente en lugar de construirla.</li>
+    <li>Quién responde frente a la empresa por un cálculo equivocado.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Mensajes por WhatsApp, SMS y llamadas <span class="pill baja">Baja</span></h3>
+  <p>Ley 2300 de 2023, que limita canales, horarios y frecuencia de contacto, y las políticas de WhatsApp Business sobre mensajes iniciados por la empresa.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Que cada persona elija su canal y pueda darse de baja.</li>
+    <li>Horarios permitidos para avisos de vacantes.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Gratuidad para el trabajador <span class="pill baja">Baja</span></h3>
+  <p>Los servicios básicos de gestión y colocación no se le cobran a quien busca empleo. La adenda ya dice que Labora es gratis para la persona, así que hoy está alineada.</p>
+  <div class="lbl">Qué verificar</div>
+  <ul>
+    <li>Que ningún módulo futuro (capacitación, beneficios) termine cobrándole al candidato algo que la norma considera básico.</li>
+  </ul>
+</div>
+
+<div class="card flag">
+  <h3>Precisión de una afirmación de la adenda <span class="pill baja">Baja</span></h3>
+  <p>La sección A atribuye la jornada de 42 horas a la reforma laboral. La reducción de la jornada viene de la Ley 2101 de 2021; el mayor recargo dominical sí viene de la reforma (Ley 2466 de 2025). Conviene separar las dos normas en el documento para que resista la revisión de un cliente o un inversionista.</p>
+</div>
+
+<h2>3. Plan de negocio</h2>
+
+<div class="card">
+  <h3>El problema, en nuestras palabras</h3>
+  <p>Las empresas con muchos cargos operativos pierden dinero cada vez que alguien se va, porque contratan con información incompleta y pierden contacto con su gente después de contratarla. Del otro lado, quien busca un empleo operativo presenta su experiencia en una hoja de vida en papel que no lo distingue y casi nunca recibe respuesta.</p>
+  <p>La adenda lo ilustra así: con un salario de $1.750.905 COP, cada salida costaría entre $5,3 y $10,5 millones de COP, y una empresa que reemplaza 20 operarios al año superaría los $100 millones. La cuenta cuadra con el rango de 3 a 6 salarios, pero es un ejemplo, no una medición de un cliente.</p>
+</div>
+
+<div class="card">
+  <h3>Primera versión a construir</h3>
+  <p><strong>Del papel o la voz a un perfil, y de ahí a las vacantes de una empresa piloto.</strong> Una prueba de concepto de máximo cuatro semanas.</p>
+  <ul>
+    <li>El candidato manda una nota de voz o una foto de su hoja de vida Minerva y recibe un perfil estandarizado que puede revisar y corregir.</li>
+    <li>Dos o tres empresas piloto de Cali cargan sus vacantes operativas y ven a los candidatos ordenados, con la razón de cada coincidencia.</li>
+    <li>Todo candidato recibe respuesta, también el que no pasa.</li>
+    <li>Un tablero mide los cuatro indicadores que la adenda ya definió, empezando por la permanencia a 90 días.</li>
+  </ul>
+  <div class="lbl">Qué queda por fuera de la primera versión</div>
+  <ul>
+    <li>Nómina, beneficios y terminaciones.</li>
+    <li>Capacitación y rutas de crecimiento interno.</li>
+    <li>Bolsa de empleo abierta al público.</li>
+  </ul>
+  <p>Así se prueba la promesa central, mejor match y menos rotación, sin entrar todavía en la parte más regulada.</p>
+</div>
+
+<div class="card">
+  <h3>Opciones de monetización</h3>
+  <p>La adenda no describe el modelo de ingresos. Estas son las opciones a evaluar, sin cifras:</p>
+  <ul>
+    <li><strong>Suscripción mensual por empresa</strong>, según el tamaño de su base operativa. Ingreso predecible.</li>
+    <li><strong>Pago por vacante cubierta.</strong> Fácil de vender, pero se parece a lo que ya cobran las bolsas de empleo.</li>
+    <li><strong>Pago ligado a la permanencia</strong>, por ejemplo cuando el nuevo ingreso cumple 90 días. Es el que mejor respalda la promesa de retención y el más difícil de copiar.</li>
+    <li><strong>Módulos adicionales</strong> de gestión laboral en fases posteriores.</li>
+    <li><strong>Convenios con fundaciones, cajas de compensación y programas públicos</strong> que financian la empleabilidad.</li>
+  </ul>
+  <p>Para la persona siempre es gratis.</p>
+</div>
+
+<div class="card">
+  <h3>Competidores</h3>
+  <div class="scroll">
+  <table>
+    <tr><th>Plataforma</th><th>Qué es</th><th>Riesgo para Labora</th></tr>
+    <tr><td>HoyTrabajas</td><td>Enfocada por completo en el mercado operativo; hoja de vida con IA; cerca de 500 empresas aliadas</td><td><span class="pill alta">Alto</span> Mismo público. Si agrega retención, cierra la brecha.</td></tr>
+    <tr><td>Magneto365</td><td>Software de selección con IA; registro por chat o audio; afinidad por candidato; trabaja con cajas de compensación</td><td><span class="pill alta">Alto</span> Ya tiene la tecnología y la relación con las empresas.</td></tr>
+    <tr><td>Computrabajo</td><td>Bolsa masiva; unos 7,9 millones de usuarios y 10.700 empresas</td><td><span class="pill media">Medio</span> Es el hábito del mercado, pero termina en publicar y aplicar.</td></tr>
+    <tr><td>Servicio Público de Empleo (SENA)</td><td>Plataforma pública y gratuita; 23.105 vacantes en octubre de 2026</td><td><span class="pill media">Medio</span> Es gratis y además es el regulador del sector.</td></tr>
+    <tr><td>Elempleo.com</td><td>Bolsa generalista, fuerte en perfiles profesionales</td><td><span class="pill baja">Bajo</span> Otro segmento.</td></tr>
+    <tr><td>LinkedIn</td><td>Red profesional para perfiles ejecutivos</td><td><span class="pill baja">Bajo</span> Otro segmento.</td></tr>
+  </table>
+  </div>
+  <p style="margin-top:12px">Los datos de la tabla son los que publica la adenda. Falta un grupo que la adenda no menciona: el <strong>software de nómina y gestión humana</strong> (Buk, entre otros). Si Labora avanza hacia nómina y beneficios, esos pasan a ser competidores directos, y son los mismos a los que cita como fuente.</p>
+  <p><strong>Lectura:</strong> la diferencia de Labora no es la tecnología, que ya existe en el mercado. Es demostrar con números que sus contratados duran más. Esa evidencia todavía no existe y es lo primero que hay que producir.</p>
+</div>
+
+<div class="card">
+  <h3>Condiciones para avanzar</h3>
+  <ul>
+    <li>Concepto legal escrito sobre la autorización del Servicio Público de Empleo antes de intermediar con público abierto.</li>
+    <li>Política de tratamiento de datos y texto de autorización listos antes de recibir el primer perfil real.</li>
+    <li>Dos o tres empresas piloto comprometidas, que entreguen su rotación actual como línea base. Sin línea base no se puede demostrar ninguna mejora.</li>
+    <li>Nómina y terminaciones fuera de la primera versión.</li>
+    <li>La IA propone y explica; la decisión de contratar es de una persona.</li>
+    <li>Acuerdo claro entre Labora y Digit2AI sobre quién es dueño de la plataforma, de los datos y de la relación con el cliente.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Preguntas para Labora</h3>
+  <ul>
+    <li>¿Qué empresas ya dijeron que sí al piloto y cuántos cargos operativos contratan al mes?</li>
+    <li>¿Esas empresas miden hoy su rotación? ¿Compartirían el dato?</li>
+    <li>¿Cómo piensan cobrar: suscripción, por vacante o por permanencia?</li>
+    <li>¿Ya hablaron con la Unidad del Servicio Público de Empleo? ¿Qué les dijeron?</li>
+    <li>¿De dónde salen los primeros candidatos: fundaciones, Compromiso Valle, las mismas empresas?</li>
+    <li>¿Qué significa "verificable" en el perfil y quién hace esa verificación?</li>
+    <li>¿La nómina la construirían o la integrarían con un proveedor existente?</li>
+    <li>¿Qué papel esperan de Digit2AI: proveedor de tecnología o socio?</li>
+  </ul>
+</div>
+
+<h2>Siguiente paso sugerido</h2>
+<p>Cerrar la consulta legal y conseguir la primera empresa piloto con su línea base de rotación. Con eso en la mano se define el alcance exacto de la prueba de concepto.</p>
+
+<footer>
+  Preparado por Digit2AI para uso de Labora y Digit2AI. Basado solo en la Adenda al Master Document del 5 de octubre de 2026. No incluye costos ni precios. No constituye asesoría legal.
+</footer>
+
+</div>
+</body>
+</html>
