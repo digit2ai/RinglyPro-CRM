@@ -37,8 +37,10 @@ th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-ali
 th{background:#eef2f7}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--mut)}
+.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;font-weight:700;border-radius:8px;padding:10px 16px;font-size:14px}
+.pdf{width:100%;height:80vh;min-height:520px;border:1px solid var(--line);border-radius:12px;background:#fff}
 @media(max-width:680px){.cols{grid-template-columns:1fr}h1{font-size:23px}.num{font-size:44px}}
-@media print{body{background:#fff}.card{break-inside:avoid}}
+@media print{.pdf,.btn{display:none}body{background:#fff}.card{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -52,6 +54,7 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <div class="note">
   <strong>Alcance de este análisis.</strong> Se evaluó únicamente la <em>Adenda al Master Document</em> (5 de octubre de 2026, 4 páginas). El Master Document completo no se revisó, así que el modelo de ingresos, el equipo y el plan de lanzamiento no están evaluados. Este documento no incluye costos ni precios de desarrollo.
+  <p style="margin:10px 0 0"><a class="btn" href="adenda-master-document.pdf" target="_blank" rel="noopener">Abrir el documento evaluado (PDF)</a></p>
 </div>
 
 <h2>1. Puntaje y recomendación</h2>
@@ -290,6 +293,13 @@ footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-si
 
 <h2>Siguiente paso sugerido</h2>
 <p>Cerrar la consulta legal y conseguir la primera empresa piloto con su línea base de rotación. Con eso en la mano se define el alcance exacto de la prueba de concepto.</p>
+
+<h2>Documento evaluado</h2>
+<p>Adenda al Master Document · Servicios y Tecnología Laboral S.A.S. · 5 de octubre de 2026 · 4 páginas.</p>
+<p><a class="btn" href="adenda-master-document.pdf" target="_blank" rel="noopener">Abrir o descargar el PDF</a></p>
+<object class="pdf" data="adenda-master-document.pdf" type="application/pdf">
+  <p>Este navegador no muestra el PDF dentro de la página. Use el botón de arriba para abrirlo.</p>
+</object>
 
 <footer>
   Preparado por Digit2AI para uso de Labora y Digit2AI. Basado solo en la Adenda al Master Document del 5 de octubre de 2026. No incluye costos ni precios. No constituye asesoría legal.
