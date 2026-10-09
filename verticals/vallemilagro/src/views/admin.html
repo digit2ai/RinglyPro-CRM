@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#21392B">
+<title>Módulo de Backend · Valle Milagro</title>
+<link rel="icon" href="{{BASE}}/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap">
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+<style>
+  .adm{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+  .side{background:var(--primary);color:var(--on-primary);padding:20px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  .side img{height:34px;background:var(--cream);border-radius:8px;padding:4px 8px;display:block;margin:0 auto 16px}
+  .side button,.side a{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;padding:8px 12px;border:0;border-radius:10px;background:none;color:inherit;
+    font-family:var(--display);font-size:13px;text-align:left;text-decoration:none}
+  .side button.on{background:rgba(255,255,255,.16);font-weight:600}
+  .side .n{background:var(--warn);color:var(--fg);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
+  .body{padding:24px;max-width:980px;width:100%}
+  .body h1{font-size:20px;color:var(--primary);margin-bottom:4px}
+  .body .lead{color:var(--muted-fg);font-size:14px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-family:var(--display);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-fg);padding:8px 6px;border-bottom:2px solid var(--border)}
+  td{padding:8px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .btn.sm{min-height:36px;padding:6px 14px;font-size:12px}
+  .btn.danger{background:var(--danger);color:#fff}
+  .flag{display:inline-block;background:var(--warn);color:var(--fg);border-radius:6px;padding:1px 6px;font-family:var(--display);font-size:10px;font-weight:600;margin-right:4px}
+  .ok{color:var(--ok)} .bad{color:var(--danger)}
+  .thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+  pre.ans{white-space:pre-wrap;font-family:var(--serif);font-size:14px;margin:0}
+  @media(max-width:760px){.adm{grid-template-columns:1fr}.side{position:static;height:auto;display:flex;gap:6px;overflow-x:auto;padding:10px}.side img{display:none}.side button,.side a{width:auto;flex:none}.grid2,.grid3{grid-template-columns:1fr}.body{padding:16px}table{display:block;overflow-x:auto}}
+</style>
+</head>
+<body>
+<div class="adm"><nav class="side" id="side"></nav><div class="body" id="body"></div></div>
+<script>
+(function () {
+  'use strict';
+  var BASE = "{{BASE}}", API = BASE + '/api/v1/admin', side = document.getElementById('side'), body = document.getElementById('body');
+  var K = null, tab = (location.hash || '#bandeja').slice(1);
+  function el(tag, attrs) {
+    var n = document.createElement(tag), i, k, c; attrs = attrs || {};
+    for (k in attrs) { if (attrs[k] == null || attrs[k] === false) continue;
+      if (k === 'class') n.className = attrs[k]; else if (k === 'text') n.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), attrs[k]); else if (k === 'style') n.style.cssText = attrs[k];
+      else if (k === 'value') n.value = attrs[k]; else n.setAttribute(k, attrs[k] === true ? '' : attrs[k]); }
+    for (i = 2; i < arguments.length; i++) { c = arguments[i]; if (c == null || c === false) continue;
+      (Array.isArray(c) ? c : [c]).forEach(function (x) { if (x != null && x !== false) n.appendChild(typeof x === 'string' ? document.createTextNode(x) : x); }); }
+    return n;
+  }
+  function call(method, path, payload) {
+    var opt = { method: method, credentials: 'same-origin', headers: { 'X-VM-Admin': '1' } };
+    if (payload !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(payload); }
+    return fetch(API + path, opt).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) {
+      if (!r.ok) { var e = new Error(j.message || (r.status === 404 ? 'Tu sesión terminó. Vuelve a entrar al portal.' : 'No se pudo completar.')); e.status = r.status; e.body = j; throw e; } return j; }); });
+  }
+  var get = function (p) { return call('GET', p); };
+  function toast(msg, bad) { var t = el('div', { class: 'card', style: 'position:fixed;right:16px;bottom:16px;z-index:9999;max-width:340px;font-size:14px;border-color:' + (bad ? 'var(--danger)' : 'var(--ok)'), text: msg }); document.body.appendChild(t); setTimeout(function () { t.remove(); }, 4200); }
+  var fail = function (e) { toast(e.message, true); };
+  function field(label, node) { return el('div', {}, el('label', { class: 'f', text: label }), node); }
+  function inp(v, attrs) { attrs = attrs || {}; attrs.class = 'in'; attrs.value = v == null ? '' : v; return el('input', attrs); }
+  function area(v, rows) { var t = el('textarea', { class: 'in', rows: String(rows || 4) }); t.value = v == null ? '' : v; return t; }
+  function sel(options, v) { var s = el('select', { class: 'in' }, options.map(function (o) { var val = Array.isArray(o) ? o[0] : o, lab = Array.isArray(o) ? o[1] : o; return el('option', { value: val, text: lab }); })); s.value = v == null ? '' : v; return s; }
+  function head(title, lead) { body.textContent = ''; body.appendChild(el('h1', { text: title })); body.appendChild(el('p', { class: 'lead', text: lead })); }
+  function d10(s) { return s ? String(s).slice(0, 10) : ''; }
+  function readFile(file) { return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = no; r.readAsDataURL(file); }); }
+  function cop(n) { return n == null ? '' : '$' + new Intl.NumberFormat('es-CO').format(n); }
+
+  var TABS = [['bandeja', 'Bandeja de reportes'], ['periodico', 'Periódico'], ['proyectos', 'Proyectos y mapa'], ['postulaciones', 'Postulaciones'], ['valle', 'Entrenamiento de Valle'],
+    ['scout', 'Directrices del Scout'], ['fotos', 'Fotografías del Inicio'], ['textos', 'Textos del portal'], ['miembros', 'Miembros'], ['intereses', 'Intereses']];
+  function nav() {
+    side.textContent = '';
+    side.appendChild(el('img', { src: BASE + '/institucional.png', alt: 'Asociación Valle Milagro' }));
+    TABS.forEach(function (t) {
+      var count = K && (t[0] === 'bandeja' ? K.pending_findings : t[0] === 'postulaciones' ? K.submissions : t[0] === 'intereses' ? K.interests : 0);
+      side.appendChild(el('button', { class: tab === t[0] ? 'on' : '', onclick: function () { tab = t[0]; location.hash = t[0]; nav(); show(); } }, el('span', { text: t[1] }), count ? el('span', { class: 'n', text: String(count) }) : null));
+    });
+    side.appendChild(el('a', { href: BASE + '/portal', text: 'Abrir el portal' }));
+  }
+  function refresh() { return get('/overview').then(function (k) { K = k; nav(); }); }
+
+  /* 3. Bandeja de reportes */
+  function vBandeja(status) {
+    status = status || 'pending';
+    head('Bandeja de reportes', 'Lo que encuentra el Scout llega aquí. Solo lo aprobado aparece en el portal. Aprobar exige medio, fecha y un enlace que responda.');
+    body.appendChild(el('div', { class: 'acts', style: 'margin:0 0 16px' }, [['pending', 'Pendientes'], ['approved', 'Aprobados'], ['discarded', 'Descartados']].map(function (s) {
+      return el('button', { class: 'pill' + (status === s[0] ? ' on' : ''), text: s[1], onclick: function () { vBandeja(s[0]); } }); }),
+      el('button', { class: 'btn ghost sm', text: 'Agregar a mano', onclick: function () { call('POST', '/findings', { title: 'Nuevo reporte' }).then(function () { vBandeja('pending'); refresh(); }).catch(fail); } })));
+    var list = el('div', { class: 'stack' }); body.appendChild(list);
+    get('/findings?status=' + status).then(function (r) {
+      if (!r.findings.length) list.appendChild(el('p', { class: 'empty', text: 'No hay reportes aquí.' }));
+      r.findings.forEach(function (f) {
+        var title = inp(f.title), summary = area(f.summary, 3), medio = inp(f.medio), date = inp(d10(f.published_on), { type: 'date' }), url = inp(f.source_url, { type: 'url' });
+        var tema = sel(['Sin clasificar'].concat(K.constants.temas), f.tema), ed = inp(K.today, { type: 'date' });
+        var save = function () { return call('PATCH', '/findings/' + f.id, { title: title.value, summary: summary.value, medio: medio.value, published_on: date.value, source_url: url.value, tema: tema.value }); };
+        var approve = function (byHand) { save().then(function () { return call('POST', '/findings/' + f.id + '/approve', { edition_date: ed.value, link_checked_by_hand: byHand }); })
+          .then(function () { toast('Aprobado para la edición del ' + ed.value); vBandeja(status); refresh(); })
+          .catch(function (e) { if (e.body && e.body.error === 'link') { if (window.confirm(e.message + '\n\n¿Ya lo abriste y funciona?')) approve(true); } else fail(e); }); };
+        list.appendChild(el('div', { class: 'card' },
+          el('div', {}, (f.flags || []).map(function (x) { return el('span', { class: 'flag', text: String(x).replace(/_/g, ' ') }); }), f.is_demo ? el('span', { class: 'demo', text: 'Dato de ejemplo' }) : null,
+            el('span', { class: 'tiny mut', text: ' ' + f.type + (f.url_seen ? ' · enlace devuelto por el buscador' : ' · enlace escrito a mano') })),
+          field('Título', title), field('Resumen propio (nunca el artículo completo)', summary),
+          el('div', { class: 'grid3' }, field('Medio', medio), field('Fecha de la noticia', date), field('Tema', tema)),
+          field('Enlace a la fuente', url),
+          f.source_url ? el('a', { href: /^https?:/i.test(f.source_url) ? f.source_url : '#', target: '_blank', rel: 'noopener noreferrer', class: 'small', text: 'Abrir la fuente' }) : null,
+          status !== 'approved' ? el('div', { class: 'grid3', style: 'margin-top:4px' }, field('Edición del Periódico', ed)) : el('p', { class: 'small mut', style: 'margin-top:8px', text: 'En la edición del ' + d10(f.edition_date) }),
+          el('div', { class: 'acts' },
+            el('button', { class: 'btn ghost sm', text: 'Guardar cambios', onclick: function () { save().then(function () { toast('Guardado'); }).catch(fail); } }),
+            status !== 'approved' ? el('button', { class: 'btn primary sm', text: 'Aprobar', onclick: function () { approve(false); } }) : null,
+            status !== 'discarded' ? el('button', { class: 'btn ghost sm', text: status === 'approved' ? 'Retirar del portal' : 'Descartar', onclick: function () { call('POST', '/findings/' + f.id + '/discard', {}).then(function () { vBandeja(status); refresh(); }).catch(fail); } }) : null)));
+      });
+    }).catch(fail);
+  }
+
+  /* 4. Periódico */
+  function vPeriodico(date) {
+    date = date || K.today;
+    head('Periódico', 'Revisa el borrador del día, ajusta el titular y publica. El sistema nunca publica solo.');
+    var picker = inp(date, { type: 'date', onchange: function () { vPeriodico(picker.value); } });
+    body.appendChild(el('div', { class: 'grid3' }, field('Edición', picker)));
+    get('/editions/' + date).then(function (r) {
+      var e = r.edition || {}, h = inp(e.headline), s = area(e.summary, 4), y = inp(e.today_line);
+      var save = function () { return call('PUT', '/editions/' + date, { headline: h.value, summary: s.value, today_line: y.value }); };
+      body.appendChild(el('div', { class: 'card', style: 'margin-top:16px' },
+        el('p', { class: 'small b ' + (e.status === 'published' ? 'ok' : 'mut'), text: e.status === 'published' ? 'Publicada' : (r.edition ? 'Borrador' + (/scout/.test(e.composed_by) ? ' del Scout' : '') : 'Sin edición para este día') }),
+        e.is_demo ? el('span', { class: 'demo', text: 'Dato de ejemplo' }) : null,
+        field('Titular del día', h), field('Síntesis', s), field('Línea "Hoy"', y),
+        el('div', { class: 'acts' }, el('button', { class: 'btn ghost sm', text: 'Guardar borrador', onclick: function () { save().then(function () { toast('Guardado'); vPeriodico(date); }).catch(fail); } }),
+          el('button', { class: 'btn primary sm', text: e.status === 'published' ? 'Guardar y mantener publicada' : 'Guardar y publicar', onclick: function () { save().then(function () { return call('POST', '/editions/' + date + '/publish', { publish: true }); }).then(function () { toast('Edición publicada'); vPeriodico(date); }).catch(fail); } }),
+          e.status === 'published' ? el('button', { class: 'btn ghost sm', text: 'Despublicar', onclick: function () { call('POST', '/editions/' + date + '/publish', { publish: false }).then(function () { vPeriodico(date); }).catch(fail); } }) : null)));
+      body.appendChild(el('h2', { class: 'eyebrow', style: 'margin:24px 0 12px', text: 'Noticias aprobadas para esta edición' }));
+      body.appendChild(r.news.length ? el('table', {}, el('thead', {}, el('tr', {}, ['Tema', 'Título', 'Medio', 'Fecha'].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.news.map(function (n) { return el('tr', {}, el('td', { text: n.tema }), el('td', { text: n.title }), el('td', { text: n.medio || '' }), el('td', { text: d10(n.published_on) })); })))
+        : el('p', { class: 'empty', text: 'Ninguna todavía. Aprueba reportes en la Bandeja y elige esta fecha.' }));
+    }).catch(fail);
+  }
+
+  /* 5. Proyectos y mapa */
+  function projectForm(p, done) {
+    p = p || {}; var C = K.constants;
+    var f = { name: inp(p.name), municipio: inp(p.municipio), entity: inp(p.entity), sector: sel([['publico', 'Sector público'], ['privado', 'Sector privado'], ['oxi', 'Obras por Impuestos']], p.sector || 'publico'),
+      layer: sel(C.layers, p.layer || C.layers[0]), category: sel([['', 'Sin categoría']].concat(C.categories), p.category || ''), stage: sel(C.stages.map(function (s, i) { return [String(i), s]; }), String(p.stage || 0)),
+      progress_pct: inp(p.progress_pct, { type: 'number', min: '0', max: '100' }), delivery_date: inp(d10(p.delivery_date), { type: 'date' }),
+      lat: inp(p.lat, { type: 'number', step: 'any', placeholder: '3.45' }), lng: inp(p.lng, { type: 'number', step: 'any', placeholder: '-76.53' }),
+      contributors_count: inp(p.contributors_count, { type: 'number', min: '0' }), fiduciary: inp(p.fiduciary),
+      quota_committed_cop: inp(p.quota_committed_cop, { type: 'number', min: '0' }), work_value_cop: inp(p.work_value_cop, { type: 'number', min: '0' }) };
+    Object.keys(C.urgency).forEach(function (k) { f[k] = inp(p[k], { type: 'number', min: '0', max: '100' }); });
+    var vals = function () { var o = {}; Object.keys(f).forEach(function (k) { o[k] = f[k].value; }); return o; };
+    return el('div', { class: 'card' }, el('div', { class: 'grid2' }, field('Nombre', f.name), field('Municipio', f.municipio)),
+      el('div', { class: 'grid3' }, field('Entidad', f.entity), field('Pestaña', f.sector), field('Capa del mapa', f.layer)),
+      el('div', { class: 'grid3' }, field('Categoría', f.category), field('Etapa', f.stage), field('Avance %', f.progress_pct)),
+      el('div', { class: 'grid3' }, field('Fecha de entrega', f.delivery_date), field('Latitud', f.lat), field('Longitud', f.lng)),
+      el('p', { class: 'small mut', style: 'margin-top:12px', text: 'Solo para Obras por Impuestos (valores en pesos, sin puntos):' }),
+      el('div', { class: 'grid2' }, field('Contribuyentes vinculados', f.contributors_count), field('Fiduciaria aliada', f.fiduciary)),
+      el('div', { class: 'grid2' }, field('Cupo comprometido (COP)', f.quota_committed_cop), field('Valor de la obra (COP)', f.work_value_cop)),
+      el('p', { class: 'small mut', style: 'margin-top:12px', text: 'Índice de Urgencia (0 a 100 cada uno). Si falta uno, el proyecto queda sin puntaje.' }),
+      el('div', { class: 'grid3' }, Object.keys(C.urgency).map(function (k) { return field(C.urgency[k], f[k]); })),
+      el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: p.id ? 'Guardar' : 'Crear borrador', onclick: function () {
+        (p.id ? call('PATCH', '/projects/' + p.id, vals()) : call('POST', '/projects', vals())).then(function () { toast('Guardado'); done(); }).catch(fail); } }),
+        el('button', { class: 'btn ghost sm', text: 'Cancelar', onclick: done })));
+  }
+  function vProyectos() {
+    head('Proyectos y mapa', 'Un proyecto nace como borrador. Publicado, aparece a la vez en Seguimiento y en el Mapa.');
+    var host = el('div'); body.appendChild(el('div', { class: 'acts', style: 'margin:0 0 16px' },
+      el('button', { class: 'btn primary sm', text: 'Nuevo proyecto', onclick: function () { host.textContent = ''; host.appendChild(projectForm(null, vProyectos)); } }),
+      K.demo_rows ? el('button', { class: 'btn ghost sm', text: 'Quitar los datos de ejemplo', onclick: function () { if (window.confirm('Se borran los proyectos, noticias y ediciones de ejemplo. ¿Continuar?')) call('POST', '/demo/clear', { confirm: true }).then(function () { refresh().then(vProyectos); }).catch(fail); } }) : null));
+    body.appendChild(host);
+    get('/projects').then(function (r) {
+      body.appendChild(el('table', {}, el('thead', {}, el('tr', {}, ['Proyecto', 'Municipio', 'Capa', 'Etapa', 'Urgencia', 'Estado', ''].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.projects.map(function (p) {
+          return el('tr', {}, el('td', {}, p.name, p.is_demo ? el('div', {}, el('span', { class: 'demo', text: 'Ejemplo' })) : null), el('td', { text: p.municipio }), el('td', { text: p.layer + (p.lat == null ? ' (sin punto)' : '') }),
+            el('td', { text: K.constants.stages[p.stage] + (p.progress_pct != null ? ' · ' + p.progress_pct + '%' : '') }), el('td', { text: p.urgency ? String(p.urgency.score) : 'Sin puntaje' }),
+            el('td', { class: p.status === 'published' ? 'ok b' : 'mut', text: p.status === 'published' ? 'Publicado' : 'Borrador' }),
+            el('td', {}, el('div', { class: 'acts', style: 'margin:0' }, el('button', { class: 'btn ghost sm', text: 'Editar', onclick: function () { host.textContent = ''; host.appendChild(projectForm(p, vProyectos)); window.scrollTo(0, 0); } }),
+              el('button', { class: 'btn ghost sm', text: p.status === 'published' ? 'Ocultar' : 'Publicar', onclick: function () { call('POST', '/projects/' + p.id + '/publish', { publish: p.status !== 'published' }).then(vProyectos).catch(fail); } }))));
+        }))));
+    }).catch(fail);
+  }
+  function vPostulaciones() {
+    head('Postulaciones', 'Lo que envían los miembros desde "Postular un proyecto", con sus fotos.');
+    get('/submissions').then(function (r) {
+      if (!r.submissions.length) body.appendChild(el('p', { class: 'empty', text: 'Todavía no hay postulaciones.' }));
+      r.submissions.forEach(function (s) {
+        body.appendChild(el('div', { class: 'card', style: 'margin-bottom:12px' }, el('p', { class: 'small mut', text: s.member + ' · ' + d10(s.created_at) + ' · ' + s.status.replace('_', ' ') }),
+          el('p', { class: 'disp b', text: s.category + ' · ' + s.municipio + (s.place ? ' · ' + s.place : '') }),
+          el('p', { class: 'small', text: [s.map_point ? 'Punto: ' + s.map_point : null, s.population != null ? 'Población: ' + new Intl.NumberFormat('es-CO').format(s.population) : null, s.time_unattended ? 'Sin intervención: ' + s.time_unattended : null, s.source ? 'Fuente: ' + s.source : null].filter(Boolean).join(' · ') }),
+          s.conditions ? el('p', { style: 'margin-top:6px;font-size:14px', text: s.conditions }) : null,
+          el('div', { class: 'thumbs' }, (s.photos || []).map(function (id) { var u = BASE + '/api/v1/portal/files/' + id; return el('a', { href: u, target: '_blank', rel: 'noopener' }, el('img', { src: u, alt: 'Foto de la postulación', loading: 'lazy' })); })),
+          s.status === 'en_revision' ? el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Convertir en proyecto (borrador)', onclick: function () { call('POST', '/submissions/' + s.id + '/to-project', {}).then(function () { toast('Borrador creado en Proyectos'); refresh().then(vPostulaciones); }).catch(fail); } }),
+            el('button', { class: 'btn ghost sm', text: 'Descartar', onclick: function () { call('POST', '/submissions/' + s.id + '/discard', {}).then(function () { refresh().then(vPostulaciones); }).catch(fail); } })) : null));
+      });
+    }).catch(fail);
+  }
+
+  /* 1. Entrenamiento de Valle */
+  function vValle() {
+    head('Entrenamiento de Valle', 'Los documentos y reglas activos viajan en cada mensaje de Valle y del Scout. Es contexto, no reentrenamiento.');
+    var name = inp(''), text = area('', 6), kind = sel([['doc', 'Documento'], ['rule', 'Regla del equipo']], 'doc'), file = el('input', { type: 'file', accept: '.pdf,.docx,.txt,.md,application/pdf,text/plain', multiple: true });
+    body.appendChild(el('div', { class: 'card' }, el('p', { class: 'disp b', text: 'Subir documentos (PDF, Word .docx o texto)' }), el('div', { style: 'margin-top:8px' }, file),
+      el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Subir', onclick: function () {
+        var files = [].slice.call(file.files || []); if (!files.length) return toast('Elige al menos un archivo.', true);
+        files.reduce(function (p, f) { return p.then(function () { return readFile(f).then(function (d) { return call('POST', '/kb', { name: f.name, file_base64: d }); }).then(function () { toast('Cargado: ' + f.name); }, function (e) { toast(f.name + ': ' + e.message, true); }); }); }, Promise.resolve()).then(vValle);
+      } }))));
+    body.appendChild(el('div', { class: 'card', style: 'margin-top:12px' }, el('p', { class: 'disp b', text: 'Escribir conocimiento o una regla' }), el('div', { class: 'grid2' }, field('Nombre', name), field('Tipo', kind)), field('Texto', text),
+      el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Guardar', onclick: function () { call('POST', '/kb', { name: name.value, kind: kind.value, text: text.value }).then(function () { toast('Guardado'); vValle(); }).catch(fail); } }))));
+    var qn = inp('', { placeholder: 'Haz una pregunta para ver la diferencia' }), out = el('div', { class: 'grid2', style: 'margin-top:12px' });
+    body.appendChild(el('div', { class: 'card', style: 'margin-top:12px' }, el('p', { class: 'disp b', text: 'Probar a Valle' }), el('p', { class: 'small mut', text: 'La misma pregunta, con y sin los documentos.' }), field('Pregunta', qn),
+      el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Probar', onclick: function () { out.textContent = 'Preguntando…';
+        call('POST', '/kb/test', { question: qn.value }).then(function (r) { out.textContent = '';
+          [['Con los documentos', r.with_docs], ['Sin los documentos', r.without_docs]].forEach(function (x) { out.appendChild(el('div', { class: 'card' }, el('p', { class: 'small b', text: x[0] + (x[1].is_simulated ? ' · respuesta sin modelo' : '') }), el('pre', { class: 'ans', text: x[1].reply }))); });
+        }).catch(function (e) { out.textContent = ''; fail(e); }); } })), out));
+    get('/kb').then(function (r) {
+      body.appendChild(el('h2', { class: 'eyebrow', style: 'margin:24px 0 12px', text: 'Documentos cargados' }));
+      body.appendChild(r.docs.length ? el('table', {}, el('thead', {}, el('tr', {}, ['Nombre', 'Tipo', 'Versión', 'Caracteres', 'Fecha', 'Estado', ''].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.docs.map(function (d) { return el('tr', {}, el('td', { text: d.name }), el('td', { text: d.kind === 'rule' ? 'Regla' : 'Documento' }), el('td', { text: String(d.version) }), el('td', { text: new Intl.NumberFormat('es-CO').format(d.chars) }), el('td', { text: d10(d.created_at) }),
+          el('td', { class: d.active ? 'ok b' : 'mut', text: d.active ? 'Activo' : 'Inactivo' }), el('td', {}, d.active ? el('button', { class: 'btn ghost sm', text: 'Quitar', onclick: function () { call('POST', '/kb/' + d.id + '/deactivate', {}).then(vValle).catch(fail); } }) : null)); })))
+        : el('p', { class: 'empty', text: 'Aún no hay documentos.' }));
+    }).catch(fail);
+  }
+
+  /* 2. Directrices del Scout */
+  function vScout() {
+    head('Directrices del Scout', 'Qué busca el Scout, dónde y cada cuánto. Lo que encuentra llega a la Bandeja; nunca publica.');
+    get('/scout').then(function (r) {
+      var d = r.directives, topics = area(d.topics, 6), sources = area(d.sources, 4), muni = area(d.municipios, 4), freq = inp(d.frequency_hours, { type: 'number', min: String(r.min_interval_hours), max: '168' });
+      body.appendChild(el('div', { class: 'card' },
+        el('p', { class: 'small ' + (r.ai ? 'ok' : 'bad'), text: r.ai ? 'Modelo disponible.' : 'Sin modelo disponible: el Scout no corre y no inventa hallazgos.' }),
+        el('p', { class: 'small mut', text: r.scheduled ? 'Corrida programada: encendida.' : 'Corrida programada: apagada. Por ahora el Scout corre solo cuando lo lanzas a mano.' }),
+        field('Temas (uno por línea)', topics), field('Fuentes preferidas (dominios, uno por línea; vacío = toda la web)', sources), field('Municipios prioritarios', muni),
+        el('div', { class: 'grid3' }, field('Frecuencia en horas (mínimo ' + r.min_interval_hours + ')', freq)),
+        el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Guardar directrices', onclick: function () { call('PUT', '/scout', { topics: topics.value, sources: sources.value, municipios: muni.value, frequency_hours: freq.value }).then(function () { toast('Directrices guardadas'); vScout(); }).catch(fail); } }),
+          el('button', { class: 'btn secondary sm', text: 'Correr el Scout ahora', onclick: function () { call('POST', '/scout/run', {}).then(function (x) { toast(x.skipped ? 'No corrió. Revisa el motivo abajo.' : 'Corrida iniciada. Tarda unos minutos.', !!x.skipped); setTimeout(vScout, 1500); }).catch(fail); } }))));
+      body.appendChild(el('h2', { class: 'eyebrow', style: 'margin:24px 0 12px', text: 'Últimas corridas' }));
+      body.appendChild(r.runs.length ? el('table', {}, el('thead', {}, el('tr', {}, ['Inicio', 'Origen', 'Estado', 'Búsquedas', 'Hallazgos', 'Descartados', 'Motivo'].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.runs.map(function (x) { return el('tr', {}, el('td', { text: new Date(x.started_at).toLocaleString('es-CO', { timeZone: 'America/Bogota' }) }), el('td', { text: x.trigger === 'schedule' ? 'Programada' : 'Manual' }),
+          el('td', { class: x.status === 'done' ? 'ok b' : x.status === 'running' ? 'b' : 'bad b', text: { done: 'Terminó', running: 'En curso', failed: 'Falló', skipped: 'No corrió' }[x.status] || x.status }),
+          el('td', { text: String(x.searches) }), el('td', { text: String(x.found) }), el('td', { text: String(x.discarded) }), el('td', { text: x.error || '' })); })))
+        : el('p', { class: 'empty', text: 'El Scout todavía no ha corrido.' }));
+    }).catch(fail);
+  }
+
+  /* 6. Fotografías del Inicio */
+  function vFotos() {
+    head('Fotografías del Inicio', 'Fotos reales del Valle. Cada día el Inicio muestra una distinta, en orden.');
+    var file = el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp' }), cap = inp('', { placeholder: 'Pie de foto (opcional)' });
+    body.appendChild(el('div', { class: 'card' }, file, field('Pie de foto', cap), el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Cargar foto', onclick: function () {
+      if (!file.files[0]) return toast('Elige una foto.', true);
+      readFile(file.files[0]).then(function (d) { return call('POST', '/photos', { image: d, caption: cap.value }); }).then(function () { toast('Foto cargada'); vFotos(); }).catch(fail); } }))));
+    get('/photos').then(function (r) {
+      if (r.note) body.appendChild(el('p', { class: 'notice', style: 'margin-top:12px', text: r.note }));
+      body.appendChild(el('div', { class: 'grid3', style: 'margin-top:16px' }, r.photos.map(function (p) {
+        var c = inp(p.caption);
+        return el('div', { class: 'card' }, el('img', { src: BASE + '/api/v1/portal/files/' + p.file_id, alt: p.caption || 'Foto del Valle', style: 'width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px' }),
+          el('p', { class: 'small b ok', text: p.id === r.today_id ? 'Es la foto de hoy' : p.id === r.tomorrow_id ? 'Es la foto de mañana' : '' }), field('Pie de foto', c),
+          el('div', { class: 'acts' }, el('button', { class: 'btn ghost sm', text: 'Guardar', onclick: function () { call('PATCH', '/photos/' + p.id, { caption: c.value }).then(function () { toast('Guardado'); }).catch(fail); } }),
+            el('button', { class: 'btn ghost sm', text: p.active ? 'Desactivar' : 'Activar', onclick: function () { call('PATCH', '/photos/' + p.id, { active: !p.active }).then(vFotos).catch(fail); } }),
+            el('button', { class: 'btn ghost sm', text: 'Borrar', onclick: function () { if (window.confirm('¿Borrar esta foto?')) call('DELETE', '/photos/' + p.id).then(vFotos).catch(fail); } })));
+      })));
+    }).catch(fail);
+  }
+
+  /* 7. Textos del portal */
+  var LABELS = { bienvenida: 'Saludo de la pantalla de ingreso', ciudad: 'Ciudad del Inicio', lema: 'Lema del pie', pie: 'Línea final del pie', nota_fiduciaria: 'Nota sobre la fiduciaria', interes_registrado: 'Mensaje al registrar interés',
+    postulacion_enviada: 'Mensaje al enviar una postulación', aviso_fotos: 'Aviso sobre las fotos', privacidad: 'Aviso de privacidad' };
+  function vTextos() {
+    head('Textos del portal', 'Cambia lo que lee el miembro sin depender del desarrollador.');
+    get('/texts').then(function (r) {
+      var f = {}, w = {};
+      var card = el('div', { class: 'card' });
+      Object.keys(LABELS).forEach(function (k) { f[k] = k === 'privacidad' ? area(r.texts[k], 8) : inp(r.texts[k]); card.appendChild(field(LABELS[k], f[k])); });
+      card.appendChild(el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Guardar textos', onclick: function () { var t = {}; Object.keys(f).forEach(function (k) { t[k] = f[k].value; }); call('PUT', '/texts', { texts: t }).then(function () { toast('Textos guardados'); }).catch(fail); } })));
+      body.appendChild(card);
+      var wc = el('div', { class: 'card', style: 'margin-top:12px' }, el('p', { class: 'disp b', text: 'Pesos del Índice de Urgencia' }), el('p', { class: 'small mut', text: 'Los cinco deben sumar 1. Hoy valen igual; la Asociación debe definirlos.' }));
+      var grid = el('div', { class: 'grid3' }); Object.keys(r.labels).forEach(function (k) { w[k] = inp(String(r.weights[k]).replace('.', ','), { inputmode: 'decimal' }); grid.appendChild(field(r.labels[k], w[k])); });
+      wc.appendChild(grid); wc.appendChild(el('div', { class: 'acts' }, el('button', { class: 'btn primary sm', text: 'Guardar pesos', onclick: function () { var o = {}; Object.keys(w).forEach(function (k) { o[k] = Number(String(w[k].value).replace(',', '.')); }); call('PUT', '/texts', { weights: o }).then(function () { toast('Pesos guardados'); }).catch(fail); } })));
+      body.appendChild(wc);
+    }).catch(fail);
+  }
+  function vMiembros() {
+    head('Miembros', 'El estado de la cuota se marca a mano. El portal no cobra ni consulta pagos.');
+    get('/members').then(function (r) {
+      body.appendChild(el('table', {}, el('thead', {}, el('tr', {}, ['Número', 'Nombre', 'Correo', 'Ingreso', 'Cuota de mantenimiento'].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.members.map(function (m) { var s = sel([['al_dia', 'Al día'], ['pendiente', 'Pendiente'], ['sin_registro', 'Sin registro']], m.dues_status);
+          s.addEventListener('change', function () { call('PATCH', '/members/' + m.id + '/dues', { dues_status: s.value }).then(function () { toast('Cuota actualizada'); }).catch(fail); });
+          return el('tr', {}, el('td', { class: 'b', text: m.code + (m.is_founder ? ' · fundador' : '') }), el('td', { text: m.first_name + ' ' + m.last_name }), el('td', { text: m.email }), el('td', { text: d10(m.joined_at) }), el('td', {}, s)); }))));
+    }).catch(fail);
+  }
+  function vIntereses() {
+    head('Intereses', 'Miembros que tocaron "Me interesa vincular a mi empresa". Es solo un registro para que el equipo haga el contacto.');
+    get('/interests').then(function (r) {
+      body.appendChild(r.interests.length ? el('table', {}, el('thead', {}, el('tr', {}, ['Fecha', 'Miembro', 'Correo', 'Proyecto', ''].map(function (x) { return el('th', { text: x }); }))),
+        el('tbody', {}, r.interests.map(function (i) { return el('tr', {}, el('td', { text: d10(i.created_at) }), el('td', { text: i.first_name + ' ' + i.last_name }), el('td', { text: i.email }), el('td', { text: i.project }),
+          el('td', {}, i.contacted_at ? el('span', { class: 'ok b', text: 'Contactado' }) : el('button', { class: 'btn ghost sm', text: 'Marcar contactado', onclick: function () { call('POST', '/interests/' + i.id + '/contacted', {}).then(function () { refresh().then(vIntereses); }).catch(fail); } }))); })))
+        : el('p', { class: 'empty', text: 'Nadie ha registrado interés todavía.' }));
+    }).catch(fail);
+  }
+
+  var VIEWS = { bandeja: vBandeja, periodico: vPeriodico, proyectos: vProyectos, postulaciones: vPostulaciones, valle: vValle, scout: vScout, fotos: vFotos, textos: vTextos, miembros: vMiembros, intereses: vIntereses };
+  function show() { (VIEWS[tab] || vBandeja)(); }
+  refresh().then(show).catch(function (e) { body.appendChild(el('p', { class: 'empty', text: e.message })); });
+})();
+</script>
+</body>
+</html>

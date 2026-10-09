@@ -3041,6 +3041,25 @@ app.get('/debug/supply-error', (req, res) => {
 });
 
 // =====================================================
+// VALLE MILAGRO — Portal de Miembros, Módulo de Backend y dos agentes (Valle y Scout),
+// servido en /vallemilagro (también /ValleMilagro; el router redirige a minúsculas
+// porque la ruta de la cookie de sesión distingue mayúsculas).
+// La página /valle_milagro de más arriba es otra cosa (informe regional).
+// =====================================================
+let valleMilagroError = null;
+try {
+  const valleMilagroApp = require('../verticals/vallemilagro/src/index');
+  app.use(['/vallemilagro', '/ValleMilagro'], valleMilagroApp);
+  console.log('Valle Milagro mounted at /vallemilagro');
+} catch (error) {
+  valleMilagroError = error;
+  console.log('⚠️ Valle Milagro not available:', error.message);
+}
+app.get('/debug/vallemilagro-error', (req, res) => {
+  res.json({ service: 'Valle Milagro', available: !valleMilagroError, error: valleMilagroError ? { message: valleMilagroError.message } : null });
+});
+
+// =====================================================
 // AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
 // =====================================================
 

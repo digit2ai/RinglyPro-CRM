@@ -64,6 +64,10 @@ const REGISTRY = {
   ronin:            { status: 'disabled', names: ['Ronin Brotherhood'], disabled_on: D,
     sites: ['voice persona ronin'], off_behaviour: 'heuristic', note: 'Own code has no Anthropic; its ElevenLabs widget is configured in ElevenLabs.' },
   // ENABLED 2026-10-06 (owner request): AutoDev runs on the Claude subscription token, not the API account.
+  vallemilagro:     { status: 'enabled', names: ['Valle Milagro'], disabled_on: null,
+    sites: ['verticals/vallemilagro/src/llm.js (agente Valle y agente Scout con búsqueda web)'],
+    off_behaviour: 'Valle responde por la ruta sin modelo, marcada; el Scout no corre y lo dice',
+    note: 'Los tokens y las búsquedas los cubre la Asociación. El Scout programado solo corre con VALLEMILAGRO_SCOUT=on.' },
   speakup:          { status: 'enabled', names: ['SpeakUp'], disabled_on: D,
     sites: ['src/factory/llm.js (API client)', 'src/factory/claude-subscription.js available() (subscription CLI: chat, research, planner)', 'src/services/ai-editor.js', 'src/claudecode/runner.js (Claude Code tab)'],
     off_behaviour: 'labelled heuristic/offline replies; Claude Code runs fail with the reason',
