@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Digit2AI — Setup inicial · Valle Milagro</title>
+<style>
+  :root{ --ink:#0f172a; --mut:#64748b; --line:#e2e8f0; --brand:#4f46e5; --brand2:#0ea5e9; --ok:#059669; --bg:#f8fafc; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page{ max-width:920px; margin:24px auto; background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(15,23,42,.06); }
+  .top{ padding:28px 34px; background:linear-gradient(120deg,#111827,#312e81 70%,#0e7490); color:#fff; display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .brand{ font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .brand small{ display:block; font-weight:500; font-size:12px; opacity:.8; letter-spacing:.02em; margin-top:3px; }
+  .doc{ text-align:right; }
+  .doc h1{ margin:0; font-size:17px; letter-spacing:.16em; font-weight:700; }
+  .doc .meta{ font-size:12.5px; opacity:.9; margin-top:6px; line-height:1.7; }
+  .parties{ display:flex; gap:24px; padding:22px 34px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .parties .col{ flex:1; min-width:220px; }
+  .parties .k{ font-size:10.5px; letter-spacing:.14em; color:var(--mut); font-weight:700; text-transform:uppercase; }
+  .parties .v{ font-size:13.5px; margin-top:5px; line-height:1.6; }
+  .sec{ padding:22px 34px; }
+  .sec h2{ font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--brand); margin:0 0 4px; }
+  .sec .lead{ font-size:12.5px; color:var(--mut); margin:0 0 14px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); border-bottom:2px solid var(--line); padding:8px 6px; }
+  td{ padding:9px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  td.num,th.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .desc small{ display:block; color:var(--mut); font-size:11.5px; margin-top:2px; }
+  tfoot td{ border-bottom:none; padding:6px; font-size:13px; }
+  tfoot .tot td{ font-weight:800; font-size:15px; border-top:2px solid var(--ink); padding-top:10px; }
+  tfoot .grand td{ color:var(--brand); font-size:17px; }
+  .pill{ display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; background:#eef2ff; color:var(--brand); }
+  .pill.ok{ background:#ecfdf5; color:var(--ok); }
+  .note{ background:#f1f5f9; border-radius:10px; padding:14px 16px; font-size:12px; color:#334155; line-height:1.6; margin-top:14px; }
+  .note b{ color:var(--ink); }
+  .foot{ padding:20px 34px 30px; font-size:11.5px; color:var(--mut); line-height:1.7; border-top:1px solid var(--line); }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .card{ border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card .big{ font-size:26px; font-weight:800; letter-spacing:-.02em; margin-top:4px; }
+  .card .sub{ font-size:11.5px; color:var(--mut); margin-top:4px; }
+  .pay{ margin-top:18px; border:1px solid var(--line); border-radius:12px; padding:16px; background:#f8fafc; }
+  .pay-h{ font-size:10.5px; letter-spacing:.14em; color:var(--mut); font-weight:700; text-transform:uppercase; margin-bottom:10px; }
+  .pay-row{ display:flex; gap:26px; flex-wrap:wrap; }
+  .pay-row .pk{ display:block; font-size:11px; color:var(--mut); margin-bottom:2px; }
+  .pay-row b{ font-size:15px; letter-spacing:.01em; }
+  .print{ display:block; text-align:center; margin:14px auto 30px; }
+  .print button{ font:inherit; font-weight:700; font-size:13px; background:var(--brand); color:#fff; border:0; border-radius:10px; padding:11px 22px; cursor:pointer; }
+  @media(max-width:640px){ .two{ grid-template-columns:1fr; } .top,.parties,.sec,.foot{ padding-left:18px; padding-right:18px; } .pay-row{ gap:14px; } }
+  @media print{
+    @page{ size:A4; margin:11mm; }
+    html,body{ background:#fff; font-size:10.5px; }
+    .page{ box-shadow:none; border:none; margin:0; max-width:100%; border-radius:0; }
+    .print{ display:none; }
+    .top{ padding:14px 20px; }
+    .parties{ padding:12px 20px; }
+    .sec{ padding:12px 20px; page-break-inside:avoid; }
+    .foot{ padding:10px 20px 6px; font-size:9.5px; }
+    h2{ page-break-after:avoid; }
+    table{ font-size:10px; }
+    td{ padding:5px 5px; }
+    th{ padding:5px 5px; }
+    .desc small{ font-size:9px; margin-top:1px; }
+    .note{ padding:9px 11px; font-size:9.5px; margin-top:9px; page-break-inside:avoid; }
+    tr{ page-break-inside:avoid; }
+    .pay{ padding:11px 13px; margin-top:12px; page-break-inside:avoid; }
+    .pay-row b{ font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div class="brand">DIGIT2AI<small>Inteligencia Artificial · Plataformas a la medida</small></div>
+    <div class="doc">
+      <h1>FACTURA · SETUP INICIAL</h1>
+      <div class="meta">
+        No. <b>DGT-VALLEMILAGRO-SETUP-2026-10</b><br>
+        Fecha de emisión: 9 de octubre de 2026<br>
+        Vencimiento: al aprobar · el desarrollo inicia con el pago<br>
+        Moneda: USD
+      </div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="col"><div class="k">Emisor</div><div class="v"><b>Digit2AI LLC</b><br>digit2ai.com · info@digit2ai.com<br>Plataforma como servicio (SaaS)</div></div>
+    <div class="col"><div class="k">Facturar a</div><div class="v"><b>Asociación Valle Milagro</b><br>Entidad de facturación por confirmar<br>Atención: Eduardo de Lima</div></div>
+    <div class="col"><div class="k">Concepto</div><div class="v">Setup inicial<br>Pago único<br>Instancia ValleMilagro</div></div>
+  </div>
+
+  <!-- SETUP -->
+  <div class="sec">
+    <h2>Setup inicial <span class="pill ok">Pago único</span></h2>
+    <p class="lead">Construcción de la instancia ValleMilagro bajo la plataforma de Digit2AI, según la Solicitud de Cotización del 4 de octubre de 2026.</p>
+    <table>
+      <thead><tr><th>Concepto</th><th>Proveedor</th><th class="num">Valor</th></tr></thead>
+      <tbody>
+        <tr><td class="desc">Setup inicial — instancia ValleMilagro<small>Precio preferencial por infraestructura compartida</small></td><td>Digit2AI</td><td class="num">$700</td></tr>
+        <tr><td class="desc">Portal de Miembros<small>Inicio, Periódico Valle Milagro, Seguimiento de proyectos, Postular un proyecto, Mapa en vivo, Valle Milagro IA y Mi perfil · diseñado primero para celular</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+        <tr><td class="desc">Registro y acceso<small>Nombre, apellido y correo verificado, sin contraseña · número de miembro consecutivo (VM-0001 reservado)</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+        <tr><td class="desc">Módulo de Backend<small>Entrenamiento de Valle, directrices del Scout, bandeja de reportes, Periódico, proyectos y mapa, fotografías del Inicio y textos del portal</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+        <tr><td class="desc">Agente 1 · Valle<small>Agente conversacional para los miembros, entrenado con los documentos que carga el administrador</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+        <tr><td class="desc">Agente 2 · Scout<small>Búsqueda de noticias, decisiones oficiales y oportunidades · nada se publica sin aprobación del administrador</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+        <tr><td class="desc">Mapa del Valle del Cauca<small>42 municipios, vista satelital y cinco capas</small></td><td>Digit2AI</td><td class="num">Incluido</td></tr>
+      </tbody>
+      <tfoot>
+        <tr class="tot"><td colspan="2">Total setup inicial</td><td class="num">$700</td></tr>
+      </tfoot>
+    </table>
+    <div class="note">
+      <b>Modelo de servicio.</b> Digit2AI opera la plataforma como servicio (SaaS), redireccionable al dominio propio de la Asociación. La capa de IA (MCP) es tecnología de Digit2AI y se usa bajo licencia. <b>Quedan a nombre de la Asociación:</b> su dominio, sus datos, su base de datos y la cuenta de mapas.<br><br>
+      <b>No incluido en esta factura:</b> la licencia de la capa de IA y la operación mensual (hosting, mantenimiento y consumo de los dos agentes), que se cotizan y facturan por separado. Tampoco lo que la solicitud deja fuera del alcance: pagos o cobro de cuotas dentro de la app, invitación guiada, flujo del comité de revisión, app móvil nativa e integraciones con sistemas del gobierno.
+    </div>
+    <a href="https://buy.stripe.com/cNi9ATc6B9f4dxdgLCa3u04" target="_blank" rel="noopener" style="display:block;margin-top:16px;background:#059669;color:#fff;text-decoration:none;font-weight:800;font-size:16px;padding:15px 20px;border-radius:12px;text-align:center;letter-spacing:.01em">Pagar setup inicial · $700 &nbsp;&rarr;&nbsp; Stripe</a>
+    <div style="font-size:11px;color:var(--mut);margin-top:8px;line-height:1.5;text-align:center">Pago único y seguro con tarjeta (Stripe). No es un cobro recurrente.</div>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="sec" style="border-top:1px solid var(--line)">
+    <div class="two">
+      <div class="card">
+        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Total setup inicial</div>
+        <table style="margin-top:8px">
+          <tr><td>Instancia ValleMilagro</td><td class="num">$700,00</td></tr>
+          <tr class="tot grand" style="font-weight:800"><td style="border-top:2px solid var(--ink);padding-top:8px">Total a pagar</td><td class="num" style="border-top:2px solid var(--ink);padding-top:8px">$700,00</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="k" style="font-size:10.5px;letter-spacing:.14em;color:var(--mut);font-weight:700;text-transform:uppercase">Resumen</div>
+        <div class="big">$700,00</div>
+        <div class="sub">Pago único por la construcción de la instancia ValleMilagro.</div>
+        <a href="https://buy.stripe.com/cNi9ATc6B9f4dxdgLCa3u04" target="_blank" rel="noopener" style="display:block;margin-top:14px;background:var(--brand);color:#fff;text-decoration:none;font-weight:800;font-size:15px;padding:14px 18px;border-radius:12px;text-align:center">Pagar setup inicial · $700</a>
+        <div style="font-size:11.5px;color:var(--ink);margin-top:10px;line-height:1.5"><b>El desarrollo inicia al recibir el pago.</b></div>
+        <div style="font-size:11px;color:var(--mut);margin-top:4px;line-height:1.5">Un solo cargo. La licencia y la operación mensual se facturan aparte.</div>
+      </div>
+    </div>
+    <div class="pay">
+      <div class="pay-h">Datos de pago · Payable to</div>
+      <div class="pay-row">
+        <div><span class="pk">Beneficiario</span><b>DIGIT2AI LLC</b></div>
+        <div><span class="pk">Account number</span><b>898164442619</b></div>
+        <div><span class="pk">Routing number</span><b>063100277</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Condiciones.</b> Precios en USD. Valores sin IVA. Setup inicial de $700, pago único vía Stripe o transferencia; el desarrollo inicia al recibir el pago. El precio es preferencial y corresponde a construir la instancia ValleMilagro bajo la plataforma compartida de Digit2AI. La licencia de la capa de IA y la operación mensual no están incluidas y se cotizan y facturan por separado. Cualquier funcionalidad que no esté en la Solicitud de Cotización del 4 de octubre de 2026 o en el prototipo de referencia se cotiza aparte, con aprobación por escrito. La entidad de facturación se confirma antes de la firma.<br><br>
+    Digit2AI LLC · digit2ai.com · info@digit2ai.com
+  </div>
+</div>
+<div class="print"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+</body>
+</html>
