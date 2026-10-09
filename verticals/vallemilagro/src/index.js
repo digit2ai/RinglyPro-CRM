@@ -78,6 +78,8 @@ const shell = (file, dir) => {
   };
 };
 const portalPage = shell('portal.html', PUBLIC);
+// Presentación narrada: pública, sin sesión. No lee la base de datos; sus pantallas son capturas con datos de ejemplo.
+router.get(['/presentacion', '/presentation'], shell('presentacion.html', PUBLIC));
 router.get(['/', '/entrar', '/privacidad', '/portal', '/portal/*'], portalPage);
 router.get('/admin', ready, wrap(async (req, res, next) => {
   const m = await auth.loadSession(req);

@@ -284,6 +284,21 @@ async function cleanup() {
   const consent = await dbm.one('SELECT text, version, ip_hash FROM vm_consents WHERE tenant_id = :t AND member_id = :m', { t: T, m: anaRow.id });
   ok(consent && consent.text.includes('Ley 1581') && consent.version === 'vm-2026-10', 'la autorización guarda el texto del servidor y su versión');
 
+  /* ---------- presentación narrada ---------- */
+  r = await req('GET', '/presentacion');
+  ok(r.status === 200, 'la presentación abre sin sesión');
+  const deck = fs.readFileSync(path.join(__dirname, 'public', 'presentacion.html'), 'utf8');
+  const narr = new Function('return ' + /var NARR = (\[[\s\S]*?\n  \]);/.exec(deck)[1])();
+  const nSlides = (deck.match(/<section class="slide/g) || []).length;
+  ok(narr.length === nSlides && nSlides >= 10, 'hay una narración por lámina', narr.length + ' / ' + nSlides);
+  ok(narr.every((t) => t.length <= 1900), 'ninguna narración pasa el tope de la voz');
+  ok(narr.every((t) => !/\d/.test(t)), 'las cifras de la narración van en palabras');
+  const shots = [...new Set((deck.match(/[md]-[a-z]+(?=\.jpg|')/g) || []))];
+  ok(shots.length >= 12 && shots.every((n) => fs.existsSync(path.join(__dirname, 'public', 'presentacion', n + '.jpg'))), 'cada pantalla de la presentación existe', shots.join(','));
+  ok(/primer borrador/.test(narr[0]) && /datos de ejemplo/.test(narr[0]) && (deck.match(/Datos de ejemplo/g) || []).length >= 5, 'la presentación dice que es un borrador con datos de ejemplo');
+  ok(/no recibe pagos ni mueve dinero/.test(deck) && !/garantiz|ahorro de|\bUSD\b|\$\s?\d/.test(deck), 'la presentación no promete cifras ni dinero');
+  ok(!/fetch\(BASE|api\/v1/.test(deck), 'la presentación no lee datos de ningún miembro');
+
   /* ---------- promesas estructurales (lo que una prueba en ejecución no ve) ---------- */
   const SRC = path.join(__dirname, 'src');
   const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
