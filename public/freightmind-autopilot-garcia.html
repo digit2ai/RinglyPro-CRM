@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1020">
+<title>FreightMind Autopilot · Presentación para la familia García</title>
+<style>
+:root{--bg:#0b1020;--bg2:#111831;--card:#161f3b;--line:rgba(140,160,220,.2);--ink:#f1f4fb;--ink2:#c5cfe6;--mut:#9aa8c7;
+  --vio:#a78bfa;--gold:#e0b04a;--grn:#4ade80;--red:#f87171;--blu:#5fb0f5}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#060913;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+body{overflow:hidden}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:1280px;height:720px;flex:0 0 auto;transform-origin:center center;overflow:hidden;
+  background:radial-gradient(1100px 620px at 78% -10%,#2a1f5c 0%,transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg))}
+.slide{position:absolute;left:0;top:0;width:1280px;height:626px;padding:38px 56px 0;display:none}
+.slide.on{display:block}
+.slide:not(:has(.sim)){padding-top:58px}
+.eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--vio);font-weight:700;margin:0 0 10px}
+h1{font-size:58px;line-height:1.04;margin:0 0 18px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:36px;line-height:1.12;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:18px;margin:0 0 6px;font-weight:700}
+p{margin:0 0 12px;font-size:19px;line-height:1.5;color:var(--ink2)}
+.gold{color:var(--gold)} .vio{color:var(--vio)} .grn{color:var(--grn)}
+.lead{font-size:22px;max-width:820px}
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.card p{font-size:16px;margin:0;line-height:1.45}
+.num{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;
+  background:rgba(167,139,250,.18);color:var(--vio);font-weight:800;margin-bottom:10px}
+ul{margin:0;padding:0;list-style:none}
+li{position:relative;padding:0 0 11px 22px;font-size:17px;line-height:1.42;color:var(--ink2)}
+li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:50%;background:var(--vio)}
+li b,p b{color:var(--ink)}
+/* pantallas del simulador */
+.sim{display:grid;grid-template-columns:770px 1fr;gap:30px;align-items:start}
+.shot{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.shot .bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#0d1326;font-size:12px;color:var(--mut)}
+.shot .bar i{width:9px;height:9px;border-radius:50%;background:#33405f;display:inline-block}
+.shot .bar span{margin-left:8px}
+.shot img{display:block;width:100%;height:auto}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;
+  border:1px solid rgba(224,176,74,.5);color:var(--gold);border-radius:999px;padding:5px 11px;margin:0 0 14px}
+.sim h2{font-size:30px}
+.sim li{font-size:16.5px}
+.key{margin-top:6px;border-left:3px solid var(--gold);padding:8px 0 8px 14px;font-size:16.5px;color:var(--ink);line-height:1.42}
+/* tabla */
+table{width:100%;border-collapse:collapse;font-size:16px}
+th{text-align:left;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);padding:0 12px 10px;font-weight:700}
+td{padding:15px 12px;font-size:17px;border-top:1px solid var(--line);color:var(--ink2);vertical-align:top;line-height:1.4}
+td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.st{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.st.ok{background:rgba(74,222,128,.14);color:var(--grn)} .st.ad{background:rgba(95,176,245,.16);color:var(--blu)}
+.st.nw{background:rgba(224,176,74,.16);color:var(--gold)}
+.col h3{font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+.col.a h3{color:var(--grn)} .col.b h3{color:var(--gold)} .col.c h3{color:var(--red)}
+.col.a li::before{background:var(--grn)} .col.b li::before{background:var(--gold)} .col.c li::before{background:var(--red)}
+.col li{font-size:15.5px;padding-bottom:9px}
+.wk{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px}
+.pill{display:inline-block;border-radius:999px;background:rgba(74,222,128,.14);color:var(--grn);font-weight:700;font-size:15px;padding:7px 16px;margin-right:8px}
+.btn{display:inline-block;background:var(--vio);color:#14102b;font-weight:800;font-size:17px;border-radius:999px;
+  padding:14px 26px;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.brand{position:absolute;right:56px;top:36px;font-size:12.5px;letter-spacing:.18em;color:var(--mut);font-weight:700}
+.brand b{color:var(--ink)}
+/* dock */
+#dock{position:absolute;left:0;right:0;bottom:0;height:94px;background:rgba(6,9,19,.92);border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:0 22px}
+#orb{flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d5c7ff,#7c5cff 48%,#2a1f6b)}
+#orb.sp{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(167,139,250,.5)}70%{box-shadow:0 0 0 16px rgba(167,139,250,0)}100%{box-shadow:0 0 0 0 rgba(167,139,250,0)}}
+#cap{flex:1;min-width:0;font-size:15px;line-height:1.4;color:var(--ink);max-height:64px;overflow:hidden}
+#cap small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--vio);font-weight:700;margin-bottom:2px}
+.ctl{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+.ctl button{width:44px;height:44px;line-height:1;border-radius:50%;border:1px solid var(--line);background:#141c36;color:var(--ink);
+  font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
+.ctl button:hover{border-color:var(--vio)}
+#cnt{font-size:13px;color:var(--mut);min-width:54px;text-align:center}
+#prog{position:absolute;left:0;top:-2px;height:2px;background:var(--vio);width:0;transition:width .3s linear}
+/* inicio */
+#gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:rgba(6,9,19,.82);padding:30px}
+#gate p{max-width:560px;font-size:17px}
+#gate.off{display:none}
+@media (max-width:820px){
+  body{overflow:auto}
+  #wrap{position:static;display:block}
+  #stage{width:100%;height:auto;min-height:100vh;transform:none!important;padding-bottom:150px}
+  .slide{position:static;width:100%;height:auto;padding:26px 18px 0}
+  .brand{position:static;margin-bottom:14px}
+  h1{font-size:36px} h2,.sim h2{font-size:26px} p,.lead{font-size:17px}
+  .g2,.g3,.g4,.sim{grid-template-columns:1fr}
+  table,tbody,tr,td{display:block;width:100%} thead{display:none}
+  tr{border-top:1px solid var(--line);padding:10px 0} td{border:0;padding:3px 0}
+  #dock{position:fixed;height:auto;min-height:92px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex-wrap:wrap;gap:10px}
+  #orb{flex-basis:36px;width:36px;height:36px}
+  #cap{flex:1 1 60%;font-size:13.5px;max-height:58px}
+  .ctl{width:100%;justify-content:center}
+  #gate{position:fixed}
+}
+@media (prefers-reduced-motion:reduce){#orb.sp{animation:none}}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+
+<!-- 1 -->
+<section class="slide on" data-t="Bienvenida">
+  <div class="brand"><b>DIGIT2AI</b> · FREIGHTMIND</div>
+  <p class="eyebrow" style="margin-top:86px">Preparado para <span class="nm"></span> y familia · México</p>
+  <h1>FreightMind <span class="vio">Autopilot</span></h1>
+  <p class="lead">Un centro de mando con inteligencia artificial para operaciones de transporte: diagnostica, recomienda y ejecuta, con una persona siempre al mando.</p>
+  <p style="margin-top:26px"><span class="pill">Prueba de concepto en 4 semanas</span><span class="pill">Sin honorarios iniciales en esta etapa</span></p>
+  <p style="margin-top:34px;font-size:15px;color:var(--mut)">Presentación narrada por Dalia, la voz de Digit2AI. Duración aproximada: 8 minutos.</p>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-t="Lo que escuchamos">
+  <p class="eyebrow">01 · Lo que escuchamos en Visionarium</p>
+  <h2>Dos negocios, una misma pregunta: <span class="gold">¿dónde se está yendo el dinero?</span></h2>
+  <p class="lead">Construcción y transporte comparten los mismos activos caros: camiones, maquinaria, gente y combustible. Esto fue lo que nos contaste que quieren modernizar.</p>
+  <div class="grid g4" style="margin-top:22px">
+    <div class="card"><h3>Camiones y maquinaria</h3><p>Saber qué unidad está trabajando, cuál está parada y por qué.</p></div>
+    <div class="card"><h3>Obras y despachos</h3><p>Asignar y dar seguimiento sin depender de llamadas y mensajes sueltos.</p></div>
+    <div class="card"><h3>Rutas</h3><p>Elegir la ruta correcta y evitar kilómetros en vacío.</p></div>
+    <div class="card"><h3>Combustible y transporte</h3><p>Conocer el costo real de cada viaje antes de aceptarlo.</p></div>
+  </div>
+  <p class="key" style="margin-top:22px">Todavía no conocemos sus números. Por eso esta presentación no promete un ahorro: propone medirlo con sus propios datos.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-t="Qué es">
+  <p class="eyebrow">02 · Qué es FreightMind Autopilot</p>
+  <h2>Tres capas que trabajan sobre los datos que ustedes ya tienen</h2>
+  <div class="grid g3" style="margin-top:20px">
+    <div class="card"><div class="num">1</div><h3>Escáner de diagnóstico</h3><p>Como el escáner de un taller, pero para la operación: revisa siete módulos y devuelve hallazgos ordenados por gravedad.</p></div>
+    <div class="card"><div class="num">2</div><h3>Centro de mando</h3><p>Un solo tablero con la salud de la flota, los clientes, el margen y el cumplimiento. Menos reportes, una sola verdad.</p></div>
+    <div class="card"><div class="num">3</div><h3>Piloto automático</h3><p>Ejecuta el flujo de un viaje en ocho etapas y se detiene solo cuando algo sale de las reglas que ustedes fijan.</p></div>
+  </div>
+  <p class="key" style="margin-top:24px">La plataforma ya está construida y funcionando en un ambiente de demostración. Lo que sigue son seis pantallas reales del simulador.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-t="Simulador · Carga de datos">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Data Ingestion</span></div><img src="/freightmind-autopilot-mx/ingesta.jpg" alt="Pantalla de carga de datos del simulador" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 1 de 6</p>
+      <h2>Todo empieza con sus archivos</h2>
+      <ul>
+        <li><b>CSV o JSON</b> exportado del sistema que ya usan, o de Excel.</li>
+        <li>Cuatro tipos de datos: <b>viajes, flotas, clientes y tarifas</b>.</li>
+        <li>Tres pasos: subir, revisar el mapeo de columnas, importar.</li>
+      </ul>
+      <p class="key">No hay que cambiar de sistema para empezar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-t="Simulador · Centro de mando">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Command Center</span></div><img src="/freightmind-autopilot-mx/centro.jpg" alt="Centro de mando del escáner" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 2 de 6</p>
+      <h2>Un escaneo, siete módulos</h2>
+      <ul>
+        <li><b>11 hallazgos abiertos</b> en la empresa de ejemplo.</li>
+        <li>Detecta riesgos que nadie reporta: un cliente que pesa el <b>35%</b> de los ingresos, tres que suman el <b>61%</b>.</li>
+        <li><b>12 documentos de cumplimiento vencidos</b> en cuatro categorías.</li>
+      </ul>
+      <p class="key">El valor está en ver el riesgo antes de que cueste.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-t="Simulador · Hallazgos">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Findings</span></div><img src="/freightmind-autopilot-mx/hallazgos.jpg" alt="Lista de hallazgos" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 3 de 6</p>
+      <h2>Hallazgos con nombre, gravedad y monto</h2>
+      <ul>
+        <li><b>7 críticos, 2 de advertencia, 2 de aviso.</b></li>
+        <li>Ejemplo: operadores en servicio al <b>27%</b> (8 de 30).</li>
+        <li>Cuando el dato lo permite, el hallazgo trae su impacto mensual. Cuando no, <b>no lo inventa</b>: queda sin monto.</li>
+      </ul>
+      <p class="key">Se filtra por gravedad, módulo o estado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-t="Simulador · Prescripciones">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Prescriptions</span></div><img src="/freightmind-autopilot-mx/prescripciones.jpg" alt="Prescripciones ordenadas por retorno" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 4 de 6</p>
+      <h2>Del problema al plan de acción</h2>
+      <ul>
+        <li>Cada hallazgo se convierte en una <b>receta con pasos concretos</b>.</li>
+        <li>Ejemplo: <b>12 de 40 camiones parados</b> (30%). Revisar causa, ofrecer capacidad, arrendar las unidades ociosas.</li>
+        <li>El total del ejemplo es <b>$1,054,972 USD al mes</b>, pero el <b>97%</b> viene de una sola receta: cartera vencida.</li>
+      </ul>
+      <p class="key">Eso es dinero por cobrar, no un ahorro recurrente. Lo decimos tal cual.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-t="Simulador · Tablero unificado">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Unified Command Dashboard</span></div><img src="/freightmind-autopilot-mx/tablero.jpg" alt="Tablero unificado de mando" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 5 de 6</p>
+      <h2>La operación en una sola pantalla</h2>
+      <ul>
+        <li>Calificación general: <b>64 de 100</b>, "requiere atención".</li>
+        <li>Cobertura de viajes <b>96%</b>, entregas a tiempo <b>98%</b>, margen <b>13.7%</b>.</li>
+        <li>El tablero también muestra lo que falta: aquí la voz por teléfono aparece como <b>pendiente</b> y sin llamadas registradas.</li>
+      </ul>
+      <p class="key">Un tablero que solo muestra verde no sirve para decidir.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-t="Simulador · Piloto automático">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Simulador · Autopilot Mode</span></div><img src="/freightmind-autopilot-mx/autopilot.jpg" alt="Modo piloto automático con una corrida en pausa" loading="lazy"></div>
+    <div><span class="tag">Datos de demostración</span>
+      <p class="eyebrow">Simulador 6 de 6</p>
+      <h2>Automático, pero con freno</h2>
+      <ul>
+        <li>Ocho etapas: contrato, tarifa, transportista, combinación de cargas, contacto, confirmación, tránsito y cobro.</li>
+        <li>En el ejemplo evaluó <b>50 transportistas</b>, calificó 48 y contactó a 5.</li>
+        <li>Se <b>detuvo solo</b>: margen de <b>4.6%</b>, por debajo del mínimo de 5%.</li>
+      </ul>
+      <p class="key">Ustedes ponen la regla. La persona decide: continuar, pasar a manual o cancelar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-t="Cómo se adapta">
+  <p class="eyebrow">03 · Cómo se adapta a su grupo</p>
+  <h2>Lo que ya existe y lo que construiríamos con ustedes</h2>
+  <table style="margin-top:14px">
+    <thead><tr><th>Lo que quieren resolver</th><th>Cómo lo atiende la plataforma</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td>Camiones</td><td>Utilización de flota, unidades paradas y causa.</td><td><span class="st ok">Ya existe</span></td></tr>
+      <tr><td>Despachos</td><td>Flujo por etapas con pausas y reglas. Hoy pensado para carga; se ajusta a despachos a obra.</td><td><span class="st ad">Se adapta</span></td></tr>
+      <tr><td>Rutas</td><td>Combinación de cargas para reducir viajes en vacío. La optimización de ruta para sus corredores se configura.</td><td><span class="st ad">Se adapta</span></td></tr>
+      <tr><td>Combustible y costo por viaje</td><td>Cálculo de costo real por viaje con sus rendimientos y precios.</td><td><span class="st nw">Por construir</span></td></tr>
+      <tr><td>Maquinaria y obras</td><td>Disponibilidad, horas de uso y vista por obra.</td><td><span class="st nw">Por construir</span></td></tr>
+      <tr><td>Cumplimiento</td><td>La demostración usa reglas de Estados Unidos. Las de México se definen con ustedes.</td><td><span class="st nw">Por construir</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-t="Con objetividad">
+  <p class="eyebrow">04 · Con objetividad</p>
+  <h2>Lo que afirmamos y lo que no</h2>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card col a"><h3>Funciona hoy</h3><ul>
+      <li>Carga de datos por archivo.</li><li>Escáner de siete módulos con hallazgos y recetas.</li><li>Tablero unificado.</li><li>Piloto automático de ocho etapas con pausas por regla.</li></ul></div>
+    <div class="card col b"><h3>Es demostración</h3><ul>
+      <li>Todas las cifras de las pantallas son de una empresa de ejemplo.</li><li>La interfaz está en inglés; se entrega en español.</li><li>La voz por teléfono no está activa en este ambiente.</li></ul></div>
+    <div class="card col c"><h3>No afirmamos</h3><ul>
+      <li>Ningún ahorro para su grupo: aún no vemos sus datos.</li><li>Que reemplaza a su gente: la decisión final siempre es de una persona.</li><li>Módulos de maquinaria y obra terminados: se construyen.</li></ul></div>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-t="La propuesta">
+  <p class="eyebrow">05 · La propuesta</p>
+  <h2>Una prueba de concepto de <span class="gold">cuatro semanas</span>, con sus datos</h2>
+  <div class="grid g4" style="margin-top:18px">
+    <div class="card"><div class="wk">Semana 1</div><h3>Prioridades</h3><p>Elegimos juntos un negocio y un problema. Revisamos qué datos existen.</p></div>
+    <div class="card"><div class="wk">Semana 2</div><h3>Sus datos</h3><p>Cargamos sus archivos y corremos el primer escaneo real.</p></div>
+    <div class="card"><div class="wk">Semana 3</div><h3>Su tablero</h3><p>Tablero en español y un flujo en piloto: despacho, ruta o costo por viaje.</p></div>
+    <div class="card"><div class="wk">Semana 4</div><h3>Resultados</h3><p>Lo medido, sin adornos, y la hoja de ruta para la alianza.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card"><h3 class="grn">Lo que ponemos nosotros</h3><p>La plataforma, el equipo y la adaptación. Sin honorarios iniciales por esta etapa.</p></div>
+    <div class="card"><h3 class="gold">Lo que necesitamos de ustedes</h3><p>Una persona de operación, exportes de datos y una hora a la semana.</p></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-t="Siguiente paso">
+  <div class="brand"><b>DIGIT2AI</b> · FREIGHTMIND</div>
+  <p class="eyebrow" style="margin-top:70px">06 · Siguiente paso</p>
+  <h1 style="font-size:50px">Una llamada de Zoom<br>entre los <span class="vio">tres</span></h1>
+  <p class="lead"><span class="nm"></span>, cuando regreses este sábado, platícalo con tu papá y compártenos dos o tres horarios. En esa llamada definimos prioridades y arrancamos la semana uno.</p>
+  <p style="margin-top:26px">
+    <a class="btn" href="mailto:mstagg@digit2ai.com?subject=Horarios%20para%20Zoom%20%C2%B7%20FreightMind%20Autopilot">Proponer horarios</a>
+    &nbsp; <button class="btn ghost" id="again">Ver de nuevo</button>
+  </p>
+  <p style="margin-top:30px;font-size:15px;color:var(--mut)">Manuel Stagg · Digit2AI · mstagg@digit2ai.com</p>
+</section>
+
+<div id="dock">
+  <div id="prog"></div>
+  <div id="orb"></div>
+  <div id="cap"><small id="capT">Dalia · Digit2AI</small><span id="capX">Pulsa iniciar para escuchar la presentación.</span></div>
+  <div class="ctl">
+    <button id="prev" aria-label="Anterior">&#8249;</button>
+    <button id="play" aria-label="Pausar o reanudar">II</button>
+    <button id="next" aria-label="Siguiente">&#8250;</button>
+    <span id="cnt">1 / 13</span>
+  </div>
+</div>
+
+<div id="gate">
+  <p class="eyebrow">Digit2AI · FreightMind Autopilot</p>
+  <h2>Presentación para <span class="nm"></span></h2>
+  <p>Dalia te la explica en voz alta, lámina por lámina. Puedes pausar o avanzar cuando quieras.</p>
+  <p><button class="btn" id="start">Iniciar con voz</button> &nbsp; <button class="btn ghost" id="silent">Ver sin audio</button></p>
+</div>
+
+</div></div>
+
+<script>
+(function(){
+  // Nombre del destinatario: un solo lugar.
+  var NOMBRE = 'Osbaldo García';
+  [].forEach.call(document.querySelectorAll('.nm'), function(e){ e.textContent = NOMBRE; });
+  [].forEach.call(document.querySelectorAll('.lead .nm'), function(e){ e.textContent = NOMBRE.split(' ')[0]; });
+
+  // Un texto por lámina. Cifras escritas en palabras para que Dalia las lea bien.
+  var NARR = [
+    'Hola, Osbaldo. Soy Dalia, la voz de inteligencia artificial de Digit2AI. Gracias por la conversación en el taller de Visionarium. En los próximos minutos te voy a mostrar FreightMind Autopilot: qué es, cómo se ve funcionando y cómo podría servirle a los negocios de construcción y transporte de tu familia. Voy a ser clara sobre lo que ya existe, lo que es demostración y lo que tendríamos que construir juntos.',
+    'Empiezo por lo que escuchamos. Tu familia opera dos negocios que comparten los mismos activos caros: camiones, maquinaria, gente y combustible. Nos contaste que quieren modernizar cuatro cosas: saber qué unidad trabaja y cuál está parada, ordenar obras y despachos, elegir mejor las rutas y conocer el costo real de combustible y transporte de cada viaje. Algo importante: todavía no conocemos sus números. Por eso no les voy a prometer un ahorro. Les propongo medirlo con sus propios datos.',
+    'FreightMind Autopilot tiene tres capas. La primera es un escáner de diagnóstico. Funciona como el escáner de un taller mecánico, pero aplicado a la operación: revisa siete módulos y entrega hallazgos ordenados por gravedad. La segunda es un centro de mando, un solo tablero con la salud de la flota, los clientes, el margen y el cumplimiento. La tercera es el piloto automático, que ejecuta el flujo de un viaje en ocho etapas y se detiene cuando algo sale de las reglas que ustedes fijan. Ahora te muestro seis pantallas reales del simulador.',
+    'Primera pantalla: la carga de datos. Todo empieza con archivos que ustedes ya tienen, exportados de su sistema actual o de Excel. Se cargan cuatro tipos de información: viajes, flotas, clientes y tarifas. Son tres pasos: subir el archivo, revisar cómo se mapearon las columnas e importar. La idea es sencilla: no hay que cambiar de sistema para empezar.',
+    'Segunda pantalla: el centro de mando del escáner. Con un solo escaneo se analizan siete módulos. En la empresa de ejemplo aparecen once hallazgos abiertos. Fíjate en el tipo de riesgo que detecta: un solo cliente representa el treinta y cinco por ciento de los ingresos, y los tres más grandes suman el sesenta y uno por ciento. También encuentra doce documentos de cumplimiento vencidos. Son riesgos que normalmente nadie reporta hasta que cuestan.',
+    'Tercera pantalla: los hallazgos. Cada uno tiene nombre, gravedad y, cuando el dato lo permite, un monto mensual. En el ejemplo hay siete críticos, dos de advertencia y dos de aviso. Uno de ellos dice que los operadores están en servicio apenas al veintisiete por ciento: ocho de treinta. Y un detalle que nos importa: cuando no hay datos suficientes para calcular el impacto, el sistema no inventa una cifra. El hallazgo queda sin monto.',
+    'Cuarta pantalla: las prescripciones. Aquí cada hallazgo se convierte en una receta con pasos concretos. Por ejemplo: doce de cuarenta camiones parados, es decir, treinta por ciento de la flota. La receta propone revisar la causa, ofrecer esa capacidad y arrendar las unidades que siguen ociosas. Ahora, con objetividad: el total de este ejemplo supera el millón de dólares al mes, pero el noventa y siete por ciento viene de una sola receta, que es cartera vencida. Eso es dinero por cobrar, no un ahorro recurrente. Y es una empresa de ejemplo, no la suya.',
+    'Quinta pantalla: el tablero unificado. Toda la operación en una sola vista. La empresa de ejemplo tiene una calificación general de sesenta y cuatro sobre cien, marcada como requiere atención. La cobertura de viajes está en noventa y seis por ciento, las entregas a tiempo en noventa y ocho, y el margen en trece punto siete por ciento. Observa que el tablero también enseña lo que falta: en este ambiente la voz por teléfono aparece como pendiente y sin llamadas registradas. Un tablero que solo muestra verde no sirve para decidir.',
+    'Sexta pantalla, y la más importante: el piloto automático. El flujo tiene ocho etapas: contrato, análisis de tarifa, selección de transportista, combinación de cargas, contacto, confirmación de tarifa, seguimiento en tránsito y cobro. En este ejemplo el sistema evaluó cincuenta transportistas, calificó cuarenta y ocho y contactó a cinco. Y luego se detuvo solo. ¿Por qué? Porque el margen quedó en cuatro punto seis por ciento, por debajo del mínimo de cinco. Ustedes ponen la regla, y una persona decide si continúa, pasa a manual o cancela.',
+    '¿Cómo se adapta esto a su grupo? Seré precisa. La utilización de camiones y las unidades paradas ya existen. Los despachos y las rutas existen para carga y se adaptan a sus obras y a sus corredores. El costo de combustible por viaje, los módulos de maquinaria y la vista por obra todavía no existen: se construyen con ustedes. Y el cumplimiento de la demostración usa reglas de Estados Unidos; las de México las definimos juntos.',
+    'Para que no haya malentendidos, esto es lo que afirmamos y lo que no. Funciona hoy: la carga de datos, el escáner, el tablero y el piloto automático. Es demostración: todas las cifras que viste, la interfaz en inglés, que entregamos en español, y la voz por teléfono, que aquí no está activa. Y no afirmamos tres cosas: ningún ahorro para su grupo, porque no hemos visto sus datos; que la plataforma reemplaza a su gente; ni que los módulos de maquinaria y obra estén terminados.',
+    'Esta es la propuesta: una prueba de concepto de cuatro semanas con sus datos. Semana uno, elegimos juntos un negocio y un problema. Semana dos, cargamos sus archivos y corremos el primer escaneo real. Semana tres, les entregamos su tablero en español y un flujo en piloto. Semana cuatro, presentamos lo medido, sin adornos, y la hoja de ruta para una alianza estratégica. Nosotros ponemos la plataforma y el equipo, sin honorarios iniciales por esta etapa. De ustedes necesitamos una persona de operación, sus archivos y una hora a la semana.',
+    'El siguiente paso es sencillo. Osbaldo, cuando regreses este sábado, platícalo con tu papá y compártenos dos o tres horarios que les funcionen. Organizamos una llamada de Zoom entre los tres, hablamos de sus prioridades y arrancamos la semana uno. Gracias por tu tiempo. Quedamos pendientes.'
+  ];
+
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '\u25B6\uFE0E';
+  var MOB = window.matchMedia('(max-width:820px)');
+
+  function fit(){
+    if (MOB.matches) { stage.style.transform = ''; return; }
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else { orb.classList.remove('sp'); } }
+  // Sin voz disponible: pausa de lectura proporcional al texto, para que la presentación avance igual.
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t === token && audio && audio.duration) { capAt(audio.currentTime / audio.duration); } if (t === token && audio && audio.duration) prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); });
+    if (MOB.matches) slides[i].scrollIntoView({ behavior:'smooth', block:'start' });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Dalia · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = "Sin audio. Avanza con las flechas o pulsa reproducir para escuchar a Dalia.";
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    narrate();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.getElementById('again').onclick = function(){ show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  MOB.addEventListener && MOB.addEventListener('change', function(){ fit(); slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); }); });
+  if (MOB.matches) slides.forEach(function(s){ s.classList.add('on'); });
+  window.addEventListener('beforeunload', stopAll);
+})();
+</script>
+</body>
+</html>

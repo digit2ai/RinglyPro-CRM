@@ -2227,3 +2227,13 @@ Seeded 2026-09-30 for the Hispanotec audience demo (2026-10-01): **500 fictional
 - Companion plugin gained `POST /wp-json/camaravirtual/v1/members` (HMAC over `ts.event.email`) plus `$GLOBALS['cv_sor_applying']` loop suppression.
 
 **Picking a scenario:** WordPress only *displays* members → the embed widget / `[cv_directory]` (no member records move). Signups and payments already happen in WordPress → `direction:'pull'`. Signups happen in the chamber and members need site accounts → `direction:'push'`.
+
+## FreightMind Autopilot — presentación narrada para México (`/freightmind-autopilot-garcia.html`)
+
+`public/freightmind-autopilot-garcia.html` + `public/freightmind-autopilot-mx/*.jpg`. Trece láminas en español, narradas por Dalia en vivo por `/api/tts/edge` (voz `dalia`, sin MP3 pre-renderizados), para Osbaldo García y su familia (grupo de construcción y transporte, contacto del taller Visionarium). Escenario 1280x720 escalado, subtítulo por frase sincronizado con el audio, avance automático, teclado, columna bajo 820 px, y pausa de lectura si la voz falla. `noindex`.
+
+- **Las seis pantallas son las capturas reales del simulador** (el dueño pidió capturas), cada una con la etiqueta "Datos de demostración". Son de la empresa de ejemplo de CW Carriers, no del cliente.
+- **No se promete ningún ahorro al cliente**: aún no se han visto sus datos. La lámina de prescripciones dice que el 97% del total de ejemplo ($1,054,972/mes) es una sola receta de cartera vencida, dinero por cobrar y no ahorro recurrente.
+- La lámina "Cómo se adapta" separa **Ya existe / Se adapta / Por construir**: combustible por viaje, maquinaria, vista por obra y cumplimiento mexicano NO existen (la demo usa reglas de EE. UU.). La voz por teléfono se declara inactiva.
+- Propuesta: prueba de concepto de 4 semanas, sin honorarios iniciales en esa etapa; siguiente paso, Zoom con Osbaldo y su papá.
+- El nombre del destinatario vive en una constante (`NOMBRE`) y el guion en `NARR` (una entrada por lámina, cifras en palabras, tope de 2000 caracteres del TTS).
