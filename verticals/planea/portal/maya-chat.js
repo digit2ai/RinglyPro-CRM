@@ -417,7 +417,8 @@
       if (a.modulo === 'meta') return saveGoal(a).then(function () { return a; });
       return fetch('/planea/api/v1/me/items', {
         method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: a.modulo, name: a.nombre, type: a.nombre, value: a.monto, monthly: a.cuota || 0 })
+        body: JSON.stringify(Object.assign({ category: a.modulo, name: a.nombre, type: a.nombre, value: a.monto, monthly: a.cuota || 0 },
+          a.fecha ? { fecha_mov: a.fecha } : {}, a.unico ? { meta: { behavior: 'unico' } } : {}))
       }).then(function (r) { if (!r.ok) throw new Error('save'); return a; });
     });
     return Promise.all(jobs).then(function (done) {
@@ -516,7 +517,7 @@
     wrap.className = 'maya-msg m maya-confirm';
     var resumen = pendingProposals.map(function (p) {
       return '<div class="mc-item"><b>' + esc(p.nombre) + '</b> ' + (p.monto ? copMx(p.monto) + ' ' : '') + 'en ' + esc(MOD_LABEL[p.modulo] || p.modulo) +
-        (p.cuota ? ' (cuota ' + copMx(p.cuota) + ')' : '') + (p.fecha ? ' · ' + esc(fechaCorta(p.fecha)) : '') + '</div>';
+        (p.cuota ? ' (cuota ' + copMx(p.cuota) + ')' : '') + (p.fecha ? ' · ' + esc(fechaCorta(p.fecha)) : '') + (p.unico ? ' · una sola vez' : '') + '</div>';
     }).join('') + pendingAcciones.map(function (a) {
       return '<div class="mc-item">' + esc(ACC_TXT[a.accion][0]) + ' <b>' + esc(a.etiqueta) + '</b>' + (a.fecha ? ' · ' + esc(fechaCorta(a.fecha)) : '') + '</div>';
     }).join('');

@@ -14,7 +14,9 @@
   function num(v) { v = Number(v); return isFinite(v) && v > 0 ? v : 0; }
   function cop(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
-  function ofCat(items, c) { return items.filter(function (i) { return i && i.category === c; }); }
+  // De ingresos y gastos solo entra lo que cuenta en el MES ACTUAL (fecha del movimiento): el
+  // servidor marca con cuenta_hoy:false un registro único de otro mes o uno con fecha futura.
+  function ofCat(items, c) { return items.filter(function (i) { return i && i.category === c && i.cuenta_hoy !== false; }); }
   function sum(items, c, f) { return ofCat(items, c).reduce(function (s, i) { return s + num(i[f]); }, 0); }
 
   var AHORRO_ILIQUIDO = { 'CDT': 1, 'Cuenta AFC': 1 };

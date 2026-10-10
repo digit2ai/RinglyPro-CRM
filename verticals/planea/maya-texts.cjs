@@ -70,9 +70,17 @@ const BIENVENIDA = (n) => 'Hola' + (n ? ' ' + n : '') + ', soy Maya, tu agente d
 // Los textos que Maya redacta. `req` dice qué hecho DEBE nombrar el texto; `solo` limita
 // qué pilares puede nombrar (un texto sobre la prioridad no puede señalar otra área).
 const SLOTS = [
-  { key: 'inicio_resumen', max: 140, donde: 'Inicio, la línea debajo de "Hola, {nombre}"', req: 'prioridad', solo: 'prioridad', ref: (f) => 'Hoy tu mayor palanca es ' + low(f.principal) + '.' },
-  { key: 'inicio_rango', max: 90, donde: 'Inicio, tarjeta del puntaje (dice en qué rango está)', req: 'rango', ref: (f) => 'Estás en ' + f.rango + '.' },
-  { key: 'inicio_rango_nota', max: 150, donde: 'Inicio, nota pequeña debajo del rango', ref: () => 'Base de la encuesta: cambiará según registres tus datos.' },
+  // Mensaje GENERAL de Inicio (ajuste del 7-oct-2026): igual para todos los usuarios. Ya no
+  // es la Lectura de Oportunidad, así que no exige nombrar un área (y no debe nombrar ninguna).
+  // `literal`: solo vale el texto de respaldo o un texto que Planea enseñó palabra por palabra.
+  { key: 'inicio_resumen', max: 140, literal: true, sinArea: true,
+    donde: 'Inicio, la línea debajo de "Hola, {nombre}". Es un mensaje GENERAL, el mismo para todos los usuarios: NO es la Lectura de Oportunidad y NO nombra ningún área. Si Planea enseñó el texto de esta línea, escríbelo palabra por palabra; si no, escribe exactamente el texto de referencia',
+    ref: () => 'Tus finanzas en un solo lugar.' },
+  // Lectura de Oportunidad, en el centro de la tarjeta del puntaje: el statement del área
+  // prioritaria. La línea «Revisa tu sección de {área}.» la agrega la app, no Maya.
+  { key: 'inicio_lectura', max: 170, solo: 'prioridad', lectura: true,
+    donde: 'Inicio, centro de la tarjeta del puntaje: la Lectura de Oportunidad. Escribe SOLO el statement que Planea enseñó para el área prioritaria del usuario, tal cual. NO agregues "Revisa tu sección de…": esa línea la pone la app debajo. Si Planea no enseñó un statement para esa área, escribe el texto de referencia',
+    ref: (f) => 'Hoy tu mayor palanca es ' + low(f.principal) + '.' },
   { key: 'inicio_prioridad', max: 230, donde: 'Inicio, bloque "Lo más importante para ti" (el nombre del área ya va como título encima)', solo: 'prioridad', ref: () => 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.' },
   { key: 'puntaje_apertura', max: 270, donde: 'Puntaje Planea, lectura principal de "Hallazgos de Maya"', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => (f.nombre ? f.nombre + ', ' : '') + 'tu mayor palanca ahora es ' + tuyo(f.principal) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.' },
   { key: 'puntaje_empieza', max: 120, donde: 'Puntaje Planea, línea de orden debajo de la lectura principal', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => 'Empieza por ' + tuyo(f.principal).replace(/^tus? /, '') + (f.secundario ? ', y luego ' + tuyo(f.secundario).replace(/^tus? /, '') : '') + '.' },
@@ -153,10 +161,41 @@ function tidy(t) {
 
 // REVISIÓN DE UN TEXTO. Devuelve { ok, text } o { ok:false, why }. `kbNumbers` son los
 // números que aparecen en el entrenamiento de Planea: esos sí se pueden decir.
-function verifySlot(slot, raw, f, kbNumbers) {
+// La app agrega sola «Revisa tu sección de {área}.» debajo de la Lectura de Oportunidad: si
+// Maya la escribe también, se quita para que no salga dos veces. Solo cuando es la ÚLTIMA
+// frase y empieza frase: «conviene que revisa tu sección…» a mitad de texto no se toca.
+function sinRevisa(t) { return String(t || '').replace(/(^|[.!?]\s+)Revisa\s+(tu|la)\s+secci[oó]n[^.!?]*[.!?]?\s*$/, '$1').trim(); }
+// LO QUE PLANEA ENSEÑÓ, FRASE POR FRASE. Del entrenamiento se sacan los textos que Planea
+// dejó escritos como tales: lo que va entre comillas y lo que sigue a los dos puntos al final
+// de un renglón. Cada uno recuerda el renglón de donde salió y, si justo antes se nombra UNA
+// sola área («Pensión: "Tu futuro…"»), a qué área pertenece.
+const normT = (x) => fold(x).replace(/[^a-z0-9{} ]+/g, ' ').replace(/\s+/g, ' ').trim();
+function pilarDe(textoFold) { const hit = PILARES.filter((k) => mentions(textoFold, k)); return hit.length === 1 ? hit[0] : null; }
+function ensenados(kbText) {
+  const out = [];
+  String(kbText || '').split(/\n+/).forEach((linea) => {
+    const lf = fold(linea); let prev = 0, m, hubo = false;
+    const re = /["“«]([^"”»]{6,300})["”»]/g;
+    while ((m = re.exec(linea))) { hubo = true; out.push({ t: normT(m[1]), pilar: pilarDe(fold(linea.slice(prev, m.index))), linea: lf }); prev = re.lastIndex; }
+    const c = linea.lastIndexOf(':');
+    if (!hubo && c > 0 && linea.length - c > 7) out.push({ t: normT(linea.slice(c + 1)), pilar: pilarDe(fold(linea.slice(0, c))), linea: lf });
+  });
+  return out.filter((x) => x.t.length >= 6);
+}
+// ¿El texto es, palabra por palabra, uno de esos? Devuelve el que coincide, o null. Se
+// ignoran mayúsculas, tildes y signos; el nombre del usuario cuenta como {nombre}.
+function literalEnKb(text, f, kbText, filtro) {
+  const t = normT(text);
+  if (!t || /[{}]/.test(String(text))) return null;
+  const nom = f && f.nombre ? normT(f.nombre) : '';
+  const tn = nom ? t.split(' ').map((w) => (w === nom ? '{nombre}' : w)).join(' ') : t;
+  return ensenados(kbText).find((x) => (x.t === t || x.t === tn) && (!filtro || filtro.test(x.linea))) || null;
+}
+function verifySlot(slot, raw, f, kbNumbers, kbText) {
   if (typeof raw !== 'string') return { ok: false, why: 'no_es_texto' };
   if (/[<>]/.test(raw)) return { ok: false, why: 'html' };
-  const text = tidy(raw);
+  if (/[{}]/.test(raw)) return { ok: false, why: 'llaves' };   // un {nombre} sin reemplazar nunca llega a la pantalla
+  const text = slot.lectura ? sinRevisa(tidy(raw)) : tidy(raw);
   if (text.length < 8) return { ok: false, why: 'vacio' };
   if (text.length > slot.max) return { ok: false, why: 'muy_largo' };
   if (/\$|\bCOP\b|\bpesos\b/i.test(text)) return { ok: false, why: 'monto' };
@@ -178,6 +217,23 @@ function verifySlot(slot, raw, f, kbNumbers) {
   if (slot.req === 'bienvenida') {
     if (ft.indexOf('maya') < 0) return { ok: false, why: 'falta_maya' };
     if (f.nombre && ft.indexOf(fold(f.nombre)) < 0) return { ok: false, why: 'falta_el_nombre' };
+  }
+  if (slot.sinArea) for (const k of PILARES) if (mentions(ft, k)) return { ok: false, why: 'nombra_un_area:' + k };
+  // Texto literal: el de respaldo, o uno que Planea enseñó palabra por palabra. Así el
+  // mensaje general es el mismo para todos y Maya no lo improvisa. (Sin el texto del
+  // entrenamiento a mano no se puede comprobar: solo pasa el de respaldo.)
+  if (slot.literal) {
+    const refT = slot.ref ? slot.ref(f) : '';
+    // …y enseñado PARA ESTA LÍNEA: el renglón de donde salió habla del saludo o de Inicio. Así
+    // una frase cualquiera del entrenamiento (una prohibición, un ejemplo) no acaba aquí.
+    if (fold(text) !== fold(refT) && !(kbText != null && literalEnKb(text, f, kbText, /saludo|inicio/))) return { ok: false, why: 'no_es_un_texto_que_planea_enseno' };
+  }
+  // Lectura de Oportunidad: el statement que Planea enseñó. Si está atado a un área, tiene que
+  // ser la del usuario; y si no nombra el área, tiene que ser un texto enseñado (o el de respaldo).
+  if (slot.lectura) {
+    const seg = kbText != null ? literalEnKb(text, f, kbText) : null;
+    if (seg && seg.pilar && seg.pilar !== f.principal) return { ok: false, why: 'statement_de_otra_area:' + seg.pilar };
+    if (!seg && !mentions(ft, f.principal) && fold(text) !== fold(slot.ref ? slot.ref(f) : '')) return { ok: false, why: 'no_es_un_statement_que_planea_enseno' };
   }
   if (slot.solo) {
     const ok = [f.principal].concat(slot.solo === 'prioridad+secundario' && f.secundario ? [f.secundario] : []);
@@ -204,6 +260,7 @@ function taskBlock(f) {
     'HECHOS DEL USUARIO (no los cambies, no agregues otros, no menciones cifras que no estén aquí o en los documentos del equipo):\n' + JSON.stringify(hechos, null, 1) + '\n' +
     'REGLAS DE ESTOS TEXTOS: texto plano, sin markdown ni emojis; no escribas cifras ni porcentajes, ni en números ni en palabras, salvo el puntaje; sin montos en pesos; no cierres con una pregunta salvo en "chat_bienvenida"; nunca digas "tu asistente" ni "tu guía financiera IA"; ' +
     'los textos sobre el área prioritaria nombran SOLO esa área (y, donde se indica, la siguiente).\n' +
+    'IMPORTANTE: el statement del área prioritaria va en "inicio_lectura". Si una instrucción anterior pedía ponerlo en la línea debajo del saludo, ya no aplica: debajo del saludo va el mensaje general ("inicio_resumen").\n' +
     'TEXTOS A ESCRIBIR:\n' + lines + '\n' +
     'Responde ÚNICAMENTE con un objeto JSON cuyas claves sean exactamente esas, cada una con su texto. Sin explicación antes ni después.';
 }
@@ -230,12 +287,15 @@ async function compose({ facts, system, knowledge, model, fetchImpl }) {
   const obj = parseJson(d && d.content && d.content[0] && d.content[0].text);
   if (!obj) return { ok: false, reason: 'respuesta_no_json' };
   const kbNums = numbersIn(knowledge);
-  const texts = {}, rejected = {};
+  const texts = {}, rejected = {}, escrito = {};
   SLOTS.forEach((s) => {
-    const v = verifySlot(s, obj[s.key], facts, kbNums);
-    if (v.ok) texts[s.key] = v.text; else { texts[s.key] = null; rejected[s.key] = v.why; }
+    const v = verifySlot(s, obj[s.key], facts, kbNums, String(knowledge || ''));
+    if (v.ok) texts[s.key] = v.text;
+    // Se guarda también QUÉ escribió Maya (recortado), no solo el motivo: sin eso nadie puede
+    // saber por qué un texto no salió en pantalla.
+    else { texts[s.key] = null; rejected[s.key] = v.why; if (typeof obj[s.key] === 'string') escrito[s.key] = tidy(obj[s.key]).replace(/[<>]/g, '').slice(0, 300); }
   });
-  return { ok: true, texts, rejected };
+  return { ok: true, texts, rejected, escrito };
 }
 
 function fixedPayload(f, why) {
@@ -262,6 +322,27 @@ function ensure(sq) {
   return ensured;
 }
 
+// Versión de los huecos. Va delante de kb_version: al cambiar los huecos, todas las filas
+// guardadas quedan «viejas» y Maya las reescribe como un cambio de entrenamiento (sin
+// gastar el tope diario de cambios de datos).
+const ESQUEMA = 'v2:';
+// Lo que Maya debe saber, EN EL CHAT, sobre los textos de pantalla que ella redacta: cuáles
+// son y qué exige cada uno. Sale de la misma lista que usa la revisión, así no se desfasan.
+function guia() {
+  const req = (s) => {
+    const r = [];
+    if (s.literal) r.push('es el mismo para todos los usuarios; solo vale un texto que Planea haya enseñado palabra por palabra');
+    if (s.sinArea) r.push('no nombra ningún área');
+    if (s.lectura) r.push('es el statement del área prioritaria; la app agrega sola "Revisa tu sección de {área}."');
+    if (s.req === 'prioridad') r.push('debe nombrar el área prioritaria del usuario');
+    if (s.req === 'bienvenida') r.push('debe decir "Maya" y el nombre del usuario');
+    if (s.solo) r.push('no puede nombrar otra área');
+    return r.join('; ');
+  };
+  const vistos = {};
+  return SLOTS.filter((s) => { if (!s.pilar) return true; if (vistos.p) return false; vistos.p = 1; return true; }).map((s) =>
+    '- ' + (s.pilar ? 'Puntaje Planea, hallazgo de cada una de las 8 áreas' : s.donde.split(/[.:]/)[0]) + ' (máximo ' + s.max + ' caracteres' + (req(s) ? '; ' + req(s) : '') + ')').join('\n');
+}
 const isOff = () => String(process.env.PLANEA_MAYA_TEXTS || '').toLowerCase() === 'off';
 const dailyData = () => Math.max(0, parseInt(process.env.PLANEA_MAYA_TEXTS_DAILY || '1', 10) || 0);
 const dailyMax = () => Math.max(1, parseInt(process.env.PLANEA_MAYA_TEXTS_MAX_DAILY || '20', 10) || 20);
@@ -291,7 +372,7 @@ function mount(me, ctx) {
         await sq.query('UPDATE planea_maya_texts SET is_current = FALSE WHERE tenant_id = :t AND user_id = :u AND is_current', { replacements: { t: tenant(), u: uid }, transaction: t });
         await sq.query(`INSERT INTO planea_maya_texts (tenant_id, user_id, is_current, cause, texts, facts, facts_hash, kb_version, composed_by, rejected)
           VALUES (:t, :u, TRUE, :c, CAST(:tx AS JSONB), CAST(:f AS JSONB), :fh, :kv, 'maya', CAST(:rj AS JSONB))`,
-          { replacements: { t: tenant(), u: uid, c: cause, tx: JSON.stringify(r.texts), f: JSON.stringify(publicFacts(f)), fh, kv, rj: JSON.stringify(r.rejected) }, transaction: t });
+          { replacements: { t: tenant(), u: uid, c: cause, tx: JSON.stringify(r.texts), f: JSON.stringify(publicFacts(f)), fh, kv, rj: JSON.stringify(Object.assign({}, r.rejected, r.escrito && Object.keys(r.escrito).length ? { _texto: r.escrito } : {})) }, transaction: t });
       });
       // Solo las últimas versiones: no se acumula historial sin límite.
       await sq.query(`DELETE FROM planea_maya_texts WHERE tenant_id = :t AND user_id = :u AND id NOT IN
@@ -325,7 +406,7 @@ function mount(me, ctx) {
       if (isOff()) return res.json(fixedPayload(f, 'apagado'));
       if (!f.ok) return res.json(fixedPayload(f, f.why));
       await ensure(sq);
-      const fh = factsHash(f), kv = sha(kbText);
+      const fh = factsHash(f), kv = ESQUEMA + sha(kbText);
       const [cur] = await sq.query('SELECT texts, facts, facts_hash, kb_version, rejected FROM planea_maya_texts WHERE tenant_id = :t AND user_id = :u AND is_current LIMIT 1', { replacements: { t: tenant(), u: a.id } });
       const row = cur[0] || null;
       const sameFacts = !!row && row.facts_hash === fh;
@@ -352,7 +433,13 @@ function mount(me, ctx) {
       // Lo guardado se REVISA otra vez contra la ficha de hoy: un texto escrito con un nombre de
       // nivel que Planea ya cambió no se muestra mientras llega el nuevo (queda el fijo).
       const kbNums = numbersIn(kbText);
-      const texts = {}; SLOTS.forEach((s) => { const t = row.texts[s.key]; texts[s.key] = typeof t === 'string' && verifySlot(s, t, f, kbNums).ok ? t : null; });
+      // Fila escrita con los huecos de ANTES del 7-oct-2026: el statement del área vivía en
+      // la línea del saludo. Se pasa a la Lectura de Oportunidad (su lugar de ahora) y la
+      // línea del saludo vuelve al mensaje general, sin esperar a que Maya reescriba.
+      const viejo = String(row.kb_version || '').indexOf(ESQUEMA) !== 0;
+      const src = Object.assign({}, row.texts);
+      if (viejo) { if (!src.inicio_lectura) src.inicio_lectura = src.inicio_resumen; src.inicio_resumen = null; }
+      const texts = {}; SLOTS.forEach((s) => { const t = src[s.key]; const v = typeof t === 'string' ? verifySlot(s, t, f, kbNums, kbText) : null; texts[s.key] = v && v.ok ? v.text : null; });
       if (!texts.chat_bienvenida) texts.chat_bienvenida = BIENVENIDA(f.nombre);
       res.json({ texts, facts: publicFacts(f), composed_by: 'maya', stale: !fresh, pending });
     } catch (e) { console.error('[planea-maya-texts]', e.message); res.json(fixedPayload(null, 'error')); }
@@ -372,7 +459,7 @@ function mount(me, ctx) {
     if (isOff()) return { ok: false, reason: 'apagado', facts: publicFacts(f) };
     const r = await compose({ facts: f, system: systemFor(f), knowledge: kbText, model: mayaModel, fetchImpl });
     const slots = SLOTS.map((sl) => ({ key: sl.key, donde: sl.donde, actual: sl.pilar ? ((loadHallazgo()[sl.pilar] || [])[band(f.pilares[sl.pilar])] || '') : (sl.ref ? sl.ref(f) : ''),
-      maya: r.ok ? r.texts[sl.key] : null, rechazado: r.ok ? (r.rejected[sl.key] || null) : null }));
+      maya: r.ok ? r.texts[sl.key] : null, rechazado: r.ok ? (r.rejected[sl.key] || null) : null, escrito: r.ok && r.escrito ? (r.escrito[sl.key] || null) : null }));
     return { ok: r.ok, reason: r.ok ? null : r.reason, facts: publicFacts(f), slots };
   }
   return { preview };
@@ -380,4 +467,4 @@ function mount(me, ctx) {
 
 function status() { return { off: isOff(), daily_data: dailyData(), daily_max: dailyMax(), slots: SLOTS.length }; }
 
-module.exports = { rangoNames, rangoIdx, mount, compose, verifySlot, factsFrom, factsHash, numbersIn, rangoDe, safeFirstName, tidy, ensure, status, SLOTS, PILARES, PILAR_LABEL, BIENVENIDA, fixedPayload, taskBlock };
+module.exports = { guia, sinRevisa, literalEnKb, ensenados, ESQUEMA, rangoNames, rangoIdx, mount, compose, verifySlot, factsFrom, factsHash, numbersIn, rangoDe, safeFirstName, tidy, ensure, status, SLOTS, PILARES, PILAR_LABEL, BIENVENIDA, fixedPayload, taskBlock };

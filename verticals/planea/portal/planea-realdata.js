@@ -18,7 +18,9 @@
 
   function num(v) { v = Number(v); return isFinite(v) && v > 0 ? v : 0; }
   function sumBy(items, cat, field) {
-    return items.reduce(function (s, it) { return it && it.category === cat ? s + num(it[field]) : s; }, 0);
+    // Un ingreso o gasto que no cuenta en el mes actual (único de otro mes, o con fecha
+    // futura) no entra al Puntaje Planea: el servidor lo marca con cuenta_hoy:false.
+    return items.reduce(function (s, it) { return it && it.category === cat && it.cuenta_hoy !== false ? s + num(it[field]) : s; }, 0);
   }
   function ofCat(items, cat) { return items.filter(function (it) { return it && it.category === cat; }); }
 

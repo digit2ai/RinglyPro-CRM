@@ -136,11 +136,22 @@
     if (!k) return 'Registra tu información para afinar tu plan.';
     return 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.';
   }
-  function resumenLine(prof) {
-    if (prof.sin_diagnostico) return 'Empieza tu diagnóstico para ver tu panorama en un solo lugar.';
+  // Ajuste del 7-oct-2026: debajo del saludo va un mensaje GENERAL, igual para TODOS los
+  // usuarios. La Lectura de Oportunidad pasó al centro de la tarjeta del puntaje (lecturaLine).
+  function resumenLine() { return 'Tus finanzas en un solo lugar.'; }
+
+  // Lectura de Oportunidad (centro de la tarjeta del puntaje). Texto de respaldo: el que
+  // se ve cuando Maya no ha escrito el statement del área, o no pasó la revisión.
+  function lecturaLine(prof) {
+    if (prof.sin_diagnostico) return 'Haz tu diagnóstico Planea para conocer tu puntaje.';
     var k = prioKey(prof);
-    if (k) return 'Hoy tu mayor palanca es ' + (PIL_LABEL[k] || k).toLowerCase() + '.';
-    return 'Tus finanzas, en un solo lugar.';
+    return k ? 'Hoy tu mayor palanca es ' + (PIL_LABEL[k] || k).toLowerCase() + '.' : 'Registra tu información para afinar tu plan.';
+  }
+  // «Revisa tu sección de {área}.» lo arma la app con el área del motor, no Maya.
+  function lecturaRev(prof) {
+    if (prof.sin_diagnostico) return '';
+    var k = prioKey(prof);
+    return k ? 'Revisa tu sección de ' + (PIL_LABEL[k] || k) + '.' : '';
   }
 
   function sbSession() {
@@ -258,6 +269,8 @@
       case 'disponible_total': return cop(prof.disponible_cop || 0);
       case 'tasa_ahorro': return prof.tasa_ahorro == null ? '—' : prof.tasa_ahorro + '%';
       case 'resumen': return resumenLine(prof);
+      case 'lectura': return lecturaLine(prof);
+      case 'lectura_rev': return lecturaRev(prof);
       case 'evolucion': return prof.evolucion || '';
       case 'prioridad_nombre': return prioNombre(prof);
       case 'prioridad_texto': return prioTexto(prof);
@@ -539,7 +552,8 @@
         // backend returns them + a per-category summary.
         var items = Array.isArray(d.items) ? d.items : [];
         var sum = d.summary || {};
-        var byCat = function (c) { return items.filter(function (x) { return x.category === c; }); };
+        // De ingresos y gastos solo se listan los que cuentan en el mes actual (fecha del movimiento).
+        var byCat = function (c) { return items.filter(function (x) { return x.category === c && x.cuenta_hoy !== false; }); };
         var toRow = function (x) { return { nombre: x.name, tipo: x.type, valor_cop: num(x.value), monthly_cop: num(x.monthly) }; };
 
         prof.ingreso_mensual_cop = num(sum.ingreso);

@@ -524,6 +524,12 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
       chatReply = 'Va. <propuesta>{"modulo":"meta","nombre":"Viaje a Cartagena","fecha":"2027-06-30","pilar":"ahorro"}</propuesta><propuesta>{"modulo":"gasto","nombre":"Sin monto"}</propuesta>';
       const c2 = await chat(userCookie, { messages: [{ role: 'user', content: 'quiero una meta' }] });
       ok(c2.body.proposals.length === 1 && c2.body.proposals[0].modulo === 'meta' && c2.body.proposals[0].fecha === '2027-06-30' && c2.body.proposals[0].pilar === 'ahorro', 'una meta puede ir sin monto, con fecha y área; un gasto sin monto no');
+      const Pd = backend.Periodo, hoyS = Pd.hoy(), pasada = Pd.sumaMeses(Pd.ymDe(hoyS), -1) + '-10';
+      chatReply = 'Va. <propuesta>{"modulo":"gasto","nombre":"Regalo","monto":80000,"fecha":"' + pasada + '","unico":true}</propuesta><propuesta>{"modulo":"ingreso","nombre":"Salario","monto":4000000,"fecha":"1999-01-01"}</propuesta>';
+      const c3 = await chat(userCookie, { messages: [{ role: 'user', content: 'gasté 80 mil en un regalo el mes pasado' }] });
+      ok(c3.body.proposals.length === 2 && c3.body.proposals[0].fecha === pasada && c3.body.proposals[0].unico === true && c3.body.proposals[1].fecha === undefined, 'Maya puede proponer un gasto con fecha y único; una fecha fuera de rango se ignora (queda hoy)');
+      const sysT = chatSeen[chatSeen.length - 1].system;
+      ok(/NUNCA digas que un cambio "ya quedó hecho"/.test(sysT) && /Inicio, centro de la tarjeta del puntaje/.test(sysT) && /lo programa Digit2AI/.test(sysT), 'Maya sabe qué textos redacta, no afirma que un cambio quedó hecho, y manda a programar lo que no es suyo');
       // La acción confirmada usa los endpoints de siempre y queda en la bitácora
       const via = async (m, p, body) => { const r = await realFetch(base + p, { method: m, headers: { 'Content-Type': 'application/json', Cookie: userCookie, 'X-Planea-Via': 'maya', 'X-Forwarded-For': SIT_IP }, body: body ? JSON.stringify(body) : undefined }); return r.status; };
       ok(await via('PATCH', '/planea/api/v1/me/goals/' + myGoal, { estado: 'cumplida' }) === 200 && await via('DELETE', '/planea/api/v1/me/goals/' + myGoal) === 200, 'cumplir y eliminar una meta por la vía de Maya funciona');
@@ -555,15 +561,15 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(MT.safeFirstName('<script>alert(1)</script>') === '' || !/[<>()]/.test(MT.safeFirstName('<script>alert(1)</script>')), 'un nombre raro no entra a la ficha');
     const SL = (k) => MT.SLOTS.find((x) => x.key === k);
     const v = (k, t, kbn) => MT.verifySlot(SL(k), t, facts, kbn || []);
-    ok(v('inicio_resumen', 'Camila, tu mayor oportunidad hoy está en tu deuda.').ok, 'un texto correcto pasa');
-    ok(!v('inicio_resumen', 'Tu deuda puede bajar un 35 por ciento este año.').ok, 'un número inventado se rechaza');
-    ok(!v('inicio_resumen', 'Con tu deuda te faltan cincuenta millones.').ok && !v('inicio_resumen', 'Tu deuda baja un veinte por ciento.').ok && v('inicio_prioridad', 'Tu deuda es el primero de dos pasos.').ok, 'una cifra escrita en palabras se rechaza; «dos pasos» no');
+    ok(v('metas_prioridad', 'Camila, tu mayor oportunidad hoy está en tu deuda.').ok, 'un texto correcto pasa');
+    ok(!v('metas_prioridad', 'Tu deuda puede bajar un 35 por ciento este año.').ok, 'un número inventado se rechaza');
+    ok(!v('metas_prioridad', 'Con tu deuda te faltan cincuenta millones.').ok && !v('metas_prioridad', 'Tu deuda baja un veinte por ciento.').ok && v('inicio_prioridad', 'Tu deuda es el primero de dos pasos.').ok, 'una cifra escrita en palabras se rechaza; «dos pasos» no');
     ok(v('puntaje_pilar_ahorro', 'Tu ahorro va sólido: 70 de 100.').ok && !MT.numbersIn('1,5').includes('15'), '«sólido» como palabra común pasa, «de 100» pasa y un decimal no se confunde');
-    ok(v('inicio_resumen', 'Con tu deuda, sigue la regla 35 de Planea.', MT.numbersIn('La regla 35 de Planea')).ok, 'un número que viene del entrenamiento se acepta');
-    ok(!v('inicio_resumen', 'Hoy tu mayor palanca es tu ahorro.').ok && !v('inicio_resumen', 'Hoy tu deuda y tu inversión son tu palanca.').ok, 'un pilar equivocado se rechaza');
+    ok(v('metas_prioridad', 'Con tu deuda, sigue la regla 35 de Planea.', MT.numbersIn('La regla 35 de Planea')).ok, 'un número que viene del entrenamiento se acepta');
+    ok(!v('metas_prioridad', 'Hoy tu mayor palanca es tu ahorro.').ok && !v('metas_prioridad', 'Hoy tu deuda y tu inversión son tu palanca.').ok, 'un pilar equivocado se rechaza');
     ok(!v('chat_bienvenida', 'Hola Camila, soy Maya, tu asistente. ¿Cómo te ayudo?').ok && !v('chat_bienvenida', 'Hola Camila, soy Maya, tu guía financiera IA.').ok, '«tu asistente» y «tu guía financiera IA» se rechazan');
     ok(v('chat_bienvenida', MT.BIENVENIDA('Camila')).ok && !v('chat_bienvenida', 'Hola, soy Maya, tu agente de planeación financiera.').ok, 'la bienvenida debe llevar el nombre');
-    ok(!v('inicio_rango', 'Estás en Sólido, sigue así.').ok && v('inicio_rango', 'Estás en En camino.').ok, 'un rango que no es el del usuario se rechaza');
+    ok(!v('puntaje_apertura', 'Camila, con tu deuda estás en Sólido.').ok && v('puntaje_apertura', 'Camila, con tu deuda vas En camino.').ok, 'un rango que no es el del usuario se rechaza');
     ok(!v('inicio_prioridad', 'Baja tu deuda en $500.000 este mes.').ok && !v('inicio_prioridad', '<b>Tu deuda</b> es lo primero.').ok && !v('inicio_prioridad', 'x'.repeat(400)).ok, 'montos, HTML y textos largos se rechazan');
     // Nombres de los niveles enseñados por Planea (regla fija, sin modelo)
     const KBN = 'cambia los nombres de los niveles a: Punto de partida (0–35), Construyendo (36–52), Avanzando (53–68), Consolidando (69–83) y Planeado (84–100).';
@@ -572,11 +578,11 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     ok(MT.rangoNames('').join('|') === 'Punto de partida|Construyendo|En camino|Sólido|Planeado' && MT.rangoNames('Fantasma (10-20) y Raro (69–90)').join('|') === MT.rangoNames('').join('|'), 'sin entrenamiento quedan los del motor, y un tramo que no existe no crea un nivel');
     const f76 = MT.factsFrom('Eduardo Ruiz', { score: 76, pilares: facts.pilares, prioridad: { principal: 'deuda' } }, nm);
     ok(f76.rango === 'Consolidando' && f76.rango_motor === 'Sólido' && MT.factsHash(f76) === MT.factsHash(MT.factsFrom('Eduardo Ruiz', { score: 76, pilares: facts.pilares, prioridad: { principal: 'deuda' } })), 'el nivel se muestra con el nombre nuevo, y cambiar el nombre es un cambio de entrenamiento, no de datos');
-    ok(MT.verifySlot(SL('inicio_rango'), 'Estás en Consolidando.', f76, []).ok && !MT.verifySlot(SL('inicio_rango'), 'Estás en Sólido.', f76, []).ok && !MT.verifySlot(SL('inicio_resumen'), 'Con tu deuda al día pasarás a Planeado.', f76, []).ok, 'un texto con el nombre viejo o con otro nivel se rechaza');
+    ok(MT.verifySlot(SL('puntaje_apertura'), 'Con tu deuda estás en Consolidando.', f76, []).ok && !MT.verifySlot(SL('puntaje_apertura'), 'Con tu deuda estás en Sólido.', f76, []).ok && !MT.verifySlot(SL('metas_prioridad'), 'Con tu deuda al día pasarás a Planeado.', f76, []).ok, 'un texto con el nombre viejo o con otro nivel se rechaza');
     const fakeModel = (obj) => async () => ({ ok: true, json: async () => ({ content: [{ text: typeof obj === 'string' ? obj : JSON.stringify(obj) }] }) });
     process.env.ANTHROPIC_API_KEY = 'sit-fake-key';
-    const mix = await MT.compose({ facts, system: 'S', knowledge: '', model: 'm', fetchImpl: fakeModel({ inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Sube tu puntaje 20 puntos pagando tu deuda.', metas_prioridad: 'Tu prioridad es tu deuda. Ponte una meta y te acompaño.' }) });
-    ok(mix.ok && mix.texts.inicio_resumen && mix.texts.metas_prioridad && mix.texts.inicio_prioridad === null && mix.rejected.inicio_prioridad, 'un hueco malo no descarta los buenos, y el rechazo queda registrado');
+    const mix = await MT.compose({ facts, system: 'S', knowledge: '', model: 'm', fetchImpl: fakeModel({ inicio_lectura: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Sube tu puntaje 20 puntos pagando tu deuda.', metas_prioridad: 'Tu prioridad es tu deuda. Ponte una meta y te acompaño.' }) });
+    ok(mix.ok && mix.texts.inicio_lectura && mix.texts.metas_prioridad && mix.texts.inicio_prioridad === null && mix.rejected.inicio_prioridad && /20 puntos/.test(mix.escrito.inicio_prioridad), 'un hueco malo no descarta los buenos, y el rechazo queda registrado');
     ok((await MT.compose({ facts, system: 'S', knowledge: '', fetchImpl: fakeModel('no soy json') })).ok === false, 'una respuesta que no es JSON no produce textos');
     delete process.env.ANTHROPIC_API_KEY;
     ok((await MT.compose({ facts, system: 'S', knowledge: '', fetchImpl: fakeModel({}) })).reason === 'sin_clave', 'sin clave del modelo no se redacta nada');
@@ -600,15 +606,15 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     process.env.PLANEA_MAYA_TEXTS = 'off';
     ok((await mtGet(userCookie)).body.reason === 'apagado' && textsCalls === 0, 'el interruptor PLANEA_MAYA_TEXTS=off devuelve los fijos');
     delete process.env.PLANEA_MAYA_TEXTS;
-    textsReply = { inicio_resumen: 'SIT, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 40 puntos pagando tu deuda.', chat_bienvenida: 'Hola SIT, soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?' };
+    textsReply = { inicio_lectura: 'SIT, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 40 puntos pagando tu deuda.', chat_bienvenida: 'Hola SIT, soy Maya, tu agente de planeación financiera. ¿Cómo te puedo ayudar hoy?' };
     const first = await mtGet(userCookie);
     ok(first.body.composed_by === 'fixed' && first.body.pending === true, 'la primera vez responde de inmediato con los fijos y redacta en segundo plano');
     ok(await waitFor(async () => (await rowsOf(userRow.id)).length === 1), 'la redacción queda guardada');
     await clearLock();
     const second = await mtGet(userCookie);
-    ok(second.body.composed_by === 'maya' && second.body.texts.inicio_resumen === 'SIT, hoy lo primero es tu deuda.' && second.body.texts.inicio_prioridad === null && !second.body.stale, 'en la siguiente carga llega el texto de Maya; el hueco rechazado queda en null (texto fijo)');
+    ok(second.body.composed_by === 'maya' && second.body.texts.inicio_lectura === 'SIT, hoy lo primero es tu deuda.' && second.body.texts.inicio_prioridad === null && !second.body.stale, 'en la siguiente carga llega el texto de Maya; el hueco rechazado queda en null (texto fijo)');
     ok(/TAREA DE ESTE MENSAJE/.test(textsSystem) && /REGLAS BASE DE MAYA/.test(textsSystem), 'Maya redacta con sus reglas y con la tarea de pantalla');
-    ok((await mtGet(dropCookie)).body.texts.inicio_resumen === null, 'otro usuario no ve los textos de este');
+    ok((await mtGet(dropCookie)).body.texts.inicio_lectura === null, 'otro usuario no ve los textos de este');
     const n1 = textsCalls; await mtGet(userCookie); await new Promise((r) => setTimeout(r, 300));
     ok(textsCalls === n1, 'si nada cambió no se vuelve a llamar al modelo');
     // Cambio de DATOS: 1 por día
@@ -639,25 +645,117 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     const upN = await kb.upload(sq, { tenant: 990918, name: 'SIT niveles', filename: 'n.md', buf: Buffer.from('Niveles: En ruta (53–68), Consolidando (69–83).', 'utf8'), by: ADMIN_EMAIL });
     if (!upN || !upN.doc) console.log('   carga SIT niveles:', JSON.stringify(upN).slice(0, 200));
     kb._cache.delete(990918);
-    await sq.query("UPDATE planea_maya_texts SET texts = jsonb_set(texts, '{inicio_rango}', '\"Estás en En camino.\"') WHERE tenant_id = 990918 AND user_id = :u AND is_current", { replacements: { u: userRow.id } });
+    await sq.query("UPDATE planea_maya_texts SET texts = jsonb_set(texts, '{puntaje_apertura}', '\"Con tu deuda vas En camino.\"') WHERE tenant_id = 990918 AND user_id = :u AND is_current", { replacements: { u: userRow.id } });
     const nv = await mtGet(userCookie);
-    ok(nv.body.facts.rango === 'En ruta' && nv.body.facts.rango_motor === 'En camino' && nv.body.texts.inicio_rango === null, 'el nombre de nivel enseñado llega a la app, y el texto guardado con el nombre viejo deja de mostrarse');
+    ok(nv.body.facts.rango === 'En ruta' && nv.body.facts.rango_motor === 'En camino' && nv.body.texts.puntaje_apertura === null, 'el nombre de nivel enseñado llega a la app, y el texto guardado con el nombre viejo deja de mostrarse');
     process.env.PLANEA_MAYA_TEXTS = 'off';
     ok((await mtGet(userCookie)).body.facts.rango === 'En ruta', 'el nombre de nivel sale aunque los textos de Maya estén apagados');
     delete process.env.PLANEA_MAYA_TEXTS;
     const pdSrc = fs.readFileSync(path.join(__dirname, 'portal', 'planea-data.js'), 'utf8');
     ok(/prof\.rango_mostrar \|\| prof\.rango/.test(pdSrc) && /data-dg-rango/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-diagnostico.js'), 'utf8')), 'Inicio y Puntaje Planea muestran el nombre de nivel enseñado');
     // Vista previa del admin
-    textsReply = { inicio_resumen: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 99 puntos pagando tu deuda.' };
+    textsReply = { inicio_lectura: 'Camila, hoy lo primero es tu deuda.', inicio_prioridad: 'Gana 99 puntos pagando tu deuda.' };
     const before = (await sq.query('SELECT COUNT(*)::int AS n FROM planea_maya_texts WHERE tenant_id = 990918'))[0][0].n;
     const pv = await call('POST', '/planea/admin/api/maya-texts/preview', { cookie: ac, body: { principal: 'deuda', score: 62 } });
-    ok(pv.status === 200 && pv.body.slots.length === MT.SLOTS.length && pv.body.slots.find((x) => x.key === 'inicio_resumen').maya && pv.body.slots.find((x) => x.key === 'inicio_prioridad').rechazado, 'la vista previa muestra cada hueco, el texto de Maya y por qué se rechazó uno');
+    ok(pv.status === 200 && pv.body.slots.length === MT.SLOTS.length && pv.body.slots.find((x) => x.key === 'inicio_lectura').maya && pv.body.slots.find((x) => x.key === 'inicio_prioridad').rechazado && /99 puntos/.test(pv.body.slots.find((x) => x.key === 'inicio_prioridad').escrito), 'la vista previa muestra cada hueco, el texto de Maya y por qué se rechazó uno');
     ok((await sq.query('SELECT COUNT(*)::int AS n FROM planea_maya_texts WHERE tenant_id = 990918'))[0][0].n === before, 'la vista previa no guarda nada');
     ok((await call('POST', '/planea/admin/api/maya-texts/preview', { cookie: userCookie, body: {} })).status === 404, 'un usuario normal no abre la vista previa');
     if (keyBefore) process.env.ANTHROPIC_API_KEY = keyBefore; else delete process.env.ANTHROPIC_API_KEY;
     const mtSrc = fs.readFileSync(path.join(__dirname, 'maya-texts.cjs'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
     ok(!/planea_items|finance_meta|ingresos_data|gastos_data|assets_data|liabilities_data|seguros_data|retiro_data|net_worth|\.value\b|\.monthly\b/.test(mtSrc), 'los textos de Maya no leen montos ni datos financieros');
     ok(!/messages\s*:\s*req\.body|INSERT INTO (?!planea_maya_texts)/.test(mtSrc) && !/sendgrid|twilio|nodemailer/i.test(mtSrc), 'los textos de Maya no guardan conversaciones ni envían nada');
+    }
+
+    // ══ AJUSTES DEL 7 DE OCTUBRE ═══════════════════════════════════════════════
+    {
+    const MT = require('./maya-texts.cjs');
+    const Pd = backend.Periodo;
+    const SL = (k) => MT.SLOTS.find((x) => x.key === k);
+    const PIL = { ahorro: 60, flujo: 60, deuda: 60, retiro: 60, seguros: 60, inversion: 60, impuestos: 60, patrimonio: 60 };
+    const fx = (k) => MT.factsFrom('Ana Pérez', { score: 70, pilares: Object.assign({}, PIL, { [k]: 20 }), prioridad: { principal: k } });
+    // Punto 2: la línea debajo del saludo es un mensaje general
+    ok(MT.verifySlot(SL('inicio_resumen'), 'Tus finanzas en un solo lugar.', fx('patrimonio'), [], '').ok, 'la línea fija «Tus finanzas en un solo lugar.» pasa sin nombrar un área');
+    const kbG = 'En Inicio, la línea debajo del saludo debe decir siempre: "Hola {nombre}, qué bueno verte de nuevo."';
+    ok(MT.verifySlot(SL('inicio_resumen'), 'Hola Ana, qué bueno verte de nuevo.', fx('deuda'), [], kbG).ok, 'un texto que Planea enseñó palabra por palabra (con {nombre}) pasa');
+    ok(!MT.verifySlot(SL('inicio_resumen'), 'Hoy es un gran día para planear.', fx('deuda'), [], kbG).ok && !MT.verifySlot(SL('inicio_resumen'), 'Una deuda sana es clave.', fx('deuda'), [], 'Una deuda sana es clave.').ok, 'Maya no improvisa esa línea ni pone ahí el área');
+    // Punto 1: los ocho statements pasan tal como Planea los escribió
+    const ST8 = { ahorro: 'Un buen ahorro es el colchón de todo plan financiero.', flujo: 'Para construir riqueza, primero debes controlar tu flujo.', deuda: 'Una deuda sana es clave para un buen plan financiero.', retiro: 'Tu futuro no se espera, se construye.', seguros: 'Si no hay seguros, no hay plan.', inversion: 'Peso que se duerme, se lo lleva la corriente.', impuestos: 'Cuentas claras, finanzas sanas.', patrimonio: 'Tu patrimonio: los frutos de tu plan.' };
+    const KB8 = 'Recuerda que los statements de cada área son: Ahorro: "' + ST8.ahorro + '" Flujo de caja: "' + ST8.flujo + '" Deuda: "' + ST8.deuda + '" Pensión: "' + ST8.retiro + '" Seguros: "' + ST8.seguros + '" Inversión: "' + ST8.inversion + '" Impuestos: "' + ST8.impuestos + '" Patrimonio: "' + ST8.patrimonio + '" Con Impuestos y Seguros usa "tus"; con las demás áreas, "tu".\nNunca prometas rentabilidad garantizada a nadie.';
+    ok(MT.PILARES.every((k) => MT.verifySlot(SL('inicio_lectura'), ST8[k], fx(k), [], KB8).ok), 'los ocho statements pasan en la Lectura de Oportunidad tal como están escritos');
+    ok(MT.verifySlot(SL('inicio_lectura'), ST8.retiro, fx('deuda'), [], KB8).why === 'statement_de_otra_area:retiro', 'el statement de Pensión (que no nombra área) no pasa para un usuario con prioridad Deuda');
+    ok(!MT.verifySlot(SL('inicio_lectura'), 'Vas bien, sigue registrando tus datos.', fx('deuda'), [], KB8).ok, 'una frase genérica que Planea no enseñó no pasa como statement');
+    ok(!MT.verifySlot(SL('inicio_resumen'), 'Nunca prometas rentabilidad garantizada a nadie.', fx('deuda'), [], KB8).ok && !MT.verifySlot(SL('inicio_resumen'), 'tabilidad garantizada a na', fx('deuda'), [], KB8).ok, 'una frase cualquiera del entrenamiento, o un pedazo, no acaba debajo del saludo');
+    ok(MT.verifySlot(SL('inicio_resumen'), 'Bienvenido, {nombre}.', fx('deuda'), [], 'En Inicio, debajo del saludo: "Bienvenido, {nombre}."').why === 'llaves', 'un {nombre} sin reemplazar nunca llega a la pantalla');
+    ok(MT.sinRevisa('Conviene que revisa tu sección de deuda y ordenes los pagos') === 'Conviene que revisa tu sección de deuda y ordenes los pagos' && MT.sinRevisa('Una deuda sana es clave. Revisa tu sección de Deuda.') === 'Una deuda sana es clave.', '«Revisa tu sección…» solo se quita cuando es la última frase');
+    ok(MT.verifySlot(SL('inicio_resumen'), 'Hola Ana, nos vemos mañana.', fx('deuda'), [], 'En Inicio, debajo del saludo debe decir: "Hola {nombre}, nos vemos mañana."').ok, 'un nombre corto (Ana) no rompe una palabra que lo contiene (mañana)');
+    const conRev = MT.verifySlot(SL('inicio_lectura'), 'Una deuda sana es clave para un buen plan financiero. Revisa tu sección de Deuda.', fx('deuda'), [], '');
+    ok(conRev.ok && conRev.text === 'Una deuda sana es clave para un buen plan financiero.', 'si Maya agrega «Revisa tu sección de…» se quita: esa línea la pone la app');
+    ok(!MT.verifySlot(SL('inicio_lectura'), ST8.ahorro, fx('deuda'), [], KB8).ok, 'el statement de OTRA área no pasa');
+    ok(!SL('inicio_rango') && !SL('inicio_rango_nota') && MT.SLOTS.length === 15, 'la línea del nivel y su nota ya no son textos de Maya');
+    // Punto 3: la tarjeta
+    const ini = fs.readFileSync(path.join(__dirname, 'portal', 'inicio.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    ok(/class="pb-eyebrow">Tu Puntaje Planea</.test(ini) && !/Puntaje Base/.test(ini), 'la tarjeta se titula «Tu Puntaje Planea»');
+    ok(/<div class="pb-ring-c"><b data-pl="score">—<\/b><\/div>\s*<\/div>\s*<div class="pb-nivel" data-pl="rango">/.test(ini), 'el nombre del nivel va debajo del círculo, no dentro');
+    ok(/data-pl="lectura" data-pl-maya="inicio_lectura"/.test(ini) && /data-pl="lectura_rev"/.test(ini) && !/pb-estas|pb-note/.test(ini), 'el centro de la tarjeta es la Lectura de Oportunidad');
+    ok(/data-pl="resumen" data-pl-maya="inicio_resumen">Tus finanzas en un solo lugar\.</.test(ini), 'debajo del saludo: «Tus finanzas en un solo lugar.»');
+    const pdS = fs.readFileSync(path.join(__dirname, 'portal', 'planea-data.js'), 'utf8');
+    ok(/function resumenLine\(\) \{ return 'Tus finanzas en un solo lugar\.'; \}/.test(pdS) && /'Revisa tu sección de ' \+ \(PIL_LABEL\[k\]/.test(pdS), 'el texto de respaldo es el fijo, y «Revisa tu sección de…» lo arma la app');
+    // Fila guardada con los huecos de antes: el statement pasa a la tarjeta sin esperar a Maya
+    const fullSd2 = { score: 62, rango: 'En camino', pilares: { ahorro: 70, flujo: 66, deuda: 38, retiro: 58, seguros: 50, inversion: 64, impuestos: 72, patrimonio: 60 }, prioridad: { principal: 'deuda', secundario: 'seguros' }, answers: {}, history: [] };
+    await sq.query('UPDATE planea_profiles SET score_data = CAST(:s AS JSONB) WHERE user_id = :u', { replacements: { u: userRow.id, s: JSON.stringify(fullSd2) } });
+    const fV = MT.factsFrom('SIT Usuario', fullSd2, MT.rangoNames(''));
+    await sq.query('UPDATE planea_maya_texts SET is_current = FALSE WHERE tenant_id = 990918 AND user_id = :u', { replacements: { u: userRow.id } });
+    await sq.query("INSERT INTO planea_maya_texts (tenant_id, user_id, is_current, cause, texts, facts, facts_hash, kb_version) VALUES (990918, :u, TRUE, 'training', CAST(:tx AS JSONB), '{}', :fh, 'hash-viejo-sin-version')",
+      { replacements: { u: userRow.id, fh: MT.factsHash(fV), tx: JSON.stringify({ inicio_resumen: 'Una deuda sana es clave para un buen plan financiero. Revisa tu sección de Deuda.' }) } });
+    const oldRow = await call('GET', '/planea/api/v1/me/maya-texts', { cookie: userCookie });
+    ok(oldRow.body.composed_by === 'maya' && oldRow.body.texts.inicio_resumen === null && oldRow.body.texts.inicio_lectura === 'Una deuda sana es clave para un buen plan financiero.' && oldRow.body.stale === true,
+      'una fila de antes del cambio muestra el statement en la tarjeta y deja libre la línea del saludo');
+
+    // Punto 4: fecha del movimiento (regla pura)
+    const hoy = Pd.hoy(), ymH = Pd.ymDe(hoy), ymA = Pd.sumaMeses(ymH, -1), ymF = Pd.sumaMeses(ymH, 1);
+    const it = (o) => Object.assign({ category: 'gasto', value: 100, meta: {} }, o);
+    ok(Pd.sumaMeses('2026-01', -1) === '2025-12' && Pd.sumaMeses('2026-12', 1) === '2027-01' && Pd.fechaValida('2028-02-29') && !Pd.fechaValida('2026-02-31'), 'meses y fechas se calculan bien (cambio de año, bisiesto, fecha que no existe)');
+    ok(Pd.cuentaEn(it({ fecha_mov: ymA + '-15' }), ymH) && Pd.cuentaEn(it({ fecha_mov: ymA + '-15' }), ymA) && !Pd.cuentaEn(it({ fecha_mov: ymH + '-01' }), ymA), 'un registro que se repite cuenta desde el mes de su fecha en adelante');
+    ok(Pd.cuentaEn(it({ fecha_mov: ymA + '-15', meta: { behavior: 'unico' } }), ymA) && !Pd.cuentaEn(it({ fecha_mov: ymA + '-15', meta: { behavior: 'unico' } }), ymH), 'un registro único cuenta solo en el mes de su fecha');
+    ok(!Pd.cuentaHoy(it({ fecha_mov: ymF + '-05' })) && Pd.cuentaHoy(it({})) && Pd.cuentaHoy({ category: 'ahorro', value: 5, fecha_mov: ymF + '-05' }), 'uno futuro no cuenta hoy; uno viejo sin fecha sí; los saldos no llevan esta regla');
+    ok(!Pd.fechaEnRango('1990-01-01') && !Pd.fechaEnRango((+hoy.slice(0, 4) + 9) + '-01-01') && Pd.fechaEnRango(ymA + '-10') && Pd.fechaEnRango(ymF + '-10'), 'se aceptan fechas pasadas y futuras dentro del rango, no una de hace décadas');
+    // Punto 4 por HTTP
+    const items0 = await call('GET', '/planea/api/v1/me/items', { cookie: userCookie });
+    const base = items0.body.summary.gasto;
+    const histOf = async () => { const h = (await call('GET', '/planea/api/v1/me/items/history?category=gasto', { cookie: userCookie })).body.history; const o = {}; h.forEach((r) => { o[r.ym] = r.total; }); return o; };
+    const H0 = await histOf();
+    const sinF = await call('POST', '/planea/api/v1/me/items', { cookie: userCookie, body: { category: 'gasto', name: 'Arriendo', type: 'Vivienda / arriendo', value: 1000 } });
+    ok(sinF.status === 200 && sinF.body.item.fecha_mov === hoy && sinF.body.item.cuenta_hoy === true, 'sin fecha, el registro queda con la fecha de hoy');
+    const retro = await call('POST', '/planea/api/v1/me/items', { cookie: userCookie, body: { category: 'gasto', name: 'Regalo', type: 'Otro', value: 300, fecha_mov: ymA + '-12', meta: { behavior: 'unico' } } });
+    const futuro = await call('POST', '/planea/api/v1/me/items', { cookie: userCookie, body: { category: 'gasto', name: 'Matrícula', type: 'Educación', value: 700, fecha_mov: ymF + '-05', meta: { behavior: 'unico' } } });
+    ok(retro.status === 200 && retro.body.item.cuenta_hoy === false && futuro.status === 200 && futuro.body.item.cuenta_hoy === false, 'se puede registrar con fecha pasada y con fecha futura');
+    const sumOf = async () => (await call('GET', '/planea/api/v1/me/items', { cookie: userCookie })).body.summary.gasto;
+    ok(await sumOf() === base + 1000, '«Tu mes» suma solo lo que cuenta este mes (ni el único pasado ni el futuro)');
+    let H = await histOf();
+    ok(H[ymA] === (H0[ymA] || 0) + 300, 'un gasto único con fecha del mes pasado suma a ese mes, no al actual');
+    ok(H[ymH] === (await sumOf()) && H[ymF] === H[ymH] + 700, 'el gasto futuro aparece en su mes; el mes actual coincide con «Tu mes»');
+    const antesA = H[ymA];
+    const mv = await call('PATCH', '/planea/api/v1/me/items/' + retro.body.item.id, { cookie: userCookie, body: { fecha_mov: ymH + '-02' } });
+    H = await histOf();
+    ok(mv.status === 200 && mv.body.item.cuenta_hoy === true && (H[ymA] || 0) === (antesA || 0) - 300 && await sumOf() === base + 1300, 'cambiar la fecha mueve el monto del mes anterior al nuevo en todas las vistas');
+    ok((await call('POST', '/planea/api/v1/me/items', { cookie: userCookie, body: { category: 'gasto', name: 'X', value: 1, fecha_mov: '2026-02-31' } })).status === 400 && (await call('PATCH', '/planea/api/v1/me/items/' + retro.body.item.id, { cookie: userCookie, body: { fecha_mov: '1980-01-01' } })).status === 400, 'una fecha que no existe o fuera de rango se rechaza');
+    ok((await call('PATCH', '/planea/api/v1/me/items/' + retro.body.item.id, { cookie: dropCookie, body: { fecha_mov: ymA + '-01' } })).status === 404, 'otro usuario no puede cambiar la fecha de un registro ajeno');
+    const ah = await call('POST', '/planea/api/v1/me/items', { cookie: userCookie, body: { category: 'ahorro', name: 'Cuenta', type: 'Cuenta de ahorros', value: 5000, fecha_mov: ymF + '-01' } });
+    ok(ah.status === 200 && ah.body.item.fecha_mov === undefined && ah.body.item.cuenta_hoy === undefined, 'la fecha del movimiento es solo de ingresos y gastos');
+    const [[viejo]] = await sq.query("INSERT INTO planea_items (user_id, category, name, type, value, monthly, meta, created_at, updated_at) VALUES (:u, 'ingreso', 'Salario viejo', 'Salario', 9000, 0, '{}', NOW() - INTERVAL '90 days', NOW()) RETURNING id", { replacements: { u: userRow.id } });
+    const conViejo = (await call('GET', '/planea/api/v1/me/items', { cookie: userCookie })).body;
+    ok(conViejo.items.find((x) => x.id === viejo.id).cuenta_hoy === true && conViejo.summary.ingreso >= 9000, 'un registro anterior al cambio (sin fecha) sigue contando cada mes');
+    const acc2 = await call('GET', '/planea/admin/api/accounts', { cookie: ac });
+    ok(acc2.status === 200 && !/Salario viejo|Matrícula|9000\b/.test(JSON.stringify(acc2.body)), 'el admin sigue sin ver montos ni nombres de registros');
+    const beS = fs.readFileSync(path.join(__dirname, 'backend.cjs'), 'utf8'), meS = fs.readFileSync(path.join(__dirname, 'portal', 'planea-module-edit.js'), 'utf8');
+    ok(/fecha_mov: \{ type: DataTypes\.DATEONLY/.test(beS) && /ADD COLUMN IF NOT EXISTS fecha_mov DATE/.test(beS), 'la columna nueva está en el ALTER y en el modelo');
+    ok(/id="pe-fecha" type="date"/.test(meS) && /body\.fecha_mov = fe/.test(meS) && /cuenta_hoy !== false/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-realdata.js'), 'utf8')), 'el formulario pide la fecha y el Puntaje Planea solo usa lo que cuenta este mes');
+    ok(/cuenta_hoy !== false/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-secresumen.js'), 'utf8')) && !/totalsFromItems\(items\)/.test(beS), 'el resumen de la sección y los cálculos de apoyo usan solo lo que cuenta este mes');
+    const [[leg]] = await sq.query("INSERT INTO planea_items (user_id, category, name, type, value, monthly, meta, created_at, updated_at) VALUES (:u, 'gasto', 'Único viejo', 'Otro', 77, 0, '{\"behavior\":\"unico\"}'::jsonb, NOW() - INTERVAL '90 days', NOW()) RETURNING id", { replacements: { u: userRow.id } });
+    const legIt = (await call('GET', '/planea/api/v1/me/items', { cookie: userCookie })).body.items.find((x) => x.id === leg.id);
+    ok(legIt && legIt.cuenta_hoy === true && !legIt.fecha_mov && /<> 'unico'/.test(beS) && /<> 'unico'/.test(fs.readFileSync(path.join(__dirname, 'migrations', '20261006_planea_maya_texts.sql'), 'utf8')), 'un «Único» anterior al cambio queda sin fecha y sigue contando, como antes');
+    await sq.query('DELETE FROM planea_items WHERE id = :i', { replacements: { i: leg.id } });
+    ok(!/planea_items|\.value\b/.test(fs.readFileSync(path.join(__dirname, 'portal', 'planea-periodo.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/it\.value/g, '')), 'la regla del período es pura: sin red ni base de datos');
     }
 
     // Auditoría

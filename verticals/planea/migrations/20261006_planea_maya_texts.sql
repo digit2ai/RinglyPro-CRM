@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS planea_maya_texts (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_maya_texts_current ON planea_maya_texts (tenant_id, user_id) WHERE is_current;
 CREATE INDEX IF NOT EXISTS idx_planea_maya_texts_user ON planea_maya_texts (tenant_id, user_id, created_at);
+
+-- 2026-10-10 · Fecha del MOVIMIENTO en ingresos y gastos (ajustes del 7 de octubre).
+-- Distinta de created_at, que se conserva para auditoría. Los registros anteriores quedan
+-- con el día en que se crearon (hora de Colombia) y, como no son «Único», siguen contando
+-- cada mes igual que antes. Idempotente; el mismo ALTER corre al arrancar (backend.cjs).
+ALTER TABLE planea_items ADD COLUMN IF NOT EXISTS fecha_mov DATE;
+UPDATE planea_items SET fecha_mov = (created_at AT TIME ZONE 'America/Bogota')::date
+ WHERE fecha_mov IS NULL AND category IN ('ingreso','gasto')
+   AND COALESCE(meta->>'behavior','') <> 'unico';  -- un «Único» viejo queda sin fecha: sigue contando como antes

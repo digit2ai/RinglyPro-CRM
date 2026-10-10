@@ -25,6 +25,19 @@ const score = require('./score.cjs');
 const salud = require('./salud.cjs');
 const unified = require('./unified-score.cjs'); // HU-1: puntaje único 7 pilares + proxy del survey
 const sec = require('./security.cjs');
+const fs = require('fs');
+const path = require('path');
+// La regla «a qué mes pertenece un ingreso o un gasto» vive en portal/planea-periodo.js y
+// la comparten el navegador y el servidor. La carpeta es "type":"module", así que un
+// require() de ese .js devolvería un objeto vacío: se evalúa con su propio `module`.
+function loadPlaneaPeriodo() {
+  const src = fs.readFileSync(path.join(__dirname, 'portal', 'planea-periodo.js'), 'utf8');
+  const m = { exports: {} };
+  new Function('module', 'window', 'self', src)(m, undefined, undefined);
+  if (typeof m.exports.cuentaEn !== 'function') throw new Error('planea-periodo.js no cargó');
+  return m.exports;
+}
+const Periodo = loadPlaneaPeriodo();
 
 const SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'planea-2026-secret';
 const COOKIE = 'planea_session';
@@ -87,6 +100,9 @@ function defineModels(sq) {
     // Atributos opcionales por ítem: comportamiento (recurrente/variable/único §18),
     // frecuencia de la prima (§24) y marca de póliza otorgada por el empleador (§24).
     meta: { type: DataTypes.JSONB, allowNull: true, defaultValue: {} },
+    // Fecha del MOVIMIENTO (ingresos y gastos): a qué mes pertenece el registro. Es distinta
+    // de created_at, que se conserva para auditoría. La columna la crea el ALTER de abajo.
+    fecha_mov: { type: DataTypes.DATEONLY, allowNull: true },
   }, { tableName: 'planea_items', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   // Snapshot MENSUAL del total por categoría — alimenta la gráfica de evolución (barras)
@@ -158,6 +174,13 @@ async function init() {
     await sequelize.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_planea_item_history_uniq ON planea_item_history(user_id, category, ym)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_salud_user_date ON planea_salud_history(user_id, snap_date)').catch(function () {});
     await sequelize.query("ALTER TABLE planea_items ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}'::jsonb").catch(function () {});
+    await sequelize.query('ALTER TABLE planea_items ADD COLUMN IF NOT EXISTS fecha_mov DATE').catch(function () {});
+    // Registros anteriores a la fecha del movimiento: quedan con el día en que se crearon
+    // (hora de Colombia). Como no son «Único», siguen contando cada mes igual que antes.
+    await sequelize.query("UPDATE planea_items SET fecha_mov = (created_at AT TIME ZONE 'America/Bogota')::date WHERE fecha_mov IS NULL AND category IN ('ingreso','gasto') AND COALESCE(meta->>'behavior','') <> 'unico'").catch(function () {});
+    // Un registro «Único» anterior a este cambio se queda SIN fecha: sigue contando cada mes,
+    // como antes. Si se le pusiera la fecha de creación dejaría de contar de un día para otro
+    // sin que el usuario hiciera nada. Cuando el usuario lo edite, elige la fecha.
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS net_worth DOUBLE PRECISION').catch(function () {});
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS income DOUBLE PRECISION').catch(function () {});
     await sequelize.query('ALTER TABLE planea_salud_history ADD COLUMN IF NOT EXISTS expense DOUBLE PRECISION').catch(function () {});
@@ -601,9 +624,9 @@ function build() {
       // 30/50/70/85) queda superado y ya NO produce el número. Así Inicio y Puntaje
       // Planea muestran siempre el mismo valor. La recomendación es metadato de apoyo y
       // no altera el puntaje.
-      const uni = unified.computeUnified(items, meta, p.score_data || null); // solo para net_worth
+      const uni = unified.computeUnified(vigentes(items), meta, p.score_data || null); // solo para net_worth
       if (sd) {
-        const t = salud.totalsFromItems(items);
+        const t = salud.totalsFromItems(vigentes(items));
         const rec = score.recommendation({
           ingresos: t.I, gastos: t.G, cuotas: t.C, tiene_deuda: (t.D > 0 || t.C > 0),
           meses_cobertura: t.G > 0 ? t.A / t.G : (t.A > 0 ? 99 : 0),
@@ -665,7 +688,22 @@ function build() {
 
   // ── Financial items (own table planea_items, one row per entry) ─────────────
   const ITEM_CATS = ['ingreso', 'gasto', 'ahorro', 'inversion', 'deuda', 'seguros', 'retiro'];
-  function itemOut(i) { return { id: i.id, category: i.category, name: i.name || '', type: i.type || '', value: +i.value || 0, monthly: +i.monthly || 0, meta: (i.meta && typeof i.meta === 'object') ? i.meta : {} }; }
+  function itemOut(i) {
+    const o = { id: i.id, category: i.category, name: i.name || '', type: i.type || '', value: +i.value || 0, monthly: +i.monthly || 0, meta: (i.meta && typeof i.meta === 'object') ? i.meta : {} };
+    if (Periodo.aplica(o)) {
+      o.fecha_mov = i.fecha_mov ? String(i.fecha_mov).slice(0, 10) : null;
+      o.cuenta_hoy = Periodo.cuentaHoy(o);   // ¿suma en el mes actual? (lo usa la app sin repetir la regla)
+    }
+    return o;
+  }
+  // Para los cálculos de apoyo (resumen, patrimonio, recomendación): de ingresos y gastos
+  // solo entra lo que cuenta en el mes actual; los saldos entran siempre.
+  function vigentes(items) { return (items || []).filter(function (i) { return Periodo.cuentaHoy(i); }); }
+  // Fecha del movimiento que llega del cliente. undefined = no vino; null = vino inválida.
+  function sanMov(v) {
+    if (v === undefined || v === null || v === '') return undefined;
+    return Periodo.fechaEnRango(String(v)) ? String(v) : null;
+  }
   // Atributos opcionales validados por lista blanca (§18 comportamiento, §24 frecuencia/empleador).
   function sanItemMeta(m) {
     m = (m && typeof m === 'object') ? m : {};
@@ -707,8 +745,8 @@ function build() {
     try {
       if (!ItemH) return;
       const rows = await Item.findAll({ where: { user_id: userId, category } });
-      const total = rows.reduce(function (s, r) { return s + (+r.value || 0); }, 0);
-      const ym = new Date().toISOString().slice(0, 7);
+      const ym = Periodo.ymDe(Periodo.hoy());
+      const total = Periodo.totalMes(rows.map(itemOut), category, ym);
       const ex = await ItemH.findOne({ where: { user_id: userId, category, ym } });
       if (ex) { ex.total = total; await ex.save(); }
       else { await ItemH.create({ user_id: userId, category, ym, total }); }
@@ -716,7 +754,9 @@ function build() {
   }
   function itemsSummary(items) {
     const s = {};
-    ITEM_CATS.forEach(function (c) { s[c] = items.filter(function (i) { return i.category === c; }).reduce(function (a, i) { return a + (+i.value || 0); }, 0); });
+    // Ingresos y gastos: el total es el del MES ACTUAL según la fecha del movimiento.
+    const ym = Periodo.ymDe(Periodo.hoy());
+    ITEM_CATS.forEach(function (c) { s[c] = Periodo.totalMes(items, c, ym); });
     s.deuda_cuota = items.filter(function (i) { return i.category === 'deuda'; }).reduce(function (a, i) { return a + (+i.monthly || 0); }, 0);
     s.activos = s.ahorro + s.inversion + s.retiro;          // net-worth assets
     s.patrimonio_neto = s.activos - s.deuda;                 // seguros excluded (protection)
@@ -749,7 +789,7 @@ function build() {
       const rows = await Item.findAll({ where: { user_id: a.id } });
       const rowItems = rows.map(itemOut);
       // Instrumentos/buckets del cockpit vienen de los DATOS REALES (salud.cjs).
-      const result = salud.computeSalud(rowItems, meta);
+      const result = salud.computeSalud(vigentes(rowItems), meta);
       // MOTOR ÚNICO (§3, §9.1): el número principal (gauge) es el del motor de 8 pilares
       // guardado en score_data — el MISMO que se ve en Inicio y Puntaje Planea. Los
       // buckets siguen siendo el desglose real, pero el puntaje ya no lo produce el
@@ -808,8 +848,8 @@ function build() {
       const meta = (prof && prof.finance_meta) || {};
       const rows = await Item.findAll({ where: { user_id: a.id } });
       const items = rows.map(itemOut);
-      const sal = salud.computeSalud(items, meta);
-      const t = salud.totalsFromItems(items);
+      const sal = salud.computeSalud(vigentes(items), meta);
+      const t = salud.totalsFromItems(vigentes(items));
       // scenario (A–I) from the CFP decision tree
       const inp = {
         ingresos: t.I, gastos: t.G, cuotas: t.C, tiene_deuda: (t.D > 0 || t.C > 0),
@@ -862,10 +902,17 @@ function build() {
       const b = req.body || {};
       const category = String(b.category || '');
       if (ITEM_CATS.indexOf(category) < 0) return res.status(400).json({ error: 'invalid_category' });
+      // Fecha del movimiento (solo ingresos y gastos): la que eligió el usuario, o hoy.
+      let fechaMov = null;
+      if (Periodo.aplica({ category: category })) {
+        const fm = sanMov(b.fecha_mov);
+        if (fm === null) return res.status(400).json({ error: 'fecha_invalida', message: 'Elige una fecha válida para el movimiento.' });
+        fechaMov = fm || Periodo.hoy();
+      }
       const item = await Item.create({
         user_id: a.id, category: category,
         name: String(b.name || '').slice(0, 160), type: String(b.type || '').slice(0, 80),
-        value: +b.value || 0, monthly: +b.monthly || 0, meta: sanItemMeta(b.meta),
+        value: +b.value || 0, monthly: +b.monthly || 0, meta: sanItemMeta(b.meta), fecha_mov: fechaMov,
       });
       await snapshotCategory(a.id, category);
       res.json({ success: true, item: itemOut(item) });
@@ -885,6 +932,12 @@ function build() {
       if (b.value != null) item.value = +b.value || 0;
       if (b.monthly != null) item.monthly = +b.monthly || 0;
       if (b.meta != null) item.meta = sanItemMeta(b.meta);
+      // Cambiar la fecha mueve el registro de mes en todas las vistas (todas se calculan de aquí).
+      if (Periodo.aplica(item)) {
+        const fm = sanMov(b.fecha_mov);
+        if (fm === null) return res.status(400).json({ error: 'fecha_invalida', message: 'Elige una fecha válida para el movimiento.' });
+        if (fm) item.fecha_mov = fm;
+      }
       await item.save();
       await snapshotCategory(a.id, item.category);
       res.json({ success: true, item: itemOut(item) });
@@ -913,7 +966,19 @@ function build() {
       const where = { user_id: a.id };
       if (req.query.category) where.category = String(req.query.category);
       const rows = await ItemH.findAll({ where: where, order: [['ym', 'ASC']], limit: 240 });
-      res.json({ history: rows.map(function (r) { return { ym: r.ym, category: r.category, total: +r.total || 0 }; }) });
+      // Ingresos y gastos NO salen de la foto guardada: se calculan por la fecha del
+      // movimiento de cada registro. Así un registro con fecha pasada suma a su mes, uno
+      // futuro aparece en el suyo, y cambiar la fecha lo mueve sin dejar rastro en el mes viejo.
+      const movCats = ['ingreso', 'gasto'].filter(function (c) { return !req.query.category || req.query.category === c; });
+      let history = rows.filter(function (r) { return movCats.indexOf(r.category) < 0 && ['ingreso', 'gasto'].indexOf(r.category) < 0; })
+        .map(function (r) { return { ym: r.ym, category: r.category, total: +r.total || 0 }; });
+      if (movCats.length) {
+        const its = (await Item.findAll({ where: { user_id: a.id, category: movCats } })).map(itemOut);
+        movCats.forEach(function (c) {
+          Periodo.serie(its, c, Periodo.hoy(), 8).forEach(function (p) { history.push({ ym: p.ym, category: c, total: p.total, actual: p.actual, futuro: p.futuro }); });
+        });
+      }
+      res.json({ history: history });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -1083,4 +1148,4 @@ function build() {
   return router;
 }
 
-module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize };
+module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize, Periodo };

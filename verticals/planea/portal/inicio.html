@@ -54,11 +54,14 @@
   .pb-ring svg{width:132px;height:132px}
   .pb-ring-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .pb-ring-c b{font-family:'Inter',sans-serif;font-weight:800;font-size:42px;line-height:1;color:#fff}
-  .pb-ring-c small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.82);margin-top:4px}
+  .pb-left{flex:0 0 132px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  /* Nombre del nivel DEBAJO del círculo: dentro se montaba con nombres largos («Consolidando»). */
+  .pb-nivel{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.9);text-align:center;line-height:1.25;max-width:132px;overflow-wrap:anywhere}
   .pb-text{flex:1;min-width:0}
-  .pb-estas{font-size:15.5px;color:#eafcf6;line-height:1.3}
-  .pb-estas b{font-weight:800}
-  .pb-note{font-size:12px;color:rgba(234,252,246,.66);margin-top:6px;line-height:1.4;max-width:200px}
+  /* Lectura de Oportunidad: el statement del área prioritaria y, debajo, a qué sección ir. */
+  .pb-lect{font-family:'Inter',sans-serif;font-weight:800;font-size:17px;color:#fff;line-height:1.28;overflow-wrap:anywhere}
+  .pb-rev{font-size:13.5px;color:rgba(234,252,246,.78);margin-top:8px;line-height:1.4}
+  .pb-rev:empty{display:none}
   .pb-link{display:inline-block;margin-top:10px;font-family:'Inter',sans-serif;font-weight:800;font-size:13px;color:#fff}
   .pb-foot{position:relative;z-index:1;display:flex;justify-content:space-between;margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.14);
     font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:rgba(234,252,246,.6)}
@@ -97,29 +100,33 @@
   <!-- Bloque 1 · Saludo (§16) — texto plano, sin tarjeta (como la referencia). -->
   <div class="greet">
     <h1 data-pl="saludo">Hola</h1>
-    <p class="greet-sub" data-pl="resumen" data-pl-maya="inicio_resumen">Tus finanzas, en un solo lugar.</p>
+    <p class="greet-sub" data-pl="resumen" data-pl-maya="inicio_resumen">Tus finanzas en un solo lugar.</p>
   </div>
 
   <!-- Avisos del Calendario Planea (renta + metas con fecha). Vacío hasta que aplique. -->
   <div id="cal-notices"></div>
 
-  <!-- Bloque 2 · Puntaje Base — tarjeta hero (como la referencia). -->
+  <!-- Bloque 2 · Tu Puntaje Planea — tarjeta hero. Círculo a la izquierda con el nivel DEBAJO;
+       en el centro, la Lectura de Oportunidad (statement del área + «Revisa tu sección de…»). -->
   <section class="sec">
     <div class="pb-card">
       <div class="pb-top">
-        <span class="pb-eyebrow">Puntaje Base</span>
+        <span class="pb-eyebrow">Tu Puntaje Planea</span>
         <img class="pb-mark" src="/planea/portal/planea-mark-white.png" alt="" aria-hidden="true">
       </div>
       <div class="pb-body">
-        <div class="pb-ring">
-          <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="9"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="#bfe9e2" stroke-width="9" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
-          <div class="pb-ring-c"><b data-pl="score">—</b><small data-pl="rango">—</small></div>
+        <div class="pb-left">
+          <div class="pb-ring">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="9"/><circle data-pl-ring cx="60" cy="60" r="46" fill="none" stroke="#bfe9e2" stroke-width="9" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 60 60)"/></svg>
+            <div class="pb-ring-c"><b data-pl="score">—</b></div>
+          </div>
+          <div class="pb-nivel" data-pl="rango">—</div>
         </div>
         <div class="pb-right">
           <img class="pb-bird" src="/planea/portal/planea-bird-engrave.png" alt="" aria-hidden="true">
           <div class="pb-text">
-            <div class="pb-estas" data-pl-maya="inicio_rango">Estás en <b data-pl="rango">—</b>.</div>
-            <p class="pb-note" data-pl-maya="inicio_rango_nota">Base de la encuesta: cambiará según registres tus datos.</p>
+            <div class="pb-lect" data-pl="lectura" data-pl-maya="inicio_lectura">Haz tu diagnóstico Planea para conocer tu puntaje.</div>
+            <p class="pb-rev" data-pl="lectura_rev"></p>
             <a class="pb-link" href="/planea/portal/diagnostico">Ver el detalle →</a>
           </div>
         </div>
@@ -166,8 +173,8 @@
 
 </div></div>
 <script src="/planea/portal/planea-nav.js?v=75" defer></script>
-<script src="/planea/portal/planea-goals.js?v=1" defer></script><script src="/planea/portal/planea-data.js?v=70" defer></script>
-<script src="/planea/portal/maya-chat.js?v=63" defer></script>
+<script src="/planea/portal/planea-goals.js?v=1" defer></script><script src="/planea/portal/planea-data.js?v=71" defer></script>
+<script src="/planea/portal/maya-chat.js?v=64" defer></script>
 <script src="/planea/portal/planea-tax.js?v=1" defer></script>
 <script src="/planea/portal/planea-avisos.js?v=1" defer></script>
 </body>

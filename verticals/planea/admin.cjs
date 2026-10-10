@@ -716,7 +716,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   api.post('/maya-texts/preview', async (req, res) => {
     try {
       const now = Date.now(), hits = (previewHits.get(req.admin.uid) || []).filter((t) => now - t < 3600e3);
-      if (hits.length >= 12) return res.status(429).json({ error: 'demasiadas', message: 'Máximo 12 vistas previas por hora.' });
+      if (hits.length >= 40) return res.status(429).json({ error: 'demasiadas', message: 'Máximo 40 vistas previas por hora.' });
       hits.push(now); previewHits.set(req.admin.uid, hits);
       if (typeof previewTexts !== 'function') return res.status(503).json({ error: 'sin_maya', message: 'La vista previa no está conectada a Maya en este servidor.' });
       kb._cache.delete(tenant()); // siempre con lo último que se enseñó

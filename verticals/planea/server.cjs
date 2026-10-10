@@ -287,6 +287,7 @@ REGISTRAR DATOS POR CHAT O VOZ — SIEMPRE CONFIRMA ANTES DE GUARDAR
 - En deuda, el pago mensual va en el campo "cuota" de la etiqueta (nombre técnico interno); al usuario le dices "pago mensual", nunca "cuota". En meta puedes añadir "objetivo" (monto que quiere alcanzar).
 - Si NO estás segura del monto, la categoría o la fecha, PREGUNTA para aclarar en vez de proponer. NUNCA inventes cifras ni adivines.
 - En una META puedes añadir, además de "objetivo": "fecha" (AAAA-MM-DD, solo si el usuario la dijo) y "pilar" (uno de: ahorro, flujo, deuda, retiro, seguros, inversion, impuestos, patrimonio). Una meta puede ir SIN monto: en ese caso omite "monto".
+- En un INGRESO o un GASTO puedes añadir "fecha" (AAAA-MM-DD) cuando el usuario dijo cuándo ocurrió o cuándo va a ocurrir ("el mes pasado", "el 15 de noviembre"); calcúlala desde la FECHA DE HOY que aparece al final. Si no dijo fecha, omítela: queda con la de hoy. Añade "unico":true cuando es algo de una sola vez (una prima, una compra, un regalo); si es algo que se repite cada mes (salario, arriendo), no lo pongas. Cada registro cuenta en el mes de su fecha: uno con fecha pasada suma a ese mes y uno con fecha futura aparece en su mes.
 - Si el usuario solo pregunta algo (no da datos), no uses ninguna etiqueta.
 
 METAS Y CALENDARIO — LO QUE PUEDES HACER POR EL USUARIO
@@ -302,7 +303,10 @@ METAS Y CALENDARIO — LO QUE PUEDES HACER POR EL USUARIO
 - La fecha de la declaración de renta y los festivos NO son recordatorios del usuario: no los puedes quitar ni cambiar, y lo explicas así si te lo piden.
 
 TEXTOS DE LAS PANTALLAS
-- Los mensajes de Inicio, los de Puntaje Planea (Hallazgos de Maya), el aviso de Mis metas y el saludo de este chat también los redactas tú, con lo que el equipo de Planea te enseña.
+- Los mensajes de Inicio, los de Puntaje Planea (Hallazgos de Maya), el aviso de Mis metas y el saludo de este chat también los redactas tú, con lo que el equipo de Planea te enseña. Estos son TODOS los textos de pantalla que redactas, y lo que la app revisa en cada uno antes de mostrarlo:
+${mayaTextsMod.guia()}
+- NUNCA digas que un cambio "ya quedó hecho", "quedó registrado" o "se verá de inmediato". Tú no guardas nada desde la conversación: una instrucción queda guardada solo cuando la persona del equipo la guarda (con "Guardar esta instrucción", "Está bien, guardar así" o en "Conocimiento de Maya"). Después de guardada, la app reescribe los textos la próxima vez que cada usuario la abre, y cada texto pasa una revisión: si no la pasa, en pantalla queda el texto fijo. Dilo así, y sugiere comprobarlo con "Ver cómo escribe Maya".
+- Si lo que piden cambiar NO está en la lista de arriba (el nombre de una sección o del menú, un título, un botón, el diseño, un cálculo, los tramos de puntos, las preguntas del cuestionario), responde con claridad que eso no es un texto tuyo: es parte de la app y lo programa Digit2AI. No digas que lo cambiaste.
 - Los NOMBRES de los niveles del Puntaje Planea también los puede cambiar el equipo de Planea: basta con que te los enseñen junto a su tramo de puntos, por ejemplo "Consolidando (69–83)". Desde ese momento la app muestra ese nombre (en el anillo del puntaje, en Inicio y en Puntaje Planea) la próxima vez que el usuario la abra, y tú usas ese nombre y no el anterior. Los tramos de puntos no cambian.
 - Si te preguntan si esos textos se pueden cambiar, la respuesta es SÍ: el equipo de Planea los ajusta enseñándote en "Entrenar a Maya" o en "Conocimiento de Maya", y el cambio se ve en la pantalla. No digas que dependen del backend ni que hay que reportarlo al equipo de desarrollo.
 
@@ -458,6 +462,12 @@ router.post('/api/v1/maya/chat', express.json({ limit: '256kb' }), async (req, r
             cuota: Math.round(Number(String(o.cuota || 0).toString().replace(/[^\d.-]/g, '')) || 0),
             objetivo: Math.round(Number(String(o.objetivo || 0).toString().replace(/[^\d.-]/g, '')) || 0),
           };
+          // Ingresos y gastos: fecha del movimiento (pasada o futura, dentro del rango que
+          // acepta el servidor) y marca de «único». Una fecha inválida se ignora: queda hoy.
+          if (mod === 'ingreso' || mod === 'gasto') {
+            if (planeaBackend && planeaBackend.Periodo && planeaBackend.Periodo.fechaEnRango(String(o.fecha || ''))) d.fecha = String(o.fecha);
+            if (o.unico === true || o.unico === 'true') d.unico = true;
+          }
           if (mod === 'meta') {
             if (okFecha(o.fecha)) d.fecha = String(o.fecha);
             if (PILAR_KEYS.indexOf(String(o.pilar)) >= 0) d.pilar = String(o.pilar);
@@ -644,7 +654,7 @@ if (hasPortal) {
 if (hasBuild) {
   // Inject the Maya floating chat into every SPA page (landing/login/score/home/...).
   // Done at serve time so it survives Vite rebuilds and needs no source change.
-  const MAYA_TAG = '<script src="/planea/portal/maya-chat.js?v=63" defer></script>';
+  const MAYA_TAG = '<script src="/planea/portal/maya-chat.js?v=64" defer></script>';
   let spaHtml = null;
   try {
     const raw = fs.readFileSync(indexHtml, 'utf8');
