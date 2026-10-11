@@ -2288,3 +2288,12 @@ Construido el 2026-10-09 a partir de la Solicitud de Cotización de la Asociaci�
 **SIT:** `node -e "require('dotenv').config();require('./verticals/vallemilagro/sit.js')"` → **89/89**, sin llaves externas (correo y modelo falsos, inquilino 990977, borra lo que crea). Cubre los diez casos de entrega de la solicitud menos el diseño. NO cubre: modelo real, búsqueda web real, entrega real del correo.
 
 **Variables de entorno:** `VALLEMILAGRO_SESSION_SECRET` (cae a `JWT_SECRET`; sin ninguna, el ingreso queda cerrado) · `VALLEMILAGRO_FOUNDER_EMAIL` · `VALLEMILAGRO_PUBLIC_URL` (`https://aiagent.ringlypro.com/vallemilagro`, base del enlace del correo) · `VALLEMILAGRO_FROM_EMAIL` (cae a `SENDGRID_FROM_EMAIL`) · `VALLEMILAGRO_SIGNUP` (`closed` deja entrar solo a correos ya registrados) · `VALLEMILAGRO_SCOUT` (`on` enciende la corrida programada) · `VALLEMILAGRO_SCOUT_MAX_SEARCHES` (25) · `VALLEMILAGRO_SCOUT_MONTHLY_CAP` (60) · `VALLEMILAGRO_SCOUT_MIN_INTERVAL_HOURS` (6) · `VALLEMILAGRO_VALLE_MODEL` (`claude-haiku-4-5-20251001`) · `VALLEMILAGRO_SCOUT_MODEL` (`claude-sonnet-5`) · `VALLEMILAGRO_AI` (`off` apaga la IA) · `VALLEMILAGRO_KB_MAX_CHARS` (60000) · `VALLEMILAGRO_CHAT_PER_10MIN` (30) · `VALLEMILAGRO_SEED_DEMO` (`off` no carga los datos de ejemplo) · `VALLEMILAGRO_TENANT_ID` (1) · `VALLEMILAGRO_DATABASE_URL`. Reutiliza `ANTHROPIC_API_KEY` y `SENDGRID_API_KEY`.
+
+## HTR Digital — propuesta de automatización para Grupo HITTES (`/HTR-Digital/`)
+
+`public/HTR-Digital/index.html`, estática, `noindex`. Landing en español con la marca del prospecto (Grupo HITTES / HTR Infraestructura, Monterrey: contratista de pavimentos con 6 plantas de **mezcla asfáltica**, no de cemento) y doce automatizaciones por unidad de negocio. La ruta distingue mayúsculas: es `/HTR-Digital`.
+
+- **Lleva arriba la franja "Propuesta de Digit2AI · No es un sitio oficial de HTR"** y el pie lo repite. No quitarla: la página usa su nombre y no debe pasar por sitio de ellos. No se usa su logotipo, solo un rótulo de texto.
+- **Cada automatización declara su estado**: Ya existe / Se adapta / Por construir. Solo FreightMind y el asistente de voz web son "Ya existe". Planta, maquinaria, combustible y bitácora de obra son "Por construir".
+- **Ninguna cifra de ahorro.** Los únicos números son los de su propio currículo 2026 (6 plantas, 4 estados, 6 unidades, 2015). No se publican montos de contratos ni nombres de clientes privados.
+- El expediente de investigación vive fuera del repo (el repo es público).

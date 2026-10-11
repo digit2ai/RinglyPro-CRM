@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#24262c">
+<title>HTR Digital · Automatización con IA para Grupo HITTES</title>
+<style>
+:root{--ink:#1d1f24;--char:#24262c;--char2:#30333b;--mut:#5d6470;--line:#e3e5ea;--bg:#ffffff;--soft:#f4f5f7;
+  --red:#d3222a;--red-d:#b01920;--grn:#12703f;--grn-bg:#e4f4ea;--blu:#17508f;--blu-bg:#e4eefa;--amb:#8a5a00;--amb-bg:#fbf0d6}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+.note{background:var(--red);color:#fff;font-size:13px;text-align:center;padding:7px 16px;font-weight:600;letter-spacing:.02em}
+header{background:var(--char);color:#fff;position:sticky;top:0;z-index:10;border-bottom:3px solid var(--red)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;flex-wrap:wrap;padding:8px 0}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800;letter-spacing:.04em;font-size:20px}
+.logo .mk{background:var(--red);color:#fff;padding:5px 10px;font-style:italic;font-size:19px;letter-spacing:.06em}
+.logo small{display:block;font-size:10.5px;font-weight:600;letter-spacing:.18em;color:#b9bec8}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{text-decoration:none;font-size:14.5px;padding:11px 12px;color:#dfe2e8;border-radius:6px}
+nav a:hover{background:var(--char2);color:#fff}
+.hero{background:linear-gradient(135deg,#24262c 0%,#30333b 60%,#3b2224 100%);color:#fff;padding:64px 0 56px}
+.eyebrow{font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--red);margin:0 0 12px}
+.hero .eyebrow{color:#ff8b90}
+h1{font-size:clamp(34px,5.4vw,56px);line-height:1.06;margin:0 0 18px;letter-spacing:-.015em}
+h1 span{color:#ff6b72}
+h2{font-size:clamp(26px,3.6vw,36px);line-height:1.15;margin:0 0 12px;letter-spacing:-.01em}
+h3{font-size:19px;margin:0 0 8px}
+.lead{font-size:19px;max-width:760px;color:#d9dce3;margin:0 0 26px}
+.sub{font-size:18px;color:var(--mut);max-width:780px;margin:0 0 30px}
+.btn{display:inline-block;background:var(--red);color:#fff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:6px;font-size:16px}
+.btn:hover{background:var(--red-d)}
+.btn.ghost{background:transparent;border:1px solid #6c717c}
+.btn.ghost:hover{background:var(--char2)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
+.stat{border-left:3px solid var(--red);padding:4px 0 4px 16px}
+.stat b{display:block;font-size:34px;line-height:1.1}
+.stat span{font-size:14px;color:#c3c8d1}
+.src{font-size:12.5px;color:#a9aeb9;margin-top:16px}
+section{padding:68px 0}
+section.soft{background:var(--soft)}
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px}
+.card p{margin:0 0 10px;color:var(--mut);font-size:15.5px}
+.card ul{margin:0;padding-left:18px;color:var(--mut);font-size:15px}
+.card li{margin-bottom:5px}
+.unit{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--red);margin-bottom:8px}
+.brands{font-size:13.5px;color:var(--ink);font-weight:600;margin-top:10px}
+/* cadena */
+.chain{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
+.step{background:var(--char);color:#fff;border-radius:8px;padding:14px 12px;position:relative}
+.step b{display:block;font-size:15px;margin-bottom:6px}
+.step span{font-size:13px;color:#c9cdd6;line-height:1.4;display:block}
+.step i{font-style:normal;font-size:11px;letter-spacing:.14em;color:#ff8b90;font-weight:700}
+/* automatizaciones */
+.auto{display:flex;flex-direction:column}
+.auto h3{font-size:18.5px}
+.tagrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.st{font-size:12px;font-weight:700;border-radius:999px;padding:4px 11px;white-space:nowrap}
+.st.ok{background:var(--grn-bg);color:var(--grn)} .st.ad{background:var(--blu-bg);color:var(--blu)} .st.nw{background:var(--amb-bg);color:var(--amb)}
+.who{font-size:12px;font-weight:600;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.auto .need{margin-top:auto;padding-top:12px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--mut)}
+.auto .need b{color:var(--ink)}
+.auto a.more{font-weight:700;color:var(--red);font-size:14.5px;text-decoration:none;display:inline-block;padding:8px 0}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+.filters button{font:inherit;font-size:14.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);
+  border-radius:999px;padding:10px 16px;cursor:pointer;min-height:44px}
+.filters button.on{background:var(--char);color:#fff;border-color:var(--char)}
+.legend{font-size:14px;color:var(--mut);margin:0 0 20px}
+.legend .st{margin-right:6px}
+.wk{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:6px}
+.col h3{font-size:14px;letter-spacing:.12em;text-transform:uppercase}
+.col.a h3{color:var(--grn)} .col.b h3{color:var(--amb)} .col.c h3{color:var(--red)}
+.cta{background:var(--char);color:#fff;text-align:center}
+.cta p{color:#d0d4dc;max-width:640px;margin:0 auto 26px;font-size:18px}
+footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-align:center}
+[hidden]{display:none!important}
+@media (max-width:900px){
+  .g3,.g2{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,1fr)} .chain{grid-template-columns:1fr 1fr}
+  section{padding:48px 0} .hero{padding:44px 0}
+  header{position:static} nav a{padding:12px 10px}
+}
+</style>
+</head>
+<body>
+<div class="note">Propuesta de trabajo preparada por Digit2AI para Grupo HITTES · No es un sitio oficial de HTR</div>
+<header><div class="wrap bar">
+  <a class="logo" href="#top"><span class="mk">HTR</span><span>DIGITAL<small>GRUPO HITTES · SISTEMA DPI</small></span></a>
+  <nav>
+    <a href="#grupo">El grupo</a><a href="#cadena">La operación</a><a href="#auto">Automatizaciones</a><a href="#ruta">Cómo empezar</a><a href="#contacto">Contacto</a>
+  </nav>
+</div></header>
+
+<div class="hero" id="top"><div class="wrap">
+  <p class="eyebrow">Construimos confianza, construimos futuro · ahora con inteligencia artificial</p>
+  <h1>La operación completa del grupo, <span>conectada y automatizada</span></h1>
+  <p class="lead">HTR ya produce su mezcla asfáltica, la transporta con su flota y la coloca con su gente. HTR Digital es la propuesta para que licitaciones, plantas, camiones, obras y cobranza trabajen sobre los mismos datos, con IA haciendo el trabajo repetitivo y una persona decidiendo.</p>
+  <a class="btn" href="#auto">Ver las 12 automatizaciones</a> &nbsp; <a class="btn ghost" href="#ruta">Cómo empezar en 4 semanas</a>
+  <div class="stats">
+    <div class="stat"><b>6</b><span>plantas de mezcla asfáltica</span></div>
+    <div class="stat"><b>4</b><span>estados: N.L., S.L.P., Querétaro y Coahuila</span></div>
+    <div class="stat"><b>6</b><span>unidades de negocio en el grupo</span></div>
+    <div class="stat"><b>2015</b><span>año de constitución · afiliado CMIC 2026</span></div>
+  </div>
+  <p class="src">Cifras tomadas del currículo HTR 2026 y de registros públicos. Ninguna es una estimación de Digit2AI.</p>
+</div></div>
+
+<section id="grupo"><div class="wrap">
+  <p class="eyebrow">El grupo</p>
+  <h2>Un grupo integrado de punta a punta</h2>
+  <p class="sub">Seis unidades de negocio que hoy ya cubren el ciclo completo de una obra de infraestructura. Esa integración es justo lo que hace valiosa la automatización: el dato que nace en una unidad lo necesita la siguiente.</p>
+  <div class="grid g3">
+    <div class="card"><div class="unit">01 · Gestión, diseño y proyectos</div><p>Planeación, ingeniería y diseño de los proyectos.</p><div class="brands">UPG · Petrova · Maia Studio</div></div>
+    <div class="card"><div class="unit">02 · Infraestructura y tecnología</div><p>Construcción y rehabilitación de carreteras, autopistas, vialidades, puentes, obra hidráulica y urbanización.</p><div class="brands">HTR Infraestructura · HTR Construction · TYPSA · Inovacret</div></div>
+    <div class="card"><div class="unit">03 · Logística, transporte y maquinaria</div><p>Flota de transporte y maquinaria especializada que mueve materiales entre plantas y obras.</p><div class="brands">TTS · Neohaul · SEMAQSA</div></div>
+    <div class="card"><div class="unit">04 · Desarrollos inmobiliarios</div><p>Desarrollo y comercialización de proyectos inmobiliarios.</p><div class="brands">HTR Inmobiliario</div></div>
+    <div class="card"><div class="unit">05 · Administración de activos y comercio</div><p>Administración de activos y actividad comercial del grupo.</p><div class="brands">Inova-Vial</div></div>
+    <div class="card"><div class="unit">06 · Medio ambiente, seguridad e higiene</div><p>Cumplimiento ambiental y seguridad laboral en plantas y frentes de obra. Recursos humanos como servicio compartido.</p><div class="brands">CVMM · SM Recursos Humanos</div></div>
+  </div>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card"><h3>Servicios</h3><ul><li>Infraestructura vial</li><li>Infraestructura hidráulica</li><li>Urbanización</li><li>Edificación</li><li>Puentes, excavaciones y terracerías</li></ul></div>
+    <div class="card"><h3>Clientes públicos</h3><ul><li>SICT (conservación de carreteras federales)</li><li>Red Estatal de Autopistas de Nuevo León</li><li>Gobiernos de Nuevo León y San Luis Potosí</li><li>Municipios del área de Monterrey</li></ul></div>
+    <div class="card"><h3>Obras de referencia</h3><ul><li>Carretera Villa de Arista, S.L.P. (23.4 km)</li><li>Puente peatonal estación Obispado, Monterrey</li><li>Autopista al Aeropuerto de Monterrey</li><li>Periférico del área metropolitana de Monterrey</li></ul></div>
+  </div>
+</div></section>
+
+<section class="soft" id="cadena"><div class="wrap">
+  <p class="eyebrow">La operación</p>
+  <h2>Siete pasos, y en cada uno hay trabajo que la IA puede quitar</h2>
+  <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. Debajo de cada paso, lo que se automatiza.</p>
+  <div class="chain">
+    <div class="step"><i>01</i><b>Licitación</b><span>Vigilar convocatorias, leer bases, armar la propuesta.</span></div>
+    <div class="step"><i>02</i><b>Proyecto</b><span>Programa de obra, volúmenes y necesidades de mezcla.</span></div>
+    <div class="step"><i>03</i><b>Planta</b><span>Producir la mezcla correcta, a tiempo y con calidad.</span></div>
+    <div class="step"><i>04</i><b>Transporte</b><span>Llevarla caliente a la obra con el camión adecuado.</span></div>
+    <div class="step"><i>05</i><b>Obra</b><span>Colocar, compactar y documentar el avance.</span></div>
+    <div class="step"><i>06</i><b>Estimación</b><span>Generadores, números y evidencia para cobrar.</span></div>
+    <div class="step"><i>07</i><b>Cobranza</b><span>Seguir cada estimación hasta que se paga.</span></div>
+  </div>
+</div></section>
+
+<section id="auto"><div class="wrap">
+  <p class="eyebrow">Automatizaciones propuestas</p>
+  <h2>Doce oportunidades, ordenadas por unidad de negocio</h2>
+  <p class="sub">Cada una dice con claridad en qué estado está de nuestro lado. No todas existen hoy: algunas se adaptan de plataformas que Digit2AI ya opera y otras se construyen con ustedes.</p>
+  <p class="legend"><span class="st ok">Ya existe</span>funciona hoy en una plataforma de Digit2AI &nbsp; <span class="st ad">Se adapta</span>existe y se ajusta a HTR &nbsp; <span class="st nw">Por construir</span>se desarrolla con sus datos</p>
+  <div class="filters" id="filters">
+    <button class="on" data-f="all">Todas</button><button data-f="lic">Licitaciones y contratos</button><button data-f="pla">Plantas de asfalto</button>
+    <button data-f="log">Transporte y maquinaria</button><button data-f="obr">Obra y cobranza</button><button data-f="gru">Grupo</button>
+  </div>
+  <div class="grid g3" id="cards">
+
+    <div class="card auto" data-c="log">
+      <div class="tagrow"><span class="st ok">Ya existe</span><span class="who">TTS · Neohaul</span></div>
+      <h3>FreightMind Autopilot para la flota</h3>
+      <p>Diagnóstico de la operación de transporte: unidades paradas, viajes en vacío, cumplimiento y margen por viaje. Un piloto automático ejecuta el flujo de cada viaje y se detiene cuando algo sale de las reglas que ustedes fijan.</p>
+      <a class="more" href="/freightmind-autopilot-garcia.html">Ver la presentación narrada</a>
+      <div class="need"><b>Necesita:</b> viajes, unidades, clientes y tarifas en archivo.</div>
+    </div>
+
+    <div class="card auto" data-c="log pla">
+      <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Plantas · TTS</span></div>
+      <h3>Despacho planta–obra</h3>
+      <p>La mezcla asfáltica tiene una ventana de temperatura. El sistema asigna camiones según el pedido de cada frente, la distancia y el ritmo de la pavimentadora, y avisa cuando una carga va a llegar fuera de ventana o un camión va a esperar.</p>
+      <div class="need"><b>Necesita:</b> pedidos de obra, tickets de báscula y posición de los camiones.</div>
+    </div>
+
+    <div class="card auto" data-c="pla">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">PAF-01 a PAF-06</span></div>
+      <h3>Programación de las seis plantas</h3>
+      <p>Un plan diario por planta que cruza los programas de obra con la capacidad de producción y el inventario de agregados y asfalto. Señala con días de anticipación cuándo una planta no alcanza y cuál puede cubrirla.</p>
+      <div class="need"><b>Necesita:</b> programas de obra, producción diaria e inventarios.</div>
+    </div>
+
+    <div class="card auto" data-c="pla">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Plantas · Calidad</span></div>
+      <h3>Calidad y consumos por lote</h3>
+      <p>Cada lote queda registrado con su temperatura, su fórmula y su destino. La IA detecta desviaciones de consumo de asfalto y combustible contra lo esperado y arma el expediente de calidad que pide la dependencia.</p>
+      <div class="need"><b>Necesita:</b> datos del tablero de la planta y pruebas de laboratorio.</div>
+    </div>
+
+    <div class="card auto" data-c="log">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">SEMAQSA</span></div>
+      <h3>Maquinaria: uso y mantenimiento</h3>
+      <p>Dónde está cada pavimentadora, fresadora y compactador, cuántas horas trabajó y cuándo le toca servicio. Avisa antes de que un equipo crítico pare un frente y muestra qué equipo está ocioso y podría rentarse.</p>
+      <div class="need"><b>Necesita:</b> inventario de equipo, horómetros y bitácora de servicios.</div>
+    </div>
+
+    <div class="card auto" data-c="log obr">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Flota · Obra</span></div>
+      <h3>Combustible y costo real por viaje</h3>
+      <p>Antes de aceptar un acarreo, el costo real con sus rendimientos, precios de diésel, casetas y tiempo de espera. Después del viaje, la comparación contra lo cargado para detectar consumos fuera de lo normal.</p>
+      <div class="need"><b>Necesita:</b> cargas de combustible, rendimientos por unidad y rutas.</div>
+    </div>
+
+    <div class="card auto" data-c="lic">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">UPG · HTR Infraestructura</span></div>
+      <h3>Radar de licitaciones</h3>
+      <p>Vigila todos los días las convocatorias federales, estatales y municipales de los estados donde tienen planta, las filtra por tipo de obra y distancia a la planta más cercana, y entrega un resumen con fechas, requisitos y montos publicados.</p>
+      <div class="need"><b>Necesita:</b> los portales públicos de contratación y sus criterios de interés.</div>
+    </div>
+
+    <div class="card auto" data-c="lic">
+      <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Licitaciones · Legal</span></div>
+      <h3>Lectura de bases y armado de propuestas</h3>
+      <p>La IA lee las bases, extrae cada requisito con la página de donde salió y arma la lista de documentos por reunir. Reutiliza el currículo, la experiencia comprobable y los documentos legales vigentes. La propuesta la revisa y la firma una persona.</p>
+      <div class="need"><b>Necesita:</b> bases en PDF y el archivo de documentos de la empresa.</div>
+    </div>
+
+    <div class="card auto" data-c="lic gru">
+      <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Administración</span></div>
+      <h3>Archivo vivo de contratos y vencimientos</h3>
+      <p>Contratos, fianzas, pólizas, registros y afiliaciones en un solo lugar, con sus fechas leídas del propio documento. Avisa antes de cada vencimiento y mantiene el currículo de obras actualizado desde los contratos, sin capturar dos veces.</p>
+      <div class="need"><b>Necesita:</b> los documentos escaneados o en PDF.</div>
+    </div>
+
+    <div class="card auto" data-c="obr">
+      <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Residentes de obra</span></div>
+      <h3>Bitácora de obra por voz y estimaciones</h3>
+      <p>El residente dicta el avance del día desde el teléfono y adjunta fotos. El sistema lo convierte en bitácora, lo cruza con el catálogo de conceptos y prepara el borrador de generadores y de la estimación para revisión.</p>
+      <div class="need"><b>Necesita:</b> catálogo de conceptos del contrato y reportes diarios.</div>
+    </div>
+
+    <div class="card auto" data-c="obr">
+      <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Finanzas</span></div>
+      <h3>Cobranza a dependencias</h3>
+      <p>Cada estimación con su estado: presentada, observada, autorizada, pagada. Antigüedad de la cartera por dependencia y por contrato, y aviso cuando una estimación lleva más días de lo normal en un mismo paso.</p>
+      <div class="need"><b>Necesita:</b> relación de estimaciones y pagos recibidos.</div>
+    </div>
+
+    <div class="card auto" data-c="gru">
+      <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Dirección</span></div>
+      <h3>Centro de mando del grupo</h3>
+      <p>Una sola pantalla para la dirección: producción de plantas, flota, avance de obras, cartera y hallazgos ordenados por gravedad. Se puede preguntar en español y contesta solo con datos que existen en el sistema.</p>
+      <div class="need"><b>Necesita:</b> que al menos dos de los módulos anteriores estén operando.</div>
+    </div>
+
+  </div>
+  <div class="grid g3" style="margin-top:18px">
+    <div class="card"><div class="unit">También en el grupo</div><h3>Seguridad e higiene (CVMM)</h3><p>Reportes de condiciones inseguras por foto y voz, control de permisos y capacitación por frente. <span class="st nw">Por construir</span></p></div>
+    <div class="card"><div class="unit">También en el grupo</div><h3>Inmobiliario (HTR Inmobiliario)</h3><p>Un asistente de voz en la web que atiende prospectos a cualquier hora y agenda la visita. <span class="st ok">Ya existe</span></p></div>
+    <div class="card"><div class="unit">También en el grupo</div><h3>Recursos humanos (SM)</h3><p>Filtro de candidatos para operadores y personal de obra, y expedientes con vencimientos. <span class="st ad">Se adapta</span></p></div>
+  </div>
+</div></section>
+
+<section class="soft"><div class="wrap">
+  <p class="eyebrow">Con objetividad</p>
+  <h2>Lo que afirmamos y lo que no</h2>
+  <div class="grid g3">
+    <div class="card col a"><h3>Afirmamos</h3><ul><li>FreightMind Autopilot funciona hoy en ambiente de demostración.</li><li>La lectura de documentos, los asistentes de voz y los tableros ya operan en otras plataformas de Digit2AI.</li><li>Todo empieza con archivos que ustedes ya tienen.</li></ul></div>
+    <div class="card col b"><h3>Está por construirse</h3><ul><li>Los módulos de planta, maquinaria, combustible y bitácora de obra.</li><li>La conexión con los sistemas que hoy usan, que aún no conocemos.</li><li>Las reglas de cumplimiento mexicanas, que se definen con ustedes.</li></ul></div>
+    <div class="card col c"><h3>No afirmamos</h3><ul><li>Ningún ahorro en pesos: no hemos visto sus datos.</li><li>Que la IA reemplaza a su gente. Propone y prepara; una persona decide y firma.</li><li>Que todo se hace a la vez. Se empieza por una unidad.</li></ul></div>
+  </div>
+</div></section>
+
+<section id="ruta"><div class="wrap">
+  <p class="eyebrow">Cómo empezar</p>
+  <h2>Una prueba de concepto de cuatro semanas, con sus datos</h2>
+  <p class="sub">Se elige una sola unidad de negocio y un solo problema. Sin honorarios iniciales por esta etapa.</p>
+  <div class="grid g3" style="grid-template-columns:repeat(4,1fr)" id="weeks">
+    <div class="card"><div class="wk">Semana 1</div><h3>Elegir</h3><p>Reunión con dirección. Se escoge la unidad y el problema, y se revisa qué datos existen.</p></div>
+    <div class="card"><div class="wk">Semana 2</div><h3>Cargar</h3><p>Se cargan sus archivos y se corre el primer diagnóstico real.</p></div>
+    <div class="card"><div class="wk">Semana 3</div><h3>Operar</h3><p>Tablero en español y un flujo en piloto con una persona de su equipo.</p></div>
+    <div class="card"><div class="wk">Semana 4</div><h3>Medir</h3><p>Resultados medidos y la hoja de ruta para el resto del grupo.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card"><h3>Por dónde sugerimos empezar</h3><p>Por <b>transporte y despacho planta–obra</b>: es donde ya tenemos plataforma funcionando, los datos suelen existir en tickets y archivos, y el resultado se ve en días, no en meses.</p></div>
+    <div class="card"><h3>Lo que necesitamos de ustedes</h3><p>Una persona de operación como contraparte, exportes de datos de la unidad elegida y una hora a la semana de la dirección.</p></div>
+  </div>
+</div></section>
+
+<section class="cta" id="contacto"><div class="wrap">
+  <h2>El siguiente paso es una conversación</h2>
+  <p>Una llamada con la dirección del grupo para elegir la unidad y arrancar la semana uno.</p>
+  <a class="btn" href="mailto:mstagg@digit2ai.com?subject=HTR%20Digital%20%C2%B7%20Horarios%20para%20reuni%C3%B3n">Proponer horarios</a>
+  &nbsp; <a class="btn ghost" href="/freightmind-autopilot-garcia.html">Ver FreightMind Autopilot</a>
+  <p style="margin-top:26px;font-size:15px">Manuel Stagg · Digit2AI · mstagg@digit2ai.com</p>
+</div></section>
+
+<footer><div class="wrap">Propuesta elaborada por Digit2AI. Los nombres y marcas de Grupo HITTES y HTR pertenecen a sus titulares y se usan solo para presentarles esta propuesta. Los datos del grupo provienen de su currículo 2026 y de registros públicos.</div></footer>
+
+<script>
+(function(){
+  var btns = [].slice.call(document.querySelectorAll('#filters button'));
+  var cards = [].slice.call(document.querySelectorAll('#cards .auto'));
+  btns.forEach(function(b){ b.addEventListener('click', function(){
+    var f = b.getAttribute('data-f');
+    btns.forEach(function(x){ x.classList.toggle('on', x === b); });
+    cards.forEach(function(c){ c.hidden = !(f === 'all' || (' ' + c.getAttribute('data-c') + ' ').indexOf(' ' + f + ' ') > -1); });
+  }); });
+  var w = document.getElementById('weeks');
+  function fit(){ w.style.gridTemplateColumns = window.innerWidth < 900 ? '1fr' : 'repeat(4,1fr)'; }
+  window.addEventListener('resize', fit); fit();
+})();
+</script>
+</body>
+</html>
