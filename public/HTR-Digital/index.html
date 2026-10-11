@@ -17,13 +17,19 @@ a{color:inherit}
 .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
 .note{background:var(--red);color:#fff;font-size:13px;text-align:center;padding:7px 16px;font-weight:600;letter-spacing:.02em}
 header{background:var(--char);color:#fff;position:sticky;top:0;z-index:10;border-bottom:3px solid var(--red)}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;flex-wrap:wrap;padding:8px 0}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;flex-wrap:wrap;padding:8px 20px}
 .logo{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:800;letter-spacing:.04em;font-size:20px}
 .logo .mk{background:var(--red);color:#fff;padding:5px 10px;font-style:italic;font-size:19px;letter-spacing:.06em}
 .logo small{display:block;font-size:10.5px;font-weight:600;letter-spacing:.18em;color:#b9bec8}
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav a{text-decoration:none;font-size:14.5px;padding:11px 12px;color:#dfe2e8;border-radius:6px}
 nav a:hover{background:var(--char2);color:#fff}
+.burger{display:none;width:44px;height:44px;border:1px solid #555a66;border-radius:8px;background:transparent;cursor:pointer;padding:0;position:relative}
+.burger span{position:absolute;left:11px;right:11px;height:2px;background:#fff;border-radius:2px;transition:transform .2s,opacity .2s,top .2s}
+.burger span:nth-child(1){top:14px}.burger span:nth-child(2){top:21px}.burger span:nth-child(3){top:28px}
+.burger[aria-expanded="true"] span:nth-child(1){top:21px;transform:rotate(45deg)}
+.burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.burger[aria-expanded="true"] span:nth-child(3){top:21px;transform:rotate(-45deg)}
 .hero{background:linear-gradient(135deg,#24262c 0%,#30333b 60%,#3b2224 100%);color:#fff;padding:64px 0 56px}
 .eyebrow{font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:var(--red);margin:0 0 12px}
 .hero .eyebrow{color:#ff8b90}
@@ -84,7 +90,21 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
 @media (max-width:900px){
   .g3,.g2{grid-template-columns:1fr} .stats{grid-template-columns:repeat(2,1fr)} .chain{grid-template-columns:1fr 1fr}
   section{padding:48px 0} .hero{padding:44px 0}
-  header{position:static} nav a{padding:12px 10px}
+  .bar{flex-wrap:nowrap}
+  .burger{display:block;flex:0 0 44px}
+  nav{display:none;position:absolute;left:0;right:0;top:100%;background:var(--char);border-top:1px solid #3d414b;
+    border-bottom:3px solid var(--red);flex-direction:column;gap:0;padding:6px 12px 12px;box-shadow:0 14px 30px rgba(0,0,0,.35)}
+  nav.open{display:flex}
+  nav a{padding:14px 10px;font-size:16.5px;border-radius:6px;border-bottom:1px solid #353944}
+  nav a:last-child{border-bottom:0}
+  .logo{font-size:18px} .logo small{font-size:12px;letter-spacing:.05em}
+  .step i{font-size:12px}
+  .auto a.more{display:flex;align-items:center;min-height:44px}
+  .note{font-size:12px;padding:6px 12px}
+  .hero .btn{display:block;text-align:center;margin:0 0 10px}
+  .cta .btn{display:block;margin:0 auto 10px;max-width:320px}
+  .legend .st{display:inline-block;margin:4px 6px 4px 0}
+  section[id],div[id="top"]{scroll-margin-top:72px}
 }
 </style>
 </head>
@@ -92,7 +112,8 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
 <div class="note">Propuesta de trabajo preparada por Digit2AI para Grupo HITTES · No es un sitio oficial de HTR</div>
 <header><div class="wrap bar">
   <a class="logo" href="#top"><span class="mk">HTR</span><span>DIGITAL<small>GRUPO HITTES · SISTEMA DPI</small></span></a>
-  <nav>
+  <button class="burger" id="burger" aria-label="Abrir menú" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span></button>
+  <nav id="menu">
     <a href="#grupo">El grupo</a><a href="#cadena">La operación</a><a href="#auto">Automatizaciones</a><a href="#ruta">Cómo empezar</a><a href="#contacto">Contacto</a>
   </nav>
 </div></header>
@@ -294,6 +315,14 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
     btns.forEach(function(x){ x.classList.toggle('on', x === b); });
     cards.forEach(function(c){ c.hidden = !(f === 'all' || (' ' + c.getAttribute('data-c') + ' ').indexOf(' ' + f + ' ') > -1); });
   }); });
+  var burger = document.getElementById('burger'), menu = document.getElementById('menu');
+  function setMenu(open){ menu.classList.toggle('open', open); burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú'); }
+  burger.addEventListener('click', function(e){ e.stopPropagation(); setMenu(!menu.classList.contains('open')); });
+  menu.addEventListener('click', function(e){ if (e.target.tagName === 'A') setMenu(false); });
+  document.addEventListener('click', function(e){ if (!menu.contains(e.target)) setMenu(false); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setMenu(false); });
+  window.addEventListener('resize', function(){ if (window.innerWidth >= 900) setMenu(false); });
   var w = document.getElementById('weeks');
   function fit(){ w.style.gridTemplateColumns = window.innerWidth < 900 ? '1fr' : 'repeat(4,1fr)'; }
   window.addEventListener('resize', fit); fit();
