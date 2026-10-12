@@ -23,6 +23,9 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;min-heig
 .btn.sec{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
 .btn.dark{background:var(--brand);color:#fff}
 nav .btn{min-height:44px;padding:0 18px;font-size:15px}
+.links{display:flex;align-items:center;gap:8px}
+.navlink{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;color:#fff;font-weight:700;font-size:15px;text-decoration:none;border-radius:999px}
+.navlink:hover{background:rgba(255,255,255,.12)}
 .hero{background:linear-gradient(160deg,var(--brand) 0%,#0b2c25 100%);color:#fff;padding:56px 0 64px}
 .tag{display:inline-block;background:rgba(242,178,51,.16);color:var(--acc);border:1px solid rgba(242,178,51,.45);border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 h1{font-size:44px;line-height:1.1;letter-spacing:-.02em;margin:18px 0 16px;max-width:17ch}
@@ -65,7 +68,10 @@ footer p{margin:0 0 8px}
 
 <nav><div class="wrap">
   <a class="logo" href="#inicio">Labora<span>.</span></a>
-  <a class="btn pri" href="#contacto">Quiero ser empresa piloto</a>
+  <div class="links">
+    <a class="navlink" href="/labora/8f061459-6ee7-4ee8-a32c-0e49bfdaf914/">Triage</a>
+    <a class="btn pri" href="#contacto">Quiero ser empresa piloto</a>
+  </div>
 </div></nav>
 
 <header class="hero" id="inicio"><div class="wrap">
