@@ -272,6 +272,21 @@ function sanitizeFindings(parsed, results) {
   return { kept, dropped };
 }
 
+/**
+ * Fuentes preferidas -> lista de dominios para el buscador. Acepta URL completas,
+ * quita esquema, ruta, puerto y "www." (el buscador ya incluye los subdominios), y
+ * NO repite: Anthropic rechaza toda la corrida con 400 si un dominio aparece dos veces.
+ */
+function sourceDomains(text) {
+  const seen = new Set();
+  for (const raw of String(text || '').split(/[\s,;]+/)) {
+    const h = raw.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/[/?#].*$/, '').replace(/:\d+$/, '').replace(/^www\./, '').replace(/\.$/, '');
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/.test(h)) seen.add(h);
+    if (seen.size >= 40) break;
+  }
+  return [...seen];
+}
+
 function scoutPrompt(d, kb, today) {
   return `Hoy es ${today} (hora de Colombia). Busca en la web novedades de los últimos días que le sirvan a la Asociación Valle Milagro, promotora de obras en el Valle del Cauca.
 
@@ -305,7 +320,7 @@ async function scoutStart(tenantId, { trigger = 'manual', by = null } = {}) {
       const d = await directives(tenantId);
       const kb = await kbBlock(tenantId);
       const today = core.bogotaToday();
-      const domains = String(d.sources || '').split(/[\n,]+/).map((s) => s.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')).filter((s) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(s)).slice(0, 40);
+      const domains = sourceDomains(d.sources);
       const out = await llm.search({ system: 'Eres Scout, el agente de búsqueda de la Asociación Valle Milagro. Solo reportas lo que encuentras con la búsqueda web. No inventas.',
         prompt: scoutPrompt(d, kb, today), maxSearches: parseInt(process.env.VALLEMILAGRO_SCOUT_MAX_SEARCHES || '25', 10), allowedDomains: domains });
       const parsed = extractJson(out.text);
@@ -350,5 +365,5 @@ async function scoutTick(tenantId) {
   return { ran: true, ...(await scoutStart(tenantId, { trigger: 'schedule' })) };
 }
 
-module.exports = { kbList, kbAdd, kbBlock, extractText, sniff, valleChat, isPolitical, claimsMoney, heuristicReply, FIXED,
+module.exports = { sourceDomains, kbList, kbAdd, kbBlock, extractText, sniff, valleChat, isPolitical, claimsMoney, heuristicReply, FIXED,
   directives, sanitizeFindings, scoutStart, scoutTick, medioFor, copies, dateFrom, urlKey, nums, TYPES };

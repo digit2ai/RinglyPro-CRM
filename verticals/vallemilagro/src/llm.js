@@ -36,7 +36,11 @@ async function text({ system, messages, model, max_tokens = 700 }) {
  */
 async function search({ system, prompt, maxSearches = 25, allowedDomains }) {
   const tool = { type: process.env.VALLEMILAGRO_SCOUT_TOOL || 'web_search_20250305', name: 'web_search', max_uses: maxSearches,
-    user_location: { type: 'approximate', city: 'Cali', region: 'Valle del Cauca', country: 'CO', timezone: 'America/Bogota' } };
+    // Sin "country": el buscador de Anthropic no admite CO y rechaza toda la corrida
+    // con 400 ("Country code CO is not supported"). La ciudad, la región y el
+    // prompt bastan para orientar la búsqueda al Valle del Cauca.
+    user_location: { type: 'approximate', city: 'Cali', region: 'Valle del Cauca', timezone: 'America/Bogota' } };
+  if (process.env.VALLEMILAGRO_SCOUT_COUNTRY) tool.user_location.country = process.env.VALLEMILAGRO_SCOUT_COUNTRY;
   if (allowedDomains && allowedDomains.length) tool.allowed_domains = allowedDomains;
   const messages = [{ role: 'user', content: prompt }];
   const results = [];

@@ -242,10 +242,17 @@ async function cleanup() {
     { type: 'web_search_tool_result', content: [{ type: 'web_search_result', url: 'https://www.valledelcauca.gov.co/noticias/sit-anuncio', title: 'Anuncio de prueba de la Gobernación' }] },
     { type: 'text', text: JSON.stringify({ hallazgos: [{ type: 'decreto', tema: 'Gobernación', municipio: 'Cali', title: 'SIT Anuncio de la Gobernación', summary: 'La Gobernación anunció una medida de prueba.', source_url: 'https://www.valledelcauca.gov.co/noticias/sit-anuncio' }],
       titular: 'Titular con una cifra ajena de 987 mil millones', sintesis: 'Síntesis del día.', hoy: '' }) }] };
+  const doms = agents.sourceDomains('https://www.cali.gov.co/\nhttps://www.cali.gov.co/index.php/\ncali.gov.co\nwww.larepublica.co, https://WWW.LAREPUBLICA.CO/\nhttps://www.renovacionterritorio.gov.co/index.php/\nno es un dominio');
+  ok(JSON.stringify(doms) === JSON.stringify(['cali.gov.co', 'larepublica.co', 'renovacionterritorio.gov.co']), 'las fuentes repetidas se escriben una sola vez (el buscador rechaza duplicados con 400)', JSON.stringify(doms));
+  await adm('PUT', '/scout', boss, { topics: 'Obras por impuestos', sources: 'https://www.cali.gov.co/\nhttps://www.cali.gov.co/\nwww.cali.gov.co', municipios: 'Cali', frequency_hours: 6 });
+  fake.calls.length = 0;
   r = await adm('POST', '/scout/run', boss, {});
   ok(r.status === 200 && r.json.run_id, 'el Scout arranca en segundo plano y responde de inmediato');
   let finding = null;
   for (let i = 0; i < 40 && !finding; i++) { await new Promise((z) => setTimeout(z, 150)); finding = await dbm.one("SELECT * FROM vm_findings WHERE tenant_id = :t AND title LIKE 'SIT Anuncio%'", { t: T }); }
+  const sentTool = ((fake.calls.find((c) => c && c.tools) || {}).tools || [])[0] || {};
+  const sentDoms = sentTool.allowed_domains || [];
+  ok(sentDoms.length === new Set(sentDoms).size && !(sentTool.user_location && sentTool.user_location.country === 'CO'), 'el buscador recibe dominios sin repetir y sin el país CO que no admite', JSON.stringify(sentTool));
   ok(finding && finding.status === 'pending' && finding.url_seen === true && finding.medio === 'Gobernación del Valle del Cauca', 'el hallazgo queda PENDIENTE en la bandeja, con el medio puesto por el código');
   const today = core.bogotaToday();
   const draft = await dbm.one('SELECT status, headline, composed_by FROM vm_editions WHERE tenant_id = :t AND edition_date = :d', { t: T, d: today });
