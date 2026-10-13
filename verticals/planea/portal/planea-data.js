@@ -134,7 +134,7 @@
     if (prof.sin_diagnostico) return 'Haz tu diagnóstico Planea para saber por dónde empezar.';
     var k = prioKey(prof);
     if (!k) return 'Registra tu información para afinar tu plan.';
-    return 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.';
+    return 'Es el área donde hoy más puedes avanzar. Ordenarla primero hace que el resto de tu plan sea más fácil de sostener.';
   }
   // Ajuste del 7-oct-2026: debajo del saludo va un mensaje GENERAL, igual para TODOS los
   // usuarios. La Lectura de Oportunidad pasó al centro de la tarjeta del puntaje (lecturaLine).
@@ -146,7 +146,8 @@
   function lecturaLine(prof) {
     if (prof.sin_diagnostico) return 'Haz tu diagnóstico Planea para conocer tu puntaje.';
     var k = prioKey(prof);
-    return k ? 'Hoy tu prioridad es ' + (PRIORIDAD_DE[k] || (PIL_LABEL[k] || k).toLowerCase()) + '.' : 'Registra tu información para afinar tu plan.';
+    var a = PRIORIDAD_DE[k] || (PIL_LABEL[k] || k || '').toLowerCase();
+    return k ? 'Hoy tu prioridad ' + (/^tus /.test(a) ? 'son ' : 'es ') + a + '.' : 'Registra tu información para afinar tu plan.';
   }
   // «Revisa tu sección de {área}.» lo arma la app con el área del motor, no Maya.
   function lecturaRev(prof) {

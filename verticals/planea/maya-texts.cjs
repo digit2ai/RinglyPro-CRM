@@ -80,9 +80,9 @@ const SLOTS = [
   // prioritaria. La línea «Revisa tu sección de {área}.» la agrega la app, no Maya.
   { key: 'inicio_lectura', max: 170, solo: 'prioridad', lectura: true,
     donde: 'Inicio, centro de la tarjeta del puntaje: la Lectura de Oportunidad. Escribe SOLO el statement que Planea enseñó para el área prioritaria del usuario, tal cual. NO agregues "Revisa tu sección de…": esa línea la pone la app debajo. Si Planea no enseñó un statement para esa área, escribe el texto de referencia',
-    ref: (f) => 'Hoy tu prioridad es ' + (PRIORIDAD_DE[f.principal] || low(f.principal)) + '.' },
-  { key: 'inicio_prioridad', max: 230, donde: 'Inicio, bloque "Lo más importante para ti" (el nombre del área ya va como título encima)', solo: 'prioridad', ref: () => 'Es el frente que más mueve tu Puntaje Planea hoy. Registra o revisa tu información en esta área.' },
-  { key: 'puntaje_apertura', max: 270, donde: 'Puntaje Planea, lectura principal de "Hallazgos de Maya"', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => (f.nombre ? f.nombre + ', ' : '') + 'tu mayor palanca ahora es ' + tuyo(f.principal) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.' },
+    ref: (f) => 'Hoy tu prioridad ' + prioFrase(f.principal) + '.' },
+  { key: 'inicio_prioridad', max: 230, donde: 'Inicio, bloque "Lo más importante para ti" (el nombre del área ya va como título encima)', solo: 'prioridad', ref: () => 'Es el área donde hoy más puedes avanzar. Ordenarla primero hace que el resto de tu plan sea más fácil de sostener.' },
+  { key: 'puntaje_apertura', max: 270, donde: 'Puntaje Planea, lectura principal de "Hallazgos de Maya"', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => (f.nombre ? f.nombre + ', hoy' : 'Hoy') + ' tu prioridad ' + prioFrase(f.principal) + '. Abajo encuentras la lectura de cada área.' },
   { key: 'puntaje_empieza', max: 120, donde: 'Puntaje Planea, línea de orden debajo de la lectura principal', req: 'prioridad', solo: 'prioridad+secundario', ref: (f) => 'Empieza por ' + tuyo(f.principal).replace(/^tus? /, '') + (f.secundario ? ', y luego ' + tuyo(f.secundario).replace(/^tus? /, '') : '') + '.' },
 ].concat(PILARES.map((k) => ({ key: 'puntaje_pilar_' + k, max: 260, pilar: k, donde: 'Puntaje Planea, hallazgo de la tarjeta "' + PILAR_LABEL[k] + '"' })), [
   { key: 'metas_prioridad', max: 190, donde: 'Mis metas, aviso que invita a crear una meta en el área prioritaria', req: 'prioridad', solo: 'prioridad', ref: (f) => 'Tu prioridad es ' + PILAR_LABEL[f.principal] + '. Ponte una meta en esta área y Maya te acompaña.' },
@@ -91,6 +91,8 @@ const SLOTS = [
 // Texto fijo de la Lectura de Oportunidad (decisión de Planea, 13-oct-2026): «Hoy tu prioridad
 // es tu {área}.», con «tus» en Impuestos y Seguros. La MISMA tabla vive en portal/planea-data.js.
 const PRIORIDAD_DE = { ahorro: 'tu ahorro', flujo: 'tu flujo de caja', deuda: 'tu deuda', retiro: 'tu pensión', seguros: 'tus seguros', inversion: 'tu inversión', impuestos: 'tus impuestos', patrimonio: 'tu patrimonio' };
+// «es tu deuda» / «son tus impuestos»: el verbo concuerda con el área (Planea, 13-oct-2026).
+function prioFrase(k) { const a = PRIORIDAD_DE[k] || low(k); return (/^tus /.test(a) ? 'son ' : 'es ') + a; }
 // Igual que la pantalla de Puntaje Planea («tu ahorro», «tu protección»).
 const TUYO = { ahorro: 'tu ahorro', flujo: 'tu flujo de caja', deuda: 'tu deuda', retiro: 'tu retiro', seguros: 'tu protección', inversion: 'tu inversión', impuestos: 'tus impuestos', patrimonio: 'tu patrimonio' };
 function tuyo(k) { return TUYO[k] || low(k); }

@@ -199,7 +199,9 @@
     var prio = (r.prioridad && r.prioridad.principal) || 'ahorro';
     var pv = Math.round((r.pilares[prio] && r.pilares[prio].puntaje) || 0);
     // §9.2: la lectura principal NO repite el texto de la tarjeta; nombra el frente prioritario.
-    var apertura = (nombre ? esc(nombre) + ', ' : '') + 'tu mayor palanca ahora es ' + esc(PILAR_LOWER[prio]) + '. Es el frente que más mueve tu puntaje hoy; abajo tienes la lectura de cada área.';
+    var PRIORIDAD_DE = { ahorro: 'tu ahorro', flujo: 'tu flujo de caja', deuda: 'tu deuda', retiro: 'tu pensión', seguros: 'tus seguros', inversion: 'tu inversión', impuestos: 'tus impuestos', patrimonio: 'tu patrimonio' };
+    var pa = PRIORIDAD_DE[prio] || PILAR_LOWER[prio];
+    var apertura = (nombre ? esc(nombre) + ', hoy' : 'Hoy') + ' tu prioridad ' + (/^tus /.test(pa) ? 'son ' : 'es ') + esc(pa) + '. Abajo encuentras la lectura de cada área.';
 
     injectPexStyle();
     // Referencia general por pilar (§10.1) — en forma relativa, nunca un monto en pesos.
