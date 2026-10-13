@@ -141,6 +141,11 @@ button.step:hover{background:#30333b}
 .st{font-size:12px;font-weight:700;border-radius:999px;padding:4px 11px;white-space:nowrap}
 .st.ok{background:var(--grn-bg);color:var(--grn)} .st.ad{background:var(--blu-bg);color:var(--blu)} .st.nw{background:var(--amb-bg);color:var(--amb)}
 .who{font-size:12px;font-weight:600;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.auto .how{background:var(--soft);border-radius:8px;padding:12px 14px;margin:4px 0 12px}
+.auto .how b{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:6px}
+.auto .how ol{margin:0;padding-left:18px;font-size:14.5px;color:var(--ink)}
+.auto .how li{margin-bottom:5px;line-height:1.45}
+.auto .how li:last-child{margin-bottom:0}
 .auto .need{margin-top:auto;padding-top:12px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--mut)}
 .auto .need b{color:var(--ink)}
 .auto a.more{font-weight:700;color:var(--red);font-size:14.5px;text-decoration:none;display:inline-block;padding:8px 0}
@@ -260,6 +265,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <h3>FreightMind Autopilot para la flota</h3>
       <p>Diagnóstico de la operación de transporte: unidades paradas, viajes en vacío, cumplimiento y margen por viaje. Un piloto automático ejecuta el flujo de cada viaje y se detiene cuando algo sale de las reglas que ustedes fijan.</p>
       <a class="more" href="/freightmind-autopilot-garcia.html">Ver la presentación narrada</a>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Se cargan viajes, unidades, clientes y tarifas desde sus archivos.</li><li>Un agente escanea siete módulos y entrega hallazgos y recetas ordenados por impacto.</li><li>El piloto automático corre cada viaje por etapas y se detiene cuando rompe una regla; el despachador decide.</li></ol></div>
       <div class="need"><b>Necesita:</b> viajes, unidades, clientes y tarifas en archivo.</div>
     </div>
 
@@ -267,6 +273,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Plantas · TTS</span></div>
       <h3>Despacho planta–obra</h3>
       <p>La mezcla asfáltica tiene una ventana de temperatura. El sistema asigna camiones según el pedido de cada frente, la distancia y el ritmo de la pavimentadora, y avisa cuando una carga va a llegar fuera de ventana o un camión va a esperar.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>El pedido de cada frente y el ticket de báscula entran al sistema; el GPS da la posición de cada camión.</li><li>Un agente calcula cuántos camiones hacen falta según el ritmo de la pavimentadora y la distancia.</li><li>Propone la asignación y avisa si una carga llegará fría; el despachador aprueba con un toque.</li></ol></div>
       <div class="need"><b>Necesita:</b> pedidos de obra, tickets de báscula y posición de los camiones.</div>
     </div>
 
@@ -274,6 +281,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">PAF-01 a PAF-06</span></div>
       <h3>Programación de las seis plantas</h3>
       <p>Un plan diario por planta que cruza los programas de obra con la capacidad de producción y el inventario de agregados y asfalto. Señala con días de anticipación cuándo una planta no alcanza y cuál puede cubrirla.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Los programas de obra se convierten en toneladas por día y por tramo.</li><li>Un agente los cruza con la capacidad y el inventario de cada planta y arma el plan de la semana.</li><li>Marca los días en que una planta no alcanza y sugiere cuál la cubre; el gerente de producción ajusta y aprueba.</li></ol></div>
       <div class="need"><b>Necesita:</b> programas de obra, producción diaria e inventarios.</div>
     </div>
 
@@ -281,6 +289,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Plantas · Calidad</span></div>
       <h3>Calidad y consumos por lote</h3>
       <p>Cada lote queda registrado con su temperatura, su fórmula y su destino. La IA detecta desviaciones de consumo de asfalto y combustible contra lo esperado y arma el expediente de calidad que pide la dependencia.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Cada lote se registra desde el tablero de la planta con su temperatura, fórmula y destino.</li><li>Un agente compara consumos de asfalto y combustible contra la fórmula y detecta desviaciones.</li><li>Retiene el ticket fuera de rango y arma el expediente de calidad; el jefe de planta libera o descarta.</li></ol></div>
       <div class="need"><b>Necesita:</b> datos del tablero de la planta y pruebas de laboratorio.</div>
     </div>
 
@@ -288,6 +297,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">SEMAQSA</span></div>
       <h3>Maquinaria: uso y mantenimiento</h3>
       <p>Dónde está cada pavimentadora, fresadora y compactador, cuántas horas trabajó y cuándo le toca servicio. Avisa antes de que un equipo crítico pare un frente y muestra qué equipo está ocioso y podría rentarse.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Horómetros, ubicación y bitácora de servicios se capturan desde el teléfono o la telemetría del equipo.</li><li>Un agente calcula el próximo servicio de cada equipo y detecta cuáles están ociosos.</li><li>Avisa antes de que un equipo crítico pare un frente y propone el calendario; el jefe de maquinaria lo confirma.</li></ol></div>
       <div class="need"><b>Necesita:</b> inventario de equipo, horómetros y bitácora de servicios.</div>
     </div>
 
@@ -295,6 +305,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Flota · Obra</span></div>
       <h3>Combustible y costo real por viaje</h3>
       <p>Antes de aceptar un acarreo, el costo real con sus rendimientos, precios de diésel, casetas y tiempo de espera. Después del viaje, la comparación contra lo cargado para detectar consumos fuera de lo normal.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Se leen las cargas de combustible, los rendimientos por unidad, las casetas y las rutas.</li><li>Un agente calcula el costo de cada viaje antes de aceptarlo y lo compara contra lo realmente cargado.</li><li>Señala los consumos fuera de lo normal con su evidencia; el responsable de flota investiga.</li></ol></div>
       <div class="need"><b>Necesita:</b> cargas de combustible, rendimientos por unidad y rutas.</div>
     </div>
 
@@ -302,6 +313,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">UPG · HTR Infraestructura</span></div>
       <h3>Radar de licitaciones</h3>
       <p>Vigila todos los días las convocatorias federales, estatales y municipales de los estados donde tienen planta, las filtra por tipo de obra y distancia a la planta más cercana, y entrega un resumen con fechas, requisitos y montos publicados.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Un agente revisa cada día los portales públicos de contratación de sus cuatro estados.</li><li>Filtra por tipo de obra, monto publicado y distancia a la planta más cercana.</li><li>Entrega un resumen con fechas y requisitos; dirección decide en cuáles participar.</li></ol></div>
       <div class="need"><b>Necesita:</b> los portales públicos de contratación y sus criterios de interés.</div>
     </div>
 
@@ -309,6 +321,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Licitaciones · Legal</span></div>
       <h3>Lectura de bases y armado de propuestas</h3>
       <p>La IA lee las bases, extrae cada requisito con la página de donde salió y arma la lista de documentos por reunir. Reutiliza el currículo, la experiencia comprobable y los documentos legales vigentes. La propuesta la revisa y la firma una persona.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Las bases en PDF se suben al sistema.</li><li>Un agente extrae cada requisito con su página y lo empata con los documentos vigentes del archivo.</li><li>Arma la carpeta y lista lo que falta; una persona revisa, completa y firma la propuesta.</li></ol></div>
       <div class="need"><b>Necesita:</b> bases en PDF y el archivo de documentos de la empresa.</div>
     </div>
 
@@ -316,6 +329,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Administración</span></div>
       <h3>Archivo vivo de contratos y vencimientos</h3>
       <p>Contratos, fianzas, pólizas, registros y afiliaciones en un solo lugar, con sus fechas leídas del propio documento. Avisa antes de cada vencimiento y mantiene el currículo de obras actualizado desde los contratos, sin capturar dos veces.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Contratos, fianzas, pólizas y registros se escanean o se suben en PDF.</li><li>Un agente lee partes, montos y fechas directamente del documento, citando de dónde salió cada dato.</li><li>Avisa antes de cada vencimiento y actualiza el currículo de obras; administración valida los datos leídos.</li></ol></div>
       <div class="need"><b>Necesita:</b> los documentos escaneados o en PDF.</div>
     </div>
 
@@ -323,6 +337,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st nw">Por construir</span><span class="who">Residentes de obra</span></div>
       <h3>Bitácora de obra por voz y estimaciones</h3>
       <p>El residente dicta el avance del día desde el teléfono y adjunta fotos. El sistema lo convierte en bitácora, lo cruza con el catálogo de conceptos y prepara el borrador de generadores y de la estimación para revisión.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>El residente dicta el avance del día desde el teléfono y adjunta fotos.</li><li>Un agente lo convierte en nota de bitácora y lo cruza con el catálogo de conceptos del contrato.</li><li>Prepara el borrador de generadores y de la estimación; el residente revisa y firma.</li></ol></div>
       <div class="need"><b>Necesita:</b> catálogo de conceptos del contrato y reportes diarios.</div>
     </div>
 
@@ -330,6 +345,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Finanzas</span></div>
       <h3>Cobranza a dependencias</h3>
       <p>Cada estimación con su estado: presentada, observada, autorizada, pagada. Antigüedad de la cartera por dependencia y por contrato, y aviso cuando una estimación lleva más días de lo normal en un mismo paso.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Se cargan las estimaciones presentadas y los pagos recibidos.</li><li>Un agente sigue cada estimación paso a paso y mide cuántos días lleva en cada uno.</li><li>Alerta cuando una se atora y deja listo el oficio de seguimiento; administración lo revisa y lo envía.</li></ol></div>
       <div class="need"><b>Necesita:</b> relación de estimaciones y pagos recibidos.</div>
     </div>
 
@@ -337,6 +353,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       <div class="tagrow"><span class="st ad">Se adapta</span><span class="who">Dirección</span></div>
       <h3>Centro de mando del grupo</h3>
       <p>Una sola pantalla para la dirección: producción de plantas, flota, avance de obras, cartera y hallazgos ordenados por gravedad. Se puede preguntar en español y contesta solo con datos que existen en el sistema.</p>
+      <div class="how"><b>Cómo se automatiza</b><ol><li>Los módulos que ya operan envían sus datos a un solo lugar por el Model Context Protocol.</li><li>Un agente resume plantas, flota, obras y cartera, y ordena los hallazgos por gravedad.</li><li>Dirección pregunta en español y recibe respuestas solo con datos que existen en el sistema.</li></ol></div>
       <div class="need"><b>Necesita:</b> que al menos dos de los módulos anteriores estén operando.</div>
     </div>
 
