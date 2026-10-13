@@ -64,6 +64,30 @@ section.soft{background:var(--soft)}
 .step b{display:block;font-size:15px;margin-bottom:6px}
 .step span{font-size:13px;color:#c9cdd6;line-height:1.4;display:block}
 .step i{font-style:normal;font-size:11px;letter-spacing:.14em;color:#ff8b90;font-weight:700}
+.step.lit{outline:2px solid #5fd0f5;background:#1b2740}
+/* cerebro MCP animado */
+.mcp{background:radial-gradient(900px 420px at 50% 45%,#16224a 0%,#0a0f1e 70%);border:1px solid #26304a;border-radius:14px;padding:14px 10px 12px;margin:0 0 20px}
+.mcp svg{display:block;width:100%;height:auto}
+.mcp .ring{fill:none;stroke:#1d2947;stroke-width:1}
+.mcp .ln{stroke:#2b3a5c;stroke-width:1.3;stroke-dasharray:5 6;fill:none}
+.mcp .ln.on{stroke:#5fd0f5;stroke-width:2;animation:mcpdash .9s linear infinite}
+@keyframes mcpdash{to{stroke-dashoffset:-22}}
+.mcp .dot{fill:#5fd0f5}
+.mcp .nd rect{fill:#111a33;stroke:#2c4470;stroke-width:1.3}
+.mcp .nd.on rect{fill:#17274a;stroke:#8be4ff;stroke-width:2;filter:drop-shadow(0 0 8px rgba(95,208,245,.75))}
+.mcp .nd .t{fill:#7fd6f5;font-weight:700;letter-spacing:.06em}
+.mcp .nd.on .t{fill:#ffffff}
+.mcp .nd .n{fill:#ff8b90;font-weight:700}
+.mcp .nd .s{fill:#aab6cf}
+.mcp .br{fill:#101a2e;stroke:#30456f;stroke-width:1.5}
+.mcp .core{fill:#1b2b24;stroke:#86b23c;stroke-width:1.5}
+.mcp .b1{fill:#9fd04a;font-weight:700;letter-spacing:.22em}
+.mcp .b2{fill:#fff;font-weight:800;letter-spacing:.14em}
+.mcp .b3{fill:#9fd04a;letter-spacing:.04em}
+.mcp-status{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;color:#9fd04a;text-align:center;margin:10px 0 0;min-height:40px;letter-spacing:.03em}
+.mcp-status b{color:#fff}
+.mcp-cap{font-size:13px;color:var(--mut);margin:-8px 0 22px}
+@media (prefers-reduced-motion:reduce){.mcp .ln.on{animation:none}}
 /* automatizaciones */
 .auto{display:flex;flex-direction:column}
 .auto h3{font-size:18.5px}
@@ -104,6 +128,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   .hero .btn{display:block;text-align:center;margin:0 0 10px}
   .cta .btn{display:block;margin:0 auto 10px;max-width:320px}
   .legend .st{display:inline-block;margin:4px 6px 4px 0}
+  .mcp{padding:10px 6px}
   section[id],div[id="top"]{scroll-margin-top:72px}
 }
 </style>
@@ -154,7 +179,9 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
 <section class="soft" id="cadena"><div class="wrap">
   <p class="eyebrow">La operación</p>
   <h2>Siete pasos, y en cada uno hay trabajo que la IA puede quitar</h2>
-  <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. Debajo de cada paso, lo que se automatiza.</p>
+  <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. El cerebro MCP de Digit2AI se conecta a los siete pasos y reparte el trabajo entre agentes de IA; en cada uno, una persona decide.</p>
+  <div class="mcp" id="mcp" role="img" aria-label="Diagrama animado: el cerebro MCP de Digit2AI conectado con los siete pasos de la operación: licitación, proyecto, planta, transporte, obra, estimación y cobranza."></div>
+  <p class="mcp-cap">Diagrama de la propuesta. El cerebro MCP ya opera en Digit2AI; la conexión con cada paso de HTR es lo que se construye.</p>
   <div class="chain">
     <div class="step"><i>01</i><b>Licitación</b><span>Vigilar convocatorias, leer bases, armar la propuesta.</span></div>
     <div class="step"><i>02</i><b>Proyecto</b><span>Programa de obra, volúmenes y necesidades de mezcla.</span></div>
@@ -340,6 +367,51 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   document.addEventListener('click', function(e){ if (!menu.contains(e.target)) setMenu(false); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setMenu(false); });
   window.addEventListener('resize', function(){ if (window.innerWidth >= 900) setMenu(false); });
+  // Cerebro MCP animado: un solo SVG, dos disposiciones (ancha y vertical para teléfono).
+  var STEPS = [
+    ['Licitación','radar · lectura de bases'],['Proyecto','programa · volúmenes'],['Planta','producción · calidad'],
+    ['Transporte','despacho · flota'],['Obra','bitácora por voz'],['Estimación','generadores · borrador'],['Cobranza','cartera · alertas']];
+  var mcp = document.getElementById('mcp'), stepCards = [].slice.call(document.querySelectorAll('.chain .step'));
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var mcpTall = null, active = 0, timer = null, statusEl;
+  function buildMcp(){
+    var tall = mcp.clientWidth < 700;
+    if (tall === mcpTall) return; mcpTall = tall;
+    var W = tall ? 300 : 1100, H = tall ? 600 : 560, cx = W/2, cy = tall ? 300 : 280;
+    var rx = tall ? 104 : 430, ry = tall ? 245 : 205, bw = tall ? 86 : 168, bh = tall ? 36 : 46;
+    var BW = tall ? 108 : 230, BH = tall ? 112 : 150, fs = tall ? 12.5 : 14;
+    var s = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">';
+    s += '<ellipse class="ring" cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'"/><ellipse class="ring" cx="'+cx+'" cy="'+cy+'" rx="'+(rx*0.62)+'" ry="'+(ry*0.62)+'"/>';
+    var pts = STEPS.map(function(_, k){ var a = (-90 + k*360/7) * Math.PI/180; return [Math.round(cx + rx*Math.cos(a)), Math.round(cy + ry*Math.sin(a))]; });
+    pts.forEach(function(p, k){
+      s += '<path class="ln" data-i="'+k+'" d="M'+cx+','+cy+' L'+p[0]+','+p[1]+'"/>';
+      if (!still) s += '<circle class="dot" r="'+(tall?2.6:3.4)+'"><animateMotion dur="2.8s" begin="'+(k*0.4)+'s" repeatCount="indefinite" path="M'+cx+','+cy+' L'+p[0]+','+p[1]+'"/></circle>';
+    });
+    pts.forEach(function(p, k){
+      s += '<g class="nd" data-i="'+k+'"><rect x="'+(p[0]-bw/2)+'" y="'+(p[1]-bh/2)+'" width="'+bw+'" height="'+bh+'" rx="9"/>';
+      if (tall) s += '<text class="t" x="'+p[0]+'" y="'+(p[1]+4.5)+'" letter-spacing="0" text-anchor="middle" font-size="'+fs+'">'+STEPS[k][0]+'</text>';
+      else s += '<text x="'+p[0]+'" y="'+(p[1]+5)+'" text-anchor="middle" font-size="'+fs+'"><tspan class="n">0'+(k+1)+'</tspan><tspan class="t" dx="8">'+STEPS[k][0].toUpperCase()+'</tspan></text>'
+        + '<text class="s" x="'+p[0]+'" y="'+(p[1]+bh/2+18)+'" text-anchor="middle" font-size="12.5">'+STEPS[k][1]+'</text>';
+      s += '</g>';
+    });
+    s += '<rect class="br" x="'+(cx-BW/2)+'" y="'+(cy-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="14"/>'
+      + '<rect class="core" x="'+(cx-BW/2+10)+'" y="'+(cy-BH/2+10)+'" width="'+(BW-20)+'" height="'+(BH-20)+'" rx="9"/>'
+      + '<text class="b1" x="'+cx+'" y="'+(cy-(tall?22:30))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">MCP</text>'
+      + '<text class="b2" x="'+cx+'" y="'+(cy+(tall?3:4))+'" text-anchor="middle" font-size="'+(tall?15:26)+'">CEREBRO</text>'
+      + '<text class="b3" x="'+cx+'" y="'+(cy+(tall?26:36))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">'+(tall?'7 pasos':'7 pasos · conectados')+'</text></svg>'
+      + '<p class="mcp-status" id="mcpStatus"></p>';
+    mcp.innerHTML = s; statusEl = document.getElementById('mcpStatus'); light(active);
+  }
+  function light(k){
+    active = k;
+    [].forEach.call(mcp.querySelectorAll('[data-i]'), function(e){ e.classList.toggle('on', +e.getAttribute('data-i') === k); });
+    stepCards.forEach(function(c, i){ c.classList.toggle('lit', i === k); });
+    if (statusEl) statusEl.innerHTML = 'ORQUESTADOR · paso ' + (k+1) + ' de 7 · <b>' + STEPS[k][0] + '</b>: ' + STEPS[k][1];
+  }
+  function run(on){ if (timer) { clearInterval(timer); timer = null; } if (on && !still) timer = setInterval(function(){ light((active+1) % 7); }, 2200); }
+  buildMcp();
+  window.addEventListener('resize', buildMcp);
+  if ('IntersectionObserver' in window) new IntersectionObserver(function(en){ run(en[0].isIntersecting); }, { threshold: 0.15 }).observe(mcp); else run(true);
   var w = document.getElementById('weeks');
   function fit(){ w.style.gridTemplateColumns = window.innerWidth < 900 ? '1fr' : 'repeat(4,1fr)'; }
   window.addEventListener('resize', fit); fit();
