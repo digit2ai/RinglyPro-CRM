@@ -81,6 +81,13 @@ section.soft{background:var(--soft)}
 .mcp .nd .s{fill:#aab6cf}
 .mcp .br{fill:#101a2e;stroke:#30456f;stroke-width:1.5}
 .mcp .core{fill:#1b2b24;stroke:#86b23c;stroke-width:1.5}
+.mcp .pn{fill:#131d38;stroke:#2c3d66;stroke-width:1.2}
+.mcp .pd{fill:#55608a} .mcp .pd.a{fill:#c98a3a}
+.mcp .pl{stroke:#3a4a78;stroke-width:2;fill:none}
+.mcp .cl{stroke:#5d7d2c;stroke-width:1.2;fill:none}
+.mcp .lb{fill:#aab3c8;letter-spacing:.14em}
+.mcp .sd{fill:#3b4a78} .mcp .sd.on{fill:#5fd0f5}
+.mcp .lv{fill:#9fd04a} .mcp .lvt{fill:#9fd04a;font-weight:700;letter-spacing:.1em}
 .mcp .b1{fill:#9fd04a;font-weight:700;letter-spacing:.22em}
 .mcp .b2{fill:#fff;font-weight:800;letter-spacing:.14em}
 .mcp .b3{fill:#9fd04a;letter-spacing:.04em}
@@ -379,7 +386,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
     if (tall === mcpTall) return; mcpTall = tall;
     var W = tall ? 300 : 1100, H = tall ? 600 : 560, cx = W/2, cy = tall ? 300 : 280;
     var rx = tall ? 104 : 430, ry = tall ? 245 : 205, bw = tall ? 86 : 168, bh = tall ? 36 : 46;
-    var BW = tall ? 108 : 230, BH = tall ? 112 : 150, fs = tall ? 12.5 : 14;
+    var BW = tall ? 108 : 284, BH = tall ? 216 : 302, fs = tall ? 12.5 : 14;
     var s = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">';
     s += '<ellipse class="ring" cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'"/><ellipse class="ring" cx="'+cx+'" cy="'+cy+'" rx="'+(rx*0.62)+'" ry="'+(ry*0.62)+'"/>';
     var pts = STEPS.map(function(_, k){ var a = (-90 + k*360/7) * Math.PI/180; return [Math.round(cx + rx*Math.cos(a)), Math.round(cy + ry*Math.sin(a))]; });
@@ -394,11 +401,32 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
         + '<text class="s" x="'+p[0]+'" y="'+(p[1]+bh/2+18)+'" text-anchor="middle" font-size="12.5">'+STEPS[k][1]+'</text>';
       s += '</g>';
     });
-    s += '<rect class="br" x="'+(cx-BW/2)+'" y="'+(cy-BH/2)+'" width="'+BW+'" height="'+BH+'" rx="14"/>'
-      + '<rect class="core" x="'+(cx-BW/2+10)+'" y="'+(cy-BH/2+10)+'" width="'+(BW-20)+'" height="'+(BH-20)+'" rx="9"/>'
-      + '<text class="b1" x="'+cx+'" y="'+(cy-(tall?22:30))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">MCP</text>'
-      + '<text class="b2" x="'+cx+'" y="'+(cy+(tall?3:4))+'" text-anchor="middle" font-size="'+(tall?15:26)+'">CEREBRO</text>'
-      + '<text class="b3" x="'+cx+'" y="'+(cy+(tall?26:36))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">'+(tall?'7 pasos':'7 pasos · conectados')+'</text></svg>'
+    // Bloque central apilado: contexto, ruteo, núcleo MCP y orquestador en vivo.
+    var x0 = cx - BW/2, y0 = cy - BH/2, pad = tall ? 6 : 12, gap = tall ? 6 : 8, ix = x0 + pad, iw = BW - 2*pad;
+    var hs = tall ? [34, 34, 70, 48] : [46, 46, 88, 74], y = y0 + pad;
+    s += '<rect class="br" x="'+x0+'" y="'+y0+'" width="'+BW+'" height="'+BH+'" rx="16"/>';
+    [tall ? 'CONTEXTO' : 'CORE · CONTEXTO', tall ? 'RUTEO' : 'CORE · RUTEO'].forEach(function(lbl, r){
+      s += '<rect class="pn" x="'+ix+'" y="'+y+'" width="'+iw+'" height="'+hs[r]+'" rx="8"/>';
+      if (tall) {
+        s += '<circle class="pd" cx="'+(ix+10)+'" cy="'+(y+hs[r]/2)+'" r="2.6"/><circle class="pd a" cx="'+(ix+18)+'" cy="'+(y+hs[r]/2)+'" r="2.6"/>'
+          + '<text class="lb" letter-spacing="0" x="'+(ix+26)+'" y="'+(y+hs[r]/2+4.3)+'" font-size="12">'+lbl+'</text>';
+      } else {
+        [0,1,2].forEach(function(d){ s += '<circle class="pd'+(d===2?' a':'')+'" cx="'+(ix+16+d*13)+'" cy="'+(y+14)+'" r="4"/>'; });
+        [0,1,2].forEach(function(d){ s += '<path class="pl" d="M'+(ix+iw-70)+','+(y+10+d*6)+' h56"/>'; });
+        s += '<text class="lb" x="'+(ix+12)+'" y="'+(y+hs[r]-10)+'" font-size="12.5">'+lbl+'</text>';
+      }
+      y += hs[r] + gap;
+    });
+    s += '<rect class="core" x="'+ix+'" y="'+y+'" width="'+iw+'" height="'+hs[2]+'" rx="9"/>'
+      + '<text class="b1" x="'+cx+'" y="'+(y+(tall?19:24))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">MCP</text>'
+      + '<text class="b2" x="'+cx+'" y="'+(y+(tall?39:51))+'" text-anchor="middle" font-size="'+(tall?15:25)+'">CEREBRO</text>'
+      + '<path class="cl" d="M'+(ix+(tall?8:14))+','+(y+(tall?46:60))+' H'+(ix+iw-(tall?8:14))+'"/>'
+      + '<text class="b3" x="'+cx+'" y="'+(y+(tall?61:77))+'" text-anchor="middle" font-size="'+(tall?12:12.5)+'">'+(tall?'7 pasos':'7 pasos · conectados')+'</text>';
+    y += hs[2] + gap;
+    s += '<rect class="pn" x="'+ix+'" y="'+y+'" width="'+iw+'" height="'+hs[3]+'" rx="8"/>';
+    STEPS.forEach(function(_, k){ s += '<circle class="sd" data-k="'+k+'" cx="'+(ix+(tall?11:17)+k*(tall?11:14))+'" cy="'+(y+(tall?14:17))+'" r="'+(tall?3.2:4.5)+'"/>'; });
+    if (!tall) s += '<circle class="lv" cx="'+(ix+iw-76)+'" cy="'+(y+17)+'" r="4.5"/><text class="lvt" x="'+(ix+iw-66)+'" y="'+(y+21.5)+'" font-size="12.5">EN VIVO</text>';
+    s += '<text class="lb" id="mcpOrq" letter-spacing="0.04em" x="'+(ix+(tall?8:12))+'" data-x="'+(ix+(tall?8:12))+'" y="'+(y+hs[3]-(tall?11:30))+'" font-size="'+(tall?12:12.5)+'"></text></svg>'
       + '<p class="mcp-status" id="mcpStatus"></p>';
     mcp.innerHTML = s; statusEl = document.getElementById('mcpStatus'); light(active);
   }
@@ -406,6 +434,9 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
     active = k;
     [].forEach.call(mcp.querySelectorAll('[data-i]'), function(e){ e.classList.toggle('on', +e.getAttribute('data-i') === k); });
     stepCards.forEach(function(c, i){ c.classList.toggle('lit', i === k); });
+    [].forEach.call(mcp.querySelectorAll('.sd'), function(d){ d.classList.toggle('on', +d.getAttribute('data-k') <= k); });
+    var orq = document.getElementById('mcpOrq');
+    if (orq) { if (mcpTall) orq.textContent = 'PASO ' + (k+1) + '/7'; else orq.innerHTML = '<tspan>ORQUESTADOR ·</tspan><tspan x="' + orq.getAttribute('data-x') + '" dy="17">' + STEPS[k][0].toUpperCase() + ' [' + (k+1) + '/7]</tspan>'; }
     if (statusEl) statusEl.innerHTML = 'ORQUESTADOR · paso ' + (k+1) + ' de 7 · <b>' + STEPS[k][0] + '</b>: ' + STEPS[k][1];
   }
   function run(on){ if (timer) { clearInterval(timer); timer = null; } if (on && !still) timer = setInterval(function(){ light((active+1) % 7); }, 2200); }
