@@ -64,7 +64,44 @@ section.soft{background:var(--soft)}
 .step b{display:block;font-size:15px;margin-bottom:6px}
 .step span{font-size:13px;color:#c9cdd6;line-height:1.4;display:block}
 .step i{font-style:normal;font-size:11px;letter-spacing:.14em;color:#ff8b90;font-weight:700}
-.step.lit{outline:2px solid #5fd0f5;background:#1b2740}
+.step.lit{outline:2px solid #5fd0f5}
+button.step{font:inherit;text-align:left;border:0;cursor:pointer;width:100%;min-height:44px}
+button.step:hover{background:#30333b}
+.step.sel{background:var(--red)} .step.sel:hover{background:var(--red)}
+.step.sel i{color:#fff} .step.sel span{color:#ffe3e4}
+/* simulador de pantallas */
+.simbox{margin-top:14px;background:#0f1424;border:1px solid #26304a;border-radius:14px;color:#e8ecf6;overflow:hidden}
+.sim-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#161d33;padding:10px 14px;border-bottom:1px solid #26304a}
+.sim-bar .d{width:10px;height:10px;border-radius:50%;background:#3a4567;flex:0 0 10px}
+.sim-bar .ttl{font-weight:700;font-size:15px;margin-left:4px}
+.sim-bar .demo{margin-left:auto;font-size:12px;font-weight:700;letter-spacing:.08em;color:#f0c261;border:1px solid rgba(240,194,97,.5);border-radius:999px;padding:4px 10px}
+.sim-body{padding:18px;display:grid;grid-template-columns:1.55fr 1fr;gap:18px}
+.sim-h{font-size:19px;font-weight:700;margin:0 0 4px} .sim-s{font-size:14px;color:#a9b4cc;margin:0 0 14px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#18203a;border:1px solid #27325a;border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:21px;line-height:1.2} .kpi span{font-size:12.5px;color:#a9b4cc}
+.kpi.warn b{color:#ffb454} .kpi.bad b{color:#ff7b82} .kpi.good b{color:#6fe39a}
+.rows{display:flex;flex-direction:column;gap:8px}
+.row{background:#141b31;border:1px solid #232d4f;border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row .m{flex:1 1 220px;min-width:0} .row .m b{display:block;font-size:14.5px} .row .m span{font-size:13px;color:#a9b4cc}
+.row .v{font-size:14px;font-weight:700;white-space:nowrap}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.pill.g{background:rgba(111,227,154,.14);color:#6fe39a} .pill.a{background:rgba(255,180,84,.16);color:#ffb454}
+.pill.r{background:rgba(255,123,130,.16);color:#ff8e94} .pill.b{background:rgba(95,208,245,.14);color:#7fd6f5}
+.ia{background:#131f2a;border:1px solid #244a3a;border-left:4px solid #6fe39a;border-radius:10px;padding:14px}
+.ia h4{margin:0 0 8px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:#6fe39a}
+.ia p{margin:0 0 10px;font-size:14.5px;color:#d6dced;line-height:1.5}
+.ia ul{margin:0 0 12px;padding-left:18px;font-size:14px;color:#c3cbe0} .ia li{margin-bottom:5px}
+.act{display:block;width:100%;font:inherit;font-weight:700;font-size:14.5px;background:#e8ecf6;color:#141a2c;border:0;border-radius:8px;padding:12px;min-height:44px;cursor:default}
+.who2{font-size:12.5px;color:#a9b4cc;margin:8px 0 0;text-align:center}
+.voice{background:#141b31;border:1px dashed #2f3c66;border-radius:10px;padding:12px;font-size:14.5px;color:#d6dced;font-style:italic;margin-bottom:12px}
+.bars{display:flex;gap:10px;align-items:flex-end;height:120px;margin:4px 0 6px}
+.bars div{flex:1;background:#5fd0f5;border-radius:6px 6px 0 0;position:relative;min-height:8px}
+.bars div b{position:absolute;top:-20px;left:0;right:0;text-align:center;font-size:12.5px;color:#e8ecf6}
+.barl{display:flex;gap:10px;font-size:12.5px;color:#a9b4cc;text-align:center;margin-bottom:12px} .barl span{flex:1}
+.sim-nav{display:flex;justify-content:space-between;gap:10px;padding:0 18px 18px}
+.sim-nav button{font:inherit;font-size:14.5px;font-weight:600;background:#18203a;color:#e8ecf6;border:1px solid #2c3966;border-radius:8px;padding:10px 16px;min-height:44px;cursor:pointer}
+.sim-nav button:disabled{opacity:.4;cursor:default}
 /* diagrama MCP animado */
 .mcp{background:radial-gradient(900px 420px at 50% 45%,#16224a 0%,#0a0f1e 70%);border:1px solid #26304a;border-radius:14px;padding:14px 10px 12px;margin:0 0 20px}
 .mcp svg{display:block;width:100%;height:auto}
@@ -73,6 +110,7 @@ section.soft{background:var(--soft)}
 .mcp .ln.on{stroke:#5fd0f5;stroke-width:2;animation:mcpdash .9s linear infinite}
 @keyframes mcpdash{to{stroke-dashoffset:-22}}
 .mcp .dot{fill:#5fd0f5}
+.mcp .nd{cursor:pointer}
 .mcp .nd rect{fill:#111a33;stroke:#2c4470;stroke-width:1.3}
 .mcp .nd.on rect{fill:#17274a;stroke:#8be4ff;stroke-width:2;filter:drop-shadow(0 0 8px rgba(95,208,245,.75))}
 .mcp .nd .t{fill:#7fd6f5;font-weight:700;letter-spacing:.06em}
@@ -137,7 +175,9 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   .cta .btn{display:block;margin:0 auto 10px;max-width:320px}
   .legend .st{display:inline-block;margin:4px 6px 4px 0}
   .mcp{padding:10px 6px}
-  section[id],div[id="top"]{scroll-margin-top:72px}
+  .sim-body{grid-template-columns:1fr;padding:14px} .kpis{grid-template-columns:1fr 1fr} .sim-nav{padding:0 14px 14px}
+  .sim-bar .demo{margin-left:0}
+  section[id],div[id="top"],.simbox{scroll-margin-top:76px}
 }
 </style>
 </head>
@@ -190,15 +230,18 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. Digit2AI se conecta a los siete pasos con el Model Context Protocol (MCP), un estándar abierto, y reparte el trabajo entre agentes de IA; en cada uno, una persona decide.</p>
   <div class="mcp" id="mcp" role="img" aria-label="Diagrama animado: el Model Context Protocol (MCP) conectado con los siete pasos de la operación: licitación, proyecto, planta, transporte, obra, estimación y cobranza."></div>
   <p class="mcp-cap">Diagrama de la propuesta. Digit2AI ya opera sobre MCP; la conexión con cada paso de HTR es lo que se construye.</p>
-  <div class="chain">
-    <div class="step"><i>01</i><b>Licitación</b><span>Vigilar convocatorias, leer bases, armar la propuesta.</span></div>
-    <div class="step"><i>02</i><b>Proyecto</b><span>Programa de obra, volúmenes y necesidades de mezcla.</span></div>
-    <div class="step"><i>03</i><b>Planta</b><span>Producir la mezcla correcta, a tiempo y con calidad.</span></div>
-    <div class="step"><i>04</i><b>Transporte</b><span>Llevarla caliente a la obra con el camión adecuado.</span></div>
-    <div class="step"><i>05</i><b>Obra</b><span>Colocar, compactar y documentar el avance.</span></div>
-    <div class="step"><i>06</i><b>Estimación</b><span>Generadores, números y evidencia para cobrar.</span></div>
-    <div class="step"><i>07</i><b>Cobranza</b><span>Seguir cada estimación hasta que se paga.</span></div>
+  <h3 style="margin:8px 0 4px;font-size:22px">Simulador: una pantalla por cada paso</h3>
+  <p class="mcp-cap" style="margin:0 0 14px">Toca un paso para ver cómo se vería su pantalla. Son maquetas con datos de ejemplo, no el sistema en producción ni cifras de HTR.</p>
+  <div class="chain" role="tablist" aria-label="Pasos de la operación">
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>01</i><b>Licitación</b><span>Vigilar convocatorias, leer bases, armar la propuesta.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>02</i><b>Proyecto</b><span>Programa de obra, volúmenes y necesidades de mezcla.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>03</i><b>Planta</b><span>Producir la mezcla correcta, a tiempo y con calidad.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>04</i><b>Transporte</b><span>Llevarla caliente a la obra con el camión adecuado.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>05</i><b>Obra</b><span>Colocar, compactar y documentar el avance.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>06</i><b>Estimación</b><span>Generadores, números y evidencia para cobrar.</span></button>
+    <button class="step" type="button" role="tab" aria-selected="false" aria-controls="simbox"><i>07</i><b>Cobranza</b><span>Seguir cada estimación hasta que se paga.</span></button>
   </div>
+  <div class="simbox" id="simbox" role="tabpanel" aria-live="polite"></div>
 </div></section>
 
 <section id="auto"><div class="wrap">
@@ -445,6 +488,83 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   buildMcp();
   window.addEventListener('resize', buildMcp);
   if ('IntersectionObserver' in window) new IntersectionObserver(function(en){ run(en[0].isIntersecting); }, { threshold: 0.15 }).observe(mcp); else run(true);
+  // Simulador: una maqueta de pantalla por paso. Todos los datos son de ejemplo y las cuentas cuadran entre pantallas.
+  var SIM = [
+    { app:'Radar de licitaciones', h:'Convocatorias que sí valen la pena', s:'Portales federales, estatales y municipales, filtrados por tipo de obra y distancia a la planta más cercana.',
+      k:[['14','publicadas hoy'],['3','dentro de criterios','good'],['2','cierran en 7 días','warn'],['37','requisitos leídos']],
+      r:[['Conservación periódica de carretera federal','Nuevo León · planta más cercana a 38 km · cierra en 9 días','Coincide','g'],
+         ['Rehabilitación de pavimento en autopista estatal','Nuevo León · planta a 22 km · cierra en 5 días','Urgente','a'],
+         ['Pavimentación de vialidades urbanas','San Luis Potosí · planta a 61 km · cierra en 12 días','Coincide','g']],
+      ia:'Leí las bases de la segunda convocatoria: 184 páginas. Saqué 37 requisitos, cada uno con la página de donde salió.',
+      li:['33 requisitos ya tienen documento vigente en el archivo.','Faltan 4: dos cartas, una constancia y una fianza.','El catálogo de conceptos está listo para cotizar.'],
+      act:'Revisar y firmar la propuesta', who:'Decide: responsable de licitaciones' },
+    { app:'Programa y volúmenes', h:'Del contrato al plan de mezcla', s:'El programa de obra convertido en toneladas por semana y asignado a una planta.',
+      k:[['12.0 km','longitud del tramo'],['10,080 t','mezcla requerida'],['720 t','por día'],['14','días de colocación']],
+      bars:[['2,880 t',80,'Semana 1'],['3,600 t',100,'Semana 2'],['3,600 t',100,'Semana 3']],
+      ia:'Calculé la mezcla con los datos del proyecto: 12 km por 7 m de ancho por 5 cm de espesor, a 2.4 toneladas por metro cúbico.',
+      li:['Planta asignada: la número 2, a 31 km del tramo.','A 80 toneladas por hora cubre 720 al día en 9 horas.','Sin margen: un paro de planta retrasa la obra el mismo día.'],
+      act:'Aprobar el programa', who:'Decide: gerente de proyecto' },
+    { app:'Planta · producción del día', h:'Planta 2, turno de hoy', s:'Cada lote con su temperatura y su destino. Lo que se sale de rango se detiene antes de salir.',
+      k:[['720 t','programado'],['468 t','producido','good'],['13','lotes'],['1','fuera de rango','bad']],
+      r:[['Lote 11 · 36 t','Salida 10:05 · 151 °C · tramo km 14','En rango','g'],
+         ['Lote 12 · 36 t','Salida 10:31 · 153 °C · tramo km 14','En rango','g'],
+         ['Lote 13 · 36 t','139 °C · mínimo configurado 145 °C','Retenido','r']],
+      ia:'El lote 13 salió del mezclador a 139 grados, por debajo del mínimo que ustedes configuraron. Retuve el ticket y avisé al jefe de planta.',
+      li:['Consumo de asfalto del turno: 5.6% contra 5.2% de la fórmula.','Combustible del secador dentro de lo esperado.','Expediente de calidad del día: 12 de 13 lotes completos.'],
+      act:'Liberar o descartar el lote 13', who:'Decide: jefe de planta' },
+    { app:'Despacho planta–obra', h:'Camiones en ciclo, ahora', s:'La mezcla tiene una ventana de temperatura. El despacho la cuida camión por camión.',
+      k:[['9','camiones en ciclo'],['26','viajes hoy'],['4','en ruta'],['18 min','espera promedio','warn']],
+      r:[['Camión 07 · 18 t','Salió 10:42 · 151 °C · llega 11:20','En ventana','g'],
+         ['Camión 12 · 18 t','Cargando en planta · sale 11:05','Cargando','b'],
+         ['Camión 03 · 18 t','En obra desde 10:31 · espera 31 min','Esperando','a']],
+      ia:'La pavimentadora avanza a 80 toneladas por hora. Con nueve camiones sobra uno: por eso el camión 03 lleva 31 minutos esperando y su carga se enfría.',
+      li:['Propuesta: pasar el camión 03 al siguiente frente.','Con ocho camiones la espera baja y no falta mezcla.','26 viajes de 18 toneladas: las 468 que produjo la planta.'],
+      act:'Aprobar la reasignación', who:'Decide: despachador' },
+    { app:'Bitácora de obra por voz', h:'El residente dicta, el sistema ordena', s:'Una nota de voz desde el teléfono se convierte en el registro del día.',
+      k:[['700 m','colocados hoy'],['4,900 m²','carpeta de 5 cm'],['2.9 km','avance acumulado'],['24%','del tramo','good']],
+      voice:'"Hoy colocamos del kilómetro catorce más doscientos al catorce más novecientos, cuerpo A, carpeta de cinco centímetros. Sin incidentes. Llovió de tres a cuatro de la tarde."',
+      r:[['Tramo','Km 14+200 al 14+900 · cuerpo A','700 m','b'],['Concepto del catálogo','Carpeta asfáltica de 5 cm','4,900 m²','b'],['Clima e incidentes','Lluvia de 15:00 a 16:00 · sin incidentes','6 fotos','b']],
+      ia:'Convertí la nota de voz en el registro del día y la crucé con el catálogo de conceptos del contrato.',
+      li:['700 m por 7 m de ancho: 4,900 metros cuadrados.','Seis fotos con hora y ubicación quedaron adjuntas.','La bitácora oficial se sigue llevando donde lo exija la dependencia; aquí se prepara la nota.'],
+      act:'Revisar y firmar la nota', who:'Decide: residente de obra' },
+    { app:'Borrador de estimación', h:'Estimación n.º 3, lista para revisar', s:'Generadores, números y evidencia armados desde la bitácora. Precios unitarios de ejemplo.',
+      k:[['$4,227,100','importe del borrador'],['3','conceptos'],['42','fotos de evidencia'],['1','por revisar','warn']],
+      r:[['Carpeta asfáltica de 5 cm','20,300 m² × $185.00','$3,755,500','g'],['Riego de liga','20,300 m² × $12.00','$243,600','g'],['Fresado de pavimento','6,000 m² × $38.00','$228,000','a']],
+      ia:'Armé la estimación con los 2.9 km colocados: 20,300 metros cuadrados. Los tres conceptos suman $4,227,100.',
+      li:['Carpeta y riego coinciden con la bitácora.','Fresado: 6,000 m² contra 5,400 del catálogo. Hay que justificarlo o corregirlo.','Generadores y fotos ya están adjuntos por concepto.'],
+      act:'Revisar y autorizar el envío', who:'Decide: residente y superintendente' },
+    { app:'Cobranza a dependencias', h:'Cada estimación, hasta que se paga', s:'En qué paso está cada cobro y cuál lleva más días de lo normal.',
+      k:[['$18.4 M','por cobrar'],['7','estimaciones en trámite'],['$5.1 M','más de 60 días','bad'],['21 días','plazo habitual']],
+      r:[['Estimación 2 · dependencia federal','Autorizada · 12 días en este paso','$4.2 M','g'],['Estimación 5 · organismo estatal','Observada · 64 días en este paso','$5.1 M','r'],['Estimación 1 · municipio','Presentada · 8 días en este paso','$3.0 M','b']],
+      ia:'La estimación 5 lleva 64 días en "observada". En esa dependencia lo habitual son 21. Es la única que explica el saldo de más de 60 días.',
+      li:['La observación pendiente es una firma en el generador 4.','Dejé listo el borrador del oficio de seguimiento.','Se muestran 3 de las 7 estimaciones en trámite.'],
+      act:'Revisar el oficio antes de enviarlo', who:'Decide: administración' }
+  ];
+  var simbox = document.getElementById('simbox'), sel = 0;
+  function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function showSim(k, scroll){
+    sel = k; var d = SIM[k], o = '';
+    o += '<div class="sim-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="ttl">HTR Digital · ' + esc(d.app) + '</span><span class="demo">MAQUETA · DATOS DE EJEMPLO</span></div>';
+    o += '<div class="sim-body"><div><p class="sim-h">' + esc(d.h) + '</p><p class="sim-s">' + esc(d.s) + '</p><div class="kpis">';
+    d.k.forEach(function(x){ o += '<div class="kpi ' + (x[2]||'') + '"><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div>'; });
+    o += '</div>';
+    if (d.voice) o += '<div class="voice">' + esc(d.voice) + '</div>';
+    if (d.bars) { o += '<div class="bars">'; d.bars.forEach(function(b){ o += '<div style="height:' + b[1] + '%"><b>' + esc(b[0]) + '</b></div>'; });
+      o += '</div><div class="barl">'; d.bars.forEach(function(b){ o += '<span>' + esc(b[2]) + '</span>'; }); o += '</div>'; }
+    if (d.r) { o += '<div class="rows">'; d.r.forEach(function(x){ o += '<div class="row"><div class="m"><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div><span class="pill ' + x[3] + '">' + esc(x[2]) + '</span></div>'; }); o += '</div>'; }
+    o += '</div><div><div class="ia"><h4>Lo que hizo la IA</h4><p>' + esc(d.ia) + '</p><ul>';
+    d.li.forEach(function(x){ o += '<li>' + esc(x) + '</li>'; });
+    o += '</ul><button class="act" type="button" tabindex="-1">' + esc(d.act) + '</button><p class="who2">' + esc(d.who) + '</p></div></div></div>';
+    o += '<div class="sim-nav"><button type="button" id="simPrev"' + (k===0?' disabled':'') + '>Paso anterior</button><button type="button" id="simNext"' + (k===6?' disabled':'') + '>Paso siguiente</button></div>';
+    simbox.innerHTML = o;
+    stepCards.forEach(function(c, i){ c.classList.toggle('sel', i === k); c.setAttribute('aria-selected', i === k ? 'true' : 'false'); });
+    document.getElementById('simPrev').onclick = function(){ showSim(sel - 1); };
+    document.getElementById('simNext').onclick = function(){ showSim(sel + 1); };
+    if (scroll && window.innerWidth < 900) simbox.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  }
+  stepCards.forEach(function(c, i){ c.addEventListener('click', function(){ showSim(i, true); }); });
+  mcp.addEventListener('click', function(e){ var g = e.target.closest && e.target.closest('.nd'); if (g) showSim(+g.getAttribute('data-i'), true); });
+  showSim(0);
   var w = document.getElementById('weeks');
   function fit(){ w.style.gridTemplateColumns = window.innerWidth < 900 ? '1fr' : 'repeat(4,1fr)'; }
   window.addEventListener('resize', fit); fit();
