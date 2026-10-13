@@ -3587,6 +3587,24 @@ const tenantSeed = (over = {}) => ({
    * return-from-Stripe redirect ever wrote it. A client who paid and closed
    * the tab had a card charged, no number, and nothing that would retry.
    */
+  await t('NO DEAD TWILIO LINE IS OFFERED TO A PROSPECT', () => {
+    // /api/config feeds the signup page's "call Lina first" link. Its
+    // defaults were two Twilio numbers on the account whose voice has been
+    // disabled since 2026-08-07, so the landing page was fixed and this was
+    // missed — every prospect was invited to call a number that cannot ring.
+    const src = fs.readFileSync(path.join(ROOT, 'src/app.js'), 'utf8');
+    // COMMENTS STRIPPED FIRST. The block explains WHICH numbers are dead and
+    // why, so a bare search flags its own explanation — a check of this shape
+    // has done exactly that in this repo before.
+    const cfg = src.slice(src.indexOf("app.get('/api/config'"), src.indexOf('// API routers'))
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
+    for (const dead of ['18132120813', '18132124888', '17627611589']) {
+      assert.ok(!cfg.includes(dead), `the config endpoint still offers the dead line ${dead}`);
+    }
+    assert.ok((cfg.match(/DEMO_LINE/g) || []).length === 3,
+      'the three demo fields do not all read the one line that answers');
+  });
+
   const subrec = require(path.join(ROOT, 'src/services/subRecover'));
   const subSess = (tid, over = {}) => ({ id: 'cs_sub_' + tid, mode: 'subscription',
     subscription: 'sub_' + tid, customer: 'cus_' + tid,

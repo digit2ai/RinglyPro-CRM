@@ -58,18 +58,27 @@ app.get('/health', async (req, res) => {
 
 // Public config (no auth) — drives the billing UI. Billing is ON by default now
 // (US plan is live); set LITE_BILLING_ENABLED=0 to return to free mode.
+// The HighLevel LC Phone line with a live Voice AI agent, a transfer action
+// and a calendar with real open hours. It is tenant 4 (the owner's own
+// account) while it is the only line that answers.
+const DEMO_LINE = '+16562203777';
 function envDisabled(v) { return ['0', 'false', 'no', 'off'].includes(String(v || '').trim().toLowerCase()); }
 app.get('/api/config', (req, res) => res.json({
   billing_enabled: !envDisabled(process.env.LITE_BILLING_ENABLED),
-  // Shared demo lines — one language each (Spanish default + English), so a
-  // prospect hears Lina in their language before a dedicated DID is provisioned.
-  demo_number: process.env.LITE_DEMO_NUMBER || '+18132120813',
-  demo_number_es: process.env.LITE_DEMO_NUMBER || '+18132120813',
-  // The number SHOWN to prospects. Since 2026-09-22 the English demo line is
-  // the owner's HighLevel number (answered by HighLevel Voice AI); the old
-  // Twilio line +17627611589 is dead with the account's voice disabled.
-  // LITE_DEMO_NUMBER_EN still routes calls that reach /voice/incoming.
-  demo_number_en: process.env.LITE_DEMO_CALL_EN || '+18132124888'
+  // ONE DEMO LINE, IN BOTH LANGUAGES, AND IT IS THE HIGHLEVEL ONE.
+  //
+  // The defaults here were +18132120813 and +18132124888 — both Twilio lines
+  // on the account whose voice has been disabled since 2026-08-07 (error
+  // 32005). The landing page was moved to +16562203777 and this endpoint was
+  // missed, so the signup page has been inviting every prospect to call a
+  // number that cannot ring, in either language. A Spanish caller reaching an
+  // English greeting is better than a caller reaching nothing, which is why
+  // both point at the one line that answers.
+  demo_number: process.env.LITE_DEMO_NUMBER || DEMO_LINE,
+  demo_number_es: process.env.LITE_DEMO_NUMBER || DEMO_LINE,
+  // LITE_DEMO_CALL_EN is what is SHOWN; LITE_DEMO_NUMBER_EN still routes calls
+  // that reach /voice/incoming, and the two are deliberately separate.
+  demo_number_en: process.env.LITE_DEMO_CALL_EN || DEMO_LINE
 }));
 
 // API routers
