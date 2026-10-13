@@ -38,6 +38,21 @@ const MAX_NUMBERS_PER_DAY = Math.max(0, parseInt(process.env.LITE_MAX_NUMBERS_PE
  */
 async function mayProvision(tenant) {
   if (!canProvisionNumber(tenant)) {
+    // ASK STRIPE BEFORE TELLING A PAYING CLIENT TO PAY. This is the one path
+    // that is ALWAYS hit when the card gate blocks somebody, so it is where
+    // the repair belongs: the webhook needs a secret and a delivery, and the
+    // return-from-Stripe redirect needs the browser to come back. Somebody who
+    // paid and closed the tab would otherwise be told to add a payment method
+    // they have already added — and would reasonably pay twice.
+    try {
+      const got = await require('../services/subRecover').run({ tenantId: tenant.id });
+      if (got.applied && got.applied.length) {
+        await tenant.reload();
+        console.log('[lite:onboarding] recovered an unclaimed subscription for tenant', tenant.id);
+      }
+    } catch (e) { console.warn('[lite:onboarding] subscription recovery failed:', e.message); }
+  }
+  if (!canProvisionNumber(tenant)) {
     return { status: 402, body: { success: false, error: 'payment_required',
       message: 'Add a payment method to activate your number. Your 7-day free trial starts with $0 charged today.' } };
   }

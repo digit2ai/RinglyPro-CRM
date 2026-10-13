@@ -269,19 +269,32 @@ router.post('/overage/bill', async (req, res) => {
 // waiting on the webhook). Called right after the Stripe redirect back.
 router.post('/confirm', requireAuth, async (req, res) => {
   try {
+    const sub = require('../services/subRecover');
     const sid = (req.body && req.body.session_id) || req.query.session_id;
-    if (!sid) return res.status(400).json({ error: 'missing_session_id' });
-    const session = await stripe().checkout.sessions.retrieve(sid);
-    if (String(session.metadata && session.metadata.tenant_id) !== String(req.tenantId)) {
-      return res.status(403).json({ error: 'session_tenant_mismatch' });
+
+    // THE SESSION ID FROM THE BROWSER IS A HINT, NOT EVIDENCE. The return URL
+    // is public, so it is retrieved from Stripe with the server key and must
+    // name THIS tenant in metadata we wrote ourselves. And it is only a hint:
+    // whether or not one arrives, Stripe is asked what it holds for this
+    // tenant, so somebody who paid and closed the tab is not stranded until a
+    // human notices. Both paths end in subRecover.apply — one writer.
+    let out = { ok: true, applied: [] };
+    if (sid) {
+      const session = await stripe().checkout.sessions.retrieve(sid);
+      if (String(session.metadata && session.metadata.tenant_id) !== String(req.tenantId)) {
+        return res.status(403).json({ error: 'session_tenant_mismatch' });
+      }
+      out = await sub.run({ tenantId: req.tenantId, sessions: [session] });
     }
+    if (!out.applied.length) out = await sub.run({ tenantId: req.tenantId });
+
     const tenant = await Tenant.findByPk(req.tenantId);
-    if (session.customer) tenant.stripe_customer_id = session.customer;
-    if (session.subscription) tenant.stripe_subscription_id = session.subscription;
-    tenant.subscription_status = 'trialing';   // webhook will refine to active/etc.
-    tenant.suspended_at = null;
-    await tenant.save();
-    res.json({ success: true, has_card: !!tenant.stripe_subscription_id });
+    res.json({
+      success: true,
+      has_card: !!(tenant && tenant.stripe_subscription_id),
+      recovered: out.applied.length,
+      reason: out.reason || null,
+    });
   } catch (e) {
     console.error('[lite:billing] confirm error:', e.message);
     res.status(500).json({ error: e.message });

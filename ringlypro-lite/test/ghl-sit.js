@@ -3581,6 +3581,133 @@ const tenantSeed = (over = {}) => ({
     assert.strictEqual((await M.Tenant.findByPk(un.id)).outbound_state, 'pending_setup');
   });
 
+  /* ── THE SUBSCRIPTION HAS THE SAME HOLE, AND BILLING BEING OFF HID IT ──
+   * With LITE_BILLING_ENABLED on, canProvisionNumber refuses a number until
+   * stripe_subscription_id is set, and only the webhook and the
+   * return-from-Stripe redirect ever wrote it. A client who paid and closed
+   * the tab had a card charged, no number, and nothing that would retry.
+   */
+  const subrec = require(path.join(ROOT, 'src/services/subRecover'));
+  const subSess = (tid, over = {}) => ({ id: 'cs_sub_' + tid, mode: 'subscription',
+    subscription: 'sub_' + tid, customer: 'cus_' + tid,
+    metadata: { tenant_id: String(tid) }, ...over });
+
+  await t('A SUBSCRIPTION NOBODY CAME BACK TO CLAIM IS RECOVERED', async () => {
+    const sc = await M.Tenant.create({ business_name: 'Closed The Tab Co' });
+    const fake = { checkout: { sessions: { list: async () => ({ data: [subSess(sc.id)] }) } } };
+    const r = await subrec.run({ client: fake });
+    assert.ok(r.ok, r.reason);
+    assert.strictEqual(r.applied.length, 1);
+    const fresh = await M.Tenant.findByPk(sc.id);
+    assert.strictEqual(fresh.stripe_subscription_id, 'sub_' + sc.id);
+    assert.strictEqual(fresh.subscription_status, 'trialing', 'it claimed active, which only Stripe can say');
+  });
+
+  await t('AND THE CARD GATE THEN LETS THEM HAVE THEIR NUMBER', async () => {
+    // The whole point: the recovery is worthless if entitlement still refuses.
+    const ent = require(path.join(ROOT, 'src/services/entitlement'));
+    const before = process.env.LITE_BILLING_ENABLED;
+    process.env.LITE_BILLING_ENABLED = '1';
+    const g = await M.Tenant.create({ business_name: 'Gated Co', owner_email: 'gated@example.test' });
+    assert.strictEqual(ent.canProvisionNumber(g), false, 'the gate was open with no card');
+    await subrec.run({ client: { checkout: { sessions: { list: async () => ({ data: [subSess(g.id)] }) } } } });
+    assert.strictEqual(ent.canProvisionNumber(await M.Tenant.findByPk(g.id)), true,
+      'they paid, it was recovered, and the gate still refuses');
+    if (before === undefined) delete process.env.LITE_BILLING_ENABLED;
+    else process.env.LITE_BILLING_ENABLED = before;
+  });
+
+  await t("ANOTHER TENANT'S SESSION GRANTS NOTHING", async () => {
+    // ONE Stripe account serves every tenant, so the listing returns
+    // everyone's sessions. The tenant comes from metadata WE wrote.
+    //
+    // ASSERTED ON `recoverable` ITSELF, because `run` carries its own scope
+    // filter: an end-to-end test here passes whichever of the two is intact,
+    // so deleting the money rule changed nothing and the mutation run was
+    // green. The same trap the outbound fakes hit.
+    assert.strictEqual(subrec.recoverable([subSess(77)], 88).length, 0,
+      "a session belonging to another tenant was accepted");
+    assert.strictEqual(subrec.recoverable([subSess(77)], 77).length, 1, 'its own session was refused');
+
+    const a = await M.Tenant.create({ business_name: 'Mine Co' });
+    const b = await M.Tenant.create({ business_name: 'Theirs Co' });
+    await subrec.run({ tenantId: a.id,
+      client: { checkout: { sessions: { list: async () => ({ data: [subSess(b.id)] }) } } } });
+    assert.ok(!(await M.Tenant.findByPk(a.id)).stripe_subscription_id,
+      "one tenant was given another tenant's subscription");
+    assert.ok(!(await M.Tenant.findByPk(b.id)).stripe_subscription_id,
+      'a tenant outside the requested scope was written to');
+  });
+
+  await t('AN ABANDONED CHECKOUT IS NOT A CARD ON FILE', async () => {
+    // An open session carries no subscription id. Treating it as payment
+    // would hand a number to somebody who never entered a card.
+    const ab = await M.Tenant.create({ business_name: 'Abandoned Co' });
+    const open = { id: 'cs_open', mode: 'subscription', status: 'open', subscription: null,
+      metadata: { tenant_id: String(ab.id) } };
+    assert.strictEqual(subrec.recoverable([open], ab.id).length, 0,
+      'an open checkout with no subscription id was accepted as a card on file');
+    const r = await subrec.run({ client: { checkout: { sessions: { list: async () => ({ data: [open] }) } } } });
+    assert.strictEqual(r.applied.length, 0);
+    assert.ok(!(await M.Tenant.findByPk(ab.id)).stripe_subscription_id);
+  });
+
+  await t('A ONE-TIME TOP-UP IS NOT A SUBSCRIPTION', async () => {
+    const tu = await M.Tenant.create({ business_name: 'Topup Co' });
+    const pay = { id: 'cs_topup', mode: 'payment', payment_status: 'paid', subscription: null,
+      metadata: { tenant_id: String(tu.id), kind: 'lite_outbound_topup' } };
+    // The MODE is the rule, asserted on its own: a payment-mode session that
+    // somehow carried a subscription id must still be refused, or the guard is
+    // only ever reached through the null-subscription check beside it.
+    assert.strictEqual(subrec.recoverable([{ ...pay, subscription: 'sub_sneaky' }], tu.id).length, 0,
+      'a one-time payment granted the subscription gate');
+    await subrec.run({ client: { checkout: { sessions: { list: async () => ({ data: [pay] }) } } } });
+    assert.ok(!(await M.Tenant.findByPk(tu.id)).stripe_subscription_id,
+      'a wallet top-up granted the card gate');
+  });
+
+  await t('IT NEVER RE-POINTS A TENANT WHO ALREADY HAS ONE', async () => {
+    const ex = await M.Tenant.create({ business_name: 'Has One Co', stripe_subscription_id: 'sub_original' });
+    await subrec.run({ client: { checkout: { sessions: { list: async () => ({ data: [subSess(ex.id)] }) } } } });
+    assert.strictEqual((await M.Tenant.findByPk(ex.id)).stripe_subscription_id, 'sub_original');
+  });
+
+  await t('AN UNREACHABLE STRIPE IS REPORTED AS ITSELF, never as nothing to apply', async () => {
+    const fake = { checkout: { sessions: { list: async () => { throw new Error('upstream down'); } } } };
+    const r = await subrec.run({ client: fake });
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.reason, 'stripe_unreachable');
+  });
+
+  await t('THE SWEEP RECOVERS SUBSCRIPTIONS ON ITS OWN TICK', () => {
+    // It rides the tick rather than owning a timer, and it must not be inside
+    // run() — a Stripe outage there returns early for reasons that have
+    // nothing to do with a waiting subscription.
+    const src = fs.readFileSync(path.join(ROOT, 'src/services/paymentSweep.js'), 'utf8');
+    assert.ok(/subRecover'\)\.run\(/.test(src), 'the sweep never recovers a subscription');
+    const runFn = src.slice(src.indexOf('async function run('), src.indexOf('let timer = null;'));
+    assert.ok(!/subRecover/.test(runFn), 'it was folded into run(), where a Stripe outage skips it');
+  });
+
+  await t('THE BLOCKED PATH ASKS STRIPE BEFORE TELLING A PAYING CLIENT TO PAY', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/onboarding.js'), 'utf8');
+    const fn = src.slice(src.indexOf('async function mayProvision('), src.indexOf("router.get('/carriers'"));
+    assert.ok(/subRecover/.test(fn), 'the card gate refuses without ever asking Stripe');
+    assert.ok(fn.indexOf('subRecover') < fn.indexOf('payment_required'),
+      'it asks only after it has already refused');
+  });
+
+  await t('CONFIRM AND THE SWEEP SHARE ONE WRITER', () => {
+    // Two copies drift the moment one learns something the other does not,
+    // and which one ran depended on whether a redirect happened to land.
+    const src = fs.readFileSync(path.join(ROOT, 'src/routes/billing.js'), 'utf8');
+    const fn = src.slice(src.indexOf("router.post('/confirm'"));
+    const body = fn.slice(0, fn.indexOf('\n});'));
+    assert.ok(/subRecover/.test(body), 'confirm does not use the shared writer');
+    assert.ok(!/stripe_subscription_id\s*=/.test(body), 'confirm writes the subscription itself');
+    assert.ok(/session_tenant_mismatch/.test(body), 'confirm dropped the tenant check on the pasted session id');
+  });
+
   await t('ONE LISTING PER TICK, AND NOTHING OF OURS MEANS NOTHING APPLIED', async () => {
     // This DELIBERATELY costs a Stripe call even when quiet. The cheap version
     // asked our own rows first and therefore could not see the one payment

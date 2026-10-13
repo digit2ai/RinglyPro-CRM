@@ -52,7 +52,7 @@ function recentlyAsked(tenantId, everyMs) {
   return false;
 }
 
-const stats = { runs: 0, applied: 0, repaired: 0, activated: 0, last_at: null, last_error: null };
+const stats = { runs: 0, applied: 0, repaired: 0, activated: 0, subscriptions: 0, last_at: null, last_error: null };
 
 /**
  * @param {object} opts
@@ -197,6 +197,19 @@ function start() {
       if (r.applied && r.applied.length) {
         console.log(`[lite:paysweep] applied ${r.applied.length} unconfirmed payment(s)`);
       }
+      // AND RECOVER A SUBSCRIPTION NOBODY CAME BACK TO CLAIM. With billing on,
+      // `canProvisionNumber` refuses a number until the subscription id is on
+      // the tenant, and only the webhook and the return-from-Stripe redirect
+      // ever wrote it — so a client who paid and closed the tab had a card
+      // charged, no number, and nothing that would retry.
+      try {
+        const got = await require('./subRecover').run({});
+        if (got.applied && got.applied.length) {
+          stats.subscriptions += got.applied.length;
+          console.log(`[lite:paysweep] recovered ${got.applied.length} unclaimed subscription(s)`);
+        }
+      } catch (e) { console.warn('[lite:paysweep] subscription recovery failed:', e.message); }
+
       // AND FINISH ANY SETUP WHOSE WORKFLOW NOW EXISTS. It rides this tick
       // rather than owning a timer because it shares the property that
       // justifies this one: it must not depend on anybody opening a tab. It is
