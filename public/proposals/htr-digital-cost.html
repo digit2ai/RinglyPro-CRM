@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Informe de Costos de Entrega — HTR Digital · Módulo 1</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --rojo:#b91c1c; --rojo-bg:#fef2f2; --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);
+    line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;
+    box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--rojo-bg);color:var(--rojo);
+    border:1px solid #fecaca;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;
+    letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;
+    border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);
+    border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  td.save{color:var(--verde);font-weight:700}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);
+    border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  @media print{
+    body{background:#fff}
+    .page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}
+    h2{break-after:avoid}
+    table.fin,.card{break-inside:avoid}
+  }
+</style>
+<style>@media(max-width:600px){td,th{overflow-wrap:anywhere}table.meta td{display:block}}</style>
+</head>
+<body>
+<div class="page">
+<h1>INFORME DE COSTOS DE ENTREGA</h1>
+<p class="sub">HTR Digital — Módulo 1: Transporte y despacho planta–obra · Modelo de Entrega AI-Native</p>
+<span class="conf">DOCUMENTO INTERNO · CONFIDENCIAL · SOLO COSTO</span>
+<hr class="rule">
+<table class="meta">
+<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Módulo 1</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
+<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Asunto:</td><td>Estructura de costo del primer módulo</td></tr>
+<tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Tarifa interna:</td><td>$70 USD/hora (tarifa cargada)</td></tr>
+<tr><td class="lbl">Base:</td><td colspan="3">Costo directo de entrega. <strong>No incluye margen de utilidad ni IVA.</strong></td></tr>
+</table>
+
+<h2>1. Contexto y alcance</h2>
+<p>Este informe presenta el costo directo de el <strong>primer módulo de HTR Digital</strong>: transporte y despacho planta–obra, construido sobre la plataforma <strong>FreightMind Autopilot</strong> que Digit2AI ya opera. Es el módulo recomendado para empezar porque la plataforma base existe y sus datos suelen estar disponibles en tickets y archivos.</p>
+<p>El trabajo va en dos etapas. La <strong>Etapa 0, prueba de concepto de 4 semanas, no se factura</strong>: es la etapa acordada sin honorarios iniciales. La <strong>Etapa 1, implementación de 4 semanas</strong>, lleva el módulo a operación con los datos reales de una planta y sus frentes.</p>
+<p><strong>Quedan FUERA de este módulo</strong>: los otros once módulos de HTR Digital (plantas, maquinaria, combustible, licitaciones, bitácora, cobranza y centro de mando); más de un proveedor de GPS; cambios a los sistemas actuales de HTR; equipo físico en camiones o plantas; y la suscripción de GPS, que sigue siendo de HTR.</p>
+<p class="muted">Las horas son una estimación previa a conocer los sistemas de HTR. Se confirman al cierre de la Etapa 0.</p>
+
+<h2>2. Etapa 0 — Prueba de concepto (4 semanas)</h2>
+<table class="fin">
+<tr><th>Actividad</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+<tr><td>Diagnóstico y línea base</td><td class="num">16</td><td class="num">$1.120</td></tr>
+<tr><td>Carga de datos y primer escaneo</td><td class="num">24</td><td class="num">$1.680</td></tr>
+<tr><td>Tablero en español</td><td class="num">24</td><td class="num">$1.680</td></tr>
+<tr><td>Resultados medidos y hoja de ruta</td><td class="num">16</td><td class="num">$1.120</td></tr>
+<tr class="total"><td>ETAPA 0 — INVERSIÓN DE DIGIT2AI (NO FACTURABLE)</td><td class="num">80</td><td class="num">$5.600 USD</td></tr>
+</table>
+
+<h2>3. Costo de desarrollo — Etapa 1 (CAPEX)</h2>
+<p>Diez componentes sobre la arquitectura AI-Native de Digit2AI, a la tarifa cargada de $70 USD/hora (sin margen ni IVA):</p>
+<div class="card"><h3>Componente 1: Localización al español y marca HTR</h3>
+Interfaz, reportes y alertas en español de México, con la identidad del grupo.
+<div class="price">24 hrs · Costo: $1.680 USD</div></div>
+<div class="card"><h3>Componente 2: Modelo de datos del grupo</h3>
+Plantas, frentes de obra, camiones, operadores y clientes internos, aislados como un inquilino propio.
+<div class="price">32 hrs · Costo: $2.240 USD</div></div>
+<div class="card"><h3>Componente 3: Conector de GPS de la flota</h3>
+Lectura de posición y estado de los camiones desde un proveedor de GPS con API documentada.
+<div class="price">40 hrs · Costo: $2.800 USD</div></div>
+<div class="card"><h3>Componente 4: Ingesta de pedidos de obra y tickets de báscula</h3>
+Carga automática de los pedidos por frente y de las pesadas de planta, por API o por archivo.
+<div class="price">32 hrs · Costo: $2.240 USD</div></div>
+<div class="card"><h3>Componente 5: Motor de despacho planta–obra</h3>
+Asignación de camiones según ritmo de la pavimentadora, distancia y ventana de temperatura de la mezcla.
+<div class="price">56 hrs · Costo: $3.920 USD</div></div>
+<div class="card"><h3>Componente 6: Reglas y piloto automático</h3>
+Reglas del grupo, pausas automáticas y aprobaciones de una persona antes de cada acción.
+<div class="price">32 hrs · Costo: $2.240 USD</div></div>
+<div class="card"><h3>Componente 7: Tablero de despacho y alertas</h3>
+Pantalla web y móvil para el despachador, con avisos de espera, carga fría y camión sobrante.
+<div class="price">40 hrs · Costo: $2.800 USD</div></div>
+<div class="card"><h3>Componente 8: Pruebas con datos reales</h3>
+Pruebas de integración y de aceptación con la operación de una planta y sus frentes.
+<div class="price">32 hrs · Costo: $2.240 USD</div></div>
+<div class="card"><h3>Componente 9: Capacitación y puesta en marcha</h3>
+Capacitación a despacho y planta, arranque acompañado y documentación.
+<div class="price">24 hrs · Costo: $1.680 USD</div></div>
+<div class="card"><h3>Componente 10: Gestión del proyecto</h3>
+Seguimiento semanal, control de alcance y comunicación con la contraparte de HTR.
+<div class="price">20 hrs · Costo: $1.400 USD</div></div>
+<table class="fin">
+<tr><th>Concepto</th><th class="num">Horas</th><th class="num">Costo (USD)</th></tr>
+<tr><td>Subtotal de los 10 componentes (incluye gestión, pruebas y puesta en marcha)</td><td class="num">332</td><td class="num">$23.240</td></tr>
+<tr class="total"><td>COSTO TOTAL DE DESARROLLO — ETAPA 1 (CAPEX)</td><td class="num">332</td><td class="num">$23.240 USD</td></tr>
+</table>
+<p class="muted">Plazo de entrega: <span class="pill">4 semanas</span> después de la Etapa 0. Si HTR no cuenta con un GPS con API, el Componente 3 se sustituye por carga de archivo y baja $1.120 USD (16 horas menos).</p>
+
+<h2>4. Cronograma de la Etapa 1</h2>
+<div class="twocol">
+<div class="card"><h3>Semana 1 — Cimientos</h3>
+<ul class="tight"><li>Localización, modelo de datos y arranque del conector de GPS.</li><li>Componentes 1, 2</li></ul>
+<div class="price">80 hrs · Costo: $5.600 USD</div></div>
+<div class="card"><h3>Semana 2 — Datos</h3>
+<ul class="tight"><li>Conector de GPS e ingesta de pedidos y tickets de báscula.</li><li>Componentes 3, 4</li></ul>
+<div class="price">88 hrs · Costo: $6.160 USD</div></div>
+<div class="card"><h3>Semana 3 — Despacho</h3>
+<ul class="tight"><li>Motor de despacho, reglas y piloto automático.</li><li>Componentes 5, 6</li></ul>
+<div class="price">88 hrs · Costo: $6.160 USD</div></div>
+<div class="card"><h3>Semana 4 — Operación</h3>
+<ul class="tight"><li>Tablero, pruebas con datos reales, capacitación y puesta en marcha.</li><li>Componentes 7, 8, 9, 10</li></ul>
+<div class="price">76 hrs · Costo: $5.320 USD</div></div>
+</div>
+<p class="muted">Suma de las 4 semanas = 332 horas = <strong>$23.240 USD</strong>.</p>
+
+<h2>5. Costo operativo mensual (OPEX)</h2>
+<p>Costo recurrente de operar el módulo. La línea marcada con (*) es variable: escala con el número de viajes y consultas.</p>
+<table class="fin">
+<tr><th>Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
+<tr><td>Render — servicio web y PostgreSQL</td><td>Cómputo y base de datos</td><td class="num">$65</td></tr>
+<tr><td>Anthropic Claude — consumo de IA (*)</td><td>Agentes de despacho y diagnóstico</td><td class="num">$120</td></tr>
+<tr><td>Cloudflare — dominio, SSL y CDN</td><td>Borde y seguridad</td><td class="num">$13</td></tr>
+<tr><td>Almacenamiento de archivos</td><td>Tickets, reportes y respaldos</td><td class="num">$13</td></tr>
+<tr><td>Soporte y mejoras (8 horas al mes)</td><td>Atención, ajustes de reglas y mantenimiento</td><td class="num">$560</td></tr>
+<tr class="total"><td colspan="2">COSTO OPERATIVO MENSUAL</td><td class="num">$771</td></tr>
+</table>
+<p class="muted">Equivale a <strong>$9.252 USD al año</strong>. Volumen supuesto: una planta y sus frentes. No incluye la suscripción de GPS de HTR.</p>
+
+<h2>6. Resumen — primer año</h2>
+<table class="fin">
+<tr><th>Concepto</th><th class="num">Costo (USD)</th></tr>
+<tr><td>Etapa 0 — Prueba de concepto (4 semanas)</td><td class="num">$5.600 (no facturable)</td></tr>
+<tr><td>Etapa 1 — Implementación (CAPEX)</td><td class="num">$23.240</td></tr>
+<tr><td>Operación, 12 meses ($771 al mes)</td><td class="num">$9.252</td></tr>
+<tr class="total"><td>COSTO FACTURABLE DEL PRIMER AÑO</td><td class="num">$32.492 USD</td></tr>
+<tr><td>Costo total para Digit2AI, incluida la Etapa 0</td><td class="num">$38.092 USD</td></tr>
+<tr><td>Plazo</td><td class="num">4 + 4 semanas</td></tr>
+</table>
+<p>Precio de lista derivado de este costo (regla de la casa: costo × 1,70 más IVA de 16%): implementación $39.508 USD, mensualidad $1.311 USD, primer año con IVA $64.078 USD. El detalle está en la propuesta para el cliente.</p>
+<div class="note"><strong>Nota:</strong> Este documento refleja exclusivamente el <strong>costo directo</strong>. El margen de utilidad y el IVA se aplican por separado en la propuesta comercial. <strong>No distribuir al cliente.</strong></div>
+<p class="foot">Digit2AI · Documento interno · Octubre 2026</p>
+</div>
+</body>
+</html>

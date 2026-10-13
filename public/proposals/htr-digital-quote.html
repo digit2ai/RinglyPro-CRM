@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Propuesta Técnico-Comercial — HTR Digital · Módulo 1</title>
+<style>
+  :root{
+    --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
+    --gris:#475569; --gris-claro:#64748b; --tinta:#1e293b; --linea:#e2e8f0;
+    --verde:#0f766e;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--tinta);line-height:1.55;margin:0;background:#f1f5f9;font-size:14px}
+  .page{max-width:900px;margin:24px auto;background:#fff;padding:54px 60px;box-shadow:0 1px 8px rgba(0,0,0,.08)}
+  h1{font-size:27px;color:#0f3a66;margin:0 0 4px;letter-spacing:-.3px;font-weight:800}
+  .sub{font-size:15px;color:var(--gris);font-weight:600;margin:0 0 8px}
+  .conf{display:inline-block;background:var(--azul-claro);color:#0f3a66;border:1px solid var(--azul-borde);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:800;letter-spacing:.4px;margin:0 0 18px}
+  hr.rule{border:none;border-top:3px solid var(--azul);margin:14px 0 26px}
+  .meta{width:100%;border-collapse:collapse;margin:0 0 24px;font-size:13.5px}
+  .meta td{padding:4px 8px;vertical-align:top}
+  .meta .lbl{font-weight:700;color:#0f3a66;width:120px}
+  h2{font-size:18px;color:#0f3a66;margin:30px 0 12px;padding-left:12px;border-left:5px solid var(--azul);font-weight:800}
+  h3{font-size:14.5px;color:#0f3a66;margin:0 0 4px;font-weight:700}
+  p{margin:0 0 12px}
+  .card{background:var(--azul-claro);border:1px solid var(--azul-borde);border-radius:8px;padding:14px 16px;margin:10px 0}
+  .card .price{text-align:right;color:var(--azul);font-weight:700;font-size:13px;margin-top:6px}
+  table.fin{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+  table.fin th{background:var(--azul);color:#fff;text-align:left;padding:10px 12px;font-weight:700}
+  table.fin th.num,table.fin td.num{text-align:right}
+  table.fin td{padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  table.fin tr:nth-child(even) td{background:#f8fafc}
+  table.fin tr.sub td{background:var(--azul-claro);font-weight:700;color:#0f3a66}
+  table.fin tr.total td{background:#0f3a66;color:#fff;font-weight:800;font-size:15px}
+  .pill{display:inline-block;background:#ecfdf5;color:var(--verde);border:1px solid #99f6e4;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+  .muted{color:var(--gris-claro);font-size:12.5px}
+  .twocol{display:flex;gap:18px;flex-wrap:wrap}
+  .twocol>div{flex:1;min-width:240px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;font-size:13px;margin:14px 0}
+  ul.tight{margin:6px 0 12px;padding-left:20px}
+  ul.tight li{margin:3px 0}
+  .foot{margin-top:36px;border-top:1px solid var(--linea);padding-top:14px;font-size:12px;color:var(--gris-claro)}
+  .cta{display:inline-block;background:#0f3a66;color:#fff;border-radius:8px;padding:11px 22px;font-weight:700;text-decoration:none;font-size:14px}
+  /* calculadora costo-beneficio */
+  .calc{background:#0f3a66;border-radius:10px;padding:20px 22px;margin:16px 0;color:#fff}
+  .calc h3{color:#fff;margin:0 0 4px}
+  .calc .hint{color:#b9d2ec;font-size:12.5px;margin:0 0 16px}
+  .calc .inputs{display:flex;gap:16px;flex-wrap:wrap}
+  .calc .inputs>div{flex:1;min-width:150px}
+  .calc label{display:block;font-size:11.5px;color:#b9d2ec;margin-bottom:5px;font-weight:600}
+  .calc input,.calc select{width:100%;background:#0b2b4d;border:1px solid #2c5c8c;color:#fff;border-radius:7px;
+    padding:8px 10px;font:inherit;font-size:14px;font-weight:700}
+  .calc .out{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;border-top:1px solid #2c5c8c;padding-top:16px}
+  .calc .out>div{flex:1;min-width:130px}
+  .calc .out .k{font-size:11px;color:#b9d2ec;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+  .calc .out .v{font-size:23px;font-weight:800;letter-spacing:-.5px;color:#7ee0b8}
+  .calc .out .v.warn{color:#f6c667}
+  .calc .foot2{font-size:11.5px;color:#8fb4d8;margin-top:14px}
+  .be{background:#ecfdf5;border:1px solid #99f6e4;border-left:5px solid var(--verde);border-radius:8px;padding:14px 18px;margin:16px 0}
+  .be b{color:var(--verde);font-size:16px}
+  @media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:100%;padding:32px 36px}h2{break-after:avoid}table.fin,.card,.calc{break-inside:avoid}
+    .calc{background:#eef4fb;color:var(--tinta);border:1px solid var(--azul-borde)}.calc h3{color:#0f3a66}
+    .calc .hint,.calc label,.calc .out .k,.calc .foot2{color:var(--gris)}
+    .calc input,.calc select{background:#fff;color:var(--tinta);border-color:var(--azul-borde)}
+    .calc .out .v{color:var(--verde)}.calc .out{border-top-color:var(--azul-borde)}}
+</style>
+<style>@media(max-width:600px){td,th{overflow-wrap:anywhere}table.meta td{display:block}}</style>
+</head>
+<body>
+<div class="page">
+<h1>PROPUESTA TÉCNICO-COMERCIAL</h1>
+<p class="sub">HTR Digital — Módulo 1: Transporte y despacho planta–obra · Modelo de Entrega AI-Native</p>
+<span class="conf">PROPUESTA TÉCNICO-COMERCIAL · VÁLIDA 30 DÍAS</span>
+<hr class="rule">
+<table class="meta">
+<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Módulo 1</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
+<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Asunto:</td><td>Inversión del primer módulo</td></tr>
+<tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Moneda:</td><td>Dólares estadounidenses (USD)</td></tr>
+<tr><td class="lbl">Base:</td><td colspan="3">Precio de implementación y operación del Módulo 1. <strong>Incluye IVA de 16%</strong>, sujeto a confirmación fiscal.</td></tr>
+</table>
+
+<h2>1. Contexto y alcance</h2>
+<p>Esta propuesta cubre el <strong>primer módulo de HTR Digital</strong>: transporte y despacho planta–obra, construido sobre la plataforma <strong>FreightMind Autopilot</strong> que Digit2AI ya opera. Es el módulo recomendado para empezar porque la plataforma base existe y sus datos suelen estar disponibles en tickets y archivos.</p>
+<p>El trabajo va en dos etapas. La <strong>Etapa 0, prueba de concepto de 4 semanas, no tiene costo para HTR</strong>: es la etapa acordada sin honorarios iniciales. La <strong>Etapa 1, implementación de 4 semanas</strong>, lleva el módulo a operación con los datos reales de una planta y sus frentes.</p>
+<p><strong>Quedan FUERA de este módulo</strong>: los otros once módulos de HTR Digital (plantas, maquinaria, combustible, licitaciones, bitácora, cobranza y centro de mando); más de un proveedor de GPS; cambios a los sistemas actuales de HTR; equipo físico en camiones o plantas; y la suscripción de GPS, que sigue siendo de HTR.</p>
+<p class="muted">Las horas son una estimación previa a conocer los sistemas de HTR. Se confirman al cierre de la Etapa 0.</p>
+
+<h2>2. Etapa 0 — Prueba de concepto (4 semanas)</h2>
+<table class="fin">
+<tr><th>Actividad</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
+<tr><td>Diagnóstico y línea base</td><td class="num">16</td><td class="num">Sin costo</td></tr>
+<tr><td>Carga de datos y primer escaneo</td><td class="num">24</td><td class="num">Sin costo</td></tr>
+<tr><td>Tablero en español</td><td class="num">24</td><td class="num">Sin costo</td></tr>
+<tr><td>Resultados medidos y hoja de ruta</td><td class="num">16</td><td class="num">Sin costo</td></tr>
+<tr class="total"><td>ETAPA 0 — SIN COSTO PARA HTR</td><td class="num">80</td><td class="num">$0 USD</td></tr>
+</table>
+
+<h2>3. Inversión de implementación — Etapa 1 (CAPEX)</h2>
+<p>Diez componentes sobre la arquitectura AI-Native de Digit2AI.</p>
+<div class="card"><h3>Componente 1: Localización al español y marca HTR</h3>
+Interfaz, reportes y alertas en español de México, con la identidad del grupo.
+<div class="price">24 hrs · Precio: $2.856 USD</div></div>
+<div class="card"><h3>Componente 2: Modelo de datos del grupo</h3>
+Plantas, frentes de obra, camiones, operadores y clientes internos, aislados como un inquilino propio.
+<div class="price">32 hrs · Precio: $3.808 USD</div></div>
+<div class="card"><h3>Componente 3: Conector de GPS de la flota</h3>
+Lectura de posición y estado de los camiones desde un proveedor de GPS con API documentada.
+<div class="price">40 hrs · Precio: $4.760 USD</div></div>
+<div class="card"><h3>Componente 4: Ingesta de pedidos de obra y tickets de báscula</h3>
+Carga automática de los pedidos por frente y de las pesadas de planta, por API o por archivo.
+<div class="price">32 hrs · Precio: $3.808 USD</div></div>
+<div class="card"><h3>Componente 5: Motor de despacho planta–obra</h3>
+Asignación de camiones según ritmo de la pavimentadora, distancia y ventana de temperatura de la mezcla.
+<div class="price">56 hrs · Precio: $6.664 USD</div></div>
+<div class="card"><h3>Componente 6: Reglas y piloto automático</h3>
+Reglas del grupo, pausas automáticas y aprobaciones de una persona antes de cada acción.
+<div class="price">32 hrs · Precio: $3.808 USD</div></div>
+<div class="card"><h3>Componente 7: Tablero de despacho y alertas</h3>
+Pantalla web y móvil para el despachador, con avisos de espera, carga fría y camión sobrante.
+<div class="price">40 hrs · Precio: $4.760 USD</div></div>
+<div class="card"><h3>Componente 8: Pruebas con datos reales</h3>
+Pruebas de integración y de aceptación con la operación de una planta y sus frentes.
+<div class="price">32 hrs · Precio: $3.808 USD</div></div>
+<div class="card"><h3>Componente 9: Capacitación y puesta en marcha</h3>
+Capacitación a despacho y planta, arranque acompañado y documentación.
+<div class="price">24 hrs · Precio: $2.856 USD</div></div>
+<div class="card"><h3>Componente 10: Gestión del proyecto</h3>
+Seguimiento semanal, control de alcance y comunicación con la contraparte de HTR.
+<div class="price">20 hrs · Precio: $2.380 USD</div></div>
+<table class="fin">
+<tr><th>Concepto</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
+<tr><td>Subtotal de los 10 componentes (incluye gestión, pruebas y puesta en marcha)</td><td class="num">332</td><td class="num">$39.508</td></tr>
+<tr class="total"><td>INVERSIÓN DE IMPLEMENTACIÓN — ETAPA 1 (CAPEX)</td><td class="num">332</td><td class="num">$39.508 USD</td></tr>
+</table>
+<p class="muted">Plazo de entrega: <span class="pill">4 semanas</span> después de la Etapa 0. Si HTR no cuenta con un GPS con API, el Componente 3 se sustituye por carga de archivo y baja $1.904 USD (16 horas menos).</p>
+
+<h2>4. Cronograma de la Etapa 1</h2>
+<div class="twocol">
+<div class="card"><h3>Semana 1 — Cimientos</h3>
+<ul class="tight"><li>Localización, modelo de datos y arranque del conector de GPS.</li><li>Componentes 1, 2</li></ul>
+<div class="price">80 hrs · Precio: $9.520 USD</div></div>
+<div class="card"><h3>Semana 2 — Datos</h3>
+<ul class="tight"><li>Conector de GPS e ingesta de pedidos y tickets de báscula.</li><li>Componentes 3, 4</li></ul>
+<div class="price">88 hrs · Precio: $10.472 USD</div></div>
+<div class="card"><h3>Semana 3 — Despacho</h3>
+<ul class="tight"><li>Motor de despacho, reglas y piloto automático.</li><li>Componentes 5, 6</li></ul>
+<div class="price">88 hrs · Precio: $10.472 USD</div></div>
+<div class="card"><h3>Semana 4 — Operación</h3>
+<ul class="tight"><li>Tablero, pruebas con datos reales, capacitación y puesta en marcha.</li><li>Componentes 7, 8, 9, 10</li></ul>
+<div class="price">76 hrs · Precio: $9.044 USD</div></div>
+</div>
+<p class="muted">Suma de las 4 semanas = 332 horas = <strong>$39.508 USD</strong>.</p>
+
+<h2>5. Mensualidad de operación (OPEX)</h2>
+<p>Mensualidad del módulo en operación. Empieza cuando el módulo entra en uso, no antes. La línea marcada con (*) es variable: escala con el número de viajes y consultas.</p>
+<table class="fin">
+<tr><th>Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
+<tr><td>Render — servicio web y PostgreSQL</td><td>Cómputo y base de datos</td><td class="num">$111</td></tr>
+<tr><td>Anthropic Claude — consumo de IA (*)</td><td>Agentes de despacho y diagnóstico</td><td class="num">$204</td></tr>
+<tr><td>Cloudflare — dominio, SSL y CDN</td><td>Borde y seguridad</td><td class="num">$22</td></tr>
+<tr><td>Almacenamiento de archivos</td><td>Tickets, reportes y respaldos</td><td class="num">$22</td></tr>
+<tr><td>Soporte y mejoras (8 horas al mes)</td><td>Atención, ajustes de reglas y mantenimiento</td><td class="num">$952</td></tr>
+<tr class="total"><td colspan="2">MENSUALIDAD DEL MÓDULO 1</td><td class="num">$1.311</td></tr>
+</table>
+<p class="muted">Equivale a <strong>$15.732 USD al año</strong>. Volumen supuesto: una planta y sus frentes. No incluye la suscripción de GPS de HTR.</p>
+
+<h2>6. Resumen — primer año</h2>
+<table class="fin">
+<tr><th>Concepto</th><th class="num">Precio (USD)</th></tr>
+<tr><td>Etapa 0 — Prueba de concepto (4 semanas)</td><td class="num">$0</td></tr>
+<tr><td>Etapa 1 — Implementación (CAPEX)</td><td class="num">$39.508</td></tr>
+<tr><td>Operación, 12 meses ($1.311 al mes)</td><td class="num">$15.732</td></tr>
+<tr><td>Subtotal</td><td class="num">$55.240</td></tr>
+<tr><td>IVA 16% (México)</td><td class="num">$8.838</td></tr>
+<tr class="total"><td>INVERSIÓN TOTAL DEL PRIMER AÑO</td><td class="num">$64.078 USD</td></tr>
+<tr><td>Plazo</td><td class="num">4 + 4 semanas</td></tr>
+</table>
+<p><strong>Forma de pago sugerida:</strong> 40% al iniciar la Etapa 1, 40% al entregar el tablero en la semana 3 y 20% a la puesta en marcha. La mensualidad se factura por mes vencido.</p>
+<p><strong>Lo que esta propuesta no promete:</strong> un porcentaje de ahorro. En la Etapa 0 se mide la línea base de HTR (por ejemplo, minutos de espera por camión) y el resultado se reporta con sus propios datos.</p>
+<div class="note"><strong>Nota:</strong> Los precios incluyen la utilidad de Digit2AI y el IVA de 16% aplicable en México. El tratamiento fiscal definitivo depende de la entidad que facture y debe confirmarlo el contador de cada parte. Propuesta válida por 30 días.</div>
+<p class="foot">Digit2AI · Propuesta para Grupo HITTES · Octubre 2026</p>
+</div>
+</body>
+</html>
