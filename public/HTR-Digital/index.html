@@ -65,7 +65,7 @@ section.soft{background:var(--soft)}
 .step span{font-size:13px;color:#c9cdd6;line-height:1.4;display:block}
 .step i{font-style:normal;font-size:11px;letter-spacing:.14em;color:#ff8b90;font-weight:700}
 .step.lit{outline:2px solid #5fd0f5;background:#1b2740}
-/* cerebro MCP animado */
+/* diagrama MCP animado */
 .mcp{background:radial-gradient(900px 420px at 50% 45%,#16224a 0%,#0a0f1e 70%);border:1px solid #26304a;border-radius:14px;padding:14px 10px 12px;margin:0 0 20px}
 .mcp svg{display:block;width:100%;height:auto}
 .mcp .ring{fill:none;stroke:#1d2947;stroke-width:1}
@@ -90,6 +90,7 @@ section.soft{background:var(--soft)}
 .mcp .lv{fill:#9fd04a} .mcp .lvt{fill:#9fd04a;font-weight:700;letter-spacing:.1em}
 .mcp .b1{fill:#9fd04a;font-weight:700;letter-spacing:.22em}
 .mcp .b2{fill:#fff;font-weight:800;letter-spacing:.14em}
+.mcp .b2.nm{letter-spacing:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
 .mcp .b3{fill:#9fd04a;letter-spacing:.04em}
 .mcp-status{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13.5px;color:#9fd04a;text-align:center;margin:10px 0 0;min-height:40px;letter-spacing:.03em}
 .mcp-status b{color:#fff}
@@ -186,9 +187,9 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
 <section class="soft" id="cadena"><div class="wrap">
   <p class="eyebrow">La operación</p>
   <h2>Siete pasos, y en cada uno hay trabajo que la IA puede quitar</h2>
-  <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. El cerebro MCP de Digit2AI se conecta a los siete pasos y reparte el trabajo entre agentes de IA; en cada uno, una persona decide.</p>
-  <div class="mcp" id="mcp" role="img" aria-label="Diagrama animado: el cerebro MCP de Digit2AI conectado con los siete pasos de la operación: licitación, proyecto, planta, transporte, obra, estimación y cobranza."></div>
-  <p class="mcp-cap">Diagrama de la propuesta. El cerebro MCP ya opera en Digit2AI; la conexión con cada paso de HTR es lo que se construye.</p>
+  <p class="sub">Así se mueve una obra de pavimentación dentro del grupo. Digit2AI se conecta a los siete pasos con el Model Context Protocol (MCP), un estándar abierto, y reparte el trabajo entre agentes de IA; en cada uno, una persona decide.</p>
+  <div class="mcp" id="mcp" role="img" aria-label="Diagrama animado: el Model Context Protocol (MCP) conectado con los siete pasos de la operación: licitación, proyecto, planta, transporte, obra, estimación y cobranza."></div>
+  <p class="mcp-cap">Diagrama de la propuesta. Digit2AI ya opera sobre MCP; la conexión con cada paso de HTR es lo que se construye.</p>
   <div class="chain">
     <div class="step"><i>01</i><b>Licitación</b><span>Vigilar convocatorias, leer bases, armar la propuesta.</span></div>
     <div class="step"><i>02</i><b>Proyecto</b><span>Programa de obra, volúmenes y necesidades de mezcla.</span></div>
@@ -374,7 +375,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
   document.addEventListener('click', function(e){ if (!menu.contains(e.target)) setMenu(false); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') setMenu(false); });
   window.addEventListener('resize', function(){ if (window.innerWidth >= 900) setMenu(false); });
-  // Cerebro MCP animado: un solo SVG, dos disposiciones (ancha y vertical para teléfono).
+  // Diagrama MCP animado: un solo SVG, dos disposiciones (ancha y vertical para teléfono).
   var STEPS = [
     ['Licitación','radar · lectura de bases'],['Proyecto','programa · volúmenes'],['Planta','producción · calidad'],
     ['Transporte','despacho · flota'],['Obra','bitácora por voz'],['Estimación','generadores · borrador'],['Cobranza','cartera · alertas']];
@@ -409,7 +410,7 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       s += '<rect class="pn" x="'+ix+'" y="'+y+'" width="'+iw+'" height="'+hs[r]+'" rx="8"/>';
       if (tall) {
         s += '<circle class="pd" cx="'+(ix+10)+'" cy="'+(y+hs[r]/2)+'" r="2.6"/><circle class="pd a" cx="'+(ix+18)+'" cy="'+(y+hs[r]/2)+'" r="2.6"/>'
-          + '<text class="lb" letter-spacing="0" x="'+(ix+26)+'" y="'+(y+hs[r]/2+4.3)+'" font-size="12">'+lbl+'</text>';
+          + '<text class="lb" letter-spacing="0" x="'+(ix+26)+'" y="'+(y+hs[r]/2+4.3)+'" font-size="12"'+(lbl.length>6?' textLength="60" lengthAdjust="spacingAndGlyphs"':'')+'>'+lbl+'</text>';
       } else {
         [0,1,2].forEach(function(d){ s += '<circle class="pd'+(d===2?' a':'')+'" cx="'+(ix+16+d*13)+'" cy="'+(y+14)+'" r="4"/>'; });
         [0,1,2].forEach(function(d){ s += '<path class="pl" d="M'+(ix+iw-70)+','+(y+10+d*6)+' h56"/>'; });
@@ -418,8 +419,9 @@ footer{background:#17181c;color:#9ea4af;font-size:13.5px;padding:26px 0;text-ali
       y += hs[r] + gap;
     });
     s += '<rect class="core" x="'+ix+'" y="'+y+'" width="'+iw+'" height="'+hs[2]+'" rx="9"/>'
-      + '<text class="b1" x="'+cx+'" y="'+(y+(tall?19:24))+'" text-anchor="middle" font-size="'+(tall?12:13)+'">MCP</text>'
-      + '<text class="b2" x="'+cx+'" y="'+(y+(tall?39:51))+'" text-anchor="middle" font-size="'+(tall?15:25)+'">CEREBRO</text>'
+      + (tall
+        ? '<text class="b2 nm" x="'+cx+'" y="'+(y+20)+'" text-anchor="middle" font-size="12" textLength="84" lengthAdjust="spacingAndGlyphs">Model Context</text><text class="b2 nm" x="'+cx+'" y="'+(y+36)+'" text-anchor="middle" font-size="12" textLength="84" lengthAdjust="spacingAndGlyphs">Protocol (MCP)</text>'
+        : '<text class="b1" x="'+cx+'" y="'+(y+24)+'" text-anchor="middle" font-size="12.5">ESTÁNDAR ABIERTO</text><text class="b2 nm" x="'+cx+'" y="'+(y+50)+'" text-anchor="middle" font-size="15.5">Model Context Protocol (MCP)</text>')
       + '<path class="cl" d="M'+(ix+(tall?8:14))+','+(y+(tall?46:60))+' H'+(ix+iw-(tall?8:14))+'"/>'
       + '<text class="b3" x="'+cx+'" y="'+(y+(tall?61:77))+'" text-anchor="middle" font-size="'+(tall?12:12.5)+'">'+(tall?'7 pasos':'7 pasos · conectados')+'</text>';
     y += hs[2] + gap;
