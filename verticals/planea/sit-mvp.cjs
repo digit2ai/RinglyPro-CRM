@@ -691,6 +691,10 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     const conRev = MT.verifySlot(SL('inicio_lectura'), 'Una deuda sana es clave para un buen plan financiero. Revisa tu sección de Deuda.', fx('deuda'), [], '');
     ok(conRev.ok && conRev.text === 'Una deuda sana es clave para un buen plan financiero.', 'si Maya agrega «Revisa tu sección de…» se quita: esa línea la pone la app');
     ok(!MT.verifySlot(SL('inicio_lectura'), ST8.ahorro, fx('deuda'), [], KB8).ok, 'el statement de OTRA área no pasa');
+    const pdS2 = fs.readFileSync(path.join(__dirname, 'portal', 'planea-data.js'), 'utf8'), mtS2 = fs.readFileSync(path.join(__dirname, 'maya-texts.cjs'), 'utf8');
+    const tabla = (s) => (/PRIORIDAD_DE = (\{[^}]+\})/.exec(s) || [])[1];
+    ok(SL('inicio_lectura').ref(fx('deuda')) === 'Hoy tu prioridad es tu deuda.' && SL('inicio_lectura').ref(fx('impuestos')) === 'Hoy tu prioridad es tus impuestos.' && SL('inicio_lectura').ref(fx('seguros')) === 'Hoy tu prioridad es tus seguros.' && MT.PILARES.every((k) => MT.verifySlot(SL('inicio_lectura'), SL('inicio_lectura').ref(fx(k)), fx(k), [], KB8).ok), 'el texto fijo de la Lectura es «Hoy tu prioridad es tu {área}.», con «tus» en Impuestos y Seguros');
+    ok(tabla(pdS2) && tabla(pdS2) === tabla(mtS2) && !/mayor palanca es/.test(pdS2) && !/Hoy tu mayor palanca/.test(mtS2), 'la app y el servidor usan la misma tabla para ese texto, y «palanca» salió de él');
     ok(!SL('inicio_rango') && !SL('inicio_rango_nota') && MT.SLOTS.length === 15, 'la línea del nivel y su nota ya no son textos de Maya');
     // Punto 3: la tarjeta
     const ini = fs.readFileSync(path.join(__dirname, 'portal', 'inicio.html'), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');

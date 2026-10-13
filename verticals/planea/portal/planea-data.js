@@ -142,10 +142,11 @@
 
   // Lectura de Oportunidad (centro de la tarjeta del puntaje). Texto de respaldo: el que
   // se ve cuando Maya no ha escrito el statement del área, o no pasó la revisión.
+  var PRIORIDAD_DE = { ahorro: 'tu ahorro', flujo: 'tu flujo de caja', deuda: 'tu deuda', retiro: 'tu pensión', seguros: 'tus seguros', inversion: 'tu inversión', impuestos: 'tus impuestos', patrimonio: 'tu patrimonio' };
   function lecturaLine(prof) {
     if (prof.sin_diagnostico) return 'Haz tu diagnóstico Planea para conocer tu puntaje.';
     var k = prioKey(prof);
-    return k ? 'Hoy tu mayor palanca es ' + (PIL_LABEL[k] || k).toLowerCase() + '.' : 'Registra tu información para afinar tu plan.';
+    return k ? 'Hoy tu prioridad es ' + (PRIORIDAD_DE[k] || (PIL_LABEL[k] || k).toLowerCase()) + '.' : 'Registra tu información para afinar tu plan.';
   }
   // «Revisa tu sección de {área}.» lo arma la app con el área del motor, no Maya.
   function lecturaRev(prof) {
