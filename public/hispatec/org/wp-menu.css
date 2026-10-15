@@ -1,0 +1,36 @@
+/* Behaviour the copied hispanotec.org pages lose when their scripts are
+   dropped (scripts/hispanotec-org/snapshot.js). Layout and look stay theirs. */
+
+/* Sticky header (was jquery.sticky): the whole header template sticks, not
+   the inner container, whose parent is only as tall as itself. */
+[data-elementor-type="header"] { position: sticky; top: 0; z-index: 999; }
+
+/* Desktop: "La asociación" submenu on hover / keyboard focus (was smartmenus). */
+.elementor-nav-menu--main .menu-item-has-children { position: relative; }
+.elementor-nav-menu--main .menu-item-has-children > .sub-menu { display: none !important; position: absolute; top: 100%; left: 0; z-index: 1000; min-width: 220px; }
+.elementor-nav-menu--main .menu-item-has-children:hover > .sub-menu,
+.elementor-nav-menu--main .menu-item-has-children:focus-within > .sub-menu { display: block !important; }
+
+/* Phone: the live site shows its dropdown menu permanently open over the page
+   and has no button to close it. Here it is closed behind a menu button. */
+.hx-burger-wp { display: none; }
+@media (max-width: 767px) {
+  .elementor-nav-menu--dropdown.elementor-nav-menu__container { display: none !important; }
+  .hx-menu-open .elementor-nav-menu--dropdown.elementor-nav-menu__container {
+    display: block !important; position: fixed; left: 0 !important; right: 0; width: auto !important;
+    top: var(--hx-wp-head, 76px); z-index: 1000; max-height: calc(100vh - var(--hx-wp-head, 76px)); overflow-y: auto;
+    transform: none !important; box-shadow: 0 12px 24px rgba(18,35,58,.12);
+  }
+  .elementor-nav-menu--dropdown .sub-menu { display: block !important; position: static !important; width: auto !important; }
+  .elementor-nav-menu--dropdown .sub-menu a { padding-left: 32px !important; }
+  .hx-burger-wp {
+    display: block; width: 44px; height: 44px; padding: 11px 10px; border: 0 !important; border-radius: 4px;
+    background: transparent !important; color: #1A2F4A !important; cursor: pointer; box-shadow: none !important;
+  }
+  .hx-burger-wp:focus-visible { outline: 2px solid #2F6FB0; }
+  .hx-burger-wp span { display: block; height: 2px; background: #1A2F4A; margin: 5px 0; transition: transform .2s, opacity .2s; }
+  .hx-menu-open .hx-burger-wp span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hx-menu-open .hx-burger-wp span:nth-child(2) { opacity: 0; }
+  .hx-menu-open .hx-burger-wp span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}
+@media (prefers-reduced-motion: reduce) { .hx-burger-wp span { transition: none; } }
