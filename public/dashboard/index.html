@@ -2883,7 +2883,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   // Spanish-speaking countries present in CHAMBER_COUNTRIES (values, not labels).
   var HISPANIC_COUNTRIES = ['Argentina','Bolivia','Chile','Colombia','Costa Rica','Cuba','Dominican Republic',
     'Ecuador','El Salvador','Guatemala','Honduras','Mexico','Nicaragua','Panama','Paraguay','Peru',
-    'Puerto Rico','Spain','Uruguay','Venezuela'];
+    'Puerto Rico','Spain','Uruguay','Venezuela',
+    // Owner request 2026-10-15: the button also covers the US Hispanic market and the Philippines.
+    'United States','Philippines'];
   // One-tap toggle: ticks every chip in the group (or only those in 'only'),
   // and a second tap clears them. The user can still untick single chips.
   function wirePickAll(btnId, name, only, label) {
