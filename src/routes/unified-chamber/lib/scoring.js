@@ -102,4 +102,19 @@ function scoreMember(member, role) {
   return denom > 0 ? Math.min(1, score / denom) : 0;
 }
 
-module.exports = { scoreMember };
+// The planner is told 1-3 sectors and 1-3 regions per role but does not always
+// obey (a real cv-105 role came back with 6 regions and 11 sectors). With that
+// many, almost every member earns the sector and region points and the match
+// stops telling people apart. Keep the planner's first three of each.
+const ROLE_TARGET_MAX = 3;
+function capRoleTargets(plan) {
+  if (!plan || !Array.isArray(plan.team_roles_required)) return plan;
+  for (const r of plan.team_roles_required) {
+    if (!r || typeof r !== 'object') continue;
+    if (Array.isArray(r.preferred_sectors)) r.preferred_sectors = r.preferred_sectors.slice(0, ROLE_TARGET_MAX);
+    if (Array.isArray(r.preferred_regions)) r.preferred_regions = r.preferred_regions.slice(0, ROLE_TARGET_MAX);
+  }
+  return plan;
+}
+
+module.exports = { scoreMember, capRoleTargets, ROLE_TARGET_MAX };

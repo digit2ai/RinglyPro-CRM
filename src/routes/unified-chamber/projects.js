@@ -218,6 +218,7 @@ router.post('/draft', authMiddleware, async (req, res) => {
       vision: vision.trim(), sector: sectorsArr.length ? sectorsArr.join(', ') : sector, countries, budget_tier
     });
     if (plan && typeof plan === 'object' && sectorsArr.length) plan.sectors = sectorsArr;
+    require('./lib/scoring').capRoleTargets(plan);
 
     const countriesArray = Array.isArray(countries) ? countries : [];
     const countriesSql = countriesArray.length > 0

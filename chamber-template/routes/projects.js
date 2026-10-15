@@ -415,6 +415,7 @@ module.exports = function createProjectRoutes(config) {
         countries,
         budget_tier
       });
+      require('../../src/routes/unified-chamber/lib/scoring').capRoleTargets(plan);
 
       const countriesArray = Array.isArray(countries) ? countries : [];
       const countriesSql = countriesArray.length > 0

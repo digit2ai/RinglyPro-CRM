@@ -2880,6 +2880,30 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     });
     return h + '</div>';
   }
+  // Spanish-speaking countries present in CHAMBER_COUNTRIES (values, not labels).
+  var HISPANIC_COUNTRIES = ['Argentina','Bolivia','Chile','Colombia','Costa Rica','Cuba','Dominican Republic',
+    'Ecuador','El Salvador','Guatemala','Honduras','Mexico','Nicaragua','Panama','Paraguay','Peru',
+    'Puerto Rico','Spain','Uruguay','Venezuela'];
+  // One-tap toggle: ticks every chip in the group (or only those in 'only'),
+  // and a second tap clears them. The user can still untick single chips.
+  function wirePickAll(btnId, name, only, label) {
+    var b = document.getElementById(btnId);
+    var box = document.querySelector('.pick-chips[data-pick="'+name+'"]');
+    if (!b || !box) return;
+    function targets() {
+      return Array.prototype.filter.call(box.querySelectorAll('input'), function(i) {
+        return !only || only.indexOf(i.value) !== -1;
+      });
+    }
+    function allOn() { var t = targets(); return t.length > 0 && t.every(function(i){ return i.checked; }); }
+    function relabel() { b.textContent = allOn() ? 'Quitar selección' : label; }
+    b.addEventListener('click', function() {
+      var on = !allOn();
+      targets().forEach(function(i){ i.checked = on; });
+      box.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    box.addEventListener('change', relabel); relabel();
+  }
   function wirePickChips(name, countId, searchId) {
     var box = document.querySelector('.pick-chips[data-pick="'+name+'"]');
     if (!box) return;
@@ -2916,8 +2940,9 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     html += '<option value="small">Pequeno ($50k-$200k)</option>';
     html += '<option value="medium" selected>Mediano ($200k-$1M)</option>';
     html += '<option value="large">Grande ($1M+)</option></select></div>';
-    html += '<div class="form-group full"><label>Sectores <span class="text-muted" style="text-transform:none;font-weight:500">(elige uno o varios)</span> <span id="npSecCount" class="pick-count"></span></label>'+pickChips('np_sectors', SECTORS.map(function(x){return {v:x.v,t:x.label};}), [])+'</div>';
+    html += '<div class="form-group full"><label>Sectores <span class="text-muted" style="text-transform:none;font-weight:500">(elige uno o varios)</span> <span id="npSecCount" class="pick-count"></span></label>'+'<button type="button" class="btn btn-outline btn-sm pick-all" id="npAllSec" style="margin:0 0 8px 0;padding:4px 12px;font-size:12px">Todos los sectores</button>'+pickChips('np_sectors', SECTORS.map(function(x){return {v:x.v,t:x.label};}), [])+'</div>';
     html += '<div class="form-group full"><label>Países <span class="text-muted" style="text-transform:none;font-weight:500">(elige uno o varios)</span> <span id="npCtyCount" class="pick-count"></span></label>'
+      + '<button type="button" class="btn btn-outline btn-sm pick-all" id="npAllHisp" style="margin:0 0 8px 0;padding:4px 12px;font-size:12px">Todos los países hispanos</button>'
       + '<input type="search" id="npCtySearch" class="pick-search" placeholder="Buscar país..." autocomplete="off">'
       + pickChips('np_countries', countryPickList(), homeCountryList())+'</div>';
     html += '<div class="form-group full mt-12"><button type="submit" class="btn btn-primary" id="generateBtn">Generar Plan de Negocio con IA</button></div>';
@@ -2925,6 +2950,8 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     openModal(html);
     wirePickChips('np_sectors', 'npSecCount');
     wirePickChips('np_countries', 'npCtyCount', 'npCtySearch');
+    wirePickAll('npAllSec', 'np_sectors', null, 'Todos los sectores');
+    wirePickAll('npAllHisp', 'np_countries', HISPANIC_COUNTRIES, 'Todos los países hispanos');
 
     document.getElementById('newProjForm').addEventListener('submit', async function(ev) {
       ev.preventDefault();
