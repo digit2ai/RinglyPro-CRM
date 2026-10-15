@@ -14,6 +14,7 @@ const COUNTRY_SYNONYMS = {
   'united states of america': 'united states',
   'united kingdom': 'united kingdom', 'uk': 'united kingdom', 'u.k.': 'united kingdom',
   'great britain': 'united kingdom', 'britain': 'united kingdom', 'england': 'united kingdom',
+  'estados unidos': 'united states', 'eeuu': 'united states', 'ee.uu.': 'united states', 'ee. uu.': 'united states',
   'spain': 'spain', 'espana': 'spain', 'españa': 'spain',
   'mexico': 'mexico', 'méxico': 'mexico',
   'brazil': 'brazil', 'brasil': 'brazil',
@@ -22,8 +23,14 @@ const COUNTRY_SYNONYMS = {
   'czech republic': 'czech republic', 'czechia': 'czech republic',
   'germany': 'germany', 'deutschland': 'germany'
 };
+// Accent-folded, lower-cased: 'Tecnológicas' and 'tecnologia' must meet.
+function fold(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 function canonCountry(s) {
-  const k = String(s || '').toLowerCase().trim();
+  // AI regions often add a gloss: 'Estados Unidos (mercado hispano)'.
+  const k = fold(s).replace(/\s*\(.*\)\s*$/, '').trim();
   return COUNTRY_SYNONYMS[k] || k;
 }
 
@@ -32,9 +39,18 @@ function scoreMember(member, role) {
   let denom = 0;
 
   if (role.preferred_sectors && role.preferred_sectors.length > 0) {
-    const sectorList = role.preferred_sectors.map(s => String(s).toLowerCase().trim());
-    const ms = String(member.sector || '').toLowerCase();
-    score += sectorList.some(s => ms.includes(s) || s.includes(ms)) ? 0.4 : 0;
+    // Compare on a 6-letter stem of each word, accent-folded, so the member's
+    // dropdown value ('tecnologia', 'comercio_exterior') meets the planner's
+    // free text ('Tecnológicas', 'Comercio exterior').
+    const ms = fold(member.sector).replace(/_/g, ' ');
+    const stem = w => w.slice(0, 6);
+    const mStems = ms.split(/[^a-z]+/).filter(w => w.length >= 4).map(stem);
+    const hit = ms && role.preferred_sectors.some(x => {
+      const r = fold(x).replace(/_/g, ' ');
+      if (r && (ms.includes(r) || r.includes(ms))) return true;
+      return r.split(/[^a-z]+/).filter(w => w.length >= 4).some(w => mStems.includes(stem(w)));
+    });
+    score += hit ? 0.4 : 0;
     denom += 0.4;
   }
 
@@ -44,8 +60,8 @@ function scoreMember(member, role) {
     // substring fallback for sub-region strings like "florida" or "central
     // florida" inside a role region that includes the country name.
     const mc = canonCountry(member.country);
-    const rawMc = String(member.country || '').toLowerCase();
-    const regionList = role.preferred_regions.map(r => String(r).toLowerCase().trim());
+    const rawMc = fold(member.country);
+    const regionList = role.preferred_regions.map(r => fold(r));
     const regionId = member.region_id;
     const match = regionList.some(r => {
       const cr = canonCountry(r);
@@ -59,20 +75,28 @@ function scoreMember(member, role) {
   }
 
   if (role.required_skills && role.required_skills.length > 0) {
-    const haystack = (
+    const haystack = fold(
       (member.bio || '') + ' ' +
       (member.sub_specialty || '') + ' ' +
       (member.company_name || '')
-    ).toLowerCase();
-    const hits = role.required_skills.filter(s =>
-      haystack.includes(String(s).toLowerCase().substring(0, 8))
-    ).length;
+    );
+    // A skill counts when any of its words (4+ letters, stemmed to 6) appears:
+    // 'Python / FastAPI' hits on 'python', 'ETL & data pipelines' on 'pipeli'.
+    const hits = role.required_skills.filter(sk => {
+      const words = fold(sk).split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+      if (!words.length) return haystack.includes(fold(sk));
+      return words.some(w => haystack.includes(w.slice(0, 6)));
+    }).length;
     const ratio = hits / role.required_skills.length;
     score += ratio * 0.3;
     denom += 0.3;
   }
 
-  score += parseFloat(member.trust_score || 0.7) * 0.1;
+  // 0 or blank means the trust score was never computed (owner and admin
+  // accounts are created that way); read it as the neutral default rather
+  // than as the worst possible member.
+  const trust = parseFloat(member.trust_score);
+  score += (trust > 0 ? trust : 0.7) * 0.1;
   denom += 0.1;
 
   return denom > 0 ? Math.min(1, score / denom) : 0;
