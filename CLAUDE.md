@@ -41,7 +41,7 @@ Multi-tenant CRM with voice AI (Rachel/Ana/Lina), Store Health AI monitoring, an
 |---|---|---|---|
 | abelardo | Abelardo | DISABLED | /api/ana/chat |
 | buyersline | BuyersLine | DISABLED | incentiva llm.aiEnabled() (also INCENTIVA_AI=on) + persona |
-| camaravirtual | CamaraVirtual | DISABLED | chamber /projects/draft (unified + legacy), trust-verifier, IRS scorer, persona — shared by every cv-*/vc-* chamber |
+| camaravirtual | CamaraVirtual | **ENABLED 2026-10-15** (owner request; API credit verified live) | chamber /projects/draft (unified + legacy), trust-verifier, IRS scorer, persona — shared by every cv-*/vc-* chamber |
 | caseguard | Case Guard | DISABLED | case-brain.js |
 | cw_carriers | CW_Carriers, FreightMind AI | DISABLED | nlp, crm-agent, collector, agent-framework run() |
 | enruta | ENRUTA | DISABLED | persona enruta |

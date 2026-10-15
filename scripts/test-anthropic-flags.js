@@ -48,7 +48,7 @@ const flags = require('../src/config/anthropic-flags');
   // ---- 1. registry ----------------------------------------------------------
   const reg = flags.registry();
   const off = reg.filter((r) => r.effective === 'disabled').map((r) => r.key);
-  ok(off.length === 17, '17 verticals are switched off (' + off.length + ')'); // speakup enabled 2026-10-06
+  ok(off.length === 16, '16 verticals are switched off (' + off.length + ')'); // speakup enabled 2026-10-06, camaravirtual 2026-10-15
   ok(reg.find((r) => r.key === 'planea').status === 'skipped' && flags.anthropicEnabled('planea'), 'Planea is skipped and untouched');
   ok(flags.anthropicEnabled('veritas') && flags.anthropicEnabled('ringlypro_lite'), 'a vertical not in the registry is unchanged');
   for (const k of off) {
@@ -69,10 +69,12 @@ const flags = require('../src/config/anthropic-flags');
   const srv = app.listen(0); const port = srv.address().port;
   const post = async (u, b) => (await realFetch('http://127.0.0.1:' + port + u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) })).json();
   const msg = { lang: 'es', messages: [{ role: 'user', content: 'hola' }], context: 'pagina de prueba' };
-  for (const p of ['buyersline', 'camaravirtual', 'pacccfl', 'pcci', 'enruta', 'ronin', 'surgicalmind', 'levelup']) {
+  for (const p of ['buyersline', 'pacccfl', 'pcci', 'enruta', 'ronin', 'surgicalmind', 'levelup']) {
     const before = calls.length; const r = await post('/v/chat', { agent: p, ...msg });
     ok(calls.length === before && r.source === 'heuristic', 'voice persona ' + p + ' answers without Anthropic');
   }
+  { const before = calls.length; const r = await post('/v/chat', { agent: 'camaravirtual', ...msg });
+    ok(calls.length === before + 1 && r.source === 'model', 'voice persona camaravirtual calls Anthropic (enabled 2026-10-15)'); }
   { const before = calls.length; const r = await post('/v/chat', { agent: 'veritas', ...msg });
     ok(calls.length === before + 1 && r.source === 'model', 'non-target persona veritas STILL calls Anthropic (unchanged)'); }
   { const before = calls.length; const r = await post('/ana/chat', { messages: [{ role: 'user', content: 'hola' }] });
@@ -97,10 +99,12 @@ const flags = require('../src/config/anthropic-flags');
     ok(ed.activeModel() === 'heuristic-fallback', 'SpeakUp ai-editor is on its heuristic path');
     ok(!sub.available(), 'SpeakUp subscription CLI path is off');
   }
-  const irs = require('../src/routes/unified-chamber/lib/project-irs-scorer.js');
-  const scored = await irs.scoreProject({ plan_json: { title: 't', team_roles_required: [] } }, [], { useAi: true });
-  ok(scored && scored.ai && scored.ai.used === false, 'CamaraVirtual IRS scorer keeps the deterministic score, no AI');
   ok(calls.length === n0, 'no Anthropic call from any gated module (' + (calls.length - n0) + ')');
+
+  const irs = require('../src/routes/unified-chamber/lib/project-irs-scorer.js');
+  const c1 = calls.length;
+  await irs.scoreProject({ plan_json: { title: 't', team_roles_required: [] } }, [], { useAi: true }).catch(() => null);
+  ok(calls.length > c1, 'CamaraVirtual IRS scorer reaches Anthropic again (enabled 2026-10-15)');
 
   // ---- 4. static: guards present, Anthropic code intact ----------------------
   const guarded = {

@@ -28,7 +28,8 @@ const REGISTRY = {
   buyersline:       { status: 'disabled', names: ['BuyersLine'], disabled_on: D,
     sites: ['verticals/incentiva/src/services/llm.js aiEnabled() (research, morning/weekly refresh, extractor, advisor, follow-up, hand-off)', 'voice persona buyersline'],
     off_behaviour: 'registry/no-model paths; INCENTIVA_AI=on also re-enables' },
-  camaravirtual:    { status: 'disabled', names: ['CamaraVirtual'], disabled_on: D,
+  // ENABLED 2026-10-15 (owner request): chamber AI plans back on; API credit verified live.
+  camaravirtual:    { status: 'enabled', names: ['CamaraVirtual'], disabled_on: null,
     sites: ['unified-chamber POST /:slug/api/projects/draft', 'chamber-template POST /chamber/<slug>/api/projects/draft', 'unified-chamber/lib/trust-verifier.js', 'unified-chamber/lib/project-irs-scorer.js', 'voice persona camaravirtual'],
     off_behaviour: 'draft: 503 "IA pausada"; trust/IRS: deterministic score (ai_used:false); orb: heuristic',
     note: 'Platform code shared by every cv-*/vc-* chamber (cv-1 HispaMind, cv-2 PACCCFL, cv-3 PCCI, cv-105 Hispanotec...). plan-generator.js itself is NOT gated because digit2ai-projects (not a target) also uses it.' },
