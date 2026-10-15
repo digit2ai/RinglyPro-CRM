@@ -7,25 +7,26 @@
 <meta name="description" content="HISPANOTEC Digital conecta talento, recursos y oportunidades del mundo hispano. Plataforma de integración estratégica para profesionales hispanohablantes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/hispatec/org/site.css?v=bcce3719">
 <style>
   :root {
-    --teal: #3e8fbf;
-    --teal-dark: #0a223a;
-    --teal-light: #eaf2f8;
-    --navy: #0e2f4f;
-    --navy-light: #1a4a73;
-    --gold: #5fa8d3;
-    --gold-light: #d6e9f4;
-    --gold-dark: #3e8fbf;
+    --teal: #2F6FB0;
+    --teal-dark: #12233A;
+    --teal-light: #EEF2F7;
+    --navy: #1A2F4A;
+    --navy-light: #24405F;
+    --gold: #C9A961;
+    --gold-light: #E8D9AE;
+    --gold-dark: #A88A45;
     --white: #ffffff;
-    --gray-50: #f8f9fa;
-    --gray-100: #f1f3f5;
-    --gray-200: #e9ecef;
+    --gray-50: #FBFBFA;
+    --gray-100: #F2F0EA;
+    --gray-200: #E5E2DA;
     --gray-300: #dee2e6;
     --gray-500: #6c757d;
-    --gray-700: #495057;
-    --gray-900: #212529;
+    --gray-700: #47586E;
+    --gray-900: #12233A;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,7 +34,7 @@
   html { scroll-behavior: smooth; }
 
   body {
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: 'Inter', system-ui, sans-serif;
     color: var(--gray-900);
     background: var(--white);
     line-height: 1.7;
@@ -41,7 +42,8 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
     line-height: 1.2;
   }
 
@@ -57,13 +59,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #0e2f4f;
+    background: #1A2F4A;
     border-bottom: 3px solid var(--gold);
     box-shadow: 0 2px 18px rgba(0,0,0,0.22);
     transition: background 0.3s, box-shadow 0.3s;
   }
   .header.scrolled {
-    background: #0a223a;
+    background: #12233A;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 2px 24px rgba(0,0,0,0.28);
@@ -129,7 +131,7 @@
   /* ── HERO ── */
   .hero {
     min-height: 100vh;
-    background: linear-gradient(165deg, #0a223a 0%, #0e2f4f 45%, #2a6f9c 100%);
+    background: linear-gradient(165deg, #12233A 0%, #1A2F4A 45%, #2F6FB0 100%);
     color: var(--white);
     display: flex;
     flex-direction: column;
@@ -186,16 +188,16 @@
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 15px;
-    background: #3e8fbf;
+    background: #2F6FB0;
     color: #ffffff;
     padding: 14px 32px;
     border-radius: 8px;
-    border: 2px solid #3e8fbf;
+    border: 2px solid #2F6FB0;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
     display: inline-block;
   }
-  .btn-gold:hover { background: #0e2f4f; border-color: #0e2f4f; transform: translateY(-1px); }
+  .btn-gold:hover { background: #1A2F4A; border-color: #1A2F4A; transform: translateY(-1px); }
   .btn-outline {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
@@ -502,9 +504,9 @@
     font-weight: 600;
     padding: 10px 20px;
     border-radius: 30px;
-    background: rgba(62,143,191,0.12);
+    background: rgba(47,111,176,0.12);
     color: var(--teal);
-    border: 1px solid rgba(62,143,191,0.22);
+    border: 1px solid rgba(47,111,176,0.22);
   }
   .hci-display {
     background: var(--navy);
@@ -704,8 +706,8 @@
     background: none !important; padding: 0 !important; gap: 12px; }
   .header-nav a.hdr-btn { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 700;
     padding: 9px 18px; border-radius: 9px; white-space: nowrap; display: inline-block; line-height: 1.2; }
-  .header-nav a.hdr-join { background: var(--gold); color: #0e2f4f; border: 2px solid var(--gold); }
-  .header-nav a.hdr-join:hover { background: #fff; border-color: #fff; color: #0e2f4f; }
+  .header-nav a.hdr-join { background: var(--gold); color: #1A2F4A; border: 2px solid var(--gold); }
+  .header-nav a.hdr-join:hover { background: #fff; border-color: #fff; color: #1A2F4A; }
   .header-nav a.hdr-login { color: #fff; border: 2px solid rgba(255,255,255,0.45); }
   .header-nav a.hdr-login:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.08); }
   @media (max-width: 860px) { .header-logo > span { display: none; } }
@@ -731,7 +733,7 @@
       position: absolute;
       top: 64px;
       left: 0; right: 0;
-      background: #0a223a;
+      background: #12233A;
       backdrop-filter: blur(12px);
       padding: 24px 32px;
       gap: 18px;
@@ -803,7 +805,7 @@
   .orb-btn[data-state="speaking"] .o-core { animation: orbBreath 1.6s ease-in-out infinite; }
   .orb-btn:hover { filter: brightness(1.08); }
   .orb-cap { font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 1.6px; text-transform: uppercase; font-weight: 600; color: var(--gold); transition: color .2s; }
-  .orb-stage[data-state="listening"] .orb-cap { color: #3e8fbf; }
+  .orb-stage[data-state="listening"] .orb-cap { color: #2F6FB0; }
   .orb-stage[data-state="speaking"] .orb-cap { color: #8ed1fc; }
   .orb-hint { font-family: 'Inter', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.72); max-width: 460px; text-align: center; line-height: 1.55; }
   .orb-transcript { display: none; width: 100%; max-width: 560px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 14px 16px; margin-top: 2px; max-height: 230px; overflow-y: auto; backdrop-filter: blur(4px); }
@@ -811,7 +813,7 @@
   @keyframes orbFade { from { opacity: 0; } to { opacity: 1; } }
   .orb-msg { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.55; margin-bottom: 9px; padding-left: 12px; border-left: 2px solid transparent; text-align: left; }
   .orb-msg.user { border-left-color: var(--gold); color: rgba(255,255,255,0.92); }
-  .orb-msg.agent { border-left-color: #3e8fbf; color: rgba(255,255,255,0.86); }
+  .orb-msg.agent { border-left-color: #2F6FB0; color: rgba(255,255,255,0.86); }
   .orb-msg .who { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; opacity: .6; margin-bottom: 2px; }
   .orb-stop { display: none; background: #c0392b; color: #fff; border: none; border-radius: 9px; padding: 10px 22px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: .3px; }
   .orb-stage[data-active="1"] .orb-stop { display: inline-block; }
@@ -823,8 +825,8 @@
     transform: translateX(-50%) translateY(150%);
     z-index: 1200;
     display: flex; align-items: center; gap: 14px;
-    background: rgba(14,47,79,0.96);
-    border: 1px solid rgba(95,168,211,0.4);
+    background: rgba(26,47,74,0.96);
+    border: 1px solid rgba(201,169,97,0.4);
     border-radius: 14px;
     padding: 11px 16px;
     box-shadow: 0 12px 38px rgba(0,0,0,0.45);
@@ -844,13 +846,13 @@
   .lina-bar-sec { font-family: 'Inter', sans-serif; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
   .lina-bar-title { font-family: 'Inter', sans-serif; font-size: 13.5px; color: #fff; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .lina-bar-prog { margin-top: 7px; height: 4px; background: rgba(255,255,255,0.16); border-radius: 3px; overflow: hidden; }
-  .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#3e8fbf,#5fa8d3); border-radius: 3px; }
+  .lina-bar-prog span { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#2F6FB0,#C9A961); border-radius: 3px; }
   .lina-bar-btn { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 600; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .2s; }
   .lina-bar-btn:hover { background: rgba(255,255,255,0.18); }
   .lina-bar-btn.stop { background: #c0392b; border-color: #c0392b; }
   .lina-bar-btn.stop:hover { background: #a93226; }
   .lina-active { animation: linaHi 1.3s ease; }
-  @keyframes linaHi { 0% { box-shadow: inset 0 0 0 0 rgba(95,168,211,0); } 28% { box-shadow: inset 0 0 0 3px rgba(95,168,211,0.5); } 100% { box-shadow: inset 0 0 0 0 rgba(95,168,211,0); } }
+  @keyframes linaHi { 0% { box-shadow: inset 0 0 0 0 rgba(201,169,97,0); } 28% { box-shadow: inset 0 0 0 3px rgba(201,169,97,0.5); } 100% { box-shadow: inset 0 0 0 0 rgba(201,169,97,0); } }
   @media (max-width: 560px) { .lina-bar-title { max-width: 150px; } .lina-bar-info { min-width: 130px; } .lina-bar-btn { padding: 8px 11px; } }
   @media (prefers-reduced-motion: reduce) { .lina-bar-eq span { animation: none !important; } .lina-active { animation: none !important; } }
 
@@ -858,7 +860,7 @@
   .wf-section {
     position: relative;
     overflow: hidden;
-    background: radial-gradient(120% 90% at 50% 0%, #163a5c 0%, #0e2f4f 45%, #08192e 100%);
+    background: radial-gradient(120% 90% at 50% 0%, #1F4D78 0%, #1A2F4A 45%, #12233A 100%);
     color: #fff;
   }
   .wf-section::before {
@@ -895,7 +897,7 @@
   }
   .wf-line {
     position: absolute; left: 8%; right: 8%; top: 41px; height: 3px; border-radius: 3px;
-    background: linear-gradient(90deg, rgba(111,155,255,0) 0%, #3e8fbf 18%, #5fa8d3 50%, #3e8fbf 82%, rgba(111,155,255,0) 100%);
+    background: linear-gradient(90deg, rgba(111,155,255,0) 0%, #2F6FB0 18%, #C9A961 50%, #2F6FB0 82%, rgba(111,155,255,0) 100%);
     background-size: 220% 100%;
     box-shadow: 0 0 16px rgba(111,155,255,0.45);
     animation: wfFlow 3s linear infinite;
@@ -904,7 +906,7 @@
   .wf-particle {
     position: absolute; top: 41px; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%;
     background: #fff;
-    box-shadow: 0 0 12px 3px #5fa8d3, 0 0 5px #fff;
+    box-shadow: 0 0 12px 3px #C9A961, 0 0 5px #fff;
     animation: wfTravel 6s linear infinite;
   }
   .wf-particle:nth-of-type(2) { animation-delay: 2s; }
@@ -922,22 +924,22 @@
   }
   .wf-orb {
     position: relative; width: 84px; height: 84px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 36%, #5fa8d3 0%, #3e8fbf 46%, #0e2f4f 100%);
+    background: radial-gradient(circle at 50% 36%, #C9A961 0%, #2F6FB0 46%, #1A2F4A 100%);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 0 0 6px rgba(62,143,191,0.16), 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 6px rgba(47,111,176,0.16), 0 8px 24px rgba(0,0,0,0.4);
     animation: wfGlow 3.4s ease-in-out infinite;
     animation-delay: var(--d, 0s);
   }
   .wf-orb svg { width: 34px; height: 34px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .wf-orb::before {
     content: ''; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid #3e8fbf; opacity: 0;
+    border: 2px solid #2F6FB0; opacity: 0;
     animation: wfPulse 3.4s ease-out infinite;
     animation-delay: var(--d, 0s);
   }
   @keyframes wfGlow {
-    0%,100% { box-shadow: 0 0 0 6px rgba(62,143,191,0.16), 0 8px 24px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(95,168,211,0.32), 0 0 32px rgba(111,155,255,0.7); }
+    0%,100% { box-shadow: 0 0 0 6px rgba(47,111,176,0.16), 0 8px 24px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(201,169,97,0.32), 0 0 32px rgba(111,155,255,0.7); }
   }
   @keyframes wfPulse {
     0% { transform: scale(.82); opacity: 0; }
@@ -946,21 +948,21 @@
     100% { opacity: 0; }
   }
   .wf-name { margin-top: 14px; font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13.5px; color: #fff; line-height: 1.3; }
-  .wf-benefit { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: #5fa8d3; letter-spacing: .2px; }
+  .wf-benefit { margin-top: 4px; font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: #C9A961; letter-spacing: .2px; }
   .wf-benefits { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 46px; }
   .wf-chip {
     font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: #e3eaff;
     background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
     padding: 9px 18px; border-radius: 30px;
   }
-  .wf-chip b { color: #5fa8d3; font-weight: 700; }
+  .wf-chip b { color: #C9A961; font-weight: 700; }
   @media (max-width: 760px) {
     .wf-pipeline { flex-direction: column; gap: 0; max-width: 320px; }
     .wf-line, .wf-particle { display: none; }
     .wf-node { width: 100%; padding: 12px 0; }
     .wf-node:not(:last-child)::after {
       content: ''; width: 3px; height: 30px; margin-top: 14px; border-radius: 3px;
-      background: linear-gradient(#3e8fbf, #5fa8d3); background-size: 100% 200%;
+      background: linear-gradient(#2F6FB0, #C9A961); background-size: 100% 200%;
       animation: wfFlowV 2s linear infinite;
     }
     @keyframes wfFlowV { 0% { background-position: 0 200%; } 100% { background-position: 0 0; } }
@@ -970,21 +972,40 @@
 </head>
 <body>
 
-<!-- ═══════ HEADER ═══════ -->
-<header class="header" id="header">
-  <a href="#hero" class="header-logo" style="display:flex;align-items:center;gap:11px;"><img src="https://aiagent.ringlypro.com/hispatec/logo-hispanotec.svg" alt="HISPANOTEC" style="height:42px;width:auto;display:block;background:#fff;border-radius:8px;padding:3px;"><span style="font-weight:800;letter-spacing:2px;font-size:18px;color:#fff;">HISPANOTEC <span style="color:var(--gold);">DIGITAL</span></span></a>
-  <nav>
-    <ul class="header-nav hdr-actions" id="navMenu">
-      <li><a href="https://www.camaravirtual.app/cv-105/signup-member" target="_blank" rel="noopener" class="hdr-btn hdr-join" data-es="Únete<span class='long'> a Hispanotec Digital</span>" data-en="Join<span class='long'> Hispanotec Digital</span>">Únete<span class="long"> a Hispanotec Digital</span></a></li>
-      <li><a href="https://www.camaravirtual.app/cv-105/login" target="_blank" rel="noopener" class="hdr-btn hdr-login" data-es="Iniciar Sesión" data-en="Log In">Iniciar Sesión</a></li>
-      <li><button class="lang-toggle" id="langToggle" onclick="toggleLang()">EN</button></li>
-    </ul>
-  </nav>
+<!-- ═══════ HEADER (shared with every hispanotec.org page: scripts/hispanotec-org/header.html) ═══════ -->
+<!--HX-HEADER-->
+<header class="hx-head" id="header">
+  <div class="hx-head-in">
+    <a class="hx-brand" href="/hispatec/" aria-label="HISPANOTEC, inicio"><img src="/hispatec/org/media/logo-hispanotec-240.png" alt="" width="46" height="46"><b>HISPANOTEC</b></a>
+    <button class="hx-burger" id="hxBurger" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="hxMenu"><span></span><span></span><span></span></button>
+    <div class="hx-menu" id="hxMenu">
+      <ul class="hx-nav">
+        <li><a data-nav="la-asociacion" href="/hispatec/la-asociacion/">La asociación</a></li>
+        <li><a data-nav="bienvenida" href="/hispatec/bienvenida/">Bienvenida</a></li>
+        <li><a data-nav="quienes-somos" href="/hispatec/quienes-somos/">Quiénes somos</a></li>
+        <li><a data-nav="asociados-protectores" href="/hispatec/asociados-protectores/">Asociados protectores</a></li>
+        <li><a data-nav="membresias" href="/hispatec/membresias/">Membresías</a></li>
+        <li><a data-nav="noticias" href="/hispatec/noticias/">Noticias</a></li>
+        <li><a data-nav="contacto" href="/hispatec/contacto/">Contacto</a></li>
+        <li><a data-nav="digital" href="/hispatec/#ecosistema">Hispanotec Digital</a></li>
+      </ul>
+      <div class="hx-cta">
+        <a class="hx-btn hx-btn-gold" href="/hispatec/membresias/">Unirme</a>
+        <a class="hx-btn hx-btn-line" href="https://www.camaravirtual.app/cv-105/login" target="_blank" rel="noopener">Acceso Digital</a>
+        <button class="hx-lang" id="langToggle" type="button" onclick="toggleLang()" aria-label="Cambiar idioma">EN</button>
+      </div>
+    </div>
+  </div>
 </header>
+<!--/HX-HEADER-->
 
 <!-- ═══════ HERO ═══════ -->
 <section class="hero" id="hero">
   <div class="hero-content">
+    <div class="hx-hero-org">
+      <div class="hx-eyebrow" style="color:var(--gold);">HISPANOTEC</div>
+      <p class="hx-hero-tag">Red profesional de técnicos, directivos y empresarios de la Hispanidad.</p>
+    </div>
     <h1 data-es="Acción, <em>no solo palabras.</em>" data-en="Action, <em>not just words.</em>">Acción, <em>no solo palabras.</em></h1>
     <p data-es="El ecosistema digital que conecta talento, empresas y oportunidades del mundo hispano -- y los convierte en negocios reales." data-en="The digital ecosystem that connects talent, companies, and opportunities across the Hispanic world -- and turns them into real business.">El ecosistema digital que conecta talento, empresas y oportunidades del mundo hispano -- y los convierte en negocios reales.</p>
     <div class="orb-stage" id="orbStage" data-state="idle" data-active="0">
@@ -992,28 +1013,28 @@
         <svg viewBox="0 0 168 168" role="img" aria-hidden="true">
           <defs>
             <radialGradient id="htCoreGrad" cx="50%" cy="42%" r="60%">
-              <stop offset="0%" stop-color="#cfe6f3"/>
-              <stop offset="45%" stop-color="#3e8fbf"/>
-              <stop offset="100%" stop-color="#0e2f4f"/>
+              <stop offset="0%" stop-color="#DCE6F1"/>
+              <stop offset="45%" stop-color="#2F6FB0"/>
+              <stop offset="100%" stop-color="#1A2F4A"/>
             </radialGradient>
             <radialGradient id="htGlowGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#5fa8d3" stop-opacity=".65"/>
-              <stop offset="100%" stop-color="#5fa8d3" stop-opacity="0"/>
+              <stop offset="0%" stop-color="#C9A961" stop-opacity=".65"/>
+              <stop offset="100%" stop-color="#C9A961" stop-opacity="0"/>
             </radialGradient>
           </defs>
           <circle class="o-glow" cx="84" cy="84" r="80" fill="url(#htGlowGrad)"/>
-          <g class="o-ring o-r1" fill="none" stroke="#5fa8d3" stroke-opacity=".6" stroke-width="1.3">
+          <g class="o-ring o-r1" fill="none" stroke="#C9A961" stroke-opacity=".6" stroke-width="1.3">
             <circle cx="84" cy="84" r="72" stroke-dasharray="6 10"/>
           </g>
-          <g class="o-ring o-r2" fill="none" stroke="#3e8fbf" stroke-opacity=".5" stroke-width="1.1">
+          <g class="o-ring o-r2" fill="none" stroke="#2F6FB0" stroke-opacity=".5" stroke-width="1.1">
             <circle cx="84" cy="84" r="61" stroke-dasharray="3 14"/>
           </g>
-          <g class="o-ring o-r3" fill="none" stroke="#9cc7e0" stroke-opacity=".4" stroke-width="1">
+          <g class="o-ring o-r3" fill="none" stroke="#A9BDD4" stroke-opacity=".4" stroke-width="1">
             <circle cx="84" cy="84" r="51" stroke-dasharray="2 8"/>
           </g>
           <circle class="o-core" cx="84" cy="84" r="39" fill="url(#htCoreGrad)"/>
           <circle cx="84" cy="84" r="39" fill="none" stroke="#eafffa" stroke-opacity=".25" stroke-width="1"/>
-          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#0a223a" fill-opacity=".85"/>
+          <path d="M84 72 a2 2 0 0 0 -2 2 v20 a2 2 0 0 0 4 0 v-20 a2 2 0 0 0 -2 -2 z M76 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z M92 78 a2 2 0 0 0 -2 2 v8 a2 2 0 0 0 4 0 v-8 a2 2 0 0 0 -2 -2 z" fill="#12233A" fill-opacity=".85"/>
         </svg>
       </button>
       <div class="orb-cap" id="orbCap">Escuchar a Lina</div>
@@ -1153,6 +1174,68 @@
     if (orbStop) orbStop.addEventListener('click', stop);
   })();
 </script>
+
+<!-- ═══════ LA ASOCIACIÓN (texto de la portada de hispanotec.org) ═══════ -->
+<section class="hx-band" id="que-es">
+  <div class="hx-wrap hx-two">
+    <div>
+      <div class="hx-eyebrow">La Asociación</div>
+      <h2 class="hx-h2">Qué es HISPANOTEC</h2>
+      <p>HISPANOTEC es una Asociación sin ánimo de lucro, internacional, transversal e independiente que reúne a técnicos, directivos, empresarios, profesionales e instituciones comprometidos con el desarrollo de la Hispanidad.</p>
+      <p>Nace con el objetivo de transformar los lazos históricos, culturales y lingüísticos que unen a América, Filipinas, España, y otros territorios de raíz hispánica en cooperación real, proyectos concretos y oportunidades compartidas.</p>
+    </div>
+    <div class="hx-quote">
+      <p><strong>HISPANOTEC es una plataforma de ejecución de proyectos con impacto real, medibles y sostenibles.</strong></p>
+      <p>Conecta Talento, impulsa la cooperación técnica, económica, educativa y empresarial entre profesionales, empresas e instituciones del Mundo Hispano.</p>
+      <div class="hx-row"><a class="hx-btn hx-btn-gold" href="/hispatec/membresias/">Unirme</a><a class="hx-btn hx-btn-line" href="/hispatec/la-asociacion/">Saber más</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="hx-band hx-band-cream" id="objetivos">
+  <div class="hx-wrap">
+    <div class="hx-center">
+      <div class="hx-eyebrow">Objetivos</div>
+      <h2 class="hx-h2">Objetivos de HISPANOTEC</h2>
+      <p class="hx-sub">Una red orientada a convertir la cooperación hispana en iniciativas concretas, medibles y útiles.</p>
+    </div>
+    <div class="hx-grid">
+      <div class="hx-tile"><h3>Proyectos estratégicos</h3><p>Impulsamos iniciativas técnicas, económicas, educativas y empresariales con impacto real.</p></div>
+      <div class="hx-tile"><h3>Conexión profesional</h3><p>Conectamos profesionales, empresas e instituciones para generar alianzas y oportunidades.</p></div>
+      <div class="hx-tile"><h3>Español e innovación</h3><p>Promovemos el español como lengua de conocimiento, ciencia, tecnología y cooperación.</p></div>
+      <div class="hx-tile"><h3>Integración hispana</h3><p>Fomentamos la colaboración económica, profesional e institucional entre los pueblos hispanos.</p></div>
+      <div class="hx-tile"><h3>Futuro compartido</h3><p>Trabajamos por una Hispanidad más cohesionada, próspera e influyente en el siglo XXI.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="hx-band" id="por-que">
+  <div class="hx-wrap">
+    <div class="hx-center">
+      <div class="hx-eyebrow">Membresía</div>
+      <h2 class="hx-h2">Por qué asociarse a HISPANOTEC</h2>
+      <p class="hx-sub">Participa en una red internacional de profesionales comprometidos con el desarrollo de la Hispanidad.</p>
+    </div>
+    <div class="hx-grid hx-grid-4">
+      <div class="hx-tile"><h3>Acceso a una red internacional cualificada</h3><p>Conecta con profesionales, empresarios, técnicos e instituciones de América, Filipinas, España y otros territorios de raíz hispánica.</p></div>
+      <div class="hx-tile"><h3>Participación en proyectos reales</h3><p>Forma parte de iniciativas técnicas, empresariales, educativas y de cooperación con impacto tangible.</p></div>
+      <div class="hx-tile"><h3>Acceso a Oportunidades y Visibilidad Profesional</h3><p>Da a conocer tus proyectos, e iniciativas personales, encuentra colaboradores y genera nuevas oportunidades profesionales y empresariales.</p></div>
+      <div class="hx-tile"><h3>Construcción de futuro</h3><p>Contribuye activamente al fortalecimiento de una Hispanidad más próspera, innovadora y cohesionada.</p></div>
+    </div>
+    <div class="hx-row hx-center-row">
+      <a class="hx-btn hx-btn-gold" href="https://hispanotec.org/inscripcion/" target="_blank" rel="noopener">Solicitar adhesión</a>
+      <a class="hx-btn hx-btn-line" href="https://hispanotec.org/formulario-de-interes/" target="_blank" rel="noopener">Registrar interés</a>
+    </div>
+  </div>
+</section>
+
+<section class="hx-band hx-band-navy" id="digital-intro">
+  <div class="hx-wrap hx-center">
+    <div class="hx-eyebrow" style="color:var(--gold);">Hispanotec Digital</div>
+    <h2 class="hx-h2" style="color:#fff;">La infraestructura digital de la Asociación</h2>
+    <p class="hx-sub" style="color:#DCE6F1;">En alianza con DIGIT2AI, HISPANOTEC cuenta con un ecosistema digital propio para encontrar socios, formar equipos y llevar los proyectos de la idea a la realidad.</p>
+  </div>
+</section>
 
 <!-- ═══════ ECOSISTEMA DIGITAL ═══════ -->
 <section class="section" id="ecosistema">
@@ -1496,7 +1579,7 @@
 </section>
 
 <!-- ═══════ JOBUP ═══════ -->
-<section class="section section-full" id="jobup" style="background:linear-gradient(160deg,#071825 0%,#0e2f4f 55%,#1a4a73 100%);">
+<section class="section section-full" id="jobup" style="background:linear-gradient(160deg,#12233A 0%,#1A2F4A 55%,#24405F 100%);">
   <div class="section-inner" style="text-align:center;max-width:820px;margin:0 auto;">
     <div class="gold-line" style="margin:0 auto 20px;"></div>
     <div style="font-family:'Inter',sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:14px;"
@@ -1519,38 +1602,37 @@
 </section>
 
 <!-- ═══════ FOOTER ═══════ -->
-<footer class="footer">
-  <div class="footer-inner">
-    <div class="footer-brand">
-      <h3 style="display:flex;align-items:center;gap:10px;"><img src="https://aiagent.ringlypro.com/hispatec/logo-hispanotec.svg" alt="HISPANOTEC" style="height:34px;width:auto;background:#fff;border-radius:6px;padding:2px;">HISPANOTEC <span>DIGITAL</span></h3>
-      <p data-es="Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano." data-en="Hispanic Strategic Integration Platform. Connecting talent, resources, and opportunities across the Hispanic world.">Plataforma de Integración Estratégica Hispana. Conectando talento, recursos y oportunidades del mundo hispano.</p>
+<!--HX-FOOTER-->
+<footer class="hx-foot">
+  <div class="hx-foot-in">
+    <div>
+      <h3>HISPANOTEC</h3>
+      <p>Asociación de Técnicos, Directivos y Empresarios de la Hispanidad</p>
+      <p>Entidad sin ánimo de lucro · NIF G27559053</p>
+      <p>Registro Nacional de Asociaciones nº 633451</p>
     </div>
-    <div class="footer-col">
-      <h4 data-es="Plataforma" data-en="Platform">Plataforma</h4>
-      <a href="#ecosistema" data-es="Ecosistema" data-en="Ecosystem">Ecosistema</a>
-      <a href="#modulos" data-es="Módulos" data-en="Modules">Módulos</a>
-      <a href="#como-funciona" data-es="Cómo Trabajamos" data-en="How We Work">Cómo Trabajamos</a>
-      <a href="#soporte" data-es="Soporte Digital" data-en="Digital Support">Soporte Digital</a>
-      <a href="https://jobup.dev/" target="_blank" rel="noopener">JobUp &mdash; jobup.dev</a>
+    <div>
+      <h4>Contacto</h4>
+      <p>Avenida del Mediterráneo, 50 – 5B<br>28007 Madrid<br>España</p>
+      <p><a href="mailto:info@hispanotec.org">info@hispanotec.org</a></p>
     </div>
-    <div class="footer-col">
-      <h4 data-es="Contacto" data-en="Contact">Contacto</h4>
-      <a href="mailto:hispanotecdigital@hispanotec.org">hispanotecdigital@hispanotec.org</a>
-      <a href="tel:+12252904754">+1 225-290-4754</a>
-    </div>
-    <div class="footer-col">
-      <h4 data-es="Enlaces" data-en="Links">Enlaces</h4>
-      <a href="https://fundacionraiceshispanas.org" target="_blank">Fundación Raíces Hispanas</a>
-      <a href="https://hispanicrootsfoundation.org" target="_blank">Hispanic Roots Foundation</a>
-      <a href="https://hispanotec.org/" target="_blank" rel="noopener">HISPANOTEC</a>
-      <a href="https://manifiestohispanista.com/" target="_blank" rel="noopener">Manifiesto Hispanista</a>
-      <a href="https://heroesdecavite.es/" target="_blank" rel="noopener">Héroes de Cavite</a>
+    <div>
+      <h4>Hispanotec Digital</h4>
+      <ul>
+        <li><a href="/hispatec/#ecosistema">Ecosistema digital</a></li>
+        <li><a href="https://www.camaravirtual.app/cv-105/signup-member" target="_blank" rel="noopener">Únete a Hispanotec Digital</a></li>
+        <li><a href="https://www.camaravirtual.app/cv-105/login" target="_blank" rel="noopener">Acceso Digital</a></li>
+        <li><a href="https://jobup.dev/" target="_blank" rel="noopener">JobUp — jobup.dev</a></li>
+        <li><a href="mailto:hispanotecdigital@hispanotec.org">hispanotecdigital@hispanotec.org</a></li>
+      </ul>
     </div>
   </div>
-  <div class="footer-bottom">
-    <p>&copy; 2026 HISPANOTEC DIGITAL -- Ecosistema digital en alianza con DIGIT2AI</p>
+  <div class="hx-foot-bar">
+    <span>© 2026 HISPANOTEC — Ecosistema digital en alianza con DIGIT2AI</span>
+    <span><a href="/hispatec/aviso-legal/">Aviso legal</a> · <a href="/hispatec/privacidad/">Privacidad</a> · <a href="/hispatec/cookies/">Cookies</a> · <a href="/hispatec/estatutos/">Estatutos</a> · <a href="/hispatec/decalogo/">Código de adhesión</a> · <a href="/hispatec/informacion-sobre-nuestros-dominios/">Denominaciones y dominios</a></span>
   </div>
 </footer>
+<!--/HX-FOOTER-->
 
 <script>
 (function() {
@@ -1718,5 +1800,6 @@
 
 })();
 </script>
+<script src="/hispatec/org/site.js?v=bcce3719" defer></script>
 </body>
 </html>

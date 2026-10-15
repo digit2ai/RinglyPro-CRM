@@ -2306,3 +2306,14 @@ Construido el 2026-10-09 a partir de la Solicitud de Cotización de la Asociaci�
 - **Cada automatización declara su estado**: Ya existe / Se adapta / Por construir. Solo FreightMind y el asistente de voz web son "Ya existe". Planta, maquinaria, combustible y bitácora de obra son "Por construir".
 - **Ninguna cifra de ahorro.** Los únicos números son los de su propio currículo 2026 (6 plantas, 4 estados, 6 unidades, 2015). No se publican montos de contratos ni nombres de clientes privados.
 - El expediente de investigación vive fuera del repo (el repo es público).
+
+## HISPANOTEC — hispanotec.org merged into /hispatec/ (digit2ai.com/hispanotec)
+
+`digit2ai.com/hispanotec` is a GHL frame around `aiagent.ringlypro.com/hispatec/`. As of 2026-10-15 that page carries ALL of hispanotec.org (WordPress + Elementor + Paid Memberships Pro) in hispanotec.org's own theme: navy `#1A2F4A`, blue `#2F6FB0`, gold `#C9A961`, text `#47586E`, cream `#F2F0EA`, Playfair Display headings + Inter body — copied from their Elementor kit, in `public/hispatec/org/site.css` (classes `hx-`). The association agreed (owner, 2026-10-15).
+
+- **One importer, re-runnable:** `node scripts/hispanotec-org/import.js` pulls the 13 content pages + every post from `hispanotec.org/wp-json/wp/v2/*`, flattens Elementor to semantic HTML, downloads images/PDFs into `public/hispatec/org/media/`, and writes `/hispatec/<same-slug>/index.html` (same paths as WordPress, so a later domain cutover is a 1:1 redirect). Re-run it whenever the association edits their site. Do not hand-edit the generated pages.
+- **Shared header/footer** are `scripts/hispanotec-org/header.html|footer.html`; the importer also injects them into the landing between `<!--HX-HEADER-->` / `<!--HX-FOOTER-->`, so the two cannot drift.
+- **MEMBERSHIP STAYS ON HISPANOTEC.ORG (owner decision).** Inscripción, interest forms, login, account and payments are NOT mirrored; links go to hispanotec.org in a new tab (never pay inside a GHL frame). Paying members are NOT moved to Stripe. Hispanotec Digital (camaravirtual cv-105 join/login) stays beside it — both.
+- The landing keeps its bilingual toggle and Lina narration; the mirrored pages are Spanish only, as on hispanotec.org.
+- **Their own Quiénes somos page still has Lorem ipsum founder bios** — mirrored faithfully; the association must fix it at the source.
+- **Not done:** pointing hispanotec.org at Render (needs their Cloudflare + WordPress admin). `hispanotec.digit2ai.com` (the narrated tour) is unchanged.
