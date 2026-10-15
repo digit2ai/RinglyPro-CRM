@@ -29,6 +29,20 @@ async function checkIds(tenantId, table, ids, label) {
   if (rows.length !== list.length) throw httpError(400, `Unknown ${label} for this company`);
   return list;
 }
+/**
+ * A campaign script is the owner's own words for the call: an opening line,
+ * what to do on a yes, what to do on a no. {first_name} and {company} are
+ * filled per contractor at dial time. It travels inside the offer, so editing
+ * it sends an approved campaign back to draft like any other offer change.
+ * Prices are still never written here: the agent quotes the offer's product
+ * prices, which come from the catalog.
+ */
+function cleanScript(sc) {
+  if (!sc || typeof sc !== 'object') return null;
+  const t = (v, n) => (v == null ? '' : String(v).replace(/\s+/g, ' ').trim().slice(0, n));
+  const out = { opening: t(sc.opening, 600), if_yes: t(sc.if_yes, 600), if_no: t(sc.if_no, 600) };
+  return out.opening || out.if_yes || out.if_no ? out : null;
+}
 function cleanGeo(g) {
   const up = (a) => (Array.isArray(a) ? a : String(a || '').split(',')).map((s) => String(s).trim()).filter(Boolean).slice(0, 200);
   return { states: up(g && g.states).map((s) => s.toUpperCase().slice(0, 2)), cities: up(g && g.cities), zips: up(g && g.zips) };
@@ -57,6 +71,8 @@ async function create(tenant, input, actor) {
   const repId = input.sales_rep_id ? (await checkIds(tenant.id, 'sup_sales_reps', [input.sales_rep_id], 'sales rep'))[0] : null;
   const cats = categoryIds.length ? await db.tq(tenant.id, 'SELECT name FROM sup_categories WHERE tenant_id = :tenant AND id IN (:ids)', { ids: categoryIds }) : [];
   const offer = await offers.build(tenant, { productIds, categoryNames: cats.map((c) => c.name), objective: input.call_objective });
+  const script = cleanScript(input.script);
+  if (script) offer.script = script;
   const minScore = Math.max(0, Math.min(100, Number(input.minimum_match_score == null ? 60 : input.minimum_match_score)));
   const limit = Math.max(1, Math.min(5000, Number(input.daily_call_limit || 50)));
   const schedule = input.calling_schedule && typeof input.calling_schedule === 'object' ? input.calling_schedule : {};
@@ -91,11 +107,14 @@ async function update(tenant, id, input, actor) {
     set.agent = JSON.stringify(ag); casts.agent = 'jsonb';
   }
   if (input.call_objective) set.call_objective = String(input.call_objective).slice(0, 1000);
-  if (set.product_ids || set.category_ids || input.rebuild_offer) {
+  const newScript = input.script !== undefined ? cleanScript(input.script) : undefined;
+  if (set.product_ids || set.category_ids || input.rebuild_offer || newScript !== undefined) {
     const pids = JSON.parse(set.product_ids || JSON.stringify(cur.product_ids));
     const cids = JSON.parse(set.category_ids || JSON.stringify(cur.category_ids));
     const cats = cids.length ? await db.tq(tenant.id, 'SELECT name FROM sup_categories WHERE tenant_id = :tenant AND id IN (:ids)', { ids: cids }) : [];
     const offer = await offers.build(tenant, { productIds: pids, categoryNames: cats.map((c) => c.name), objective: set.call_objective || cur.call_objective });
+    const script = newScript !== undefined ? newScript : (cur.offer && cur.offer.script) || null;
+    if (script) offer.script = script;
     set.offer = JSON.stringify(offer); casts.offer = 'jsonb';
     set.talking_points = JSON.stringify(offer.talking_points); casts.talking_points = 'jsonb';
   }
@@ -231,4 +250,4 @@ async function defaultRep(tenantId) {
   return r ? r.id : null;
 }
 
-module.exports = { create, update, get, list, transition, buildAudience, preview, generate, defaultRep, candidates };
+module.exports = { cleanScript, create, update, get, list, transition, buildAudience, preview, generate, defaultRep, candidates };

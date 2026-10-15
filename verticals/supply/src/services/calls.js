@@ -27,7 +27,7 @@ const memory = require('./memory');
 const tenants = require('./tenants');
 
 const RULES = [
-  [/\b(do not call|don'?t call|stop calling|remove (me|us|my number)|take me off)\b/i, 'do_not_call'],
+  [/\b(do not call|don'?t call|stop calling|remove (me|us|my number)|take me off|removed from (our|the) calling list)\b/i, 'do_not_call'],
   [/\b(transfer(red)?|speak (to|with) (a |someone|sales|a person|a human)|talk to (a |someone|sales))\b/i, 'transfer_requested'],
   [/\b(voicemail|left a message|answering machine)\b/i, 'voicemail'],
   [/\b(no answer|did not answer|didn'?t answer|unanswered)\b/i, 'no_answer'],

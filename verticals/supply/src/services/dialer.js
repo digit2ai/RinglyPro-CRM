@@ -35,12 +35,28 @@ async function contextPackage(tenant, campaign, contractor) {
     value_proposition: offer.value_proposition, talking_points: offer.talking_points || [], pricing_language: offer.pricing_language,
     objection_handling: offer.objection_handling || [], history: ctx ? ctx.text : null,
     sales_rep: rep ? rep.name : null,
-    disclosure: (tenant.settings && tenant.settings.recording_disclosure) || null
+    disclosure: (tenant.settings && tenant.settings.recording_disclosure) || null,
+    script: personalize(offer.script, contractor, tenant)
   };
 }
 
+/** Fill {first_name} / {company} for THIS contractor; an unknown name is dropped, never guessed. */
+function personalize(script, contractor, tenant) {
+  if (!script) return null;
+  const first = String(contractor.contact_name || '').trim().split(/\s+/)[0] || '';
+  const fill = (s) => String(s || '').replace(/\{first_name\}/g, first).replace(/\{company\}/g, tenant.name)
+    .replace(/\b(Mr|Mrs|Ms)\.?\s+(?=[,.!?]|$)/g, '').replace(/\s+([,.!?])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+  return { opening: fill(script.opening), if_yes: fill(script.if_yes), if_no: fill(script.if_no) };
+}
+
 function offerText(pkg) {
-  const lines = [pkg.value_proposition].concat(pkg.talking_points || []);
+  const sc = pkg.script;
+  const scriptLines = sc ? ['CAMPAIGN SCRIPT (follow it; it replaces your usual opening):',
+    sc.opening && 'OPENING LINE, say it as your first sentence: ' + sc.opening,
+    sc.if_yes && 'IF THEY SAY YES: ' + sc.if_yes,
+    sc.if_no && 'IF THEY SAY NO: ' + sc.if_no,
+    'OFFER FACTS:'] : [];
+  const lines = scriptLines.concat([pkg.value_proposition]).concat(pkg.talking_points || []);
   if (pkg.pricing_language) lines.push('Pricing rule: ' + pkg.pricing_language);
   if (pkg.disclosure) lines.push('Say first: ' + pkg.disclosure);
   if (pkg.sales_rep) lines.push('Transfer interested buyers to ' + pkg.sales_rep + '.');
@@ -128,4 +144,4 @@ async function reconcile(tenant, provider) {
   return { checked: pending.length, ingested };
 }
 
-module.exports = { tick, reconcile, contextPackage, offerText, dispatchOne };
+module.exports = { personalize, tick, reconcile, contextPackage, offerText, dispatchOne };

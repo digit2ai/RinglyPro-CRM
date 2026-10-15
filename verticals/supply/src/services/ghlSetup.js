@@ -61,7 +61,8 @@ ${goal}
 RULES
 - Quote ONLY the prices and numbers written above. Never invent a price, discount or stock level.
 - Never compare to Home Depot, Lowe's or any competitor unless the offer text contains that exact comparison.
-- If they ask not to be called again, apologize, confirm they will not be called, and end the call.
+- If the offer above contains a CAMPAIGN SCRIPT, follow it: say its OPENING LINE first, then its YES or NO step. It replaces steps 1 to 3 of your goal.
+- If they ask not to be called again, or say yes to being removed from the list, say exactly "You have been removed from our calling list." then thank them and end the call.
 - Keep answers short and natural. One question at a time.
 - If you do not know something, say a sales rep will follow up.`;
 }
@@ -107,7 +108,7 @@ async function run(tenant, provider, { answerInbound = false, actorId } = {}) {
   for (const [dir, name, key] of [['outbound', OUT_NAME, 'outbound_agent_id'], ['inbound', IN_NAME, 'inbound_agent_id']]) {
     const body = {
       agentName: name, businessName: company, agentPrompt: prompt(dir, tags, company), language: 'multi', maxCallDuration: 900, timezone: tenant.timezone,
-      welcomeMessage: dir === 'outbound' ? `Hi, this is Lina calling from ${company} about building materials for your projects. Do you have a minute?` : `Thanks for calling ${company}, this is Lina. How can I help you today?`
+      welcomeMessage: dir === 'outbound' ? 'Hi, is this {{contact.first_name}}?' : `Thanks for calling ${company}, this is Lina. How can I help you today?`
     };
     if (dir === 'inbound' && answerInbound && number) body.inboundNumber = number;
     try {
