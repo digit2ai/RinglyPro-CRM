@@ -51,14 +51,14 @@ function personalize(script, contractor, tenant) {
 
 function offerText(pkg) {
   const sc = pkg.script;
+  const head = pkg.disclosure ? ['Say first, before anything else: ' + pkg.disclosure] : [];
   const scriptLines = sc ? ['CAMPAIGN SCRIPT (follow it; it replaces your usual opening):',
-    sc.opening && 'OPENING LINE, say it as your first sentence: ' + sc.opening,
+    sc.opening && 'OPENING LINE, say it at the start of the call: ' + sc.opening,
     sc.if_yes && 'IF THEY SAY YES: ' + sc.if_yes,
     sc.if_no && 'IF THEY SAY NO: ' + sc.if_no,
     'OFFER FACTS:'] : [];
-  const lines = scriptLines.concat([pkg.value_proposition]).concat(pkg.talking_points || []);
+  const lines = head.concat(scriptLines, [pkg.value_proposition]).concat(pkg.talking_points || []);
   if (pkg.pricing_language) lines.push('Pricing rule: ' + pkg.pricing_language);
-  if (pkg.disclosure) lines.push('Say first: ' + pkg.disclosure);
   if (pkg.sales_rep) lines.push('Transfer interested buyers to ' + pkg.sales_rep + '.');
   return lines.filter(Boolean).join('\n').slice(0, 3900);
 }

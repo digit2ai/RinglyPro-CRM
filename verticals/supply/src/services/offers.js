@@ -64,7 +64,12 @@ async function build(tenant, { productIds, categoryNames = [], objective } = {})
   const who = categoryNames.length ? categoryNames.join(', ') : 'contractors';
   const valueProp = withClaim.length
     ? `${tenant.name} has ${withClaim.map((i) => i.name).join(', ')} in stock at prices below what we verified at ${[...new Set(withClaim.map((i) => i.claim.competitor))].join(' and ')}.`
-    : priced.length ? `${tenant.name} has ${priced.map((i) => i.name).join(', ')} in stock and ready for ${who}.` : `${tenant.name} supplies building materials for ${who}.`;
+    : priced.length
+      ? (priced.every((i) => i.quantity_available)
+        ? `${tenant.name} has ${priced.map((i) => i.name).join(', ')} in stock and ready for ${who}.`
+        // No stock figure on file: say what is offered, never that it is in stock.
+        : `${tenant.name} is offering ${priced.map((i) => i.name).join(', ')} to ${who}.`)
+      : `${tenant.name} supplies building materials for ${who}.`;
   const talking = [].concat(...priced.map((i) => i.lines));
   talking.push('Ask which materials they buy regularly and roughly how much per job.');
   talking.push('Ask when their next project needs material.');
