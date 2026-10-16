@@ -453,41 +453,50 @@ router.post('/auth/forgot-password', async (req, res) => {
 
 // POST /auth/reset-password -- set a new password using a reset token.
 router.post('/auth/reset-password', async (req, res) => {
+  const es = (req.chamber && req.chamber.primary_language) !== 'en';
+  const M = (spa, eng) => (es ? spa : eng);
   try {
     const { token, newPassword } = req.body;
-    if (!token || !newPassword) return res.status(400).json({ success: false, error: 'Token and new password are required' });
+    if (!token || !newPassword) return res.status(400).json({ success: false, error: M('Faltan el enlace o la nueva contraseña.', 'Token and new password are required') });
     if (String(newPassword).length < 8) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters long' });
+      return res.status(400).json({ success: false, error: M('La contraseña debe tener al menos 8 caracteres.', 'Password must be at least 8 characters long') });
     }
     let decoded;
     try {
       decoded = jwt.verify(token, JWT_SECRET);
       if (decoded.type !== 'member_password_reset') throw new Error('wrong token type');
     } catch (e) {
-      return res.status(400).json({ success: false, error: 'This reset link is invalid or has expired. Please request a new one.' });
+      return res.status(400).json({ success: false, error: M('Este enlace no es válido o ya caducó (dura 1 hora). Solicita uno nuevo.', 'This reset link is invalid or has expired. Please request a new one.') });
     }
     if (decoded.chamber_id !== req.chamber_id) {
-      return res.status(400).json({ success: false, error: 'This reset link does not match this chamber.' });
+      return res.status(400).json({ success: false, error: M('Este enlace es de otra cámara.', 'This reset link does not match this chamber.') });
     }
     const [member] = await sequelize.query(
       `SELECT id, email, password_hash, status FROM members
        WHERE chamber_id = :c AND id = :id AND email = :email`,
       { replacements: { c: req.chamber_id, id: decoded.member_id, email: decoded.email }, type: QueryTypes.SELECT }
     );
-    if (!member) return res.status(400).json({ success: false, error: 'Account not found for this reset link.' });
+    // The link is bound to the email it was sent to: if the account's email
+    // changed since, the old address must not be able to reset it. Say so,
+    // rather than "account not found", which reads like a broken account.
+    if (!member) {
+      return res.status(400).json({ success: false, error: M(
+        'Este enlace se envió a un correo que ya no es el de la cuenta. Solicita uno nuevo con tu correo actual.',
+        'This link was sent to an email that is no longer on the account. Request a new one with your current email.') });
+    }
     if (member.status === 'deleted' || member.status === 'suspended') {
       return res.status(403).json({ success: false, error: 'Account ' + member.status });
     }
     // Single-use enforcement: token was bound to the password hash at issue time.
     if (decoded.pwc !== String(member.password_hash || '').slice(-12)) {
-      return res.status(400).json({ success: false, error: 'This reset link has already been used. Please request a new one.' });
+      return res.status(400).json({ success: false, error: M('Este enlace ya se usó. Solicita uno nuevo.', 'This reset link has already been used. Please request a new one.') });
     }
     const hashed = await bcrypt.hash(String(newPassword), 10);
     await sequelize.query(
       `UPDATE members SET password_hash = :h, updated_at = NOW() WHERE chamber_id = :c AND id = :id`,
       { replacements: { h: hashed, c: req.chamber_id, id: member.id } }
     );
-    return res.json({ success: true, message: 'Your password has been updated. You can now sign in.' });
+    return res.json({ success: true, message: M('Tu contraseña se actualizó. Ya puedes iniciar sesión.', 'Your password has been updated. You can now sign in.') });
   } catch (err) {
     console.error('[/auth/reset-password]', err.message);
     return res.status(500).json({ success: false, error: 'Failed to reset password' });
