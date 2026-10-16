@@ -1,6 +1,6 @@
 {
   "source": "https://hispanotec.org",
-  "captured_at": "2026-10-15T23:30:19.916Z",
+  "captured_at": "2026-10-16T00:08:00.426Z",
   "pages": [
     "",
     "la-asociacion",
@@ -16,12 +16,14 @@
     "aviso-legal",
     "privacidad",
     "cookies",
+    "formulario-de-interes",
     "hispanotec-firma-un-acuerdo-estrategico-con-digit2ai-para-impulsar-su-infraestructura-digital-basada-en-inteligencia-artificial",
     "hispanotec-suscribe-una-carta-de-apoyo-institucional-a-la-obra"
   ],
   "assets": [
     "/hispatec/org/wp/plugins_contact-form-7_includes_css_styles.css",
     "/hispatec/org/wp/plugins_elementor-pro_assets_css_modules_sticky.min.css",
+    "/hispatec/org/wp/plugins_elementor-pro_assets_css_widget-form.min.css",
     "/hispatec/org/wp/plugins_elementor-pro_assets_css_widget-loop-common.min.css",
     "/hispatec/org/wp/plugins_elementor-pro_assets_css_widget-loop-grid.min.css",
     "/hispatec/org/wp/plugins_elementor-pro_assets_css_widget-nav-menu.min.css",
@@ -117,6 +119,7 @@
     "/hispatec/org/wp/uploads_2026_10_Fran-Hurtado.jpg",
     "/hispatec/org/wp/uploads_2026_10_cierre-bloques.svg",
     "/hispatec/org/wp/uploads_2026_10_hero-la-asociacion.svg",
+    "/hispatec/org/wp/uploads_elementor_css_post-5315.css",
     "/hispatec/org/wp/uploads_elementor_css_post-5445.css",
     "/hispatec/org/wp/uploads_elementor_css_post-5450.css",
     "/hispatec/org/wp/uploads_elementor_css_post-5453.css",

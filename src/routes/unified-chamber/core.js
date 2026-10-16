@@ -35,7 +35,72 @@ const WAIVED_FEE_SLUGS = Array.from(new Set([
     .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
 ]));
 function signupFeesWaived(chamberSlug) {
-  return WAIVED_FEE_SLUGS.includes(String(chamberSlug || '').toLowerCase());
+  const slug = String(chamberSlug || '').toLowerCase();
+  // A chamber that collects with its OWN Stripe account (see chamberStripeKey)
+  // is never waived: cv-105 was free only until HISPANOTEC moved its paid
+  // membership off WordPress and onto this signup (owner, 2026-10-15).
+  if (ownStripeKey(slug)) return false;
+  return WAIVED_FEE_SLUGS.includes(slug);
+}
+
+// A chamber can collect membership on its OWN Stripe account instead of the
+// platform's: CHAMBER_STRIPE_KEY_<SLUG> (cv-105 -> CHAMBER_STRIPE_KEY_CV_105).
+// HISPANOTEC charges 100 EUR/year on the Stripe account its WordPress
+// (Paid Memberships Pro) already used, so members keep paying the
+// association, never Digit2AI.
+function ownStripeKey(slug) {
+  const k = 'CHAMBER_STRIPE_KEY_' + String(slug || '').toUpperCase().replace(/[^A-Z0-9]/g, '_');
+  return process.env[k] || null;
+}
+// Which key a chamber's member billing uses. A chamber whose theme_config says
+// member_billing.own_stripe=true NEVER falls back to the platform key: charging
+// its members on the wrong account is worse than refusing.
+function chamberStripeKey(chamber) {
+  const own = ownStripeKey(chamber && chamber.slug);
+  if (own) return own;
+  if (memberBilling(chamber).own_stripe) return null;
+  return process.env.STRIPE_SECRET_KEY || null;
+}
+function memberBilling(chamber) {
+  let tc = chamber && chamber.theme_config;
+  if (typeof tc === 'string') { try { tc = JSON.parse(tc); } catch (e) { tc = {}; } }
+  return (tc && tc.member_billing) || {};
+}
+// Line items for a member Checkout. Default: platform standard ($25 setup +
+// $10/month). theme_config.member_billing = { currency, interval, price_cents,
+// setup_cents, product_name, own_stripe } replaces it -- HISPANOTEC:
+// { currency:'eur', interval:'year', price_cents:10000, setup_cents:0 }.
+function memberLineItems(chamber) {
+  const b = memberBilling(chamber);
+  const name = chamber.name || 'Chamber';
+  if (Number.isFinite(+b.price_cents) && +b.price_cents > 0) {
+    const currency = String(b.currency || 'usd').toLowerCase();
+    const interval = ['day', 'week', 'month', 'year'].includes(b.interval) ? b.interval : 'year';
+    const items = [];
+    if (+b.setup_cents > 0) items.push({ price_data: { currency, product_data: { name: `${name} -- Cuota de alta` }, unit_amount: Math.round(+b.setup_cents) }, quantity: 1 });
+    items.push({ price_data: { currency, product_data: { name: b.product_name || `${name} -- Membresía` }, unit_amount: Math.round(+b.price_cents), recurring: { interval } }, quantity: 1 });
+    return items;
+  }
+  const fees = memberFees(chamber);
+  return [
+    { price_data: { currency: 'usd', product_data: { name: `${name} -- One-Time Setup Fee`, description: 'Account provisioning, onboarding, and platform activation' }, unit_amount: fees.setup_cents }, quantity: 1 },
+    { price_data: { currency: 'usd', product_data: { name: `${name} -- Monthly Membership`, description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics' }, unit_amount: fees.monthly_cents, recurring: { interval: 'month' } }, quantity: 1 }
+  ];
+}
+async function createMemberCheckout(req, member, successUrl, cancelUrl) {
+  const key = chamberStripeKey(req.chamber);
+  if (!key) return null;
+  const stripe = require('stripe')(key);
+  return stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    customer_email: member.email,
+    metadata: { chamber_id: String(req.chamber_id), chamber_slug: req.chamber.slug, member_id: String(member.id), member_email: member.email, flow: 'member_signup' },
+    subscription_data: { metadata: { chamber_id: String(req.chamber_id), chamber_slug: req.chamber.slug, member_id: String(member.id) } },
+    line_items: memberLineItems(req.chamber),
+    mode: 'subscription',
+    success_url: successUrl,
+    cancel_url: cancelUrl
+  });
 }
 
 // Per-chamber member signup pricing. Defaults to the platform standard
@@ -255,59 +320,13 @@ router.post('/auth/login', async (req, res) => {
       // already be expired (24h limit), so always create a new one.
       let checkoutUrl = null;
       try {
-        const stripeKey = process.env.STRIPE_SECRET_KEY;
-        if (stripeKey) {
-          const stripe = require('stripe')(stripeKey);
-          const baseUrl = `${req.protocol}://${req.get('host')}`;
-          const slug = req.chamber.slug;
-          const chamberName = req.chamber.name;
-          const fees = memberFees(req.chamber);
-          const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            customer_email: member.email,
-            metadata: {
-              chamber_id: String(req.chamber_id),
-              chamber_slug: slug,
-              member_id: String(member.id),
-              member_email: member.email,
-              flow: 'member_signup'
-            },
-            subscription_data: {
-              metadata: {
-                chamber_id: String(req.chamber_id),
-                chamber_slug: slug,
-                member_id: String(member.id)
-              }
-            },
-            line_items: [
-              {
-                price_data: {
-                  currency: 'usd',
-                  product_data: {
-                    name: `${chamberName} -- One-Time Setup Fee`,
-                    description: 'Account provisioning, onboarding, and platform activation'
-                  },
-                  unit_amount: fees.setup_cents
-                },
-                quantity: 1
-              },
-              {
-                price_data: {
-                  currency: 'usd',
-                  product_data: {
-                    name: `${chamberName} -- Monthly Membership`,
-                    description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
-                  },
-                  unit_amount: fees.monthly_cents,
-                  recurring: { interval: 'month' }
-                },
-                quantity: 1
-              }
-            ],
-            mode: 'subscription',
-            success_url: `${baseUrl}/${slug}/login?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${baseUrl}/${slug}/login?payment=cancelled`
-          });
+        const proto = req.headers['x-forwarded-proto'] || req.protocol;
+        const baseUrl = `${proto}://${req.get('host')}`;
+        const slug = req.chamber.slug;
+        const session = await createMemberCheckout(req, member,
+          `${baseUrl}/${slug}/login?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+          `${baseUrl}/${slug}/login?payment=cancelled`);
+        if (session) {
           checkoutUrl = session.url;
           await sequelize.query(
             `UPDATE members SET stripe_customer_id = :cs, updated_at = NOW()
@@ -364,16 +383,29 @@ router.post('/auth/login', async (req, res) => {
 // auto-invalidates the moment the password changes (single use) -- no DB column
 // or migration required.
 router.post('/auth/forgot-password', async (req, res) => {
+  // THE LINK TRAVELS ONLY BY EMAIL (SendGrid). It used to be returned in this
+  // response too, which let anyone who knew a member's email reset that
+  // member's password from the browser. The answer is also identical whether
+  // or not the address exists, so the endpoint cannot be used to find members.
+  const es = (req.chamber && req.chamber.primary_language) !== 'en';
+  const generic = es
+    ? 'Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer la contraseña. Revisa tu bandeja de entrada (y la carpeta de spam).'
+    : 'If an account exists for that email, a reset link has been sent. Check your inbox (and spam folder).';
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
+    if (!email) return res.status(400).json({ success: false, error: es ? 'El correo es obligatorio' : 'Email is required' });
+    const sgKey = process.env.SENDGRID_API_KEY;
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    if (!sgKey || !fromEmail) {
+      return res.status(503).json({ success: false, error: es ? 'El envío de correo no está configurado. Contacta a la asociación.' : 'Email is not configured. Contact support.' });
+    }
     const [member] = await sequelize.query(
       `SELECT id, email, password_hash, first_name, status
        FROM members WHERE chamber_id = :c AND email = :email`,
       { replacements: { c: req.chamber_id, email: String(email).toLowerCase().trim() }, type: QueryTypes.SELECT }
     );
     if (!member || member.status === 'deleted' || member.status === 'suspended') {
-      return res.json({ success: false, error: 'No active account found with this email address' });
+      return res.json({ success: true, message: generic });
     }
     // Bind the token to the last 12 chars of the current hash -> single use.
     const pwc = String(member.password_hash || '').slice(-12);
@@ -386,43 +418,32 @@ router.post('/auth/forgot-password', async (req, res) => {
     const proto = req.headers['x-forwarded-proto'] || req.protocol;
     const baseUrl = `${proto}://${req.get('host')}`;
     const resetLink = `${baseUrl}/${req.chamber.slug}/dashboard/?reset_token=${encodeURIComponent(resetToken)}`;
-
-    // Best-effort branded email. Never blocks the link from being returned.
-    let emailed = false;
+    const chamberName = req.chamber.name || 'Virtual Chamber';
+    const name = String(member.first_name || '').replace(/[<>&"]/g, '');
     try {
-      const sgKey = process.env.SENDGRID_API_KEY;
-      const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-      if (sgKey && fromEmail) {
-        const sgMail = require('@sendgrid/mail');
-        sgMail.setApiKey(sgKey);
-        const chamberName = req.chamber.name || 'Virtual Chamber';
-        await sgMail.send({
-          to: member.email,
-          from: { email: fromEmail, name: chamberName },
-          subject: `Reset your ${chamberName} password`,
-          text: `Hi ${member.first_name || ''},\n\nWe received a request to reset your ${chamberName} member password. Use the link below (valid for 1 hour):\n\n${resetLink}\n\nIf you did not request this, you can safely ignore this email -- your password will not change.`,
-          html: `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e">`
-            + `<h2 style="color:#003DA5">${chamberName}</h2>`
-            + `<p>Hi ${member.first_name || 'there'},</p>`
-            + `<p>We received a request to reset your member password. Click the button below to choose a new one. This link is valid for <b>1 hour</b>.</p>`
-            + `<p style="text-align:center;margin:28px 0"><a href="${resetLink}" style="background:#CE1126;color:#fff;text-decoration:none;padding:13px 28px;border-radius:8px;font-weight:700;display:inline-block">Reset Password</a></p>`
-            + `<p style="font-size:12px;color:#777">If the button doesn't work, copy and paste this link:<br><a href="${resetLink}">${resetLink}</a></p>`
-            + `<p style="font-size:12px;color:#777">If you did not request this, you can safely ignore this email -- your password will not change.</p>`
-            + `</div>`
-        });
-        emailed = true;
-      }
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(sgKey);
+      await sgMail.send({
+        to: member.email,
+        from: { email: fromEmail, name: chamberName },
+        subject: es ? `Restablece tu contraseña de ${chamberName}` : `Reset your ${chamberName} password`,
+        text: es
+          ? `Hola ${name},\n\nRecibimos una solicitud para restablecer tu contraseña de ${chamberName}. Usa este enlace (válido durante 1 hora):\n\n${resetLink}\n\nSi no lo solicitaste, ignora este correo: tu contraseña no cambiará.`
+          : `Hi ${name},\n\nWe received a request to reset your ${chamberName} member password. Use the link below (valid for 1 hour):\n\n${resetLink}\n\nIf you did not request this, you can safely ignore this email -- your password will not change.`,
+        html: `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#1a1a2e">`
+          + `<h2 style="color:#1A2F4A">${chamberName}</h2>`
+          + `<p>${es ? 'Hola' : 'Hi'} ${name || (es ? '' : 'there')},</p>`
+          + `<p>${es ? 'Recibimos una solicitud para restablecer tu contraseña. Pulsa el botón para elegir una nueva. El enlace es válido durante <b>1 hora</b>.' : 'We received a request to reset your member password. Click the button below to choose a new one. This link is valid for <b>1 hour</b>.'}</p>`
+          + `<p style="text-align:center;margin:28px 0"><a href="${resetLink}" style="background:#1F4D78;color:#fff;text-decoration:none;padding:13px 28px;border-radius:6px;font-weight:700;display:inline-block">${es ? 'Restablecer contraseña' : 'Reset Password'}</a></p>`
+          + `<p style="font-size:12px;color:#777">${es ? 'Si el botón no funciona, copia y pega este enlace:' : "If the button doesn't work, copy and paste this link:"}<br><a href="${resetLink}">${resetLink}</a></p>`
+          + `<p style="font-size:12px;color:#777">${es ? 'Si no lo solicitaste, ignora este correo: tu contraseña no cambiará.' : 'If you did not request this, you can safely ignore this email -- your password will not change.'}</p>`
+          + `</div>`
+      });
     } catch (mailErr) {
       console.error('[/auth/forgot-password email]', mailErr.message);
+      return res.status(502).json({ success: false, error: es ? 'No se pudo enviar el correo. Inténtalo de nuevo en unos minutos.' : 'The email could not be sent. Try again in a few minutes.' });
     }
-
-    return res.json({
-      success: true,
-      message: emailed ? 'A reset link has been emailed to you. You can also use the link below.' : 'Use the link below to reset your password.',
-      resetLink,
-      emailed,
-      expiresIn: '1 hour'
-    });
+    return res.json({ success: true, message: generic, emailed: true });
   } catch (err) {
     console.error('[/auth/forgot-password]', err.message);
     return res.status(500).json({ success: false, error: 'Failed to process reset request' });
@@ -630,66 +651,18 @@ router.post('/auth/signup-member', async (req, res) => {
       });
     }
 
-    // Create Stripe Checkout session
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    if (!stripeKey) {
-      return res.status(500).json({ success: false, error: 'Stripe is not configured. Contact support.' });
-    }
-    const stripe = require('stripe')(stripeKey);
-
-    // Determine the absolute base URL for redirect URLs. Honour the request's
-    // host so the same code works on aiagent.ringlypro.com and camaravirtual.app.
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    // Create Stripe Checkout session -- on the chamber's own Stripe account
+    // when it has one (HISPANOTEC), otherwise the platform's.
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${proto}://${req.get('host')}`;
     const slug = req.chamber.slug;
-    const chamberName = req.chamber.name;
-    const fees = memberFees(req.chamber);
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      customer_email: lowerEmail,
-      metadata: {
-        chamber_id: String(req.chamber_id),
-        chamber_slug: slug,
-        member_id: String(memberRow.id),
-        member_email: lowerEmail,
-        flow: 'member_signup'
-      },
-      subscription_data: {
-        metadata: {
-          chamber_id: String(req.chamber_id),
-          chamber_slug: slug,
-          member_id: String(memberRow.id)
-        }
-      },
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${chamberName} -- One-Time Setup Fee`,
-              description: 'Account provisioning, onboarding, and platform activation'
-            },
-            unit_amount: fees.setup_cents
-          },
-          quantity: 1
-        },
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `${chamberName} -- Monthly Membership`,
-              description: 'Full ecosystem access: AI matching, directory, projects, exchange, analytics'
-            },
-            unit_amount: fees.monthly_cents,
-            recurring: { interval: 'month' }
-          },
-          quantity: 1
-        }
-      ],
-      mode: 'subscription',
-      success_url: `${baseUrl}/${slug}/dashboard/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/${slug}/signup-member?payment=cancelled`
-    });
+    const okPath = typeof req.body.return_path === 'string' && /^\/[a-z0-9/_-]*$/i.test(req.body.return_path) ? req.body.return_path : null;
+    const session = await createMemberCheckout(req, memberRow,
+      `${baseUrl}/${slug}/dashboard/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      okPath ? `${baseUrl}${okPath}?payment=cancelled` : `${baseUrl}/${slug}/signup-member?payment=cancelled`);
+    if (!session) {
+      return res.status(503).json({ success: false, error: 'Payments are not configured for this chamber yet. Contact the association.' });
+    }
 
     // Stash the checkout session id on the row so the success-URL verifier can
     // double-check it matches before flipping status.
@@ -724,7 +697,7 @@ router.post('/auth/complete-signup-payment', async (req, res) => {
     const { session_id } = req.body;
     if (!session_id) return res.status(400).json({ success: false, error: 'session_id required' });
 
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const stripeKey = chamberStripeKey(req.chamber);
     if (!stripeKey) return res.status(500).json({ success: false, error: 'Stripe is not configured' });
     const stripe = require('stripe')(stripeKey);
 
@@ -768,12 +741,13 @@ router.post('/auth/complete-signup-payment', async (req, res) => {
     await sequelize.query(
       `INSERT INTO transactions
        (chamber_id, type, from_member_id, amount, currency, status, description, created_at)
-       VALUES (:c, 'membership_signup', :m, :amt, 'USD', 'completed', :desc, NOW())`,
+       VALUES (:c, 'membership_signup', :m, :amt, :cur, 'completed', :desc, NOW())`,
       {
         replacements: {
           c: req.chamber_id, m: memberId,
-          amt: (session.amount_total || 3500) / 100,
-          desc: `Initial setup ($25) + first month ($10) -- session ${session.id}`
+          amt: (session.amount_total || 0) / 100,
+          cur: String(session.currency || 'usd').toUpperCase(),
+          desc: `Membership signup -- session ${session.id}`
         }
       }
     );

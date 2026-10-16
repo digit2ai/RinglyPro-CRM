@@ -1,0 +1,180 @@
+<!-- Alta de asociado HISPANOTEC. Replaces the WordPress form on /formulario-de-interes/.
+     Same fields as camaravirtual.app/cv-105/signup-member; posts to the cv-105 member signup, so the
+     account and password live in the digital ecosystem, not WordPress. Payment (100 EUR/year) runs on
+     HISPANOTEC's own Stripe account when CHAMBER_STRIPE_KEY_CV_105 is set. Inserted by snapshot.js. -->
+<div class="hx-signup">
+<form class="elementor-form" id="hxSignup" novalidate>
+<div class="elementor-form-fields-wrapper elementor-labels-above">
+<div class="elementor-field-group elementor-column elementor-field-group-first_name elementor-col-50 elementor-field-required">
+<label for="hx-first_name" class="elementor-field-label">Nombre</label>
+<input size="1" type="text" id="hx-first_name" name="first_name" class="elementor-field elementor-size-sm elementor-field-textual" required autocomplete="given-name">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-last_name elementor-col-50 elementor-field-required">
+<label for="hx-last_name" class="elementor-field-label">Apellido(s)</label>
+<input size="1" type="text" id="hx-last_name" name="last_name" class="elementor-field elementor-size-sm elementor-field-textual" required autocomplete="family-name">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-email elementor-col-50 elementor-field-required">
+<label for="hx-email" class="elementor-field-label">Correo electrónico</label>
+<input size="1" type="email" id="hx-email" name="email" class="elementor-field elementor-size-sm elementor-field-textual" required autocomplete="email">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-phone elementor-col-50">
+<label for="hx-phone" class="elementor-field-label">Teléfono (opcional)</label>
+<input size="1" type="tel" id="hx-phone" name="phone" class="elementor-field elementor-size-sm elementor-field-textual" autocomplete="tel" placeholder="+34 600 000 000">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-password elementor-col-50 elementor-field-required">
+<label for="hx-password" class="elementor-field-label">Contraseña (mínimo 8 caracteres)</label>
+<input size="1" type="password" id="hx-password" name="password" class="elementor-field elementor-size-sm elementor-field-textual" required minlength="8" autocomplete="new-password">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-password_confirm elementor-col-50 elementor-field-required">
+<label for="hx-password_confirm" class="elementor-field-label">Confirmar contraseña</label>
+<input size="1" type="password" id="hx-password_confirm" name="password_confirm" class="elementor-field elementor-size-sm elementor-field-textual" required minlength="8" autocomplete="new-password">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-country elementor-col-50">
+<label for="hx-country" class="elementor-field-label">País de residencia</label>
+<div class="elementor-field elementor-select-wrapper remove-before"><select id="hx-country" name="country" class="elementor-field-textual elementor-size-sm">
+<option value="">Selecciona un país</option>
+<option value="Germany">Alemania</option>
+<option value="Argentina">Argentina</option>
+<option value="Austria">Austria</option>
+<option value="Belize">Belice</option>
+<option value="Bolivia">Bolivia</option>
+<option value="Brazil">Brasil</option>
+<option value="Bulgaria">Bulgaria</option>
+<option value="Belgium">Bélgica</option>
+<option value="Canada">Canadá</option>
+<option value="Chile">Chile</option>
+<option value="Cyprus">Chipre</option>
+<option value="Colombia">Colombia</option>
+<option value="Costa Rica">Costa Rica</option>
+<option value="Croatia">Croacia</option>
+<option value="Cuba">Cuba</option>
+<option value="Denmark">Dinamarca</option>
+<option value="Ecuador">Ecuador</option>
+<option value="El Salvador">El Salvador</option>
+<option value="Slovakia">Eslovaquia</option>
+<option value="Slovenia">Eslovenia</option>
+<option value="Spain">España</option>
+<option value="United States">Estados Unidos</option>
+<option value="Estonia">Estonia</option>
+<option value="Philippines">Filipinas</option>
+<option value="Finland">Finlandia</option>
+<option value="France">Francia</option>
+<option value="Greece">Grecia</option>
+<option value="Guatemala">Guatemala</option>
+<option value="Guyana">Guyana</option>
+<option value="Haiti">Haití</option>
+<option value="Honduras">Honduras</option>
+<option value="Hungary">Hungría</option>
+<option value="Ireland">Irlanda</option>
+<option value="Iceland">Islandia</option>
+<option value="Italy">Italia</option>
+<option value="Jamaica">Jamaica</option>
+<option value="Latvia">Letonia</option>
+<option value="Lithuania">Lituania</option>
+<option value="Luxembourg">Luxemburgo</option>
+<option value="Malta">Malta</option>
+<option value="Mexico">México</option>
+<option value="Nicaragua">Nicaragua</option>
+<option value="Norway">Noruega</option>
+<option value="Panama">Panamá</option>
+<option value="Paraguay">Paraguay</option>
+<option value="Netherlands">Países Bajos</option>
+<option value="Peru">Perú</option>
+<option value="Poland">Polonia</option>
+<option value="Portugal">Portugal</option>
+<option value="Puerto Rico">Puerto Rico</option>
+<option value="United Kingdom">Reino Unido</option>
+<option value="Czech Republic">República Checa</option>
+<option value="Dominican Republic">República Dominicana</option>
+<option value="Romania">Rumanía</option>
+<option value="Sweden">Suecia</option>
+<option value="Switzerland">Suiza</option>
+<option value="Suriname">Suriname</option>
+<option value="Trinidad and Tobago">Trinidad y Tobago</option>
+<option value="Turkey">Turquía</option>
+<option value="Ukraine">Ucrania</option>
+<option value="Uruguay">Uruguay</option>
+<option value="Venezuela">Venezuela</option>
+</select></div>
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-sector elementor-col-50">
+<label for="hx-sector" class="elementor-field-label">Área profesional / industria</label>
+<div class="elementor-field elementor-select-wrapper remove-before"><select id="hx-sector" name="sector" class="elementor-field-textual elementor-size-sm">
+<option value="">Selecciona un sector</option>
+<option value="agricultura">Agricultura</option>
+<option value="alimentos_bebidas">Alimentos y bebidas</option>
+<option value="automotriz">Automotriz</option>
+<option value="belleza_bienestar">Belleza y bienestar</option>
+<option value="bienes_raices">Bienes raíces</option>
+<option value="ciberseguridad">Ciberseguridad</option>
+<option value="comercio_exterior">Comercio exterior</option>
+<option value="construccion">Construcción</option>
+<option value="consultoria">Consultoría</option>
+<option value="educacion">Educación</option>
+<option value="energia">Energía</option>
+<option value="finanzas">Finanzas</option>
+<option value="hoteleria_turismo">Hotelería y turismo</option>
+<option value="legal">Legal</option>
+<option value="logistica">Logística</option>
+<option value="manufactura">Manufactura</option>
+<option value="marketing_digital">Marketing digital</option>
+<option value="medios_comunicacion">Medios de comunicación</option>
+<option value="mineria">Minería</option>
+<option value="retail">Retail</option>
+<option value="salud">Salud</option>
+<option value="seguros">Seguros</option>
+<option value="servicios_profesionales">Servicios profesionales</option>
+<option value="tecnologia">Tecnología</option>
+<option value="textil">Textil</option>
+</select></div>
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-company_name elementor-col-50">
+<label for="hx-company_name" class="elementor-field-label">Empresa (opcional)</label>
+<input size="1" type="text" id="hx-company_name" name="company_name" class="elementor-field elementor-size-sm elementor-field-textual">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-years_experience elementor-col-50">
+<label for="hx-years_experience" class="elementor-field-label">Años de experiencia</label>
+<input size="1" type="number" id="hx-years_experience" name="years_experience" class="elementor-field elementor-size-sm elementor-field-textual" min="0" max="80">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-sub_specialty elementor-col-100">
+<label for="hx-sub_specialty" class="elementor-field-label">Especialidad / enfoque</label>
+<input size="1" type="text" id="hx-sub_specialty" name="sub_specialty" class="elementor-field elementor-size-sm elementor-field-textual" placeholder="Ej.: ingeniería civil, comercio exterior, software">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-bio elementor-col-100">
+<label for="hx-bio" class="elementor-field-label">Descripción profesional</label>
+<textarea id="hx-bio" name="bio" rows="5" class="elementor-field elementor-size-sm elementor-field-textual" placeholder="Tu experiencia, servicios y el tipo de proyectos en los que quieres participar. Se usa para conectarte con otros asociados."></textarea>
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-languages elementor-col-50">
+<label for="hx-languages" class="elementor-field-label">Idiomas</label>
+<div class="hx-langs"><label><input type="checkbox" name="languages" value="Spanish" checked> Español</label><label><input type="checkbox" name="languages" value="English"> Inglés</label></div>
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-website_url elementor-col-50">
+<label for="hx-website_url" class="elementor-field-label">Sitio web (opcional)</label>
+<input size="1" type="url" id="hx-website_url" name="website_url" class="elementor-field elementor-size-sm elementor-field-textual" placeholder="https://">
+</div>
+<div class="elementor-field-group elementor-column elementor-field-group-linkedin_url elementor-col-100">
+<label for="hx-linkedin_url" class="elementor-field-label">LinkedIn (opcional)</label>
+<input size="1" type="url" id="hx-linkedin_url" name="linkedin_url" class="elementor-field elementor-size-sm elementor-field-textual" placeholder="https://linkedin.com/in/...">
+</div>
+<div class="elementor-field-group elementor-column elementor-col-100 elementor-field-type-acceptance elementor-field-required">
+<label class="hx-accept"><input type="checkbox" id="hx-privacidad" required> He leído y acepto la <a href="/hispatec/privacidad/" target="_blank">Política de privacidad</a>.</label>
+</div>
+<div class="elementor-field-group elementor-column elementor-col-100 elementor-field-type-acceptance elementor-field-required">
+<label class="hx-accept"><input type="checkbox" id="hx-estatutos" required> Acepto los <a href="/hispatec/estatutos/" target="_blank">Estatutos</a> y el <a href="/hispatec/decalogo/" target="_blank">Código de adhesión</a> de HISPANOTEC.</label>
+</div>
+<div class="elementor-field-group elementor-column elementor-field-type-submit elementor-col-100 e-form__buttons">
+<button type="submit" class="elementor-button elementor-size-sm" id="hxSubmit"><span class="elementor-button-content-wrapper"><span class="elementor-button-text">Solicitar adhesión</span></span></button>
+</div>
+</div>
+<p class="hx-note" id="hxPrice">Cuota de asociado individual: 100 € al año.</p>
+<div class="hx-msg" id="hxMsg" role="alert" hidden></div>
+</form>
+<div class="hx-account">
+<p>¿Ya eres asociado? <a href="/cv-105/login" target="_blank" rel="noopener">Inicia sesión</a> · <a href="#" id="hxForgotOpen">¿Olvidaste tu contraseña?</a></p>
+<form id="hxForgot" hidden>
+<label for="hx-forgot-email" class="elementor-field-label">Correo de tu cuenta</label>
+<div class="hx-forgot-row"><input type="email" id="hx-forgot-email" required class="elementor-field elementor-size-sm elementor-field-textual" autocomplete="email"><button type="submit" class="elementor-button elementor-size-sm"><span class="elementor-button-text">Enviar enlace</span></button></div>
+<div class="hx-msg" id="hxForgotMsg" role="status" hidden></div>
+</form>
+</div>
+</div>

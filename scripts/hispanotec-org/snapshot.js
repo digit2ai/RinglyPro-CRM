@@ -47,7 +47,17 @@ const PAGES = [
   '', 'la-asociacion', 'bienvenida', 'quienes-somos', 'asociados-protectores',
   'membresias', 'noticias', 'contacto', 'decalogo', 'estatutos',
   'informacion-sobre-nuestros-dominios', 'aviso-legal', 'privacidad', 'cookies',
+  'formulario-de-interes',
 ];
+// WordPress pages being retired (owner, 2026-10-15): sign-up, login and
+// account now live in the digital ecosystem (cv-105), so links to them point
+// at our pages instead of hispanotec.org.
+const REPLACED = {
+  'inscripcion': BASE + 'formulario-de-interes/',
+  'tipos-de-membresia': BASE + 'membresias/',
+  'iniciar-sesion': '/cv-105/login',
+  'mi-cuenta': '/cv-105/login',
+};
 
 // ── assets ────────────────────────────────────────────────────────────────
 const assetMap = new Map();
@@ -127,6 +137,8 @@ function rewriteHref(href, copied) {
   if (!/(^|\.)hispanotec\.org$/i.test(u.hostname)) return { href: u.href, external: true };
   const slug = u.pathname.replace(/^\/+|\/+$/g, '');
   if (copied.has(slug)) return { href: BASE + (slug ? slug + '/' : '') + (u.hash || '') };
+  const top = slug.split('/')[0];
+  if (REPLACED[top]) return { href: REPLACED[top], external: REPLACED[top].startsWith('/cv-105') };
   if (u.pathname.includes('/wp-content/uploads/')) return { href: u.href, media: true };
   return { href: u.href, external: true }; // membership flow, forms, account: stays on hispanotec.org
 }
@@ -246,6 +258,13 @@ async function processPage(html, slug, copied, digital) {
   $('head').append(`\n<link rel="canonical" href="https://aiagent.ringlypro.com${BASE}${slug ? slug + '/' : ''}">\n<link rel="stylesheet" href="/hispatec/org/wp-menu.css?v=${VERSION}">\n`);
   $('body').append(`\n<script src="/hispatec/org/wp-menu.js?v=${VERSION}" defer></script>\n`);
 
+  if (slug === 'formulario-de-interes') {
+    const form = $('.elementor-widget-form').first();
+    if (!form.length) throw new Error('formulario-de-interes: Elementor form widget not found -- their page changed, update snapshot.js');
+    form.html('<div class="elementor-widget-container">' + fs.readFileSync(path.join(__dirname, 'signup-form.html'), 'utf8') + '</div>');
+    $('head').append(`<link rel="stylesheet" href="/hispatec/org/signup.css?v=${VERSION}">\n`);
+    $('body').append(`<script src="/hispatec/org/signup.js?v=${VERSION}" defer></script>\n`);
+  }
   if (slug === '' && digital) {
     const $d = cheerio.load(`<div id="hx-digital-wrap">${digital}</div>`, null, false);
     $d('style[data-d2-scope]').each((_, s) => { $d(s).text(scopeCss($d(s).text(), '#d2-digital')); });
@@ -260,7 +279,8 @@ let VERSION = '1';
 async function main() {
   fs.mkdirSync(WP_DIR, { recursive: true });
   VERSION = crypto.createHash('sha1').update(fs.readFileSync(path.join(OUT, 'org', 'wp-menu.js')))
-    .update(fs.readFileSync(path.join(OUT, 'org', 'wp-menu.css'))).update(fs.readFileSync(path.join(OUT, 'org', 'site.css'))).digest('hex').slice(0, 8);
+    .update(fs.readFileSync(path.join(OUT, 'org', 'wp-menu.css'))).update(fs.readFileSync(path.join(OUT, 'org', 'site.css')))
+    .update(fs.readFileSync(path.join(OUT, 'org', 'signup.css'))).update(fs.readFileSync(path.join(OUT, 'org', 'signup.js'))).digest('hex').slice(0, 8);
   const posts = await (await fetch(`${ORIGIN}/wp-json/wp/v2/posts?per_page=100&_fields=slug`, { headers: { 'User-Agent': UA } })).json();
   const slugs = [...PAGES, ...posts.map(p => p.slug)];
   const copied = new Set(slugs);

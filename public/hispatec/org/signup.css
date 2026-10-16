@@ -1,0 +1,19 @@
+/* Alta de asociado: only what Elementor's own form CSS (already loaded on the
+   copied page) does not cover. */
+.hx-signup { width: 100%; }
+.hx-signup .elementor-field-group { margin-bottom: 16px; }
+.hx-signup textarea.elementor-field { min-height: 120px; }
+.hx-signup .hx-langs { display: flex; gap: 18px; padding-top: 6px; }
+.hx-signup .hx-langs label, .hx-signup .hx-accept { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; cursor: pointer; }
+.hx-signup .hx-accept input, .hx-signup .hx-langs input { width: auto; margin-top: 3px; }
+.hx-signup .hx-accept a, .hx-signup .hx-account a { color: #1F4D78; text-decoration: underline; }
+.hx-signup .elementor-button { min-height: 46px; cursor: pointer; }
+.hx-signup .elementor-button[disabled] { opacity: .6; cursor: wait; }
+.hx-signup .hx-note { font-size: 14px; color: #47586E; margin: 4px 0 0; }
+.hx-signup .hx-msg { margin-top: 14px; padding: 12px 14px; border-radius: 4px; font-size: 14px; }
+.hx-signup .hx-msg.ok { background: #EEF2F7; border-left: 3px solid #2F6FB0; color: #1A2F4A; }
+.hx-signup .hx-msg.err { background: #fdf2f2; border-left: 3px solid #a93226; color: #7a1f17; }
+.hx-signup .hx-account { margin-top: 28px; padding-top: 18px; border-top: 1px solid #E5E2DA; font-size: 14px; }
+.hx-signup .hx-forgot-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.hx-signup .hx-forgot-row input { flex: 1 1 220px; }
+@media (max-width: 767px) { .hx-signup .elementor-col-50 { width: 100%; } }
