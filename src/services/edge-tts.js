@@ -19,7 +19,9 @@ const WebSocket = require('ws');
 
 const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const WSS_URL = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}`;
-const SEC_MS_GEC_VERSION = '1-143.0.3650.75';
+// v2 since October 2026: the v1 token below now answers 403 (see edge-tts-gec.js).
+const SEC_MS_GEC_VERSION = '2-143.0.3650.75';
+const { generateSecMsGecV2 } = require('./edge-tts-gec');
 const WIN_EPOCH = 11644473600; // seconds between 1601-01-01 and 1970-01-01
 
 const HEADERS = {
@@ -54,16 +56,6 @@ const CHUNK_CHARS = Number(process.env.EDGE_TTS_CHUNK_CHARS || 600);
 // Marker Profesora Isabel uses to wrap Spanish target words for the voice layer.
 const ES_MARKER = '⟦es⟧'; // ⟦es⟧
 
-// Sec-MS-GEC token: SHA256 of (Windows-file-time ticks rounded to 5 min) + token.
-// Ticks exceed Number.MAX_SAFE_INTEGER, so compute with BigInt.
-function generateSecMsGec() {
-  let seconds = Math.floor(Date.now() / 1000) + WIN_EPOCH;
-  seconds -= seconds % 300; // round down to nearest 5 minutes
-  const ticks = BigInt(seconds) * 10000000n; // seconds -> 100ns intervals
-  const strToHash = `${ticks.toString()}${TRUSTED_CLIENT_TOKEN}`;
-  return crypto.createHash('sha256').update(strToHash, 'ascii').digest('hex').toUpperCase();
-}
-
 function escapeXml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -93,11 +85,12 @@ function synthesize(text, opts = {}) {
   const lang = opts.lang || (voice.match(/^[a-z]{2}-[A-Z]{2}/) || ['es-MX'])[0];
   const rate = opts.rate || DEFAULT_RATE;
   const connectId = crypto.randomUUID().replace(/-/g, '');
-  const gec = generateSecMsGec();
+  const gec = generateSecMsGecV2();
   const url = `${WSS_URL}&Sec-MS-GEC=${gec}&Sec-MS-GEC-Version=${SEC_MS_GEC_VERSION}&ConnectionId=${connectId}`;
 
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(url, { headers: HEADERS });
+    // Microsoft also expects a random MUID cookie per connection (edge-tts does the same).
+    const ws = new WebSocket(url, { headers: Object.assign({}, HEADERS, { Cookie: 'muid=' + crypto.randomBytes(16).toString('hex').toUpperCase() + ';' }) });
     const chunks = [];
     let settled = false;
 
