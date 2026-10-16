@@ -265,6 +265,19 @@ async function processPage(html, slug, copied, digital) {
     $('head').append(`<link rel="stylesheet" href="/hispatec/org/signup.css?v=${VERSION}">\n`);
     $('body').append(`<script src="/hispatec/org/signup.js?v=${VERSION}" defer></script>\n`);
   }
+  if (slug === '') {
+    // Owner request 2026-10-15: an "Iniciar sesión" button between UNIRME and
+    // SABER MÁS in the hero. Cloned from SABER MÁS so it carries their own
+    // outline style; it opens the cv-105 login in a new tab because the page
+    // usually sits inside the digit2ai.com frame.
+    const join = $('.elementor-widget-button').filter((_, el) => /^\s*unirme\s*$/i.test($(el).text())).first();
+    const more = join.nextAll('.elementor-widget-button').first();
+    if (!join.length || !more.length) throw new Error('home hero: UNIRME / SABER MAS buttons not found -- their page changed, update snapshot.js');
+    const login = more.clone();
+    login.find('a').attr('href', '/cv-105/login').attr('target', '_blank').attr('rel', 'noopener');
+    login.find('.elementor-button-text').text('INICIAR SESIÓN');
+    join.after(login);
+  }
   if (slug === '' && digital) {
     const $d = cheerio.load(`<div id="hx-digital-wrap">${digital}</div>`, null, false);
     $d('style[data-d2-scope]').each((_, s) => { $d(s).text(scopeCss($d(s).text(), '#d2-digital')); });
