@@ -395,8 +395,9 @@ router.post('/auth/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, error: es ? 'El correo es obligatorio' : 'Email is required' });
     const sgKey = process.env.SENDGRID_API_KEY;
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-    if (!sgKey || !fromEmail) {
+    // Same verified sender the other verticals fall back to (Planea, BuyersLine).
+    const fromEmail = process.env.CHAMBER_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    if (!sgKey) {
       return res.status(503).json({ success: false, error: es ? 'El envío de correo no está configurado. Contacta a la asociación.' : 'Email is not configured. Contact support.' });
     }
     const [member] = await sequelize.query(
