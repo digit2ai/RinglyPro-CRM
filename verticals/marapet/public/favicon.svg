@@ -1,4 +1,4 @@
-<!-- MaraPet mark. FULL-BLEED SQUARE ON PURPOSE: iOS rounds apple-touch-icon
+<!-- MaraPet mark: orange paw on white (owner request 2026-10-17; it was white on orange). FULL-BLEED SQUARE ON PURPOSE: iOS rounds apple-touch-icon
      itself, and a pre-rounded source gets rounded twice. Everything sits inside
      the central 80% so this one file also works as a maskable icon on Android.
      A paw reads as a paw at 32px; the pad is a heart, which reads as health up
@@ -10,8 +10,8 @@
      at 32 and blowing it back up, which is the only way to see this. The toes
      now clear each other and the pad clears the toes. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="MaraPet">
-  <rect width="512" height="512" rx="96" ry="96" fill="#ff6f20"/>
-  <g fill="#ffffff">
+  <rect width="512" height="512" rx="96" ry="96" fill="#ffffff"/>
+  <g fill="#ff6f20">
     <ellipse cx="150" cy="186" rx="35" ry="44"/>
     <ellipse cx="221" cy="146" rx="34" ry="46"/>
     <ellipse cx="291" cy="146" rx="34" ry="46"/>
