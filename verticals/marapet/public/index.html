@@ -160,7 +160,14 @@ var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('co
   </div>
 </footer>
 
+<!-- Mara: chat and voice. Typed or spoken; Dalia in Spanish, Ava in English.
+     The script comes from aiagent.ringlypro.com on purpose: the orb calls the
+     API of the origin it was loaded from, so marapet.app forwards nothing. -->
+<div data-voice-orb data-agent="marapet" data-accent="#ff6f20" data-accent2="#c2470a" data-hi="#ffe2cf"
+     data-glow="rgba(255,111,32,.45)" data-ring="rgba(255,111,32,.35)" data-icon="{{BASE}}/chat-icon.svg"
+     data-label-en="Chat with Mara" data-label-es="Habla con Mara"></div>
 <script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+<script src="https://aiagent.ringlypro.com/embed/voice-orb.js" defer></script>
 <script>
 if ('serviceWorker' in navigator && window.top === window.self) {
   window.addEventListener('load', function () {

@@ -20,6 +20,9 @@
  *   data-accent   CSS colour for the orb gradient's core
  *   data-label    launcher caption
  *   data-api      API origin, when the page is served from another host
+ *   data-icon     image drawn inside the orb ball (opt-in; unset keeps the plain orb)
+ *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
+ *                 keeps the right caption when it calls setLang()
  *
  * The agent's FACTS come from this page: we extract its visible text and send it
  * as context on every turn, and the server prompt forbids answering from
@@ -111,6 +114,8 @@
     '.d2orb-end{width:calc(100% - 32px);margin:0 16px 14px;background:rgba(239,68,68,.16);border:1px solid rgba(239,68,68,.5);color:#fca5a5;border-radius:999px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:none}',
     '.d2orb-root.is-live .d2orb-end{display:block}',
     '.d2orb-foot{padding:0 16px 14px;font-size:10px;letter-spacing:.4px;color:rgba(255,255,255,.35);text-transform:uppercase}',
+    '.d2orb-ball img{position:absolute;left:18%;top:18%;width:64%;height:64%;object-fit:contain;pointer-events:none}',
+    '.d2orb-ball.d2orb-has-icon.is-thinking{animation:d2orb-breathe .9s ease-in-out infinite}',
     '@media print{.d2orb-root{display:none!important}}'
   ].join('');
 
@@ -172,6 +177,7 @@
     // pixel-identical to before.
     var accent2 = d.accent2 || '', glow = d.glow || '', ring = d.ring || '', hi = d.hi || '';
     var pos = d.position === 'bottom-left' ? 'bottom-left' : 'bottom-right';
+    var icon = d.icon || '';
 
     var lang = (d.lang || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
     if (lang !== 'es') lang = 'en';
@@ -207,11 +213,17 @@
       '</button>';
     document.body.appendChild(root);
 
+    if (icon) {
+      [].forEach.call(root.querySelectorAll('.d2orb-ball'), function (b) {
+        var im = document.createElement('img'); im.src = icon; im.alt = ''; b.classList.add('d2orb-has-icon'); b.appendChild(im);
+      });
+    }
     var $ = function (n) { return root.querySelector('[data-el="' + n + '"]'); };
+    function launchLabel() { return (cfg.lang === 'es' ? d.labelEs : d.labelEn) || d.label || T.idle; }
     var ball = $('ball'), statusEl = $('status'), capEl = $('cap');
     var input = $('input'), sendBtn = $('send'), endBtn = $('end');
 
-    $('launchTxt').textContent = d.label || T.idle;
+    $('launchTxt').textContent = launchLabel();
     input.placeholder = T.typed;
     sendBtn.textContent = T.send;
     endBtn.textContent = T.hangup;
@@ -512,7 +524,7 @@
       T = STRINGS[cfg.lang] || T;
       $('name').textContent = cfg.name;
       $('role').textContent = cfg.role;
-      $('launchTxt').textContent = d.label || T.idle;
+      $('launchTxt').textContent = launchLabel();
       input.placeholder = T.typed; sendBtn.textContent = T.send; endBtn.textContent = T.hangup;
       setState('idle');
     }
@@ -543,7 +555,7 @@
         // Relabel at once. The persona fetch below may be slow or fail, and a
         // button left in the previous language reads as a broken page.
         cfg.lang = l; T = STRINGS[l] || T;
-        $('launchTxt').textContent = d.label || T.idle;
+        $('launchTxt').textContent = launchLabel();
         input.placeholder = T.typed; sendBtn.textContent = T.send; endBtn.textContent = T.hangup;
         fetch(API + '/api/voice-agent/config?agent=' + encodeURIComponent(AGENT) + '&lang=' + l)
           .then(function (r) { return r.json(); }).then(applyCfg).catch(function () {});

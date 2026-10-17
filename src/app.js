@@ -379,10 +379,11 @@ app.use((req, res, next) => {
 // in the field pointed at an older base must keep working.
 // ═════════════════════════════════════════════════════════════════════════
 const MARAPET_HOSTS = new Set(['marapet.app', 'www.marapet.app']);
-// DELIBERATELY EMPTY. The other brand domains pass /embed/, /api/voice-agent/
-// and /api/tts/ through because they carry a voice orb that infers its origin
-// from its own script src. MaraPet carries no orb, so forwarding those would
-// publish an LLM endpoint and a TTS endpoint on a new domain for nothing.
+// DELIBERATELY EMPTY. The landing now carries Mara (the voice orb), but loads
+// it from https://aiagent.ringlypro.com/embed/voice-orb.js, so the orb calls
+// that origin's /api/voice-agent/ and /api/tts/ (CORS is open app-wide).
+// Forwarding them here would publish an LLM endpoint and a TTS endpoint on a
+// second domain for nothing.
 const MARAPET_PASS_THROUGH = [];
 let marapetRootApp = null;
 app.use((req, res, next) => {

@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Bump when any shell file changes, or installed copies keep serving the old one.
-const SHELL_VERSION = 'marapet-v2';
+const SHELL_VERSION = 'marapet-v3';
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 

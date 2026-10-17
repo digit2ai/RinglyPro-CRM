@@ -249,7 +249,7 @@ router.post('/chat', async (req, res) => {
   // Personas that belong to a vertical in the Anthropic registry follow that
   // vertical's soft switch (src/config/anthropic-flags.js). Others: unchanged.
   const PERSONA_VERTICAL = { camaravirtual: 'camaravirtual', pacccfl: 'pacccfl', pcci: 'pcci', enruta: 'enruta',
-    ronin: 'ronin', surgicalmind: 'surgicalmind', buyersline: 'buyersline', levelup: 'levelup' };
+    ronin: 'ronin', surgicalmind: 'surgicalmind', buyersline: 'buyersline', levelup: 'levelup', marapet: 'marapet' };
   const flags = require('../config/anthropic-flags');
   const verticalOff = PERSONA_VERTICAL[agent.id] && !flags.anthropicEnabled(PERSONA_VERTICAL[agent.id]);
   if (!isConfigured() || modelOff.has(agent.id) || verticalOff) {

@@ -34,6 +34,8 @@
       btns[k].setAttribute('aria-pressed', String(btns[k].getAttribute('data-lang-btn') === lang));
     }
     store(LKEY, lang);
+    // Keep Mara (the chat orb) in the same language: Dalia in Spanish, Ava in English.
+    if (window.D2AIVoiceOrb && window.D2AIVoiceOrb.setLang) window.D2AIVoiceOrb.setLang(lang);
   }
   window.mpSetLang = setLang;
 

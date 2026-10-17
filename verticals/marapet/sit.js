@@ -715,6 +715,24 @@ function cookieOf(res) {
 
   server.close();
 
+  /* ═══════════════════ Mara, the chat and voice orb ═══════════════════ */
+  section('Mara: conversational assistant on the landing');
+  const VA = require('../../src/config/voice-agents');
+  const mara = VA.agentConfig('marapet', 'es'), maraEn = VA.agentConfig('marapet', 'en');
+  ok('the marapet persona exists (an unknown id would silently fall back to the generic one)', VA.getAgent('marapet').id === 'marapet');
+  ok('Spanish speaks with Dalia', mara.voice === 'dalia');
+  ok('English speaks with Ava', maraEn.voice === 'ava');
+  const rules = VA.getAgent('marapet').persona;
+  ok('the persona forbids diagnosis in both languages', /never diagnose/.test(rules.en) && /nunca diagnostiques/.test(rules.es));
+  ok('the persona sends urgent cases to a veterinarian in both languages', /veterinarian/.test(rules.en) && /veterinario/.test(rules.es));
+  ok('the boot payload never leaks the prompt', !JSON.stringify(mara).includes('nunca diagnostiques'));
+  const landing = fs.readFileSync(path.join(__dirname, 'public/index.html'), 'utf8');
+  ok('the landing carries the orb with the marapet persona', /data-voice-orb[^>]*data-agent="marapet"/.test(landing));
+  ok('the orb script loads from the main app, so marapet.app forwards no API', landing.includes('src="https://aiagent.ringlypro.com/embed/voice-orb.js"'));
+  ok('the chat icon exists', fs.existsSync(path.join(__dirname, 'public/chat-icon.svg')));
+  ok('the language switch keeps Mara in the page language',
+    /D2AIVoiceOrb\.setLang\(lang\)/.test(fs.readFileSync(path.join(__dirname, 'public/js/landing.js'), 'utf8')));
+
   /* ═══════════════════ summary ═══════════════════ */
   console.log('\n' + '─'.repeat(64));
   if (failures.length) {
