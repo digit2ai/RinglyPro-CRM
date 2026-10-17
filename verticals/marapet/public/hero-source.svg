@@ -1,0 +1,77 @@
+<!-- MaraPet hero.
+     THE SUBJECT IS A TRAIL OF PAW PRINTS, NOT A DOG, AND THAT IS A DECISION.
+     Three attempts at a sitting-dog silhouette produced a cat, then a bird,
+     then a seal: guessing bezier control points for an animal by eye does not
+     converge, and each attempt had to be rendered to find that out. The paw is
+     a shape already verified legible down to 32px in the app icon, it says
+     "dog" unmistakably, and a trail of them reads as a walk home at the end of
+     the day — which is the product.
+     It is also better BACKGROUND behaviour: this sits behind a headline, and a
+     detailed subject competing with the words is worse than a calm one. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffc48c"/>
+      <stop offset="38%"  stop-color="#ff9a5c"/>
+      <stop offset="74%"  stop-color="#ff7430"/>
+      <stop offset="100%" stop-color="#e65a12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%"   stop-color="#fff6ea" stop-opacity=".95"/>
+      <stop offset="42%"  stop-color="#ffdcb0" stop-opacity=".55"/>
+      <stop offset="100%" stop-color="#ffc48c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="r1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2600f"/><stop offset="100%" stop-color="#cf5008"/>
+    </linearGradient>
+    <linearGradient id="r2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b94206"/><stop offset="100%" stop-color="#9c3406"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a2a08"/><stop offset="100%" stop-color="#4a1808"/>
+    </linearGradient>
+
+    <!-- the same paw as the app icon, as a reusable symbol -->
+    <symbol id="paw" viewBox="0 0 512 512">
+      <ellipse cx="150" cy="186" rx="35" ry="44"/>
+      <ellipse cx="221" cy="146" rx="34" ry="46"/>
+      <ellipse cx="291" cy="146" rx="34" ry="46"/>
+      <ellipse cx="362" cy="186" rx="35" ry="44"/>
+      <path d="M256 406c-7 0-13-3-18-9-15-17-54-46-54-83 0-27 21-46 46-46 10 0 20 4 26 12
+               6-8 16-12 26-12 25 0 46 19 46 46 0 37-39 66-54 83-5 6-11 9-18 9z"/>
+    </symbol>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <!-- low sun, off to the right so the left stays clear for a headline -->
+  <circle cx="1210" cy="352" r="420" fill="url(#glow)"/>
+  <circle cx="1210" cy="352" r="150" fill="#fff6ea" opacity=".30"/>
+  <circle cx="1210" cy="352" r="92"  fill="#fff8ee" opacity=".58"/>
+
+  <!-- distant ridge -->
+  <path d="M0 592 C 190 556, 320 600, 486 580 C 652 560, 782 600, 944 584
+           C 1106 568, 1246 606, 1400 586 C 1486 575, 1548 590, 1600 582
+           L1600 900 L0 900 Z" fill="url(#r1)" opacity=".8"/>
+  <!-- mid ridge -->
+  <path d="M0 668 C 176 634, 342 676, 514 660 C 698 642, 858 684, 1030 666
+           C 1200 648, 1366 686, 1600 662 L1600 900 L0 900 Z"
+        fill="url(#r2)" opacity=".9"/>
+  <!-- foreground -->
+  <path d="M0 772 C 260 748, 540 784, 846 768 C 1142 752, 1392 788, 1600 766
+           L1600 900 L0 900 Z" fill="url(#ground)"/>
+
+  <!-- A TRAIL OF PAWS walking out of the distance toward the viewer. They grow
+       and gain contrast as they come forward, which is what makes it read as
+       depth rather than as scattered stamps. Kept to the right half and inside
+       the frame: the headline lives on the left, and a print clipped by the
+       bottom edge reads as a mistake rather than as a crop. -->
+  <g fill="#ffe4c4">
+    <use href="#paw" width="30"  height="30"  transform="translate(596 676) rotate(-16)" opacity=".34"/>
+    <use href="#paw" width="40"  height="40"  transform="translate(664 696) rotate(-12)" opacity=".42"/>
+    <use href="#paw" width="54"  height="54"  transform="translate(748 720) rotate(-8)"  opacity=".74"/>
+    <use href="#paw" width="72"  height="72"  transform="translate(850 746) rotate(-5)"  opacity=".38"/>
+    <use href="#paw" width="94"  height="94"  transform="translate(980 772) rotate(-2)"  opacity=".66"/>
+    <use href="#paw" width="120" height="120" transform="translate(1150 752) rotate(4)"  opacity=".50"/>
+  </g>
+</svg>

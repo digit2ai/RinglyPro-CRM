@@ -284,6 +284,44 @@ ok('no page mentions the reference product by name',
 ok('no page borrows its award claim', !/CES\s*20\d\d/i.test(allText));
 ok('no page borrows its university validation', !/jeju/i.test(allText));
 
+/* ═══════════════════ 5b. the hero artwork ═══════════════════ */
+section('The hero artwork');
+const heroJpg = path.join(ROOT, 'public', 'hero.jpg');
+ok('the hero image ships with the vertical', fs.existsSync(heroJpg));
+ok('and its SOURCE ships beside it, so it can be re-rendered rather than re-drawn',
+  fs.existsSync(path.join(ROOT, 'public', 'hero-source.svg')));
+const heroBytes = fs.existsSync(heroJpg) ? fs.statSync(heroJpg).size : 0;
+ok('it is a reasonable weight for an above-the-fold background',
+  heroBytes > 20 * 1024 && heroBytes < 400 * 1024, heroBytes + ' bytes');
+
+const css = read('public/theme.css');
+ok('the hero references its own image, same-origin',
+  /background-image:\s*url\('hero\.jpg'\)/.test(css));
+ok('nothing in the vertical hotlinks an image from another host',
+  !/url\(\s*['"]?https?:\/\//.test(stripComments(css)));
+
+// THE SCRIM IS WHAT MAKES THE HEADLINE WIN. A percentage-only fade cannot be
+// trusted: the text column is centred and fixed-width while the fade is a
+// share of the viewport, so they diverge as the window grows — the first
+// version measured 1.12:1 on the line that reaches furthest across.
+const heroBlock = css.slice(css.indexOf('.mp-hero::before'), css.indexOf('.mp-hero > *'));
+ok('the hero scrim has a FLAT layer, not only a directional fade',
+  /rgba\([^)]+\);\s*$/m.test(heroBlock) || /,\s*\n\s*rgba\([^)]+\);/.test(heroBlock),
+  heroBlock.slice(0, 120));
+ok('and the hero declares its own ink rather than reusing the page text tokens',
+  /\.mp-hero \.mp-alliance\s*\{\s*color:\s*#/.test(css));
+
+ok('the landing points its canonical and og:url at the live domain',
+  /<link rel="canonical" href="https:\/\/marapet\.app\/">/.test(landing) &&
+  /og:url" content="https:\/\/marapet\.app\/"/.test(landing));
+ok('and offers a share image', /og:image" content="https:\/\/marapet\.app\/og-image\.jpg"/.test(landing));
+ok('the share image ships', fs.existsSync(path.join(ROOT, 'public', 'og-image.jpg')));
+
+// The hero is full-bleed: a boxed hero with the page showing either side reads
+// as a broken image rather than as a design.
+ok('the hero section is full-bleed, with the column nested inside it',
+  /<section class="mp-hero">\s*\n\s*<div class="mp-wrap">/.test(landing));
+
 /* ═══════════════════ 6. contrast ═══════════════════ */
 section('Contrast, computed from the tokens');
 const contrast = require('./scripts/contrast');

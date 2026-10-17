@@ -309,7 +309,66 @@ a:hover { text-decoration: underline; }
   padding: 10px 14px; margin: 18px 0;
 }
 
-.mp-hero { padding: 56px 0 44px; }
+/* ── the hero, over its own artwork ──────────────────────────────────────
+   hero.jpg is drawn here (hero-source.svg is the source), not a stock photo:
+   nothing is licensed, hotlinked, or left to age on someone else's CDN.
+
+   IT IS A DARK BAND WITH LIGHT TEXT IN BOTH THEMES, AND THAT IS A CONTRAST
+   DECISION RATHER THAN A MOOD ONE. A vivid orange mid-tone carries neither
+   black nor white text safely: white on the sky measures 2.76:1, and the dark
+   inks fail over the sun. The first version solved it with a near-white scrim,
+   which passed the measurement and greyed the artwork out completely. A DARK
+   overlay keeps the saturation — light overlays wash a sunset flat — and gives
+   light text a floor everywhere.
+
+   The FLAT layer is the load-bearing one; the directional gradient on top is
+   styling and can only ever darken, never lighten. A percentage fade cannot be
+   trusted alone: the text column is centred and fixed-width while the fade is
+   a share of the viewport, so the two diverge as the window grows and there is
+   no stop that holds at 1024 and at 1920 both. That is measured, not guessed —
+   the first attempt put one line at 1.12:1. */
+.mp-hero {
+  position: relative;
+  padding: 92px 0 100px;
+  background-image: url('hero.jpg');
+  background-size: cover;
+  background-position: 60% 56%;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+.mp-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(100deg,
+      rgba(28,11,2,.50) 0%,
+      rgba(28,11,2,.34) 44%,
+      rgba(30,13,3,.10) 74%,
+      rgba(30,13,3,0)   92%),
+    linear-gradient(180deg, rgba(20,8,2,.50) 0%, rgba(20,8,2,0) 52%),
+    rgba(24,10,2,.34);
+}
+.mp-hero > * { position: relative; z-index: 1; }
+
+/* The hero carries its OWN ink, in both themes. The page's text tokens are
+   chosen against a flat page background and mean nothing over artwork. */
+.mp-hero { color: #fff7f0; }
+.mp-hero .mp-hero__sub { color: #fff8f2; }
+.mp-hero .mp-alliance  { color: #ffffff; }
+.mp-hero .mp-mark      { color: #ffc89a; }
+.mp-hero .mp-note      { color: #ffeadb; max-width: 58ch; }
+.mp-hero .mp-btn--ghost {
+  border-color: rgba(255,240,228,.6);
+  color: #fff7f0;
+  background: rgba(28,12,2,.30);
+}
+.mp-hero .mp-btn--ghost:hover { background: rgba(28,12,2,.48); }
+
+/* Already a dark band in both themes, so dark mode only deepens it. */
+:root[data-theme="dark"] .mp-hero::before { background: rgba(10,6,2,.58); }
+
 .mp-hero h1 { font-size: 48px; max-width: 18ch; }
 .mp-hero__sub { font-size: 18px; color: var(--mp-text-2); max-width: 52ch; }
 .mp-mark { color: var(--mp-text-accent); }
@@ -330,7 +389,11 @@ a:hover { text-decoration: underline; }
 @media (max-width: 760px) {
   h1 { font-size: 28px; }
   h2 { font-size: 24px; }
-  .mp-hero { padding: 32px 0 28px; }
+  .mp-hero { padding: 52px 0 56px; background-position: 68% 60%; }
+  /* Flat on a phone: the words fill the column, so a left-to-right fade would
+     leave the right-hand end of every line sitting on bare artwork. */
+  .mp-hero::before { background: rgba(24,10,2,.64); }
+  :root[data-theme="dark"] .mp-hero::before { background: rgba(10,6,2,.62); }
   .mp-hero h1 { font-size: 34px; }
   .mp-hero__sub { font-size: 17px; }
   .mp-nav__links { display: none; }

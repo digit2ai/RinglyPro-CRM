@@ -20,6 +20,72 @@ require('./fake-db').install();
 const WIDTHS = [390, 1440];
 const PAGES = ['/', '/login', '/app', '/how-it-works', '/offline'];
 
+const zlib = require('zlib');
+
+/** Minimal PNG reader — enough for a screenshot (8-bit RGB/RGBA, no interlace). */
+function decodePng(buf) {
+  let p = 8, width = 0, height = 0, colorType = 6, bitDepth = 8;
+  const idat = [];
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p);
+    const type = buf.toString('ascii', p + 4, p + 8);
+    const data = buf.slice(p + 8, p + 8 + len);
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0); height = data.readUInt32BE(4);
+      bitDepth = data[8]; colorType = data[9];
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  if (bitDepth !== 8 || (colorType !== 2 && colorType !== 6)) return null;
+  const ch = colorType === 6 ? 4 : 3;
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = width * ch;
+  const out = Buffer.alloc(height * stride);
+  let o = 0;
+  for (let y = 0; y < height; y++) {
+    const filter = raw[o++];
+    const line = raw.slice(o, o + stride); o += stride;
+    const prev = y ? out.slice((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+    const cur = out.slice(y * stride, (y + 1) * stride);
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? cur[x - ch] : 0;
+      const b = prev[x];
+      const c = x >= ch ? prev[x - ch] : 0;
+      let v = line[x];
+      if (filter === 1) v += a;
+      else if (filter === 2) v += b;
+      else if (filter === 3) v += (a + b) >> 1;
+      else if (filter === 4) {
+        const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c);
+        v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
+      }
+      cur[x] = v & 0xff;
+    }
+  }
+  return { width, height, ch, data: out };
+}
+
+/** The pixel behind this box that is CLOSEST in luminance to the text colour. */
+function worstPixelFor(png, box, fg) {
+  if (!png || box.w <= 0 || box.h <= 0) return null;
+  const x0 = Math.max(0, box.x), y0 = Math.max(0, box.y);
+  const x1 = Math.min(png.width - 1, box.x + box.w), y1 = Math.min(png.height - 1, box.y + box.h);
+  if (x1 <= x0 || y1 <= y0) return null;
+  let worst = null;
+  const stepX = Math.max(1, Math.floor((x1 - x0) / 60));
+  const stepY = Math.max(1, Math.floor((y1 - y0) / 24));
+  for (let y = y0; y <= y1; y += stepY) {
+    for (let x = x0; x <= x1; x += stepX) {
+      const i = y * png.width * png.ch + x * png.ch;
+      const px = [png.data[i], png.data[i + 1], png.data[i + 2]];
+      const c = ratio(fg, px);
+      if (!worst || c < worst.c) worst = { c, px };
+    }
+  }
+  return worst;
+}
+
 function lum(rgb) {
   const c = rgb.map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
@@ -101,10 +167,32 @@ function ratio(a, b) {
           if (!own || rect.width === 0 || rect.height === 0) return;
           const fg = parse(cs.color);
           if (!fg || fg.a === 0) return;
+          // IS THERE A PICTURE BEHIND THIS? An ancestor-colour walk cannot see a
+          // background-image, so text over one would be measured against a
+          // colour that is not what the eye receives — and would pass for
+          // entirely the wrong reason. Flag it; the pixel pass handles it.
+          //
+          // BUT STOP AT THE FIRST OPAQUE BACKGROUND. A filled button inside the
+          // hero sits on its OWN colour, not on the artwork; the first version
+          // of this walk reported the hero's primary button at 1.61:1 by
+          // measuring the sunset behind a control the sunset never touches.
+          // An audit that cries wolf gets switched off.
+          let overImage = false;
+          for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
+            const cs2 = getComputedStyle(a);
+            const own = parse(cs2.backgroundColor);
+            if (own && own.a === 1) break;          // opaque: the picture is hidden here
+            const bi = cs2.backgroundImage;
+            if (bi && bi !== 'none' && bi.includes('url(')) { overImage = true; break; }
+          }
+          const r2 = el.getBoundingClientRect();
           texts.push({
             fg: fg.rgb, bg: behind(el),
             fs: parseFloat(cs.fontSize), fw: cs.fontWeight,
-            text: (el.textContent || '').trim().slice(0, 36), tag
+            text: (el.textContent || '').trim().slice(0, 36), tag,
+            overImage,
+            box: { x: Math.round(r2.left), y: Math.round(r2.top),
+                   w: Math.round(r2.width), h: Math.round(r2.height) }
           });
         });
         return {
@@ -122,9 +210,11 @@ function ratio(a, b) {
       else pass++;
 
       let worst = null;
+      const overImage = [];
       for (const t of r.texts) {
         const large = t.fs >= 24 || (t.fs >= 18.66 && Number(t.fw) >= 700);
         const floor = large ? 3.0 : 4.5;
+        if (t.overImage) { overImage.push({ ...t, floor, large }); continue; }
         const c = ratio(t.fg, t.bg);
         if (!worst || c < worst.c) worst = { c, ...t, floor };
         if (c < floor - 0.01) {
@@ -133,6 +223,44 @@ function ratio(a, b) {
         }
       }
       pass++;
+
+      // ── the pixel pass ──────────────────────────────────────────────────
+      // For text over artwork, screenshot the region the words occupy with the
+      // words HIDDEN, and measure the foreground against the WORST (nearest in
+      // luminance) pixel actually behind them. The hero's own image runs from
+      // near-white at the sun to near-black at the foreground, so an average
+      // would hide exactly the case that fails.
+      if (overImage.length) {
+        await page.evaluate(() => {
+          document.querySelectorAll('.mp-hero > *').forEach((n) => { n.style.visibility = 'hidden'; });
+        });
+        const shot = await page.screenshot({ type: 'png' });
+        await page.evaluate(() => {
+          document.querySelectorAll('.mp-hero > *').forEach((n) => { n.style.visibility = ''; });
+        });
+        const png = decodePng(shot);
+        let worstPix = null;
+        for (const t of overImage) {
+          const probe = worstPixelFor(png, t.box, t.fg);
+          if (!probe) continue;
+          const margin = probe.c - t.floor;
+          if (!worstPix || margin < worstPix.margin) {
+            worstPix = { ...probe, text: t.text, floor: t.floor, margin, fs: t.fs };
+          }
+          if (probe.c < t.floor - 0.01) {
+            fail++;
+            problems.push(`${route} @${width}: PIXEL contrast ${probe.c.toFixed(2)}:1 ` +
+              `(floor ${t.floor}) over artwork "${t.text}" ${t.tag} ${t.fs}px`);
+          }
+        }
+        pass++;
+        if (worstPix) {
+          console.log(`${''.padEnd(16)} @${String(width).padEnd(5)} ` +
+            `over artwork: ${overImage.length} nodes, tightest ${worstPix.c.toFixed(2)}:1 ` +
+            `vs floor ${worstPix.floor} (+${worstPix.margin.toFixed(2)}) ${worstPix.fs}px ` +
+            `"${String(worstPix.text).slice(0, 28)}"`);
+        }
+      }
 
       if (width === 390) {
         for (const t of r.targets) {
