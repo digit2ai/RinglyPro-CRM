@@ -1,0 +1,349 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MaraPet design tokens — ISTC x Digit2AI
+   ═══════════════════════════════════════════════════════════════════════════
+   The ramps below are the design system of cotons.ai, read out of its live
+   stylesheet (assets/index-BUEGkJZX.css) rather than eyeballed. Colour values
+   and a type scale are facts and are not copyrightable; their copy, imagery,
+   logo, award claims and validated accuracy figures are theirs and appear
+   nowhere in MaraPet.
+
+   THREE OF THEIR SEMANTIC TOKENS FAIL WCAG AA AS TEXT AND ARE NOT COPIED AS
+   TEXT. Every ratio below was computed, not estimated (scripts/contrast.js
+   recomputes them and the SIT fails if one drops under its floor):
+
+     #ff6f20  brand orange   on white ........ 2.78:1   FAIL  -> fill only
+     white                   on #ff6f20 ...... 2.78:1   FAIL  -> never used
+     #d94d00  orange6        on white ........ 4.19:1   FAIL  for body text
+     #868e96  their gray9    on white ........ 3.32:1   FAIL  (their text-secondary)
+     #adb5bd  their gray7    on white ........ 1.95:1   FAIL  (their text-tertiary)
+
+   So MaraPet splits each of those into a fill token and a darker text token:
+
+     --mp-accent        #ff6f20  FILL ONLY. Never carries text.
+     --mp-text-accent   #c04400  on white ........ 5.16:1  PASS
+     --mp-on-accent     #1a0b00  on #ff6f20 ...... 6.91:1  PASS
+                              on #d94d00 ...... 4.59:1  PASS  (the hover fill)
+     --mp-text-2        #676f77  on white ........ 5.10:1  PASS
+     --mp-text-3        #596169  on white ........ 6.29:1  PASS
+     --mp-text          #212529  on white ....... 15.9:1  PASS
+
+   This is the same lesson already recorded for RinglyPro Lite's teal
+   (#12b8a6, 2.49:1) and BuyersLine's orange (3.5:1): a brand colour that
+   fails as text gets its own darker sibling rather than a smaller font.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Pretendard, self-hosted. SIL Open Font License 1.1 (fonts/PRETENDARD-OFL.txt).
+   Subset to Latin + Latin-1 + Latin Extended-A/B + punctuation, which is what
+   English and Spanish need: 57 KB a weight instead of 750 KB with the full
+   Korean set. No third-party font request leaves the page. */
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/Pretendard-Regular.latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/Pretendard-Medium.latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('fonts/Pretendard-Bold.latin.woff2') format('woff2');
+}
+
+:root {
+  /* orange ramp — read from the reference stylesheet */
+  --mp-orange1: #ffefe4;
+  --mp-orange2: #ffdac1;
+  --mp-orange3: #ffac7a;
+  --mp-orange4: #ff8644;
+  --mp-orange5: #ff6f20;
+  --mp-orange6: #d94d00;
+
+  /* 19-step grey ramp */
+  --mp-gray1:  #f8f9fa;  --mp-gray11: #676f77;
+  --mp-gray2:  #f1f3f5;  --mp-gray12: #596169;
+  --mp-gray3:  #e9ecef;  --mp-gray13: #495057;
+  --mp-gray4:  #dee2e6;  --mp-gray14: #3d444a;
+  --mp-gray5:  #ced4da;  --mp-gray15: #343a40;
+  --mp-gray6:  #bec5cd;  --mp-gray16: #2a3035;
+  --mp-gray7:  #adb5bd;  --mp-gray17: #212529;
+  --mp-gray8:  #9fa7af;  --mp-gray18: #14171a;
+  --mp-gray9:  #868e96;  --mp-gray19: #080a0c;
+  --mp-gray10: #767f88;
+
+  /* health status — the reference system's own pairs (wash / solid) */
+  --mp-green:  #d7fecf;  --mp-green2:  #6ae352;
+  --mp-blue:   #dff2ff;  --mp-blue2:   #82c9fb;
+  --mp-yellow: #ffcd91;
+  --mp-red:    #ff5647;
+
+  /* overlays */
+  --mp-op10: rgba(8,14,20,.1);
+  --mp-op20: rgba(8,14,20,.2);
+  --mp-op40: rgba(8,14,20,.4);
+  --mp-op60: rgba(8,14,20,.6);
+  --mp-op80: rgba(8,14,20,.8);
+
+  /* ── semantic layer ── */
+  --mp-accent:       var(--mp-orange5);   /* FILL ONLY */
+  --mp-accent-dark:  var(--mp-orange6);   /* FILL / hover */
+  --mp-accent-light: var(--mp-orange3);   /* focus ring, wash */
+  --mp-accent-wash:  var(--mp-orange1);
+  --mp-text-accent:  #c04400;             /* the ONLY orange that may be text */
+  /* THE HOVER STATE IS WHY THIS IS #1a0b00 AND NOT A LIGHTER WARM BLACK.
+     The first value here was #2a1200, which measures a comfortable 6.37:1 on
+     the brand fill and then 4.23:1 once hover darkens that fill to #d94d00 —
+     under AA, on the control a person is actively pointing at. #d94d00 sits in
+     a luminance dead zone where NOTHING passes above it either: white is
+     4.19:1 and the lightest brand tint is 3.73:1, so the label has to go
+     darker rather than lighter. Measured by scripts/contrast.js, which fails
+     the build on both fills. */
+  --mp-on-accent:    #1a0b00;             /* the ONLY thing that sits on an orange fill */
+
+  --mp-text:   var(--mp-gray17);
+  --mp-text-2: var(--mp-gray11);
+  --mp-text-3: var(--mp-gray12);
+
+  --mp-bg:      #ffffff;
+  --mp-bg-2:    var(--mp-gray1);
+  --mp-border:        var(--mp-gray3);
+  --mp-border-strong: var(--mp-gray5);
+
+  /* geometry */
+  --mp-r-sm: 8px; --mp-r-md: 12px; --mp-r-lg: 16px;
+  --mp-r-xl: 20px; --mp-r-2xl: 32px; --mp-r-pill: 999px;
+  --mp-sh-1: 0 2px 8px rgba(8,10,12,.12);
+  --mp-sh-2: 0 4px 12px rgba(0,0,0,.10);
+  --mp-sh-up: 0 -4px 20px rgba(8,10,12,.06);
+  --mp-focus: 0 0 0 2px var(--mp-accent-light);
+
+  --mp-font: 'Pretendard', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mp-nav-h: 60px;
+}
+
+/* DARK IS AN EXPLICIT CHOICE, NEVER THE SHIPPED DEFAULT AND NEVER THE OS
+   PREFERENCE. A pre-paint script in <head> applies a saved 'dark' before the
+   stylesheet, or the app renders light for one frame and repaints, which reads
+   as a broken page. */
+:root[data-theme="dark"] {
+  --mp-text:   #eef1f4;
+  --mp-text-2: #b6bdc4;
+  --mp-text-3: #9aa2aa;
+  --mp-bg:     #14171a;
+  --mp-bg-2:   #1c2024;
+  --mp-border:        #2a3035;
+  --mp-border-strong: #3d444a;
+  --mp-text-accent: #ffac7a;   /* 7.4:1 on #14171a */
+  --mp-green:  #16321a;  --mp-blue: #10283a;
+  --mp-op10: rgba(255,255,255,.08);
+  --mp-op20: rgba(255,255,255,.16);
+  --mp-sh-1: 0 2px 8px rgba(0,0,0,.5);
+  --mp-sh-2: 0 4px 12px rgba(0,0,0,.55);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--mp-bg);
+  color: var(--mp-text);
+  font-family: var(--mp-font);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0 0 .5em; line-height: 1.28; font-weight: 700; letter-spacing: -.015em; }
+h1 { font-size: 40px; }
+h2 { font-size: 28px; }
+h3 { font-size: 20px; }
+h4 { font-size: 17px; }
+p { margin: 0 0 1em; }
+small, .mp-small { font-size: 13px; }
+.mp-mut  { color: var(--mp-text-2); }
+.mp-mut3 { color: var(--mp-text-3); }
+
+a { color: var(--mp-text-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: none; box-shadow: var(--mp-focus); border-radius: var(--mp-r-sm); }
+
+/* [hidden] must win: a display rule on .mp-btn would otherwise beat the
+   browser's own [hidden] and leave a dead control on screen. */
+[hidden] { display: none !important; }
+
+.mp-wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+/* ── buttons ── 44px minimum on every touch target ── */
+.mp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 11px 20px;
+  font: inherit; font-size: 16px; font-weight: 700;
+  border: 1px solid transparent; border-radius: var(--mp-r-pill);
+  background: var(--mp-bg-2); color: var(--mp-text);
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+.mp-btn:hover { background: var(--mp-gray3); }
+.mp-btn--primary { background: var(--mp-accent); color: var(--mp-on-accent); }
+.mp-btn--primary:hover { background: var(--mp-accent-dark); color: var(--mp-on-accent); }
+.mp-btn--ghost { background: transparent; border-color: var(--mp-border-strong); color: var(--mp-text); }
+.mp-btn--ghost:hover { background: var(--mp-bg-2); }
+.mp-btn[disabled] { opacity: .5; cursor: not-allowed; }
+.mp-btn--sm { min-height: 44px; padding: 8px 14px; font-size: 14px; }
+
+/* ── fields ── never under 16px: below that iPhone Safari zooms the page ── */
+.mp-field { display: block; margin-bottom: 14px; }
+.mp-label { display: block; font-size: 14px; font-weight: 500; color: var(--mp-text-3); margin-bottom: 6px; }
+.mp-input, .mp-select, .mp-textarea {
+  width: 100%; min-height: 48px; padding: 12px 14px;
+  font: inherit; font-size: 16px;
+  color: var(--mp-text); background: var(--mp-bg);
+  border: 1px solid var(--mp-border-strong); border-radius: var(--mp-r-md);
+}
+.mp-textarea { min-height: 96px; resize: vertical; }
+.mp-input:focus, .mp-select:focus, .mp-textarea:focus { outline: none; box-shadow: var(--mp-focus); border-color: var(--mp-accent); }
+.mp-hint { font-size: 13px; color: var(--mp-text-2); margin-top: 6px; }
+
+/* ── cards ── */
+.mp-card {
+  background: var(--mp-bg); border: 1px solid var(--mp-border);
+  border-radius: var(--mp-r-xl); padding: 20px;
+  box-shadow: var(--mp-sh-1);
+}
+.mp-card--flat { box-shadow: none; background: var(--mp-bg-2); border-color: transparent; }
+.mp-grid { display: grid; gap: 16px; }
+.mp-grid--2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.mp-grid--3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* ── status pills: the reference system's health pairs ── */
+.mp-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: var(--mp-r-pill);
+  font-size: 13px; font-weight: 700;
+  background: var(--mp-bg-2); color: var(--mp-text-3);
+}
+.mp-pill--ok    { background: var(--mp-green);  color: #12400f; }
+.mp-pill--info  { background: var(--mp-blue);   color: #0b3450; }
+.mp-pill--warn  { background: var(--mp-yellow); color: #4a2a00; }
+.mp-pill--alert { background: #ffe3e0;          color: #8a1407; }
+:root[data-theme="dark"] .mp-pill--ok    { color: #b7f5ad; }
+:root[data-theme="dark"] .mp-pill--info  { color: #bfe4ff; }
+:root[data-theme="dark"] .mp-pill--warn  { background: #3d2a00; color: #ffd9a3; }
+:root[data-theme="dark"] .mp-pill--alert { background: #45120c; color: #ffc4bd; }
+
+/* A figure that is not a sensor reading never renders like one. */
+.mp-prov {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 500; color: var(--mp-text-3);
+  border: 1px dashed var(--mp-border-strong);
+  border-radius: var(--mp-r-sm); padding: 2px 8px;
+}
+
+.mp-metric { display: flex; align-items: baseline; gap: 8px; }
+.mp-metric__v { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
+.mp-metric__u { font-size: 15px; color: var(--mp-text-2); font-weight: 500; }
+
+/* "Not connected" is a real answer and gets a real place on the screen. */
+.mp-empty {
+  border: 1px dashed var(--mp-border-strong); border-radius: var(--mp-r-lg);
+  padding: 22px; text-align: center; color: var(--mp-text-2); background: var(--mp-bg-2);
+}
+
+/* ── nav ── */
+.mp-nav {
+  position: sticky; top: 0; z-index: 50;
+  height: var(--mp-nav-h); display: flex; align-items: center;
+  background: var(--mp-bg); border-bottom: 1px solid var(--mp-border);
+}
+.mp-nav__in { display: flex; align-items: center; gap: 14px; width: 100%; }
+/* 44px even though the lockup is only 30px of artwork: it is a link people
+   tap to get home, and the browser audit measures the hit box, not the glyph. */
+.mp-brand { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; font-weight: 700; font-size: 18px; color: var(--mp-text); }
+.mp-brand:hover { text-decoration: none; }
+.mp-brand__mark { width: 30px; height: 30px; flex: 0 0 30px; }
+.mp-nav__links { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.mp-nav__links a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; color: var(--mp-text-2); font-size: 15px; font-weight: 500; }
+.mp-nav__links a:hover { color: var(--mp-text); text-decoration: none; }
+.mp-burger { display: none; margin-left: auto; width: 44px; height: 44px; align-items: center; justify-content: center;
+  background: none; border: 1px solid var(--mp-border); border-radius: var(--mp-r-md); cursor: pointer; color: var(--mp-text); }
+.mp-drawer {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--mp-bg);                     /* fully OPAQUE: content ghosting through reads as a rendering fault */
+  border-bottom: 1px solid var(--mp-border); box-shadow: var(--mp-sh-2);
+  padding: 8px 16px 16px; display: none;
+}
+.mp-drawer a, .mp-drawer button {
+  display: flex; align-items: center; width: 100%;
+  min-height: 48px; padding: 0 4px; font-size: 16px;
+  color: var(--mp-text); background: none; border: 0; border-bottom: 1px solid var(--mp-border);
+  font-family: inherit; text-align: left; cursor: pointer;
+}
+.mp-nav--open .mp-drawer { display: block; }
+
+/* ── tabs ── */
+.mp-tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--mp-border); scrollbar-width: none; }
+.mp-tabs::-webkit-scrollbar { display: none; }
+.mp-tab {
+  min-height: 48px; padding: 0 14px; flex: 0 0 auto;
+  background: none; border: 0; border-bottom: 2px solid transparent;
+  font: inherit; font-size: 15px; font-weight: 500; color: var(--mp-text-2); cursor: pointer;
+}
+.mp-tab[aria-selected="true"] { color: var(--mp-text-accent); border-bottom-color: var(--mp-accent); font-weight: 700; }
+
+/* ── the disclaimer, on every surface that shows a number ── */
+.mp-disclaim {
+  font-size: 13px; color: var(--mp-text-2);
+  background: var(--mp-bg-2); border-left: 3px solid var(--mp-accent);
+  border-radius: 0 var(--mp-r-sm) var(--mp-r-sm) 0;
+  padding: 10px 14px; margin: 18px 0;
+}
+
+.mp-hero { padding: 56px 0 44px; }
+.mp-hero h1 { font-size: 48px; max-width: 18ch; }
+.mp-hero__sub { font-size: 18px; color: var(--mp-text-2); max-width: 52ch; }
+.mp-mark { color: var(--mp-text-accent); }
+.mp-alliance { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--mp-text-3); }
+.mp-section { padding: 44px 0; }
+.mp-section--alt { background: var(--mp-bg-2); }
+.mp-foot { padding: 36px 0; border-top: 1px solid var(--mp-border); color: var(--mp-text-2); font-size: 14px; }
+/* Footer links are navigation, not prose, so they are real tap targets. */
+.mp-foot .mp-row a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; }
+.mp-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.mp-spread { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+.mp-spark { width: 100%; height: 72px; display: block; }
+.mp-note { font-size: 13px; color: var(--mp-text-3); }
+.mp-err { color: #8a1407; background: #ffe3e0; border-radius: var(--mp-r-md); padding: 10px 14px; font-size: 14px; }
+:root[data-theme="dark"] .mp-err { color: #ffc4bd; background: #45120c; }
+
+@media (max-width: 760px) {
+  h1 { font-size: 28px; }
+  h2 { font-size: 24px; }
+  .mp-hero { padding: 32px 0 28px; }
+  .mp-hero h1 { font-size: 34px; }
+  .mp-hero__sub { font-size: 17px; }
+  .mp-nav__links { display: none; }
+  .mp-burger { display: inline-flex; }
+  .mp-card { padding: 16px; border-radius: var(--mp-r-lg); }
+  .mp-metric__v { font-size: 28px; }
+}
+
+@media print {
+  .mp-nav, .mp-burger, .mp-drawer, .mp-btn { display: none !important; }
+  body { color: #000; background: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

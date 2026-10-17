@@ -65,6 +65,13 @@ const REGISTRY = {
   ronin:            { status: 'disabled', names: ['Ronin Brotherhood'], disabled_on: D,
     sites: ['voice persona ronin'], off_behaviour: 'heuristic', note: 'Own code has no Anthropic; its ElevenLabs widget is configured in ElevenLabs.' },
   // ENABLED 2026-10-06 (owner request): AutoDev runs on the Claude subscription token, not the API account.
+  // ENABLED on creation 2026-10-17: the only model call is Mara's short daily
+  // summary, one per pet per day, on Haiku. With it off the report still works
+  // and is labelled composed_by:'heuristic'.
+  marapet:          { status: 'enabled', names: ['MaraPet'], disabled_on: null,
+    sites: ['verticals/marapet/src/llm.js (Mara daily report prose)'],
+    off_behaviour: "deterministic report, composed_by:'heuristic', is_simulated:true",
+    note: 'ISTC x Digit2AI. The figures are computed either way; only the wording moves.' },
   vallemilagro:     { status: 'enabled', names: ['Valle Milagro'], disabled_on: null,
     sites: ['verticals/vallemilagro/src/llm.js (agente Valle y agente Scout con búsqueda web)'],
     off_behaviour: 'Valle responde por la ruta sin modelo, marcada; el Scout no corre y lo dice',

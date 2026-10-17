@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MaraPet — know how your dog is doing</title>
+<meta name="description" content="MaraPet watches your dog's resting heart rate, breathing and activity, and tells you in plain language how they are doing. A wellness aid by ISTC and Digit2AI, not a medical device.">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<meta property="og:title" content="MaraPet — know how your dog is doing">
+<meta property="og:description" content="Resting heart rate, breathing and activity, explained in plain language. A wellness aid by ISTC and Digit2AI, not a medical device.">
+<meta property="og:type" content="website">
+<!-- Applied BEFORE the stylesheet. From the deferred script at the foot of the
+     page this flashes light and repaints, which reads as a broken page. -->
+<script>
+(function(){try{var t=localStorage.getItem('marapet_theme');if(t==='dark'){
+document.documentElement.setAttribute('data-theme','dark');
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#14171a');}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+</head>
+<body>
+
+<nav class="mp-nav">
+  <div class="mp-wrap mp-nav__in">
+    <a class="mp-brand" href="{{BASE}}/">
+      <img class="mp-brand__mark" src="{{BASE}}/icon-192.png" alt="" width="30" height="30">
+      MaraPet
+    </a>
+    <div class="mp-nav__links">
+      <a href="#how" data-en="How it works" data-es="Cómo funciona">How it works</a>
+      <a href="#measures" data-en="What it measures" data-es="Qué mide">What it measures</a>
+      <a href="#honest" data-en="What it does not do" data-es="Lo que no hace">What it does not do</a>
+      <a href="{{BASE}}/login" data-en="Sign in" data-es="Entrar">Sign in</a>
+      <button class="mp-btn mp-btn--sm" data-lang-btn="en" aria-pressed="true">EN</button>
+      <button class="mp-btn mp-btn--sm" data-lang-btn="es" aria-pressed="false">ES</button>
+      <button class="mp-btn mp-btn--sm" data-theme-toggle aria-label="Switch theme">&#9681;</button>
+    </div>
+    <button class="mp-burger" aria-expanded="false" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+    </button>
+    <div class="mp-drawer">
+      <a href="#how" data-en="How it works" data-es="Cómo funciona">How it works</a>
+      <a href="#measures" data-en="What it measures" data-es="Qué mide">What it measures</a>
+      <a href="#honest" data-en="What it does not do" data-es="Lo que no hace">What it does not do</a>
+      <a href="{{BASE}}/how-it-works" data-en="Documentation" data-es="Documentación">Documentation</a>
+      <a href="{{BASE}}/login" data-en="Sign in" data-es="Entrar">Sign in</a>
+      <button data-lang-btn="en">English</button>
+      <button data-lang-btn="es">Español</button>
+      <button data-theme-toggle data-en="Switch theme" data-es="Cambiar tema">Switch theme</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <section class="mp-wrap mp-hero">
+    <p class="mp-alliance">ISTC &times; Digit2AI</p>
+    <h1><span data-en="Know how your dog is" data-es="Sabe cómo está tu perro">Know how your dog is</span>
+      <span class="mp-mark" data-en="actually doing." data-es="de verdad.">actually doing.</span></h1>
+    <p class="mp-hero__sub" data-en="MaraPet watches your dog's resting heart rate, breathing and activity, and tells you in plain language what changed. You do not need to read a chart to understand it." data-es="MaraPet observa la frecuencia cardiaca en reposo, la respiración y la actividad de tu perro, y te dice en palabras claras qué cambió. No necesitas leer una gráfica para entenderlo.">MaraPet watches your dog's resting heart rate, breathing and activity, and tells you in plain language what changed. You do not need to read a chart to understand it.</p>
+    <div class="mp-row" style="margin-top:22px">
+      <a class="mp-btn mp-btn--primary" href="{{BASE}}/login" data-en="Create an account" data-es="Crear una cuenta">Create an account</a>
+      <a class="mp-btn mp-btn--ghost" href="#measures" data-en="See what it measures" data-es="Ver qué mide">See what it measures</a>
+    </div>
+    <p class="mp-note" style="margin-top:14px" data-en="You can start today with no device: record 30 seconds of your dog sleeping and MaraPet estimates their breathing rate on your phone." data-es="Puedes empezar hoy sin ningún dispositivo: graba 30 segundos de tu perro durmiendo y MaraPet estima su frecuencia respiratoria en tu teléfono.">You can start today with no device: record 30 seconds of your dog sleeping and MaraPet estimates their breathing rate on your phone.</p>
+  </section>
+
+  <section class="mp-section mp-section--alt" id="how">
+    <div class="mp-wrap">
+      <h2 data-en="How it works" data-es="Cómo funciona">How it works</h2>
+      <div class="mp-grid mp-grid--3" style="margin-top:20px">
+        <div class="mp-card">
+          <h4 data-en="1. Tell us about your dog" data-es="1. Cuéntanos de tu perro">1. Tell us about your dog</h4>
+          <p class="mp-mut" data-en="Breed, age and weight. A resting heart rate that is normal for a Great Dane is high for a Chihuahua, so the reference range is built from your dog, not from an average." data-es="Raza, edad y peso. Una frecuencia cardiaca normal para un Gran Danés es alta para un Chihuahua, así que el rango de referencia se arma con tu perro, no con un promedio.">Breed, age and weight.</p>
+        </div>
+        <div class="mp-card">
+          <h4 data-en="2. Readings arrive" data-es="2. Llegan las lecturas">2. Readings arrive</h4>
+          <p class="mp-mut" data-en="From the collar when you have one, from a 30-second video of your sleeping dog when you do not, or typed in by hand. All three arrive the same way and are labelled by where they came from." data-es="Del collar cuando lo tengas, de un video de 30 segundos de tu perro durmiendo cuando no, o escritas a mano. Las tres llegan igual y quedan marcadas según su origen.">From the collar, from a video, or by hand.</p>
+        </div>
+        <div class="mp-card">
+          <h4 data-en="3. Mara explains it" data-es="3. Mara te lo explica">3. Mara explains it</h4>
+          <p class="mp-mut" data-en="A short daily summary in plain words, built only from the readings that exist. You set your own alert limits, and MaraPet tells you when one is crossed." data-es="Un resumen diario corto en palabras claras, hecho solo con las lecturas que existen. Tú pones tus propios límites de aviso y MaraPet te dice cuando se cruza uno.">A short daily summary in plain words.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mp-section" id="measures">
+    <div class="mp-wrap">
+      <h2 data-en="What it measures" data-es="Qué mide">What it measures</h2>
+      <div class="mp-grid mp-grid--2" style="margin-top:20px">
+        <div class="mp-card">
+          <span class="mp-pill mp-pill--ok" data-en="Works today" data-es="Funciona hoy">Works today</span>
+          <h4 style="margin-top:12px" data-en="Breathing rate" data-es="Frecuencia respiratoria">Breathing rate</h4>
+          <p class="mp-mut" data-en="From the collar, or estimated on your phone from a 30-second video of your dog asleep. A sustained sleeping rate above thirty breaths a minute is the figure vets ask owners to watch." data-es="Del collar, o estimada en tu teléfono a partir de un video de 30 segundos de tu perro dormido. Una frecuencia sostenida por encima de treinta respiraciones por minuto durante el sueño es la cifra que los veterinarios piden vigilar.">From the collar, or estimated from video.</p>
+        </div>
+        <div class="mp-card">
+          <span class="mp-pill mp-pill--info" data-en="Needs the collar" data-es="Necesita el collar">Needs the collar</span>
+          <h4 style="margin-top:12px" data-en="Resting heart rate, variability, activity" data-es="Frecuencia cardiaca en reposo, variabilidad, actividad">Resting heart rate, variability, activity</h4>
+          <p class="mp-mut" data-en="Measured at the neck by movement, which is the method every shipping product uses, because fur defeats the optical sensor a smartwatch relies on." data-es="Se miden en el cuello por movimiento, que es el método de todos los productos del mercado, porque el pelo anula el sensor óptico en que se basa un reloj inteligente.">Measured at the neck by movement.</p>
+        </div>
+      </div>
+      <p class="mp-disclaim" data-en="MaraPet is a wellness aid, not a medical device. It diagnoses nothing. Reference ranges shown in the app are published veterinary figures, not measurements MaraPet has validated. Any decision about your dog's health belongs to your vet." data-es="MaraPet es una ayuda de bienestar, no un dispositivo médico. No diagnostica nada. Los rangos de referencia que aparecen en la aplicación son cifras veterinarias publicadas, no mediciones validadas por MaraPet. Cualquier decisión sobre la salud de tu perro es de tu veterinario.">MaraPet is a wellness aid, not a medical device.</p>
+    </div>
+  </section>
+
+  <section class="mp-section mp-section--alt" id="honest">
+    <div class="mp-wrap">
+      <h2 data-en="What it does not do" data-es="Lo que no hace">What it does not do</h2>
+      <p class="mp-mut" style="max-width:62ch" data-en="Stated here rather than discovered later." data-es="Dicho aquí y no descubierto después.">Stated here rather than discovered later.</p>
+      <div class="mp-grid mp-grid--2" style="margin-top:20px">
+        <div class="mp-card mp-card--flat">
+          <h4 data-en="No blood pressure" data-es="Sin presión arterial">No blood pressure</h4>
+          <p class="mp-mut" data-en="A dog's blood pressure is taken with a cuff on a limb or the tail base. It is not something a collar can read, so MaraPet does not pretend to have it." data-es="La presión arterial de un perro se toma con un brazalete en una pata o en la base de la cola. No es algo que un collar pueda leer, así que MaraPet no finge tenerla.">Taken with a cuff, not a collar.</p>
+        </div>
+        <div class="mp-card mp-card--flat">
+          <h4 data-en="No oxygen at the collar" data-es="Sin oxígeno en el collar">No oxygen at the collar</h4>
+          <p class="mp-mut" data-en="Oxygen saturation needs thin, sparsely furred tissue, which is why a vet clips the sensor to an ear or a lip. If a future MaraPet device reads it there, the app will show it. Until then there is no oxygen card at all, rather than an empty one." data-es="La saturación de oxígeno necesita tejido delgado y con poco pelo, por eso el veterinario pinza el sensor en una oreja o un labio. Si un dispositivo MaraPet futuro la mide ahí, la aplicación la mostrará. Hasta entonces no hay tarjeta de oxígeno, en lugar de una vacía.">Needs an ear or a lip, not a neck.</p>
+        </div>
+        <div class="mp-card mp-card--flat">
+          <h4 data-en="No diagnosis, ever" data-es="Nunca un diagnóstico">No diagnosis, ever</h4>
+          <p class="mp-mut" data-en="MaraPet can say a figure is outside the published range and that it is worth a call to your vet. It will never name a condition. That boundary is enforced in the code, not just promised." data-es="MaraPet puede decir que una cifra está fuera del rango publicado y que vale la pena llamar a tu veterinario. Nunca nombrará una enfermedad. Ese límite está en el código, no solo prometido.">Never names a condition.</p>
+        </div>
+        <div class="mp-card mp-card--flat">
+          <h4 data-en="No accuracy claim" data-es="Sin promesas de exactitud">No accuracy claim</h4>
+          <p class="mp-mut" data-en="We publish no accuracy percentage, because the study that would earn one has not been run. The video breathing estimate is labelled an estimate everywhere it appears, with how confident it is." data-es="No publicamos ningún porcentaje de exactitud, porque el estudio que lo justificaría no se ha hecho. La estimación de respiración por video aparece siempre marcada como estimación, con su nivel de confianza.">No percentage we have not earned.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mp-section">
+    <div class="mp-wrap" style="text-align:center">
+      <h2 data-en="Start with the dog you have, today" data-es="Empieza con el perro que tienes, hoy">Start with the dog you have, today</h2>
+      <p class="mp-mut" data-en="No device needed to begin." data-es="No necesitas ningún dispositivo para empezar.">No device needed to begin.</p>
+      <a class="mp-btn mp-btn--primary" href="{{BASE}}/login" data-en="Create an account" data-es="Crear una cuenta">Create an account</a>
+    </div>
+  </section>
+</main>
+
+<footer class="mp-foot">
+  <div class="mp-wrap mp-spread">
+    <div>
+      <p class="mp-alliance">ISTC &times; Digit2AI</p>
+      <p class="mp-note" style="margin:0" data-en="The device is built and operated by ISTC. The app, the cloud and the AI are Digit2AI." data-es="El dispositivo lo construye y opera ISTC. La aplicación, la nube y la IA son de Digit2AI.">The device is built and operated by ISTC. The app, the cloud and the AI are Digit2AI.</p>
+    </div>
+    <div class="mp-row">
+      <a href="{{BASE}}/how-it-works" data-en="Documentation" data-es="Documentación">Documentation</a>
+      <a href="{{BASE}}/health">Status</a>
+    </div>
+  </div>
+</footer>
+
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+<script>
+if ('serviceWorker' in navigator && window.top === window.self) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

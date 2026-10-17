@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MaraPet</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<script>
+(function(){try{var t=localStorage.getItem('marapet_theme');if(t==='dark'){
+document.documentElement.setAttribute('data-theme','dark');
+var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#14171a');}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+</head>
+<body>
+
+<nav class="mp-nav">
+  <div class="mp-wrap mp-nav__in">
+    <a class="mp-brand" href="{{BASE}}/app">
+      <img class="mp-brand__mark" src="{{BASE}}/icon-192.png" alt="" width="30" height="30"> MaraPet
+    </a>
+    <div class="mp-nav__links">
+      <select class="mp-select" id="petSel" style="min-height:44px;width:auto"></select>
+      <button class="mp-btn mp-btn--sm" data-lang-btn="en" aria-pressed="true">EN</button>
+      <button class="mp-btn mp-btn--sm" data-lang-btn="es" aria-pressed="false">ES</button>
+      <button class="mp-btn mp-btn--sm" data-theme-toggle aria-label="Switch theme">&#9681;</button>
+      <button class="mp-btn mp-btn--sm" id="out" data-en="Sign out" data-es="Salir">Sign out</button>
+    </div>
+    <button class="mp-burger" aria-expanded="false" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+    </button>
+    <div class="mp-drawer">
+      <button data-lang-btn="en">English</button>
+      <button data-lang-btn="es">Español</button>
+      <button data-theme-toggle data-en="Switch theme" data-es="Cambiar tema">Switch theme</button>
+      <button id="out2" data-en="Sign out" data-es="Salir">Sign out</button>
+    </div>
+  </div>
+</nav>
+
+<main class="mp-wrap" style="padding-bottom:48px">
+  <div id="petPicker" style="margin:14px 0" hidden>
+    <select class="mp-select" id="petSelMobile"></select>
+  </div>
+
+  <div class="mp-tabs" role="tablist" id="tabs" style="margin:10px 0 20px">
+    <button class="mp-tab" role="tab" data-tab="today"     aria-selected="true"  data-en="Today" data-es="Hoy">Today</button>
+    <button class="mp-tab" role="tab" data-tab="trends"    aria-selected="false" data-en="Trends" data-es="Tendencias">Trends</button>
+    <button class="mp-tab" role="tab" data-tab="breathing" aria-selected="false" data-en="Breathing check" data-es="Chequeo de respiración">Breathing check</button>
+    <button class="mp-tab" role="tab" data-tab="alerts"    aria-selected="false" data-en="Alerts" data-es="Avisos">Alerts</button>
+    <button class="mp-tab" role="tab" data-tab="pets"      aria-selected="false" data-en="My dogs" data-es="Mis perros">My dogs</button>
+    <button class="mp-tab" role="tab" data-tab="devices"   aria-selected="false" data-en="Devices" data-es="Dispositivos">Devices</button>
+  </div>
+
+  <section id="pane-today"></section>
+  <section id="pane-trends" hidden></section>
+  <section id="pane-breathing" hidden></section>
+  <section id="pane-alerts" hidden></section>
+  <section id="pane-pets" hidden></section>
+  <section id="pane-devices" hidden></section>
+
+  <p class="mp-disclaim" data-en="MaraPet is a wellness aid, not a medical device. It diagnoses nothing, and the ranges shown are published veterinary references rather than measurements MaraPet has validated. Any decision about your dog's health belongs to your vet." data-es="MaraPet es una ayuda de bienestar, no un dispositivo médico. No diagnostica nada, y los rangos que se muestran son referencias veterinarias publicadas, no mediciones validadas por MaraPet. Cualquier decisión sobre la salud de tu perro es de tu veterinario.">MaraPet is a wellness aid, not a medical device.</p>
+</main>
+
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+<script src="{{BASE}}/js/breathing-core.js?v={{VERSION}}" defer></script>
+<script src="{{BASE}}/js/breathing-capture.js?v={{VERSION}}" defer></script>
+<script>window.MARAPET_BASE = {{BASE_JSON}};</script>
+<script src="{{BASE}}/js/app.js?v={{VERSION}}" defer></script>
+<script>
+if ('serviceWorker' in navigator && window.top === window.self) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('{{BASE}}/sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<script>
+(function(){try{var t=localStorage.getItem("marapet_theme");if(t==="dark"){
+document.documentElement.setAttribute("data-theme","dark");
+var m=document.querySelector("meta[name=\"theme-color\"]");if(m)m.setAttribute("content","#14171a");}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+<title>Sign in — MaraPet</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<main class="mp-wrap" style="max-width:420px;padding-top:48px">
+  <a class="mp-brand" href="{{BASE}}/" style="margin-bottom:24px">
+    <img class="mp-brand__mark" src="{{BASE}}/icon-192.png" alt="" width="30" height="30"> MaraPet
+  </a>
+  <p class="mp-alliance">ISTC &times; Digit2AI</p>
+
+  <div class="mp-card">
+    <div class="mp-tabs" role="tablist" style="margin:-4px -4px 18px">
+      <button class="mp-tab" id="tabIn" role="tab" aria-selected="true" data-en="Sign in" data-es="Entrar">Sign in</button>
+      <button class="mp-tab" id="tabUp" role="tab" aria-selected="false" data-en="Create account" data-es="Crear cuenta">Create account</button>
+    </div>
+
+    <div id="err" class="mp-err" hidden></div>
+
+    <form id="form" novalidate>
+      <label class="mp-field" id="nameField" hidden>
+        <span class="mp-label" data-en="Your name" data-es="Tu nombre">Your name</span>
+        <input class="mp-input" id="name" autocomplete="name" maxlength="120">
+      </label>
+      <label class="mp-field">
+        <span class="mp-label" data-en="Email" data-es="Correo">Email</span>
+        <input class="mp-input" id="email" type="email" autocomplete="email" required>
+      </label>
+      <label class="mp-field">
+        <span class="mp-label" data-en="Password" data-es="Contraseña">Password</span>
+        <input class="mp-input" id="password" type="password" autocomplete="current-password" required>
+        <span class="mp-hint" id="pwHint" hidden data-en="At least 10 characters." data-es="Al menos 10 caracteres.">At least 10 characters.</span>
+      </label>
+      <button class="mp-btn mp-btn--primary" id="go" type="submit" style="width:100%" data-en="Sign in" data-es="Entrar">Sign in</button>
+    </form>
+  </div>
+
+  <p class="mp-note" style="margin-top:18px" data-en="MaraPet is a wellness aid, not a medical device. It diagnoses nothing." data-es="MaraPet es una ayuda de bienestar, no un dispositivo médico. No diagnostica nada.">MaraPet is a wellness aid, not a medical device.</p>
+  <p class="mp-row" style="margin-top:10px">
+    <button class="mp-btn mp-btn--sm" data-lang-btn="en" aria-pressed="true">EN</button>
+    <button class="mp-btn mp-btn--sm" data-lang-btn="es" aria-pressed="false">ES</button>
+  </p>
+</main>
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+<script>
+(function () {
+  var mode = 'login';
+  var $ = function (id) { return document.getElementById(id); };
+  function setMode(m) {
+    mode = m;
+    $('tabIn').setAttribute('aria-selected', String(m === 'login'));
+    $('tabUp').setAttribute('aria-selected', String(m === 'signup'));
+    $('nameField').hidden = m !== 'signup';
+    $('pwHint').hidden = m !== 'signup';
+    $('password').setAttribute('autocomplete', m === 'signup' ? 'new-password' : 'current-password');
+    var lang = document.documentElement.getAttribute('lang') === 'es' ? 'es' : 'en';
+    var label = m === 'signup' ? { en: 'Create account', es: 'Crear cuenta' } : { en: 'Sign in', es: 'Entrar' };
+    $('go').setAttribute('data-en', label.en);
+    $('go').setAttribute('data-es', label.es);
+    $('go').textContent = label[lang];
+  }
+  $('tabIn').addEventListener('click', function () { setMode('login'); });
+  $('tabUp').addEventListener('click', function () { setMode('signup'); });
+
+  var MSG = {
+    bad_credentials: { en: 'That email and password do not match an account.', es: 'Ese correo y contraseña no coinciden con ninguna cuenta.' },
+    email_taken: { en: 'There is already an account with that email.', es: 'Ya existe una cuenta con ese correo.' },
+    email_invalid: { en: 'That does not look like an email address.', es: 'Eso no parece un correo electrónico.' },
+    password_too_short: { en: 'Use at least 10 characters.', es: 'Usa al menos 10 caracteres.' },
+    password_is_published: { en: 'That password appears in public documentation. Pick another.', es: 'Esa contraseña aparece en documentación pública. Elige otra.' },
+    too_many_attempts: { en: 'Too many attempts. Wait a few minutes.', es: 'Demasiados intentos. Espera unos minutos.' },
+    sessions_not_configured: { en: 'Sign-in is not configured on this service yet.', es: 'El acceso aún no está configurado en este servicio.' }
+  };
+  function show(code) {
+    var lang = document.documentElement.getAttribute('lang') === 'es' ? 'es' : 'en';
+    var m = MSG[code];
+    $('err').textContent = m ? m[lang] : code;
+    $('err').hidden = false;
+  }
+
+  $('form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    $('err').hidden = true;
+    $('go').disabled = true;
+    try {
+      var body = { email: $('email').value, password: $('password').value };
+      if (mode === 'signup') {
+        body.name = $('name').value;
+        body.lang = document.documentElement.getAttribute('lang');
+      }
+      var r = await fetch('{{BASE}}/api/v1/auth/' + (mode === 'signup' ? 'signup' : 'login'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), credentials: 'same-origin'
+      });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) { show(j.error || 'bad_credentials'); return; }
+      location.href = '{{BASE}}/app';
+    } catch (_) {
+      show('bad_credentials');
+    } finally {
+      $('go').disabled = false;
+    }
+  });
+  setMode('login');
+}());
+</script>
+</body>
+</html>

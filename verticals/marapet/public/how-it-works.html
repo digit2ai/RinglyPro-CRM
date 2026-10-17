@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<script>
+(function(){try{var t=localStorage.getItem("marapet_theme");if(t==="dark"){
+document.documentElement.setAttribute("data-theme","dark");}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+<title>How MaraPet works — documentation</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<nav class="mp-nav"><div class="mp-wrap mp-nav__in">
+  <a class="mp-brand" href="{{BASE}}/"><img class="mp-brand__mark" src="{{BASE}}/icon-192.png" alt="" width="30" height="30"> MaraPet</a>
+</div></nav>
+<main class="mp-wrap" style="max-width:820px;padding:32px 16px">
+  <p class="mp-alliance">ISTC &times; Digit2AI</p>
+  <h1>How MaraPet works</h1>
+  <p class="mp-mut">Written for whoever has to maintain this, and for ISTC's engineering lead building the device.</p>
+
+  <h2>Who owns which half</h2>
+  <p>ISTC owns the device: board, sensors, firmware, enclosure, battery, certification and manufacture or sourcing. Digit2AI owns the app, the cloud, the database, the ingest contract and the AI. The alliance is named <strong>ISTC &times; Digit2AI</strong>, in that order, on every surface.</p>
+
+  <h2>The ingest contract</h2>
+  <p>Every reading enters by one door, so the board can change without the platform changing.</p>
+  <pre class="mp-card" style="overflow-x:auto"><code>POST {{BASE}}/api/v1/readings
+Authorization: Bearer mp_dev_...
+
+{ "recorded_at": "2026-10-17T03:12:00Z",
+  "firmware": "1.0.3",
+  "metrics": { "heart_rate_bpm": 78, "resp_rate_bpm": 22 } }</code></pre>
+  <p>Or the explicit form, one object per sample, which is what a buffered collar sends when it reconnects:</p>
+  <pre class="mp-card" style="overflow-x:auto"><code>{ "samples": [
+    { "metric": "heart_rate_bpm", "value": 78, "recorded_at": "..." },
+    { "metric": "resp_rate_bpm",  "value": 22, "recorded_at": "..." } ] }</code></pre>
+  <ul>
+    <li><strong>Metrics accepted:</strong> <code>heart_rate_bpm</code>, <code>resp_rate_bpm</code>, <code>hrv_ms</code>, <code>activity</code>, <code>temp_c</code>, <code>spo2_pct</code>. Anything else comes back in <code>rejected</code> <em>by name</em> — a metric we silently discarded would look like success from the device side.</li>
+    <li><strong>Sources:</strong> <code>device</code>, <code>video</code>, <code>manual</code>. A device key may only claim <code>device</code>.</li>
+    <li><strong>Idempotent</strong> on device, instant and metric, so a retry after a dropped connection cannot double-count.</li>
+    <li><strong>A device key writes and reads nothing.</strong> It is hashed at rest and shown once.</li>
+    <li><code>GET {{BASE}}/api/v1/ingest/ping</code> confirms a key and returns server time for clock sync.</li>
+  </ul>
+
+  <h2>Blood pressure is deliberately absent</h2>
+  <p>Canine blood pressure is an oscillometric cuff measurement on a limb or the tail base. It is not a continuous wearable reading, so it is not in the data model at all rather than present and empty. If ISTC ships a cuff it enters as a timestamped manual reading, never as a trend line.</p>
+
+  <h2>Oxygen needs a different site, not a better collar</h2>
+  <p>Transmittance pulse oximetry needs thin, sparsely furred tissue, which is why clinical veterinary oximeters clip to an ear pinna, lip or tongue. At the neck, under fur, it does not work. <code>spo2_pct</code> is in the allow-list so a future ear-site device is a config change, and until a row exists the app draws no oxygen card at all.</p>
+
+  <h2>The breathing estimate, and what it is not</h2>
+  <p>The browser samples the brightness of the chest region frame by frame, detrends it, and finds the dominant period in the 6&ndash;120 breaths-per-minute band. The <strong>video never leaves the phone</strong>; only the brightness series and the resulting figure are sent.</p>
+  <p>The detection threshold is derived from a false-alarm bound rather than picked, because the first version of it returned a confident 102 breaths a minute from pure noise. <code>scripts/calibrate-breathing.js</code> measures the real false-alarm and recovery rates. Below the floor it returns <em>no number and the reason</em>.</p>
+  <p><strong>It has not been validated against a vet with a stopwatch.</strong> It is labelled an estimate from video, with its confidence, everywhere it appears, and that validation is the first external dependency.</p>
+
+  <h2>What is enforced in code, not promised</h2>
+  <ul>
+    <li>The daily summary is written from computed facts; any number in a draft that is not in those facts <strong>discards the whole draft</strong> for the deterministic text.</li>
+    <li>No condition name, no treatment, no medication, no guarantee, no accuracy percentage. The verifier runs on the deterministic path too.</li>
+    <li>With no readings the screen says <em>not connected</em>. There is no sample data in the product.</li>
+    <li>With no model the report still works and is labelled as written without one.</li>
+    <li>Reference ranges are published veterinary figures and carry their basis to the screen. A metric with no range MaraPet can stand behind (variability, activity) gets a trend and no verdict.</li>
+  </ul>
+
+  <h2>Not built yet</h2>
+  <ul>
+    <li>No MaraPet device exists. ISTC owns that half.</li>
+    <li>No clinical validation of anything.</li>
+    <li>Web push is not wired; alerts are in-app.</li>
+  </ul>
+  <p><a class="mp-btn mp-btn--ghost" href="{{BASE}}/health">Live service status</a></p>
+</main>
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+</body>
+</html>

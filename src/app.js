@@ -334,8 +334,16 @@ app.use((req, res, next) => {
   const path = cut === -1 ? req.url : req.url.slice(0, cut);
   const query = cut === -1 ? '' : req.url.slice(cut);
   if (BUYERSLINE_PASS_THROUGH.some((pre) => path.startsWith(pre))) return next();
+  // A SECOND LEADING SLASH IS AN OPEN REDIRECT, NOT A PATH. `//evil.example/x`
+  // is a protocol-relative URL: every browser resolves it against the current
+  // scheme, so echoing the captured group straight into res.redirect() hands an
+  // attacker a phishing link that genuinely begins with this product's own
+  // domain. encodeurl() does not touch it and res.location() only special-cases
+  // the literal 'back'. Verified against the Express in this repo, then fixed in
+  // all three handlers that share this pattern.
+  const toPath = (captured) => '/' + String(captured || '').replace(/^\/+/, '');
   const legacy = /^\/(buyersline|incentiva)(\/.*)?$/.exec(path);
-  if (legacy) return res.redirect(301, (legacy[2] || '/') + query);
+  if (legacy) return res.redirect(301, toPath(legacy[2]) + query);
   try {
     if (!buyerslineRootApp) buyerslineRootApp = require('../verticals/incentiva/src/index');
   } catch (e) {
@@ -343,6 +351,65 @@ app.use((req, res, next) => {
     return res.status(503).type('text').send('BuyersLine is temporarily unavailable.');
   }
   return buyerslineRootApp(req, res, (err) => {
+    if (err) return next(err);
+    res.status(404).type('text').send('Not found');
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// MARAPET DOMAIN: marapet.app serves the MaraPet vertical at its ROOT.
+// ISTC x Digit2AI — ISTC owns the device, Digit2AI owns the app and the AI.
+//
+// Registered here with the other brand domains because Express matches in
+// registration order and the CRM defines hundreds of paths below; a handler
+// added later would silently shadow only the paths the CRM happens to define.
+// The router is called directly with baseUrl '' so every {{BASE}} in its pages,
+// its generated manifest and its generated worker resolves to the root — a
+// /marapet/-scoped manifest served here would install an app whose scope
+// EXCLUDES marapet.app itself (the JobUp PWA bug).
+//
+// /embed/, /api/voice-agent/ and /api/tts/ pass through to the main app, since
+// an orb infers its origin from its own script src. /marapet/... on this host
+// 301s to the root equivalent. ANYTHING ELSE ENDS IN MARAPET'S OWN 404, never
+// the CRM: falling through served the RinglyPro sign-in on jobmd.io/admin and
+// on autodev.digit2ai.com/login, which is a different product with a different
+// user table appearing on a customer's domain.
+//
+// The device ingest endpoint is deliberately NOT redirected anywhere: a collar
+// in the field pointed at an older base must keep working.
+// ═════════════════════════════════════════════════════════════════════════
+const MARAPET_HOSTS = new Set(['marapet.app', 'www.marapet.app']);
+// DELIBERATELY EMPTY. The other brand domains pass /embed/, /api/voice-agent/
+// and /api/tts/ through because they carry a voice orb that infers its origin
+// from its own script src. MaraPet carries no orb, so forwarding those would
+// publish an LLM endpoint and a TTS endpoint on a new domain for nothing.
+const MARAPET_PASS_THROUGH = [];
+let marapetRootApp = null;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!MARAPET_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://marapet.app' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  const query = cut === -1 ? '' : req.url.slice(cut);
+  if (MARAPET_PASS_THROUGH.some((pre) => path.startsWith(pre))) return next();
+  // A SECOND LEADING SLASH IS AN OPEN REDIRECT, NOT A PATH. `//evil.example/x`
+  // is a protocol-relative URL: every browser resolves it against the current
+  // scheme, so echoing the captured group straight into res.redirect() hands an
+  // attacker a phishing link that genuinely begins with this product's own
+  // domain. encodeurl() does not touch it and res.location() only special-cases
+  // the literal 'back'. Verified against the Express in this repo, then fixed in
+  // all three handlers that share this pattern.
+  const toPath = (captured) => '/' + String(captured || '').replace(/^\/+/, '');
+  const legacy = /^\/marapet(\/.*)?$/.exec(path);
+  if (legacy) return res.redirect(301, toPath(legacy[1]) + query);
+  try {
+    if (!marapetRootApp) marapetRootApp = require('../verticals/marapet/src/index');
+  } catch (e) {
+    console.error('[marapet.app] vertical failed to load:', e.message);
+    return res.status(503).type('text').send('MaraPet is temporarily unavailable.');
+  }
+  return marapetRootApp(req, res, (err) => {
     if (err) return next(err);
     res.status(404).type('text').send('Not found');
   });
@@ -367,8 +434,16 @@ app.use((req, res, next) => {
   const path = cut === -1 ? req.url : req.url.slice(0, cut);
   const query = cut === -1 ? '' : req.url.slice(cut);
   if (LEVELUP_PASS_THROUGH.some((pre) => path.startsWith(pre))) return next();
+  // A SECOND LEADING SLASH IS AN OPEN REDIRECT, NOT A PATH. `//evil.example/x`
+  // is a protocol-relative URL: every browser resolves it against the current
+  // scheme, so echoing the captured group straight into res.redirect() hands an
+  // attacker a phishing link that genuinely begins with this product's own
+  // domain. encodeurl() does not touch it and res.location() only special-cases
+  // the literal 'back'. Verified against the Express in this repo, then fixed in
+  // all three handlers that share this pattern.
+  const toPath = (captured) => '/' + String(captured || '').replace(/^\/+/, '');
   const legacy = /^\/levelupmediamarketing(\/.*)?$/.exec(path);
-  if (legacy) return res.redirect(301, (legacy[1] || '/') + query);
+  if (legacy) return res.redirect(301, toPath(legacy[1]) + query);
   try {
     if (!levelupRootApp) levelupRootApp = require('../verticals/levelup/src/index');
   } catch (e) {
@@ -3050,6 +3125,16 @@ let valleMilagroError = null;
 try {
   const valleMilagroApp = require('../verticals/vallemilagro/src/index');
   app.use(['/vallemilagro', '/ValleMilagro'], valleMilagroApp);
+
+  // MaraPet (ISTC x Digit2AI) — canine health monitoring. Also served at its
+  // own root on marapet.app by the host handler near the top of this file.
+  try {
+    const marapetApp = require('../verticals/marapet/src/index');
+    app.use('/marapet', marapetApp);
+    console.log('[marapet] mounted at /marapet');
+  } catch (e) {
+    console.error('[marapet] failed to mount:', e.message);
+  }
   console.log('Valle Milagro mounted at /vallemilagro');
 } catch (error) {
   valleMilagroError = error;

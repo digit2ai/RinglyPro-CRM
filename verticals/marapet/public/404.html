@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="{{BASE}}/manifest.webmanifest">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{{BASE}}/apple-touch-icon.png">
+<script>
+(function(){try{var t=localStorage.getItem("marapet_theme");if(t==="dark"){
+document.documentElement.setAttribute("data-theme","dark");
+var m=document.querySelector("meta[name=\"theme-color\"]");if(m)m.setAttribute("content","#14171a");}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+<title>Not found — MaraPet</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<main class="mp-wrap" style="max-width:520px;padding-top:64px;text-align:center">
+  <img src="{{BASE}}/icon-192.png" alt="" width="56" height="56" style="border-radius:14px">
+  <h1 style="font-size:28px;margin-top:18px">404</h1>
+  <p class="mp-mut" data-en="There is nothing at this address on MaraPet." data-es="No hay nada en esta dirección de MaraPet.">There is nothing at this address on MaraPet.</p>
+  <a class="mp-btn mp-btn--primary" href="{{BASE}}/" data-en="Go to MaraPet" data-es="Ir a MaraPet">Go to MaraPet</a>
+  <p class="mp-alliance" style="margin-top:28px">ISTC &times; Digit2AI</p>
+</main>
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+</body>
+</html>

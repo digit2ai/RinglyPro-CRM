@@ -1,0 +1,21 @@
+<!-- MaraPet mark. FULL-BLEED SQUARE ON PURPOSE: iOS rounds apple-touch-icon
+     itself, and a pre-rounded source gets rounded twice. Everything sits inside
+     the central 80% so this one file also works as a maskable icon on Android.
+     A paw reads as a paw at 32px; the pad is a heart, which reads as health up
+     close and as a pad at icon size. No gradient and no opacity — both are the
+     first things to break when a launcher rasterises small.
+
+     THE GAPS ARE THE DESIGN. The first version used larger toes and a larger
+     pad and they merged into an orange blob at 32px — checked by rendering it
+     at 32 and blowing it back up, which is the only way to see this. The toes
+     now clear each other and the pad clears the toes. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="MaraPet">
+  <rect width="512" height="512" fill="#ff6f20"/>
+  <g fill="#ffffff">
+    <ellipse cx="150" cy="186" rx="35" ry="44"/>
+    <ellipse cx="221" cy="146" rx="34" ry="46"/>
+    <ellipse cx="291" cy="146" rx="34" ry="46"/>
+    <ellipse cx="362" cy="186" rx="35" ry="44"/>
+    <path d="M256 406c-7 0-13-3-18-9-15-17-54-46-54-83 0-27 21-46 46-46 10 0 20 4 26 12 6-8 16-12 26-12 25 0 46 19 46 46 0 37-39 66-54 83-5 6-11 9-18 9z"/>
+  </g>
+</svg>

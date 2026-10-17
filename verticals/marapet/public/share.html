@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<script>
+(function(){try{var t=localStorage.getItem("marapet_theme");if(t==="dark"){
+document.documentElement.setAttribute("data-theme","dark");}}catch(e){}}());
+</script>
+<link rel="stylesheet" href="{{BASE}}/theme.css?v={{VERSION}}">
+<title>Shared readings — MaraPet</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<main class="mp-wrap" style="max-width:720px;padding:32px 16px">
+  <p class="mp-alliance">ISTC &times; Digit2AI &middot; MaraPet</p>
+  <div id="box"><p class="mp-mut">Loading…</p></div>
+  <p class="mp-disclaim">MaraPet is a wellness aid, not a medical device. These figures are not a diagnosis.</p>
+</main>
+<script src="{{BASE}}/js/landing.js?v={{VERSION}}" defer></script>
+<script>
+(function () {
+  var parts = location.pathname.split('/');
+  var token = parts[parts.length - 1];
+  var base = {{BASE_JSON}};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  fetch(base + '/api/v1/public/share/' + encodeURIComponent(token))
+    .then(function (r) { if (!r.ok) throw new Error('gone'); return r.json(); })
+    .then(function (d) {
+      var h = '<h1 style="font-size:28px">' + esc(d.pet ? d.pet.name : 'This dog') + '</h1>' +
+        '<p class="mp-mut">' + esc((d.pet && d.pet.breed) || '') + '</p>' +
+        '<p class="mp-note">' + esc(d.from) + ' &rarr; ' + esc(d.to) + '</p>';
+      if (!d.summary.length) {
+        h += '<div class="mp-empty"><p style="margin:0">No readings in this range.</p></div>';
+      } else {
+        h += '<div class="mp-grid mp-grid--2" style="margin-top:16px">' + d.summary.map(function (s) {
+          return '<div class="mp-card"><span class="mp-label" style="margin:0">' + esc(s.metric) + '</span>' +
+            '<div class="mp-metric" style="margin-top:6px"><span class="mp-metric__v">' + esc(s.avg) +
+            '</span><span class="mp-metric__u">' + esc(s.unit || '') + '</span></div>' +
+            '<p class="mp-note" style="margin:6px 0 0">min ' + esc(s.min) + ' &middot; max ' + esc(s.max) +
+            ' &middot; ' + esc(s.samples) + ' readings' +
+            (s.source === 'video' ? ' &middot; estimate from video' : '') + '</p></div>';
+        }).join('') + '</div>';
+      }
+      document.getElementById('box').innerHTML = h;
+    })
+    .catch(function () {
+      document.getElementById('box').innerHTML =
+        '<div class="mp-empty"><h3 style="margin-top:0">This link is not available</h3>' +
+        '<p style="margin:0">It may have expired or been revoked by the owner.</p></div>';
+    });
+}());
+</script>
+</body>
+</html>
