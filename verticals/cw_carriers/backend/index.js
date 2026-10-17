@@ -151,41 +151,29 @@ async function initialize() {
       }
     }
 
-    // Seed admin user — always upsert to ensure password is current
-    const email = process.env.CW_USER_EMAIL || 'cwcarriers@ringlypro.com';
-    const password = process.env.CW_USER_PASSWORD || 'CWCarriers2026!';
-    const hash = await bcrypt.hash(password, 12);
-
-    const [existingRows] = await sequelize.query(
-      `SELECT id FROM cw_users WHERE email = $1`, { bind: [email] }
-    );
-    if (existingRows && existingRows.length > 0) {
-      // Update password hash in case env var changed
-      await sequelize.query(
-        `UPDATE cw_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`,
-        { bind: [hash, email] }
-      );
-      console.log('  ✅ CW Carriers admin user password updated');
-    } else {
-      await sequelize.query(
-        `INSERT INTO cw_users (email, password_hash, tenant_id, role, full_name, status, created_at, updated_at)
-         VALUES ($1, $2, 'cw_carriers', 'admin', 'CW Carriers Admin', 'active', NOW(), NOW())`,
-        { bind: [email, hash] }
-      );
-      console.log('  ✅ CW Carriers admin user created');
-    }
-    // Seed additional admin users
-    const extraUsers = [
-      { email: 'mstagg@ringlypro.com', password: 'Palindrome@7', name: 'Manuel Stagg' },
-      { email: 'mstagg@digit2ai.com', password: 'Palindrome@7', name: 'Manuel Stagg' },
-      { email: 'jovan.jegdic@gmail.com', password: 'CW_carriers@7', name: 'Jovan Jegdic' },
+    // Seed admin users. Passwords come ONLY from env vars: the old hardcoded
+    // values sat in this public repo and were re-applied on every boot, so anyone
+    // who read the repo could sign in as admin. An unset var never touches an
+    // existing hash; a missing user is created with a random, unusable password.
+    const crypto = require('crypto');
+    const seedUsers = [
+      { email: (process.env.CW_USER_EMAIL || 'cwcarriers@ringlypro.com').toLowerCase(), env: 'CW_USER_PASSWORD', name: 'CW Carriers Admin' },
+      { email: 'mstagg@ringlypro.com', env: 'CW_OWNER_PASSWORD', name: 'Manuel Stagg' },
+      { email: 'mstagg@digit2ai.com', env: 'CW_OWNER_PASSWORD', name: 'Manuel Stagg' },
+      { email: 'jovan.jegdic@gmail.com', env: 'CW_JOVAN_PASSWORD', name: 'Jovan Jegdic' },
     ];
-    for (const u of extraUsers) {
-      const h = await bcrypt.hash(u.password, 12);
+    for (const u of seedUsers) {
+      const pw = process.env[u.env];
       const [ex] = await sequelize.query(`SELECT id FROM cw_users WHERE email = $1`, { bind: [u.email] });
       if (ex && ex.length > 0) {
-        await sequelize.query(`UPDATE cw_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`, { bind: [h, u.email] });
+        if (pw) {
+          const h = await bcrypt.hash(pw, 12);
+          await sequelize.query(`UPDATE cw_users SET password_hash = $1, updated_at = NOW() WHERE email = $2`, { bind: [h, u.email] });
+        } else {
+          console.warn(`  ⚠️  CW Carriers: ${u.env} unset, password for ${u.email} left unchanged`);
+        }
       } else {
+        const h = await bcrypt.hash(pw || crypto.randomBytes(24).toString('hex'), 12);
         await sequelize.query(`INSERT INTO cw_users (email, password_hash, tenant_id, role, full_name, status, created_at, updated_at) VALUES ($1, $2, 'cw_carriers', 'admin', $3, 'active', NOW(), NOW())`, { bind: [u.email, h, u.name] });
       }
     }

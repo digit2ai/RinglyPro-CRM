@@ -10,6 +10,13 @@ function asyncHandler(fn) {
 
 router.use(auth);
 
+// Secret settings never leave the server in full. GET returns a mask; a PUT
+// carrying the mask (the page round-trips what it loaded) keeps the stored value.
+const MASK = '\u2022\u2022\u2022\u2022';
+const isSecretKey = k => /token|secret|password|api_key|apikey/i.test(k || '');
+const maskValue = v => (v ? MASK + String(v).slice(-4) : '');
+const isMasked = v => typeof v === 'string' && v.startsWith(MASK);
+
 // GET / — load all settings
 router.get('/', asyncHandler(async (req, res) => {
   // Ensure settings table exists
@@ -24,7 +31,8 @@ router.get('/', asyncHandler(async (req, res) => {
     )
   `);
 
-  const [rows] = await sequelize.query(`SELECT * FROM cw_settings ORDER BY category, setting_key`);
+  const [raw] = await sequelize.query(`SELECT * FROM cw_settings ORDER BY category, setting_key`);
+  const rows = raw.map(r => isSecretKey(r.setting_key) ? { ...r, setting_value: maskValue(r.setting_value) } : r);
 
   // Group by category
   const grouped = {};
@@ -44,6 +52,7 @@ router.put('/', asyncHandler(async (req, res) => {
   }
 
   for (const s of settings) {
+    if (isSecretKey(s.key) && (isMasked(s.value) || !s.value)) continue; // keep stored secret
     await sequelize.query(`
       INSERT INTO cw_settings (setting_key, setting_value, setting_type, category, updated_at)
       VALUES ($1, $2, $3, $4, NOW())
@@ -61,7 +70,11 @@ router.put('/', asyncHandler(async (req, res) => {
 // POST /hubspot/test — test HubSpot connection with provided API key
 router.post('/hubspot/test', asyncHandler(async (req, res) => {
   const { access_token } = req.body;
-  const token = access_token || process.env.HUBSPOT_ACCESS_TOKEN;
+  let token = access_token;
+  if (!token || isMasked(token)) {
+    const [[row]] = await sequelize.query(`SELECT setting_value FROM cw_settings WHERE setting_key = 'hubspot_access_token'`).catch(() => [[]]);
+    token = (row && row.setting_value) || process.env.HUBSPOT_ACCESS_TOKEN;
+  }
   if (!token) {
     return res.json({ success: false, message: 'No access token provided' });
   }

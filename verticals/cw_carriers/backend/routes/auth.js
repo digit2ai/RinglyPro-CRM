@@ -76,25 +76,4 @@ router.get('/me', require('../middleware/auth.cw'), asyncHandler(async (req, res
   res.json({ success: true, user });
 }));
 
-// GET /debug - temp: check if admin user exists and test bcrypt
-router.get('/debug', asyncHandler(async (req, res) => {
-  const [rows] = await sequelize.query(`SELECT id, email, role, status, length(password_hash) as hash_len, substring(password_hash, 1, 7) as hash_prefix FROM cw_users LIMIT 5`);
-
-  // Test bcrypt with fallback password against stored hash
-  let bcryptTest = 'skipped';
-  if (rows && rows[0]) {
-    const [fullRows] = await sequelize.query(`SELECT password_hash FROM cw_users WHERE id = $1`, { bind: [rows[0].id] });
-    if (fullRows[0]) {
-      try {
-        const testResult = await bcrypt.compare('CWCarriers2026!', fullRows[0].password_hash);
-        bcryptTest = testResult ? 'MATCH' : 'NO_MATCH';
-      } catch (e) {
-        bcryptTest = 'ERROR: ' + e.message;
-      }
-    }
-  }
-
-  res.json({ users: rows, bcrypt_test_fallback_password: bcryptTest });
-}));
-
 module.exports = router;
