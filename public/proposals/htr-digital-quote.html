@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Propuesta Técnico-Comercial — HTR Digital · Módulo 1</title>
+<title>Propuesta Técnico-Comercial — HTR Digital · Programación y Control de Obra</title>
 <style>
   :root{
     --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
@@ -70,115 +70,115 @@
 <body>
 <div class="page">
 <h1>PROPUESTA TÉCNICO-COMERCIAL</h1>
-<p class="sub">HTR Digital — Módulo 1: Transporte y despacho planta–obra · Modelo de Entrega AI-Native</p>
+<p class="sub">HTR Digital — Plataforma de Programación y Control de Obra con MCP Neural Intelligence · Modelo de Entrega AI-Native</p>
 <span class="conf">PROPUESTA TÉCNICO-COMERCIAL · VÁLIDA 30 DÍAS</span>
 <hr class="rule">
 <table class="meta">
-<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Módulo 1</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
-<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Asunto:</td><td>Inversión del primer módulo</td></tr>
+<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Programación y Control de Obra</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
+<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Asunto:</td><td>Prueba de concepto e implementación</td></tr>
 <tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Moneda:</td><td>Dólares estadounidenses (USD)</td></tr>
 <tr><td class="lbl">Base:</td><td colspan="3"><strong>Prueba de concepto de 4 semanas pagada por Digit2AI, sin costo para HTR.</strong> Los precios de la Etapa 1 aplican solo si HTR decide continuar después de ver los resultados.</td></tr>
 </table>
 
 <h2>1. Contexto y alcance</h2>
-<p>Esta propuesta cubre el <strong>primer módulo de HTR Digital</strong>: transporte y despacho planta–obra, construido sobre la plataforma <strong>FreightMind Autopilot</strong> que Digit2AI ya opera. Es el módulo recomendado para empezar porque la plataforma base existe y sus datos suelen estar disponibles en tickets y archivos.</p>
-<p>El trabajo va en dos etapas. La <strong>Etapa 0, prueba de concepto de 4 semanas, no tiene costo para HTR</strong>: Digit2AI la cubre en su totalidad (80 horas de trabajo), como inversión para demostrar el resultado con sus propios datos. La <strong>Etapa 1, implementación de 4 semanas</strong>, lleva el módulo a operación con los datos reales de una planta y sus frentes.</p>
-<p><strong>Quedan FUERA de este módulo</strong>: los otros once módulos de HTR Digital (plantas, maquinaria, combustible, licitaciones, bitácora, cobranza y centro de mando); más de un proveedor de GPS; cambios a los sistemas actuales de HTR; equipo físico en camiones o plantas; y la suscripción de GPS, que sigue siendo de HTR.</p>
-<p class="muted">Las horas son una estimación previa a conocer los sistemas de HTR. Se confirman al cierre de la Etapa 0.</p>
+<p>Esta propuesta cubre la <strong>plataforma de programación y control de obra de HTR Digital</strong>, que sustituye y mejora el manejo de proyectos en Excel. Se integra con los sistemas que Grupo HITTES ya usa (<strong>Neodata, CONTPAQi y SAP</strong>) para que el programa de obra se genere desde el presupuesto existente, el avance llegue desde campo y el costo real se compare con lo programado, sin recapturar información. Incluye el <strong>módulo MCP Neural Intelligence</strong>: agentes de IA conectados a sus datos por el Model Context Protocol que preparan programas, interpretan el avance, detectan atrasos y redactan estimaciones, siempre con aprobación de una persona.</p>
+<p>El trabajo va en dos etapas. La <strong>Etapa 0, prueba de concepto de 4 semanas, no tiene costo para HTR</strong>: Digit2AI la cubre en su totalidad (80 horas de trabajo) sobre un contrato activo, como inversión para demostrar el resultado con sus propios datos. La <strong>Etapa 1, implementación de 4 semanas</strong>, lleva la plataforma a todos los contratos activos.</p>
+<p><strong>Quedan FUERA de esta propuesta</strong>: escritura en CONTPAQi o SAP (la conexión es de solo lectura); sustituir la bitácora electrónica oficial en obra federal; contabilidad, nómina o facturación, que siguen en sus sistemas; la presentación de estimaciones a dependencias, que hace una persona; y los módulos de planta, despacho y maquinaria de HTR Digital, que se cotizan por separado.</p>
+<p class="muted">Las horas son una estimación previa a conocer sus versiones de Neodata, CONTPAQi y SAP. Se confirman al cierre de la Etapa 0. El detalle técnico está en el documento de arquitectura técnica.</p>
 
 <h2>2. Etapa 0 — Prueba de concepto (4 semanas)</h2>
 <table class="fin">
 <tr><th>Actividad</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
-<tr><td>Diagnóstico y línea base</td><td class="num">16</td><td class="num">Sin costo</td></tr>
-<tr><td>Carga de datos y primer escaneo</td><td class="num">24</td><td class="num">Sin costo</td></tr>
-<tr><td>Tablero en español</td><td class="num">24</td><td class="num">Sin costo</td></tr>
-<tr><td>Resultados medidos y hoja de ruta</td><td class="num">16</td><td class="num">Sin costo</td></tr>
+<tr><td>Diagnóstico y línea base del proceso actual en Excel</td><td class="num">16</td><td class="num">Sin costo</td></tr>
+<tr><td>Importación del presupuesto Neodata de un contrato y programa generado</td><td class="num">24</td><td class="num">Sin costo</td></tr>
+<tr><td>Captura de avance con un residente y avance programado contra real semanal</td><td class="num">24</td><td class="num">Sin costo</td></tr>
+<tr><td>Borrador de estimación, resultados medidos y hoja de ruta</td><td class="num">16</td><td class="num">Sin costo</td></tr>
 <tr class="total"><td>ETAPA 0 — CUBIERTA POR DIGIT2AI · SIN COSTO PARA HTR</td><td class="num">80</td><td class="num">$0 USD</td></tr>
 </table>
 
 <h2>3. Inversión de implementación — Etapa 1 (CAPEX)</h2>
 <p>Diez componentes sobre la arquitectura AI-Native de Digit2AI.</p>
-<div class="card"><h3>Componente 1: Localización al español y marca HTR</h3>
-Interfaz, reportes y alertas en español de México, con la identidad del grupo.
+<div class="card"><h3>Componente 1: Modelo de datos de obra multiempresa</h3>
+Obras, frentes, conceptos, insumos, actividades y programas por empresa del grupo, en español, con bitácora de auditoría.
+<div class="price">32 hrs · Precio: $3.808 USD</div></div>
+<div class="card"><h3>Componente 2: Conector Neodata</h3>
+Importa catálogo de conceptos, cantidades, precios unitarios y análisis de precios con rendimientos. Devuelve la estimación en un archivo que Neodata abre.
+<div class="price">48 hrs · Precio: $5.712 USD</div></div>
+<div class="card"><h3>Componente 3: Importación de programas en Excel</h3>
+Trae una sola vez los programas vigentes, con plantilla de mapeo y reporte de filas rechazadas.
 <div class="price">24 hrs · Precio: $2.856 USD</div></div>
-<div class="card"><h3>Componente 2: Modelo de datos del grupo</h3>
-Plantas, frentes de obra, camiones, operadores y clientes internos, aislados como un inquilino propio.
-<div class="price">32 hrs · Precio: $3.808 USD</div></div>
-<div class="card"><h3>Componente 3: Conector de GPS de la flota</h3>
-Lectura de posición y estado de los camiones desde un proveedor de GPS con API documentada.
-<div class="price">40 hrs · Precio: $4.760 USD</div></div>
-<div class="card"><h3>Componente 4: Ingesta de pedidos de obra y tickets de báscula</h3>
-Carga automática de los pedidos por frente y de las pesadas de planta, por API o por archivo.
-<div class="price">32 hrs · Precio: $3.808 USD</div></div>
-<div class="card"><h3>Componente 5: Motor de despacho planta–obra</h3>
-Asignación de camiones según ritmo de la pavimentadora, distancia y ventana de temperatura de la mezcla.
+<div class="card"><h3>Componente 4: Motor de programación</h3>
+Duraciones calculadas desde cantidades y rendimientos, dependencias, ruta crítica, programa base y reprogramaciones.
 <div class="price">56 hrs · Precio: $6.664 USD</div></div>
-<div class="card"><h3>Componente 6: Reglas y piloto automático</h3>
-Reglas del grupo, pausas automáticas y aprobaciones de una persona antes de cada acción.
-<div class="price">32 hrs · Precio: $3.808 USD</div></div>
-<div class="card"><h3>Componente 7: Tablero de despacho y alertas</h3>
-Pantalla web y móvil para el despachador, con avisos de espera, carga fría y camión sobrante.
+<div class="card"><h3>Componente 5: Pantalla del planeador</h3>
+Gantt, ruta crítica, ajuste de secuencia, frentes y calendario laboral por obra.
+<div class="price">48 hrs · Precio: $5.712 USD</div></div>
+<div class="card"><h3>Componente 6: Avance desde campo</h3>
+Captura diaria por voz o formulario desde el teléfono, funciona sin señal y se aprueba por el residente.
 <div class="price">40 hrs · Precio: $4.760 USD</div></div>
-<div class="card"><h3>Componente 8: Pruebas con datos reales</h3>
-Pruebas de integración y de aceptación con la operación de una planta y sus frentes.
-<div class="price">32 hrs · Precio: $3.808 USD</div></div>
-<div class="card"><h3>Componente 9: Capacitación y puesta en marcha</h3>
-Capacitación a despacho y planta, arranque acompañado y documentación.
-<div class="price">24 hrs · Precio: $2.856 USD</div></div>
-<div class="card"><h3>Componente 10: Gestión del proyecto</h3>
-Seguimiento semanal, control de alcance y comunicación con la contraparte de HTR.
-<div class="price">20 hrs · Precio: $2.380 USD</div></div>
+<div class="card"><h3>Componente 7: Control de obra y tablero de dirección</h3>
+Avance físico, curva S, valor ganado e índices de programa y costo, por obra y para todo el grupo.
+<div class="price">40 hrs · Precio: $4.760 USD</div></div>
+<div class="card"><h3>Componente 8: Conectores CONTPAQi y SAP</h3>
+Costo real por obra, CFDI emitidos y cobrados, en solo lectura, empezando por los exportes que ya generan.
+<div class="price">40 hrs · Precio: $4.760 USD</div></div>
+<div class="card"><h3>Componente 9: Módulo MCP Neural Intelligence</h3>
+Servidores MCP sobre sus datos y cinco agentes de IA: constructor de programa, intérprete de avance, vigía de atrasos, redactor de estimaciones y analista de costo. Proponen; una persona aprueba.
+<div class="price">56 hrs · Precio: $6.664 USD</div></div>
+<div class="card"><h3>Componente 10: Pruebas, capacitación y gestión</h3>
+Pruebas con contratos reales, capacitación de planeadores y residentes, puesta en marcha y seguimiento semanal.
+<div class="price">40 hrs · Precio: $4.760 USD</div></div>
 <table class="fin">
 <tr><th>Concepto</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
-<tr><td>Subtotal de los 10 componentes (incluye gestión, pruebas y puesta en marcha)</td><td class="num">332</td><td class="num">$39.508</td></tr>
-<tr class="total"><td>INVERSIÓN DE IMPLEMENTACIÓN — ETAPA 1 (CAPEX)</td><td class="num">332</td><td class="num">$39.508 USD</td></tr>
+<tr><td>Subtotal de los 10 componentes (incluye pruebas, capacitación y gestión)</td><td class="num">424</td><td class="num">$50.456</td></tr>
+<tr class="total"><td>INVERSIÓN DE IMPLEMENTACIÓN — ETAPA 1 (CAPEX)</td><td class="num">424</td><td class="num">$50.456 USD</td></tr>
 </table>
-<p class="muted">Plazo de entrega: <span class="pill">4 semanas</span> después de la Etapa 0. Si HTR no cuenta con un GPS con API, el Componente 3 se sustituye por carga de archivo y baja $1.904 USD (16 horas menos).</p>
+<p class="muted">Plazo de entrega: <span class="pill">4 semanas</span> después de la Etapa 0.</p>
 
 <h2>4. Cronograma de la Etapa 1</h2>
 <div class="twocol">
-<div class="card"><h3>Semana 1 — Cimientos</h3>
-<ul class="tight"><li>Localización, modelo de datos y arranque del conector de GPS.</li><li>Componentes 1, 2</li></ul>
-<div class="price">80 hrs · Precio: $9.520 USD</div></div>
-<div class="card"><h3>Semana 2 — Datos</h3>
-<ul class="tight"><li>Conector de GPS e ingesta de pedidos y tickets de báscula.</li><li>Componentes 3, 4</li></ul>
-<div class="price">88 hrs · Precio: $10.472 USD</div></div>
-<div class="card"><h3>Semana 3 — Despacho</h3>
-<ul class="tight"><li>Motor de despacho, reglas y piloto automático.</li><li>Componentes 5, 6</li></ul>
-<div class="price">88 hrs · Precio: $10.472 USD</div></div>
-<div class="card"><h3>Semana 4 — Operación</h3>
-<ul class="tight"><li>Tablero, pruebas con datos reales, capacitación y puesta en marcha.</li><li>Componentes 7, 8, 9, 10</li></ul>
-<div class="price">76 hrs · Precio: $9.044 USD</div></div>
+<div class="card"><h3>Semana 1 — Datos</h3>
+<ul class="tight"><li>Modelo de datos, conector Neodata e importación de Excel.</li><li>Componentes 1, 2, 3</li></ul>
+<div class="price">104 hrs · Precio: $12.376 USD</div></div>
+<div class="card"><h3>Semana 2 — Programación</h3>
+<ul class="tight"><li>Motor de programación y pantalla del planeador.</li><li>Componentes 4, 5</li></ul>
+<div class="price">104 hrs · Precio: $12.376 USD</div></div>
+<div class="card"><h3>Semana 3 — Campo y control</h3>
+<ul class="tight"><li>Avance desde campo, tablero de dirección y conectores CONTPAQi y SAP.</li><li>Componentes 6, 7, 8</li></ul>
+<div class="price">120 hrs · Precio: $14.280 USD</div></div>
+<div class="card"><h3>Semana 4 — Inteligencia y operación</h3>
+<ul class="tight"><li>Módulo MCP Neural Intelligence, pruebas, capacitación y puesta en marcha.</li><li>Componentes 9, 10</li></ul>
+<div class="price">96 hrs · Precio: $11.424 USD</div></div>
 </div>
-<p class="muted">Suma de las 4 semanas = 332 horas = <strong>$39.508 USD</strong>.</p>
+<p class="muted">Suma de las 4 semanas = 424 horas = <strong>$50.456 USD</strong>.</p>
 
 <h2>5. Mensualidad de operación (OPEX)</h2>
-<p>Mensualidad del módulo en operación. Empieza cuando el módulo entra en uso, no antes. La línea marcada con (*) es variable: escala con el número de viajes y consultas.</p>
+<p>Mensualidad de la plataforma en operación. Empieza cuando entra en uso, no antes. La línea marcada con (*) es variable: escala con el número de obras y consultas a los agentes.</p>
 <table class="fin">
 <tr><th>Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
 <tr><td>Render — servicio web y PostgreSQL</td><td>Cómputo y base de datos</td><td class="num">$111</td></tr>
-<tr><td>Anthropic Claude — consumo de IA (*)</td><td>Agentes de despacho y diagnóstico</td><td class="num">$204</td></tr>
+<tr><td>Anthropic Claude — consumo de IA (*)</td><td>Agentes del módulo MCP Neural Intelligence</td><td class="num">$255</td></tr>
 <tr><td>Cloudflare — dominio, SSL y CDN</td><td>Borde y seguridad</td><td class="num">$22</td></tr>
-<tr><td>Almacenamiento de archivos</td><td>Tickets, reportes y respaldos</td><td class="num">$22</td></tr>
-<tr><td>Soporte y mejoras (8 horas al mes)</td><td>Atención, ajustes de reglas y mantenimiento</td><td class="num">$952</td></tr>
-<tr class="total"><td colspan="2">MENSUALIDAD DEL MÓDULO 1</td><td class="num">$1.311</td></tr>
+<tr><td>Almacenamiento de archivos</td><td>Importaciones, fotos de avance y respaldos</td><td class="num">$22</td></tr>
+<tr><td>Soporte y mejoras (8 horas al mes)</td><td>Atención, ajustes y mantenimiento</td><td class="num">$952</td></tr>
+<tr class="total"><td colspan="2">MENSUALIDAD DE LA PLATAFORMA</td><td class="num">$1.362</td></tr>
 </table>
-<p class="muted">Equivale a <strong>$15.732 USD al año</strong>. Volumen supuesto: una planta y sus frentes. No incluye la suscripción de GPS de HTR.</p>
+<p class="muted">Equivale a <strong>$16.344 USD al año</strong>. Volumen supuesto: los contratos activos de una empresa del grupo.</p>
 
 <h2>6. Resumen — primer año</h2>
 <table class="fin">
 <tr><th>Concepto</th><th class="num">Precio (USD)</th></tr>
 <tr><td>Etapa 0 — Prueba de concepto (4 semanas), cubierta por Digit2AI</td><td class="num">$0</td></tr>
-<tr><td>Etapa 1 — Implementación (CAPEX)</td><td class="num">$39.508</td></tr>
-<tr><td>Operación, 12 meses ($1.311 al mes)</td><td class="num">$15.732</td></tr>
-<tr><td>Subtotal</td><td class="num">$55.240</td></tr>
-<tr><td>IVA 16% (México)</td><td class="num">$8.838</td></tr>
-<tr class="total"><td>INVERSIÓN TOTAL DEL PRIMER AÑO</td><td class="num">$64.078 USD</td></tr>
+<tr><td>Etapa 1 — Implementación (CAPEX)</td><td class="num">$50.456</td></tr>
+<tr><td>Operación, 12 meses ($1.362 al mes)</td><td class="num">$16.344</td></tr>
+<tr><td>Subtotal</td><td class="num">$66.800</td></tr>
+<tr><td>IVA 16% (México)</td><td class="num">$10.688</td></tr>
+<tr class="total"><td>INVERSIÓN TOTAL DEL PRIMER AÑO</td><td class="num">$77.488 USD</td></tr>
 <tr><td>Plazo</td><td class="num">4 + 4 semanas</td></tr>
 </table>
-<p><strong>Forma de pago sugerida:</strong> 40% al iniciar la Etapa 1, 40% al entregar el tablero en la semana 3 y 20% a la puesta en marcha. La mensualidad se factura por mes vencido.</p>
-<p><strong>Lo que esta propuesta no promete:</strong> un porcentaje de ahorro. En la Etapa 0 se mide la línea base de HTR (por ejemplo, minutos de espera por camión) y el resultado se reporta con sus propios datos.</p>
-<div class="note"><strong>Nota:</strong> Los precios incluyen la utilidad de Digit2AI y el IVA de 16% aplicable en México. El tratamiento fiscal definitivo depende de la entidad que facture y debe confirmarlo el contador de cada parte. Propuesta válida por 30 días.</div>
+<p><strong>Forma de pago sugerida:</strong> 40% al iniciar la Etapa 1, 40% al entregar la pantalla del planeador en la semana 2 y 20% a la puesta en marcha. La mensualidad se factura por mes vencido.</p>
+<p><strong>Lo que esta propuesta no promete:</strong> un porcentaje de ahorro. En la Etapa 0 se mide la línea base de su proceso actual en Excel (por ejemplo, horas para armar y actualizar un programa) y el resultado se reporta con sus propios datos.</p>
+<div class="note"><strong>Nota:</strong> Los precios de la Etapa 1 incluyen la utilidad de Digit2AI y el IVA de 16% aplicable en México. El tratamiento fiscal definitivo depende de la entidad que facture y debe confirmarlo el contador de cada parte. Propuesta válida por 30 días.</div>
 <p class="foot">Digit2AI · Propuesta para Grupo HITTES · Octubre 2026</p>
 </div>
 </body>
