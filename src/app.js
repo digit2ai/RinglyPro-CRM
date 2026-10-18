@@ -3146,6 +3146,22 @@ app.get('/debug/vallemilagro-error', (req, res) => {
 });
 
 // =====================================================
+// CLIENT WORKSPACE — private shared space per client (first: Grupo HITTES) at /workspace/
+// Projects, tasks, documents and invoices. Owner signs in with the CRM password.
+// =====================================================
+try {
+  const clientspaceApp = require("../verticals/clientspace/src/index");
+  app.get("/workspace", (req, res, next) => {
+    if (!req.originalUrl.split("?")[0].endsWith("/")) return res.redirect(301, "/workspace/");
+    next();
+  });
+  app.use("/workspace", clientspaceApp);
+  console.log("Client Workspace mounted at /workspace");
+} catch (error) {
+  console.log("⚠️ Client Workspace not available:", error.message);
+}
+
+// =====================================================
 // AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
 // =====================================================
 

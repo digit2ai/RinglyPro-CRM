@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#24262c">
+<title>Digit2AI Workspace</title>
+<style>
+:root{--ink:#1d1f24;--mut:#5d6470;--line:#e3e5ea;--bg:#f4f5f7;--card:#fff;--char:#24262c;--acc:#c81e26;--acc-d:#a5161d;--blu:#1f4e8c;--blu-bg:#e8f0fb;--grn:#127a43;--grn-bg:#e5f4ea;--amb:#8a5a00;--amb-bg:#fbf0d6;--red-bg:#fde8e9}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit}
+input,select,textarea{border:1px solid #cdd1d9;border-radius:8px;padding:10px 12px;background:#fff;color:var(--ink);width:100%;min-height:44px;font-size:16px}
+textarea{min-height:80px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:0 0 4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:8px;padding:10px 16px;min-height:44px;font-weight:700;cursor:pointer;background:var(--acc);color:#fff;text-decoration:none}
+.btn:hover{background:var(--acc-d)}
+.btn.sec{background:#fff;color:var(--ink);border:1px solid #cdd1d9}
+.btn.sec:hover{background:#f0f1f4}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn.link{background:none;color:var(--blu);padding:6px 8px;min-height:36px}
+/* login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#24262c,#3b2224)}
+.login .box{background:#fff;border-radius:14px;padding:30px;width:100%;max-width:400px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.brand{font-weight:800;letter-spacing:.06em;font-size:20px}
+.brand span{color:var(--acc)}
+.login h1{font-size:20px;margin:14px 0 4px}
+.login p{color:var(--mut);margin:0 0 18px;font-size:14px}
+.field{margin-bottom:12px}
+.err{background:var(--red-bg);color:#8f1218;border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.okmsg{background:var(--grn-bg);color:var(--grn);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+/* shell */
+header.top{background:var(--char);color:#fff;border-bottom:3px solid var(--acc);position:sticky;top:0;z-index:5}
+.topin{max-width:1200px;margin:0 auto;padding:8px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:60px}
+.topin .brand{font-size:17px;color:#fff}
+.wsname{font-weight:700;color:#e4e6eb}
+.wssel{width:auto;min-height:40px;padding:6px 10px;background:#30333b;color:#fff;border-color:#4a4f5b}
+.topin .right{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:14px;color:#c7cbd3}
+.topin .right .btn.sec{background:transparent;color:#fff;border-color:#555a66;min-height:40px}
+nav.tabs{background:#fff;border-bottom:1px solid var(--line)}
+nav.tabs .in{max-width:1200px;margin:0 auto;padding:0 12px;display:flex;gap:2px;overflow-x:auto}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:14px 14px;min-height:48px;font-weight:600;color:var(--mut);cursor:pointer;white-space:nowrap}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--acc)}
+main{max-width:1200px;margin:0 auto;padding:22px 18px 60px}
+h2{font-size:22px;margin:0 0 4px}
+.subt{color:var(--mut);margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.grid{display:grid;gap:14px}
+.k4{grid-template-columns:repeat(4,1fr)}
+.k2{grid-template-columns:repeat(2,1fr)}
+.kpi b{display:block;font-size:26px;line-height:1.2}
+.kpi span{color:var(--mut);font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.bar{height:8px;background:#eceef2;border-radius:999px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--grn)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.s-planeado,.s-pendiente{background:#eceef2;color:#454b56}
+.s-en_curso{background:var(--blu-bg);color:var(--blu)}
+.s-en_pausa,.s-bloqueado{background:var(--amb-bg);color:var(--amb)}
+.s-terminado,.s-hecho,.s-pagada{background:var(--grn-bg);color:var(--grn)}
+.s-archivado,.s-cancelada{background:#f1f1f1;color:#777}
+.s-vencida{background:var(--red-bg);color:#8f1218}
+.c-propuesta{background:var(--blu-bg);color:var(--blu)} .c-contrato{background:#efe7fb;color:#5b2ea6}
+.c-factura{background:var(--amb-bg);color:var(--amb)} .c-documento{background:#eceef2;color:#454b56}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tablewrap{overflow-x:auto}
+.proj{cursor:pointer}
+.proj:hover{border-color:#b9bec8}
+.proj h3{margin:0 0 4px;font-size:17px}
+.muted{color:var(--mut);font-size:13px}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.col{background:#eceef2;border-radius:10px;padding:10px;min-height:120px}
+.col h4{margin:2px 4px 10px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.task{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+.task b{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.task .meta{font-size:12.5px;color:var(--mut);margin-bottom:6px}
+.task select{min-height:36px;padding:4px 8px;font-size:14px}
+.task.overdue{border-left:3px solid var(--acc)}
+.form{display:grid;gap:10px;grid-template-columns:2fr 1fr 1fr auto;align-items:end}
+.uform{display:grid;gap:10px;grid-template-columns:2fr 1fr 1fr 1fr;align-items:end}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal .box{background:#fff;border-radius:12px;padding:22px;max-width:460px;width:100%}
+.secret{font-family:ui-monospace,Menlo,monospace;font-size:18px;background:#f4f5f7;border:1px dashed #b9bec8;border-radius:8px;padding:12px;text-align:center;letter-spacing:.06em;margin:10px 0}
+.empty{color:var(--mut);text-align:center;padding:26px}
+@media (max-width:860px){
+  .k4{grid-template-columns:1fr 1fr} .k2{grid-template-columns:1fr}
+  .board{grid-template-columns:1fr} .form,.uform{grid-template-columns:1fr}
+  .topin .right span{display:none}
+}
+</style>
+</head>
+<body>
+
+<section class="login" id="vLogin" hidden>
+  <form class="box" id="fLogin">
+    <div class="brand">DIGIT2AI <span>WORKSPACE</span></div>
+    <h1>Iniciar sesión</h1>
+    <p>Espacio privado de trabajo compartido.</p>
+    <div class="err" id="loginErr" hidden></div>
+    <div class="field"><label for="lEmail">Correo</label><input id="lEmail" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="lPass">Contraseña</label><input id="lPass" type="password" autocomplete="current-password" required></div>
+    <button class="btn" style="width:100%" type="submit">Entrar</button>
+  </form>
+</section>
+
+<section class="login" id="vChange" hidden>
+  <form class="box" id="fChange">
+    <div class="brand">DIGIT2AI <span>WORKSPACE</span></div>
+    <h1>Crea tu contraseña</h1>
+    <p>Por seguridad, cambia la contraseña temporal antes de continuar. Mínimo 10 caracteres.</p>
+    <div class="err" id="chErr" hidden></div>
+    <div class="field"><label for="cCur">Contraseña actual (temporal)</label><input id="cCur" type="password" autocomplete="current-password" required></div>
+    <div class="field"><label for="cNew">Nueva contraseña</label><input id="cNew" type="password" autocomplete="new-password" minlength="10" required></div>
+    <div class="field"><label for="cNew2">Repite la nueva contraseña</label><input id="cNew2" type="password" autocomplete="new-password" minlength="10" required></div>
+    <button class="btn" style="width:100%" type="submit">Guardar y entrar</button>
+  </form>
+</section>
+
+<div id="vApp" hidden>
+  <header class="top"><div class="topin">
+    <div class="brand">DIGIT2AI <span style="color:#ff6b72">WORKSPACE</span></div>
+    <select class="wssel" id="wsSel" aria-label="Espacio de trabajo" hidden></select>
+    <div class="wsname" id="wsName"></div>
+    <div class="right"><span id="who"></span>
+      <button class="btn sec sm" id="bPass" type="button">Contraseña</button>
+      <button class="btn sec sm" id="bOut" type="button">Salir</button></div>
+  </div></header>
+  <nav class="tabs"><div class="in" id="tabs">
+    <button data-t="resumen" class="on">Resumen</button>
+    <button data-t="proyectos">Proyectos</button>
+    <button data-t="documentos">Documentos</button>
+    <button data-t="facturas">Facturas</button>
+    <button data-t="equipo" data-owner>Equipo</button>
+    <button data-t="actividad">Actividad</button>
+  </div></nav>
+  <main id="view"></main>
+</div>
+
+<div class="modal" id="modal" hidden><div class="box" id="modalBox"></div></div>
+
+<script src="app.js?v=1"></script>
+</body>
+</html>
