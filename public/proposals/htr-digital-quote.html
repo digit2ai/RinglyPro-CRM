@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>Propuesta Técnico-Comercial — HTR Digital · Programación y Control de Obra</title>
+<title>Propuesta Técnico-Comercial — HTR Digital · Inteligencia Neural de Proyectos</title>
 <style>
   :root{
     --azul:#1f5fa8; --azul-claro:#eef4fb; --azul-borde:#cfe0f2;
@@ -65,120 +65,88 @@
     .calc input,.calc select{background:#fff;color:var(--tinta);border-color:var(--azul-borde)}
     .calc .out .v{color:var(--verde)}.calc .out{border-top-color:var(--azul-borde)}}
 </style>
-<style>@media screen and (max-width:600px){td,th{overflow-wrap:anywhere}table.meta td{display:block}}@media print{h2,h3{break-after:avoid;page-break-after:avoid}table,table.fin,.card{break-inside:auto!important;page-break-inside:auto!important}tr,.card .price{break-inside:avoid}}</style>
+<style>@media screen and (max-width:600px){td,th{overflow-wrap:anywhere}table.meta td{display:block}}@media print{h2,h3{break-after:avoid;page-break-after:avoid}table,table.fin,.card{break-inside:auto!important;page-break-inside:auto!important}tr{break-inside:avoid}}
+table.fin td{vertical-align:top}</style>
 </head>
 <body>
 <div class="page">
 <h1>PROPUESTA TÉCNICO-COMERCIAL</h1>
-<p class="sub">HTR Digital — Plataforma de Programación y Control de Obra con MCP Neural Intelligence · Modelo de Entrega AI-Native</p>
-<span class="conf">PROPUESTA TÉCNICO-COMERCIAL · VÁLIDA 30 DÍAS</span>
+<p class="sub">HTR Digital — Inteligencia Neural para el Manejo de Proyectos · Prueba de Concepto</p>
+<span class="conf">PRUEBA DE CONCEPTO DE 4 SEMANAS · PAGADA POR DIGIT2AI</span>
 <hr class="rule">
 <table class="meta">
-<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Programación y Control de Obra</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
-<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Asunto:</td><td>Prueba de concepto e implementación</td></tr>
-<tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Moneda:</td><td>Dólares estadounidenses (USD)</td></tr>
-<tr><td class="lbl">Base:</td><td colspan="3"><strong>Prueba de concepto de 4 semanas pagada por Digit2AI, sin costo para HTR.</strong> Los precios de la Etapa 1 aplican solo si HTR decide continuar después de ver los resultados.</td></tr>
+<tr><td class="lbl">Proyecto:</td><td>HTR Digital · Inteligencia Neural de Proyectos</td><td class="lbl">Fecha:</td><td>Octubre 2026</td></tr>
+<tr><td class="lbl">Atención:</td><td>Osbaldo García · Grupo HITTES</td><td class="lbl">Duración:</td><td>4 semanas</td></tr>
+<tr><td class="lbl">Equipo:</td><td>Digit2AI</td><td class="lbl">Inversión de HTR:</td><td>Ninguna. Digit2AI cubre la prueba completa.</td></tr>
 </table>
 
-<h2>1. Contexto y alcance</h2>
-<p>Esta propuesta cubre la <strong>plataforma de programación y control de obra de HTR Digital</strong>, que sustituye y mejora el manejo de proyectos en Excel. Se integra con los sistemas que Grupo HITTES ya usa (<strong>Neodata, CONTPAQi y SAP</strong>) para que el programa de obra se genere desde el presupuesto existente, el avance llegue desde campo y el costo real se compare con lo programado, sin recapturar información. Incluye el <strong>módulo MCP Neural Intelligence</strong>: agentes de IA conectados a sus datos por el Model Context Protocol que preparan programas, interpretan el avance, detectan atrasos y redactan estimaciones, siempre con aprobación de una persona.</p>
-<p>El trabajo va en dos etapas. La <strong>Etapa 0, prueba de concepto de 4 semanas, no tiene costo para HTR</strong>: Digit2AI la cubre en su totalidad (80 horas de trabajo) sobre un contrato activo, como inversión para demostrar el resultado con sus propios datos. La <strong>Etapa 1, implementación de 4 semanas</strong>, lleva la plataforma a todos los contratos activos.</p>
-<p><strong>Quedan FUERA de esta propuesta</strong>: escritura en CONTPAQi o SAP (la conexión es de solo lectura); sustituir la bitácora electrónica oficial en obra federal; contabilidad, nómina o facturación, que siguen en sus sistemas; la presentación de estimaciones a dependencias, que hace una persona; y los módulos de planta, despacho y maquinaria de HTR Digital, que se cotizan por separado.</p>
-<p class="muted">Las horas son una estimación previa a conocer sus versiones de Neodata, CONTPAQi y SAP. Se confirman al cierre de la Etapa 0. El detalle técnico está en el documento de arquitectura técnica.</p>
+<h2>1. Lo que vamos a construir</h2>
+<p>Una <strong>herramienta de inteligencia neural para el manejo de proyectos</strong> que trabaja sobre los datos que Grupo HITTES ya tiene. Lee el presupuesto de <strong>Neodata</strong>, el costo y la facturación de <strong>CONTPAQi</strong> y <strong>SAP</strong>, y los programas que hoy viven en <strong>Excel</strong>, y los convierte en un solo lugar donde cada obra tiene su programa, su avance real, su costo y sus alertas.</p>
+<p>Los agentes de inteligencia artificial, conectados a esos datos por el Model Context Protocol (MCP), hacen el trabajo repetitivo: arman el programa, interpretan el avance que llega de campo, detectan atrasos y preparan estimaciones. <strong>Una persona de HITTES revisa y aprueba cada paso.</strong></p>
+<div class="note"><strong>Por qué así:</strong> HITTES no necesita otro sistema donde volver a capturar todo. Necesita que los sistemas que ya paga trabajen juntos y que alguien vigile las obras todos los días. Eso es lo que hace la inteligencia neural.</div>
 
-<h2>2. Etapa 0 — Prueba de concepto (4 semanas)</h2>
+<h2>2. El beneficio para HITTES</h2>
 <table class="fin">
-<tr><th>Actividad</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
-<tr><td>Diagnóstico y línea base del proceso actual en Excel</td><td class="num">16</td><td class="num">Sin costo</td></tr>
-<tr><td>Importación del presupuesto Neodata de un contrato y programa generado</td><td class="num">24</td><td class="num">Sin costo</td></tr>
-<tr><td>Captura de avance con un residente y avance programado contra real semanal</td><td class="num">24</td><td class="num">Sin costo</td></tr>
-<tr><td>Borrador de estimación, resultados medidos y hoja de ruta</td><td class="num">16</td><td class="num">Sin costo</td></tr>
-<tr class="total"><td>ETAPA 0 — CUBIERTA POR DIGIT2AI · SIN COSTO PARA HTR</td><td class="num">80</td><td class="num">$0 USD</td></tr>
+<tr><th>Beneficio</th><th>Hoy</th><th>Con la herramienta</th></tr>
+<tr><td><strong>Programas de obra en horas, no en días</strong></td><td>Se arman a mano en Excel, concepto por concepto</td><td>Se generan desde el presupuesto de Neodata; el planeador solo ajusta secuencia y fechas</td></tr>
+<tr><td><strong>Cero recaptura</strong></td><td>El mismo dato se escribe en Neodata, en Excel y en reportes</td><td>Cada dato se lee una sola vez del sistema donde ya existe</td></tr>
+<tr><td><strong>Atrasos visibles antes</strong></td><td>Se descubren en la junta o cuando la dependencia reclama</td><td>Un agente revisa la ruta crítica todos los días y avisa qué actividad amenaza la fecha final y por qué</td></tr>
+<tr><td><strong>Avance real desde campo</strong></td><td>Llega por WhatsApp, llamada o papel</td><td>El residente lo dicta desde el teléfono, incluso sin señal, y queda ligado al concepto del contrato</td></tr>
+<tr><td><strong>Estimaciones más rápidas</strong></td><td>Generadores armados a mano al cierre de cada periodo</td><td>Borrador de generadores y estimación a partir del avance aprobado, listo para revisar</td></tr>
+<tr><td><strong>Avance, costo y cobro en una pantalla</strong></td><td>Cada cifra está en un sistema distinto</td><td>Por obra: cuánto se hizo, cuánto costó (CONTPAQi y SAP), cuánto se facturó y cuánto se cobró</td></tr>
+<tr><td><strong>Vista de todo el grupo</strong></td><td>Cada obra en su propio archivo</td><td>Dirección ve todas las obras activas en un solo tablero</td></tr>
 </table>
+<p class="muted">No prometemos un porcentaje de ahorro. En la semana 1 medimos cómo funciona hoy su proceso en Excel y al final reportamos la diferencia con sus propios números.</p>
 
-<h2>3. Inversión de implementación — Etapa 1 (CAPEX)</h2>
-<p>Diez componentes sobre la arquitectura AI-Native de Digit2AI.</p>
-<div class="card"><h3>Componente 1: Modelo de datos de obra multiempresa</h3>
-Obras, frentes, conceptos, insumos, actividades y programas por empresa del grupo, en español, con bitácora de auditoría.
-<div class="price">32 hrs · Precio: $3.808 USD</div></div>
-<div class="card"><h3>Componente 2: Conector Neodata</h3>
-Importa catálogo de conceptos, cantidades, precios unitarios y análisis de precios con rendimientos. Devuelve la estimación en un archivo que Neodata abre.
-<div class="price">48 hrs · Precio: $5.712 USD</div></div>
-<div class="card"><h3>Componente 3: Importación de programas en Excel</h3>
-Trae una sola vez los programas vigentes, con plantilla de mapeo y reporte de filas rechazadas.
-<div class="price">24 hrs · Precio: $2.856 USD</div></div>
-<div class="card"><h3>Componente 4: Motor de programación</h3>
-Duraciones calculadas desde cantidades y rendimientos, dependencias, ruta crítica, programa base y reprogramaciones.
-<div class="price">56 hrs · Precio: $6.664 USD</div></div>
-<div class="card"><h3>Componente 5: Pantalla del planeador</h3>
-Gantt, ruta crítica, ajuste de secuencia, frentes y calendario laboral por obra.
-<div class="price">48 hrs · Precio: $5.712 USD</div></div>
-<div class="card"><h3>Componente 6: Avance desde campo</h3>
-Captura diaria por voz o formulario desde el teléfono, funciona sin señal y se aprueba por el residente.
-<div class="price">40 hrs · Precio: $4.760 USD</div></div>
-<div class="card"><h3>Componente 7: Control de obra y tablero de dirección</h3>
-Avance físico, curva S, valor ganado e índices de programa y costo, por obra y para todo el grupo.
-<div class="price">40 hrs · Precio: $4.760 USD</div></div>
-<div class="card"><h3>Componente 8: Conectores CONTPAQi y SAP</h3>
-Costo real por obra, CFDI emitidos y cobrados, en solo lectura, empezando por los exportes que ya generan.
-<div class="price">40 hrs · Precio: $4.760 USD</div></div>
-<div class="card"><h3>Componente 9: Módulo MCP Neural Intelligence</h3>
-Servidores MCP sobre sus datos y cinco agentes de IA: constructor de programa, intérprete de avance, vigía de atrasos, redactor de estimaciones y analista de costo. Proponen; una persona aprueba.
-<div class="price">56 hrs · Precio: $6.664 USD</div></div>
-<div class="card"><h3>Componente 10: Pruebas, capacitación y gestión</h3>
-Pruebas con contratos reales, capacitación de planeadores y residentes, puesta en marcha y seguimiento semanal.
-<div class="price">40 hrs · Precio: $4.760 USD</div></div>
+<h2>3. Cómo aprovecha los sistemas que ya tienen</h2>
 <table class="fin">
-<tr><th>Concepto</th><th class="num">Horas</th><th class="num">Precio (USD)</th></tr>
-<tr><td>Subtotal de los 10 componentes (incluye pruebas, capacitación y gestión)</td><td class="num">424</td><td class="num">$50.456</td></tr>
-<tr class="total"><td>INVERSIÓN DE IMPLEMENTACIÓN — ETAPA 1 (CAPEX)</td><td class="num">424</td><td class="num">$50.456 USD</td></tr>
+<tr><th>Sistema</th><th>Lo que ya contiene</th><th>Cómo lo usa la inteligencia neural</th></tr>
+<tr><td><strong>Neodata</strong></td><td>Conceptos, cantidades, precios unitarios, insumos y rendimientos</td><td>Base del programa: duración de cada actividad = cantidad ÷ rendimiento. Regresa la estimación en un archivo que Neodata abre</td></tr>
+<tr><td><strong>CONTPAQi</strong></td><td>Costo real, compras, nómina y facturas (CFDI)</td><td>Costo y facturación por obra, comparados contra el avance</td></tr>
+<tr><td><strong>SAP</strong></td><td>Según sus módulos: compras, inventario, mantenimiento o finanzas</td><td>Materiales y compras contra el programa, o costo, según lo que contenga</td></tr>
+<tr><td><strong>Excel</strong></td><td>Los programas y reportes de avance actuales</td><td>Se importan una sola vez para no empezar de cero</td></tr>
+<tr><td><strong>Campo</strong></td><td>Lo que realmente se hizo cada día</td><td>Captura por voz o formulario desde el teléfono</td></tr>
 </table>
-<p class="muted">Plazo de entrega: <span class="pill">4 semanas</span> después de la Etapa 0.</p>
+<p><strong>Solo lectura.</strong> La herramienta nunca escribe en CONTPAQi ni en SAP. Empezamos con los archivos que ya exportan; la conexión directa llega después, si funciona y su área de sistemas lo autoriza.</p>
 
-<h2>4. Cronograma de la Etapa 1</h2>
+<h2>4. La inteligencia neural: cinco agentes</h2>
+<table class="fin">
+<tr><th>Agente</th><th>Qué hace</th><th>Quién aprueba</th></tr>
+<tr><td>Constructor de programa</td><td>Convierte el presupuesto de Neodata en programa de obra y explica cada duración</td><td>Planeador</td></tr>
+<tr><td>Intérprete de avance</td><td>Convierte la nota de voz del residente en avance por concepto; pregunta si algo no es claro</td><td>Residente</td></tr>
+<tr><td>Vigía de atrasos</td><td>Revisa todos los días qué actividades ponen en riesgo la fecha final</td><td>Planeador</td></tr>
+<tr><td>Redactor de estimaciones</td><td>Prepara generadores y el borrador de estimación con su evidencia</td><td>Residente y superintendente</td></tr>
+<tr><td>Analista de costo y flujo</td><td>Explica diferencias entre avance, costo, facturado y cobrado</td><td>Administración</td></tr>
+</table>
+<p>Las cifras siempre salen de sus sistemas, nunca del modelo de IA. Si falta un dato, la herramienta lo muestra como faltante en lugar de inventarlo.</p>
+
+<h2>5. La prueba de concepto: 4 semanas sobre una obra real</h2>
 <div class="twocol">
-<div class="card"><h3>Semana 1 — Datos</h3>
-<ul class="tight"><li>Modelo de datos, conector Neodata e importación de Excel.</li><li>Componentes 1, 2, 3</li></ul>
-<div class="price">104 hrs · Precio: $12.376 USD</div></div>
-<div class="card"><h3>Semana 2 — Programación</h3>
-<ul class="tight"><li>Motor de programación y pantalla del planeador.</li><li>Componentes 4, 5</li></ul>
-<div class="price">104 hrs · Precio: $12.376 USD</div></div>
-<div class="card"><h3>Semana 3 — Campo y control</h3>
-<ul class="tight"><li>Avance desde campo, tablero de dirección y conectores CONTPAQi y SAP.</li><li>Componentes 6, 7, 8</li></ul>
-<div class="price">120 hrs · Precio: $14.280 USD</div></div>
-<div class="card"><h3>Semana 4 — Inteligencia y operación</h3>
-<ul class="tight"><li>Módulo MCP Neural Intelligence, pruebas, capacitación y puesta en marcha.</li><li>Componentes 9, 10</li></ul>
-<div class="price">96 hrs · Precio: $11.424 USD</div></div>
+<div class="card"><h3>Semana 1 — Punto de partida</h3><ul class="tight"><li>Elegimos juntos un contrato activo</li><li>Recibimos su exporte de Neodata y su programa en Excel</li><li>Medimos cuánto tiempo toma hoy armar y actualizar el programa</li></ul></div>
+<div class="card"><h3>Semana 2 — Programa generado</h3><ul class="tight"><li>La herramienta genera el programa desde Neodata</li><li>El planeador lo ajusta y lo aprueba</li><li>Ven la ruta crítica de su obra</li></ul></div>
+<div class="card"><h3>Semana 3 — Obra en vivo</h3><ul class="tight"><li>Un residente reporta avance desde el teléfono</li><li>Tablero semanal: programado contra real</li><li>Primeras alertas del vigía de atrasos</li></ul></div>
+<div class="card"><h3>Semana 4 — Resultados</h3><ul class="tight"><li>Borrador de estimación desde el avance capturado</li><li>Costo de CONTPAQi junto al avance</li><li>Resultados medidos contra la semana 1</li></ul></div>
 </div>
-<p class="muted">Suma de las 4 semanas = 424 horas = <strong>$50.456 USD</strong>.</p>
 
-<h2>5. Mensualidad de operación (OPEX)</h2>
-<p>Mensualidad de la plataforma en operación. Empieza cuando entra en uso, no antes. La línea marcada con (*) es variable: escala con el número de obras y consultas a los agentes.</p>
+<h2>6. Qué pone cada parte</h2>
 <table class="fin">
-<tr><th>Servicio</th><th>Uso</th><th class="num">USD/mes</th></tr>
-<tr><td>Render — servicio web y PostgreSQL</td><td>Cómputo y base de datos</td><td class="num">$111</td></tr>
-<tr><td>Anthropic Claude — consumo de IA (*)</td><td>Agentes del módulo MCP Neural Intelligence</td><td class="num">$255</td></tr>
-<tr><td>Cloudflare — dominio, SSL y CDN</td><td>Borde y seguridad</td><td class="num">$22</td></tr>
-<tr><td>Almacenamiento de archivos</td><td>Importaciones, fotos de avance y respaldos</td><td class="num">$22</td></tr>
-<tr><td>Soporte y mejoras (8 horas al mes)</td><td>Atención, ajustes y mantenimiento</td><td class="num">$952</td></tr>
-<tr class="total"><td colspan="2">MENSUALIDAD DE LA PLATAFORMA</td><td class="num">$1.362</td></tr>
+<tr><th>Digit2AI</th><th>Grupo HITTES</th></tr>
+<tr><td>La plataforma, los agentes de IA, el equipo y todo el trabajo de las 4 semanas, sin costo para HTR</td><td>Una persona de planeación como contraparte, un residente para la captura de campo, los exportes de Neodata, CONTPAQi y el programa en Excel de la obra elegida, y una hora a la semana de la dirección</td></tr>
 </table>
-<p class="muted">Equivale a <strong>$16.344 USD al año</strong>. Volumen supuesto: los contratos activos de una empresa del grupo.</p>
+<p>Antes de recibir cualquier archivo firmamos un acuerdo de confidencialidad.</p>
 
-<h2>6. Resumen — primer año</h2>
-<table class="fin">
-<tr><th>Concepto</th><th class="num">Precio (USD)</th></tr>
-<tr><td>Etapa 0 — Prueba de concepto (4 semanas), cubierta por Digit2AI</td><td class="num">$0</td></tr>
-<tr><td>Etapa 1 — Implementación (CAPEX)</td><td class="num">$50.456</td></tr>
-<tr><td>Operación, 12 meses ($1.362 al mes)</td><td class="num">$16.344</td></tr>
-<tr><td>Subtotal</td><td class="num">$66.800</td></tr>
-<tr><td>IVA 16% (México)</td><td class="num">$10.688</td></tr>
-<tr class="total"><td>INVERSIÓN TOTAL DEL PRIMER AÑO</td><td class="num">$77.488 USD</td></tr>
-<tr><td>Plazo</td><td class="num">4 + 4 semanas</td></tr>
-</table>
-<p><strong>Forma de pago sugerida:</strong> 40% al iniciar la Etapa 1, 40% al entregar la pantalla del planeador en la semana 2 y 20% a la puesta en marcha. La mensualidad se factura por mes vencido.</p>
-<p><strong>Lo que esta propuesta no promete:</strong> un porcentaje de ahorro. En la Etapa 0 se mide la línea base de su proceso actual en Excel (por ejemplo, horas para armar y actualizar un programa) y el resultado se reporta con sus propios datos.</p>
-<div class="note"><strong>Nota:</strong> Los precios de la Etapa 1 incluyen la utilidad de Digit2AI y el IVA de 16% aplicable en México. El tratamiento fiscal definitivo depende de la entidad que facture y debe confirmarlo el contador de cada parte. Propuesta válida por 30 días.</div>
+<h2>7. Cómo sabremos que funcionó</h2>
+<ul>
+<li>El programa de la obra se generó desde Neodata sin recapturar conceptos ni cantidades.</li>
+<li>El residente reportó avance real durante al menos tres semanas.</li>
+<li>Dirección pudo ver cada semana el avance programado contra el real y las actividades atrasadas.</li>
+<li>Se obtuvo un borrador de estimación a partir del avance capturado.</li>
+<li>El tiempo para armar y actualizar el programa se comparó contra el que se midió en la semana 1.</li>
+</ul>
+
+<h2>8. Qué sigue</h2>
+<p>Al terminar la semana 4 presentamos los resultados con sus propios datos. <strong>Si los resultados convencen</strong>, proponemos llevar la herramienta a todas las obras activas, con un alcance y una inversión cerrados a partir de lo que se midió. <strong>Si no convencen</strong>, HITTES se queda con el diagnóstico de su proceso y no existe ningún compromiso.</p>
+<div class="note"><strong>Nota:</strong> Esta prueba de concepto no tiene costo para Grupo HITTES; Digit2AI la cubre en su totalidad. El detalle técnico está en el documento de arquitectura técnica que acompaña esta propuesta.</div>
 <p class="foot">Digit2AI · Propuesta para Grupo HITTES · Octubre 2026</p>
 </div>
 </body>
