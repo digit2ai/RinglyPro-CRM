@@ -65,6 +65,11 @@ section:nth-of-type(even){background:var(--bg2)}
 .no{border-left:3px solid #f87171}
 .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
 
+/* animated brain */
+.brain{padding:40px 0 56px}
+.mcp-embed{max-width:1120px;margin:0 auto}
+.mcp-frame{display:block;width:100%;border:0;background:transparent;height:640px;transition:height .2s ease}
+
 /* diagram */
 .dia{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
 .dia svg{width:100%;height:auto;display:block}
@@ -154,6 +159,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     </div>
   </div>
 </header>
+
+<section class="brain" id="cerebro" aria-label="Digit2AI MCP Brain">
+  <div class="mcp-embed">
+    <iframe id="mcp-brain-frame" class="mcp-frame" src="/digit2ai-mcp-brain.html" title="DIGIT2AI MCP Brain" loading="eager" scrolling="no"></iframe>
+  </div>
+</section>
+<script>
+(function(){ window.addEventListener('message', function(e){
+  var d=e&&e.data; if(d&&d.__d2mcp&&typeof d.height==='number'){
+    var f=document.getElementById('mcp-brain-frame'); if(f) f.style.height=Math.max(360,d.height)+'px'; }
+}); })();
+</script>
 
 <section id="que">
   <div class="wrap">
