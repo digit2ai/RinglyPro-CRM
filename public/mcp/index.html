@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Digit2AI MCP Neural</title>
+<meta name="description" content="Digit2AI MCP Neural: la inteligencia artificial de Anthropic, OpenAI, Google, AWS, Azure, GitHub y Render, integrada en un solo cerebro MCP con más de 100 agentes para su empresa.">
+<link rel="canonical" href="https://digit2ai.com/MCP">
+<meta property="og:title" content="Digit2AI MCP Neural">
+<meta property="og:description" content="La IA de los mejores proveedores, ya integrada para su empresa. Se conecta como un USB.">
+<meta name="theme-color" content="#070b16">
+<style>html,body{background:#070b16}</style>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070b16;--bg2:#0b1222;--panel:#0f1728;--line:rgba(120,150,200,.16);
+  --txt:#eaf0fb;--mut:#9db0cc;--accent:#22d3ee;--accent2:#8b5cf6;--on-accent:#04222a;
+  --font-display:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --font-body:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --maxw:1080px;
+}
+html{scroll-behavior:smooth}
+body{color:var(--txt);font-family:var(--font-body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+html[lang="es"] .en,html[lang="en"] .es{display:none!important}
+a{color:var(--accent)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--font-display);line-height:1.15;letter-spacing:-.01em}
+h1{font-size:clamp(32px,5vw,58px)}
+h2{font-size:clamp(26px,3.2vw,38px);margin-bottom:14px}
+h3{font-size:19px;margin-bottom:6px}
+.lead{color:var(--mut);font-size:clamp(17px,1.4vw,20px);max-width:760px}
+.grad{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(7,11,22,.92);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;min-height:60px;gap:12px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:.04em;color:var(--txt);text-decoration:none}
+.brand b{color:var(--accent)}
+.navr{display:flex;align-items:center;gap:8px}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--mut);font:600 13px var(--font-body);min-width:44px;min-height:44px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:999px;font-weight:700;text-decoration:none;border:1px solid var(--line);color:var(--txt);background:transparent}
+.btn.pri{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.btn:focus-visible,.lang button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+nav .btn{min-height:44px;padding:0 16px;font-size:14px}
+
+section{padding:72px 0;border-bottom:1px solid var(--line)}
+section:nth-of-type(even){background:var(--bg2)}
+
+/* hero */
+.hero{padding:88px 0 72px;background:radial-gradient(900px 420px at 80% -10%,rgba(34,211,238,.14),transparent 60%),radial-gradient(700px 380px at 0% 110%,rgba(139,92,246,.14),transparent 60%)}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.hero h1{margin-bottom:18px;max-width:900px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.usb{display:flex;align-items:center;gap:14px;margin-top:36px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);max-width:640px}
+.usb svg{flex:0 0 auto}
+.usb p{color:var(--mut);font-size:15px}
+.usb strong{color:var(--txt)}
+
+/* cards */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:28px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card p{color:var(--mut);font-size:15.5px}
+.no{border-left:3px solid #f87171}
+.tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+
+/* diagram */
+.dia{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.dia svg{width:100%;height:auto;display:block}
+
+/* tables */
+.tw{overflow-x:auto;margin-top:24px;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:520px;font-size:15.5px}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-display);font-size:14px;color:var(--mut);background:var(--panel);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.hi{color:var(--txt);font-weight:600}
+td.lo{color:var(--mut)}
+
+/* agents */
+.agents{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:28px}
+.ag{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.ag .n{font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--accent);line-height:1;min-width:44px}
+.ag h3{font-size:16px}
+.ag p{color:var(--mut);font-size:14px;line-height:1.5}
+.total{margin-top:18px;color:var(--mut)}
+.total strong{color:var(--txt)}
+
+/* pricing */
+.price{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:28px}
+.pc{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px}
+.pc.feat{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pc .amt{font-family:var(--font-display);font-size:44px;font-weight:700;margin:6px 0}
+.pc .amt small{font-size:16px;color:var(--mut);font-weight:500}
+.pc p{color:var(--mut);font-size:15px}
+.pc ul{margin-top:14px;padding-left:18px;color:var(--mut);font-size:15px}
+.pc li{margin-bottom:6px}
+.fine{margin-top:16px;color:var(--mut);font-size:14px}
+
+/* steps */
+ol.steps{list-style:none;counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:28px}
+ol.steps li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+ol.steps li::before{content:counter(s);display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;background:var(--accent);color:var(--on-accent);font-weight:700;margin-bottom:10px}
+ol.steps p{color:var(--mut);font-size:15px}
+
+.final{text-align:center}
+.final .lead{margin:0 auto 26px}
+footer{padding:28px 0 40px;color:var(--mut);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media(max-width:640px){
+  section{padding:56px 0}
+  .hero{padding:56px 0}
+  nav .btn{display:none}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="https://digit2ai.com">DIGIT<b>2</b>AI <span style="color:var(--mut);font-weight:500">MCP</span></a>
+    <div class="navr">
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-set-lang="es" aria-pressed="true">ES</button>
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn pri" href="#empezar"><span class="es">Empezar</span><span class="en">Get started</span></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Digit2AI MCP Neural</span>
+    <h1>
+      <span class="es">La IA de los mejores proveedores, <span class="grad">ya integrada</span> para su empresa.</span>
+      <span class="en">The AI of the best providers, <span class="grad">already integrated</span> for your business.</span>
+    </h1>
+    <p class="lead">
+      <span class="es">Anthropic, OpenAI, Google, Amazon Web Services, Microsoft Azure, GitHub, Render y otros, unidos bajo un solo cerebro MCP con más de 100 agentes de IA. Rápido, seguro y listo para trabajar con sus sistemas.</span>
+      <span class="en">Anthropic, OpenAI, Google, Amazon Web Services, Microsoft Azure, GitHub, Render and others, joined under one MCP brain with more than 100 AI agents. Fast, secure and ready to work with your systems.</span>
+    </p>
+    <div class="cta">
+      <a class="btn pri" href="#empezar"><span class="es">Quiero empezar</span><span class="en">I want to start</span></a>
+      <a class="btn" href="#como"><span class="es">Cómo funciona</span><span class="en">How it works</span></a>
+    </div>
+    <div class="usb">
+      <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><rect x="14" y="4" width="26" height="16" rx="3" fill="none" stroke="#22d3ee" stroke-width="2"/><rect x="20" y="9" width="5" height="5" fill="#22d3ee"/><rect x="29" y="9" width="5" height="5" fill="#22d3ee"/><rect x="9" y="20" width="36" height="30" rx="7" fill="rgba(34,211,238,.14)" stroke="#22d3ee" stroke-width="2"/><circle cx="27" cy="35" r="6" fill="none" stroke="#8b5cf6" stroke-width="2"/></svg>
+      <p class="es"><strong>Como un USB para empresas.</strong> Se conecta a lo que usted ya tiene y lo convierte en una empresa inteligente. No reemplaza nada y no se queda con nada suyo.</p>
+      <p class="en"><strong>Like a USB drive for companies.</strong> It plugs into what you already have and turns it into an intelligent company. It replaces nothing and owns nothing of yours.</p>
+    </div>
+  </div>
+</header>
+
+<section id="que">
+  <div class="wrap">
+    <h2><span class="es">Qué es</span><span class="en">What it is</span></h2>
+    <p class="lead"><span class="es">Un servicio de inteligencia artificial avanzada, como el que ofrecen Anthropic u OpenAI, con una diferencia: llega ya integrado y listo para trabajar dentro de su empresa.</span><span class="en">An advanced artificial intelligence service, like the ones Anthropic or OpenAI offer, with one difference: it arrives already integrated and ready to work inside your company.</span></p>
+    <div class="grid">
+      <div class="card"><span class="tag">01</span><h3><span class="es">Un cerebro central</span><span class="en">One central brain</span></h3><p><span class="es">Recibe cada solicitud, decide qué agentes la atienden, reparte el trabajo y entrega un solo resultado.</span><span class="en">It takes each request, decides which agents handle it, splits the work and returns one result.</span></p></div>
+      <div class="card"><span class="tag">02</span><h3><span class="es">Más de 100 agentes</span><span class="en">More than 100 agents</span></h3><p><span class="es">Cada agente tiene un rol, reglas y entregables: análisis, ingeniería, finanzas, cumplimiento, ventas, voz y datos.</span><span class="en">Each agent has a role, rules and deliverables: analysis, engineering, finance, compliance, sales, voice and data.</span></p></div>
+      <div class="card"><span class="tag">03</span><h3><span class="es">Conectores estándar MCP</span><span class="en">Standard MCP connectors</span></h3><p><span class="es">MCP es un protocolo abierto para conectar la IA con sistemas reales: CRM, correo, calendario, ERP y bases de datos.</span><span class="en">MCP is an open protocol that connects AI to real systems: CRM, email, calendar, ERP and databases.</span></p></div>
+      <div class="card"><span class="tag">04</span><h3><span class="es">Varios proveedores</span><span class="en">Many providers</span></h3><p><span class="es">Para cada tarea se usa el servicio que mejor la resuelve. Si uno falla o sube de precio, se cambia sin que usted lo note.</span><span class="en">Each task uses the service that does it best. If one fails or gets pricier, it is swapped without you noticing.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="no">
+  <div class="wrap">
+    <h2><span class="es">Qué no es</span><span class="en">What it is not</span></h2>
+    <p class="lead"><span class="es">No compite con sus sistemas ni con sus proveedores: los hace más inteligentes.</span><span class="en">It does not compete with your systems or providers: it makes them smarter.</span></p>
+    <div class="grid">
+      <div class="card no"><h3><span class="es">No reemplaza</span><span class="en">It does not replace</span></h3><p><span class="es">Su CRM, ERP, contabilidad y aplicaciones siguen igual. Se conecta a ellos.</span><span class="en">Your CRM, ERP, accounting and apps stay as they are. It connects to them.</span></p></div>
+      <div class="card no"><h3><span class="es">No es dueño de nada suyo</span><span class="en">It owns nothing of yours</span></h3><p><span class="es">Su propiedad intelectual, productos y datos siguen siendo suyos.</span><span class="en">Your intellectual property, products and data remain yours.</span></p></div>
+      <div class="card no"><h3><span class="es">No es un modelo propio</span><span class="en">It is not its own model</span></h3><p><span class="es">Usa los modelos de los líderes del mercado y los combina.</span><span class="en">It uses the market leaders' models and combines them.</span></p></div>
+      <div class="card no"><h3><span class="es">No decide por usted</span><span class="en">It does not decide for you</span></h3><p><span class="es">Enviar, pagar o publicar siempre espera la aprobación de una persona.</span><span class="en">Sending, paying or publishing always waits for a person's approval.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="como">
+  <div class="wrap">
+    <h2><span class="es">Cómo funciona</span><span class="en">How it works</span></h2>
+    <p class="lead"><span class="es">Una solicitud baja de su empresa al cerebro, el cerebro la reparte entre agentes, y cada agente usa el mejor servicio disponible. El resultado vuelve por el mismo camino.</span><span class="en">A request goes from your company to the brain, the brain splits it among agents, and each agent uses the best service available. The result comes back the same way.</span></p>
+    <div class="dia">
+      <svg viewBox="0 0 760 470" role="img" aria-label="Arquitectura: su empresa, cerebro MCP, agentes y proveedores" font-family="Inter,Segoe UI,system-ui,sans-serif">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9db0cc"/></marker></defs>
+        <g fill="none" stroke="#9db0cc" stroke-width="1.4">
+          <path d="M380 92V140" marker-end="url(#ar)" marker-start="url(#ar)"/>
+          <path d="M380 204V252" marker-end="url(#ar)"/>
+          <path d="M380 316V364" marker-end="url(#ar)"/>
+        </g>
+        <g font-size="12" fill="#9db0cc">
+          <text x="392" y="121" class="es">conectores MCP: el enchufe tipo USB</text><text x="392" y="121" class="en">MCP connectors: the USB-style plug</text>
+          <text x="392" y="233" class="es">activa solo los agentes necesarios</text><text x="392" y="233" class="en">activates only the agents needed</text>
+          <text x="392" y="345" class="es">usa el mejor modelo o servicio para cada tarea</text><text x="392" y="345" class="en">uses the best model or service for each task</text>
+        </g>
+        <rect x="24" y="28" width="712" height="64" rx="10" fill="none" stroke="rgba(157,176,204,.5)" stroke-width="1.2"/>
+        <text x="380" y="55" text-anchor="middle" font-size="15" font-weight="700" fill="#eaf0fb"><tspan class="es">Su empresa</tspan><tspan class="en">Your company</tspan></text>
+        <text x="380" y="76" text-anchor="middle" font-size="12.5" fill="#9db0cc"><tspan class="es">CRM, ERP, correo, calendario, datos y las personas que aprueban</tspan><tspan class="en">CRM, ERP, email, calendar, data and the people who approve</tspan></text>
+        <rect x="24" y="140" width="712" height="64" rx="10" fill="rgba(34,211,238,.12)" stroke="#22d3ee" stroke-width="2"/>
+        <text x="380" y="167" text-anchor="middle" font-size="15" font-weight="700" fill="#eaf0fb"><tspan class="es">Cerebro MCP de Digit2AI</tspan><tspan class="en">Digit2AI MCP brain</tspan></text>
+        <text x="380" y="188" text-anchor="middle" font-size="12.5" fill="#eaf0fb"><tspan class="es">Recibe la solicitud, elige los agentes, reparte el trabajo y une el resultado</tspan><tspan class="en">Takes the request, picks the agents, splits the work and joins the result</tspan></text>
+        <rect x="24" y="252" width="712" height="64" rx="10" fill="rgba(139,92,246,.12)" stroke="#8b5cf6" stroke-width="1.6"/>
+        <text x="380" y="279" text-anchor="middle" font-size="15" font-weight="700" fill="#eaf0fb"><tspan class="es">102 agentes de IA por función</tspan><tspan class="en">102 AI agents by function</tspan></text>
+        <text x="380" y="300" text-anchor="middle" font-size="12.5" fill="#9db0cc"><tspan class="es">Núcleo, ingeniería, datos, negocio, finanzas y legal, industria, servicios de IA</tspan><tspan class="en">Core, engineering, data, business, finance and legal, industry, AI services</tspan></text>
+        <rect x="24" y="364" width="712" height="88" rx="10" fill="rgba(157,176,204,.06)" stroke="rgba(157,176,204,.5)" stroke-width="1.2"/>
+        <text x="40" y="386" font-size="12" font-weight="700" fill="#9db0cc"><tspan class="es">Proveedores integrados (y otros terceros)</tspan><tspan class="en">Integrated providers (and other third parties)</tspan></text>
+        <g fill="none" stroke="rgba(157,176,204,.6)" stroke-width="1.2">
+          <rect x="40" y="398" width="90" height="38" rx="8"/><rect x="138" y="398" width="90" height="38" rx="8"/><rect x="236" y="398" width="90" height="38" rx="8"/><rect x="334" y="398" width="90" height="38" rx="8"/><rect x="432" y="398" width="90" height="38" rx="8"/><rect x="530" y="398" width="90" height="38" rx="8"/><rect x="628" y="398" width="92" height="38" rx="8"/>
+        </g>
+        <g font-size="13" font-weight="600" fill="#eaf0fb" text-anchor="middle">
+          <text x="85" y="422">Anthropic</text><text x="183" y="422">OpenAI</text><text x="281" y="422">Google</text><text x="379" y="422">AWS</text><text x="477" y="422">Azure</text><text x="575" y="422">GitHub</text><text x="674" y="422">Render</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="proveedores">
+  <div class="wrap">
+    <h2><span class="es">Lo mejor de cada proveedor</span><span class="en">The best of each provider</span></h2>
+    <p class="lead"><span class="es">Usted no tiene que contratar, configurar ni pagar por separado cada uno de estos servicios.</span><span class="en">You don't have to sign up for, configure or pay for each of these services separately.</span></p>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Proveedor</span><span class="en">Provider</span></th><th><span class="es">Qué aporta</span><span class="en">What it brings</span></th></tr></thead>
+      <tbody>
+        <tr><td class="hi">Anthropic (Claude)</td><td class="lo"><span class="es">Razonamiento, redacción, agentes y programación asistida</span><span class="en">Reasoning, writing, agents and assisted coding</span></td></tr>
+        <tr><td class="hi">OpenAI (ChatGPT)</td><td class="lo"><span class="es">Modelos de lenguaje y generación de contenido</span><span class="en">Language models and content generation</span></td></tr>
+        <tr><td class="hi">Google (Gemini y Cloud)</td><td class="lo"><span class="es">Modelos multimodales, mapas, calendario y correo</span><span class="en">Multimodal models, maps, calendar and email</span></td></tr>
+        <tr><td class="hi">Amazon Web Services</td><td class="lo"><span class="es">Almacenamiento seguro de archivos y voz telefónica</span><span class="en">Secure file storage and phone voice</span></td></tr>
+        <tr><td class="hi">Microsoft Azure</td><td class="lo"><span class="es">Voces neuronales en español e inglés</span><span class="en">Neural voices in Spanish and English</span></td></tr>
+        <tr><td class="hi">GitHub</td><td class="lo"><span class="es">Código, versiones y automatización de pruebas</span><span class="en">Code, versioning and test automation</span></td></tr>
+        <tr><td class="hi">Render</td><td class="lo"><span class="es">Servidores, bases de datos y despliegue continuo</span><span class="en">Servers, databases and continuous deployment</span></td></tr>
+        <tr><td class="hi"><span class="es">Otros terceros</span><span class="en">Other third parties</span></td><td class="lo"><span class="es">Telefonía, mensajería, pagos y correo</span><span class="en">Telephony, messaging, payments and email</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="agentes">
+  <div class="wrap">
+    <h2><span class="es">Una fuerza de trabajo de agentes</span><span class="en">A workforce of agents</span></h2>
+    <p class="lead"><span class="es">El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre y cada cliente recibe los nuevos agentes automáticamente.</span><span class="en">The brain activates only the agents each task needs. The workforce grows every quarter and every client gets new agents automatically.</span></p>
+    <div class="agents">
+      <div class="ag"><div class="n">9</div><div><h3><span class="es">Núcleo siempre activo</span><span class="en">Always-on core</span></h3><p><span class="es">Negocio, investigación, correos, software, triage, actas, voz y alertas</span><span class="en">Business, research, email, software, triage, minutes, voice and alerts</span></p></div></div>
+      <div class="ag"><div class="n">5</div><div><h3><span class="es">Preparación para IA</span><span class="en">AI readiness</span></h3><p><span class="es">Costo, riesgo, datos y hoja de ruta</span><span class="en">Cost, risk, data and roadmap</span></p></div></div>
+      <div class="ag"><div class="n">12</div><div><h3><span class="es">Ingeniería</span><span class="en">Engineering</span></h3><p><span class="es">Desarrollo, seguridad, pruebas y despliegue</span><span class="en">Development, security, testing and release</span></p></div></div>
+      <div class="ag"><div class="n">9</div><div><h3><span class="es">Datos y ML</span><span class="en">Data and ML</span></h3><p><span class="es">Extracción, análisis, pronósticos y tableros</span><span class="en">Extraction, analysis, forecasting and dashboards</span></p></div></div>
+      <div class="ag"><div class="n">11</div><div><h3><span class="es">IA nativa y confianza</span><span class="en">AI-native and trust</span></h3><p><span class="es">Evaluación, citas, seguridad de IA y costos</span><span class="en">Evaluation, citations, AI safety and cost</span></p></div></div>
+      <div class="ag"><div class="n">17</div><div><h3><span class="es">Negocio y ventas</span><span class="en">Business and sales</span></h3><p><span class="es">Estrategia, precios, mercadeo y retención</span><span class="en">Strategy, pricing, marketing and retention</span></p></div></div>
+      <div class="ag"><div class="n">15</div><div><h3><span class="es">Finanzas, legal y talento</span><span class="en">Finance, legal and talent</span></h3><p><span class="es">Contabilidad, contratos, cumplimiento y privacidad</span><span class="en">Accounting, contracts, compliance and privacy</span></p></div></div>
+      <div class="ag"><div class="n">12</div><div><h3><span class="es">Industria y diseño</span><span class="en">Industry and design</span></h3><p><span class="es">Salud, logística, agro, pagos, experiencia y traducción</span><span class="en">Health, logistics, agro, payments, UX and translation</span></p></div></div>
+      <div class="ag"><div class="n">12</div><div><h3><span class="es">Servicios de IA</span><span class="en">AI services</span></h3><p><span class="es">Expertos que diseñan y verifican cada servicio</span><span class="en">Experts who design and verify every service</span></p></div></div>
+    </div>
+    <p class="total"><span class="es">Total hoy: <strong>102 agentes</strong>.</span><span class="en">Total today: <strong>102 agents</strong>.</span></p>
+  </div>
+</section>
+
+<section id="usos">
+  <div class="wrap">
+    <h2><span class="es">Para qué sirve</span><span class="en">What it is for</span></h2>
+    <p class="lead"><span class="es">Para que su empresa use IA en el trabajo diario, no solo en un chat.</span><span class="en">So your company uses AI in daily work, not just in a chat.</span></p>
+    <div class="grid">
+      <div class="card"><h3><span class="es">Atención 24/7</span><span class="en">24/7 service</span></h3><p><span class="es">Asistentes de voz y texto en español e inglés que responden, agendan y toman mensajes.</span><span class="en">Voice and text assistants in Spanish and English that answer, book and take messages.</span></p></div>
+      <div class="card"><h3><span class="es">Documentos</span><span class="en">Documents</span></h3><p><span class="es">Lectura de facturas, contratos y formularios, con la fuente de cada dato señalada.</span><span class="en">Reading invoices, contracts and forms, with the source of each value marked.</span></p></div>
+      <div class="card"><h3><span class="es">Conocimiento interno</span><span class="en">Internal knowledge</span></h3><p><span class="es">Respuestas con los manuales y políticas de la empresa, citando de dónde salen.</span><span class="en">Answers from company manuals and policies, citing where they come from.</span></p></div>
+      <div class="card"><h3><span class="es">Automatización</span><span class="en">Automation</span></h3><p><span class="es">Tareas repetitivas entre sistemas: copiar datos, dar seguimiento, recordar vencimientos.</span><span class="en">Repetitive work across systems: copying data, follow-ups, deadline reminders.</span></p></div>
+      <div class="card"><h3><span class="es">Ventas y mercadeo</span><span class="en">Sales and marketing</span></h3><p><span class="es">Calificación de prospectos y borradores de campañas, aprobados por una persona.</span><span class="en">Lead scoring and campaign drafts, approved by a person.</span></p></div>
+      <div class="card"><h3><span class="es">Software a la medida</span><span class="en">Custom software</span></h3><p><span class="es">Aplicaciones nuevas construidas, probadas y publicadas en semanas.</span><span class="en">New apps built, tested and launched in weeks.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="seguridad">
+  <div class="wrap">
+    <h2><span class="es">Seguridad y control</span><span class="en">Security and control</span></h2>
+    <p class="lead"><span class="es">Las reglas de seguridad están escritas en el sistema, no solo en las instrucciones a la IA.</span><span class="en">Security rules are written into the system, not only into the AI's instructions.</span></p>
+    <div class="grid">
+      <div class="card"><h3><span class="es">Datos separados</span><span class="en">Separated data</span></h3><p><span class="es">Cada empresa ve solo su propia información.</span><span class="en">Each company sees only its own information.</span></p></div>
+      <div class="card"><h3><span class="es">Aprobación humana</span><span class="en">Human approval</span></h3><p><span class="es">Nada se envía, se paga ni se publica sin autorización.</span><span class="en">Nothing is sent, paid or published without authorization.</span></p></div>
+      <div class="card"><h3><span class="es">Registro completo</span><span class="en">Full audit trail</span></h3><p><span class="es">Cada acción de cada agente queda registrada.</span><span class="en">Every action by every agent is logged.</span></p></div>
+      <div class="card"><h3><span class="es">Sin cifras inventadas</span><span class="en">No invented figures</span></h3><p><span class="es">Si un dato no existe, el sistema lo dice. No lo adivina.</span><span class="en">If a value does not exist, the system says so. It does not guess.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="diferencia">
+  <div class="wrap">
+    <h2><span class="es">Frente a un solo proveedor de IA</span><span class="en">Versus a single AI provider</span></h2>
+    <p class="lead"><span class="es">Un proveedor de modelos entrega la materia prima. Digit2AI MCP Neural entrega la IA ya integrada a su operación.</span><span class="en">A model provider delivers the raw material. Digit2AI MCP Neural delivers AI already built into your operation.</span></p>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Aspecto</span><span class="en">Aspect</span></th><th><span class="es">Un solo proveedor</span><span class="en">One provider</span></th><th>Digit2AI MCP Neural</th></tr></thead>
+      <tbody>
+        <tr><td class="hi"><span class="es">Modelos</span><span class="en">Models</span></td><td class="lo"><span class="es">Solo los suyos</span><span class="en">Only its own</span></td><td><span class="es">Los mejores de varios</span><span class="en">The best of several</span></td></tr>
+        <tr><td class="hi"><span class="es">Conexión con sus sistemas</span><span class="en">Connection to your systems</span></td><td class="lo"><span class="es">La construye usted</span><span class="en">You build it</span></td><td><span class="es">Ya integrada por MCP</span><span class="en">Already integrated via MCP</span></td></tr>
+        <tr><td class="hi"><span class="es">Agentes por función</span><span class="en">Agents by function</span></td><td class="lo"><span class="es">Los arma usted</span><span class="en">You assemble them</span></td><td><span class="es">Más de 100 listos</span><span class="en">More than 100 ready</span></td></tr>
+        <tr><td class="hi"><span class="es">Voz, telefonía y mensajería</span><span class="en">Voice, phone and messaging</span></td><td class="lo"><span class="es">Aparte</span><span class="en">Separate</span></td><td><span class="es">Incluidas</span><span class="en">Included</span></td></tr>
+        <tr><td class="hi"><span class="es">Aprobación y auditoría</span><span class="en">Approval and audit</span></td><td class="lo"><span class="es">La diseña usted</span><span class="en">You design it</span></td><td><span class="es">Incorporadas</span><span class="en">Built in</span></td></tr>
+        <tr><td class="hi"><span class="es">Si un proveedor falla o sube precios</span><span class="en">If a provider fails or raises prices</span></td><td class="lo"><span class="es">Queda atado</span><span class="en">You're locked in</span></td><td><span class="es">Se cambia de proveedor</span><span class="en">The provider is swapped</span></td></tr>
+        <tr><td class="hi"><span class="es">Tiempo para empezar</span><span class="en">Time to start</span></td><td class="lo"><span class="es">Meses</span><span class="en">Months</span></td><td><span class="es">Semanas</span><span class="en">Weeks</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="precio">
+  <div class="wrap">
+    <h2><span class="es">Inversión</span><span class="en">Pricing</span></h2>
+    <p class="lead"><span class="es">Se contrata como un servicio: un pago único de configuración y una suscripción mensual.</span><span class="en">It is contracted as a service: a one-time setup fee and a monthly subscription.</span></p>
+    <div class="price">
+      <div class="pc">
+        <span class="tag"><span class="es">Configuración inicial</span><span class="en">Initial setup</span></span>
+        <div class="amt">$700 <small>USD · <span class="es">pago único</span><span class="en">one time</span></small></div>
+        <p><span class="es">Creación de la instancia de su empresa y conexión del cerebro MCP.</span><span class="en">Creating your company's instance and connecting the MCP brain.</span></p>
+      </div>
+      <div class="pc feat">
+        <span class="tag"><span class="es">Suscripción mensual (SaaS)</span><span class="en">Monthly subscription (SaaS)</span></span>
+        <div class="amt">$397 <small>USD / <span class="es">mes</span><span class="en">month</span></small></div>
+        <p><span class="es">Uso de la inteligencia artificial avanzada y mantenimiento del ecosistema.</span><span class="en">Use of the advanced artificial intelligence and ecosystem maintenance.</span></p>
+        <ul>
+          <li><span class="es">Consumo de tokens estándar incluido</span><span class="en">Standard token usage included</span></li>
+          <li><span class="es">Acceso a la fuerza de trabajo de agentes</span><span class="en">Access to the agent workforce</span></li>
+          <li><span class="es">Nuevos agentes cada trimestre</span><span class="en">New agents every quarter</span></li>
+        </ul>
+      </div>
+    </div>
+    <p class="fine"><span class="es">Un consumo de tokens por encima del estándar se cotiza aparte.</span><span class="en">Token usage above the standard is quoted separately.</span></p>
+  </div>
+</section>
+
+<section id="empezar">
+  <div class="wrap">
+    <h2><span class="es">Cómo empezar</span><span class="en">How to start</span></h2>
+    <p class="lead"><span class="es">Se empieza pequeño y seguro, con una prueba de concepto de máximo 4 semanas.</span><span class="en">You start small and safe, with a proof of concept of at most 4 weeks.</span></p>
+    <ol class="steps">
+      <li><h3><span class="es">Diagnóstico</span><span class="en">Assessment</span></h3><p><span class="es">Medimos costo, riesgo y calidad de datos, y entregamos una hoja de ruta.</span><span class="en">We measure cost, risk and data quality, and deliver a roadmap.</span></p></li>
+      <li><h3><span class="es">Primer paso seguro</span><span class="en">A safe first step</span></h3><p><span class="es">Elegimos un proceso de bajo riesgo y alto valor.</span><span class="en">We pick a low-risk, high-value process.</span></p></li>
+      <li><h3><span class="es">Conexión</span><span class="en">Connection</span></h3><p><span class="es">El cerebro MCP se conecta a los sistemas que ese proceso usa.</span><span class="en">The MCP brain connects to the systems that process uses.</span></p></li>
+      <li><h3><span class="es">Resultados medidos</span><span class="en">Measured results</span></h3><p><span class="es">Medimos con datos reales antes de crecer a la siguiente fase.</span><span class="en">We measure with real data before growing to the next phase.</span></p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2><span class="es">Convierta su empresa en una empresa inteligente</span><span class="en">Turn your company into an intelligent company</span></h2>
+    <p class="lead"><span class="es">Conecte Digit2AI MCP Neural y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</span><span class="en">Connect Digit2AI MCP Neural and put the best providers' AI to work from the first week.</span></p>
+    <a class="btn pri" href="https://digit2ai.com" target="_top"><span class="es">Hablar con Digit2AI</span><span class="en">Talk to Digit2AI</span></a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Digit2AI</span>
+    <span><span class="es">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub y Render son marcas de sus respectivos dueños. Digit2AI no está afiliada a ellos.</span><span class="en">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub and Render are trademarks of their respective owners. Digit2AI is not affiliated with them.</span></span>
+  </div>
+</footer>
+
+<div data-voice-orb data-agent="digit2ai" data-lang="es" data-label="Pregúntame"></div>
+<script src="/embed/voice-orb.js" defer></script>
+<script>
+(function(){
+  var btns = document.querySelectorAll('[data-set-lang]');
+  function set(l){
+    document.documentElement.lang = l;
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-set-lang') === l ? 'true' : 'false'); });
+    try { localStorage.setItem('d2_mcp_lang', l); } catch(e) {}
+    try { if (window.D2AIVoiceOrb && window.D2AIVoiceOrb.setLang) window.D2AIVoiceOrb.setLang(l); } catch(e) {}
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-set-lang')); }); });
+  var saved = null; try { saved = localStorage.getItem('d2_mcp_lang'); } catch(e) {}
+  if (saved === 'en' || saved === 'es') set(saved);
+})();
+</script>
+</body>
+</html>
