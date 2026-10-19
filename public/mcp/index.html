@@ -102,6 +102,12 @@ td.lo{color:var(--mut)}
 .pc p{color:var(--mut);font-size:15px}
 .pc ul{margin-top:14px;padding-left:18px;color:var(--mut);font-size:15px}
 .pc li{margin-bottom:6px}
+.buy{margin-top:28px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.btn.big{min-height:56px;padding:0 30px;font-size:17px;cursor:pointer}
+.btn[disabled]{opacity:.6;cursor:wait}
+.paymsg{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:15px;max-width:640px}
+.paymsg.ok{border-color:#34d399;color:#d1fae5}
+.paymsg.bad{border-color:#f87171;color:#fee2e2}
 .fine{margin-top:16px;color:var(--mut);font-size:14px}
 
 /* steps */
@@ -345,6 +351,11 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
         </ul>
       </div>
     </div>
+    <div class="buy">
+      <div id="payMsg" class="paymsg" role="status" hidden></div>
+      <button type="button" class="btn pri big" id="payBtn"><span class="es">Contratar ahora · $700 + $397/mes</span><span class="en">Subscribe now · $700 + $397/month</span></button>
+      <p class="fine"><span class="es">Hoy se cobran $1,097 USD: la configuración ($700) y el primer mes ($397). Luego $397 cada mes en la misma fecha. Pago seguro con Stripe; puede cancelar la suscripción cuando quiera.</span><span class="en">Today you are charged $1,097 USD: setup ($700) and the first month ($397). Then $397 every month on the same date. Secure payment with Stripe; you can cancel the subscription anytime.</span></p>
+    </div>
     <p class="fine"><span class="es">Un consumo de tokens por encima del estándar se cotiza aparte.</span><span class="en">Token usage above the standard is quoted separately.</span></p>
   </div>
 </section>
@@ -391,6 +402,38 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-set-lang')); }); });
   var saved = null; try { saved = localStorage.getItem('d2_mcp_lang'); } catch(e) {}
   if (saved === 'en' || saved === 'es') set(saved);
+})();
+</script>
+<script>
+(function(){
+  var btn=document.getElementById('payBtn'), msg=document.getElementById('payMsg');
+  function L(){ return document.documentElement.lang==='en'?'en':'es'; }
+  function show(kind, es, en){ msg.hidden=false; msg.className='paymsg '+kind; msg.textContent = L()==='en'?en:es; }
+  btn.addEventListener('click', function(){
+    btn.disabled=true;
+    fetch('/api/mcp-checkout/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:L()})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(x){
+        if(!x.ok||!x.j.url) throw new Error(x.j&&x.j.error||'error');
+        try { window.top.location.href = x.j.url; } catch(e) { window.open(x.j.url,'_blank'); }
+      })
+      .catch(function(e){
+        btn.disabled=false;
+        if(String(e.message)==='payments_not_configured') show('bad','Los pagos en línea aún no están activos. Escríbanos y le enviamos el enlace de pago.','Online payments are not active yet. Contact us and we will send you the payment link.');
+        else show('bad','No se pudo abrir el pago. Intente de nuevo en un momento.','The payment could not be opened. Please try again in a moment.');
+      });
+  });
+  var q=new URLSearchParams(location.search);
+  if(q.get('pago')==='cancelado') show('bad','El pago fue cancelado. No se realizó ningún cobro.','The payment was cancelled. You were not charged.');
+  if(q.get('pago')==='ok' && q.get('session_id')){
+    show('', 'Confirmando su pago...', 'Confirming your payment...');
+    fetch('/api/mcp-checkout/status?session_id='+encodeURIComponent(q.get('session_id')))
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if(j.paid) show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural: le contactaremos para configurar su instancia.','Payment received. Welcome to Digit2AI MCP Neural: we will contact you to set up your instance.');
+        else show('bad','Aún no vemos el pago confirmado. Si se cobró, le contactaremos.','We do not see the payment confirmed yet. If you were charged, we will contact you.'); })
+      .catch(function(){ show('bad','No pudimos confirmar el pago ahora. Si se cobró, le contactaremos.','We could not confirm the payment now. If you were charged, we will contact you.'); });
+    var p=document.getElementById('precio'); if(p) p.scrollIntoView();
+  }
 })();
 </script>
 </body>
