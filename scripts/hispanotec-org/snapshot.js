@@ -258,6 +258,18 @@ async function processPage(html, slug, copied, digital) {
   $('head').append(`\n<link rel="canonical" href="https://aiagent.ringlypro.com${BASE}${slug ? slug + '/' : ''}">\n<link rel="stylesheet" href="/hispatec/org/wp-menu.css?v=${VERSION}">\n`);
   $('body').append(`\n<script src="/hispatec/org/wp-menu.js?v=${VERSION}" defer></script>\n`);
 
+  // Owner request 2026-10-19: a menu entry to sign in to Hispanotec Digital,
+  // on every copied page (one shared header). Cloned from their last menu item
+  // so it carries their own style, in both the desktop bar and the phone menu.
+  $('ul.elementor-nav-menu').each((_, ul) => {
+    const last = $(ul).children('li').last();
+    if (!last.length) return;
+    const li = last.clone();
+    li.attr('class', 'menu-item menu-item-type-custom hx-login-item');
+    li.find('a').attr('href', '/cv-105/login').attr('target', '_blank').attr('rel', 'noopener')
+      .removeAttr('aria-current').removeClass('elementor-item-active').text('Iniciar sesión');
+    $(ul).append(li);
+  });
   if (slug === 'formulario-de-interes') {
     const form = $('.elementor-widget-form').first();
     if (!form.length) throw new Error('formulario-de-interes: Elementor form widget not found -- their page changed, update snapshot.js');
