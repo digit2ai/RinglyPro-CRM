@@ -26,6 +26,14 @@ const SETUP_USD = Number(process.env.MCP_SETUP_FEE_USD || 700);
 const MONTHLY_USD = Number(process.env.MCP_MONTHLY_USD || 397);
 const RETURN_BASE = (process.env.MCP_PUBLIC_URL || 'https://aiagent.ringlypro.com/mcp/').replace(/\/?$/, '/');
 
+// PAYMENTS ARE OFF UNTIL MCP_PAYMENTS=on (owner 2026-10-20: test the workflow first).
+// Off: the form leads straight to the meeting picker, authorised by a signed test token
+// bound to a lead created moments earlier from this page, instead of a paid Stripe session.
+const PAYMENTS_ON = () => String(process.env.MCP_PAYMENTS || 'off').toLowerCase() === 'on';
+const crypto = require('crypto');
+const TOKEN_SECRET = () => process.env.MCP_TOKEN_SECRET || process.env.JWT_SECRET || '';
+const sign = pid => crypto.createHmac('sha256', TOKEN_SECRET()).update('mcp-test:' + pid).digest('hex').slice(0, 32);
+
 let stripeClient = null;
 function stripe() {
   const key = process.env.MCP_STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
@@ -45,16 +53,27 @@ function limited(ip) {
 }
 
 router.get('/health', (req, res) => {
-  res.json({ ok: true, stripe_configured: !!stripe(), setup_usd: SETUP_USD, monthly_usd: MONTHLY_USD });
+  res.json({ ok: true, payments: PAYMENTS_ON() ? 'on' : 'off (test mode)', stripe_configured: !!stripe(), setup_usd: SETUP_USD, monthly_usd: MONTHLY_USD });
 });
 
 router.post('/session', express.json({ limit: '2kb' }), async (req, res) => {
   try {
     const ip = String(req.headers['cf-connecting-ip'] || req.ip || '');
     if (limited(ip)) return res.status(429).json({ error: 'too_many_requests' });
+    const b = req.body || {};
+    if (!PAYMENTS_ON()) {
+      // Test mode: no charge. Only a lead this page created in the last hour gets a token.
+      const pid = /^[0-9]{1,10}$/.test(String(b.project_id || '')) ? Number(b.project_id) : null;
+      if (!pid || !TOKEN_SECRET()) return res.status(400).json({ error: 'bad_project' });
+      const rows = await db().query(
+        `SELECT id FROM d2_projects WHERE id = :pid AND heard_from = 'digit2ai.com/MCP'
+            AND created_at > NOW() - INTERVAL '1 hour'`,
+        { replacements: { pid }, type: require('sequelize').QueryTypes.SELECT, logging: false });
+      if (!rows.length) return res.status(404).json({ error: 'bad_project' });
+      return res.json({ test: true, url: `${RETURN_BASE}?pago=ok&session_id=mt_${pid}_${sign(pid)}#precio` });
+    }
     const s = stripe();
     if (!s) return res.status(503).json({ error: 'payments_not_configured' });
-    const b = req.body || {};
     const lang = b.lang === 'en' ? 'en' : 'es';
     // References only: the lead this payment belongs to (Projects inbox id) and the
     // email to prefill. Neither can change the amount.
@@ -177,6 +196,18 @@ function candidateSlots(now) {
 }
 
 async function paidSession(id) {
+  const tm = /^mt_([0-9]{1,10})_([a-f0-9]{32})$/.exec(id);
+  if (tm) {
+    if (PAYMENTS_ON() || !TOKEN_SECRET()) return { error: 402 };
+    const a = Buffer.from(tm[2]), e = Buffer.from(sign(tm[1]));
+    if (a.length !== e.length || !crypto.timingSafeEqual(a, e)) return { error: 404 };
+    const rows = await db().query('SELECT submitter_name, submitter_email, submitter_phone FROM d2_projects WHERE id = :pid',
+      { replacements: { pid: Number(tm[1]) }, type: require('sequelize').QueryTypes.SELECT, logging: false });
+    if (!rows.length) return { error: 404 };
+    const r = rows[0];
+    return { test: true, session: { metadata: { product: 'digit2ai_mcp_neural', d2_project_id: tm[1] },
+      customer_details: { name: r.submitter_name, email: r.submitter_email, phone: r.submitter_phone } } };
+  }
   if (!/^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(id)) return { error: 400 };
   const s = stripe();
   if (!s) return { error: 503 };
@@ -222,9 +253,9 @@ router.get('/slots', async (req, res) => {
     const p = await paidSession(id);
     if (p.error) return res.status(p.error).json({ error: STATUS[p.error] });
     const booking = await existingBooking(id);
-    if (booking) return res.json({ booking: { start: new Date(booking.start_time).toISOString() }, slots: [], minutes: BOOK_MIN });
+    if (booking) return res.json({ test: !!p.test, booking: { start: new Date(booking.start_time).toISOString() }, slots: [], minutes: BOOK_MIN });
     const slots = await freeSlots();
-    res.json({ booking: null, slots: slots.map(d => d.toISOString()), minutes: BOOK_MIN, timezone: BOOK_TZ });
+    res.json({ test: !!p.test, booking: null, slots: slots.map(d => d.toISOString()), minutes: BOOK_MIN, timezone: BOOK_TZ });
   } catch (err) {
     console.error('[mcp-checkout] slots error:', err && err.message);
     res.status(500).json({ error: 'slots_failed' });
@@ -255,7 +286,7 @@ router.post('/book', express.json({ limit: '2kb' }), async (req, res) => {
     const name = String(cd.name || '').slice(0, 120);
     const pid = /^[0-9]{1,10}$/.test(String(p.session.metadata.d2_project_id || '')) ? Number(p.session.metadata.d2_project_id) : null;
     const description = [
-      'Reunión de configuración de Digit2AI MCP Neural (cliente pagado en Stripe).',
+      p.test ? 'Reunión de configuración de Digit2AI MCP Neural (MODO PRUEBA: sin pago en Stripe).' : 'Reunión de configuración de Digit2AI MCP Neural (cliente pagado en Stripe).',
       name ? `Cliente: ${name}` : null,
       cd.email ? `Correo: ${cd.email}` : null,
       cd.phone ? `Teléfono: ${cd.phone}` : null,

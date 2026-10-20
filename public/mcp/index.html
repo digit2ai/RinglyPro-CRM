@@ -491,7 +491,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
       .then(function(x){
         if(!x.ok||!x.j.success) throw new Error('lead_failed');
-        show('', 'Abriendo el pago seguro...', 'Opening secure payment...');
+        show('', 'Un momento...', 'One moment...');
         return fetch('/api/mcp-checkout/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:L(),project_id:x.j.project_id,email:d.email})})
           .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); });
       })
@@ -503,22 +503,22 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   });
   var q=new URLSearchParams(location.search);
   if(q.get('pago')==='ok' && q.get('session_id')){
-    var sid=q.get('session_id'), panel=document.getElementById('bookPanel'), days=document.getElementById('bookDays'), times=document.getElementById('bookTimes'), bbtn=document.getElementById('bookBtn'), picked=null;
+    var sid=q.get('session_id'), panel=document.getElementById('bookPanel'), days=document.getElementById('bookDays'), times=document.getElementById('bookTimes'), bbtn=document.getElementById('bookBtn'), picked=null, testMode=/^mt_/.test(sid);
     form.hidden=true;
     var pr=document.getElementById('precio'); if(pr) pr.scrollIntoView();
-    show('', 'Confirmando su pago...', 'Confirming your payment...');
+    show('', testMode?'Cargando horarios...':'Confirmando su pago...', testMode?'Loading times...':'Confirming your payment...');
     function fmt(d,o){ return new Intl.DateTimeFormat(L()==='en'?'en-US':'es-ES',o).format(d); }
     function booked(iso){
       panel.hidden=true;
       var d=new Date(iso);
-      show('ok','Pago recibido y reunión confirmada: '+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le contactaremos con el enlace de la reunión.',
-               'Payment received and meeting confirmed: '+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We will send you the meeting link.');
+      show('ok',(testMode?'Reunión confirmada (modo prueba, sin pago): ':'Pago recibido y reunión confirmada: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le contactaremos con el enlace de la reunión.',
+               (testMode?'Meeting confirmed (test mode, no payment): ':'Payment received and meeting confirmed: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We will send you the meeting link.');
     }
     function load(){
       return fetch('/api/mcp-checkout/slots?session_id='+encodeURIComponent(sid)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); }).then(function(x){
         if(!x.ok) throw new Error(x.j&&x.j.error||'error');
         if(x.j.booking) return booked(x.j.booking.start);
-        show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural. Ahora elija la fecha de su reunión de configuración.','Payment received. Welcome to Digit2AI MCP Neural. Now pick the date of your setup meeting.');
+        if(testMode) show('ok','Datos recibidos (modo prueba, sin pago). Ahora elija la fecha de su reunión de configuración.','Details received (test mode, no payment). Now pick the date of your setup meeting.'); else show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural. Ahora elija la fecha de su reunión de configuración.','Payment received. Welcome to Digit2AI MCP Neural. Now pick the date of your setup meeting.');
         panel.hidden=false; days.innerHTML=''; times.innerHTML=''; picked=null; bbtn.disabled=true;
         var byDay={};
         x.j.slots.forEach(function(iso){ var d=new Date(iso); var k=d.toDateString(); (byDay[k]=byDay[k]||[]).push(d); });
