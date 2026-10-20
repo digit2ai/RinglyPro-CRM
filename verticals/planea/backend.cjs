@@ -50,10 +50,10 @@ const VERIFY_RESEND_SECONDS = 60;
 // Las pruebas inyectan un transporte falso: el SIT nunca envía correos reales.
 let mailer = null;
 // Remitente de los correos de Planea: el NOMBRE que ve la persona es «Planea», no la
-// cuenta del ecosistema. La dirección debe ser un remitente verificado en SendGrid;
-// PLANEA_FROM_EMAIL permite usar una de Planea cuando su dominio esté verificado.
+// cuenta del ecosistema. planea.co está verificado en SendGrid (20-oct-2026, registros em7797 y
+// s1/s2._domainkey en Spaceship), así que sale desde una dirección de Planea.
 function planeaFrom() {
-  return { email: process.env.PLANEA_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com', name: process.env.PLANEA_FROM_NAME || 'Planea' };
+  return { email: process.env.PLANEA_FROM_EMAIL || 'no-responder@planea.co', name: process.env.PLANEA_FROM_NAME || 'Planea' };
 }
 
 // ── DB (own instance, CRM Postgres) ─────────────────────────────────────────
