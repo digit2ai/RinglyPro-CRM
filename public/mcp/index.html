@@ -412,6 +412,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
           <label class="full"><span class="es">¿Qué quiere lograr con la IA? *</span><span class="en">What do you want to achieve with AI? *</span><textarea name="problem" required maxlength="4000" rows="4"></textarea></label>
           <label class="full"><span class="es">¿Qué sistemas usa hoy? (CRM, ERP, correo...)</span><span class="en">What systems do you use today? (CRM, ERP, email...)</span><input name="existing_stack" maxlength="500"></label>
         </div>
+        <p class="fine" style="margin:0 0 12px"><span class="es">Al enviar, acepta recibir mensajes de Digit2AI por correo y por texto sobre su servicio y su reunión. Pueden aplicar tarifas de mensajes y datos. Responda STOP para dejar de recibir textos.</span><span class="en">By sending, you agree to receive emails and text messages from Digit2AI about your service and meeting. Message and data rates may apply. Reply STOP to stop texts.</span></p>
         <button type="submit" class="btn pri big" id="payBtn"><span class="es">Continuar al pago · $700 + $397/mes</span><span class="en">Continue to payment · $700 + $397/month</span></button>
       </form>
       <p class="fine"><span class="es">Hoy se cobran $1,097 USD: la configuración ($700) y el primer mes ($397). Luego $397 cada mes en la misma fecha. Pago seguro con Stripe; puede cancelar la suscripción cuando quiera.</span><span class="en">Today you are charged $1,097 USD: setup ($700) and the first month ($397). Then $397 every month on the same date. Secure payment with Stripe; you can cancel the subscription anytime.</span></p>
@@ -515,8 +516,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     function booked(iso){
       panel.hidden=true;
       var d=new Date(iso);
-      show('ok',(testMode?'Reunión confirmada (modo prueba, sin pago): ':'Pago recibido y reunión confirmada: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le contactaremos con el enlace de la reunión.',
-               (testMode?'Meeting confirmed (test mode, no payment): ':'Payment received and meeting confirmed: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We will send you the meeting link.');
+      show('ok',(testMode?'Reunión confirmada (modo prueba, sin pago): ':'Pago recibido y reunión confirmada: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le enviamos la confirmación por correo y por texto, y le haremos llegar el enlace de la reunión.',
+               (testMode?'Meeting confirmed (test mode, no payment): ':'Payment received and meeting confirmed: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We sent the confirmation by email and text, and will send you the meeting link.');
     }
     function load(){
       return fetch('/api/mcp-checkout/slots?session_id='+encodeURIComponent(sid)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); }).then(function(x){
@@ -541,7 +542,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     }
     bbtn.addEventListener('click',function(){
       if(!picked) return; bbtn.disabled=true;
-      fetch('/api/mcp-checkout/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,start:picked,lang:L()})})
+      fetch('/api/mcp-checkout/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,start:picked,lang:L(),tz:(Intl.DateTimeFormat().resolvedOptions().timeZone||'')})})
         .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(x){
           if(x.ok&&x.j.booked) return booked(x.j.start);

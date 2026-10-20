@@ -334,6 +334,13 @@ router.post('/book', express.json({ limit: '2kb' }), async (req, res) => {
           s: start.toISOString(), e: end.toISOString(), lang: b.lang === 'en' ? 'en' : 'es' }, transaction: t, logging: false });
     await t.commit();
     res.json({ booked: true, start: start.toISOString() });
+    // Confirmations after the response: a mail or SMS hiccup never undoes a booking.
+    setImmediate(() => {
+      require('../services/mcpNotify').bookingConfirmed({
+        start: start.toISOString(), name, email: cd.email, phone: cd.phone, projectId: pid,
+        lang: b.lang === 'en' ? 'en' : 'es', tz: String(b.tz || '').slice(0, 64), test: !!p.test
+      }).catch(e => console.error('[mcp-checkout] notify error:', e.message));
+    });
   } catch (err) {
     try { await t.rollback(); } catch (_) {}
     console.error('[mcp-checkout] book error:', err && err.message);
