@@ -36,6 +36,7 @@ srv.listen(0, async () => {
   ok('planea.ai sirve la app (login)', r.s === 200 && /Planea/.test(r.b), r.s);
   r = await pedir('/planea/main', 'planea.ai');
   ok('/planea/main muestra la landing', r.s === 200 && /Entiende tu dinero/.test(r.b), r.s);
+  ok('la landing ya no tiene el formulario de contacto', !/id="contacto"|contact\.js|Tienes una pregunta/.test(r.b));
   ok('la landing ya no carga nada de Vercel (www.planea.co)', !/www\.planea\.co/.test(r.b) && /\/planea\/portal\/landing\/landing\.css/.test(r.b));
   for (const h of ['planea.co', 'www.planea.co']) {
     r = await pedir('/', h);
@@ -43,7 +44,7 @@ srv.listen(0, async () => {
   }
   r = await pedir('/login', 'planea.co');
   ok('planea.co/login lleva a la app en planea.ai', r.s === 301 && r.loc === 'https://planea.ai/login', r.loc);
-  for (const p of ['/planea/portal/landing/landing.css', '/planea/portal/landing/contact.js', '/planea/portal/landing/figure1.jpeg', '/docs/terminos-y-condiciones.pdf', '/docs/politica-de-privacidad.pdf', '/images/og-image.jpeg', '/videos/planea_bg_1024_576.mp4']) {
+  for (const p of ['/planea/portal/landing/landing.css', '/planea/portal/landing/figure1.jpeg', '/docs/terminos-y-condiciones.pdf', '/docs/politica-de-privacidad.pdf', '/images/og-image.jpeg', '/videos/planea_bg_1024_576.mp4']) {
     r = await pedir(p, 'planea.co');
     ok('planea.co' + p + ' responde', r.s === 200, r.s);
   }
