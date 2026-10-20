@@ -9,7 +9,8 @@
  *
  * Mounted by server.cjs at  /planea/api/v1  (router returned by build()).
  * Tables (idempotent create on boot): planea_users, planea_profiles.
- * NO email confirmation — signups can log in immediately.
+ * Email confirmation since 2026-10-20: a signup gets a 6-digit code + link and cannot
+ * sign in until it confirms (see /auth/verify).
  *
  * All runtime deps already in the root package.json (sequelize, pg, bcryptjs,
  * jsonwebtoken) — no new dependency, no @supabase/supabase-js.
@@ -43,6 +44,11 @@ const SECRET = process.env.PLANEA_JWT_SECRET || process.env.JWT_SECRET || 'plane
 const COOKIE = 'planea_session';
 const MAX_AGE = 1000 * 60 * 60 * 24 * 30; // 30d
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VERIFY_MINUTES = Number(process.env.PLANEA_VERIFY_MINUTES || 30);
+const VERIFY_MAX_TRIES = 5;
+const VERIFY_RESEND_SECONDS = 60;
+// Las pruebas inyectan un transporte falso: el SIT nunca envía correos reales.
+let mailer = null;
 
 // ── DB (own instance, CRM Postgres) ─────────────────────────────────────────
 const databaseUrl = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
@@ -68,6 +74,13 @@ function defineModels(sq) {
     reset_expires: { type: DataTypes.DATE, allowNull: true },
     failed_logins: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
     locked_until: { type: DataTypes.DATE, allowNull: true },
+    // Confirmación del correo (20-oct-2026). NULL = sin confirmar: no puede iniciar sesión.
+    email_verified_at: { type: DataTypes.DATE, allowNull: true },
+    verify_code_hash: { type: DataTypes.STRING, allowNull: true },
+    verify_token_hash: { type: DataTypes.STRING, allowNull: true },
+    verify_expires: { type: DataTypes.DATE, allowNull: true },
+    verify_attempts: { type: DataTypes.INTEGER, allowNull: true, defaultValue: 0 },
+    verify_sent_at: { type: DataTypes.DATE, allowNull: true },
   }, { tableName: 'planea_users', underscored: true, createdAt: 'created_at', updatedAt: 'updated_at' });
 
   const P = sq.define('PlaneaProfile', {
@@ -197,6 +210,13 @@ async function init() {
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS reset_expires TIMESTAMPTZ').catch(function () {});
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS failed_logins INTEGER DEFAULT 0').catch(function () {});
     await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ').catch(function () {});
+    for (const col of ['email_verified_at TIMESTAMPTZ', 'verify_code_hash VARCHAR(80)', 'verify_token_hash VARCHAR(80)', 'verify_expires TIMESTAMPTZ', 'verify_attempts INTEGER DEFAULT 0', 'verify_sent_at TIMESTAMPTZ']) {
+      await sequelize.query('ALTER TABLE planea_users ADD COLUMN IF NOT EXISTS ' + col).catch(function () {});
+    }
+    // Las cuentas creadas ANTES de la confirmación por correo quedan confirmadas: nadie
+    // queda fuera por un cambio de reglas. Una cuenta nueva siempre recibe un código
+    // (verify_code_hash) al registrarse, así que este UPDATE nunca la confirma sola.
+    await sequelize.query('UPDATE planea_users SET email_verified_at = created_at WHERE email_verified_at IS NULL AND verify_code_hash IS NULL AND created_at < \'2026-10-21\'').catch(function () {});
     // Contador de límite de peticiones COMPARTIDO entre instancias de Render.
     await sequelize.query('CREATE TABLE IF NOT EXISTS planea_rate_limits (key TEXT PRIMARY KEY, hits INTEGER NOT NULL DEFAULT 0, expires_at TIMESTAMPTZ NOT NULL)').catch(function () {});
     await sequelize.query('CREATE INDEX IF NOT EXISTS idx_planea_rate_exp ON planea_rate_limits(expires_at)').catch(function () {});
@@ -421,7 +441,46 @@ function build() {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  // Open free signup — NO email confirmation.
+  // ── Confirmación del correo (20-oct-2026) ─────────────────────────────────
+  // Registrarse ya NO inicia sesión: se envía un código de 6 dígitos y un enlace, y la
+  // cuenta entra solo cuando se confirma. Los dos se guardan como HASH, vencen en
+  // VERIFY_MINUTES y el código admite VERIFY_MAX_TRIES intentos; luego hay que pedir otro.
+  async function sendVerifyEmail(email, code, link) {
+    if (mailer) return mailer({ kind: 'verify', to: email, code, link });
+    const key = process.env.SENDGRID_API_KEY;
+    const from = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    if (!key) return false;
+    try {
+      const sg = require('@sendgrid/mail'); sg.setApiKey(key);
+      await sg.send({
+        to: email, from: from, subject: 'Tu código para confirmar tu correo en Planea: ' + code,
+        text: 'Tu código de confirmación de Planea es: ' + code + '\n\nTambién puedes abrir este enlace: ' + link + '\n\nEl código vence en ' + VERIFY_MINUTES + ' minutos. Si no creaste una cuenta en Planea, ignora este correo.',
+        html: '<div style="font-family:Inter,Arial,sans-serif;max-width:460px;margin:auto;color:#0f231e"><h2 style="color:#17a6a6">Planea</h2><p>Confirma tu correo para entrar a Planea. Tu código es:</p><p style="font-size:32px;font-weight:800;letter-spacing:8px;margin:12px 0">' + code + '</p><p>O toca el botón:</p><p><a href="' + link + '" style="display:inline-block;background:#17a6a6;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700">Confirmar mi correo</a></p><p style="color:#607068;font-size:13px">El código vence en ' + VERIFY_MINUTES + ' minutos. Si no creaste una cuenta en Planea, ignora este correo.</p></div>',
+      });
+      return true;
+    } catch (e) { console.error('Planea verify email error:', e.message); return false; }
+  }
+  // Emite un código nuevo (invalida el anterior) y lo envía. Devuelve {sent, dev_link}.
+  async function issueVerification(user) {
+    const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+    const token = sec.randomToken(24);
+    user.verify_code_hash = sec.hashToken(user.id + ':' + code);
+    user.verify_token_hash = sec.hashToken(token);
+    user.verify_expires = new Date(Date.now() + VERIFY_MINUTES * 60000);
+    user.verify_attempts = 0;
+    user.verify_sent_at = new Date();
+    await user.save();
+    const base = String(process.env.PLANEA_PUBLIC_URL || 'https://planea.vip').replace(/\/+$/, '');
+    const link = base + '/planea/verificar?t=' + token;
+    const sent = await sendVerifyEmail(user.email, code, link);
+    // Solo fuera de producción el enlace vuelve a quien lo pidió (igual que el reset).
+    return { sent, dev_link: !sent && process.env.NODE_ENV !== 'production' ? link : null };
+  }
+  function resendWait(user) {
+    const t = user.verify_sent_at ? new Date(user.verify_sent_at).getTime() : 0;
+    return Math.max(0, Math.ceil((t + VERIFY_RESEND_SECONDS * 1000 - Date.now()) / 1000));
+  }
+
   // Trazabilidad de seguridad — nunca guarda contraseña, token ni cuerpo. IP hasheada.
   async function audit(req, event, outcome, extra) {
     try {
@@ -449,15 +508,26 @@ function build() {
       if (pwIssue) return res.status(400).json({ error: pwIssue });
 
       const existing = await User.findOne({ where: { email } });
-      if (existing) return res.status(409).json({ error: 'Ese correo ya está registrado. Inicia sesión.' });
+      if (existing && existing.email_verified_at) return res.status(409).json({ error: 'Ese correo ya está registrado. Inicia sesión.' });
 
       const password_hash = await bcrypt.hash(password, 12);
-      const user = await User.create({ email, password_hash, full_name, last_login_at: new Date() });
-      await Profile.create({ user_id: user.id, full_name, assets_data: [], liabilities_data: [], goals: [] });
-
-      setSession(res, user);
-      audit(req, 'signup', 'success', { user_id: user.id, email: email });
-      res.json({ success: true, user: publicUser(user) });
+      let user;
+      if (existing) {
+        // Un registro sin confirmar se puede repetir: quien sí es dueño del correo no
+        // queda bloqueado por un intento anterior (suyo o ajeno). Nada entra sin el código.
+        existing.password_hash = password_hash;
+        if (full_name) existing.full_name = full_name;
+        await existing.save();
+        user = existing;
+      } else {
+        user = await User.create({ email, password_hash, full_name });
+        await Profile.create({ user_id: user.id, full_name, assets_data: [], liabilities_data: [], goals: [] });
+      }
+      // No se inicia sesión: primero hay que confirmar el correo.
+      const wait = existing ? resendWait(user) : 0;
+      const out = wait > 0 ? { sent: true, dev_link: null } : await issueVerification(user);
+      audit(req, 'signup', existing ? 'retry_unverified' : 'pending_verification', { user_id: user.id, email: email });
+      res.json({ success: true, verify: true, email: email, sent: out.sent, dev_link: out.dev_link });
     } catch (e) {
       console.error('Planea signup error:', e.message);
       res.status(500).json({ error: e.message });
@@ -496,6 +566,16 @@ function build() {
         return res.status(401).json({ error: 'Credenciales inválidas' });
       }
 
+      if (!user.email_verified_at) {
+        // La contraseña es correcta pero el correo no está confirmado. Se dice solo a
+        // quien conoce la contraseña; si el código venció, se envía uno nuevo.
+        user.failed_logins = 0; await user.save().catch(function () {});
+        const vencido = !user.verify_expires || new Date(user.verify_expires).getTime() < Date.now();
+        const out = vencido && resendWait(user) === 0 ? await issueVerification(user) : { dev_link: null };
+        audit(req, 'login', 'blocked_unverified', { user_id: user.id, email: email });
+        return res.status(403).json({ error: 'Confirma tu correo para entrar. Te enviamos un código.', verify: true, email: email, dev_link: out.dev_link });
+      }
+
       user.last_login_at = new Date();
       user.failed_logins = 0;
       user.locked_until = null;
@@ -507,6 +587,62 @@ function build() {
       console.error('Planea login error:', e.message);
       res.status(500).json({ error: e.message });
     }
+  });
+
+  // Confirmar: {email, code} (lo que la persona escribe) o {token} (el botón del correo).
+  router.post('/auth/verify', sec.verifyLimiter, async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const token = String(req.body.token || '').trim();
+      const email = String(req.body.email || '').toLowerCase().trim();
+      const code = String(req.body.code || '').replace(/\D/g, '');
+      let user = null;
+      if (token) user = await User.findOne({ where: { verify_token_hash: sec.hashToken(token) } });
+      else if (EMAIL_RE.test(email) && code.length === 6) user = await User.findOne({ where: { email } });
+      else return res.status(400).json({ error: 'Escribe el código de 6 dígitos que te enviamos.' });
+      const malo = token ? 'El enlace no es válido o ya se usó. Pide un código nuevo.' : 'El código no es correcto.';
+      if (!user || user.email_verified_at || !user.verify_code_hash) {
+        if (user && user.email_verified_at) return res.status(409).json({ error: 'Tu correo ya está confirmado. Inicia sesión.', verified: true });
+        return res.status(400).json({ error: malo });
+      }
+      if (!user.verify_expires || new Date(user.verify_expires).getTime() < Date.now()) {
+        return res.status(400).json({ error: 'El código venció. Pide uno nuevo.', expired: true });
+      }
+      if (!token) {
+        if ((user.verify_attempts || 0) >= VERIFY_MAX_TRIES) return res.status(400).json({ error: 'Demasiados intentos con este código. Pide uno nuevo.', expired: true });
+        if (!sec.safeEqual(sec.hashToken(user.id + ':' + code), user.verify_code_hash)) {
+          user.verify_attempts = (user.verify_attempts || 0) + 1; await user.save();
+          audit(req, 'email_verify', 'fail_code', { user_id: user.id, email: user.email, meta: { attempt: user.verify_attempts } });
+          const quedan = VERIFY_MAX_TRIES - user.verify_attempts;
+          return res.status(400).json({ error: quedan > 0 ? 'El código no es correcto. Te quedan ' + quedan + ' intento' + (quedan === 1 ? '' : 's') + '.' : 'Demasiados intentos con este código. Pide uno nuevo.', expired: quedan <= 0 });
+        }
+      }
+      user.email_verified_at = new Date();
+      user.verify_code_hash = null; user.verify_token_hash = null; user.verify_expires = null; user.verify_attempts = 0;
+      user.last_login_at = new Date(); user.failed_logins = 0; user.locked_until = null;
+      await user.save();
+      setSession(res, user);
+      audit(req, 'email_verify', 'success', { user_id: user.id, email: user.email, meta: { via: token ? 'link' : 'code' } });
+      res.json({ success: true, user: publicUser(user) });
+    } catch (e) { console.error('Planea verify error:', e.message); res.status(500).json({ error: 'No se pudo confirmar. Intenta de nuevo.' }); }
+  });
+  // Pedir otro código. Siempre responde lo mismo: no revela si el correo existe.
+  router.post('/auth/verify/resend', sec.verifyLimiter, async (req, res) => {
+    if (!requireReady(res)) return;
+    try {
+      const email = String(req.body.email || '').toLowerCase().trim();
+      if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Correo inválido' });
+      const user = await User.findOne({ where: { email } });
+      let devLink = null;
+      if (user && !user.email_verified_at) {
+        const wait = resendWait(user);
+        if (wait > 0) return res.status(429).json({ error: 'Espera ' + wait + ' segundos para pedir otro código.', wait: wait });
+        const out = await issueVerification(user);
+        devLink = out.dev_link;
+        audit(req, 'email_verify', 'resent', { user_id: user.id, email: email });
+      }
+      res.json({ ok: true, wait: VERIFY_RESEND_SECONDS, dev_link: devLink });
+    } catch (e) { console.error('Planea resend error:', e.message); res.status(500).json({ error: 'No se pudo enviar. Intenta de nuevo.' }); }
   });
 
   router.post('/auth/logout', (req, res) => {
@@ -574,6 +710,8 @@ function build() {
       // restablecimiento no levantara el bloqueo, ese consejo sería mentira y el
       // usuario legítimo quedaría fuera 15 minutos más sin motivo.
       user.failed_logins = 0; user.locked_until = null;
+      // El enlace llegó a ese buzón: también prueba que el correo es suyo.
+      if (!user.email_verified_at) { user.email_verified_at = new Date(); user.verify_code_hash = null; user.verify_token_hash = null; user.verify_expires = null; }
       await user.save();
       audit(req, 'password_reset', 'success', { user_id: user.id, email: user.email });
       res.json({ ok: true });
@@ -1148,4 +1286,4 @@ function build() {
   return router;
 }
 
-module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize, Periodo };
+module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize, Periodo, _setMailer: (fn) => { mailer = fn; } };

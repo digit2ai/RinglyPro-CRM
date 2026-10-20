@@ -609,13 +609,14 @@ if (planeaBackend) {
 
 // ── Our own login / signup pages (replace the Supabase-bound SPA auth screens) ──
 // Registered BEFORE the SPA catch-all so /planea/login + /planea/signup serve OUR
-// dark-theme pages that talk to /planea/api/v1/auth/* (no email confirmation).
+// dark-theme pages that talk to /planea/api/v1/auth/* (signup is confirmed by email: /verificar).
 if (hasPortal) {
   const noCache = (res) => res.set('Cache-Control', 'no-store, must-revalidate');
   router.get('/login', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'login.html')); });
   router.get(['/signup', '/register', '/start'], (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'signup.html')); });
   router.get('/forgot', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'forgot.html')); });
   router.get('/reset', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'reset.html')); });
+  router.get(['/verificar', '/verify'], (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'verificar.html')); });
   // Public marketing landing (planea.vip/main). Assets served from planea.co.
   if (fs.existsSync(path.join(portalDir, 'main.html'))) {
     router.get(['/main', '/main/'], (req, res) => { res.sendFile(path.join(portalDir, 'main.html')); });

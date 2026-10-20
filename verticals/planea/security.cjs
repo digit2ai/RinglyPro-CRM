@@ -142,6 +142,8 @@ async function clearHit(key) { await sharedStore.resetKey(String(key).slice(0, 1
 const loginLimiter = makeLimiter(15 * 60 * 1000, 12, 'Demasiados intentos de ingreso. Espera 15 minutos e inténtalo de nuevo.', 'login');
 const signupLimiter = makeLimiter(60 * 60 * 1000, 8, 'Demasiadas cuentas creadas desde esta conexión. Intenta más tarde.', 'signup');
 const resetLimiter = makeLimiter(60 * 60 * 1000, 6, 'Demasiadas solicitudes de restablecimiento. Espera una hora.', 'reset');
+// Confirmación del correo: escribir el código y pedir otro. 20 por hora por conexión.
+const verifyLimiter = makeLimiter(60 * 60 * 1000, 20, 'Demasiados intentos. Espera una hora e inténtalo de nuevo.', 'verify');
 
 // ── 2b. Bloqueo por cuenta ──────────────────────────────────────────────────
 // El límite por IP no protege a un usuario concreto: un atacante con muchas IPs
@@ -227,7 +229,7 @@ function ipHash(req) {
 module.exports = {
   headers, CSP,
   useDatabase,
-  loginLimiter, signupLimiter, resetLimiter, countHit, clearHit,
+  loginLimiter, signupLimiter, resetLimiter, verifyLimiter, countHit, clearHit,
   LOCK_AFTER, LOCK_MINUTES, lockRemaining,
   passwordIssue,
   encrypt, decrypt, hashToken, randomToken, safeEqual,

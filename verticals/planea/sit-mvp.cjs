@@ -771,6 +771,77 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     const evs = aud.map((r) => r.event);
     ['admin.login', 'admin.view_users', 'admin.view_metrics', 'admin.kb_upload', 'admin.kb_deactivate', 'admin.view_accounts', 'admin.kb_test', 'admin.train_chat', 'admin.train_rule', 'admin.kb_edit', 'admin.dian_load'].forEach((e) => ok(evs.indexOf(e) >= 0, 'auditoría registra ' + e));
 
+    // ── Confirmación del correo (20-oct-2026) ──
+    {
+      const mails = []; backend._setMailer(async (m) => { mails.push(m); return true; });
+      const VIP = '192.0.2.' + rnd();
+      const vcall = (m, p, body) => call(m, p, { body, hdr: false, ip: VIP });
+      const VE = (n) => 'sit-mvp-verif-' + n + '-' + RUN + '@example.test';
+      const VPW = 'Verif-' + RUN + '-clave9!';
+      // setSession limpia antes la cookie vieja (planea_session=; Path=/planea): cuenta solo un valor real.
+      const sesion = (r) => /planea_session=[A-Za-z0-9._-]{40,}/.test(r.cookie || '');
+      const s1 = await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(1), password: VPW, full_name: 'Verif Uno' });
+      const m1 = mails.pop();
+      ok(s1.status === 200 && s1.body.verify === true && !sesion(s1), 'registrarse ya no inicia sesión: pide confirmar el correo');
+      ok(m1 && m1.to === VE(1) && /^\d{6}$/.test(m1.code) && /\/planea\/verificar\?t=[a-f0-9]{48}$/.test(m1.link), 'llega un correo con un código de 6 dígitos y un enlace');
+      const [[r1 = {}]] = await sq.query('SELECT email_verified_at, verify_code_hash, verify_token_hash FROM planea_users WHERE email = :e', { replacements: { e: VE(1) } });
+      ok(r1.email_verified_at === null && r1.verify_code_hash && !String(r1.verify_code_hash).includes(m1.code) && r1.verify_token_hash !== m1.link.split('t=')[1], 'en la base quedan solo los hashes del código y del enlace');
+      const l1 = await vcall('POST', '/planea/api/v1/auth/login', { email: VE(1), password: VPW });
+      ok(l1.status === 403 && l1.body.verify === true && !sesion(l1), 'con la contraseña correcta pero sin confirmar, no entra y se le pide el código');
+      ok((await vcall('POST', '/planea/api/v1/auth/login', { email: VE(1), password: 'otra-clave-123' })).status === 401, 'con la contraseña equivocada no se revela que la cuenta está sin confirmar');
+      const bad = await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(1), code: m1.code === '000000' ? '111111' : '000000' });
+      ok(bad.status === 400 && /4 intentos/.test(bad.body.error) && !sesion(bad), 'un código equivocado se rechaza y dice cuántos intentos quedan');
+      ok((await vcall('POST', '/planea/api/v1/auth/verify/resend', { email: VE(1) })).status === 429, 'no se puede pedir otro código antes de 60 segundos');
+      await sq.query("UPDATE planea_users SET verify_sent_at = NOW() - INTERVAL '2 minutes' WHERE email = :e", { replacements: { e: VE(1) } });
+      const rs = await vcall('POST', '/planea/api/v1/auth/verify/resend', { email: VE(1) });
+      const m1b = mails.pop();
+      ok(rs.status === 200 && m1b && m1b.code, 'pasado el minuto, «pide otro código» envía uno nuevo');
+      if (m1b.code !== m1.code) ok((await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(1), code: m1.code })).status === 400, 'el código anterior deja de servir');
+      const v1 = await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(1), code: m1b.code });
+      const [[r1b]] = await sq.query('SELECT email_verified_at, verify_code_hash, verify_token_hash FROM planea_users WHERE email = :e', { replacements: { e: VE(1) } });
+      ok(v1.status === 200 && sesion(v1) && r1b.email_verified_at && !r1b.verify_code_hash && !r1b.verify_token_hash, 'el código correcto confirma el correo, inicia sesión y borra los hashes');
+      ok(sesion(await vcall('POST', '/planea/api/v1/auth/login', { email: VE(1), password: VPW })), 'ya confirmado, el ingreso normal funciona');
+      ok((await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(1), password: VPW })).status === 409, 'un correo confirmado no se puede registrar otra vez');
+      // Enlace del correo
+      await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(2), password: VPW });
+      const m2 = mails.pop(); const tok = m2.link.split('t=')[1];
+      const v2 = await vcall('POST', '/planea/api/v1/auth/verify', { token: tok });
+      ok(v2.status === 200 && sesion(v2), 'el botón del enlace confirma y entra');
+      ok((await vcall('POST', '/planea/api/v1/auth/verify', { token: tok })).status === 400, 'el enlace sirve una sola vez');
+      // Intentos y vencimiento
+      await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(3), password: VPW });
+      const m3 = mails.pop(); const malo = m3.code === '999999' ? '888888' : '999999';
+      for (let i = 0; i < 5; i++) await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(3), code: malo });
+      const v3 = await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(3), code: m3.code });
+      ok(v3.status === 400 && v3.body.expired && !sesion(v3), 'tras 5 intentos fallidos, ni el código correcto sirve: hay que pedir otro');
+      await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(4), password: VPW });
+      const m4 = mails.pop();
+      await sq.query("UPDATE planea_users SET verify_expires = NOW() - INTERVAL '1 minute' WHERE email = :e", { replacements: { e: VE(4) } });
+      const v4 = await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(4), code: m4.code });
+      ok(v4.status === 400 && v4.body.expired, 'un código vencido no sirve');
+      // Registrarse otra vez sin haber confirmado: no bloquea al dueño del correo
+      await sq.query("UPDATE planea_users SET verify_sent_at = NOW() - INTERVAL '2 minutes' WHERE email = :e", { replacements: { e: VE(4) } });
+      const s4 = await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(4), password: VPW + 'x', full_name: 'Verif Cuatro' });
+      const m4b = mails.pop();
+      ok(s4.status === 200 && s4.body.verify && m4b && m4b.code, 'registrarse otra vez con un correo sin confirmar envía un código nuevo, no «ya está registrado»');
+      ok(sesion(await vcall('POST', '/planea/api/v1/auth/verify', { email: VE(4), code: m4b.code })) && sesion(await vcall('POST', '/planea/api/v1/auth/login', { email: VE(4), password: VPW + 'x' })), 'y queda con la contraseña del último registro');
+      // Restablecer la contraseña también prueba el correo
+      await vcall('POST', '/planea/api/v1/auth/signup', { email: VE(5), password: VPW }); mails.pop();
+      const rtok = sec.randomToken(24);
+      await sq.query("UPDATE planea_users SET reset_token = :h, reset_expires = NOW() + INTERVAL '1 hour' WHERE email = :e", { replacements: { h: sec.hashToken(rtok), e: VE(5) } });
+      ok((await vcall('POST', '/planea/api/v1/auth/reset', { token: rtok, password: VPW + 'y' })).status === 200 && sesion(await vcall('POST', '/planea/api/v1/auth/login', { email: VE(5), password: VPW + 'y' })), 'restablecer la contraseña por correo también confirma la cuenta');
+      const unk = await vcall('POST', '/planea/api/v1/auth/verify/resend', { email: VE('nadie') });
+      ok(unk.status === 200 && mails.length === 0, 'pedir un código para un correo que no existe responde igual y no envía nada');
+      backend._setMailer(null);
+      const bS = fs.readFileSync(path.join(__dirname, 'backend.cjs'), 'utf8');
+      ok(/email_verified_at: \{ type: DataTypes\.DATE/.test(bS) && /ADD COLUMN IF NOT EXISTS ' \+ col/.test(bS) && /email_verified_at TIMESTAMPTZ/.test(bS), 'las columnas nuevas están en el ALTER y en el modelo');
+      ok(/SET email_verified_at = created_at WHERE email_verified_at IS NULL AND verify_code_hash IS NULL/.test(bS), 'las cuentas anteriores quedan confirmadas, nunca una que recibió código');
+      const vS = fs.readFileSync(path.join(__dirname, 'portal', 'verificar.html'), 'utf8'), sS = fs.readFileSync(path.join(__dirname, 'portal', 'signup.html'), 'utf8');
+      ok(/addEventListener\('click'[\s\S]{0,200}post\('verify',\{token:token\}\)/.test(vS) && !/Sin confirmación por correo/.test(sS) && /verificar\?email=/.test(sS), 'el enlace confirma solo con el botón (no al abrirse) y Crear cuenta ya no dice «sin confirmación»');
+      await sq.query("DELETE FROM planea_profiles WHERE user_id IN (SELECT id FROM planea_users WHERE email LIKE 'sit-mvp-verif-%')").catch(() => {});
+      await sq.query("DELETE FROM planea_users WHERE email LIKE 'sit-mvp-verif-%'").catch(() => {});
+    }
+
     // Revisión de seguridad
     const bigLogin = await call('POST', '/planea/admin/api/login', { body: { email: ADMIN_EMAIL, password: 'x'.repeat(20000) } });
     ok(bigLogin.status === 413, 'un cuerpo grande sin sesión admin se rechaza antes de procesarlo');
@@ -810,6 +881,8 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
     await sq.query('DELETE FROM planea_items WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_profiles WHERE user_id IN (:ids)', { replacements: { ids } }).catch(() => {});
     await sq.query('DELETE FROM planea_users WHERE id IN (:ids)', { replacements: { ids } }).catch(() => {});
+    await sq.query("DELETE FROM planea_profiles WHERE user_id IN (SELECT id FROM planea_users WHERE email LIKE 'sit-mvp-verif-%')").catch(() => {});
+    await sq.query("DELETE FROM planea_users WHERE email LIKE 'sit-mvp-verif-%'").catch(() => {});
     const [[left]] = await sq.query("SELECT COUNT(*)::int AS n FROM planea_users WHERE email LIKE 'sit-mvp-%'");
     ok(left.n === 0, 'la SIT borró sus usuarios');
   }

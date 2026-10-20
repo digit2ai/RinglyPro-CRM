@@ -59,6 +59,7 @@
     fetch(API,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pw})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
       .then(function(res){
+        if(res.j && res.j.verify){ location.href='/planea/verificar?email='+encodeURIComponent(res.j.email||email); return; }
         if(!res.ok){ show(res.j.error||'No se pudo iniciar sesión.',false); go.disabled=false; go.textContent='Ingresar'; return; }
         show('Listo. Entrando…',true);
         location.href=DEST;
