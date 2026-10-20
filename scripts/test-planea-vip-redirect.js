@@ -34,6 +34,10 @@ srv.listen(0, async () => {
   ok('sin la variable, el valor por defecto ya es planea.ai', r.s === 301 && r.loc === 'https://planea.ai/score', r.loc);
   r = await pedir('/login', 'planea.ai');
   ok('planea.ai sirve la app (login)', r.s === 200 && /Planea/.test(r.b), r.s);
+  for (const p of ['/planea/main', '/main', '/planea/portal/main.html']) {
+    r = await pedir(p, 'planea.ai');
+    ok('planea.ai' + p + ' va a la landing de planea.co', r.s === 301 && r.loc === 'https://www.planea.co/', r.s + ' ' + r.loc);
+  }
   console.log(`PLANEA VIP REDIRECT: ${pasa}/${pasa + falla}`);
   srv.close(); process.exit(falla ? 1 : 0);
 });
