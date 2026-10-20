@@ -1173,6 +1173,9 @@ app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (!PLANEA_SITE_HOSTS.includes(host)) return next();
   const p = req.path;
+  // Enlaces viejos del sitio en Vercel (/docs, /images, /videos): los archivos ahora son locales.
+  const viejo = /^\/(docs|images|videos)\/([a-z0-9_.-]+)$/i.exec(p);
+  if (viejo) { req.url = '/planea/portal/landing/' + (viejo[1] === 'docs' ? 'docs/' : '') + viejo[2]; return next(); }
   if (p.startsWith('/api') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
   const q = req.url.slice(p.length);
   // Cualquier ruta de la app que alguien tenga guardada sigue funcionando: se va a planea.ai
@@ -1180,8 +1183,7 @@ app.use((req, res, next) => {
     return res.redirect(301, PLANEA_APP_ORIGIN + req.url.replace(/^\/planea/, ''));
   }
   // El landing de marketing es main.html (el mismo que hoy sirve planea.vip/main),
-  // NO la portada del portal (inicio.html). OJO: main.html todavía trae CSS, video
-  // e imágenes desde www.planea.co (Vercel) — hay que localizarlos antes de apagarlo.
+  // NO la portada del portal (inicio.html). Sus archivos son locales (/planea/portal/landing/).
   if (p === '/' || p === '' || p === '/index.html') req.url = '/planea/main' + q;
   else req.url = '/planea/portal' + req.url;
   next();

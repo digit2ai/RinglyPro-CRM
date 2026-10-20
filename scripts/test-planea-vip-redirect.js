@@ -34,9 +34,18 @@ srv.listen(0, async () => {
   ok('sin la variable, el valor por defecto ya es planea.ai', r.s === 301 && r.loc === 'https://planea.ai/score', r.loc);
   r = await pedir('/login', 'planea.ai');
   ok('planea.ai sirve la app (login)', r.s === 200 && /Planea/.test(r.b), r.s);
-  for (const p of ['/planea/main', '/main', '/planea/portal/main.html']) {
-    r = await pedir(p, 'planea.ai');
-    ok('planea.ai' + p + ' va a la landing de planea.co', r.s === 301 && r.loc === 'https://www.planea.co/', r.s + ' ' + r.loc);
+  r = await pedir('/planea/main', 'planea.ai');
+  ok('/planea/main muestra la landing', r.s === 200 && /Entiende tu dinero/.test(r.b), r.s);
+  ok('la landing ya no carga nada de Vercel (www.planea.co)', !/www\.planea\.co/.test(r.b) && /\/planea\/portal\/landing\/landing\.css/.test(r.b));
+  for (const h of ['planea.co', 'www.planea.co']) {
+    r = await pedir('/', h);
+    ok(h + ' muestra la landing en la raíz', r.s === 200 && /Entiende tu dinero/.test(r.b), r.s);
+  }
+  r = await pedir('/login', 'planea.co');
+  ok('planea.co/login lleva a la app en planea.ai', r.s === 301 && r.loc === 'https://planea.ai/login', r.loc);
+  for (const p of ['/planea/portal/landing/landing.css', '/planea/portal/landing/contact.js', '/planea/portal/landing/figure1.jpeg', '/docs/terminos-y-condiciones.pdf', '/docs/politica-de-privacidad.pdf', '/images/og-image.jpeg', '/videos/planea_bg_1024_576.mp4']) {
+    r = await pedir(p, 'planea.co');
+    ok('planea.co' + p + ' responde', r.s === 200, r.s);
   }
   console.log(`PLANEA VIP REDIRECT: ${pasa}/${pasa + falla}`);
   srv.close(); process.exit(falla ? 1 : 0);

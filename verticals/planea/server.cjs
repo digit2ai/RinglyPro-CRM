@@ -617,10 +617,9 @@ if (hasPortal) {
   router.get('/forgot', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'forgot.html')); });
   router.get('/reset', (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'reset.html')); });
   router.get(['/verificar', '/verify'], (req, res) => { noCache(res); res.sendFile(path.join(portalDir, 'verificar.html')); });
-  // La landing de marketing vive en planea.co (Vercel). La copia que servíamos en /main
-  // (main.html) ya no se muestra: redirige allá, para que haya una sola landing (2026-10-20).
-  const LANDING = String(process.env.PLANEA_LANDING_URL || 'https://www.planea.co/');
-  router.get(['/main', '/main/', '/portal/main', '/portal/main.html'], (req, res) => res.redirect(301, LANDING));
+  // La landing de marketing (main.html): es la portada de planea.co y también se ve en /main.
+  // Sus archivos viven en /planea/portal/landing/ — ya no depende del sitio viejo en Vercel.
+  router.get(['/main', '/main/'], (req, res) => { res.sendFile(path.join(portalDir, 'main.html')); });
   // Public UAT checklist (planea.vip/uat) — results saved to Postgres.
   if (fs.existsSync(path.join(portalDir, 'uat.html'))) {
     router.get(['/uat', '/uat/'], (req, res) => { res.sendFile(path.join(portalDir, 'uat.html')); });
