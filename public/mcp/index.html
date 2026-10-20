@@ -22,6 +22,7 @@
 html{scroll-behavior:smooth}
 body{color:var(--txt);font-family:var(--font-body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
 html[lang="es"] .en,html[lang="en"] .es{display:none!important}
+[hidden]{display:none!important}
 a{color:var(--accent)}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
 h1,h2,h3{font-family:var(--font-display);line-height:1.15;letter-spacing:-.01em}
@@ -105,6 +106,15 @@ td.lo{color:var(--mut)}
 .buy{margin-top:28px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .btn.big{min-height:56px;padding:0 30px;font-size:17px;cursor:pointer}
 .btn[disabled]{opacity:.6;cursor:wait}
+.lead{display:none;width:100%;max-width:820px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin-top:8px}
+.lead.open{display:block}
+.fg{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-bottom:16px}
+.fg label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.fg .full{grid-column:1/-1}
+.fg input,.fg select,.fg textarea{font:16px var(--font-body);color:var(--txt);background:#0b1222;border:1px solid var(--line);border-radius:10px;padding:11px 12px;min-height:46px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.fg .bad{border-color:#f87171}
+@media(max-width:640px){.fg{grid-template-columns:1fr}}
 .paymsg{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:15px;max-width:640px}
 .paymsg.ok{border-color:#34d399;color:#d1fae5}
 .paymsg.bad{border-color:#f87171;color:#fee2e2}
@@ -353,7 +363,25 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     </div>
     <div class="buy">
       <div id="payMsg" class="paymsg" role="status" hidden></div>
-      <button type="button" class="btn pri big" id="payBtn"><span class="es">Contratar ahora · $700 + $397/mes</span><span class="en">Subscribe now · $700 + $397/month</span></button>
+      <button type="button" class="btn pri big" id="openForm"><span class="es">Contratar ahora · $700 + $397/mes</span><span class="en">Subscribe now · $700 + $397/month</span></button>
+      <form id="leadForm" class="lead" novalidate>
+        <h3><span class="es">Cuéntenos de su empresa</span><span class="en">Tell us about your company</span></h3>
+        <p class="fine" style="margin:0 0 14px"><span class="es">Con estos datos preparamos su instancia. Al enviar, pasa al pago seguro con Stripe.</span><span class="en">We use this to prepare your instance. After sending, you go to secure payment with Stripe.</span></p>
+        <div class="fg">
+          <label><span class="es">Nombre completo *</span><span class="en">Full name *</span><input name="full_name" required maxlength="120" autocomplete="name"></label>
+          <label><span class="es">Correo *</span><span class="en">Email *</span><input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+          <label><span class="es">Teléfono / WhatsApp *</span><span class="en">Phone / WhatsApp *</span><input name="phone" type="tel" required maxlength="40" autocomplete="tel"></label>
+          <label><span class="es">Empresa *</span><span class="en">Company *</span><input name="company_name" required maxlength="120" autocomplete="organization"></label>
+          <label><span class="es">Sitio web</span><span class="en">Website</span><input name="company_website" maxlength="200" autocomplete="url"></label>
+          <label><span class="es">País</span><span class="en">Country</span><input name="country" maxlength="80" autocomplete="country-name"></label>
+          <label><span class="es">Industria</span><span class="en">Industry</span><input name="industry" maxlength="120"></label>
+          <label><span class="es">¿Cuándo quiere empezar?</span><span class="en">When do you want to start?</span>
+            <select name="timeline"><option value="">—</option><option value="Inmediato / ASAP">Inmediato · ASAP</option><option value="Este mes">Este mes · This month</option><option value="1-3 meses">1-3 meses · months</option><option value="Explorando">Explorando · Exploring</option></select></label>
+          <label class="full"><span class="es">¿Qué quiere lograr con la IA? *</span><span class="en">What do you want to achieve with AI? *</span><textarea name="problem" required maxlength="4000" rows="4"></textarea></label>
+          <label class="full"><span class="es">¿Qué sistemas usa hoy? (CRM, ERP, correo...)</span><span class="en">What systems do you use today? (CRM, ERP, email...)</span><input name="existing_stack" maxlength="500"></label>
+        </div>
+        <button type="submit" class="btn pri big" id="payBtn"><span class="es">Continuar al pago · $700 + $397/mes</span><span class="en">Continue to payment · $700 + $397/month</span></button>
+      </form>
       <p class="fine"><span class="es">Hoy se cobran $1,097 USD: la configuración ($700) y el primer mes ($397). Luego $397 cada mes en la misma fecha. Pago seguro con Stripe; puede cancelar la suscripción cuando quiera.</span><span class="en">Today you are charged $1,097 USD: setup ($700) and the first month ($397). Then $397 every month on the same date. Secure payment with Stripe; you can cancel the subscription anytime.</span></p>
     </div>
     <p class="fine"><span class="es">Un consumo de tokens por encima del estándar se cotiza aparte.</span><span class="en">Token usage above the standard is quoted separately.</span></p>
@@ -409,19 +437,42 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   var btn=document.getElementById('payBtn'), msg=document.getElementById('payMsg');
   function L(){ return document.documentElement.lang==='en'?'en':'es'; }
   function show(kind, es, en){ msg.hidden=false; msg.className='paymsg '+kind; msg.textContent = L()==='en'?en:es; }
-  btn.addEventListener('click', function(){
-    btn.disabled=true;
-    fetch('/api/mcp-checkout/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:L()})})
+  var form=document.getElementById('leadForm'), open=document.getElementById('openForm');
+  open.addEventListener('click', function(){ form.classList.add('open'); open.hidden=true; var i=form.querySelector('input'); if(i) i.focus(); });
+  function fail(e){
+    btn.disabled=false;
+    if(String(e&&e.message)==='payments_not_configured') show('bad','Recibimos sus datos. Los pagos en línea aún no están activos: le enviaremos el enlace de pago.','We received your details. Online payments are not active yet: we will send you the payment link.');
+    else show('bad','No se pudo continuar. Intente de nuevo en un momento.','Could not continue. Please try again in a moment.');
+  }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var d={}; new FormData(form).forEach(function(v,k){ d[k]=String(v).trim(); });
+    var missing=false;
+    ['full_name','email','phone','company_name','problem'].forEach(function(k){ var el=form.elements[k]; var bad=!d[k]||(k==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d[k])); el.classList.toggle('bad',bad); if(bad) missing=true; });
+    if(missing){ show('bad','Complete los campos marcados con *.','Please complete the fields marked with *.'); return; }
+    btn.disabled=true; show('', 'Guardando sus datos...', 'Saving your details...');
+    var payload={
+      full_name:d.full_name, email:d.email, phone:d.phone, company_name:d.company_name,
+      company_website:d.company_website, country:d.country, industry:d.industry, timeline:d.timeline,
+      existing_stack:d.existing_stack, problem:d.problem,
+      project_title:'Digit2AI MCP Neural - '+d.company_name,
+      project_description:'Solicitud de contratación de Digit2AI MCP Neural ($700 configuración + $397/mes) desde digit2ai.com/MCP.\n\n'+d.problem,
+      ai_category:['MCP Neural'], heard_from:'digit2ai.com/MCP',
+      utm_source:'mcp-landing', utm_campaign:'mcp-neural-subscription', referrer_url:document.referrer||''
+    };
+    fetch('/projects/api/v1/intake/public/request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(x){
+        if(!x.ok||!x.j.success) throw new Error('lead_failed');
+        show('', 'Abriendo el pago seguro...', 'Opening secure payment...');
+        return fetch('/api/mcp-checkout/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lang:L(),project_id:x.j.project_id,email:d.email})})
+          .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); });
+      })
       .then(function(x){
         if(!x.ok||!x.j.url) throw new Error(x.j&&x.j.error||'error');
         try { window.top.location.href = x.j.url; } catch(e) { window.open(x.j.url,'_blank'); }
       })
-      .catch(function(e){
-        btn.disabled=false;
-        if(String(e.message)==='payments_not_configured') show('bad','Los pagos en línea aún no están activos. Escríbanos y le enviamos el enlace de pago.','Online payments are not active yet. Contact us and we will send you the payment link.');
-        else show('bad','No se pudo abrir el pago. Intente de nuevo en un momento.','The payment could not be opened. Please try again in a moment.');
-      });
+      .catch(fail);
   });
   var q=new URLSearchParams(location.search);
   if(q.get('pago')==='cancelado') show('bad','El pago fue cancelado. No se realizó ningún cobro.','The payment was cancelled. You were not charged.');

@@ -54,7 +54,12 @@ router.post('/session', express.json({ limit: '2kb' }), async (req, res) => {
     if (limited(ip)) return res.status(429).json({ error: 'too_many_requests' });
     const s = stripe();
     if (!s) return res.status(503).json({ error: 'payments_not_configured' });
-    const lang = req.body && req.body.lang === 'en' ? 'en' : 'es';
+    const b = req.body || {};
+    const lang = b.lang === 'en' ? 'en' : 'es';
+    // References only: the lead this payment belongs to (Projects inbox id) and the
+    // email to prefill. Neither can change the amount.
+    const projectId = /^[0-9]{1,10}$/.test(String(b.project_id || '')) ? String(b.project_id) : null;
+    const email = /^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,20}$/.test(String(b.email || '').trim()) ? String(b.email).trim() : undefined;
 
     const session = await s.checkout.sessions.create({
       mode: 'subscription',
@@ -85,10 +90,12 @@ router.post('/session', express.json({ limit: '2kb' }), async (req, res) => {
           }
         }
       ],
+      customer_email: email,
+      client_reference_id: projectId ? 'd2_project_' + projectId : undefined,
       billing_address_collection: 'required',
       phone_number_collection: { enabled: true },
-      subscription_data: { metadata: { product: 'digit2ai_mcp_neural' } },
-      metadata: { product: 'digit2ai_mcp_neural' },
+      subscription_data: { metadata: { product: 'digit2ai_mcp_neural', d2_project_id: projectId || '' } },
+      metadata: { product: 'digit2ai_mcp_neural', d2_project_id: projectId || '' },
       success_url: `${RETURN_BASE}?pago=ok&session_id={CHECKOUT_SESSION_ID}#precio`,
       cancel_url: `${RETURN_BASE}?pago=cancelado#precio`
     });
