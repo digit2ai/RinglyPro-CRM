@@ -87,10 +87,10 @@ function message(n, table) {
 async function sendEmail(to, msg) {
   const key = process.env.SENDGRID_API_KEY;
   if (!key) return { ok: false, detail: 'sin SENDGRID_API_KEY' };
-  const from = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+  const from = process.env.PLANEA_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
   try {
     const sg = require('@sendgrid/mail'); sg.setApiKey(key);
-    await sg.send({ to, from: { email: from, name: 'Planea' }, subject: msg.subject, text: msg.text, html: msg.html,
+    await sg.send({ to, from: { email: from, name: process.env.PLANEA_FROM_NAME || 'Planea' }, subject: msg.subject, text: msg.text, html: msg.html,
       headers: { 'List-Unsubscribe': '<' + msg.unsubscribe + '>' } });
     return { ok: true };
   } catch (e) { return { ok: false, detail: String(e.message || e).slice(0, 200) }; }

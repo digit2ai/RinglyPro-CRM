@@ -835,6 +835,7 @@ function ok(cond, name) { if (cond) { pass++; } else { fail++; fails.push(name);
       backend._setMailer(null);
       const bS = fs.readFileSync(path.join(__dirname, 'backend.cjs'), 'utf8');
       ok(/email_verified_at: \{ type: DataTypes\.DATE/.test(bS) && /ADD COLUMN IF NOT EXISTS ' \+ col/.test(bS) && /email_verified_at TIMESTAMPTZ/.test(bS), 'las columnas nuevas están en el ALTER y en el modelo');
+      ok(/function planeaFrom\(\)[\s\S]{0,260}name: process\.env\.PLANEA_FROM_NAME \|\| 'Planea'/.test(bS) && (bS.match(/const from = planeaFrom\(\)/g) || []).length === 2, 'los correos de confirmación y de contraseña salen con el nombre «Planea»');
       ok(/SET email_verified_at = created_at WHERE email_verified_at IS NULL AND verify_code_hash IS NULL/.test(bS), 'las cuentas anteriores quedan confirmadas, nunca una que recibió código');
       const vS = fs.readFileSync(path.join(__dirname, 'portal', 'verificar.html'), 'utf8'), sS = fs.readFileSync(path.join(__dirname, 'portal', 'signup.html'), 'utf8');
       ok(/addEventListener\('click'[\s\S]{0,200}post\('verify',\{token:token\}\)/.test(vS) && !/Sin confirmación por correo/.test(sS) && /verificar\?email=/.test(sS), 'el enlace confirma solo con el botón (no al abrirse) y Crear cuenta ya no dice «sin confirmación»');

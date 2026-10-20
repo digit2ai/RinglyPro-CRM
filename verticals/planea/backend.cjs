@@ -49,6 +49,12 @@ const VERIFY_MAX_TRIES = 5;
 const VERIFY_RESEND_SECONDS = 60;
 // Las pruebas inyectan un transporte falso: el SIT nunca envía correos reales.
 let mailer = null;
+// Remitente de los correos de Planea: el NOMBRE que ve la persona es «Planea», no la
+// cuenta del ecosistema. La dirección debe ser un remitente verificado en SendGrid;
+// PLANEA_FROM_EMAIL permite usar una de Planea cuando su dominio esté verificado.
+function planeaFrom() {
+  return { email: process.env.PLANEA_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com', name: process.env.PLANEA_FROM_NAME || 'Planea' };
+}
 
 // ── DB (own instance, CRM Postgres) ─────────────────────────────────────────
 const databaseUrl = process.env.CRM_DATABASE_URL || process.env.DATABASE_URL;
@@ -448,7 +454,7 @@ function build() {
   async function sendVerifyEmail(email, code, link) {
     if (mailer) return mailer({ kind: 'verify', to: email, code, link });
     const key = process.env.SENDGRID_API_KEY;
-    const from = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    const from = planeaFrom();
     if (!key) return false;
     try {
       const sg = require('@sendgrid/mail'); sg.setApiKey(key);
@@ -655,7 +661,7 @@ function build() {
     // Mismo patrón que el resto del ecosistema: si no hay SENDGRID_FROM_EMAIL,
     // usa el remitente verificado que ya usan los demás flujos.
     const key = process.env.SENDGRID_API_KEY;
-    const from = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
+    const from = planeaFrom();
     if (!key) return false;
     try {
       const sg = require('@sendgrid/mail'); sg.setApiKey(key);
