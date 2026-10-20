@@ -980,6 +980,9 @@ body.tw-on .tw-side{display:flex}
       }).catch(function(){ statusEl.textContent=T.net; confirmBtn.disabled=false; confirmBtn.textContent=T.confirm; });
   };
   if(btn) btn.addEventListener('click', open);
+  // The plan's own CTA opens the calendar directly: on a "Build complete"
+  // teaser the bottom card shows the workspace link and #ts-book-btn does not exist.
+  window.__tsOpenBooking = open;
   var closers = modal.querySelectorAll('[data-close]');
   for(var i=0;i<closers.length;i++) closers[i].addEventListener('click', close);
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.style.display==='flex') close(); });
@@ -1139,9 +1142,10 @@ body.tw-on .tw-side{display:flex}
       var cb = document.getElementById('d2plan-cta-btn');
       if(!cb) return;
       cb.onclick = function(){
-        var bk = document.getElementById('ts-book-btn');
+        if(typeof window.__tsOpenBooking === 'function'){ window.__tsOpenBooking(); return; }
         var cta = document.getElementById('cta');
         if(cta) cta.scrollIntoView({behavior:'smooth',block:'center'});
+        var bk = document.getElementById('ts-book-btn');
         if(bk) setTimeout(function(){ bk.click(); }, 420);
       };
     })();
