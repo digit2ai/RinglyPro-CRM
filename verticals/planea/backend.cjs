@@ -470,7 +470,7 @@ function build() {
     user.verify_attempts = 0;
     user.verify_sent_at = new Date();
     await user.save();
-    const base = String(process.env.PLANEA_PUBLIC_URL || 'https://planea.vip').replace(/\/+$/, '');
+    const base = String(process.env.PLANEA_PUBLIC_URL || 'https://planea.ai').replace(/\/+$/, '');
     const link = base + '/planea/verificar?t=' + token;
     const sent = await sendVerifyEmail(user.email, code, link);
     // Solo fuera de producción el enlace vuelve a quien lo pidió (igual que el reset).
@@ -681,7 +681,7 @@ function build() {
         user.reset_token = sec.hashToken(token); user.reset_expires = new Date(Date.now() + 3600000); await user.save();
         audit(req, 'password_reset_request', 'issued', { user_id: user.id, email: email });
         // Base fija: un Host/X-Forwarded-Host falso no puede mandar el token a otro dominio.
-        const base = String(process.env.PLANEA_PUBLIC_URL || 'https://planea.vip').replace(/\/+$/, '');
+        const base = String(process.env.PLANEA_PUBLIC_URL || 'https://planea.ai').replace(/\/+$/, '');
         const link = base + '/planea/reset?token=' + token;
         const sent = await sendResetEmail(email, link);
         // Solo fuera de producción: en producción el enlace nunca vuelve a quien lo pidió,

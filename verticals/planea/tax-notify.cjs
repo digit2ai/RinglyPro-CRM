@@ -23,7 +23,7 @@ const TICK_MS = 60 * 60 * 1000;
 const SEND_HOUR = 8;
 const tenant = () => Number(process.env.PLANEA_TENANT_ID) || 1;
 const offsets = () => String(process.env.PLANEA_TAX_EMAIL_DAYS || '30,7,1').split(',').map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 120);
-const PUBLIC_URL = () => String(process.env.PLANEA_PUBLIC_URL || 'https://planea.vip').replace(/\/+$/, '');
+const PUBLIC_URL = () => String(process.env.PLANEA_PUBLIC_URL || 'https://planea.ai').replace(/\/+$/, '');
 
 function enabled() {
   const v = String(process.env.PLANEA_TAX_EMAILS || '').toLowerCase();

@@ -1114,11 +1114,11 @@ function planeaGateHtml(nextUrl, err) {
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase();
   if (host === 'planea.vip' || host === 'www.planea.vip') {
-    // planea.vip -> planea.ai. Apagado hasta que planea.ai responda en Render: se enciende
-    // poniendo PLANEA_VIP_REDIRECT=https://planea.ai en Render (sin deploy). Solo GET/HEAD:
+    // planea.vip -> planea.ai (encendido 2026-10-20, cuando planea.ai quedó verificado en
+    // Render). PLANEA_VIP_REDIRECT=off lo apaga sin deploy; otro https://host lo cambia. Solo GET/HEAD:
     // un POST redirigido llega como GET y perdería el cuerpo, así que una página vieja que
     // envía un formulario sigue funcionando en planea.vip.
-    const to = String(process.env.PLANEA_VIP_REDIRECT || '').replace(/\/+$/, '');
+    const to = String(process.env.PLANEA_VIP_REDIRECT || 'https://planea.ai').replace(/\/+$/, '');
     if (/^https:\/\/[a-z0-9.-]+$/i.test(to) && (req.method === 'GET' || req.method === 'HEAD')) {
       return res.redirect(301, to + req.originalUrl);
     }

@@ -187,7 +187,7 @@
     '<div class="psim-now" id="psim-now"></div>' +
     '<button class="psim-nav" id="psim-next" aria-label="Siguiente">›</button></div>' +
     '<div class="psim-dots" id="psim-dots"></div>' +
-    '<a class="psim-cta" href="https://planea.vip/planea/signup">Crear mi cuenta gratis →</a>';
+    '<a class="psim-cta" href="https://planea.ai/planea/signup">Crear mi cuenta gratis →</a>';
 
   var i = 0, timer = null;
   function render() {
