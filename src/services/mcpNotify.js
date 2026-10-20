@@ -142,7 +142,8 @@ async function bookingConfirmed(booking) {
 
   // 2) Client text from the A2P number
   const to = e164us(b.phone);
-  if (!b.phone) out.sms = 'skipped: no phone';
+  if (String(process.env.MCP_SMS || 'off').toLowerCase() !== 'on') out.sms = 'skipped: MCP_SMS off';
+  else if (!b.phone) out.sms = 'skipped: no phone';
   else if (!to) out.sms = 'skipped: not a US/Canada number';
   else {
     try {

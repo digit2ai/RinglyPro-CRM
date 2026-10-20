@@ -516,8 +516,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     function booked(iso){
       panel.hidden=true;
       var d=new Date(iso);
-      show('ok',(testMode?'Reunión confirmada (modo prueba, sin pago): ':'Pago recibido y reunión confirmada: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le enviamos la confirmación por correo y por texto, y le haremos llegar el enlace de la reunión.',
-               (testMode?'Meeting confirmed (test mode, no payment): ':'Payment received and meeting confirmed: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We sent the confirmation by email and text, and will send you the meeting link.');
+      show('ok',(testMode?'Reunión confirmada (modo prueba, sin pago): ':'Pago recibido y reunión confirmada: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le enviamos la confirmación por correo y le haremos llegar el enlace de la reunión.',
+               (testMode?'Meeting confirmed (test mode, no payment): ':'Payment received and meeting confirmed: ')+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We sent the confirmation by email and will send you the meeting link.');
     }
     function load(){
       return fetch('/api/mcp-checkout/slots?session_id='+encodeURIComponent(sid)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); }).then(function(x){
