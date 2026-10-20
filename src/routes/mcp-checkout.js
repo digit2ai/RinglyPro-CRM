@@ -26,10 +26,10 @@ const SETUP_USD = Number(process.env.MCP_SETUP_FEE_USD || 700);
 const MONTHLY_USD = Number(process.env.MCP_MONTHLY_USD || 397);
 const RETURN_BASE = (process.env.MCP_PUBLIC_URL || 'https://aiagent.ringlypro.com/mcp/').replace(/\/?$/, '/');
 
-// PAYMENTS ARE OFF UNTIL MCP_PAYMENTS=on (owner 2026-10-20: test the workflow first).
+// PAYMENTS ARE ON (owner re-enabled 2026-10-20). MCP_PAYMENTS=off returns to test mode.
 // Off: the form leads straight to the meeting picker, authorised by a signed test token
 // bound to a lead created moments earlier from this page, instead of a paid Stripe session.
-const PAYMENTS_ON = () => String(process.env.MCP_PAYMENTS || 'off').toLowerCase() === 'on';
+const PAYMENTS_ON = () => String(process.env.MCP_PAYMENTS || 'on').toLowerCase() === 'on';
 const crypto = require('crypto');
 const TOKEN_SECRET = () => process.env.MCP_TOKEN_SECRET || process.env.JWT_SECRET || '';
 const sign = pid => crypto.createHmac('sha256', TOKEN_SECRET()).update('mcp-test:' + pid).digest('hex').slice(0, 32);
