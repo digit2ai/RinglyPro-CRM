@@ -239,10 +239,42 @@ async function freeSlots(t) {
         AND COALESCE(end_time, start_time + INTERVAL '30 minutes') > :lo`,
     { replacements: { lo: cands[0].toISOString(), hi: new Date(cands[cands.length - 1].getTime() + BOOK_MIN * 60000).toISOString() },
       type: require('sequelize').QueryTypes.SELECT, transaction: t, logging: false });
+  // The owner's Google Calendar too, as Lina does (fail-open: a Google hiccup never blocks).
+  let gBusy = [];
+  try {
+    gBusy = await require('../services/googleCalendarService').getFreeBusy(
+      15, cands[0], new Date(cands[cands.length - 1].getTime() + BOOK_MIN * 60000));
+  } catch (e) { /* calendar events only */ }
   return cands.filter(s => {
     const a = s.getTime(), b = a + BOOK_MIN * 60000;
-    return !busy.some(e => new Date(e.start_time).getTime() < b && new Date(e.end_time).getTime() > a);
+    if (busy.some(e => new Date(e.start_time).getTime() < b && new Date(e.end_time).getTime() > a)) return false;
+    return !(gBusy || []).some(g => new Date(g.start).getTime() < b && new Date(g.end).getTime() > a);
   });
+}
+
+// Three days, three random free times each. Seeded by the session id, so a reload
+// shows the same choices instead of reshuffling them under the client's cursor.
+function threeByThree(slots, seed) {
+  let h = 2166136261;
+  for (const c of String(seed)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return h / 4294967296; };
+  const byDay = new Map();
+  for (const d of slots) {
+    const k = new Intl.DateTimeFormat('en-CA', { timeZone: BOOK_TZ }).format(d);
+    if (!byDay.has(k)) byDay.set(k, []);
+    byDay.get(k).push(d);
+  }
+  const out = [];
+  for (const [day, list] of byDay) {
+    if (out.length === 3) break;
+    if (list.length < 3) continue; // a day offers three real choices or is skipped
+    const pool = list.slice();
+    const pick = [];
+    while (pick.length < 3 && pool.length) pick.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    pick.sort((a, b) => a - b);
+    out.push({ day, slots: pick.map(d => d.toISOString()) });
+  }
+  return out;
 }
 
 const STATUS = { 400: 'bad_session', 402: 'not_paid', 404: 'not_found', 503: 'payments_not_configured' };
@@ -255,7 +287,7 @@ router.get('/slots', async (req, res) => {
     const booking = await existingBooking(id);
     if (booking) return res.json({ test: !!p.test, booking: { start: new Date(booking.start_time).toISOString() }, slots: [], minutes: BOOK_MIN });
     const slots = await freeSlots();
-    res.json({ test: !!p.test, booking: null, slots: slots.map(d => d.toISOString()), minutes: BOOK_MIN, timezone: BOOK_TZ });
+    res.json({ test: !!p.test, booking: null, options: threeByThree(slots, id), minutes: BOOK_MIN, timezone: BOOK_TZ });
   } catch (err) {
     console.error('[mcp-checkout] slots error:', err && err.message);
     res.status(500).json({ error: 'slots_failed' });

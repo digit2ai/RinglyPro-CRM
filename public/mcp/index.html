@@ -110,7 +110,7 @@ td.lo{color:var(--mut)}
 .pc li{margin-bottom:6px}
 .buy{margin-top:28px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .btn.big{min-height:56px;padding:0 30px;font-size:17px;cursor:pointer}
-.btn[disabled]{opacity:.6;cursor:wait}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
 .lead{display:none;width:100%;max-width:820px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;margin-top:8px}
 .lead.open{display:block}
 #leadForm{scroll-margin-top:84px}
@@ -122,6 +122,10 @@ td.lo{color:var(--mut)}
 .fg .bad{border-color:#f87171}
 @media(max-width:640px){.fg{grid-template-columns:1fr}}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.daygrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:12px}
+.daycard{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:#0b1222}
+.dayname{font-weight:700;margin-bottom:2px}
+.dayname::first-letter{text-transform:uppercase}
 .chip{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#0b1222;color:var(--txt);font:600 14px var(--font-body);cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -388,8 +392,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <div id="bookPanel" class="lead open" hidden>
         <h3><span class="es">Elija el día y la hora de su reunión de configuración</span><span class="en">Pick the day and time of your setup meeting</span></h3>
         <p class="fine" style="margin:0 0 14px"><span class="es">Reunión de 60 minutos con nuestro equipo para conectar el MCP a sus sistemas. Los horarios se muestran en su hora local.</span><span class="en">A 60-minute meeting with our team to connect MCP to your systems. Times are shown in your local time.</span></p>
-        <div id="bookDays" class="chips"></div>
-        <div id="bookTimes" class="chips"></div>
+        <div id="bookDays" class="daygrid"></div>
+        <p id="bookHint" class="fine" style="margin:0 0 12px"><span class="es">Toque una hora para elegirla.</span><span class="en">Tap a time to choose it.</span></p>
         <button type="button" class="btn pri big" id="bookBtn" disabled><span class="es">Confirmar reunión</span><span class="en">Confirm meeting</span></button>
       </div>
       <form id="leadForm" class="lead open" novalidate>
@@ -503,7 +507,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   });
   var q=new URLSearchParams(location.search);
   if(q.get('pago')==='ok' && q.get('session_id')){
-    var sid=q.get('session_id'), panel=document.getElementById('bookPanel'), days=document.getElementById('bookDays'), times=document.getElementById('bookTimes'), bbtn=document.getElementById('bookBtn'), picked=null, testMode=/^mt_/.test(sid);
+    var sid=q.get('session_id'), panel=document.getElementById('bookPanel'), days=document.getElementById('bookDays'), hint=document.getElementById('bookHint'), bbtn=document.getElementById('bookBtn'), picked=null, testMode=/^mt_/.test(sid);
     form.hidden=true;
     var pr=document.getElementById('precio'); if(pr) pr.scrollIntoView();
     show('', testMode?'Cargando horarios...':'Confirmando su pago...', testMode?'Loading times...':'Confirming your payment...');
@@ -519,26 +523,19 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
         if(!x.ok) throw new Error(x.j&&x.j.error||'error');
         if(x.j.booking) return booked(x.j.booking.start);
         if(testMode) show('ok','Datos recibidos (modo prueba, sin pago). Ahora elija la fecha de su reunión de configuración.','Details received (test mode, no payment). Now pick the date of your setup meeting.'); else show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural. Ahora elija la fecha de su reunión de configuración.','Payment received. Welcome to Digit2AI MCP Neural. Now pick the date of your setup meeting.');
-        panel.hidden=false; days.innerHTML=''; times.innerHTML=''; picked=null; bbtn.disabled=true;
-        var byDay={};
-        x.j.slots.forEach(function(iso){ var d=new Date(iso); var k=d.toDateString(); (byDay[k]=byDay[k]||[]).push(d); });
-        var keys=Object.keys(byDay);
-        if(!keys.length){ days.textContent = L()==='en'?'No times available right now. We will contact you to schedule.':'No hay horarios disponibles ahora. Le contactaremos para agendar.'; return; }
-        keys.forEach(function(k,i){
-          var b=document.createElement('button'); b.type='button'; b.className='chip'; b.setAttribute('aria-pressed','false');
-          b.textContent=fmt(byDay[k][0],{weekday:'short',day:'numeric',month:'short'});
-          b.addEventListener('click',function(){
-            days.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); }); b.setAttribute('aria-pressed','true');
-            times.innerHTML=''; picked=null; bbtn.disabled=true;
-            byDay[k].forEach(function(d){
-              var t=document.createElement('button'); t.type='button'; t.className='chip'; t.setAttribute('aria-pressed','false');
-              t.textContent=fmt(d,{hour:'2-digit',minute:'2-digit'});
-              t.addEventListener('click',function(){ times.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); }); t.setAttribute('aria-pressed','true'); picked=d.toISOString(); bbtn.disabled=false; });
-              times.appendChild(t);
-            });
+        panel.hidden=false; days.innerHTML=''; picked=null; bbtn.disabled=true; hint.hidden=false;
+        var opts=x.j.options||[];
+        if(!opts.length){ days.textContent = L()==='en'?'No times available right now. We will contact you to schedule.':'No hay horarios disponibles ahora. Le contactaremos para agendar.'; return; }
+        opts.forEach(function(o){
+          var card=document.createElement('div'); card.className='daycard';
+          var h=document.createElement('div'); h.className='dayname'; h.textContent=fmt(new Date(o.slots[0]),{weekday:'long',day:'numeric',month:'long'}); card.appendChild(h);
+          o.slots.forEach(function(iso){
+            var d=new Date(iso), t=document.createElement('button'); t.type='button'; t.className='chip'; t.setAttribute('aria-pressed','false');
+            t.textContent=fmt(d,{hour:'numeric',minute:'2-digit',hourCycle:'h12'});
+            t.addEventListener('click',function(){ days.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); }); t.setAttribute('aria-pressed','true'); picked=iso; bbtn.disabled=false; hint.hidden=true; });
+            card.appendChild(t);
           });
-          days.appendChild(b);
-          if(i===0) b.click();
+          days.appendChild(card);
         });
       });
     }
