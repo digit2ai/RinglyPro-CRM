@@ -55,10 +55,15 @@ section:nth-of-type(even){background:var(--bg2)}
 .hlogo{display:block;width:min(340px,80%);height:auto;border-radius:14px;margin-bottom:24px;border:1px solid var(--line)}
 .hero h1{margin-bottom:18px;max-width:900px}
 .hero .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.usb{display:flex;align-items:center;gap:14px;margin-top:36px;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);max-width:640px}
-.usb svg{flex:0 0 auto}
-.usb p{color:var(--mut);font-size:15px}
-.usb strong{color:var(--txt)}
+.usb{margin-top:40px;padding:26px;border:1px solid rgba(34,211,238,.35);border-radius:18px;background:linear-gradient(180deg,rgba(34,211,238,.07),rgba(139,92,246,.05)),var(--panel);max-width:900px}
+.usb-head{display:flex;gap:18px;align-items:flex-start}
+.usb-head svg{flex:0 0 auto}
+.usb h3{font-size:clamp(20px,2.2vw,26px);margin-bottom:8px}
+.usb p{color:var(--mut);font-size:16px}
+.usb-ben{list-style:none;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin:22px 0}
+.usb-ben li{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--mut);font-size:15px}
+.usb-ben b{display:block;color:var(--txt);font-size:15.5px;margin-bottom:2px}
+@media(max-width:640px){.usb-head{flex-direction:column}}
 
 /* cards */
 .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:28px}
@@ -116,6 +121,10 @@ td.lo{color:var(--mut)}
 .fg input:focus,.fg select:focus,.fg textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
 .fg .bad{border-color:#f87171}
 @media(max-width:640px){.fg{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#0b1222;color:var(--txt);font:600 14px var(--font-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .paymsg{padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:15px;max-width:640px}
 .paymsg.ok{border-color:#34d399;color:#d1fae5}
 .paymsg.bad{border-color:#f87171;color:#fee2e2}
@@ -171,9 +180,21 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
       <a class="btn" href="#como"><span class="es">Cómo funciona</span><span class="en">How it works</span></a>
     </div>
     <div class="usb">
-      <svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><rect x="14" y="4" width="26" height="16" rx="3" fill="none" stroke="#22d3ee" stroke-width="2"/><rect x="20" y="9" width="5" height="5" fill="#22d3ee"/><rect x="29" y="9" width="5" height="5" fill="#22d3ee"/><rect x="9" y="20" width="36" height="30" rx="7" fill="rgba(34,211,238,.14)" stroke="#22d3ee" stroke-width="2"/><circle cx="27" cy="35" r="6" fill="none" stroke="#8b5cf6" stroke-width="2"/></svg>
-      <p class="es"><strong>Como un USB para empresas.</strong> Se conecta a lo que usted ya tiene y lo convierte en una empresa inteligente. No reemplaza nada y no se queda con nada suyo.</p>
-      <p class="en"><strong>Like a USB drive for companies.</strong> It plugs into what you already have and turns it into an intelligent company. It replaces nothing and owns nothing of yours.</p>
+      <div class="usb-head">
+        <svg width="64" height="64" viewBox="0 0 54 54" aria-hidden="true"><rect x="14" y="4" width="26" height="16" rx="3" fill="none" stroke="#22d3ee" stroke-width="2"/><rect x="20" y="9" width="5" height="5" fill="#22d3ee"/><rect x="29" y="9" width="5" height="5" fill="#22d3ee"/><rect x="9" y="20" width="36" height="30" rx="7" fill="rgba(34,211,238,.14)" stroke="#22d3ee" stroke-width="2"/><circle cx="27" cy="35" r="6" fill="none" stroke="#8b5cf6" stroke-width="2"/></svg>
+        <div>
+          <h3><span class="es">Un USB que conecta su empresa a un ecosistema inteligente</span><span class="en">A USB that plugs your company into an intelligent ecosystem</span></h3>
+          <p><span class="es">Igual que un USB le da a su computadora una capacidad nueva en segundos, Digit2AI MCP conecta su empresa a la inteligencia artificial de los mejores proveedores del mundo y a más de 100 agentes especializados. Sin cambiar sus sistemas, sin contratar un equipo de IA y sin años de desarrollo.</span><span class="en">Just as a USB gives your computer a new capability in seconds, Digit2AI MCP plugs your company into the AI of the world's best providers and more than 100 specialized agents. Without changing your systems, without hiring an AI team and without years of development.</span></p>
+        </div>
+      </div>
+      <ul class="usb-ben">
+        <li><b><span class="es">Se conecta, no se reemplaza</span><span class="en">It plugs in, nothing is replaced</span></b><span class="es">Funciona con su CRM, correo, calendario y datos de hoy. Su equipo sigue trabajando igual, ahora con IA.</span><span class="en">It works with your current CRM, email, calendar and data. Your team keeps working the same way, now with AI.</span></li>
+        <li><b><span class="es">Resultados en semanas</span><span class="en">Results in weeks</span></b><span class="es">Todo ya está integrado: no hay que contratar ni configurar cada proveedor por separado.</span><span class="en">Everything is already integrated: no need to sign up for or configure each provider separately.</span></li>
+        <li><b><span class="es">Un equipo completo de IA trabajando para usted</span><span class="en">A full AI team working for you</span></b><span class="es">Atención al cliente 24/7, documentos, ventas, análisis y automatización, por un costo mensual fijo.</span><span class="en">24/7 customer service, documents, sales, analysis and automation, for a fixed monthly cost.</span></li>
+        <li><b><span class="es">Usted sigue siendo el dueño</span><span class="en">You remain the owner</span></b><span class="es">Sus datos, sus sistemas y su propiedad intelectual siguen siendo suyos. Nada se envía ni se paga sin su aprobación.</span><span class="en">Your data, systems and intellectual property stay yours. Nothing is sent or paid without your approval.</span></li>
+        <li><b><span class="es">Siempre al día</span><span class="en">Always up to date</span></b><span class="es">Cuando sale un modelo mejor o un nuevo agente, su empresa lo recibe sin hacer nada.</span><span class="en">When a better model or a new agent comes out, your company gets it without doing anything.</span></li>
+      </ul>
+      <a class="btn pri" href="#leadForm"><span class="es">Conectar mi empresa</span><span class="en">Connect my company</span></a>
     </div>
   </div>
 </header>
@@ -364,6 +385,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     </div>
     <div class="buy">
       <div id="payMsg" class="paymsg" role="status" hidden></div>
+      <div id="bookPanel" class="lead open" hidden>
+        <h3><span class="es">Elija el día y la hora de su reunión de configuración</span><span class="en">Pick the day and time of your setup meeting</span></h3>
+        <p class="fine" style="margin:0 0 14px"><span class="es">Reunión de 60 minutos con nuestro equipo para conectar el MCP a sus sistemas. Los horarios se muestran en su hora local.</span><span class="en">A 60-minute meeting with our team to connect MCP to your systems. Times are shown in your local time.</span></p>
+        <div id="bookDays" class="chips"></div>
+        <div id="bookTimes" class="chips"></div>
+        <button type="button" class="btn pri big" id="bookBtn" disabled><span class="es">Confirmar reunión</span><span class="en">Confirm meeting</span></button>
+      </div>
       <form id="leadForm" class="lead open" novalidate>
         <h3><span class="es">Cuéntenos de su empresa</span><span class="en">Tell us about your company</span></h3>
         <p class="fine" style="margin:0 0 14px"><span class="es">Con estos datos preparamos su instancia. Al enviar, pasa al pago seguro con Stripe.</span><span class="en">We use this to prepare your instance. After sending, you go to secure payment with Stripe.</span></p>
@@ -476,13 +504,60 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   var q=new URLSearchParams(location.search);
   if(q.get('pago')==='cancelado') show('bad','El pago fue cancelado. No se realizó ningún cobro.','The payment was cancelled. You were not charged.');
   if(q.get('pago')==='ok' && q.get('session_id')){
+    var sid=q.get('session_id'), panel=document.getElementById('bookPanel'), days=document.getElementById('bookDays'), times=document.getElementById('bookTimes'), bbtn=document.getElementById('bookBtn'), picked=null;
+    form.hidden=true;
+    var pr=document.getElementById('precio'); if(pr) pr.scrollIntoView();
     show('', 'Confirmando su pago...', 'Confirming your payment...');
-    fetch('/api/mcp-checkout/status?session_id='+encodeURIComponent(q.get('session_id')))
-      .then(function(r){ return r.json(); })
-      .then(function(j){ if(j.paid) show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural: le contactaremos para configurar su instancia.','Payment received. Welcome to Digit2AI MCP Neural: we will contact you to set up your instance.');
-        else show('bad','Aún no vemos el pago confirmado. Si se cobró, le contactaremos.','We do not see the payment confirmed yet. If you were charged, we will contact you.'); })
-      .catch(function(){ show('bad','No pudimos confirmar el pago ahora. Si se cobró, le contactaremos.','We could not confirm the payment now. If you were charged, we will contact you.'); });
-    var p=document.getElementById('precio'); if(p) p.scrollIntoView();
+    function fmt(d,o){ return new Intl.DateTimeFormat(L()==='en'?'en-US':'es-ES',o).format(d); }
+    function booked(iso){
+      panel.hidden=true;
+      var d=new Date(iso);
+      show('ok','Pago recibido y reunión confirmada: '+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (su hora local). Le contactaremos con el enlace de la reunión.',
+               'Payment received and meeting confirmed: '+fmt(d,{weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})+' (your local time). We will send you the meeting link.');
+    }
+    function load(){
+      return fetch('/api/mcp-checkout/slots?session_id='+encodeURIComponent(sid)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); }).then(function(x){
+        if(!x.ok) throw new Error(x.j&&x.j.error||'error');
+        if(x.j.booking) return booked(x.j.booking.start);
+        show('ok','Pago recibido. Bienvenido a Digit2AI MCP Neural. Ahora elija la fecha de su reunión de configuración.','Payment received. Welcome to Digit2AI MCP Neural. Now pick the date of your setup meeting.');
+        panel.hidden=false; days.innerHTML=''; times.innerHTML=''; picked=null; bbtn.disabled=true;
+        var byDay={};
+        x.j.slots.forEach(function(iso){ var d=new Date(iso); var k=d.toDateString(); (byDay[k]=byDay[k]||[]).push(d); });
+        var keys=Object.keys(byDay);
+        if(!keys.length){ days.textContent = L()==='en'?'No times available right now. We will contact you to schedule.':'No hay horarios disponibles ahora. Le contactaremos para agendar.'; return; }
+        keys.forEach(function(k,i){
+          var b=document.createElement('button'); b.type='button'; b.className='chip'; b.setAttribute('aria-pressed','false');
+          b.textContent=fmt(byDay[k][0],{weekday:'short',day:'numeric',month:'short'});
+          b.addEventListener('click',function(){
+            days.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); }); b.setAttribute('aria-pressed','true');
+            times.innerHTML=''; picked=null; bbtn.disabled=true;
+            byDay[k].forEach(function(d){
+              var t=document.createElement('button'); t.type='button'; t.className='chip'; t.setAttribute('aria-pressed','false');
+              t.textContent=fmt(d,{hour:'2-digit',minute:'2-digit'});
+              t.addEventListener('click',function(){ times.querySelectorAll('.chip').forEach(function(c){ c.setAttribute('aria-pressed','false'); }); t.setAttribute('aria-pressed','true'); picked=d.toISOString(); bbtn.disabled=false; });
+              times.appendChild(t);
+            });
+          });
+          days.appendChild(b);
+          if(i===0) b.click();
+        });
+      });
+    }
+    bbtn.addEventListener('click',function(){
+      if(!picked) return; bbtn.disabled=true;
+      fetch('/api/mcp-checkout/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sid,start:picked,lang:L()})})
+        .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(x){
+          if(x.ok&&x.j.booked) return booked(x.j.start);
+          if(x.j&&x.j.error==='slot_taken'){ show('bad','Ese horario se acaba de ocupar. Elija otro.','That time was just taken. Please pick another.'); return load(); }
+          throw new Error('book');
+        })
+        .catch(function(){ bbtn.disabled=false; show('bad','No se pudo confirmar la reunión. Intente de nuevo.','The meeting could not be confirmed. Please try again.'); });
+    });
+    load().catch(function(e){
+      if(String(e.message)==='not_paid') show('bad','Aún no vemos el pago confirmado. Si se cobró, le contactaremos.','We do not see the payment confirmed yet. If you were charged, we will contact you.');
+      else show('bad','Pago recibido. No pudimos cargar los horarios: le contactaremos para agendar la reunión.','Payment received. We could not load the times: we will contact you to schedule the meeting.');
+    });
   }
 })();
 </script>
