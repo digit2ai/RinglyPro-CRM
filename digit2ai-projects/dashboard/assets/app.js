@@ -9362,51 +9362,102 @@ function showQuickAdd() {
 // =====================================================
 // NLP WIDGET
 // =====================================================
-// Voice dictation for the AI chat — uses the browser's built-in speech-to-text
-// (Web Speech API; Chrome + iOS Safari). Speaks → fills the input → auto-sends.
+// Voice dictation for the AI chat — the browser's own speech-to-text (Web Speech API).
+// It keeps listening until you pause for SILENCE_MS (or hit MAX_MS), shows the words
+// as you speak, then sends. Tap the mic again to stop early and send what was heard.
+// The EN/ES switch picks the recognizer language; it is remembered on this device.
+const VOICE_SILENCE_MS = 2500;
+const VOICE_MAX_MS = 90000;
+
+function getVoiceLang() {
+  try { const v = localStorage.getItem('d2ai_voice_lang'); if (v === 'es' || v === 'en') return v; } catch (e) {}
+  return (navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+function paintVoiceLang() {
+  const lang = getVoiceLang();
+  document.querySelectorAll('.nlp-lang').forEach(b => {
+    b.textContent = lang.toUpperCase();
+    b.title = lang === 'es' ? 'Idioma de voz: Español (toca para English)' : 'Voice language: English (tap for Español)';
+  });
+  const input = document.getElementById('nlp-input');
+  if (input) input.placeholder = lang === 'es' ? 'Pídeme algo, ej. "Agenda una reunión con Eduardo mañana a las 10:30"' : 'Ask me anything, e.g. "What\'s coming up?"';
+}
+function toggleVoiceLang() {
+  const next = getVoiceLang() === 'es' ? 'en' : 'es';
+  try { localStorage.setItem('d2ai_voice_lang', next); } catch (e) {}
+  if (window._dictating) { try { window._dictating.abort(); } catch (e) {} }
+  paintVoiceLang();
+}
+window.toggleVoiceLang = toggleVoiceLang;
+document.addEventListener('DOMContentLoaded', paintVoiceLang);
+if (document.readyState !== 'loading') paintVoiceLang();
+
 function startDictation(inputId, target) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const micBtn = document.getElementById(target === 'ai' ? 'ai-mic' : 'nlp-mic');
+  const lang = getVoiceLang();
   if (!SR) {
-    alert('Voice input isn\'t supported in this browser. Try Chrome on desktop or Safari on iPhone.');
+    alert(lang === 'es' ? 'Este navegador no permite dictar. Usa Chrome en computador o Safari en iPhone.' : 'Voice input isn\'t supported in this browser. Try Chrome on desktop or Safari on iPhone.');
     return;
   }
-  // Toggle off if already listening.
+  // Tapping again stops listening and sends what was heard.
   if (window._dictating) { try { window._dictating.stop(); } catch (e) {} return; }
 
   const rec = new SR();
-  rec.lang = (typeof getLang === 'function' && getLang() === 'es') ? 'es-ES' : 'en-US';
-  rec.interimResults = false;
+  rec.lang = lang === 'es' ? 'es-MX' : 'en-US';
+  rec.continuous = true;
+  rec.interimResults = true;
   rec.maxAlternatives = 1;
   window._dictating = rec;
   if (micBtn) micBtn.classList.add('listening');
+  const input = document.getElementById(inputId);
 
-  let got = false;
-  rec.onresult = (e) => {
-    got = true;
-    const text = e.results[0][0].transcript;
-    const input = document.getElementById(inputId);
-    if (input) input.value = text;
-    // Small delay so the user sees what was heard, then send.
-    setTimeout(() => sendAICommand(target), 150);
+  let finalText = '', interim = '', aborted = false, silenceTimer = null;
+  const maxTimer = setTimeout(() => { try { rec.stop(); } catch (e) {} }, VOICE_MAX_MS);
+  const armSilence = () => {
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => { try { rec.stop(); } catch (e) {} }, VOICE_SILENCE_MS);
   };
-  const cleanup = () => { window._dictating = null; if (micBtn) micBtn.classList.remove('listening'); };
-  // Surface mic failures in the chat so the button never appears "dead".
+
+  rec.onstart = armSilence;
+  rec.onresult = (e) => {
+    interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) finalText += (finalText ? ' ' : '') + r[0].transcript.trim();
+      else interim += r[0].transcript;
+    }
+    if (input) input.value = (finalText + (interim ? ' ' + interim : '')).trim();
+    armSilence();
+  };
+  const cleanup = () => {
+    clearTimeout(silenceTimer); clearTimeout(maxTimer);
+    window._dictating = null;
+    if (micBtn) micBtn.classList.remove('listening');
+  };
   rec.onerror = (e) => {
-    cleanup();
+    const err = e && e.error;
+    if (err === 'aborted') { aborted = true; return; }
+    if (err === 'no-speech' && (finalText || interim)) return;   // pause after speaking: just end
     const box = document.getElementById(target === 'ai' ? 'ai-messages' : 'nlp-messages');
-    if (box && !got) {
-      const err = e && e.error;
+    if (box && !finalText && !interim) {
+      const es = lang === 'es';
       const msg = err === 'not-allowed' || err === 'service-not-allowed'
-        ? 'I need microphone permission. Enable the mic for this site (click the lock icon in the address bar) and try again.'
+        ? (es ? 'Necesito permiso para el micrófono. Actívalo en el candado de la barra de direcciones e intenta de nuevo.' : 'I need microphone permission. Enable the mic for this site (click the lock icon in the address bar) and try again.')
         : err === 'no-speech'
-          ? "I didn't hear anything — tap the mic and speak, or just type your request."
-          : 'Voice input had a problem (' + (err || 'unknown') + '). You can type your request instead.';
+          ? (es ? 'No escuché nada — toca el micrófono y habla, o escribe tu pedido.' : "I didn't hear anything — tap the mic and speak, or just type your request.")
+          : (es ? 'El dictado tuvo un problema (' : 'Voice input had a problem (') + (err || 'unknown') + (es ? '). Puedes escribirlo.' : '). You can type your request instead.');
       box.innerHTML += `<div class="nlp-msg system">${escHtml(msg)}</div>`;
       box.scrollTop = box.scrollHeight;
     }
   };
-  rec.onend = cleanup;
+  rec.onend = () => {
+    cleanup();
+    const text = (finalText || interim).trim();   // keep a trailing interim phrase if the engine never finalized it
+    if (aborted || !text) return;
+    if (input) input.value = text;
+    setTimeout(() => sendAICommand(target), 150);
+  };
   try { rec.start(); } catch (e) { cleanup(); }
 }
 window.startDictation = startDictation;
@@ -9423,7 +9474,7 @@ async function sendAICommand(target) {
   input.value = '';
 
   try {
-    const res = await api('/nlp/command', { method: 'POST', body: JSON.stringify({ text }) });
+    const res = await api('/nlp/command', { method: 'POST', body: JSON.stringify({ text, lang: getVoiceLang() }) });
     const response = res.data?.response || res.error || (res.success ? 'Done.' : 'Sorry, I could not process that.');
     msgContainer.innerHTML += `<div class="nlp-msg system">${escHtml(response)}</div>`;
     // A new reminder is an alert — refresh the bell badge (and the Alerts view if open).
@@ -9431,6 +9482,8 @@ async function sendAICommand(target) {
       refreshNotifBadge();
       if (currentView === 'notifications') renderView('notifications');
     }
+    // A booked meeting (directly or from a reminder) should show on an open calendar.
+    if ((res.data?.intent === 'create_event' || res.data?.intent === 'create_reminder') && currentView === 'calendar') renderView('calendar');
   } catch (err) {
     msgContainer.innerHTML += `<div class="nlp-msg system" style="color:var(--danger)">Error: ${err.message}</div>`;
   }

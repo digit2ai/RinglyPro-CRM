@@ -19,6 +19,9 @@
       cursor: pointer; flex: 0 0 auto; padding: 0; }
     .nlp-mic:hover { color: #60a5fa; border-color: #3b5378; }
     .nlp-mic.listening { background: #ef4444; color: #fff; border-color: #ef4444; animation: micpulse 1.1s infinite; }
+    .nlp-lang { background: #172033; color: #e2e8f0; border: 1px solid #2a3852; border-radius: 8px; min-width: 44px; height: 38px;
+      font: 600 12px/1 system-ui, sans-serif; letter-spacing: .04em; cursor: pointer; flex: 0 0 auto; padding: 0 8px; }
+    .nlp-lang:hover { border-color: #3b5378; color: #60a5fa; }
     @keyframes micpulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); } 50% { box-shadow: 0 0 0 7px rgba(239,68,68,0); } }
     /* Lina voice orb (Hub home) */
     .lina { margin: 0 0 24px; background: linear-gradient(180deg, var(--bg-card, #141b29), var(--bg-secondary, #0d1320));
@@ -200,6 +203,7 @@
             <button class="nlp-chip" onclick="nlpChip('help')">Show all commands</button>
           </div>
           <div class="nlp-input-area">
+            <button id="nlp-lang" class="nlp-lang" type="button" onclick="toggleVoiceLang()" title="Voice language / Idioma de voz">EN</button>
             <button id="nlp-mic" class="nlp-mic" type="button" onclick="startDictation('nlp-input','nlp')" title="Tap and speak">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
@@ -228,7 +232,7 @@
       </div>
     </div>
   </div>
-  <script src="/projects/assets/app.js?v=premortem-20260716"></script>
+  <script src="/projects/assets/app.js?v=voice-bilingual-20261022"></script>
   <script>
   // Intercom unread badge — polls the voice-to-intake owner endpoint (same origin,
   // uses the CRM token in localStorage). Additive; never affects other dashboard logic.

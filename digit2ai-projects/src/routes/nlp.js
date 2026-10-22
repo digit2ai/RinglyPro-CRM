@@ -9,12 +9,13 @@ const { executeCommand } = require('../services/nlpService');
 router.post('/command', async (req, res) => {
   try {
     const { text } = req.body;
+    const lang = req.body.lang === 'es' || req.body.lang === 'en' ? req.body.lang : null;
     if (!text || !text.trim()) {
       return res.status(400).json({ success: false, error: 'Command text required' });
     }
 
     const userEmail = req.user?.email || 'system';
-    const result = await executeCommand(text.trim(), userEmail);
+    const result = await executeCommand(text.trim(), userEmail, { lang });
 
     // Log the NLP command
     await NlpCommand.create({
@@ -33,7 +34,8 @@ router.post('/command', async (req, res) => {
       data: {
         intent: result.intent,
         entities: result.entities,
-        response: result.response
+        response: result.response,
+        lang: result.lang
       }
     });
   } catch (error) {

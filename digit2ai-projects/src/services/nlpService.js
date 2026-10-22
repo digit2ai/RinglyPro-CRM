@@ -4,12 +4,26 @@ const { Op } = require('sequelize');
 const { Contact, Project, Task, CalendarEvent, Vertical, ProjectContact, ProjectMilestone, Notification } = require('../models');
 const { logActivity, createNotification } = require('./activityService');
 const zoomService = require('./zoom');
-
-const HUB_TZ = process.env.D2AI_TZ || 'America/New_York';
+const { HUB_TZ, detectLang, L, resolveDate, parseTime, MEETING_WORDS, NO_ZOOM } = require('./nlpLang');
 
 // Intent patterns for NLP parsing - ordered by specificity (most specific first)
 // Designed for non-technical users: supports casual, conversational language
 const INTENT_PATTERNS = [
+  // Spanish — reminders first, so "recuérdame que tengo una reunión…" is a reminder (it also books the meeting).
+  { pattern: /^(?:oye\s+|por\s+favor\s+)?(?:recu[eé]rda(?:me|nos)?|recordarme|av[ií]same|no\s+me\s+dejes\s+olvidar|tengo\s+que\s+acordarme|necesito\s+recordar|pon(?:me)?\s+un\s+recordatorio|crea(?:r)?\s+un\s+recordatorio)/i, intent: 'create_reminder' },
+  { pattern: /^(?:por\s+favor\s+)?(?:agenda(?:r|me)?|ag[eé]nda(?:me|la)|programa(?:r|me)?|crea(?:r)?|pon(?:er|me)?|haz|organiza(?:r)?|coordina(?:r)?|reserva(?:r)?|fija(?:r)?|cuadra(?:r)?|anota(?:r)?)\s+(?:(?:una?|la|el|otra|nueva)\s+)*(?:reuni[oó]n|cita|llamada|videollamada|zoom|evento|junta)/i, intent: 'create_event' },
+  { pattern: /^(?:yo\s+)?(?:tengo|tenemos|cuadr[eé]|agend[eé]|program[eé]|hice)\s+(?:una?\s+)?(?:reuni[oó]n|cita|llamada|videollamada|zoom|junta)/i, intent: 'create_event' },
+  { pattern: /^(?:i|we)\s+(?:have|got|set\s*up|setup|scheduled|booked|arranged)\s+(?:a|an)\s+(?:meeting|call|appointment|zoom)/i, intent: 'create_event' },
+  { pattern: /^(?:crea(?:r)?|agrega(?:r)?|a[nñ]ade|anota(?:r)?|nueva?)\s+(?:una?\s+)?(?:tarea|pendiente)/i, intent: 'create_task' },
+  { pattern: /^(?:mu[eé]stra(?:me)?|ver|lista(?:r)?|cu[aá]les\s+son)\s+(?:mis\s+|los\s+)?recordatorios/i, intent: 'list_reminders' },
+  { pattern: /^(?:mu[eé]stra(?:me)?|ver|lista(?:r)?)\s+(?:mis\s+|las\s+)?tareas\s+(?:vencidas|atrasadas)/i, intent: 'overdue_tasks' },
+  { pattern: /^(?:qu[eé]\s+(?:tengo\s+que\s+hacer|tengo\s+pendiente|me\s+falta|hay\s+pendiente)|mis\s+(?:tareas|pendientes)|mu[eé]stra(?:me)?\s+(?:mis\s+)?(?:tareas|pendientes))/i, intent: 'list_tasks' },
+  { pattern: /^(?:hay\s+)?(?:algo|alg[uú]n\s+proyecto)\s+(?:vencido|atrasado)|^proyectos\s+(?:vencidos|atrasados)/i, intent: 'overdue_projects' },
+  { pattern: /^(?:mu[eé]stra(?:me)?|ver|lista(?:r)?|mis|cu[aá]les\s+son\s+mis)\s+(?:mis\s+|los\s+)?proyectos|^(?:c[oó]mo\s+van|c[oó]mo\s+est[aá]n)\s+(?:mis\s+|los\s+)?proyectos/i, intent: 'list_projects' },
+  { pattern: /^(?:qu[eé]\s+(?:tengo|hay)\s+(?:en\s+(?:la|mi)\s+agenda|esta\s+semana|hoy|ma[nñ]ana|pr[oó]ximamente)|mi\s+agenda|mu[eé]stra(?:me)?\s+(?:mi\s+)?(?:agenda|calendario)|cu[aá]l\s+es\s+mi\s+(?:pr[oó]xima\s+reuni[oó]n|agenda))/i, intent: 'upcoming_events' },
+  { pattern: /^(?:dame\s+)?(?:un\s+)?res[uú]men/i, intent: 'summarize_projects' },
+  { pattern: /^(?:ayuda|comandos|qu[eé]\s+puedes\s+hacer)/i, intent: 'help' },
+
   // Contact intents
   { pattern: /^(create|add|new|register)\s+(?:(?:a|the|another|new)\s+)*contact/i, intent: 'create_contact' },
   { pattern: /^(show|list|get|find|see|view|open)\s+(all\s+|my\s+)?contacts/i, intent: 'list_contacts' },
@@ -102,37 +116,9 @@ function extractEntities(text) {
   const verticalMatch = text.match(/(?:under|for|vertical|in)\s+(?:the\s+)?([A-Za-z]+(?:\s+[A-Za-z]+)?)\s*(?:vertical)?/i);
   if (verticalMatch) entities.vertical = verticalMatch[1].trim();
 
-  // Extract date references
-  const dateMap = {
-    'today': 0, 'tomorrow': 1, 'next monday': null, 'next tuesday': null,
-    'next wednesday': null, 'next thursday': null, 'next friday': null,
-    'next week': 7, 'in 3 days': 3, 'in a week': 7, 'in two days': 2,
-    'in 2 days': 2, 'end of week': null, 'this friday': null
-  };
-
-  for (const [phrase, days] of Object.entries(dateMap)) {
-    if (text.toLowerCase().includes(phrase)) {
-      if (days !== null) {
-        const date = new Date();
-        date.setDate(date.getDate() + days);
-        entities.date = date.toISOString().split('T')[0];
-      } else {
-        // Handle "next [weekday]" or "this [weekday]" or "end of week"
-        let weekday = phrase.replace(/^(next|this)\s+/, '').replace('end of week', 'friday');
-        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        const targetDay = dayNames.indexOf(weekday);
-        if (targetDay >= 0) {
-          const now = new Date();
-          const currentDay = now.getDay();
-          let diff = targetDay - currentDay;
-          if (diff <= 0) diff += 7;
-          now.setDate(now.getDate() + diff);
-          entities.date = now.toISOString().split('T')[0];
-        }
-      }
-      break;
-    }
-  }
+  // Extract date references (English + Spanish, resolved in the hub timezone)
+  const resolved = resolveDate(text);
+  if (resolved) entities.date = resolved;
 
   // Extract status
   const statusMatch = text.match(/to\s+(planning|active|in[\s_]?progress|on[\s_]?hold|completed|cancelled|review|done|finished)/i);
@@ -194,21 +180,6 @@ function parseDateFreeform(s) {
   return null;
 }
 
-// Parse a free-form time ("10am", "10:30 am", "2 pm", "at 3", "15:00", "noon").
-function parseTimeFreeform(s) {
-  if (!s) return null;
-  const t = s.toLowerCase();
-  if (/\bnoon\b/.test(t)) return { h: 12, m: 0 };
-  if (/\bmidnight\b/.test(t)) return { h: 0, m: 0 };
-  let m = t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)/);
-  if (m) { let h = parseInt(m[1], 10) % 12; if (/p/.test(m[3])) h += 12; return { h, m: m[2] ? parseInt(m[2], 10) : 0 }; }
-  m = t.match(/\b(\d{1,2}):(\d{2})\b/);
-  if (m) return { h: parseInt(m[1], 10), m: parseInt(m[2], 10) };
-  m = t.match(/\bat\s+(\d{1,2})\b/);
-  if (m) return { h: parseInt(m[1], 10), m: 0 };
-  return null;
-}
-
 // Convert a wall-clock time in a given IANA tz to a correct UTC Date (DST-safe).
 function wallTimeToUtc(tz, y, mo, d, h, mi) {
   const dtf = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -222,8 +193,16 @@ function wallTimeToUtc(tz, y, mo, d, h, mi) {
   return new Date(ts);
 }
 
+// Drop opening punctuation and a leading greeting so "¿Qué…" and "Hola, agenda…" reach their real intent.
+function normalizeInput(text) {
+  const t = String(text).replace(/^[\s¿¡"'“]+/, '').replace(/[?!]+$/, '').trim();
+  const rest = t.replace(/^(?:hola|hi|hey|hello|oye|buenos\s+d[ií]as|buenas(?:\s+tardes|\s+noches)?|good\s+(?:morning|afternoon|evening))[\s,.!:]+/i, '');
+  return rest.length >= 3 && rest !== t ? rest : t;
+}
+
 // Detect intent from text
 function detectIntent(text) {
+  text = normalizeInput(text);
   for (const { pattern, intent } of INTENT_PATTERNS) {
     const match = text.match(pattern);
     if (match) return { intent, match };
@@ -231,10 +210,96 @@ function detectIntent(text) {
   return { intent: 'unknown', match: null };
 }
 
+// Words that end the attendee list: "con Eduardo mañana a las 10:30" -> "Eduardo".
+const ATTENDEE_STOP = /\s*(?:[,.;]\s*)?\b(?:today|tomorrow|tonight|this|next|on|at|in|for|about|to\s+(?:discuss|review|talk)|regarding|via|over|by|hoy|ma[nñ]ana|pasado|esta|este|pr[oó]xim[oa]|el\s+(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|\d+)|a\s+las?|a\s+la|para|por|sobre|acerca|en\s+(?:la|el|zoom)|v[ií]a|sin|no\s+zoom|with(?:out)?\s+zoom|and\s+(?:please\s+)?(?:add|use|activate|enable|turn\s+on)|y\s+(?:pon|agrega|activa|usa)|\d+)\b.*$/i;
+
+function parseAttendees(text) {
+  const wm = text.match(/\b(?:with|con)\s+(.+)$/i);
+  if (!wm) return [];
+  const raw = wm[1].replace(ATTENDEE_STOP, '').trim();
+  return raw.split(/\s*(?:,|&|\band\b|\by\b|\be\b)\s*/i)
+    .map(x => x.replace(/^(?:el|la|los|las|the|my|mi|mis)\s+/i, '').trim())
+    .filter(x => x && x.length <= 60 && !/^(?:zoom|team|equipo)$/i.test(x))
+    .map(x => x.charAt(0).toUpperCase() + x.slice(1));
+}
+
+// Books a calendar meeting from a sentence. Zoom is ON unless the sentence opts out.
+async function bookMeeting(inputText, entities, userEmail, lang) {
+  const attendees = parseAttendees(inputText);
+  const wantsZoom = !NO_ZOOM.test(inputText);
+
+  let title;
+  if (attendees.length) title = L(lang, 'Meeting with ', 'Reunión con ') + attendees.join(', ');
+  else {
+    const tm2 = inputText.match(/(?:meeting|event|appointment|call|sync|reuni[oó]n|cita|llamada|junta|evento)\s+(?:for\s+|about\s+|sobre\s+|de\s+|para\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow|today|with|ma[nñ]ana|hoy|a\s+las?|el|con)\b|$)/i);
+    title = tm2 && tm2[1] && !/^\d/.test(tm2[1].trim()) ? tm2[1].trim() : L(lang, 'New Meeting', 'Nueva reunión');
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+  }
+
+  const dateStr = entities.date || new Date().toLocaleDateString('en-CA', { timeZone: HUB_TZ });
+  const parsedTime = parseTime(inputText);
+  const tm = parsedTime || { h: 10, m: 0 };
+  const [Y, Mo, D] = dateStr.split('-').map(Number);
+  const startDate = wallTimeToUtc(HUB_TZ, Y, Mo, D, tm.h, tm.m);
+  const endDate = new Date(startDate.getTime() + 3600000);
+
+  // Attendee names -> contact emails (best effort; contacts store first/last name).
+  const inviteEmails = [];
+  for (const nm of attendees) {
+    try {
+      const [first, ...rest] = nm.split(/\s+/);
+      const where = { workspace_id: 1, first_name: { [Op.iLike]: `${first}%` }, email: { [Op.ne]: null } };
+      if (rest.length) where.last_name = { [Op.iLike]: `${rest.join(' ')}%` };
+      const c = await Contact.findOne({ where });
+      if (c && c.email) inviteEmails.push(c.email);
+    } catch (_) { /* best effort */ }
+  }
+
+  let zoomFields = {}, zoomNote = '';
+  if (wantsZoom) {
+    if (zoomService.isConfigured && zoomService.isConfigured()) {
+      try {
+        const mtg = await zoomService.createMeeting({ topic: title, startISO: startDate.toISOString(), durationMinutes: 60, timezone: HUB_TZ, agenda: '' });
+        zoomFields = { zoom_meeting_id: String(mtg.id), zoom_join_url: mtg.join_url, zoom_start_url: mtg.start_url, zoom_password: mtg.password, location: mtg.join_url };
+        zoomNote = `\nZoom: ${mtg.join_url}`;
+      } catch (zErr) {
+        zoomFields = { location: 'Zoom' };
+        zoomNote = L(lang, `\n(The Zoom link couldn't be created: `, `\n(No se pudo crear el enlace de Zoom: `) + (zErr.response?.data?.message || zErr.message) + ')';
+      }
+    } else {
+      zoomFields = { location: 'Zoom' };
+      zoomNote = L(lang, `\n(Zoom isn't configured on the server, so no link was generated.)`, `\n(Zoom no está configurado en el servidor; no se generó enlace.)`);
+    }
+  }
+
+  const event = await CalendarEvent.create({
+    workspace_id: 1, user_email: userEmail, title,
+    start_time: startDate, end_time: endDate,
+    event_type: 'meeting',
+    invited_emails: inviteEmails,
+    language: lang,
+    ...zoomFields
+  });
+  await logActivity(userEmail, 'created', 'calendar_event', event.id, title, { via: 'nlp', attendees, zoom: wantsZoom, lang });
+
+  const whenStr = startDate.toLocaleString(lang === 'es' ? 'es-MX' : 'en-US', { timeZone: HUB_TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  const assumed = [];
+  if (!entities.date) assumed.push(L(lang, 'no date was given, so today', 'no dijiste fecha, así que hoy'));
+  if (!parsedTime) assumed.push(L(lang, 'no time was given, so 10:00 AM', 'no dijiste hora, así que 10:00 a. m.'));
+  const text = L(lang, `Scheduled "${title}" for ${whenStr}.`, `Agendé "${title}" para el ${whenStr}.`) +
+    (attendees.length ? L(lang, ` Attendees: `, ` Asistentes: `) + attendees.join(', ') +
+      (inviteEmails.length ? L(lang, ` (${inviteEmails.length} email found)`, ` (${inviteEmails.length} correo encontrado)`) : '') + '.' : '') +
+    (assumed.length ? L(lang, ` Note: `, ` Ojo: `) + assumed.join('; ') + L(lang, ' — edit it in the Calendar if needed.', ' — cámbialo en el Calendario si hace falta.') : '') +
+    zoomNote + L(lang, `\nIt's in your Calendar.`, `\nYa está en tu Calendario.`);
+  return { event, text, whenStr, title };
+}
+
 // Execute NLP command
-async function executeCommand(inputText, userEmail) {
+async function executeCommand(inputText, userEmail, opts = {}) {
+  inputText = normalizeInput(inputText);
   const { intent, match } = detectIntent(inputText);
   const entities = extractEntities(inputText);
+  const lang = detectLang(inputText, opts.lang);
 
   let response = '';
   let data = null;
@@ -244,21 +309,23 @@ async function executeCommand(inputText, userEmail) {
   try {
     switch (intent) {
       case 'greeting': {
-        const hour = new Date().getHours();
-        const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-        response = `${greeting}! I'm your AI assistant. Here's what I can help with:\n\n` +
-          `Try saying things like:\n` +
-          `  "What do I need to do?"\n` +
-          `  "Show my projects"\n` +
-          `  "Any overdue tasks?"\n` +
-          `  "Schedule a meeting for tomorrow"\n` +
-          `  "Give me a summary"\n\n` +
-          `Or type "help" to see all available commands.`;
+        const hour = Number(new Date().toLocaleString('en-US', { timeZone: HUB_TZ, hour: 'numeric', hour12: false }));
+        response = lang === 'es'
+          ? `${hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches'}! Soy tu asistente. Puedes decirme cosas como:\n\n` +
+            `  "¿Qué tengo pendiente?"\n  "Muéstrame mis proyectos"\n  "Agenda una reunión con Eduardo mañana a las 10:30"\n  "Recuérdame llamar al proveedor el viernes"\n  "Dame un resumen"\n\nO escribe "ayuda" para ver todo.`
+          : `${hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'}! I'm your AI assistant. Here's what I can help with:\n\n` +
+            `Try saying things like:\n` +
+            `  "What do I need to do?"\n` +
+            `  "Show my projects"\n` +
+            `  "Any overdue tasks?"\n` +
+            `  "Schedule a meeting with Eduardo tomorrow at 10:30"\n` +
+            `  "Give me a summary"\n\n` +
+            `Or type "help" to see all available commands.`;
         break;
       }
 
       case 'thanks': {
-        response = "You're welcome! Let me know if you need anything else.";
+        response = L(lang, "You're welcome! Let me know if you need anything else.", '¡Con gusto! Avísame si necesitas algo más.');
         break;
       }
 
@@ -354,7 +421,7 @@ async function executeCommand(inputText, userEmail) {
         });
         data = projects;
         response = projects.length > 0
-          ? `You have ${projects.length} project${projects.length > 1 ? 's' : ''}:\n` + projects.map(p => `  - ${p.name} [${p.status}] ${p.priority} priority ${p.vertical ? '(' + p.vertical.name + ')' : ''}`).join('\n')
+          ? L(lang, `You have ${projects.length} project${projects.length > 1 ? 's' : ''}:\n`, `Tienes ${projects.length} proyecto${projects.length > 1 ? 's' : ''}:\n`) + projects.map(p => `  - ${p.name} [${p.status}] ${p.priority} priority ${p.vertical ? '(' + p.vertical.name + ')' : ''}`).join('\n')
           : 'No projects yet. Try: "Start a new project called Website Redesign"';
         break;
       }
@@ -367,8 +434,8 @@ async function executeCommand(inputText, userEmail) {
         });
         data = projects;
         response = projects.length > 0
-          ? `Heads up! ${projects.length} project${projects.length > 1 ? 's are' : ' is'} overdue:\n` + projects.map(p => `  - ${p.name} (was due: ${p.due_date}) [${p.status}]`).join('\n') + '\n\nClick on any project to update its status.'
-          : 'Great news! No overdue projects. Everything is on track.';
+          ? L(lang, `Heads up! ${projects.length} project${projects.length > 1 ? 's are' : ' is'} overdue:\n`, `¡Ojo! ${projects.length} proyecto${projects.length > 1 ? 's están vencidos' : ' está vencido'}:\n`) + projects.map(p => `  - ${p.name} (was due: ${p.due_date}) [${p.status}]`).join('\n') + '\n\nClick on any project to update its status.'
+          : L(lang, 'Great news! No overdue projects. Everything is on track.', '¡Buenas noticias! No hay proyectos vencidos. Todo va en orden.');
         break;
       }
 
@@ -456,19 +523,31 @@ async function executeCommand(inputText, userEmail) {
           byPriority[p.priority] = (byPriority[p.priority] || 0) + 1;
         });
 
-        response = `Here's your workspace snapshot:\n\n` +
-          `  Projects: ${projects.length} total\n` +
-          (Object.keys(byStatus).length ? Object.entries(byStatus).map(([k, v]) => `    - ${v} ${k}`).join('\n') + '\n' : '') +
-          `\n  Tasks: ${tasks.length} pending` +
-          (overdueTasks.length ? ` (${overdueTasks.length} overdue!)` : ' (none overdue)') +
-          `\n  Contacts: ${contacts.length} in your network\n\n` +
-          (overdueTasks.length ? `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''} that need attention.` : 'Everything looks good! No urgent items.');
+        response = lang === 'es'
+          ? `Resumen de tu espacio:\n\n  Proyectos: ${projects.length} en total\n` +
+            (Object.keys(byStatus).length ? Object.entries(byStatus).map(([k, v]) => `    - ${v} ${k}`).join('\n') + '\n' : '') +
+            `\n  Tareas: ${tasks.length} pendientes` + (overdueTasks.length ? ` (¡${overdueTasks.length} vencidas!)` : ' (ninguna vencida)') +
+            `\n  Contactos: ${contacts.length}\n\n` +
+            (overdueTasks.length ? `Tienes ${overdueTasks.length} tarea${overdueTasks.length > 1 ? 's' : ''} vencida${overdueTasks.length > 1 ? 's' : ''} por atender.` : 'Todo se ve bien. Nada urgente.')
+          : `Here's your workspace snapshot:\n\n` +
+            `  Projects: ${projects.length} total\n` +
+            (Object.keys(byStatus).length ? Object.entries(byStatus).map(([k, v]) => `    - ${v} ${k}`).join('\n') + '\n' : '') +
+            `\n  Tasks: ${tasks.length} pending` +
+            (overdueTasks.length ? ` (${overdueTasks.length} overdue!)` : ' (none overdue)') +
+            `\n  Contacts: ${contacts.length} in your network\n\n` +
+            (overdueTasks.length ? `You have ${overdueTasks.length} overdue task${overdueTasks.length > 1 ? 's' : ''} that need attention.` : 'Everything looks good! No urgent items.');
         break;
       }
 
       case 'create_task': {
-        const titleMatch = inputText.match(/(?:to|about|for)\s+(.+?)(?:\s+(?:on|by|next|tomorrow|today)|$)/i);
-        const title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|new|make)\s+(a\s+)?(task|todo|to[\s-]?do|follow[\s-]?up)\s*/i, '').trim() || 'Follow-up';
+        let title;
+        if (lang === 'es') {
+          title = inputText.replace(/^(?:crea(?:r)?|agrega(?:r)?|a[nñ]ade|anota(?:r)?|nueva?)\s+(?:una?\s+)?(?:tarea|pendiente)\s*(?:de|para|:)?\s*/i, '').trim() || 'Seguimiento';
+          title = title.charAt(0).toUpperCase() + title.slice(1);
+        } else {
+          const titleMatch = inputText.match(/(?:to|about|for)\s+(.+?)(?:\s+(?:on|by|next|tomorrow|today)|$)/i);
+          title = titleMatch ? titleMatch[1].trim() : inputText.replace(/^(create|add|new|make)\s+(a\s+)?(task|todo|to[\s-]?do|follow[\s-]?up)\s*/i, '').trim() || 'Follow-up';
+        }
         const task = await Task.create({
           workspace_id: 1, user_email: userEmail, title, task_type: 'task',
           due_date: entities.date ? new Date(entities.date) : null,
@@ -476,28 +555,47 @@ async function executeCommand(inputText, userEmail) {
         });
         await logActivity(userEmail, 'created', 'task', task.id, title, { via: 'nlp' });
         data = task;
-        response = `Got it! Created task: "${title}"` +
-          (entities.date ? ` (due: ${entities.date})` : '') +
-          `. You can find it in the Tasks section.`;
+        response = L(lang, `Got it! Created task: "${title}"`, `Listo. Creé la tarea: "${title}"`) +
+          (entities.date ? L(lang, ` (due: ${entities.date})`, ` (vence: ${entities.date})`) : '') +
+          L(lang, `. You can find it in the Tasks section.`, `. La encuentras en Tareas.`);
         break;
       }
 
       case 'create_reminder': {
         // On-demand reminders are ALERTS (the bell / Alerts & Updates), not tasks.
-        const titleMatch = inputText.match(/(?:about|that|to|for|of)\s+(.+)$/i);
-        let title = titleMatch
-          ? titleMatch[1].trim()
-          : inputText
-              .replace(/^(remind|alert|notify)\s+(me|us)\s*/i, '')
-              .replace(/^(don'?t\s+let\s+me\s+forget|i\s+need\s+to\s+remember)\s*(to|about|that)?\s*/i, '')
-              .trim();
-        if (!title) title = 'Reminder';
+        let title;
+        if (lang === 'es') {
+          title = inputText
+            .replace(/^(?:oye\s+|por\s+favor\s+)?(?:recu[eé]rda(?:me|nos)?|recordarme|av[ií]same|no\s+me\s+dejes\s+olvidar|tengo\s+que\s+acordarme|necesito\s+recordar|pon(?:me)?\s+un\s+recordatorio|crea(?:r)?\s+un\s+recordatorio)\s*[,:]?\s*/i, '')
+            .replace(/^(?:que|de|para|sobre|lo\s+de)\s+/i, '')
+            .trim();
+        } else {
+          const titleMatch = inputText.match(/(?:about|that|to|for|of)\s+(.+)$/i);
+          title = titleMatch
+            ? titleMatch[1].trim()
+            : inputText
+                .replace(/^(remind|alert|notify)\s+(me|us)\s*/i, '')
+                .replace(/^(don'?t\s+let\s+me\s+forget|i\s+need\s+to\s+remember)\s*(to|about|that)?\s*/i, '')
+                .trim();
+        }
+        if (!title) title = L(lang, 'Reminder', 'Recordatorio');
         title = title.charAt(0).toUpperCase() + title.slice(1);
-        const message = entities.date ? `Reminder for ${entities.date}` : 'On-demand reminder';
-        await createNotification(userEmail, 'reminder', title, message, 'reminder', null);
-        await logActivity(userEmail, 'created', 'reminder', null, title, { via: 'nlp' });
-        data = { title };
-        response = `Reminder set: "${title}". It's now in your Alerts & Updates — tap the bell, top-right.`;
+
+        // A reminder about a meeting with a day or time also goes on the calendar (Zoom by default).
+        let booked = null;
+        if (MEETING_WORDS.test(inputText) && (entities.date || parseTime(inputText))) {
+          booked = await bookMeeting(inputText, entities, userEmail, lang);
+        }
+
+        const message = booked
+          ? L(lang, `Meeting on ${booked.whenStr}`, `Reunión el ${booked.whenStr}`) + (booked.event.zoom_join_url ? ` · Zoom: ${booked.event.zoom_join_url}` : '')
+          : entities.date ? L(lang, `Reminder for ${entities.date}`, `Recordatorio para el ${entities.date}`) : L(lang, 'On-demand reminder', 'Recordatorio');
+        await createNotification(userEmail, 'reminder', title, message, booked ? 'calendar_event' : 'reminder', booked ? booked.event.id : null);
+        await logActivity(userEmail, 'created', 'reminder', null, title, { via: 'nlp', lang, event_id: booked ? booked.event.id : null });
+        data = { title, event_id: booked ? booked.event.id : null };
+        response = L(lang, `Reminder set: "${title}". It's in your Alerts — tap the bell, top-right.`,
+                           `Recordatorio guardado: "${title}". Está en tus Alertas — toca la campana, arriba a la derecha.`) +
+          (booked ? '\n\n' + booked.text : '');
         break;
       }
 
@@ -511,17 +609,17 @@ async function executeCommand(inputText, userEmail) {
         data = tasks;
         if (tasks.length > 0) {
           const overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date());
-          response = `You have ${tasks.length} pending task${tasks.length > 1 ? 's' : ''}` +
-            (overdue.length ? ` (${overdue.length} overdue!)` : '') + `:\n` +
+          response = L(lang, `You have ${tasks.length} pending task${tasks.length > 1 ? 's' : ''}`, `Tienes ${tasks.length} tarea${tasks.length > 1 ? 's' : ''} pendiente${tasks.length > 1 ? 's' : ''}`) +
+            (overdue.length ? L(lang, ` (${overdue.length} overdue!)`, ` (¡${overdue.length} vencida${overdue.length > 1 ? 's' : ''}!)`) : '') + `:\n` +
             tasks.map(t => {
               const isOverdue = t.due_date && new Date(t.due_date) < new Date();
               return `  ${isOverdue ? '!' : '-'} ${t.title} [${t.priority}]` +
                 (t.due_date ? ` (due: ${t.due_date.toISOString().split('T')[0]}${isOverdue ? ' - OVERDUE' : ''})` : '') +
                 (t.project ? ` [${t.project.name}]` : '');
             }).join('\n') +
-            `\n\nClick on Tasks in the sidebar to manage them.`;
+            L(lang, `\n\nClick on Tasks in the sidebar to manage them.`, `\n\nAbre Tareas en el menú para gestionarlas.`);
         } else {
-          response = 'You\'re all caught up! No pending tasks. To add one, try:\n  "Add a task to review the proposal"';
+          response = L(lang, 'You\'re all caught up! No pending tasks. To add one, try:\n  "Add a task to review the proposal"', '¡Estás al día! No tienes tareas pendientes. Para agregar una: "Crea una tarea revisar la propuesta"');
         }
         break;
       }
@@ -533,80 +631,15 @@ async function executeCommand(inputText, userEmail) {
         });
         data = tasks;
         response = tasks.length > 0
-          ? `Attention! ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}:\n` + tasks.map(t => `  ! ${t.title} (was due: ${t.due_date.toISOString().split('T')[0]})`).join('\n') + '\n\nClick Tasks to mark them as done or reschedule.'
-          : 'No overdue tasks. You\'re on top of everything!';
+          ? L(lang, `Attention! ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''}:\n`, `¡Atención! ${tasks.length} tarea${tasks.length > 1 ? 's' : ''} vencida${tasks.length > 1 ? 's' : ''}:\n`) + tasks.map(t => `  ! ${t.title} (${L(lang, 'was due', 'vencía')}: ${t.due_date.toISOString().split('T')[0]})`).join('\n') + L(lang, '\n\nClick Tasks to mark them as done or reschedule.', '\n\nAbre Tareas para marcarlas o reprogramarlas.')
+          : L(lang, 'No overdue tasks. You\'re on top of everything!', 'No hay tareas vencidas. ¡Vas al día!');
         break;
       }
 
       case 'create_event': {
-        // 1) Attendees — everything after "with" up to a trailing zoom/time/date clause.
-        let attendees = [];
-        const wm = inputText.match(/\bwith\s+(.+)$/i);
-        if (wm) {
-          let a = wm[1]
-            .replace(/\b(?:and\s+|,\s*)?(?:please\s+)?(?:activate|enable|turn\s+on|add|use|via|on|through)\s+(?:the\s+)?zoom.*$/i, '')
-            .replace(/\b(?:today|tomorrow|tonight|this|next|on|at)\b.*$/i, '')
-            .trim();
-          attendees = a.split(/\s*(?:,|&|\band\b|\by\b|\be\b)\s*/i)
-            .map(s => s.trim()).filter(Boolean)
-            .map(s => s.charAt(0).toUpperCase() + s.slice(1));
-        }
-        const wantsZoom = /\bzoom\b/i.test(inputText);
-
-        // 2) Title.
-        let title;
-        if (attendees.length) title = `Meeting with ${attendees.join(', ')}`;
-        else {
-          const tm2 = inputText.match(/(?:meeting|event|appointment|calendar|call|sync)\s+(?:for\s+|about\s+)?(.+?)(?:\s+(?:on|at|next|tomorrow|today|with)|$)/i);
-          title = tm2 && tm2[1] && !/^\d/.test(tm2[1].trim()) ? tm2[1].trim() : 'New Meeting';
-        }
-
-        // 3) Date + time → correct UTC instant (interpreted in the hub timezone).
-        const dateStr = entities.date || new Date().toLocaleDateString('en-CA', { timeZone: HUB_TZ });
-        const tm = parseTimeFreeform(inputText) || { h: 10, m: 0 };
-        const [Y, Mo, D] = dateStr.split('-').map(Number);
-        const startDate = wallTimeToUtc(HUB_TZ, Y, Mo, D, tm.h, tm.m);
-        const endDate = new Date(startDate.getTime() + 3600000);
-
-        // 4) Resolve attendee names to contacts → invited_emails (best effort).
-        const inviteEmails = [];
-        for (const nm of attendees) {
-          try {
-            const c = await Contact.findOne({ where: { workspace_id: 1, name: { [Op.iLike]: `%${nm}%` }, email: { [Op.ne]: null } } });
-            if (c && c.email) inviteEmails.push(c.email);
-          } catch (_) { /* ignore */ }
-        }
-
-        // 5) Zoom (real meeting if configured).
-        let zoomFields = {}, zoomNote = '';
-        if (wantsZoom) {
-          if (zoomService.isConfigured && zoomService.isConfigured()) {
-            try {
-              const mtg = await zoomService.createMeeting({ topic: title, startISO: startDate.toISOString(), durationMinutes: 60, timezone: HUB_TZ, agenda: '' });
-              zoomFields = { zoom_meeting_id: mtg.id, zoom_join_url: mtg.join_url, zoom_start_url: mtg.start_url, zoom_password: mtg.password, location: mtg.join_url };
-              zoomNote = `\nZoom: ${mtg.join_url}`;
-            } catch (zErr) {
-              zoomNote = `\n(Zoom link couldn't be created: ${zErr.response?.data?.message || zErr.message})`;
-            }
-          } else {
-            zoomFields = { location: 'Zoom' };
-            zoomNote = `\n(Zoom isn't configured on the server, so no link was generated.)`;
-          }
-        }
-
-        const event = await CalendarEvent.create({
-          workspace_id: 1, user_email: userEmail, title,
-          start_time: startDate, end_time: endDate,
-          event_type: 'meeting',
-          invited_emails: inviteEmails,
-          ...zoomFields
-        });
-        await logActivity(userEmail, 'created', 'calendar_event', event.id, title, { via: 'nlp', attendees, zoom: wantsZoom });
-        data = event;
-        const whenStr = startDate.toLocaleString('en-US', { timeZone: HUB_TZ, weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        response = `Scheduled "${title}" for ${whenStr}.` +
-          (attendees.length ? ` Attendees: ${attendees.join(', ')}${inviteEmails.length ? ` (${inviteEmails.length} invite email${inviteEmails.length > 1 ? 's' : ''} found)` : ''}.` : '') +
-          zoomNote + `\nCheck your Calendar to see it.`;
+        const booked = await bookMeeting(inputText, entities, userEmail, lang);
+        data = booked.event;
+        response = booked.text;
         break;
       }
 
@@ -620,8 +653,8 @@ async function executeCommand(inputText, userEmail) {
         });
         data = events;
         response = events.length > 0
-          ? `You have ${events.length} event${events.length > 1 ? 's' : ''} coming up this week:\n` + events.map(e => `  - ${e.title} (${new Date(e.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}) [${e.event_type}]`).join('\n')
-          : 'Your week is clear! No upcoming events. To add one, try:\n  "Schedule a meeting with the team for tomorrow"';
+          ? L(lang, `You have ${events.length} event${events.length > 1 ? 's' : ''} coming up this week:\n`, `Tienes ${events.length} evento${events.length > 1 ? 's' : ''} esta semana:\n`) + events.map(e => `  - ${e.title} (${new Date(e.start_time).toLocaleString(lang === 'es' ? 'es-MX' : 'en-US', { timeZone: HUB_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })})${e.zoom_join_url ? ' · Zoom' : ''}`).join('\n')
+          : L(lang, 'Your week is clear! No upcoming events. To add one, try:\n  "Schedule a meeting with the team for tomorrow"', '¡Semana libre! No tienes eventos. Para agregar uno: "Agenda una reunión con el equipo mañana a las 10"');
         break;
       }
 
@@ -653,8 +686,8 @@ async function executeCommand(inputText, userEmail) {
         });
         data = reminders;
         response = reminders.length > 0
-          ? `${reminders.length} pending reminder${reminders.length > 1 ? 's' : ''}:\n` + reminders.map(r => `  - ${r.title} ${r.due_date ? '(due: ' + r.due_date.toISOString().split('T')[0] + ')' : ''}`).join('\n')
-          : 'No pending reminders. To add one, try:\n  "Remind me to call the vendor next Tuesday"';
+          ? L(lang, `${reminders.length} pending reminder${reminders.length > 1 ? 's' : ''}:\n`, `${reminders.length} recordatorio${reminders.length > 1 ? 's' : ''} pendiente${reminders.length > 1 ? 's' : ''}:\n`) + reminders.map(r => `  - ${r.title} ${r.due_date ? '(due: ' + r.due_date.toISOString().split('T')[0] + ')' : ''}`).join('\n')
+          : L(lang, 'No pending reminders. To add one, try:\n  "Remind me to call the vendor next Tuesday"', 'No hay recordatorios pendientes. Para crear uno: "Recuérdame llamar al proveedor el martes"');
         break;
       }
 
@@ -665,6 +698,14 @@ async function executeCommand(inputText, userEmail) {
       }
 
       case 'help': {
+        if (lang === 'es') {
+          response = `Puedes pedirme cosas como:\n\n` +
+            `TAREAS\n  "¿Qué tengo pendiente?"\n  "Muéstrame las tareas vencidas"\n  "Crea una tarea llamar al proveedor"\n  "Recuérdame enviar la propuesta el viernes"\n\n` +
+            `PROYECTOS\n  "Muéstrame mis proyectos"\n  "¿Hay algo vencido?"\n  "Dame un resumen"\n\n` +
+            `AGENDA (Zoom incluido por defecto)\n  "¿Qué tengo esta semana?"\n  "Agenda una reunión con Eduardo mañana a las 10:30"\n  "Tengo una cita con Ana el lunes a las 3 de la tarde, sin zoom"\n\n` +
+            `Habla o escribe con naturalidad, en español o en inglés.`;
+          break;
+        }
         response = `Here are some things you can ask me:\n\n` +
           `TASKS & TO-DOS\n` +
           `  "What do I need to do?"\n` +
@@ -689,6 +730,11 @@ async function executeCommand(inputText, userEmail) {
       }
 
       default:
+        if (lang === 'es') {
+          response = `No estoy seguro de qué necesitas. Prueba con:\n\n` +
+            `  "¿Qué tengo pendiente?"\n  "Muéstrame mis proyectos"\n  "Agenda una reunión con Eduardo mañana a las 10:30"\n  "Recuérdame llamar a Carlos el viernes"\n  "Ayuda" — para ver todo`;
+          break;
+        }
         response = `I'm not sure what you mean. Here are some things you can try:\n\n` +
           `  "What do I need to do?" — see your pending tasks\n` +
           `  "Show my projects" — list all projects\n` +
@@ -698,11 +744,11 @@ async function executeCommand(inputText, userEmail) {
     }
   } catch (err) {
     console.error('[D2AI NLP] Execution error:', err);
-    response = `Oops, something went wrong: ${err.message}. Please try again.`;
+    response = L(lang, `Oops, something went wrong: ${err.message}. Please try again.`, `Algo salió mal: ${err.message}. Intenta de nuevo.`);
     success = false;
   }
 
-  return { intent, entities, actionTaken, response, data, success };
+  return { intent, entities, actionTaken, response, data, success, lang };
 }
 
-module.exports = { executeCommand, detectIntent, extractEntities };
+module.exports = { executeCommand, detectIntent, extractEntities, parseAttendees };
