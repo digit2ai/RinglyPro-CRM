@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Propuesta Doña Elena</title>
+<meta name="description" content="Propuesta comercial y técnica de ISTC para Doña Elena C.A.: tienda en línea, aplicación móvil y panel administrativo conectados a SAINT.">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Los mismos tokens de la presentación (index.html), leídos del logo. */
+  --gold:#f7b416; --gold2:#e8900c; --goldL:#ffd75a; --sun:#ffe9a8;
+  --brown:#4a1806; --brown2:#6e2a0d; --brown3:#8a3a14;
+  --cream:#fff7e3; --cream2:#fdeec6; --line:#ecd9a6;
+  --ink:#3a1405; --mut:#6d4a32;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:#e9dcc0;-webkit-font-smoothing:antialiased;line-height:1.42}
+.page{width:8.5in;height:11in;margin:24px auto;background:var(--cream);box-shadow:0 10px 40px rgba(0,0,0,.18);position:relative;overflow:hidden;padding:0 0 .5in}
+.page::before{content:"";position:absolute;right:-1.6in;top:-1.9in;width:4.4in;height:4.4in;border-radius:50%;background:radial-gradient(circle at 40% 40%,var(--goldL),var(--gold) 55%,var(--gold2));opacity:.22}
+.in{padding:0 .65in;position:relative}
+.hero{background:radial-gradient(900px 500px at 80% 40%,var(--goldL),var(--gold) 50%,var(--gold2));padding:.32in .65in .28in;display:flex;align-items:center;gap:.35in;position:relative}
+.hero img{width:1.5in;height:auto;filter:drop-shadow(0 10px 18px rgba(74,24,6,.35))}
+.tag{display:inline-block;background:var(--brown);color:#fff;font-weight:800;font-size:9.5pt;letter-spacing:.14em;text-transform:uppercase;padding:5px 11px 4px;border-radius:5px;transform:rotate(-2deg);box-shadow:0 3px 0 var(--brown3)}
+h1{font-weight:900;font-size:22pt;line-height:1.05;color:var(--brown);margin-top:12px}
+.sub{font-weight:700;color:var(--brown2);font-size:11.5pt;margin-top:6px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.meta span{background:var(--brown);color:#fff;font-weight:700;font-size:9pt;padding:5px 10px;border-radius:999px}
+.meta span b{color:var(--goldL)}
+h2{font-weight:900;font-size:14.5pt;color:var(--brown);margin:13px 0 5px;display:flex;align-items:center;gap:10px}
+h2 .n{width:28px;height:28px;border-radius:50%;flex:0 0 28px;background:radial-gradient(circle at 35% 30%,var(--goldL),var(--gold) 60%,var(--gold2));display:flex;align-items:center;justify-content:center;font-size:12pt;color:var(--brown)}
+h3{font-weight:800;font-size:11pt;color:var(--brown3);margin:9px 0 4px}
+p,li{font-size:9.5pt;font-weight:500}
+p+p{margin-top:8px}
+ul{margin:4px 0 0 0;list-style:none}
+li{position:relative;padding-left:18px;margin:3px 0}
+li::before{content:"";position:absolute;left:2px;top:.55em;width:8px;height:8px;border-radius:50%;background:var(--gold2)}
+li.sub2{margin-left:18px}
+li.sub2::before{background:var(--brown3);width:6px;height:6px}
+b{font-weight:800;color:var(--brown)}
+table{width:100%;border-collapse:collapse;margin-top:8px;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:10pt}
+th{background:var(--brown);color:#fff;text-align:left;font-size:8pt;letter-spacing:.07em;text-transform:uppercase;padding:6px 11px}
+td{padding:6px 11px;border-top:1px solid var(--line);vertical-align:top;font-weight:500}
+td.r,th.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.tot td{background:var(--cream2);font-weight:900;color:var(--brown)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 4px 0 var(--cream2)}
+.card h3{margin:0 0 4px;color:var(--brown)}
+.card p{font-size:9.5pt;color:var(--mut)}
+.note{margin-top:12px;background:var(--cream2);border:1px dashed var(--brown3);border-radius:10px;padding:10px 12px;font-size:9.5pt}
+.sign{margin-top:26px;display:flex;align-items:center;gap:14px}
+.sign .bar{width:6px;align-self:stretch;background:var(--gold);border-radius:3px}
+.sign p{font-size:10pt}
+.foot{margin-top:18px;font-size:8.5pt;color:var(--mut);font-weight:600}
+.pb{break-before:page}
+@page{size:letter;margin:0}
+@media print{
+  body{background:none}
+  .page{margin:0;box-shadow:none;break-after:page}
+  .page:last-child{break-after:auto}
+}
+@media screen and (max-width:760px){
+  .page{width:auto;margin:0;height:auto;padding-bottom:24px}
+  .in{padding:0 18px}.hero{padding:22px 18px;flex-direction:column-reverse;align-items:flex-start}
+  .hero img{width:130px}.cards{grid-template-columns:1fr}h1{font-size:22pt}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <div style="flex:1">
+      <span class="tag">ISTC · Propuesta comercial y técnica</span>
+      <h1>Desarrollo de Aplicación <span style="white-space:nowrap">E-commerce</span> y Panel Administrativo</h1>
+      <div class="sub">Doña Elena C.A.</div>
+      <div class="meta"><span>Fecha: <b>Octubre 2026</b></span><span>Ejecución: <b>2 meses (8 semanas)</b></span><span>Inversión total: <b>$16,000.00 USD</b></span></div>
+    </div>
+    <img src="logo.png" alt="Logotipo de Comercializadora Doña Elena">
+  </div>
+
+  <div class="in">
+    <h2><span class="n">1</span>Resumen Ejecutivo</h2>
+    <p>La presente propuesta contempla el diseño, desarrollo e implementación integral desde cero de una plataforma de comercio electrónico de tienda única adaptada para Doña Elena. La solución optimiza la experiencia de compra de los usuarios y centraliza la gestión operativa, de inventario y analítica del negocio.</p>
+    <p>El sistema se desarrollará con tecnologías modernas de alto rendimiento en la nube mediante Supabase Pro, control de versiones en GitHub y despliegue continuo en Vercel. Adicionalmente, se contemplan dos modalidades de entrega para el acceso de los usuarios finales (Web mediante dominio propio y Aplicación Móvil bajo opción PWA o despliegue nativo en tiendas de aplicaciones), permitiendo a la directiva seleccionar la estrategia que mejor se adapte a sus objetivos comerciales.</p>
+
+    <h2><span class="n">2</span>Alcance Funcional del Sistema</h2>
+    <h3>2.1. Aplicaciones y Canales de Acceso</h3>
+    <ul>
+      <li><b>Versión Web (Dominio Propio):</b> Plataforma web accesible directamente mediante el dominio propio de la empresa, optimizada para SEO, velocidad de carga y adaptada a cualquier navegador de escritorio o móvil.</li>
+      <li><b>Modalidades para Dispositivos Móviles:</b> El cliente final podrá optar por dos modalidades de distribución móvil:</li>
+      <li class="sub2"><b>Opción A (PWA):</b> Aplicación web progresiva instalable directamente desde el navegador móvil sin pasar por tiendas de aplicaciones, con notificaciones push y funcionamiento offline básico.</li>
+      <li class="sub2"><b>Opción B (Apps Nativas en Stores):</b> Empaquetado y publicación oficial de la aplicación en Google Play Store (Android) y Apple App Store (iOS), brindando mayor prestigio y presencia directa en las tiendas oficiales.</li>
+    </ul>
+    <h3>2.2. Módulos Funcionales (Cliente y Admin)</h3>
+    <ul>
+      <li><b>Catálogo de Productos:</b> Visualización por categorías, motor de búsqueda avanzado, filtros y detalles completos de productos (precios, stock disponible y descripciones).</li>
+      <li><b>Carrito y Checkout:</b> Control de artículos en el carrito, selección de modalidad de entrega (Delivery local o Retiro en tienda) y métodos de pago.</li>
+      <li><b>Gestión de Cuenta:</b> Registro de usuarios, inicio de sesión seguro (gestión mediante Supabase Auth), historial de pedidos y libreta de direcciones.</li>
+      <li><b>Seguimiento en Vivo:</b> Actualizaciones de estado de los pedidos en tiempo real (Recibido, En preparación, En camino, Entregado) mediante las capacidades Realtime de Supabase.</li>
+      <li><b>Panel Administrativo (Backoffice):</b> Interfaz operativa para que el personal reciba, gestione, imprima y actualice el estatus de los pedidos web y control de inventario sincronizado.</li>
+      <li><b>Panel de Métricas y Analítica:</b> Visualización de métricas de rendimiento comercial, reportes de ventas diarias, semanales y mensuales, y productos con mayor rotación o demanda en la tienda.</li>
+    </ul>
+
+  </div>
+</div>
+<div class="page">
+  <div class="in" style="padding-top:.5in">
+    <h2 style="margin-top:0"><span class="n">3</span>Arquitectura e Integración con Sistema Saint</h2>
+    <p>Para asegurar la correcta sincronización entre la plataforma en la nube y el sistema administrativo Saint Enterprise del negocio, se establecen dos alternativas técnicas evaluables:</p>
+    <div class="cards">
+      <div class="card"><h3>Opción 1: Integración a través del Canal Cloud Existente</h3><p>Si la empresa ya cuenta con un mecanismo automatizado que exporta o respalda la base de datos de inventario hacia la nube periódicamente (cada 20 minutos), se configurará un conector nativo (Webhook o tarea programada) para que Supabase Pro consuma dichos datos de manera automatizada.</p></div>
+      <div class="card"><h3>Opción 2: Implementación de Agente de Sincronización Dedicado</h3><p>En caso de requerir un canal directo de control local, se instalará un servicio o agente ligero en segundo plano en el servidor local de la tienda para extraer periódicamente los cambios de inventario y precios hacia Supabase Pro, y viceversa (descargando los pedidos web directamente como preventas en Saint).</p></div>
+    </div>
+
+    <h2><span class="n">4</span>Cronograma de Ejecución (8 Semanas)</h2>
+    <p>El plan de trabajo está estructurado para completarse en un período estimado de 2 meses, garantizando fases rigurosas de control de calidad:</p>
+    <table>
+      <tr><th style="width:15%">Fase</th><th>Descripción de Actividades</th><th style="width:22%">Duración</th></tr>
+      <tr><td><b>Fase 1</b></td><td>Arquitectura, auditoría técnica de integración, diseño de base de datos en Supabase Pro y wireframes UI/UX.</td><td>Semanas 1 - 2</td></tr>
+      <tr><td><b>Fase 2</b></td><td>Desarrollo del frontend (Web, PWA y preparación para stores), flujos de compra, carrito y diseño responsivo.</td><td>Semanas 3 - 5</td></tr>
+      <tr><td><b>Fase 3</b></td><td>Desarrollo del backend, capa de sincronización con sistema Saint y panel de administración (Backoffice y métricas).</td><td>Semana 6</td></tr>
+      <tr><td><b>Fase 4</b></td><td>Pruebas integrales QA, corrección de incidencias, despliegue en Vercel / Stores y capacitación al personal.</td><td>Semanas 7 - 8</td></tr>
+    </table>
+
+    <h2><span class="n">5</span>Presupuesto y Desglose de Inversión</h2>
+    <p>La inversión total para el desarrollo, pruebas y puesta en producción del proyecto es de dieciséis mil dólares americanos ($16,000 USD).</p>
+    <table>
+      <tr><th>Componente / Etapa del Proyecto</th><th class="r">Inversión (USD)</th></tr>
+      <tr><td>Diseño UI/UX, Auditoría de Integración y Arquitectura de Datos</td><td class="r">$2,500.00</td></tr>
+      <tr><td>Desarrollo Frontend (Web Dominio + Opciones Móviles PWA / Stores)</td><td class="r">$5,500.00</td></tr>
+      <tr><td>Desarrollo Backend, Capa de Sincronización y Panel Administrativo (Con Métricas)</td><td class="r">$4,500.00</td></tr>
+      <tr><td>Pruebas QA, Despliegue en Vercel con Dominio y Entrega</td><td class="r">$3,500.00</td></tr>
+      <tr class="tot"><td>TOTAL GENERAL</td><td class="r">$16,000.00 USD</td></tr>
+    </table>
+
+  </div>
+</div>
+<div class="page">
+  <div class="in" style="padding-top:.5in">
+    <h2 style="margin-top:0"><span class="n">6</span>Forma de Pago y Condiciones</h2>
+    <ul>
+      <li><b>Anticipo Inicial (35%):</b> Para la formalización del inicio del proyecto y levantamiento técnico detallado ($5,600 USD).</li>
+      <li><b>Segundo Hito (40%):</b> Al completar el desarrollo funcional y la pasarela de integración probada en entorno de desarrollo ($6,400 USD).</li>
+      <li><b>Hito Final (25%):</b> Contra entrega, pruebas finales exitosas y despliegue definitivo en producción ($4,000 USD).</li>
+    </ul>
+    <div class="note"><b>Condiciones Operativas:</b> Los costos de suscripciones de terceros (como Supabase Pro, dominio propio o tarifas de desarrollador en Google Play / Apple App Store) corren por cuenta nuestra el primer año, de ahí en adelante el cliente asume los costos operativos anuales.</div>
+    <table style="margin-top:12px">
+      <tr><th>Gastos Anuales</th><th class="r">Inversión (USD)</th></tr>
+      <tr><td>Base de Datos (Supabase Pro)</td><td class="r">$300.00</td></tr>
+      <tr><td>Tienda Apple (App Store)</td><td class="r">$100.00</td></tr>
+      <tr><td>Dominio (Vercel)</td><td class="r">$25.00</td></tr>
+      <tr><td>Modelo de IA para Control de Gestión</td><td class="r">$120.00</td></tr>
+      <tr><td>Soporte y Mantenimiento del Sistema</td><td class="r">$2,400.00</td></tr>
+      <tr class="tot"><td>TOTAL GENERAL</td><td class="r">$2,945.00 USD</td></tr>
+    </table>
+
+    <div class="note" style="margin-top:18px"><b>Presentación narrada y simulador:</b> aiagent.ringlypro.com/dona-elena/ — el simulador usa datos de ejemplo y no está conectado al sistema Saint de Doña Elena.</div>
+
+    <div class="sign">
+      <div class="bar"></div>
+      <p><b>Ing. Luisa Pirela</b><br>ISTC · Ingeniería y Servicios Tecnológicos Colón<br>Email: istc.ingenieriatecnologica@gmail.com<br>Contacto: +58 424 7132078</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
