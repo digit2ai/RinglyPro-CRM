@@ -35,11 +35,11 @@ const { synthesize } = require('../src/services/edge-tts');
 const ROOT = path.join(__dirname, '..');
 const DECK = path.join(ROOT, 'public', 'dona-elena', 'index.html');
 const VERT = process.argv.includes('--vertical');
-const W = VERT ? 1080 : 1920, H = VERT ? 1920 : 1080, FPS = 12, TAIL = 0.5;
+const W = VERT ? 1080 : 1920, H = VERT ? 1920 : 1080, FPS = 12, TAIL = 0.5, LEAD = 1;
 const arg = (k, d) => (process.argv.find(a => a.startsWith(`--${k}=`)) || `=${d}`).split('=').pop();
 let CRF = parseInt(arg('crf', 14), 10);
 const CAP_MB = parseFloat(arg('mb', 15));
-const OUT = arg('out', path.join(os.homedir(), 'Desktop', VERT ? 'Dona-Elena-presentacion-vertical.mp4' : 'Dona-Elena-presentacion.mp4'));
+const OUT = arg('out', path.join(os.homedir(), 'Desktop', 'Dona Elena', VERT ? 'Dona-Elena-presentacion-vertical.mp4' : 'Dona-Elena-presentacion.mp4'));
 
 const ff = (b, a) => execFileSync(b, a, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim();
 const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]));
@@ -71,7 +71,11 @@ function captionAt(text, frac) {
     if (!buf || buf.length < 1000) throw new Error(`Mara no devolvió audio para la lámina ${i + 1}`);
     const mp3 = path.join(work, `v${pad(i + 1, 2)}.mp3`), wav = path.join(work, `v${pad(i + 1, 2)}.wav`);
     fs.writeFileSync(mp3, buf);
-    ff('ffmpeg', ['-v', 'error', '-y', '-i', mp3, '-af', `apad=pad_dur=${TAIL}`, '-ac', '1', '-ar', '44100', wav]);
+    // La primera pista empieza con un segundo de silencio: muchos reproductores
+    // (WhatsApp, teléfonos) se comen la primera fracción de segundo de un video,
+    // y con la voz en el segundo cero el "Hola" de Mara se cortaba.
+    const lead = i === 0 ? `adelay=${LEAD * 1000}:all=1,` : '';
+    ff('ffmpeg', ['-v', 'error', '-y', '-i', mp3, '-af', `${lead}apad=pad_dur=${TAIL}`, '-ac', '1', '-ar', '44100', wav]);
     durs.push(dur(wav));
     console.log(`  voz ${i + 1}: ${durs[i].toFixed(1)} s`);
   }
@@ -193,7 +197,8 @@ function captionAt(text, frac) {
       // una imagen por frase: el subtítulo cambia donde cambia la frase
       let acc = 0;
       for (let k = 0; k < ss.length; k++) {
-        const t = (acc / text.length) * (D - TAIL);
+        const lead0 = i === 0 ? LEAD : 0;
+        const t = (k === 0 ? 0 : lead0) + (acc / text.length) * (D - TAIL - lead0);
         await setCap(ss[k].trim(), titles[i], (base + t) / total * 100);
         events.push({ slide: i, t, img: await snap() });
         acc += ss[k].length;
