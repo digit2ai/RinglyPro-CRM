@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#4a1806">
+<title>Doña Elena en línea</title>
+<meta name="description" content="Propuesta de Digit2AI: tienda en línea para Comercializadora Doña Elena conectada a SAINT, con simulador. Datos de ejemplo.">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>html,body{background:#2b0e03}</style>
+<style>
+:root{
+  /* Leídos del logo: oro, oro profundo, marrón de la placa, crema del borde. */
+  --gold:#f7b416; --gold2:#e8900c; --goldL:#ffd75a; --sun:#ffe9a8;
+  --brown:#4a1806; --brown2:#6e2a0d; --brown3:#8a3a14;
+  --cream:#fff7e3; --cream2:#fdeec6; --line:#ecd9a6;
+  --ink:#3a1405; --mut:#6d4a32; --ok:#1f7a3a; --warn:#a14b00; --bad:#a3261b;
+  --font:'Montserrat',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--ink);background:radial-gradient(1200px 800px at 50% 30%,#5a1f08,#2b0e03);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+.ribbon{position:fixed;top:0;left:0;right:0;z-index:30;background:var(--brown);color:#fff;font-size:12px;font-weight:600;text-align:center;padding:6px 12px;letter-spacing:.02em}
+.ribbon b{color:var(--goldL)}
+
+/* ── escenario ─────────────────────────────────────────────── */
+.vp{position:fixed;inset:28px 0 64px 0;display:flex;align-items:center;justify-content:center}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:0 0 auto}
+.slide{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:var(--cream);box-shadow:0 30px 80px rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .45s;padding:54px 64px 46px;display:flex;flex-direction:column}
+.slide.on{opacity:1;visibility:visible}
+.slide::before{content:"";position:absolute;right:-180px;top:-200px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle at 40% 40%,var(--goldL),var(--gold) 55%,var(--gold2));opacity:.22;pointer-events:none}
+.tag{display:inline-block;align-self:flex-start;background:var(--brown);color:#fff;font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;padding:7px 14px 6px;border-radius:6px;transform:rotate(-2deg);box-shadow:0 4px 0 var(--brown3)}
+h1{font-weight:900;font-size:60px;line-height:1.02;letter-spacing:-.01em;color:var(--brown)}
+h2{font-weight:900;font-size:40px;line-height:1.08;color:var(--brown);margin:16px 0 8px}
+h3{font-weight:800;font-size:19px;color:var(--brown)}
+p,li{font-size:18px;line-height:1.45;font-weight:500;color:var(--ink)}
+.lead{font-size:21px;color:var(--mut);max-width:880px}
+.hl{background:linear-gradient(transparent 58%,var(--goldL) 58%);padding:0 2px}
+.grid{display:grid;gap:18px;margin-top:22px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 20px 18px;box-shadow:0 6px 0 var(--cream2)}
+.card p{font-size:16px;margin-top:6px;color:var(--mut)}
+.num{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--goldL),var(--gold) 60%,var(--gold2));color:var(--brown);font-weight:900;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.pill{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.p-ok{background:#dff3e4;color:var(--ok)}.p-adapt{background:#fff0c9;color:var(--warn)}.p-new{background:#f8dcd6;color:var(--bad)}
+.foot{margin-top:auto;font-size:13px;color:var(--mut);font-weight:600}
+
+/* portada */
+.cover{background:radial-gradient(900px 700px at 78% 45%,var(--goldL),var(--gold) 45%,var(--gold2) 85%);flex-direction:row;align-items:center;gap:46px}
+.cover::before{display:none}
+.cover .txt{flex:1}
+.cover h1{font-size:66px}
+.cover .lead{color:var(--brown);font-weight:600}
+.cover .logo{width:400px;height:auto;filter:drop-shadow(0 18px 30px rgba(74,24,6,.35))}
+.cover .by{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}
+.cover .by span{background:var(--brown);color:#fff;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px}
+
+/* flujo */
+.flow{display:flex;align-items:stretch;gap:0;margin-top:28px}
+.flow .st{flex:1;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;position:relative}
+.flow .ar{width:46px;display:flex;align-items:center;justify-content:center;color:var(--brown3);font-weight:900;font-size:28px}
+.flow .st.saint{background:var(--brown);color:#fff;border-color:var(--brown)}
+.flow .st.saint h3,.flow .st.saint p{color:#fff}
+.flow .st.saint p{opacity:.88}
+.flow .st h3{margin-bottom:6px}
+.flow .st p{font-size:15px;color:var(--mut)}
+.back{margin-top:16px;background:var(--cream2);border:1px dashed var(--brown3);border-radius:14px;padding:14px 18px;font-size:16px;font-weight:600}
+
+/* tabla simple */
+table.t{width:100%;border-collapse:collapse;margin-top:18px;background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+table.t th{background:var(--brown);color:#fff;text-align:left;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px}
+table.t td{padding:11px 14px;border-top:1px solid var(--line);font-size:16px;font-weight:500}
+table.t td.r{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr.tot td{font-weight:800;background:var(--cream2)}
+
+/* ── simulador ─────────────────────────────────────────────── */
+.sim{display:grid;grid-template-columns:1.18fr 1fr;gap:16px;height:100%;min-height:0}
+.slide.simslide{padding:26px 28px 22px}
+.slide.simslide::before{display:none}
+.simhead{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.simhead h2{font-size:24px;margin:0}
+.simhead .sp{flex:1}
+.simbtn{background:var(--brown);color:#fff;border:0;border-radius:999px;font-weight:800;font-size:13px;padding:9px 14px;min-height:36px}
+.simbtn.alt{background:#fff;color:var(--brown);border:1px solid var(--brown3)}
+.simwrap{flex:1;min-height:0}
+
+.shop{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:0;position:relative}
+.shop .bar{background:var(--brown);color:#fff;display:flex;align-items:center;gap:10px;padding:9px 12px}
+.shop .bar img{width:40px;height:40px}
+.shop .bar .nm{font-weight:900;font-size:15px;line-height:1.05}
+.shop .bar .nm small{display:block;font-weight:600;font-size:10.5px;color:var(--goldL);letter-spacing:.08em}
+.shop .search{flex:1;background:#fff;border-radius:999px;display:flex;align-items:center;padding:0 12px;height:34px;color:var(--mut);font-size:13px;font-weight:600}
+.shop .search input{border:0;outline:0;font:inherit;font-size:13px;color:var(--ink);width:100%;background:transparent}
+.shop .city{font-size:11.5px;font-weight:700;background:var(--brown2);border-radius:999px;padding:6px 10px;white-space:nowrap}
+.shop .cartb{background:var(--gold);color:var(--brown);border:0;border-radius:999px;font-weight:900;font-size:13px;padding:8px 12px;white-space:nowrap}
+.shop .cats{display:flex;gap:6px;padding:9px 12px;border-bottom:1px solid var(--line);overflow-x:auto}
+.shop .cats button{border:1px solid var(--line);background:var(--cream);color:var(--brown);font-weight:700;font-size:12px;padding:6px 11px;border-radius:999px;white-space:nowrap}
+.shop .cats button.on{background:var(--gold);border-color:var(--gold2)}
+.shop .promo{margin:9px 12px 0;background:linear-gradient(90deg,var(--gold),var(--goldL));border-radius:12px;padding:9px 12px;font-weight:800;color:var(--brown);font-size:13px;display:flex;justify-content:space-between;gap:10px}
+.shop .promo span{font-weight:600}
+.prods{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:10px 12px 12px;overflow:auto;min-height:0}
+.pc{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:3px;background:#fff;transition:box-shadow .3s,transform .3s}
+.pc.pulse{box-shadow:0 0 0 3px var(--gold);transform:translateY(-2px)}
+.pc .ph{height:52px;border-radius:9px;background:radial-gradient(circle at 35% 30%,var(--sun),var(--cream2));display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--brown3);font-size:20px}
+.pc .n{font-size:11.5px;font-weight:700;line-height:1.25;min-height:29px}
+.pc .pr{font-size:15px;font-weight:900;color:var(--brown)}
+.pc .bs{font-size:10.5px;color:var(--mut);font-weight:600}
+.pc .st{font-size:10.5px;font-weight:700;color:var(--ok)}
+.pc .st.low{color:var(--warn)}.pc .st.out{color:var(--bad)}
+.pc button{margin-top:3px;border:0;background:var(--brown);color:#fff;font-weight:800;font-size:11.5px;border-radius:8px;padding:6px 0;min-height:28px}
+.pc button:disabled{background:#c9b9a6;cursor:not-allowed}
+
+.drawer{position:absolute;right:0;top:0;bottom:0;width:62%;background:#fff;border-left:2px solid var(--brown);box-shadow:-16px 0 30px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .35s;display:flex;flex-direction:column;padding:12px 14px;z-index:3}
+.drawer.open{transform:none}
+.drawer h3{font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.drawer h3 button{border:0;background:none;font-size:20px;color:var(--brown);font-weight:800;min-width:32px;min-height:32px}
+.lines{flex:1;overflow:auto;margin:8px 0;font-size:13px}
+.line{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-weight:600}
+.line small{display:block;color:var(--mut);font-weight:600;font-size:11px}
+.sum{font-size:12.5px;font-weight:600}
+.sum div{display:flex;justify-content:space-between;padding:2px 0}
+.sum .big{font-size:16px;font-weight:900;color:var(--brown);border-top:2px solid var(--brown);margin-top:4px;padding-top:6px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.opts label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.opts select{width:100%;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--cream)}
+.pay{border:0;background:var(--gold);color:var(--brown);font-weight:900;font-size:14px;border-radius:999px;padding:10px;min-height:40px}
+.pay:disabled{opacity:.5;cursor:not-allowed}
+
+.saint{background:var(--brown);color:#fff;border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;min-height:0}
+.saint .top{display:flex;align-items:center;gap:8px}
+.saint .top b{font-weight:900;font-size:15px}
+.saint .top .sp{flex:1}
+.conn{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#2f0f03;color:var(--goldL);border-radius:999px;padding:5px 10px;display:flex;align-items:center;gap:6px}
+.conn i{width:8px;height:8px;border-radius:50%;background:#58d26f;box-shadow:0 0 0 0 rgba(88,210,111,.7);animation:blink 1.6s infinite}
+@keyframes blink{70%{box-shadow:0 0 0 8px rgba(88,210,111,0)}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.kpi{background:#5d2209;border-radius:10px;padding:8px}
+.kpi s{display:block;text-decoration:none;font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--sun)}
+.kpi b{font-size:19px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+.sec{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--goldL);margin-top:2px}
+table.inv{width:100%;border-collapse:collapse;font-size:11.5px}
+table.inv th{text-align:left;color:var(--sun);font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 4px;border-bottom:1px solid #7a3414}
+table.inv td{padding:3.5px 4px;border-bottom:1px solid #5d2209;font-weight:600;font-variant-numeric:tabular-nums}
+table.inv td.r{text-align:right}
+table.inv tr.flash td{background:rgba(247,180,22,.35)}
+.orders{display:flex;flex-direction:column;gap:6px;min-height:46px}
+.ord{background:#fff;color:var(--ink);border-radius:10px;padding:7px 9px;font-size:12px;font-weight:700}
+.ord .row{display:flex;justify-content:space-between;gap:6px}
+.steps{display:flex;gap:4px;margin-top:5px}
+.steps span{flex:1;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;text-align:center;padding:3px 2px;border-radius:5px;background:#efe3cf;color:#8b7259}
+.steps span.d{background:var(--gold);color:var(--brown)}
+.empty{font-size:12px;color:var(--sun);font-weight:600;opacity:.8}
+.log{background:#2f0f03;border-radius:10px;padding:7px 9px;font:600 10.5px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#f3dcb1;flex:1;min-height:60px;overflow:auto}
+.log div span{color:var(--goldL)}
+
+/* ── reproductor ───────────────────────────────────────────── */
+.dock{position:fixed;left:0;right:0;bottom:0;height:64px;background:rgba(43,14,3,.94);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;color:#fff}
+.orb{width:38px;height:38px;border-radius:50%;flex:0 0 38px;background:radial-gradient(circle at 35% 30%,var(--goldL),var(--gold) 50%,var(--gold2));box-shadow:0 0 0 0 rgba(247,180,22,.6)}
+.orb.sp{animation:pul 1.2s ease-in-out infinite}
+@keyframes pul{70%{box-shadow:0 0 0 14px rgba(247,180,22,0)}}
+.cap{flex:1;min-width:0}
+#capT{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--goldL)}
+#capX{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{background:#5d2209;color:#fff;border:0;border-radius:10px;min-width:44px;height:44px;font-weight:900;font-size:16px}
+#cnt{font-size:13px;font-weight:700;min-width:54px;text-align:center}
+#prog{position:fixed;left:0;bottom:64px;height:3px;background:var(--gold);width:0;z-index:21;transition:width .3s}
+
+.gate{position:fixed;inset:0;z-index:40;background:rgba(43,14,3,.86);display:flex;align-items:center;justify-content:center;padding:16px}
+.gate.off{display:none}
+.gate .box{background:var(--cream);border-radius:22px;padding:30px 30px 26px;max-width:460px;text-align:center}
+.gate img{width:150px}
+.gate h1{font-size:30px;margin-top:8px}
+.gate p{font-size:16px;color:var(--mut);margin:10px 0 18px}
+.gate button{display:block;width:100%;border:0;border-radius:999px;padding:14px;font-weight:900;font-size:16px;margin-top:10px;min-height:48px}
+#start{background:var(--brown);color:#fff}
+#silent{background:#fff;color:var(--brown);border:1px solid var(--brown3)!important}
+
+/* ── móvil: las láminas se apilan ─────────────────────────── */
+@media (max-width:820px){
+  body{overflow:auto}
+  .ribbon{position:static;font-size:11px}
+  .vp{position:static;display:block;padding:12px 12px 90px}
+  #stage{width:auto;height:auto;transform:none!important}
+  .slide{position:relative;opacity:1;visibility:visible;margin-bottom:16px;padding:26px 18px 22px;border-radius:18px}
+  .slide.simslide{padding:18px 12px}
+  h1,.cover h1{font-size:36px}h2{font-size:27px}
+  .lead{font-size:17px}p,li{font-size:16px}
+  .cover{flex-direction:column-reverse;gap:14px;text-align:left}
+  .cover .logo{width:210px}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .flow{flex-direction:column}.flow .ar{width:auto;height:30px;transform:rotate(90deg)}
+  .sim{grid-template-columns:1fr}
+  .prods{grid-template-columns:repeat(2,1fr);max-height:none}
+  .shop .bar{flex-wrap:wrap}.shop .search{order:5;flex-basis:100%}
+  .drawer{width:100%}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .simhead{flex-wrap:wrap}
+  .slide::before{display:none}
+  table.t td,table.t th{font-size:13px;padding:8px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="ribbon">Propuesta de <b>Digit2AI</b> para Comercializadora Doña Elena · Datos de ejemplo · No es un sitio oficial de SAINT ni de Farmatodo</div>
+
+<div class="vp"><div id="stage">
+
+  <!-- 1 portada -->
+  <section class="slide cover on" data-t="Bienvenida">
+    <div class="txt">
+      <span class="tag">Propuesta · Digit2AI</span>
+      <h1 style="margin-top:18px">Doña Elena,<br>ahora en línea.</h1>
+      <p class="lead" style="margin-top:16px">Una tienda en línea con la experiencia de las grandes cadenas, conectada a SAINT para que el inventario, los precios y los pedidos vivan en un solo lugar.</p>
+      <div class="by"><span>Tienda en línea</span><span>Conexión con SAINT</span><span>Dólares y bolívares</span><span>Simulador incluido</span></div>
+    </div>
+    <img class="logo" src="logo.png" alt="Logotipo de Comercializadora Doña Elena">
+  </section>
+
+  <!-- 2 el reto -->
+  <section class="slide" data-t="El reto de hoy">
+    <span class="tag">El punto de partida</span>
+    <h2>Hoy el negocio vive en SAINT,<br>pero los clientes compran por mensaje.</h2>
+    <div class="grid g4">
+      <div class="card"><div class="num">1</div><h3>Pedidos por WhatsApp</h3><p>Cada pedido se lee, se confirma y se vuelve a escribir a mano en SAINT.</p></div>
+      <div class="card"><div class="num">2</div><h3>Existencias a ciegas</h3><p>El cliente no sabe si hay producto hasta que alguien revisa el sistema.</p></div>
+      <div class="card"><div class="num">3</div><h3>Dos monedas</h3><p>Precios en dólares, cobros en bolívares, la tasa cambia cada día.</p></div>
+      <div class="card"><div class="num">4</div><h3>Sin vitrina</h3><p>No hay un lugar donde el cliente vea el catálogo completo y compre solo.</p></div>
+    </div>
+    <p class="foot">Supuestos de trabajo para la conversación. Los confirmamos con ustedes en la primera reunión.</p>
+  </section>
+
+  <!-- 3 la idea -->
+  <section class="slide" data-t="La idea">
+    <span class="tag">La propuesta</span>
+    <h2>Una tienda como las de las grandes cadenas,<br>con <span class="hl">SAINT como única fuente</span>.</h2>
+    <p class="lead">Tomamos lo que el cliente venezolano ya sabe usar en las tiendas grandes y lo conectamos al sistema administrativo que Doña Elena ya tiene.</p>
+    <div class="grid g3">
+      <div class="card"><h3>Lo que ve el cliente</h3><p>Buscador, categorías, ciudad de entrega, ofertas de la semana, carrito, precio en dólares y en bolívares, pago móvil o divisas, envío o retiro.</p></div>
+      <div class="card"><h3>Lo que hace SAINT</h3><p>Sigue siendo el dueño del catálogo, las existencias, los precios, el IVA de cada artículo y la factura. Nada se duplica.</p></div>
+      <div class="card"><h3>Lo que aporta Digit2AI</h3><p>La tienda, el puente con SAINT, el panel de control y una asistente de voz que responde con el catálogo real.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 flujo -->
+  <section class="slide" data-t="Cómo fluye la información">
+    <span class="tag">El circuito</span>
+    <h2>Un pedido, de la pantalla del cliente a la factura.</h2>
+    <div class="flow">
+      <div class="st saint"><h3>1 · SAINT</h3><p>Catálogo, existencias, precios en dólares y condición de IVA de cada artículo.</p></div>
+      <div class="ar">›</div>
+      <div class="st"><h3>2 · Tienda</h3><p>Muestra solo lo que hay. Convierte a bolívares con la tasa del día.</p></div>
+      <div class="ar">›</div>
+      <div class="st"><h3>3 · Pedido</h3><p>El cliente paga o elige pago contra entrega. Se valida el pago.</p></div>
+      <div class="ar">›</div>
+      <div class="st saint"><h3>4 · SAINT</h3><p>Entra como pedido, se factura con su imprenta digital y descuenta existencias.</p></div>
+    </div>
+    <div class="back">Y de vuelta: cada vez que SAINT cambia una existencia o un precio, la tienda lo refleja en la siguiente sincronización. El cliente nunca compra algo que no hay.</div>
+  </section>
+
+  <!-- 5 simulador (demostración automática) -->
+  <section class="slide simslide" data-t="Simulador · la tienda y SAINT" id="simSlide">
+    <div class="simhead">
+      <span class="tag">Simulador</span>
+      <h2>Mírelo funcionar</h2>
+      <span class="sp"></span>
+      <button class="simbtn alt" id="simReset">Reiniciar</button>
+      <button class="simbtn" id="simAuto">Ver demostración</button>
+    </div>
+    <div class="simwrap"><div class="sim">
+      <div class="shop">
+        <div class="bar">
+          <img src="logo.png" alt="">
+          <div class="nm">Doña Elena<small>EN LÍNEA</small></div>
+          <label class="search"><input id="q" placeholder="Busca harina, café, jabón…" aria-label="Buscar productos"></label>
+          <span class="city">Entrega en Caracas</span>
+          <button class="cartb" id="cartBtn">Carrito · <span id="cartN">0</span></button>
+        </div>
+        <div class="cats" id="cats"></div>
+        <div class="promo">Ofertas de la semana <span id="rateTxt"></span></div>
+        <div class="prods" id="prods"></div>
+        <div class="drawer" id="drawer">
+          <h3>Tu carrito <button id="closeCart" aria-label="Cerrar carrito">×</button></h3>
+          <div class="lines" id="lines"></div>
+          <div class="opts">
+            <div><label for="payM">Pago</label><select id="payM"><option value="pm">Pago móvil (Bs)</option><option value="usd">Divisas</option><option value="ce">Contra entrega</option></select></div>
+            <div><label for="shipM">Entrega</label><select id="shipM"><option value="d">Envío a domicilio</option><option value="r">Retiro en tienda</option></select></div>
+          </div>
+          <div class="sum" id="sum"></div>
+          <button class="pay" id="payBtn">Confirmar pedido</button>
+        </div>
+      </div>
+      <div class="saint">
+        <div class="top"><b>SAINT · panel de integración</b><span class="sp"></span><span class="conn"><i></i>Conexión simulada</span></div>
+        <div class="kpis">
+          <div class="kpi"><s>Pedidos hoy</s><b id="kOrd">0</b></div>
+          <div class="kpi"><s>Ventas USD</s><b id="kUsd">0,00</b></div>
+          <div class="kpi"><s>Artículos</s><b id="kArt">0</b></div>
+          <div class="kpi"><s>Última sync</s><b id="kSync">--:--</b></div>
+        </div>
+        <div class="sec">Inventario leído de SAINT</div>
+        <table class="inv"><thead><tr><th>Código</th><th>Artículo</th><th class="r">Exist.</th><th class="r">USD</th><th class="r">IVA</th></tr></thead><tbody id="inv"></tbody></table>
+        <div class="sec">Pedidos que entran a SAINT</div>
+        <div class="orders" id="orders"><div class="empty">Aún no hay pedidos. Agregue productos en la tienda.</div></div>
+        <div class="sec">Registro</div>
+        <div class="log" id="log"></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 6 monedas e impuestos -->
+  <section class="slide" data-t="Dólares, bolívares e impuestos">
+    <span class="tag">Precios y monedas</span>
+    <h2>El precio base vive en SAINT.<br>La tienda solo lo presenta y lo convierte.</h2>
+    <div class="grid g2">
+      <div>
+        <table class="t">
+          <tr><th>Ejemplo de pedido</th><th style="text-align:right">USD</th><th style="text-align:right">Bs</th></tr>
+          <tr><td>Artículos exentos de IVA</td><td class="r">6,00</td><td class="r">600,00</td></tr>
+          <tr><td>Artículos gravados</td><td class="r">4,00</td><td class="r">400,00</td></tr>
+          <tr><td>IVA dieciséis por ciento (sobre gravados)</td><td class="r">0,64</td><td class="r">64,00</td></tr>
+          <tr><td>IGTF tres por ciento (solo si paga en divisas)</td><td class="r">0,32</td><td class="r">no aplica</td></tr>
+          <tr class="tot"><td>Total pagando en divisas</td><td class="r">10,96</td><td class="r">—</td></tr>
+        </table>
+        <p class="foot" style="margin-top:10px">Tasa de ejemplo: un dólar = cien bolívares. No es la tasa del día.</p>
+      </div>
+      <div class="grid" style="margin-top:18px;gap:12px">
+        <div class="card"><h3>Tasa del día</h3><p>Se toma la tasa oficial publicada por el BCV y se muestra con su fecha en cada precio en bolívares.</p></div>
+        <div class="card"><h3>IVA por artículo</h3><p>Exento o gravado lo decide la ficha del artículo en SAINT, no la tienda.</p></div>
+        <div class="card"><h3>La factura sigue en SAINT</h3><p>La tienda no emite facturas. SAINT factura con su imprenta digital, como hoy.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 pagos y entregas -->
+  <section class="slide" data-t="Pagos y entregas">
+    <span class="tag">Cobrar y entregar</span>
+    <h2>Las formas de pago y entrega que el cliente ya usa.</h2>
+    <div class="grid g2">
+      <div class="card"><h3>Pagos</h3>
+        <ul style="margin:10px 0 0 20px"><li>Pago móvil y transferencia en bolívares, con número de referencia.</li><li>Divisas, con el IGTF calculado.</li><li>Contra entrega, en efectivo o punto de venta.</li></ul>
+        <p style="margin-top:10px">Al inicio, una persona del equipo confirma cada referencia antes de despachar. La conciliación automática con el banco es un paso posterior.</p></div>
+      <div class="card"><h3>Entregas</h3>
+        <ul style="margin:10px 0 0 20px"><li>Envío a domicilio por zonas y horarios que defina Doña Elena.</li><li>Retiro en tienda, listo para buscar.</li><li>Aviso al cliente en cada cambio de estado.</li></ul>
+        <p style="margin-top:10px">Los mensajes al cliente se preparan como borradores hasta que ustedes decidan enviarlos de forma automática.</p></div>
+    </div>
+  </section>
+
+  <!-- 8 panel -->
+  <section class="slide" data-t="El panel de control">
+    <span class="tag">Para la gerencia</span>
+    <h2>Un panel que responde lo que se pregunta cada mañana.</h2>
+    <div class="grid g4">
+      <div class="card"><h3>¿Cuánto vendimos?</h3><p>Pedidos y ventas del día en dólares y bolívares, por canal.</p></div>
+      <div class="card"><h3>¿Qué se está acabando?</h3><p>Artículos con pocas existencias en SAINT, antes de que el cliente lo note.</p></div>
+      <div class="card"><h3>¿Qué está pendiente?</h3><p>Pagos por confirmar, pedidos por despachar, entregas en camino.</p></div>
+      <div class="card"><h3>¿Está todo conectado?</h3><p>Hora de la última sincronización con SAINT y cualquier error, a la vista.</p></div>
+    </div>
+    <p class="lead" style="margin-top:22px">Cada cifra del panel sale de un pedido o de un registro de SAINT. Si un dato no existe, el panel lo dice en vez de estimarlo.</p>
+  </section>
+
+  <!-- 9 IA -->
+  <section class="slide" data-t="La capa de inteligencia artificial">
+    <span class="tag">Digit2AI</span>
+    <h2>Inteligencia artificial donde ayuda,<br>y en ningún otro lugar.</h2>
+    <div class="grid g3">
+      <div class="card"><span class="pill p-ok">Ya existe</span><h3 style="margin-top:10px">Asistente de voz en la tienda</h3><p>Responde preguntas del cliente leyendo el catálogo en pantalla. Si no está en el catálogo, no lo inventa.</p></div>
+      <div class="card"><span class="pill p-new">Por construir</span><h3 style="margin-top:10px">Alertas de reposición</h3><p>Avisa qué artículos conviene pedir al proveedor según lo que se vende en la tienda y en SAINT.</p></div>
+      <div class="card"><span class="pill p-new">Por construir</span><h3 style="margin-top:10px">Pedidos desde WhatsApp</h3><p>Convierte un mensaje en un carrito para que una persona lo revise y lo confirme.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 honestidad -->
+  <section class="slide" data-t="Qué existe y qué falta">
+    <span class="tag">Con claridad</span>
+    <h2>Qué existe hoy, qué se adapta y qué falta.</h2>
+    <table class="t">
+      <tr><th style="width:28%">Pieza</th><th style="width:18%">Estado</th><th>Detalle</th></tr>
+      <tr><td>Tienda en línea</td><td><span class="pill p-adapt">Se adapta</span></td><td>Base de tienda multicanal de Digit2AI, vestida con la marca Doña Elena.</td></tr>
+      <tr><td>Conexión con SAINT</td><td><span class="pill p-new">Por confirmar</span></td><td>SAINT no publica una interfaz de programación en su sitio. El método (DS Pedidos, lectura de su base de datos o archivos de intercambio) se acuerda con Saint de Venezuela.</td></tr>
+      <tr><td>Monedas e impuestos</td><td><span class="pill p-adapt">Se adapta</span></td><td>Tasa BCV, IVA por artículo e IGTF, con reglas que revisa su contador.</td></tr>
+      <tr><td>Panel de control</td><td><span class="pill p-adapt">Se adapta</span></td><td>Tablero existente de Digit2AI, con los indicadores de esta propuesta.</td></tr>
+      <tr><td>Asistente de voz</td><td><span class="pill p-ok">Ya existe</span></td><td>En producción en otras plataformas de Digit2AI, en español.</td></tr>
+    </table>
+    <p class="foot" style="margin-top:12px">El simulador usa datos de ejemplo. No está conectado al SAINT de Doña Elena ni a ningún banco.</p>
+  </section>
+
+  <!-- 11 plan -->
+  <section class="slide" data-t="Plan de cuatro semanas">
+    <span class="tag">Prueba de concepto</span>
+    <h2>Cuatro semanas, una tienda funcionando.</h2>
+    <div class="grid g4">
+      <div class="card"><div class="num">1</div><h3>Conexión</h3><p>Acordar con Saint de Venezuela el método de conexión. Leer catálogo, existencias y precios.</p></div>
+      <div class="card"><div class="num">2</div><h3>Tienda</h3><p>Categorías, buscador, carrito, dólares y bolívares, la marca Doña Elena.</p></div>
+      <div class="card"><div class="num">3</div><h3>Pedidos</h3><p>Pedido hacia SAINT, confirmación de pagos, envío y retiro en tienda.</p></div>
+      <div class="card"><div class="num">4</div><h3>Prueba real</h3><p>Pedidos de clientes reales en un grupo pequeño, panel de control y ajustes.</p></div>
+    </div>
+    <p class="lead" style="margin-top:22px">Lo que necesitamos de ustedes: acceso a SAINT en un ambiente de prueba, el catálogo con fotos, las zonas de entrega y una persona de contacto.</p>
+  </section>
+
+  <!-- 12 cierre -->
+  <section class="slide cover" data-t="Siguiente paso">
+    <div class="txt">
+      <span class="tag">Siguiente paso</span>
+      <h1 style="margin-top:18px">Conversemos<br>con SAINT a la mesa.</h1>
+      <p class="lead" style="margin-top:16px">Una reunión con Doña Elena, su proveedor de SAINT y Digit2AI para definir la conexión. Con eso arranca la primera semana.</p>
+      <div class="by"><span>Digit2AI</span><span>info@digit2ai.com</span><button class="simbtn" id="again" style="margin-left:4px">Ver de nuevo</button></div>
+    </div>
+    <img class="logo" src="logo.png" alt="">
+  </section>
+
+</div></div>
+
+<div id="prog"></div>
+<div class="dock">
+  <div class="orb" id="orb" aria-hidden="true"></div>
+  <div class="cap"><div id="capT">Dalia</div><div id="capX">Pulse reproducir para escuchar a Dalia.</div></div>
+  <button id="prev" aria-label="Lámina anterior">‹</button>
+  <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
+  <button id="next" aria-label="Lámina siguiente">›</button>
+  <span id="cnt">1 / 12</span>
+</div>
+
+<div class="gate" id="gate"><div class="box">
+  <img src="logo.png" alt="Comercializadora Doña Elena">
+  <h1>Doña Elena en línea</h1>
+  <p>Presentación narrada por Dalia, con un simulador de la tienda conectada a SAINT. Datos de ejemplo.</p>
+  <button id="start">Comenzar con voz</button>
+  <button id="silent">Ver sin audio</button>
+</div></div>
+
+<script>
+/* ── SIMULADOR ─────────────────────────────────────────────────────────────
+   Todo es de ejemplo y vive en esta página: no llama a SAINT, a un banco ni a
+   ninguna API. La tasa es de ejemplo (1 USD = 100 Bs) y lo dice en pantalla. */
+var SIM = (function(){
+  var RATE = 100;
+  var CATS = ['Todas','Víveres','Bebidas','Limpieza','Cuidado personal'];
+  var BASE = [
+    {c:'VIV-0001', sn:'Harina de maíz', n:'Harina de maíz precocida 1 kg', cat:'Víveres', usd:1.20, iva:0,  q:48, ab:'HM'},
+    {c:'VIV-0002', sn:'Arroz blanco', n:'Arroz blanco 1 kg',              cat:'Víveres', usd:1.35, iva:0,  q:36, ab:'AR'},
+    {c:'VIV-0003', sn:'Café molido', n:'Café molido 500 g',              cat:'Víveres', usd:4.80, iva:16, q:9,  ab:'CF'},
+    {c:'VIV-0004', sn:'Azúcar', n:'Azúcar refinada 1 kg',           cat:'Víveres', usd:1.30, iva:0,  q:30, ab:'AZ'},
+    {c:'BEB-0001', sn:'Refresco cola', n:'Refresco de cola 2 L',           cat:'Bebidas', usd:1.90, iva:16, q:24, ab:'RF'},
+    {c:'BEB-0002', sn:'Jugo de naranja', n:'Jugo de naranja 1 L',            cat:'Bebidas', usd:2.10, iva:16, q:3,  ab:'JN'},
+    {c:'LIM-0001', sn:'Detergente', n:'Detergente en polvo 1 kg',       cat:'Limpieza', usd:3.40, iva:16, q:14, ab:'DT'},
+    {c:'CUI-0001', sn:'Jabón de baño', n:'Jabón de baño, paquete de 3',    cat:'Cuidado personal', usd:2.60, iva:16, q:0, ab:'JB'}
+  ];
+  var items, cart, orders, seq, cat, synced, timers = [];
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return n.toLocaleString('es-VE',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  var now = function(){ var d=new Date(); return d.toTimeString().slice(0,8); };
+  function log(t){ var l=$('log'); var d=document.createElement('div'); d.innerHTML='<span>'+now()+'</span> '+t; l.appendChild(d); l.scrollTop=l.scrollHeight; }
+
+  function reset(){
+    timers.forEach(clearTimeout); timers = [];
+    items = BASE.map(function(x){ return Object.assign({}, x); });
+    cart = {}; orders = []; seq = 1041; cat = 'Todas'; synced = false;
+    $('log').innerHTML=''; $('q').value=''; $('drawer').classList.remove('open');
+    $('rateTxt').textContent = 'Tasa de ejemplo: 1 USD = ' + fmt(RATE) + ' Bs';
+    $('orders').innerHTML = '<div class="empty">Aún no hay pedidos. Agregue productos en la tienda.</div>';
+    $('kOrd').textContent='0'; $('kUsd').textContent='0,00'; $('kArt').textContent='0'; $('kSync').textContent='--:--';
+    sync(); renderCats(); renderProds(); renderInv(); renderCart();
+  }
+  function sync(){
+    synced = true;
+    $('kArt').textContent = items.length; $('kSync').textContent = now().slice(0,5);
+    log('Catálogo: ' + items.length + ' artículos leídos de SAINT (existencias, precio USD, IVA).');
+  }
+  function renderCats(){
+    $('cats').innerHTML = CATS.map(function(c){ return '<button class="'+(c===cat?'on':'')+'" data-c="'+c+'">'+c+'</button>'; }).join('');
+  }
+  function visible(){
+    var q = $('q').value.trim().toLowerCase();
+    return items.filter(function(p){ return (cat==='Todas'||p.cat===cat) && (!q || p.n.toLowerCase().indexOf(q)>=0); });
+  }
+  function stockTxt(p){
+    var free = p.q - (cart[p.c]||0);
+    if (free <= 0) return '<div class="st out">Agotado en SAINT</div>';
+    if (free <= 5) return '<div class="st low">Quedan '+free+'</div>';
+    return '<div class="st">Disponible · '+free+'</div>';
+  }
+  function renderProds(){
+    var v = visible();
+    $('prods').innerHTML = v.length ? v.map(function(p){
+      var free = p.q - (cart[p.c]||0);
+      return '<div class="pc" id="pc-'+p.c+'"><div class="ph">'+p.ab+'</div><div class="n">'+p.n+'</div>'+
+        '<div class="pr">$ '+fmt(p.usd)+'</div><div class="bs">Bs '+fmt(p.usd*RATE)+(p.iva?' + IVA':' · exento')+'</div>'+
+        stockTxt(p)+'<button data-add="'+p.c+'"'+(free<=0?' disabled':'')+'>'+(free<=0?'Sin existencia':'Agregar')+'</button></div>';
+    }).join('') : '<p style="grid-column:1/-1;font-size:13px;color:var(--mut)">No hay artículos con ese nombre en el catálogo de SAINT.</p>';
+  }
+  function renderInv(flash){
+    $('inv').innerHTML = items.map(function(p){
+      return '<tr'+(flash&&flash.indexOf(p.c)>=0?' class="flash"':'')+'><td>'+p.c+'</td><td>'+p.sn+'</td><td class="r">'+p.q+'</td><td class="r">'+fmt(p.usd)+'</td><td class="r">'+(p.iva?p.iva+'%':'Ex')+'</td></tr>';
+    }).join('');
+  }
+  function totals(){
+    var ex=0, gr=0, n=0;
+    Object.keys(cart).forEach(function(c){ var p=items.filter(function(x){return x.c===c;})[0]; var s=p.usd*cart[c]; n+=cart[c]; if(p.iva) gr+=s; else ex+=s; });
+    var iva = gr*0.16, sub = ex+gr+iva, igtf = $('payM').value==='usd' ? sub*0.03 : 0;
+    return {ex:ex, gr:gr, iva:iva, igtf:igtf, tot:sub+igtf, n:n};
+  }
+  function renderCart(){
+    var t = totals();
+    $('cartN').textContent = t.n;
+    $('lines').innerHTML = t.n ? Object.keys(cart).map(function(c){
+      var p=items.filter(function(x){return x.c===c;})[0];
+      return '<div class="line"><div>'+cart[c]+' × '+p.n+'<small>'+p.c+' · '+(p.iva?'IVA 16 %':'exento')+'</small></div><div>$ '+fmt(p.usd*cart[c])+'</div></div>';
+    }).join('') : '<p style="font-size:13px;color:var(--mut)">El carrito está vacío.</p>';
+    var bs = $('payM').value==='usd' ? '' : '<div><span>Equivale a</span><span>Bs '+fmt(t.tot*RATE)+'</span></div>';
+    $('sum').innerHTML = '<div><span>Exento</span><span>$ '+fmt(t.ex)+'</span></div><div><span>Gravado</span><span>$ '+fmt(t.gr)+'</span></div>'+
+      '<div><span>IVA 16 %</span><span>$ '+fmt(t.iva)+'</span></div>'+($('payM').value==='usd'?'<div><span>IGTF 3 %</span><span>$ '+fmt(t.igtf)+'</span></div>':'')+
+      '<div class="big"><span>Total</span><span>$ '+fmt(t.tot)+'</span></div>'+bs;
+    $('payBtn').disabled = !t.n;
+  }
+  function add(code){
+    var p = items.filter(function(x){return x.c===code;})[0];
+    if (!p || (cart[code]||0) >= p.q) return;
+    cart[code] = (cart[code]||0)+1;
+    renderProds(); renderCart();
+    var el = $('pc-'+code); if (el){ el.classList.add('pulse'); setTimeout(function(){ el.classList.remove('pulse'); }, 600); }
+  }
+  var STEPS = ['Recibido','Pago','En SAINT','Factura','Despacho'];
+  function renderOrders(){
+    $('orders').innerHTML = orders.slice(-2).reverse().map(function(o){
+      return '<div class="ord"><div class="row"><span>Pedido '+o.id+' · '+o.n+' art.</span><span>$ '+fmt(o.tot)+'</span></div>'+
+        '<div class="row" style="font-weight:600;font-size:11px;color:var(--mut)"><span>'+o.pay+' · '+o.ship+'</span><span>'+o.at+'</span></div>'+
+        '<div class="steps">'+STEPS.map(function(s,k){ return '<span class="'+(k<=o.step?'d':'')+'">'+s+'</span>'; }).join('')+'</div></div>';
+    }).join('');
+  }
+  function checkout(){
+    var t = totals(); if (!t.n) return;
+    var pay = {pm:'Pago móvil', usd:'Divisas', ce:'Contra entrega'}[$('payM').value];
+    var ship = $('shipM').value==='d' ? 'Envío' : 'Retiro';
+    var o = {id: 'W-'+(seq++), n:t.n, tot:t.tot, pay:pay, ship:ship, at:now().slice(0,5), step:0, lines:Object.assign({},cart)};
+    orders.push(o); cart = {}; cat = 'Todas'; $('q').value = ''; renderCats(); renderCart(); renderProds(); $('drawer').classList.remove('open');
+    log('Tienda: pedido '+o.id+' recibido · '+o.n+' artículos · $ '+fmt(o.tot)+' · '+pay+'.');
+    renderOrders();
+    var go = function(ms, fn){ timers.push(setTimeout(fn, ms)); };
+    go(1100, function(){ o.step=1; log(pay==='Contra entrega' ? 'Pago: se cobrará al entregar.' : 'Pago: referencia confirmada por el equipo (simulado).'); renderOrders(); });
+    go(2300, function(){ o.step=2; log('SAINT: pedido '+o.id+' creado como pedido de venta.'); renderOrders(); });
+    go(3500, function(){
+      o.step=3; var touched = Object.keys(o.lines);
+      touched.forEach(function(c){ var p=items.filter(function(x){return x.c===c;})[0]; p.q -= o.lines[c]; });
+      log('SAINT: factura emitida con imprenta digital. Existencias descontadas: '+touched.join(', ')+'.');
+      renderInv(touched); renderProds();
+      $('kOrd').textContent = orders.length;
+      $('kUsd').textContent = fmt(orders.reduce(function(a,x){return a+x.tot;},0));
+      $('kSync').textContent = now().slice(0,5);
+      renderOrders();
+      var low = items.filter(function(p){ return p.q>0 && p.q<=5; }).map(function(p){return p.sn.toLowerCase();});
+      if (low.length) log('Panel: pocas existencias en '+low.join(', ')+'.');
+    });
+    go(4700, function(){ o.step=4; log(ship==='Envío' ? 'Despacho: pedido '+o.id+' asignado a reparto.' : 'Despacho: pedido '+o.id+' listo para retirar.'); renderOrders(); });
+  }
+  function auto(){
+    reset();
+    var go = function(ms, fn){ timers.push(setTimeout(fn, ms)); };
+    go(900,  function(){ $('q').value='harina'; renderProds(); log('Cliente busca "harina".'); });
+    go(2200, function(){ add('VIV-0001'); add('VIV-0001'); });
+    go(3300, function(){ $('q').value=''; cat='Víveres'; renderCats(); renderProds(); });
+    go(4300, function(){ add('VIV-0003'); });
+    go(5300, function(){ cat='Bebidas'; renderCats(); renderProds(); });
+    go(6200, function(){ add('BEB-0002'); add('BEB-0002'); });
+    go(7300, function(){ $('drawer').classList.add('open'); });
+    go(8600, function(){ $('payM').value='usd'; renderCart(); log('Cliente elige pagar en divisas: se agrega el IGTF.'); });
+    go(10200,function(){ checkout(); });
+  }
+  function bind(){
+    $('cats').addEventListener('click', function(e){ var c=e.target.getAttribute('data-c'); if(c){ cat=c; renderCats(); renderProds(); } });
+    $('prods').addEventListener('click', function(e){ var c=e.target.getAttribute('data-add'); if(c) add(c); });
+    $('q').addEventListener('input', renderProds);
+    $('cartBtn').onclick = function(){ $('drawer').classList.add('open'); };
+    $('closeCart').onclick = function(){ $('drawer').classList.remove('open'); };
+    $('payM').onchange = renderCart;
+    $('payBtn').onclick = checkout;
+    $('simReset').onclick = reset;
+    $('simAuto').onclick = auto;
+  }
+  bind(); reset();
+  return { auto: auto, reset: reset, stop: function(){ timers.forEach(clearTimeout); timers=[]; } };
+})();
+</script>
+
+<script>
+(function(){
+  // Un texto por lámina. Cifras en palabras para que Dalia las lea bien.
+  var NARR = [
+    'Hola, soy Dalia, de Digit2AI. Esta es una propuesta para Comercializadora Doña Elena: una tienda en línea, con la experiencia de las grandes cadenas, conectada a SAINT, el sistema administrativo que ustedes ya usan. Todo lo que verán usa datos de ejemplo.',
+    'Partimos de una situación muy común. El negocio vive en SAINT, pero los clientes compran por mensaje. Cada pedido de WhatsApp se lee y se vuelve a escribir a mano. El cliente no sabe si hay producto. Los precios están en dólares y se cobran en bolívares. Y no existe una vitrina donde el cliente vea todo el catálogo y compre solo. Estos son supuestos de trabajo, y los confirmamos con ustedes.',
+    'La propuesta es sencilla. El cliente ve una tienda como las de las grandes cadenas: buscador, categorías, ofertas de la semana, carrito, precios en dólares y en bolívares, y pago móvil o divisas. SAINT sigue siendo el dueño del catálogo, de las existencias, de los precios y de la factura. Digit2AI pone la tienda, el puente con SAINT, el panel de control y una asistente de voz.',
+    'Así fluye un pedido. SAINT entrega el catálogo, las existencias y la condición de IVA de cada artículo. La tienda muestra solo lo que hay y convierte a bolívares con la tasa del día. El cliente hace su pedido. Y el pedido vuelve a SAINT, donde se factura y se descuentan las existencias. Cuando SAINT cambia un precio o una existencia, la tienda lo refleja. El cliente nunca compra algo que no hay.',
+    'Ahora véalo funcionar. A la izquierda, la tienda de Doña Elena. A la derecha, el panel de integración con SAINT. El cliente busca harina y la agrega al carrito. Agrega café y jugo de naranja. Elige pagar en divisas, y la tienda suma el impuesto a las grandes transacciones financieras. Al confirmar, el pedido entra a SAINT, se factura, y las existencias bajan en las dos pantallas al mismo tiempo. Usted puede repetirlo a su ritmo con el botón de demostración, o usar la tienda directamente.',
+    'Sobre precios y monedas. El precio base vive en SAINT, en dólares. La tienda lo convierte a bolívares con la tasa oficial del Banco Central de Venezuela, y muestra su fecha. Si el artículo es exento o gravado lo decide su ficha en SAINT. El IVA del dieciséis por ciento aplica solo a los gravados, y el tres por ciento del IGTF solo cuando se paga en divisas. La factura la sigue emitiendo SAINT con su imprenta digital.',
+    'Para cobrar, el cliente usa lo que ya conoce: pago móvil y transferencia con número de referencia, divisas, o pago contra entrega. Al principio, una persona del equipo confirma cada referencia antes de despachar. Para entregar, hay envío a domicilio por zonas y horarios que ustedes definen, y retiro en tienda. Los avisos al cliente quedan como borradores hasta que ustedes decidan automatizarlos.',
+    'La gerencia tiene un panel que responde las preguntas de cada mañana. Cuánto vendimos. Qué se está acabando. Qué está pendiente de cobro o de despacho. Y si todo está conectado con SAINT. Cada cifra sale de un pedido o de un registro real. Si un dato no existe, el panel lo dice, en vez de estimarlo.',
+    'La inteligencia artificial entra solo donde ayuda. La asistente de voz ya existe: responde preguntas del cliente leyendo el catálogo, y no inventa lo que no está. Las alertas de reposición y la lectura de pedidos de WhatsApp están por construir, y siempre con una persona que revisa antes de confirmar.',
+    'Queremos ser claros. La tienda y el panel se adaptan de piezas que Digit2AI ya tiene. La asistente de voz ya existe. Lo que está por confirmar es la conexión con SAINT: SAINT no publica en su sitio una interfaz de programación, así que el método se acuerda con Saint de Venezuela. Y el simulador que vieron no está conectado al SAINT de Doña Elena ni a ningún banco.',
+    'Proponemos una prueba de concepto de cuatro semanas. Semana uno, la conexión con SAINT y la lectura del catálogo. Semana dos, la tienda con la marca Doña Elena. Semana tres, los pedidos hacia SAINT, los pagos y las entregas. Semana cuatro, una prueba con clientes reales y el panel de control. De ustedes necesitamos acceso a SAINT en un ambiente de prueba, el catálogo con fotos, las zonas de entrega y una persona de contacto.',
+    'El siguiente paso es una reunión con Doña Elena, su proveedor de SAINT y Digit2AI, para definir la conexión. Con eso arranca la primera semana. Gracias por su tiempo. Soy Dalia, de Digit2AI.'
+  ];
+
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var simSlide = slides.indexOf(document.getElementById('simSlide'));
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '▶︎';
+  var MOB = window.matchMedia('(max-width:820px)');
+
+  function fit(){
+    if (MOB.matches) { stage.style.transform = ''; return; }
+    var s = Math.min(window.innerWidth / 1280, (window.innerHeight - 92) / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }
+  // Sin voz: pausa de lectura proporcional, para que la presentación avance igual.
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t !== token || !audio || !audio.duration) return;
+        capAt(audio.currentTime / audio.duration);
+        prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); });
+    if (MOB.matches) slides[i].scrollIntoView({ behavior:'smooth', block:'start' });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Dalia · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Dalia.';
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    // La lámina del simulador corre su demostración mientras Dalia la narra.
+    if (i === simSlide && !MOB.matches) SIM.auto(); else SIM.stop();
+    narrate();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.getElementById('again').onclick = function(){ show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    var tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'SELECT') return;     // escribir en el buscador no cambia de lámina
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  // Mientras el visitante usa el simulador, la narración no lo arrastra a la siguiente lámina.
+  document.getElementById('simSlide').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.shop')) { SIM.stop(); if (timer) { clearTimeout(timer); timer = null; } }
+  });
+  if (MOB.addEventListener) MOB.addEventListener('change', function(){ fit(); slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); }); });
+  if (MOB.matches) slides.forEach(function(s){ s.classList.add('on'); });
+  window.addEventListener('beforeunload', stopAll);
+})();
+</script>
+</body>
+</html>
