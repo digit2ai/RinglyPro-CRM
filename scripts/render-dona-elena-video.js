@@ -2,7 +2,10 @@
 /**
  * Convierte public/dona-elena/index.html en un MP4 con la voz de Mara.
  *
- * Uso:  node scripts/render-dona-elena-video.js [--crf=14] [--mb=15] [--out=...]
+ * Uso:  node scripts/render-dona-elena-video.js [--vertical] [--crf=14] [--mb=15] [--out=...]
+ *   --vertical  1080x1920 para teléfono: la página se abre a 540x960 (su propio
+ *               diseño móvil), se muestra una lámina a la vez y cada lámina se
+ *               encoge con `zoom` hasta caber entre el aviso superior y el subtítulo.
  * ffmpeg/ffprobe y puppeteer son dependencias de construcción, no del servidor.
  *
  * Mismas reglas que render-maramed-video.js, por las mismas razones:
@@ -31,11 +34,12 @@ const { synthesize } = require('../src/services/edge-tts');
 
 const ROOT = path.join(__dirname, '..');
 const DECK = path.join(ROOT, 'public', 'dona-elena', 'index.html');
-const W = 1920, H = 1080, FPS = 12, TAIL = 0.5;
+const VERT = process.argv.includes('--vertical');
+const W = VERT ? 1080 : 1920, H = VERT ? 1920 : 1080, FPS = 12, TAIL = 0.5;
 const arg = (k, d) => (process.argv.find(a => a.startsWith(`--${k}=`)) || `=${d}`).split('=').pop();
 let CRF = parseInt(arg('crf', 14), 10);
 const CAP_MB = parseFloat(arg('mb', 15));
-const OUT = arg('out', path.join(os.homedir(), 'Desktop', 'Dona-Elena-presentacion.mp4'));
+const OUT = arg('out', path.join(os.homedir(), 'Desktop', VERT ? 'Dona-Elena-presentacion-vertical.mp4' : 'Dona-Elena-presentacion.mp4'));
 
 const ff = (b, a) => execFileSync(b, a, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim();
 const dur = f => parseFloat(ff('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]));
@@ -83,41 +87,94 @@ function captionAt(text, frac) {
 
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
+  await page.setViewport(VERT ? { width: 540, height: 960, deviceScaleFactor: 2 } : { width: W, height: H, deviceScaleFactor: 1 });
   await page.goto(URL, { waitUntil: 'networkidle0' });
   await page.click('#silent');
   await page.evaluate(async () => { await document.fonts.ready; });
-  // Modo video: sin botones, subtítulo de varias líneas, escenario re-escalado.
-  await page.addStyleTag({ content: `
-    #prev,#play,#next,#cnt{display:none!important}
-    .vp{inset:28px 0 118px 0!important}
-    .dock{height:118px!important;padding:0 40px!important;gap:20px!important}
-    .orb{width:52px!important;height:52px!important;flex-basis:52px!important}
-    #prog{bottom:118px!important}
-    #capT{font-size:14px!important}
-    #capX{white-space:normal!important;overflow:hidden!important;text-overflow:clip!important;line-height:1.3!important;max-height:84px}
-    .orb.sp{animation:pul 1.2s ease-in-out infinite}` });
-  await page.evaluate(() => {
-    const s = Math.min(1920 / 1280, (1080 - 28 - 118 - 14) / 720);
-    const st = document.getElementById('stage');
-    st.style.transform = 'scale(' + s + ')';
-    window.addEventListener('resize', () => { st.style.transform = 'scale(' + s + ')'; }, true);
-    document.getElementById('orb').classList.add('sp');
-  });
-  const setCap = (text, title, progress) => page.evaluate((t, ti, p) => {
+  // Modo video: sin botones, subtítulo de varias líneas.
+  const CAPMAX = VERT ? 118 : 84;
+  if (!VERT) {
+    await page.addStyleTag({ content: `
+      #prev,#play,#next,#cnt{display:none!important}
+      .vp{inset:28px 0 118px 0!important}
+      .dock{height:118px!important;padding:0 40px!important;gap:20px!important}
+      .orb{width:52px!important;height:52px!important;flex-basis:52px!important}
+      #prog{bottom:118px!important}
+      #capT{font-size:14px!important}
+      #capX{white-space:normal!important;overflow:hidden!important;text-overflow:clip!important;line-height:1.3!important;max-height:84px}
+      .orb.sp{animation:pul 1.2s ease-in-out infinite}` });
+    await page.evaluate(() => {
+      const s = Math.min(1920 / 1280, (1080 - 28 - 118 - 14) / 720);
+      const st = document.getElementById('stage');
+      st.style.transform = 'scale(' + s + ')';
+      window.addEventListener('resize', () => { st.style.transform = 'scale(' + s + ')'; }, true);
+      document.getElementById('orb').classList.add('sp');
+    });
+  } else {
+    // Vertical: el diseño móvil de la página, una lámina a la vez.
+    await page.addStyleTag({ content: `
+      #prev,#play,#next,#cnt{display:none!important}
+      html,body{overflow:hidden!important;height:100%!important}
+      .ribbon{position:fixed!important;top:0;left:0;right:0;font-size:11px!important;padding:6px 10px!important}
+      .vp{position:fixed!important;left:0;right:0;bottom:170px;display:flex!important;align-items:center;justify-content:center;padding:10px 12px!important}
+      #stage{width:100%!important;height:auto!important}
+      .slide{display:none!important;margin:0!important;position:relative!important}
+      .slide.vid{display:flex!important}
+      .dock{height:170px!important;padding:12px 16px 16px!important;align-items:flex-start!important;gap:12px!important}
+      .orb{width:40px!important;height:40px!important;flex-basis:40px!important;margin-top:4px}
+      #prog{bottom:170px!important}
+      #capT{font-size:11px!important;margin-bottom:4px}
+      #capX{white-space:normal!important;overflow:hidden!important;text-overflow:clip!important;line-height:1.32!important;max-height:${CAPMAX}px}
+      .log{max-height:118px!important}
+      .orders{min-height:76px!important}
+      /* el simulador, compacto: si se encoge entero no se lee en un teléfono */
+      #simSlide{padding:12px 10px!important}
+      #simSlide .simhead{margin-bottom:6px!important}
+      #simSlide .simhead .simbtn{display:none!important}
+      #simSlide .simhead h2{font-size:20px!important}
+      #simSlide .sim{gap:10px!important}
+      #simSlide .prods{grid-template-columns:repeat(4,1fr)!important;gap:5px!important;padding:7px 8px!important}
+      #simSlide .pc{padding:6px!important}
+      #simSlide .pc .ph{display:none!important}
+      #simSlide .pc .n{min-height:0!important;font-size:10px!important}
+      #simSlide .pc .pr{font-size:13px!important}
+      #simSlide .pc .bs,#simSlide .pc .st{font-size:9px!important}
+      #simSlide .pc button{font-size:10px!important;min-height:22px!important;padding:3px 0!important}
+      #simSlide .shop .cats{padding:6px 8px!important}
+      #simSlide .shop .promo{margin:6px 8px 0!important;padding:6px 10px!important;font-size:11px!important}
+      #simSlide .kpis{grid-template-columns:repeat(4,1fr)!important}
+      #simSlide .kpi b{font-size:16px!important}
+      #simSlide .saint{gap:6px!important;padding:10px!important}
+      #simSlide .log{max-height:64px!important;min-height:0!important}
+      .orb.sp{animation:pul 1.2s ease-in-out infinite}` });
+    await page.evaluate(() => {
+      const rib = document.querySelector('.ribbon').getBoundingClientRect().height;
+      document.querySelector('.vp').style.top = rib + 'px';
+      document.getElementById('orb').classList.add('sp');
+    });
+  }
+  const setCap = (text, title, progress) => page.evaluate((t, ti, p, mx, mn, cm) => {
     const c = document.getElementById('capX');
     document.getElementById('capT').textContent = 'Mara · ' + ti;
     c.textContent = t;
-    for (let s = 24; s >= 15; s -= 0.5) { c.style.fontSize = s + 'px'; if (c.scrollHeight <= 84) break; }
+    for (let s = mx; s >= mn; s -= 0.5) { c.style.fontSize = s + 'px'; if (c.scrollHeight <= cm) break; }
     document.getElementById('prog').style.width = p + '%';
     document.getElementById('orb').classList.add('sp');
-  }, text, title, progress);
+  }, text, title, progress, VERT ? 21 : 24, VERT ? 14 : 15, CAPMAX);
   const goTo = async (n) => {
     await page.evaluate(n => {
       for (let j = 0; j < 12; j++) document.getElementById('prev').click();
       for (let j = 0; j < n; j++) document.getElementById('next').click();
     }, n);
     await page.evaluate(() => window.SIM && window.SIM.stop());
+    if (VERT) await page.evaluate(n => {
+      const ss = [...document.querySelectorAll('.slide')];
+      ss.forEach((s, k) => { s.classList.toggle('vid', k === n); s.style.zoom = ''; });
+      const s = ss[n], vp = document.querySelector('.vp');
+      const avail = vp.clientHeight - 20, h = s.scrollHeight;
+      if (h > avail) s.style.zoom = String(Math.floor(avail / h * 100) / 100);
+      window.scrollTo(0, 0);
+    }, n);
   };
 
   // --- 3. fotogramas: eventos (inicio, imagen) por lámina ----------------------
