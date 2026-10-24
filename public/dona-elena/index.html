@@ -420,7 +420,7 @@ table.inv tr.flash td{background:rgba(247,180,22,.35)}
 <div id="prog"></div>
 <div class="dock">
   <div class="orb" id="orb" aria-hidden="true"></div>
-  <div class="cap"><div id="capT">Dalia</div><div id="capX">Pulse reproducir para escuchar a Dalia.</div></div>
+  <div class="cap"><div id="capT">Mara</div><div id="capX">Pulse reproducir para escuchar a Mara.</div></div>
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
@@ -430,7 +430,7 @@ table.inv tr.flash td{background:rgba(247,180,22,.35)}
 <div class="gate" id="gate"><div class="box">
   <img src="logo.png" alt="Comercializadora Doña Elena">
   <h1>Doña Elena en línea</h1>
-  <p>Presentación narrada por Dalia, con un simulador de la tienda conectada a SAINT. Datos de ejemplo.</p>
+  <p>Presentación narrada por Mara, con un simulador de la tienda conectada a SAINT. Datos de ejemplo.</p>
   <button id="start">Comenzar con voz</button>
   <button id="silent">Ver sin audio</button>
 </div></div>
@@ -590,9 +590,9 @@ var SIM = (function(){
 
 <script>
 (function(){
-  // Un texto por lámina. Cifras en palabras para que Dalia las lea bien.
+  // Un texto por lámina. Cifras en palabras para que Mara las lea bien.
   var NARR = [
-    'Hola, soy Dalia, de ISTC. Esta es una propuesta para Comercializadora Doña Elena: una tienda en línea, con la experiencia de las grandes cadenas, conectada a SAINT, el sistema administrativo que ustedes ya usan. Todo lo que verán usa datos de ejemplo.',
+    'Hola, soy Mara, de ISTC. Esta es una propuesta para Comercializadora Doña Elena: una tienda en línea, con la experiencia de las grandes cadenas, conectada a SAINT, el sistema administrativo que ustedes ya usan. Todo lo que verán usa datos de ejemplo.',
     'Partimos de una situación muy común. El negocio vive en SAINT, pero los clientes compran por mensaje. Cada pedido de WhatsApp se lee y se vuelve a escribir a mano. El cliente no sabe si hay producto. Los precios están en dólares y se cobran en bolívares. Y no existe una vitrina donde el cliente vea todo el catálogo y compre solo. Estos son supuestos de trabajo, y los confirmamos con ustedes.',
     'La propuesta es sencilla. El cliente ve una tienda como las de las grandes cadenas: buscador, categorías, ofertas de la semana, carrito, precios en dólares y en bolívares, y pago móvil o divisas. SAINT sigue siendo el dueño del catálogo, de las existencias, de los precios y de la factura. ISTC pone la tienda, el puente con SAINT, el panel de control y una asistente de voz.',
     'Así fluye un pedido. SAINT entrega el catálogo, las existencias y la condición de IVA de cada artículo. La tienda muestra solo lo que hay y convierte a bolívares con la tasa del día. El cliente hace su pedido. Y el pedido vuelve a SAINT, donde se factura y se descuentan las existencias. Cuando SAINT cambia un precio o una existencia, la tienda lo refleja. El cliente nunca compra algo que no hay.',
@@ -603,7 +603,7 @@ var SIM = (function(){
     'La inteligencia artificial entra solo donde ayuda. La asistente de voz ya existe: responde preguntas del cliente leyendo el catálogo, y no inventa lo que no está. Las alertas de reposición y la lectura de pedidos de WhatsApp están por construir, y siempre con una persona que revisa antes de confirmar.',
     'Queremos ser claros. La tienda y el panel se adaptan de piezas que ISTC ya tiene. La asistente de voz ya existe. Lo que está por confirmar es la conexión con SAINT: SAINT no publica en su sitio una interfaz de programación, así que el método se acuerda con Saint de Venezuela. Y el simulador que vieron no está conectado al SAINT de Doña Elena ni a ningún banco.',
     'Proponemos una prueba de concepto de cuatro semanas. Semana uno, la conexión con SAINT y la lectura del catálogo. Semana dos, la tienda con la marca Doña Elena. Semana tres, los pedidos hacia SAINT, los pagos y las entregas. Semana cuatro, una prueba con clientes reales y el panel de control. De ustedes necesitamos acceso a SAINT en un ambiente de prueba, el catálogo con fotos, las zonas de entrega y una persona de contacto.',
-    'El siguiente paso es una reunión con Doña Elena, su proveedor de SAINT e ISTC, para definir la conexión. Con eso arranca la primera semana. Gracias por su tiempo. Soy Dalia, de ISTC.'
+    'El siguiente paso es una reunión con Doña Elena, su proveedor de SAINT e ISTC, para definir la conexión. Con eso arranca la primera semana. Gracias por su tiempo. Soy Mara, de ISTC.'
   ];
 
   var slides = [].slice.call(document.querySelectorAll('.slide'));
@@ -675,11 +675,11 @@ var SIM = (function(){
     slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); });
     if (MOB.matches) slides[i].scrollIntoView({ behavior:'smooth', block:'start' });
     cnt.textContent = (i + 1) + ' / ' + slides.length;
-    capT.textContent = 'Dalia · ' + slides[i].getAttribute('data-t');
-    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Dalia.';
+    capT.textContent = 'Mara · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Mara.';
     prog.style.width = (i / slides.length * 100) + '%';
     paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
-    // La lámina del simulador corre su demostración mientras Dalia la narra.
+    // La lámina del simulador corre su demostración mientras Mara la narra.
     if (i === simSlide && !MOB.matches) SIM.auto(); else SIM.stop();
     narrate();
   }

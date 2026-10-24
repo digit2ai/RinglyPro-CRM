@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Convierte public/dona-elena/index.html en un MP4 con la voz de Dalia.
+ * Convierte public/dona-elena/index.html en un MP4 con la voz de Mara.
  *
  * Uso:  node scripts/render-dona-elena-video.js [--crf=14] [--mb=15] [--out=...]
  * ffmpeg/ffprobe y puppeteer son dependencias de construcción, no del servidor.
@@ -16,7 +16,7 @@
  *
  * Lo propio de este mazo: la lámina del simulador SE MUEVE. Se graba en tiempo
  * real con su marca de tiempo, y la demostración arranca en el momento en que
- * Dalia empieza a describirla ("El cliente busca harina"), no al entrar a la
+ * Mara empieza a describirla ("El cliente busca harina"), no al entrar a la
  * lámina, para que lo que se ve y lo que se oye coincidan.
  */
 
@@ -64,7 +64,7 @@ function captionAt(text, frac) {
       try { buf = await synthesize(NARR[i], { voice: 'es-MX-DaliaNeural', rate: '-3%' }); }
       catch (e) { console.warn(`  voz ${i + 1}, intento ${t}: ${e.message}`); await sleep(1500 * t); }
     }
-    if (!buf || buf.length < 1000) throw new Error(`Dalia no devolvió audio para la lámina ${i + 1}`);
+    if (!buf || buf.length < 1000) throw new Error(`Mara no devolvió audio para la lámina ${i + 1}`);
     const mp3 = path.join(work, `v${pad(i + 1, 2)}.mp3`), wav = path.join(work, `v${pad(i + 1, 2)}.wav`);
     fs.writeFileSync(mp3, buf);
     ff('ffmpeg', ['-v', 'error', '-y', '-i', mp3, '-af', `apad=pad_dur=${TAIL}`, '-ac', '1', '-ar', '44100', wav]);
@@ -106,7 +106,7 @@ function captionAt(text, frac) {
   });
   const setCap = (text, title, progress) => page.evaluate((t, ti, p) => {
     const c = document.getElementById('capX');
-    document.getElementById('capT').textContent = 'Dalia · ' + ti;
+    document.getElementById('capT').textContent = 'Mara · ' + ti;
     c.textContent = t;
     for (let s = 24; s >= 15; s -= 0.5) { c.style.fontSize = s + 'px'; if (c.scrollHeight <= 84) break; }
     document.getElementById('prog').style.width = p + '%';
