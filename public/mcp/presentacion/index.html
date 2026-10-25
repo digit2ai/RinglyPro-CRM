@@ -8,13 +8,13 @@
 <title>Digit2AI MCP Neural</title>
 <meta name="description" content="Presentación narrada por Lina: cómo Digit2AI MCP Neural conecta su empresa a la inteligencia artificial de los mejores proveedores, sin cambiar sus sistemas.">
 <link rel="icon" href="../logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="../logo.png">
 <style>html,body{background:#070b16}</style>
 <style>
-/* Tokens copiados de public/mcp/index.html (digit2ai.com/mcp): el mazo se ve
-   como la página que lo vende. */
+/* Tokens y tipografía copiados de public/mcp/index.html (digit2ai.com/mcp). La
+   página no descarga fuentes: Space Grotesk e Inter solo se usan si están
+   instaladas, y si no, cae a la fuente del sistema. Aquí igual, a propósito:
+   así el mazo se ve exactamente como la página que lo vende. */
 :root{
   --bg:#070b16; --bg2:#0b1222; --panel:#0f1728; --panel2:#131e33;
   --line:rgba(120,150,200,.16); --line2:rgba(120,150,200,.28);
@@ -40,7 +40,7 @@ body.vert{--W:720px;--H:1280px}
   border:1px solid var(--line);box-shadow:0 30px 90px rgba(0,0,0,.55);
   padding:52px 64px 48px;display:none;flex-direction:column}
 .slide.on{display:flex;animation:in .6s ease both}
-.slide:not(.cover){justify-content:center}
+.slide{justify-content:center}
 @keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 body.vert .slide{padding:64px 48px 56px}
 .slide::after{content:"";position:absolute;inset:0;pointer-events:none;
@@ -48,12 +48,14 @@ body.vert .slide{padding:64px 48px 56px}
   background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);opacity:.35}
 .slide > *{position:relative;z-index:1}
 
-.brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;letter-spacing:.02em;font-size:15px;color:var(--mut)}
-.brand img{width:28px;height:28px;border-radius:7px}
-.brand b{color:var(--txt)}.brand i{font-style:normal;color:var(--cy)}
+.brand{font-family:var(--fd);font-weight:700;font-size:19px;letter-spacing:.04em;color:var(--txt)}
+.brand b{color:var(--cy)}.brand span{color:var(--mut);font-weight:500}
+body.vert .brand{font-size:24px}
+.hlogo{display:block;width:340px;height:auto;border-radius:14px;border:1px solid var(--line)}
+body.vert .hlogo{width:440px}
 .kick{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy);margin-top:18px}
-h1{font-family:var(--fd);font-weight:700;font-size:62px;line-height:1.02;letter-spacing:-.02em;margin-top:12px}
-h2{font-family:var(--fd);font-weight:700;font-size:48px;line-height:1.06;letter-spacing:-.015em;margin-top:10px}
+h1{font-family:var(--fd);font-weight:700;font-size:62px;line-height:1.1;letter-spacing:-.01em;margin-top:12px}
+h2{font-family:var(--fd);font-weight:700;font-size:48px;line-height:1.12;letter-spacing:-.01em;margin-top:10px}
 body.vert h1{font-size:72px}body.vert h2{font-size:58px}
 .grad{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:22px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:900px}
@@ -154,7 +156,7 @@ body.vert .step h3{margin-top:4px;font-size:28px}
 body.vert .step p{font-size:21px}
 
 /* portada */
-.cover h1{font-size:70px}
+.cover h1{font-size:56px;max-width:640px}
 body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}body.vert .cover .col.grow{max-width:none!important}body.vert .price .amt{font-size:76px}body.vert .price li{font-size:21px}
 .cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
 
@@ -186,11 +188,10 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
 
   <!-- 1 portada -->
   <section class="slide cover" data-t="Bienvenida">
-    <div class="brand"><img src="../logo.png" alt=""><span><b>DIGIT</b><i>2</i><b>AI</b> · MCP NEURAL</span></div>
     <div class="row">
       <div class="col grow">
-        <div class="kick stag d1">Inteligencia artificial para su empresa</div>
-        <h1 class="stag d2">Conecte su empresa a la <span class="grad">IA de los mejores proveedores.</span></h1>
+        <img class="hlogo stag d1" src="../logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
+        <h1 class="stag d2">La IA de los mejores proveedores, <span class="grad">ya integrada</span> para su empresa.</h1>
         <p class="lead stag d3">Como una memoria USB: se conecta por la API de sus sistemas y su empresa gana una capacidad nueva. Sin cambiar nada de lo que ya funciona.</p>
       </div>
       <div class="col grow" style="max-width:520px;width:100%">
@@ -434,10 +435,9 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
 
   <!-- 14 cierre -->
   <section class="slide cover" data-t="Siguiente paso">
-    <div class="brand"><img src="../logo.png" alt=""><span><b>DIGIT</b><i>2</i><b>AI</b> · MCP NEURAL</span></div>
     <div class="row">
       <div class="col grow">
-        <div class="kick stag d1">Siguiente paso</div>
+        <img class="hlogo stag d1" src="../logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
         <h1 class="stag d2">Convierta su empresa en una <span class="grad">empresa inteligente.</span></h1>
         <p class="lead stag d3">Conecte Digit2AI MCP Neural y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</p>
         <span class="cta stag d4">digit2ai.com/mcp</span>
