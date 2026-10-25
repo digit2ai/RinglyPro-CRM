@@ -25,7 +25,42 @@
   function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
   function nice(range) { var c = [50, 100, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000]; for (var i = 0; i < c.length; i++) if (range / c[i] <= 6) return c[i]; return 50000; }
   var C = { mag: '#ff4fd8', cyan: '#3ee8ff', green: '#2ee86b', amber: '#ffcc00', red: '#ff3b3b', white: '#ffffff', sky1: '#1c5fd6', sky2: '#4f8ff0', gnd1: '#8a5a2b', gnd2: '#5b3a17' };
-  var state = { tecla: 'ALERTAS' };
+  var state = { tecla: 'RESUMEN', minSel: '' };
+
+  // ------------------------------------------------------------ RESUMEN: what used to be the KPI cards, as G1000 data boxes
+  function tile(label, value, sub, color, extra) {
+    return '<div style="border:1px solid #3a4250;border-radius:6px;padding:8px 10px;min-width:0;background:#05070a">' +
+      '<div style="color:#9aa4b2;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;gap:6px;align-items:center;flex-wrap:wrap">' + label + (extra || '') + '</div>' +
+      '<div style="color:' + (color || C.cyan) + ';font-size:22px;font-weight:700;margin-top:2px">' + value + '</div>' +
+      (sub ? '<div style="color:#c9d2de;font-size:12.5px;line-height:1.35;margin-top:3px">' + sub + '</div>' : '') + '</div>';
+  }
+  function resumen(s) {
+    var p = s.pfd, cm = s.cierre_mes_actual, t = s.tendencia || { malas: [], buenas: [], sube: true }, h = [];
+    h.push(tile('Saldo hoy', esc(p.saldo_hoy.t), esc(fl(s.hoy)), '#fff'));
+    if (cm) h.push(tile('Cierre de ' + esc(cm.nombre.split(' ')[0]), esc(cm.saldo), cm.saldo === cm.saldo_plan ? 'Igual al plan' : 'Plan: ' + esc(cm.saldo_plan), cm.saldo.charAt(0) === '-' ? C.red : '#fff'));
+    var q = s.cierres_trimestre || [];
+    h.push(tile('Saldo final del trimestre', '', q.map(function (c) {
+      return '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + esc(c.nombre.charAt(0).toUpperCase() + c.nombre.slice(1)) + '</span><b style="color:' + (c.saldo.charAt(0) === '-' ? C.red : '#fff') + ';font-size:15px">' + esc(c.saldo) + '</b></div>';
+    }).join('')));
+    // minimum with its month/year selector
+    var m = state.minSel ? (s.minimos_mes || []).filter(function (x) { return x.mes === state.minSel; })[0] : null;
+    var mv = m ? m.minimo : p.saldo_min.t;
+    var msub = m ? esc(fl(m.fecha)) + (m.negativo ? ' · queda en negativo' : '')
+      : (s.zona ? 'Del ' + esc(fl(s.zona.desde)) + ' al ' + esc(fl(s.zona.hasta)) + (s.zona.bajo_colchon ? ' · mejor no gastar' : '') : esc(fl(p.fecha_min)));
+    var sel = '<select data-minsel aria-label="Mes y año" style="font-size:16px;background:#111;color:#fff;border:1px solid #3a4250;border-radius:4px;padding:2px 4px;max-width:100%"><option value="">Todo el plan</option>' +
+      (s.minimos_mes || []).map(function (x) { return '<option value="' + x.mes + '"' + (x.mes === state.minSel ? ' selected' : '') + '>' + esc(x.nombre.charAt(0).toUpperCase() + x.nombre.slice(1)) + '</option>'; }).join('') + '</select>';
+    h.push(tile('Saldo mínimo proyectado', esc(mv), msub, mv.charAt(0) === '-' ? C.red : C.amber, sel));
+    var g = s.gasto_personal_mes;
+    if (g) h.push(tile('Gasto personal de ' + esc(g.nombre), esc(g.gastado), g.movimientos ? 'Bajó tu mínimo ' + esc(g.baja_el_minimo) + ': sin estos gastos sería ' + esc(g.saldo_min_sin_gastos) : 'Sin gastos personales registrados este mes', '#fff'));
+    var neg = s.dias_negativos && s.dias_negativos.length;
+    h.push(tile('Salud financiera', Math.round(s.score) + '% <span style="font-size:14px">' + esc(s.frase) + '</span>',
+      neg ? 'Limitada a 49%: tu saldo queda en negativo el ' + esc(fl(s.dias_negativos[0].fecha)) + ' (' + esc(s.dias_negativos[0].saldo) + ').' : 'Ningún día queda en negativo.',
+      s.color === 'verde' ? C.green : C.amber));
+    var neural = (t.sube ? t.buenas.slice(0, 2) : t.malas).map(function (x) { return esc(x.texto.charAt(0).toUpperCase() + x.texto.slice(1)) + '.'; }).join('<br>') +
+      ((s.obligaciones_descubiertas || []).length ? '<br><span style="color:#fff">No quedan cubiertos:</span> ' + s.obligaciones_descubiertas.map(function (o) { return esc(o.concepto) + ' (' + esc(fl(o.fecha)) + ', ' + esc(o.monto) + ' → ' + esc(o.saldo) + ')'; }).join('; ') : '');
+    h.push(tile('Neural Intelligence', t.sube ? '▲ Sube' : '▼ Baja', neural, t.sube ? C.green : C.amber));
+    return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">' + h.join('') + '</div>';
+  }
 
   // ------------------------------------------------------------ insights per softkey
   function insights(s, tecla) {
@@ -224,20 +259,21 @@
     })();
 
     // ---------------- softkeys ----------------
-    var keys = ['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'];
+    var keys = ['RESUMEN', 'HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'];
     o.push('<rect x="0" y="700" width="' + W + '" height="60" fill="#000"/>');
     keys.forEach(function (kk, i) {
-      var kx = 140 + i * 130, on = state.tecla === kk;
-      o.push('<g data-tecla="' + kk + '" style="cursor:pointer"><rect x="' + kx + '" y="704" width="124" height="52" fill="' + (on ? '#2b3a55' : '#000') + '"/>' +
-        '<line x1="' + kx + '" y1="708" x2="' + kx + '" y2="752" stroke="#666"/><text x="' + (kx + 62) + '" y="738" fill="' + (on ? C.cyan : '#fff') + '" font-size="21" text-anchor="middle">' + kk + '</text></g>');
+      var kx = 38 + i * 132, on = state.tecla === kk;
+      o.push('<g data-tecla="' + kk + '" style="cursor:pointer"><rect x="' + kx + '" y="704" width="128" height="52" fill="' + (on ? '#2b3a55' : '#000') + '"/>' +
+        '<line x1="' + kx + '" y1="708" x2="' + kx + '" y2="752" stroke="#666"/><text x="' + (kx + 64) + '" y="738" fill="' + (on ? C.cyan : '#fff') + '" font-size="20" text-anchor="middle">' + kk + '</text></g>');
     });
     o.push('</svg>');
 
-    var lines = insights(s, state.tecla);
     o.push('<div style="background:#000;border-radius:10px;margin-top:8px;padding:12px 14px;font-family:Arial Narrow,Helvetica Neue,Arial,sans-serif;font-size:15px;line-height:1.5">' +
-      '<div style="color:#9aa4b2;font-size:12px;letter-spacing:.08em;margin-bottom:4px">' + esc(state.tecla) + '</div>' +
-      lines.map(function (l) { return '<div style="color:' + l.c + '">' + esc(l.t) + '</div>'; }).join('') + '</div>');
+      '<div style="color:#9aa4b2;font-size:12px;letter-spacing:.08em;margin-bottom:6px">' + esc(state.tecla) + '</div>' +
+      (state.tecla === 'RESUMEN' ? resumen(s) : insights(s, state.tecla).map(function (l) { return '<div style="color:' + l.c + '">' + esc(l.t) + '</div>'; }).join('')) + '</div>');
     el.innerHTML = o.join('');
+    var ms = el.querySelector('[data-minsel]');
+    if (ms) ms.addEventListener('change', function () { state.minSel = this.value; window.drawSfPfd(el, s); });
     el.querySelectorAll('[data-tecla]').forEach(function (g) {
       g.addEventListener('click', function () { state.tecla = g.getAttribute('data-tecla'); window.drawSfPfd(el, s); });
     });

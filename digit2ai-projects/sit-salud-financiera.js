@@ -196,21 +196,23 @@ async function linaTests() {
   ok(paraVoz('Tienes $1,868.48 y -$131.52') === 'Tienes 1868 dólares con 48 centavos y menos 131 dólares con 52 centavos', 'voice says dólares, never pesos');
   ok(/paraVoz\(text\)\.slice/.test(ui) && /SpeechSynthesisUtterance\(paraVoz\(text\)\)/.test(ui), 'both voice paths (neural + browser) speak through paraVoz');
   ok(/rec\.continuous = true/.test(ui) && /SILENCIO_MS = 3000/.test(ui), 'listening keeps going through pauses (continuous + 3 s silence)');
-  const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('(SHOW_LINA ? orbHtml()');
-  ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
+  const iK = ui.indexOf('id="sf-pfd"'), iL = ui.indexOf('(SHOW_LINA ? orbHtml()');
+  ok(iK > 0 && iL > 0 && iL < iK, 'Lina (hidden) slot stays above the instrument panel');
   ok(/var SHOW_LINA = false;/.test(ui) && /if \(SHOW_LINA\) wireLina\(\);/.test(ui), 'Lina is hidden from the dashboard for now (one switch brings her back)');
   ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
   ok(/data-edit="' \+ r\.id/.test(ui) && /function openEdit\(id\)/.test(ui) && /method: 'PATCH', body: cambios/.test(ui), 'every movement row has an Editar button that PATCHes only what changed');
-  ok(/function gastoMesCard\(g\)/.test(ui) && /Bajó tu saldo mínimo proyectado/.test(ui), 'personal-spending card: this month, and its effect on the projected low point');
+  { const pf = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-pfd.js'), 'utf8');
+  ok(/Gasto personal de/.test(pf) && /Bajó tu mínimo/.test(pf), 'panel RESUMEN: personal spending this month and its effect on the low point');
+  ok(/data-minsel/.test(pf) && /state\.minSel = this\.value/.test(pf), 'panel RESUMEN: minimum with a month/year selector');
+  ok(/Saldo final del trimestre/.test(pf) && /Cierre de /.test(pf) && /Salud financiera/.test(pf) && /Neural Intelligence/.test(pf) && /state = \{ tecla: 'RESUMEN'/.test(pf), 'panel RESUMEN (default) carries every former card: hoy, cierre, trimestre, mínimo, gasto, salud, neural');
+  ok(!/id="sf-cards"|function drawCards/.test(ui), 'the separate KPI cards are gone from the view'); }
   const pfdSrc = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-pfd.js'), 'utf8');
   const idx = fs.readFileSync(path.join(__dirname, 'dashboard/index.html'), 'utf8');
   ok(/window\.drawSfPfd/.test(pfdSrc) && /salud-pfd\.js/.test(idx) && idx.indexOf('salud-pfd.js') < idx.indexOf('salud-financiera.js?'), 'G1000 panel script is loaded before the view');
   ok(!/Saldo en el tiempo|Por qué tu salud está así|function drawChart|function drawDesglose/.test(ui) && /id=\"sf-pfd\"/.test(ui), 'chart and score breakdown replaced by the instrument panel');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
-  ok(/id="sf-min-mes"/.test(ui) && /state\.minSel = this\.value/.test(ui), 'minimum card has a month/year selector');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');
-  ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
   console.log('\n[3] Lina model path (fake client)');

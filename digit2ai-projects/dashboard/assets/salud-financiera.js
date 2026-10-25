@@ -84,12 +84,11 @@
     try { if (location.pathname !== '/projects/salud-financiera') history.replaceState(null, '', '/projects/salud-financiera'); } catch (e) {}
     container.innerHTML =
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
-      '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
       (SHOW_LINA ? orbHtml() : '') +
+      '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"><div class="spinner"></div></div></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
-      '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"></div></div>' +
       '<div class="card card-accent-blue" id="sf-mov-card" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
       '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
@@ -106,110 +105,9 @@
 
   function loadSalud() {
     return sf('/salud').then(function (s) {
-      if (!s.success) { document.getElementById('sf-cards').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
-      state.salud = s; drawCards(s); if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
+      if (!s.success) { document.getElementById('sf-pfd').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
+      state.salud = s; if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
     });
-  }
-
-  // Saldo mínimo proyectado, for the whole plan or for the month/year picked.
-  function minimoCard(s, z) {
-    var sel = state.minSel || '';
-    var m = sel ? (s.minimos_mes || []).filter(function (x) { return x.mes === sel; })[0] : null;
-    var valor = m ? m.minimo : s.saldo_min;
-    var sub = m ? esc(fechaLarga(m.fecha)) + (m.negativo ? ' &middot; queda en negativo' : '')
-      : (z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)));
-    var neg = valor.charAt(0) === '-';
-    var opts = '<option value="">Todo el plan</option>' + (s.minimos_mes || []).map(function (x) {
-      return '<option value="' + x.mes + '"' + (x.mes === sel ? ' selected' : '') + '>' + esc(x.nombre.charAt(0).toUpperCase() + x.nombre.slice(1)) + '</option>';
-    }).join('');
-    return '<div class="card card-stat card-accent-' + (neg ? 'red' : 'yellow') + '" style="min-width:0">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap"><div class="stat-label">Saldo mínimo proyectado</div>' +
-      '<select id="sf-min-mes" aria-label="Mes y año" style="font-size:16px;padding:4px 6px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);max-width:100%">' + opts + '</select></div>' +
-      '<div class="stat-value" style="font-size:26px">' + esc(valor) + '</div>' +
-      '<div class="stat-change ' + (neg ? 'stat-down' : 'stat-neutral') + '">' + sub + '</div></div>';
-  }
-
-  function card(label, value, sub, accent, subClass) {
-    return '<div class="card card-stat card-accent-' + accent + '" style="min-width:0"><div class="stat-label">' + label + '</div>' +
-      '<div class="stat-value" style="font-size:26px">' + esc(value) + '</div>' +
-      (sub ? '<div class="stat-change ' + (subClass || 'stat-neutral') + '">' + sub + '</div>' : '') + '</div>';
-  }
-
-  function vsPlan(c) {
-    if (!c) return '';
-    return c.saldo === c.saldo_plan ? 'Igual al plan' : (c.sobre_plan ? 'Arriba del plan (' + esc(c.saldo_plan) + ')' : 'Plan: ' + esc(c.saldo_plan));
-  }
-
-  function rango(desde, hasta) {
-    if (!desde) return '';
-    if (desde === hasta) return 'El ' + fechaLarga(desde);
-    var m1 = desde.slice(5, 7), m2 = hasta.slice(5, 7);
-    return 'Del ' + (m1 === m2 ? Number(desde.slice(8)) : fechaLarga(desde)) + ' al ' + fechaLarga(hasta);
-  }
-
-  // Arrow up when nothing is at risk, down when something is — with every
-  // reason and each payment that is not covered, named.
-  function tendenciaHtml(s) {
-    var t = s.tendencia; if (!t) return '';
-    var col = t.sube ? 'var(--success)' : 'var(--warning)';
-    var arrow = t.sube
-      ? '<svg width="28" height="28" style="flex:0 0 28px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4.5v8h-5v-8H5z" fill="' + col + '"/></svg>'
-      : '<svg width="28" height="28" style="flex:0 0 28px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-7-8h4.5V4h5v8H19z" fill="' + col + '"/></svg>';
-    var hayLista = (s.obligaciones_descubiertas || []).length > 0;
-    var razones = t.sube ? t.buenas.slice(0, 2) : t.malas.filter(function (r) { return !(hayLista && r.tipo === 'pago_descubierto'); });
-    var texto = (t.sube ? 'Sube: ' : 'Baja: ') + (razones.length ? '' : 'hay pagos sin cubrir') + razones.map(function (r) { return r.texto; }).join('; ') + '.';
-    var lista = (s.obligaciones_descubiertas || []).map(function (p) {
-      return '<li style="margin:4px 0"><strong>' + esc(p.concepto) + '</strong> &middot; ' + esc(fechaLarga(p.fecha)) + ' &middot; ' + esc(p.monto) +
-        '<br><span style="color:var(--text-secondary)">después de pagarlo quedas en ' + esc(p.saldo) + '</span></li>';
-    }).join('');
-    return '<div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px">' + arrow +
-      '<div style="font-size:13px;line-height:1.45;color:' + col + '">' + esc(texto.charAt(0).toUpperCase() + texto.slice(1)) + '</div></div>' +
-      (lista ? '<div style="font-size:12.5px;margin-top:8px;color:var(--text-primary)">No quedan cubiertos:<ul style="margin:4px 0 0 16px;padding:0">' + lista + '</ul></div>' : '');
-  }
-
-  // One card, three monthly closes (next three months), no plan comparison.
-  function cierresCard(cs) {
-    if (!cs || !cs.length) return '';
-    var neg = cs.some(function (c) { return c.saldo.charAt(0) === '-'; });
-    return '<div class="card card-stat card-accent-' + (neg ? 'yellow' : 'green') + '" style="min-width:0"><div class="stat-label">Saldo final proyectado del trimestre</div>' +
-      cs.map(function (c) {
-        var n = c.nombre.charAt(0).toUpperCase() + c.nombre.slice(1);
-        return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-top:1px solid var(--border)">' +
-          '<span style="font-size:13px;color:var(--text-secondary)">' + esc(n) + '</span>' +
-          '<span style="font-size:20px;font-weight:700;color:' + (c.saldo.charAt(0) === '-' ? 'var(--warning)' : 'var(--text-primary)') + '">' + esc(c.saldo) + '</span></div>';
-      }).join('') + '</div>';
-  }
-
-  function drawCards(s) {
-    var sem = s.semana;
-    var restNeg = sem.restante.charAt(0) === '-';
-    var acum = sem.acumulado_previo && sem.acumulado_previo !== '$0.00';
-    var cm = s.cierre_mes_actual;
-    var z = s.zona;
-    var pagos = '<div style="min-width:0" class="card card-stat card-accent-' + (s.tendencia && s.tendencia.sube ? 'green' : 'yellow') + '">' +
-      '<div class="stat-label">Neural Intelligence</div>' +
-      tendenciaHtml(s) + '</div>';
-    document.getElementById('sf-cards').innerHTML =
-      card('Saldo hoy', s.saldo_hoy, esc(fechaLarga(s.hoy)), 'blue') +
-      (cm ? card('Cierre de ' + esc(cm.nombre.split(' ')[0]), cm.saldo, vsPlan(cm), cm.sobre_plan ? 'green' : 'yellow', cm.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
-      cierresCard(s.cierres_trimestre || s.cierres_proximos) +
-      pagos +
-      minimoCard(s, z) +
-      (s.sin_presupuesto && s.gasto_personal_mes ? gastoMesCard(s.gasto_personal_mes) : card('Gasto de esta semana', sem.gastado + ' / ' + sem.disponible,
-        (restNeg ? 'Te pasaste ' + esc(sem.restante.replace('-', '')) : 'Te quedan ' + esc(sem.restante)) + (acum ? ' &middot; incluye ' + esc(sem.acumulado_previo) + ' acumulado' : '') +
-          (!restNeg && sem.proxima_semana ? ' &middot; si no gastas más, la próxima semana tendrás ' + esc(sem.proxima_semana) : ''),
-        restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up'));
-    var ms = document.getElementById('sf-min-mes');
-    if (ms) ms.onchange = function () { state.minSel = this.value; drawCards(state.salud); };
-  }
-
-  // Real personal spending this month and what it does to the projected low point.
-  function gastoMesCard(g) {
-    var mes = g.nombre.charAt(0).toUpperCase() + g.nombre.slice(1);
-    var efecto = g.movimientos
-      ? 'Bajó tu saldo mínimo proyectado ' + esc(g.baja_el_minimo) + ': sin estos gastos sería ' + esc(g.saldo_min_sin_gastos) + ', hoy es ' + esc(g.saldo_min) + ' (' + esc(fechaLarga(g.fecha_min)) + ')'
-      : 'Sin gastos personales registrados este mes. Cada dólar que gastes antes del ' + esc(fechaLarga(g.fecha_min)) + ' baja igual tu saldo mínimo (' + esc(g.saldo_min) + ')';
-    return card('Gasto personal de ' + esc(mes), g.gastado, efecto, g.movimientos ? 'yellow' : 'green', 'stat-neutral');
   }
 
   function loadMovs() {
