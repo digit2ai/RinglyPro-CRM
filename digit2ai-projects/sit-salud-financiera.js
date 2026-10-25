@@ -81,6 +81,13 @@ async function engineTests() {
   ok(lina.heuristic('en que fecha tengo que tener cuidado', rows, { today: TODAY }, {}).texto.includes('del 6 de diciembre al 17 de diciembre'), 'Lina: when to be careful -> the window');
   ok(/acumula/.test(lina.heuristic('cuanto me queda para gastar esta semana', r20, { today: '2026-11-02' }, {}).texto), 'Lina explains the weekly rollover');
 
+  // No colchón (owner removed it): the floor is zero.
+  const z0 = engine.analyze(rows, { today: TODAY, colchonCents: 0 });
+  ok(z0.A === 40 && z0.tendencia.sube === true && !z0.tendencia.malas.length, 'colchón 0: full A while never negative, trend up', [z0.A, z0.tendencia]);
+  const z0neg = engine.analyze([...rows, { id: 980, fecha: '2026-12-06', concepto: 'x', tipo: 'egreso', monto: '1000', categoria: 'otro', origen: 'real' }], { today: TODAY, colchonCents: 0 });
+  ok(z0neg.A === 0 && z0neg.score <= 49 && z0neg.zona.bajo_colchon, 'colchón 0: a negative day still caps at 49 and opens the care window');
+  ok(!/colchón de \$0/.test(lina.heuristic('en que fecha tengo que tener cuidado', rows, { today: TODAY, colchonCents: 0 }, {}).texto), 'colchón 0: Lina never mentions a "$0 colchón"');
+
   // Monthly recurring bills: end of month and a fixed day, never duplicated.
   const RECS = [{ concepto: 'Internet', monto: '150.00', fin_de_mes: true }, { concepto: 'Software', monto: '100.00', dia: 7 }];
   const rr = engine.recurrentRows(rows, RECS, TODAY, '2027-01-31');

@@ -24,6 +24,9 @@ const fl = (iso) => engine.fechaLarga(iso);
 const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
 const CAT = fin.CAT;
 const OBL = ['corte', 'pago_lina', 'hija'];
+// The owner may have no colchón (0): then the floor is simply not going negative.
+const bajoDe = (c) => (c > 0 ? `por debajo de tu colchón de ${fmt(c)}` : 'en negativo');
+const arribaDe = (c) => (c > 0 ? `arriba de tu colchón de ${fmt(c)}` : 'arriba de cero');
 
 function makeTools(rows, opts) {
   const today = opts.today;
@@ -108,8 +111,8 @@ function textoZona(cur) {
   if (!z) return `Tu punto más bajo es el ${fl(cur.fecha_min)}, con ${fmt(cur.saldo_min)}.`;
   const r = z.desde === z.hasta ? `el ${fl(z.desde)}` : `del ${fl(z.desde)} al ${fl(z.hasta)}`;
   return z.bajo_colchon
-    ? `Ten cuidado ${r}: en esas fechas tu saldo queda por debajo de tu colchón de ${fmt(cur.colchon_meta)} y llega a ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}. Entre esas fechas no conviene gastar nada fuera de lo planeado.`
-    : `Tu punto más bajo es ${fmt(cur.saldo_min)} ${r}, y sigue arriba de tu colchón de ${fmt(cur.colchon_meta)}. No hay fechas de riesgo, solo cuida tu presupuesto semanal.`;
+    ? `Ten cuidado ${r}: en esas fechas tu saldo queda ${bajoDe(cur.colchon_meta)} y llega a ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}. Entre esas fechas no conviene gastar nada fuera de lo planeado.`
+    : `Tu punto más bajo es ${fmt(cur.saldo_min)} ${r}, y sigue ${arribaDe(cur.colchon_meta)}. No hay fechas de riesgo, solo cuida tu presupuesto semanal.`;
 }
 
 function textoSaldoFecha(cur, fecha) {
@@ -122,8 +125,8 @@ function textoSaldoFecha(cur, fecha) {
   if (s.fuera_de_plan) partes.push(`Tu plan solo llega hasta el ${fl(s.ultimo_dato)}; después no hay movimientos cargados. Usa "Extender plan" para proyectar más lejos.`);
   else if (s.fecha_minimo_despues !== fecha) {
     partes.push(s.libre > 0
-      ? `Pero no es todo disponible: de ahí en adelante tu punto más bajo es ${fmt(s.minimo_despues)} el ${fl(s.fecha_minimo_despues)}. Lo que de verdad puedes gastar sin bajar de tu colchón de ${fmt(s.colchon)} son ${fmt(s.libre)}.`
-      : `Pero no es dinero libre: de ahí en adelante bajas a ${fmt(s.minimo_despues)} el ${fl(s.fecha_minimo_despues)}, por debajo de tu colchón de ${fmt(s.colchon)}. Cualquier gasto extra antes de esa fecha te deja más corto.`);
+      ? `Pero no es todo disponible: de ahí en adelante tu punto más bajo es ${fmt(s.minimo_despues)} el ${fl(s.fecha_minimo_despues)}. Lo que de verdad puedes gastar ${s.colchon > 0 ? `sin bajar de tu colchón de ${fmt(s.colchon)}` : 'sin quedar en negativo'} son ${fmt(s.libre)}.`
+      : `Pero no es dinero libre: de ahí en adelante bajas a ${fmt(s.minimo_despues)} el ${fl(s.fecha_minimo_despues)}, ${bajoDe(s.colchon)}. Cualquier gasto extra antes de esa fecha te deja más corto.`);
   }
   return partes.join(' ');
 }
@@ -134,7 +137,7 @@ function textoResumenMes(cur, ym) {
   if (r.fuera_de_plan) return `Tu plan llega hasta el ${fl(r.ultimo_dato)}; ${nombre} todavía no tiene movimientos. Usa "Extender plan" y te digo cómo queda.`;
   const grandes = r.grandes.slice(0, 5).map(g => `${g.concepto} ${g.tipo === 'ingreso' ? '+' : '-'}${fmt(g.monto)} el ${Number(g.fecha.slice(8))}`).join(', ');
   return `En ${nombre} empiezas con ${fmt(r.saldo_inicio)}, entran ${fmt(r.ingresos)} y salen ${fmt(r.egresos)}, así que cierras el mes con ${fmt(r.saldo_fin)}. ` +
-    `El día más apretado es el ${fl(r.fecha_minimo)}, con ${fmt(r.minimo)}${r.minimo < cur.colchon_meta ? `, por debajo de tu colchón de ${fmt(cur.colchon_meta)}` : ''}. ` +
+    `El día más apretado es el ${fl(r.fecha_minimo)}, con ${fmt(r.minimo)}${r.minimo < Math.max(cur.colchon_meta, 0) || r.minimo < 0 ? `, ${bajoDe(cur.colchon_meta)}` : ''}. ` +
     (grandes ? `Lo principal del mes: ${grandes}.` : '');
 }
 
@@ -176,8 +179,8 @@ function textoExplicarSaldo(cur, fecha) {
   out.push(p.sale > p.entra
     ? `La causa: de hoy al ${fl(fecha)} salen ${fmt(p.sale)} y entran ${fmt(p.entra)}, ${fmt(p.sale - p.entra)} más de lo que entra, y eso se come lo que tienes hoy (${fmt(p.saldo_inicio)}). Lo que más pesa es ${lista(p.pesan.slice(0, 2).map(item))}.`
     : `De hoy al ${fl(fecha)} entran ${fmt(p.entra)} y salen ${fmt(p.sale)}, así que sumas ${fmt(p.entra - p.sale)} a lo que tienes hoy (${fmt(p.saldo_inicio)}).`);
-  if (p.falta_para_cero) out.push(`Para no quedar en negativo necesitas liberar ${fmt(p.falta_para_cero)} antes de esa fecha; para mantener tu colchón de ${fmt(p.colchon)}, ${fmt(p.falta_para_colchon)}.`);
-  else if (p.falta_para_colchon) out.push(`Estás ${fmt(p.falta_para_colchon)} por debajo de tu colchón de ${fmt(p.colchon)} ese día.`);
+  if (p.falta_para_cero) out.push(`Para no quedar en negativo necesitas liberar ${fmt(p.falta_para_cero)} antes de esa fecha${p.colchon > 0 ? `; para mantener tu colchón de ${fmt(p.colchon)}, ${fmt(p.falta_para_colchon)}` : ''}.`);
+  else if (p.colchon > 0 && p.falta_para_colchon) out.push(`Estás ${fmt(p.falta_para_colchon)} por debajo de tu colchón de ${fmt(p.colchon)} ese día.`);
   return out.join(' ');
 }
 
@@ -198,8 +201,8 @@ function textoMantener(cur, rows, opts, foco) {
   const p = fin.planMantener(cur, foco && foco > cur.today ? foco : null);
   const partes = [];
   partes.push(p.margen >= 0
-    ? `Para mantener la proyección tienes un margen de ${fmt(p.margen)} sobre tu colchón hasta el ${fl(p.fecha_min)}, que es tu punto más bajo (${fmt(p.saldo_min)}).`
-    : `Hoy la proyección ya está ${fmt(-p.margen)} por debajo de tu colchón en su punto más bajo (${fmt(p.saldo_min)} el ${fl(p.fecha_min)}), así que no hay margen para gastos extra.`);
+    ? `Para mantener la proyección tienes un margen de ${fmt(p.margen)} ${cur.colchon_meta > 0 ? 'sobre tu colchón' : 'antes de quedar en negativo'} hasta el ${fl(p.fecha_min)}, que es tu punto más bajo (${fmt(p.saldo_min)}).`
+    : `Hoy la proyección ya está ${fmt(-p.margen)} ${cur.colchon_meta > 0 ? 'por debajo de tu colchón' : 'en negativo'} en su punto más bajo (${fmt(p.saldo_min)} el ${fl(p.fecha_min)}), así que no hay margen para gastos extra.`);
   if (p.ingresos_que_deben_llegar.length) partes.push(`Tienen que llegar: ${p.ingresos_que_deben_llegar.slice(0, 5).map(i => `${i.concepto} ${fmt(i.monto)} el ${fl(i.fecha)}`).join(', ')}.`);
   partes.push(`Y necesitas quedarte en ${fmt(p.presupuesto)} por semana${p.semanas_de_presupuesto ? ` durante ${plural(p.semanas_de_presupuesto, 'semana', 'semanas')}` : ''}.`);
   const recs = recomendaciones(rows, opts, cur);
@@ -383,8 +386,8 @@ function heuristic(pregunta, rows, opts, state = {}) {
       return out(`${alerta}Tu salud está en ${cur.score}% (${cur.color}). ` + recs.map((r, i) => `${i + 1}) ${r.texto}`).join(' '), { recomendaciones: recs });
     }
     case 'estado': {
-      const punto = cur.saldo_min < cur.colchon_meta
-        ? `Tu punto más bajo es el ${fl(cur.fecha_min)}, con ${fmt(cur.saldo_min)}, por debajo de tu colchón de ${fmt(cur.colchon_meta)}.`
+      const punto = (cur.saldo_min < cur.colchon_meta || cur.saldo_min < 0)
+        ? `Tu punto más bajo es el ${fl(cur.fecha_min)}, con ${fmt(cur.saldo_min)}, ${bajoDe(cur.colchon_meta)}.`
         : `Tu punto más bajo es ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}.`;
       return out(`${alerta}${cur.frase}: tu salud financiera está en ${cur.score}%, en ${cur.color}. Hoy tienes ${fmt(cur.saldo_hoy)}. ${punto}`);
     }

@@ -231,7 +231,9 @@
 
   function drawDesglose(s) {
     var parts = [
-      ['A', 'Colchón', s.A, 40, 'Saldo mínimo ' + s.saldo_min + ' contra la meta de ' + s.colchon_meta],
+      s.colchon_meta === '$0.00'
+        ? ['A', 'Sin quedar en negativo', s.A, 40, 'Saldo mínimo ' + s.saldo_min + (s.saldo_min.charAt(0) === '-' ? ': queda en negativo' : ': nunca queda en negativo')]
+        : ['A', 'Colchón', s.A, 40, 'Saldo mínimo ' + s.saldo_min + ' contra la meta de ' + s.colchon_meta],
       ['B', 'Apego al plan', s.B, 30, 'Saldo final ' + s.saldo_final + ' contra el plan ' + s.saldo_final_plan],
       ['C', 'Presupuesto de la semana', s.C, 20, 'Gastado ' + s.semana.gastado + ' de ' + s.semana.disponible + ' disponibles (con lo acumulado)'],
       ['D', 'Obligaciones cubiertas', s.D, 10, s.obligaciones_descubiertas.length ? 'Hay pagos que quedan en negativo' : 'Corte, pago Lina, casa de tu hija y servicios cubiertos']

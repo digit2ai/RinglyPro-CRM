@@ -150,7 +150,8 @@ function analyze(rawRows, opts = {}) {
   const saldoFinalPlan = plan.final;
 
   // A. Colchón (40)
-  const A = min.saldo < 0 ? 0 : Math.min(1, min.saldo / colchon) * 40;
+  // With no colchón configured (0), the floor is zero: 40 points unless a day goes negative.
+  const A = min.saldo < 0 ? 0 : (colchon > 0 ? Math.min(1, min.saldo / colchon) * 40 : 40);
   // B. Apego al plan (30)
   let B;
   if (saldoFinalPlan > 0) B = Math.max(0, Math.min(1, saldoFinal / saldoFinalPlan)) * 30;
@@ -244,6 +245,7 @@ function razon(x) {
     sobre_colchon: () => `tu punto más bajo (${fmt(x.saldo)}) está arriba de tu colchón`,
     sobre_plan: () => `vas ${fmt(x.diferencia)} arriba del plan`,
     en_plan: () => 'vas según el plan',
+    sin_negativos: () => `tu saldo nunca queda en negativo (lo más bajo es ${fmt(x.saldo)})`,
     semana_ok: () => `te quedan ${fmt(x.restante)} para gastar esta semana`
   }[x.tipo];
   return { tipo: x.tipo, texto: t ? t() : x.tipo };
@@ -272,7 +274,7 @@ function simulate(rawRows, hypotheticals, opts = {}) {
 function zonaCuidado(forward, min, colchon) {
   if (!forward.length) return null;
   const i = forward.findIndex(d => d.fecha === min.fecha);
-  const umbral = min.saldo < colchon ? colchon : min.saldo + 1;
+  const umbral = min.saldo < colchon ? colchon : (min.saldo < 0 ? 0 : min.saldo + 1);
   let a = i, b = i;
   while (a > 0 && forward[a - 1].saldo < umbral) a--;
   while (b < forward.length - 1 && forward[b + 1].saldo < umbral) b++;
@@ -286,8 +288,8 @@ function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFin
   if (negativos.length) malas.push({ tipo: 'negativo', fecha: negativos[0].fecha, saldo: negativos[0].saldo });
   if (descubiertas.length) malas.push({ tipo: 'pago_descubierto', fecha: descubiertas[0].row.fecha, concepto: descubiertas[0].row.concepto, total: descubiertas.length });
   else buenas.push({ tipo: 'pagos_cubiertos' });
-  if (min.saldo < colchon && !negativos.length) malas.push({ tipo: 'bajo_colchon', desde: zona && zona.desde, hasta: zona && zona.hasta, saldo: min.saldo, colchon });
-  else if (min.saldo >= colchon) buenas.push({ tipo: 'sobre_colchon', saldo: min.saldo, colchon });
+  if (colchon > 0 && min.saldo < colchon && !negativos.length) malas.push({ tipo: 'bajo_colchon', desde: zona && zona.desde, hasta: zona && zona.hasta, saldo: min.saldo, colchon });
+  else if (min.saldo >= colchon && min.saldo >= 0) buenas.push({ tipo: colchon > 0 ? 'sobre_colchon' : 'sin_negativos', saldo: min.saldo, colchon });
   if (saldoFinal < saldoFinalPlan) malas.push({ tipo: 'bajo_plan', diferencia: saldoFinalPlan - saldoFinal });
   else buenas.push({ tipo: saldoFinal > saldoFinalPlan ? 'sobre_plan' : 'en_plan', diferencia: saldoFinal - saldoFinalPlan });
   if (gastado > disponible) malas.push({ tipo: 'semana_excedida', exceso: gastado - disponible });
