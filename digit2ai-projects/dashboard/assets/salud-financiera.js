@@ -161,11 +161,24 @@
       (lista ? '<div style="font-size:12.5px;margin-top:8px;color:var(--text-primary)">No quedan cubiertos:<ul style="margin:4px 0 0 16px;padding:0">' + lista + '</ul></div>' : '');
   }
 
+  // One card, three monthly closes (next three months), no plan comparison.
+  function cierresCard(cs) {
+    if (!cs || !cs.length) return '';
+    var neg = cs.some(function (c) { return c.saldo.charAt(0) === '-'; });
+    return '<div class="card card-stat card-accent-' + (neg ? 'yellow' : 'green') + '" style="min-width:0"><div class="stat-label">Saldo final proyectado</div>' +
+      cs.map(function (c) {
+        var n = c.nombre.charAt(0).toUpperCase() + c.nombre.slice(1);
+        return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-top:1px solid var(--border)">' +
+          '<span style="font-size:13px;color:var(--text-secondary)">' + esc(n) + '</span>' +
+          '<span style="font-size:20px;font-weight:700;color:' + (c.saldo.charAt(0) === '-' ? 'var(--warning)' : 'var(--text-primary)') + '">' + esc(c.saldo) + '</span></div>';
+      }).join('') + '</div>';
+  }
+
   function drawCards(s) {
     var sem = s.semana;
     var restNeg = sem.restante.charAt(0) === '-';
     var acum = sem.acumulado_previo && sem.acumulado_previo !== '$0.00';
-    var cm = s.cierre_mes_actual, cd = s.cierre_fin_de_ano;
+    var cm = s.cierre_mes_actual;
     var ob = s.obligaciones || { total: 0, cubiertas: 0 };
     var todo = ob.total > 0 && ob.cubiertas === ob.total;
     var z = s.zona;
@@ -176,7 +189,7 @@
     document.getElementById('sf-cards').innerHTML =
       card('Saldo hoy', s.saldo_hoy, esc(fechaLarga(s.hoy)), 'blue') +
       (cm ? card('Cierre de ' + esc(cm.nombre.split(' ')[0]), cm.saldo, vsPlan(cm), cm.sobre_plan ? 'green' : 'yellow', cm.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
-      (cd ? card('Saldo final proyectado &middot; ' + esc(cd.nombre.charAt(0).toUpperCase() + cd.nombre.slice(1)), cd.saldo, vsPlan(cd), cd.sobre_plan ? 'green' : 'yellow', cd.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
+      cierresCard(s.cierres_proximos) +
       pagos +
       card('Saldo mínimo proyectado', s.saldo_min,
         z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)),

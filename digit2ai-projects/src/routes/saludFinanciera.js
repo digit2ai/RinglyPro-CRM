@@ -87,6 +87,8 @@ router.get('/salud', async (req, res) => {
       ...engine.publicSummary(a),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
       cierre_fin_de_ano: cierre(a, a.today.slice(0, 4) + '-12'),
+      // the closes of the next three months (owner request: noviembre, diciembre, enero)
+      cierres_proximos: [1, 2, 3].map(k => { const [y, m] = a.today.slice(0, 7).split('-').map(Number); return cierre(a, new Date(Date.UTC(y, m - 1 + k, 1)).toISOString().slice(0, 7)); }),
       cierre_ultimo_mes: a.serie.proyeccion.length ? cierre(a, a.serie.proyeccion[a.serie.proyeccion.length - 1].fecha.slice(0, 7)) : null,
       serie: { plan: a.serie.plan.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })), proyeccion: a.serie.proyeccion.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })) }
     });
