@@ -933,7 +933,9 @@ router.put('/crm-settings/:client_id', async (req, res) => {
 // GET /api/client/crm-credentials/:client_id - Get full CRM credentials (for MCP Copilot auto-load)
 // Returns credentials for ALL supported CRMs: GoHighLevel, HubSpot, Vagaro
 // Used by: Dashboard Contacts modal, MCP Copilot
-router.get('/crm-credentials/:client_id', async (req, res) => {
+// Returns a client's GoHighLevel / HubSpot / Vagaro secrets, so it requires the
+// CRM login and the caller's own client (it was open to anyone with an id).
+router.get('/crm-credentials/:client_id', require('../middleware/client-access').requireOwnClient(req => req.params.client_id), async (req, res) => {
     console.log(`📋 CRM credentials requested for client ${req.params.client_id}`);
     try {
         const { client_id } = req.params;

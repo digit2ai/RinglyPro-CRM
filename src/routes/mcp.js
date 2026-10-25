@@ -19,6 +19,21 @@ const BusinessCollectorMCPProxy = require(path.join(projectRoot, 'mcp-integratio
 const WebhookManager = require(path.join(projectRoot, 'mcp-integrations/webhooks/webhook-manager'));
 const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflows/workflow-engine'));
 const { parseNaturalDate, parseDuration, formatFriendlyDate } = require('../utils/date-parser');
+const crypto = require('crypto');
+const { requireOwnClient } = require('../middleware/client-access');
+
+// Admin keys come from the environment ONLY. The old fallbacks were written in
+// this public repository, so anyone could use them. Unset = the route is closed.
+function adminKeyOk(given, envName) {
+  const expected = process.env[envName];
+  if (!expected || expected.length < 16) return null;            // closed
+  const a = crypto.createHash('sha256').update(String(given || '')).digest();
+  const b = crypto.createHash('sha256').update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+// Session ids were `ghl_${Date.now()}`: a guessable millisecond timestamp that
+// handed over another client's CRM tokens. Now 32 random bytes.
+const newSessionId = (prefix) => `${prefix}_${crypto.randomBytes(32).toString('hex')}`;
 
 // Initialize services
 const sessions = new Map();
@@ -92,8 +107,9 @@ router.post('/admin/disable-all-leads/:clientId', async (req, res) => {
   const { apiKey } = req.body;
 
   // Simple API key check
-  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
-  if (apiKey !== expectedKey) {
+  const keyOk = adminKeyOk(apiKey, 'ADMIN_API_KEY');
+  if (keyOk === null) return res.status(503).json({ success: false, error: 'Admin endpoint disabled' });
+  if (!keyOk) {
     return res.status(401).json({ success: false, error: 'Invalid API key' });
   }
 
@@ -149,8 +165,9 @@ router.post('/admin/fix-client-phone/:clientId', async (req, res) => {
   const { apiKey, phoneNumber } = req.body;
 
   // Simple API key check
-  const expectedKey = process.env.ADMIN_API_KEY || 'ringlypro-quick-admin-2024';
-  if (apiKey !== expectedKey) {
+  const keyOk = adminKeyOk(apiKey, 'ADMIN_API_KEY');
+  if (keyOk === null) return res.status(503).json({ success: false, error: 'Admin endpoint disabled' });
+  if (!keyOk) {
     return res.status(401).json({ success: false, error: 'Invalid API key' });
   }
 
@@ -1288,7 +1305,7 @@ router.post('/hubspot/connect', async (req, res) => {
 
   try {
     const proxy = new HubSpotMCPProxy(accessToken);
-    const sessionId = `hs_${Date.now()}`;
+    const sessionId = newSessionId('hs');
 
     sessions.set(sessionId, {
       type: 'hubspot',
@@ -1317,7 +1334,7 @@ router.post('/gohighlevel/connect', async (req, res) => {
   const { apiKey, locationId } = req.body;
 
   // DEBUG: Log what we received
-  console.log('🔍 DEBUG - API Key received:', apiKey ? `${apiKey.substring(0, 20)}...${apiKey.substring(apiKey.length - 10)}` : 'MISSING');
+  console.log('🔍 GHL connect: API key', apiKey ? 'received' : 'MISSING');
   console.log('🔍 DEBUG - Location ID received:', locationId || 'MISSING');
   console.log('🔍 DEBUG - API Key starts with pit-?', apiKey?.startsWith('pit-') ? 'YES (PIT)' : 'NO (JWT or other)');
 
@@ -1331,7 +1348,7 @@ router.post('/gohighlevel/connect', async (req, res) => {
 
   try {
     const proxy = new GoHighLevelMCPProxy(apiKey, locationId);
-    const sessionId = `ghl_${Date.now()}`;
+    const sessionId = newSessionId('ghl');
 
     sessions.set(sessionId, {
       type: 'gohighlevel',
@@ -1390,7 +1407,7 @@ router.post('/vagaro/connect', async (req, res) => {
       throw new Error(connectionTest.message || 'Failed to connect to Vagaro');
     }
 
-    const sessionId = `vagaro_${Date.now()}`;
+    const sessionId = newSessionId('vagaro');
 
     sessions.set(sessionId, {
       type: 'vagaro',
@@ -1454,7 +1471,7 @@ router.post('/business-collector/connect', async (req, res) => {
 
   try {
     const proxy = new BusinessCollectorMCPProxy();
-    const sessionId = `bc_${Date.now()}`;
+    const sessionId = newSessionId('bc');
 
     // Check if Business Collector service is healthy
     const health = await proxy.checkHealth();
@@ -2070,7 +2087,7 @@ router.get('/business-collector/quick', async (req, res) => {
 });
 
 // Business Collector - Save businesses to database
-router.post('/business-collector/save', async (req, res) => {
+router.post('/business-collector/save', requireOwnClient(req => req.body && req.body.clientId), async (req, res) => {
   console.log('💾 Save businesses to database request received');
   const { clientId, businesses } = req.body;
 
@@ -2308,7 +2325,7 @@ router.post('/business-collector/save', async (req, res) => {
 });
 
 // Business Collector - Export businesses to GHL CRM with "NEW LEAD" tag
-router.post('/business-collector/export-to-ghl', async (req, res) => {
+router.post('/business-collector/export-to-ghl', requireOwnClient(req => req.body && req.body.clientId), async (req, res) => {
   console.log('📤 Export businesses to GHL CRM request received');
   const { clientId, businesses } = req.body;
 
@@ -2471,7 +2488,7 @@ router.post('/business-collector/export-to-ghl', async (req, res) => {
 });
 
 // Business Collector - Get collected businesses from database
-router.get('/business-collector/directory/:clientId', async (req, res) => {
+router.get('/business-collector/directory/:clientId', requireOwnClient(req => req.params.clientId), async (req, res) => {
   console.log('📂 Get business directory request received');
   const { clientId } = req.params;
   const { limit = 100, offset = 0, category, state } = req.query;
@@ -2556,8 +2573,9 @@ router.post('/business-collector/admin/disable-leads/:clientId', async (req, res
   const { adminKey } = req.body;
 
   // Simple admin key check (should match environment variable)
-  const expectedKey = process.env.ADMIN_SECRET_KEY || 'ringlypro-admin-2024';
-  if (adminKey !== expectedKey) {
+  const keyOk = adminKeyOk(adminKey, 'ADMIN_SECRET_KEY');
+  if (keyOk === null) return res.status(503).json({ success: false, error: 'Admin endpoint disabled' });
+  if (!keyOk) {
     return res.status(401).json({
       success: false,
       error: 'Unauthorized - Invalid admin key'
@@ -2624,7 +2642,7 @@ router.post('/business-collector/admin/disable-leads/:clientId', async (req, res
 });
 
 // Admin endpoint: Get stats for a client's business directory
-router.get('/business-collector/admin/stats/:clientId', async (req, res) => {
+router.get('/business-collector/admin/stats/:clientId', requireOwnClient(req => req.params.clientId), async (req, res) => {
   const { clientId } = req.params;
 
   try {
@@ -3221,7 +3239,7 @@ router.post('/copilot/chat', async (req, res) => {
       ENABLE_CLAUDE_AI: process.env.ENABLE_CLAUDE_AI,
       useClaudeAI,
       hasAnthropicKey,
-      apiKeyPreview: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...' : 'NOT SET'
+      apiKeySet: !!process.env.ANTHROPIC_API_KEY
     });
 
     if (useClaudeAI && hasAnthropicKey) {
@@ -6649,7 +6667,7 @@ router.post('/zoho/connect', async (req, res) => {
       });
     }
 
-    const sessionId = `zoho_${Date.now()}`;
+    const sessionId = newSessionId('zoho');
 
     sessions.set(sessionId, {
       type: 'zoho',
