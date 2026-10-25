@@ -10,7 +10,7 @@
   var SF_API = '/projects/api/salud-financiera';
   var CATS = [
     ['gasto_personal', 'Gasto personal'], ['otro', 'Otro'], ['ingreso_extra', 'Ingreso extra'], ['salario', 'Salario'],
-    ['ahorro', 'Ahorro'], ['inversion', 'Inversión'], ['corte', 'Corte'], ['pago_lina', 'Pago Lina'], ['hija', 'Casa de mi hija'], ['gasto_semanal', 'Gastos semana']
+    ['ahorro', 'Ahorro'], ['inversion', 'Inversión'], ['corte', 'Corte'], ['pago_lina', 'Pago Lina'], ['hija', 'Casa de mi hija'], ['servicios', 'Servicios'], ['gasto_semanal', 'Gastos semana']
   ];
   var CHIPS = ['¿Cómo estoy hoy?', '¿Cuánto tendré el 1 de diciembre?', '¿Por qué tengo este saldo hoy?', '¿Cómo se calcula la proyección?', '¿Qué hago para mantenerla?', 'Agrega un gasto de 45 en comida'];
   var CAT_LABEL = {}; CATS.forEach(function (c) { CAT_LABEL[c[0]] = c[1]; });
@@ -312,7 +312,9 @@
     document.querySelectorAll('#sfChips [data-chip]').forEach(function (b) { b.onclick = function () { ask(b.getAttribute('data-chip'), 'texto'); }; });
     sf('/lina/historial?limit=6').then(function (j) {
       if (!j.success) return;
-      j.data.forEach(function (h) { bubble('yo', esc(h.pregunta)); bubble('lina', esc(h.respuesta)); state.historial.push({ rol: 'yo', texto: h.pregunta }, { rol: 'lina', texto: h.respuesta }); });
+      j.data.forEach(function (h) { state.historial.push({ rol: 'yo', texto: h.pregunta }, { rol: 'lina', texto: h.respuesta }); });
+      var last = j.data[j.data.length - 1];
+      if (last) { bubble('yo', esc(last.pregunta)); bubble('lina', esc(last.respuesta)); }
       if (!j.data.length) status('Toca el orbe y pregúntame "¿Cómo estoy hoy?"');
     });
   }
@@ -365,6 +367,7 @@
   function ask(text, canal) {
     text = String(text || '').trim(); if (!text) return;
     document.getElementById('sfAsk').value = '';
+    document.getElementById('sfChat').innerHTML = ''; // only the latest question and answer stay on screen
     bubble('yo', esc(text));
     setOrb('thinking'); status('Lina está revisando tus números...');
     sf('/lina', { method: 'POST', body: { pregunta: text, canal: canal, historial: state.historial.slice(-6) } }).then(function (j) {

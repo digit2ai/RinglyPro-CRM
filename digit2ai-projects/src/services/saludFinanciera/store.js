@@ -125,6 +125,27 @@ async function setState(sequelize, user, { pendiente, contexto }) {
     { replacements: { u: user.userId, t: user.tenantId, p: pendiente ? JSON.stringify(pendiente) : null, c: JSON.stringify(contexto || {}) } });
 }
 
+async function recurrentes(sequelize, user, { soloActivos = true } = {}) {
+  const [rows] = await sequelize.query(`SELECT id, concepto, tipo, monto::text AS monto, categoria, dia, fin_de_mes, activo FROM sf_recurrentes
+    WHERE user_id = :u AND tenant_id = :t ${soloActivos ? 'AND activo' : ''} ORDER BY id`, { replacements: { u: user.userId, t: user.tenantId } });
+  return rows;
+}
+async function insertRecurrente(sequelize, user, r) {
+  const [rows] = await sequelize.query(`INSERT INTO sf_recurrentes (tenant_id, user_id, concepto, tipo, monto, categoria, dia, fin_de_mes)
+    VALUES (:t, :u, :concepto, :tipo, :monto, :categoria, :dia, :fin) RETURNING id, concepto, tipo, monto::text AS monto, categoria, dia, fin_de_mes, activo`,
+    { replacements: { t: user.tenantId, u: user.userId, concepto: r.concepto, tipo: r.tipo, monto: r.monto, categoria: r.categoria, dia: r.dia, fin: !!r.fin_de_mes } });
+  return rows[0];
+}
+async function desactivarRecurrente(sequelize, user, id, desde) {
+  const [rows] = await sequelize.query('UPDATE sf_recurrentes SET activo = FALSE WHERE id = :id AND user_id = :u AND tenant_id = :t RETURNING concepto',
+    { replacements: { id, u: user.userId, t: user.tenantId } });
+  if (!rows.length) return null;
+  // its future, still-pending plan rows go with it; history stays
+  const [del] = await sequelize.query(`DELETE FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND origen = 'plan' AND estado = 'pendiente'
+    AND lower(concepto) = lower(:c) AND fecha >= :desde RETURNING id`, { replacements: { u: user.userId, t: user.tenantId, c: rows[0].concepto, desde } });
+  return { concepto: rows[0].concepto, borrados: del.length };
+}
+
 async function logConversation(sequelize, user, pregunta, respuesta, canal) {
   await sequelize.query(`INSERT INTO sf_conversaciones_lina (tenant_id, user_id, pregunta, respuesta, canal) VALUES (:t, :u, :p, :r, :c)`,
     { replacements: { t: user.tenantId, u: user.userId, p: String(pregunta).slice(0, 4000), r: String(respuesta).slice(0, 8000), c: canal === 'voz' ? 'voz' : 'texto' } });
@@ -136,4 +157,4 @@ async function conversations(sequelize, user, limit = 20) {
   return rows.reverse();
 }
 
-module.exports = { getState, setState, ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };
+module.exports = { recurrentes, insertRecurrente, desactivarRecurrente, getState, setState, ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };

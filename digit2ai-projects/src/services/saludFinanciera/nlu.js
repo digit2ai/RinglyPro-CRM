@@ -142,7 +142,8 @@ function categoria(t, tipo, montoCents) {
   if (ob && ob !== 'salario' && ob !== 'ahorro') return ob;
   if (PERSONAL.test(t)) return 'gasto_personal';
   if (/\bgasto personal\b/.test(t)) return 'gasto_personal';
-  if (/\b(otro|imprevisto|reparacion|medico|doctor|carro|auto|seguro|renta|servicio|factura|luz|agua|internet|telefono)\b/.test(t)) return 'otro';
+  if (/\b(servicio|servicios|factura|luz|agua|internet|telefono|celular|cable|suscripcion|att|spectrum|render|claude|anthropic)\b/.test(t)) return 'servicios';
+  if (/\b(otro|imprevisto|reparacion|medico|doctor|carro|auto|seguro|renta)\b/.test(t)) return 'otro';
   return montoCents != null && montoCents <= 10000 ? 'gasto_personal' : 'otro';
 }
 function concepto(original, t, tipo) {

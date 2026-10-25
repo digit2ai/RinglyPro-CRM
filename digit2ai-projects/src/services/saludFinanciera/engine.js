@@ -19,7 +19,7 @@
  */
 const { toCents, fmt } = require('./money');
 
-const CATEGORIAS = ['ahorro', 'salario', 'ingreso_extra', 'inversion', 'corte', 'pago_lina', 'hija', 'gasto_semanal', 'gasto_personal', 'otro'];
+const CATEGORIAS = ['ahorro', 'salario', 'ingreso_extra', 'inversion', 'corte', 'pago_lina', 'hija', 'gasto_semanal', 'gasto_personal', 'servicios', 'otro'];
 const OBLIGACIONES = ['corte', 'pago_lina', 'hija'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
@@ -231,7 +231,37 @@ function lastDayOfMonth(y, m) { return new Date(Date.UTC(y, m, 0)).toISOString()
  * month name in the concept (the seed pays February's corte on 2027-01-29),
  * salary and weekly rows by date + category.
  */
-function extendPlan(rawRows, meses = 1) {
+/**
+ * Monthly recurring items (owner's own list, stored in sf_recurrentes, never
+ * in code) turned into plan rows for every month in [desde, hasta]. A month
+ * that already holds a plan row with the same concept is skipped, so running
+ * it twice never duplicates.
+ */
+function recurrentRows(rawRows, recurrentes, desde, hasta) {
+  const plan = rawRows.map(norm).filter(r => r.origen === 'plan');
+  const have = new Set(plan.map(r => (r.concepto || '').toLowerCase() + '|' + r.fecha.slice(0, 7)));
+  const out = [];
+  if (!desde || !hasta || desde > hasta) return out;
+  for (const rec of recurrentes || []) {
+    if (rec.activo === false) continue;
+    let ym = desde.slice(0, 7);
+    while (ym <= hasta.slice(0, 7)) {
+      const [y, m] = ym.split('-').map(Number);
+      const last = lastDayOfMonth(y, m);
+      const dia = rec.fin_de_mes ? Number(last.slice(8)) : Math.min(Number(rec.dia) || 1, Number(last.slice(8)));
+      const fecha = ym + '-' + String(dia).padStart(2, '0');
+      const key = String(rec.concepto).toLowerCase() + '|' + ym;
+      if (fecha >= desde && fecha <= hasta && !have.has(key)) {
+        have.add(key);
+        out.push({ fecha, concepto: rec.concepto, tipo: rec.tipo || 'egreso', monto: rec.monto, categoria: rec.categoria || 'servicios', origen: 'plan', estado: 'pendiente' });
+      }
+      ym = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+    }
+  }
+  return out.sort((a, b) => (a.fecha < b.fecha ? -1 : 1));
+}
+
+function extendPlan(rawRows, meses = 1, recurrentes = []) {
   const rows = rawRows.map(norm).filter(r => r.origen === 'plan');
   if (!rows.length) return { desde: null, hasta: null, nuevos: [] };
   const last = rows.reduce((m, r) => r.fecha > m ? r.fecha : m, rows[0].fecha);
@@ -271,6 +301,7 @@ function extendPlan(rawRows, meses = 1) {
   let fri = desde; while (dow(fri) !== 5) fri = addDays(fri, 1);
   for (; fri <= hasta; fri = addDays(fri, 7)) if (!have.has(fri + '|gasto_semanal')) add(fri, 'Gastos semana', 'egreso', '100.00', 'gasto_semanal');
 
+  for (const x of recurrentRows(rawRows, recurrentes, desde, hasta)) nuevos.push(x);
   nuevos.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.tipo === 'ingreso' ? -1 : 1));
   return { desde, hasta, nuevos };
 }
@@ -278,5 +309,5 @@ function extendPlan(rawRows, meses = 1) {
 module.exports = {
   CATEGORIAS, OBLIGACIONES, MESES,
   isISO, addDays, dow, weekStart, weekEnd, todayNY, fechaLarga, lastDayOfMonth,
-  norm, analyze, publicSummary, simulate, extendPlan, ledger
+  norm, analyze, publicSummary, simulate, extendPlan, recurrentRows, ledger
 };

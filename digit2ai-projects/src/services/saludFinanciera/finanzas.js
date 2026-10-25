@@ -9,7 +9,7 @@ const { fmt } = require('./money');
 
 const CAT = {
   ahorro: 'ahorro', salario: 'salario', ingreso_extra: 'ingreso extra', inversion: 'inversión', corte: 'corte',
-  pago_lina: 'pago Lina', hija: 'casa de tu hija', gasto_semanal: 'gastos de la semana', gasto_personal: 'gasto personal', otro: 'otro'
+  pago_lina: 'pago Lina', hija: 'casa de tu hija', gasto_semanal: 'gastos de la semana', gasto_personal: 'gasto personal', servicios: 'servicios', otro: 'otro'
 };
 const fl = (iso) => engine.fechaLarga(iso);
 

@@ -155,13 +155,61 @@ router.post('/plan/extender', async (req, res) => {
   try {
     const meses = Math.max(1, Math.min(12, parseInt((req.body || {}).meses, 10) || 1));
     const { rows } = await context(req);
-    const plan = engine.extendPlan(rows, meses);
+    const recs = await store.recurrentes(deps.sequelize, req.sf);
+    const plan = engine.extendPlan(rows, meses, recs);
     const t = await deps.sequelize.transaction();
     try {
       for (const r of plan.nuevos) await store.insertRow(deps.sequelize, req.sf, r, t);
       await t.commit();
     } catch (e) { await t.rollback(); throw e; }
     res.json({ success: true, desde: plan.desde, hasta: plan.hasta, creados: plan.nuevos.length, nuevos: plan.nuevos });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ---- Monthly recurring items (bills) ----
+// Creating one projects it at once, from today to the end of the plan's last
+// month; 'Extender plan' keeps adding it. Deactivating removes only its future
+// pending rows.
+function lastPlanMonthEnd(rows) {
+  const plan = rows.filter(r => r.origen === 'plan');
+  if (!plan.length) return null;
+  const last = plan.reduce((m, r) => (r.fecha > m ? r.fecha : m), plan[0].fecha);
+  const [y, m] = last.split('-').map(Number);
+  return engine.lastDayOfMonth(y, m);
+}
+
+router.get('/recurrentes', async (req, res) => {
+  try { res.json({ success: true, data: await store.recurrentes(deps.sequelize, req.sf) }); }
+  catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/recurrentes', async (req, res) => {
+  try {
+    const b = req.body || {};
+    const concepto = String(b.concepto || '').trim().slice(0, 200);
+    const monto = toCents(b.monto);
+    const tipo = b.tipo === 'ingreso' ? 'ingreso' : 'egreso';
+    const categoria = engine.CATEGORIAS.includes(b.categoria) ? b.categoria : (tipo === 'ingreso' ? 'ingreso_extra' : 'servicios');
+    const fin_de_mes = b.fin_de_mes === true || b.dia === 'fin';
+    const dia = fin_de_mes ? null : parseInt(b.dia, 10);
+    if (!concepto) return res.status(400).json({ success: false, error: 'concepto requerido' });
+    if (monto == null || monto <= 0) return res.status(400).json({ success: false, error: 'monto debe ser positivo' });
+    if (!fin_de_mes && !(dia >= 1 && dia <= 31)) return res.status(400).json({ success: false, error: "dia 1-31 o 'fin'" });
+    const rec = await store.insertRecurrente(deps.sequelize, req.sf, { concepto, tipo, monto: (monto / 100).toFixed(2), categoria, dia, fin_de_mes });
+    const { rows, opts } = await context(req);
+    const nuevos = engine.recurrentRows(rows, [rec], opts.today, lastPlanMonthEnd(rows));
+    const t = await deps.sequelize.transaction();
+    try { for (const r of nuevos) await store.insertRow(deps.sequelize, req.sf, r, t); await t.commit(); }
+    catch (e) { await t.rollback(); throw e; }
+    res.status(201).json({ success: true, data: rec, proyectados: nuevos.length, fechas: nuevos.map(n => n.fecha) });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/recurrentes/:id(\\d+)', async (req, res) => {
+  try {
+    const r = await store.desactivarRecurrente(deps.sequelize, req.sf, Number(req.params.id), deps.today());
+    if (!r) return res.status(404).json({ success: false, error: 'No encontrado' });
+    res.json({ success: true, ...r });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

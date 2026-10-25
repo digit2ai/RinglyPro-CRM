@@ -48,3 +48,24 @@ CREATE INDEX IF NOT EXISTS sf_config_tenant_idx ON sf_config (tenant_id);
 ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS pendiente JSONB;
 ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS pendiente_at TIMESTAMPTZ;
 ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS contexto JSONB;
+
+-- 2026-10-25: 'servicios' category for monthly bills, and the owner's monthly
+-- recurring items (AT&T, Render, ...). Recurrences are data, never code.
+ALTER TABLE sf_movimientos DROP CONSTRAINT IF EXISTS sf_movimientos_categoria_check;
+ALTER TABLE sf_movimientos ADD CONSTRAINT sf_movimientos_categoria_check CHECK (categoria IN ('ahorro','salario','ingreso_extra','inversion','corte','pago_lina','hija','gasto_semanal','gasto_personal','servicios','otro'));
+
+CREATE TABLE IF NOT EXISTS sf_recurrentes (
+  id          SERIAL PRIMARY KEY,
+  tenant_id   INTEGER NOT NULL,
+  user_id     INTEGER NOT NULL,
+  concepto    TEXT NOT NULL,
+  tipo        TEXT NOT NULL DEFAULT 'egreso' CHECK (tipo IN ('ingreso','egreso')),
+  monto       NUMERIC(12,2) NOT NULL CHECK (monto > 0),
+  categoria   TEXT NOT NULL DEFAULT 'servicios',
+  dia         INTEGER CHECK (dia IS NULL OR (dia BETWEEN 1 AND 31)),
+  fin_de_mes  BOOLEAN NOT NULL DEFAULT FALSE,
+  activo      BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS sf_recurrentes_tenant_idx ON sf_recurrentes (tenant_id);
+CREATE INDEX IF NOT EXISTS sf_recurrentes_user_idx ON sf_recurrentes (user_id);

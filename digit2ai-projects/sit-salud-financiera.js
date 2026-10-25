@@ -65,6 +65,14 @@ async function engineTests() {
   ok(ext.nuevos.filter(n => n.categoria === 'salario').map(n => n.fecha).join() === '2027-02-12,2027-02-26,2027-03-12,2027-03-26', 'extend: salary every two Fridays');
   const again = engine.extendPlan([...rows, ...ext.nuevos.map((n, i) => ({ ...n, id: 500 + i }))], 2);
   ok(!again.nuevos.some(n => ext.nuevos.some(e => e.fecha === n.fecha && e.categoria === n.categoria)), 'extend twice: never duplicates');
+  // Monthly recurring bills: end of month and a fixed day, never duplicated.
+  const RECS = [{ concepto: 'Internet', monto: '150.00', fin_de_mes: true }, { concepto: 'Software', monto: '100.00', dia: 7 }];
+  const rr = engine.recurrentRows(rows, RECS, TODAY, '2027-01-31');
+  ok(rr.filter(x => x.concepto === 'Internet').map(x => x.fecha).join() === '2026-10-31,2026-11-30,2026-12-31,2027-01-31', 'recurring end-of-month bill lands on each month\'s last day');
+  ok(rr.filter(x => x.concepto === 'Software').map(x => x.fecha).join() === '2026-11-07,2026-12-07,2027-01-07', 'recurring day-7 bill skips the past (Oct 7) and repeats monthly');
+  ok(engine.recurrentRows([...rows, ...rr.map((x, i) => ({ ...x, id: 700 + i }))], RECS, TODAY, '2027-01-31').length === 0, 'recurring rows are never duplicated');
+  ok(engine.extendPlan(rows, 1, RECS).nuevos.some(x => x.concepto === 'Internet' && x.fecha === '2027-02-28'), 'Extender plan carries recurring bills forward');
+  ok(engine.recurrentRows(rows, [{ concepto: 'x', monto: '1', dia: 31 }], '2027-02-01', '2027-02-28')[0].fecha === '2027-02-28', 'day 31 clamps to a short month');
   // Money is exact.
   ok(toCents('0.10') + toCents('0.20') === toCents('0.30') && toCents('1,500') === 150000 && toCents('4689.48') === 468948, 'money: exact decimal parsing');
   ok(engine.weekStart('2026-10-25') === '2026-10-24' && engine.weekEnd('2026-10-25') === '2026-10-30', 'week runs Saturday to Friday');
@@ -139,6 +147,7 @@ async function linaTests() {
   ok(/rec\.continuous = true/.test(ui) && /SILENCIO_MS = 3000/.test(ui), 'listening keeps going through pauses (continuous + 3 s silence)');
   const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('orbHtml() +');
   ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
+  ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
   console.log('\n[3] Lina model path (fake client)');
   const fake = (finalText) => {
@@ -259,6 +268,14 @@ async function apiTests() {
     r = await call('/lina', B, 'POST', { pregunta: 'súmale un ingreso de 1000 el 28 de noviembre' });
     r = await call('/lina', B, 'POST', { pregunta: 'dale' });
     ok(r.j.cambio && /El 28 de noviembre tendrás \$7,368\.48 \(antes \$6,368\.48\)/.test(r.j.texto) && /punto más bajo pasa de \$68\.48/.test(r.j.texto), 'income confirmed: explains the new balance and low point', r.j.texto);
+    r = await call('/recurrentes', B, 'POST', { concepto: 'Internet', monto: '150', dia: 'fin' });
+    ok(r.s === 201 && r.j.proyectados > 0 && r.j.fechas[0] === '2026-10-31', 'POST /recurrentes projects the bill from today to the plan end', r.j);
+    ok((await call('/recurrentes', A)).j.data.length === 0, 'user A cannot see user B recurring bills');
+    ok((await call('/recurrentes/' + r.j.data.id, A, 'DELETE')).s === 404, 'user A cannot delete user B recurring bill');
+    const nB = (await call('/movimientos', B)).j.data.filter(x => x.concepto === 'Internet').length;
+    r = await call('/recurrentes/' + r.j.data.id, B, 'DELETE');
+    ok(r.j.borrados === nB && !(await call('/movimientos', B)).j.data.some(x => x.concepto === 'Internet'), 'deactivating removes its pending future rows');
+    ok((await call('/recurrentes', B, 'POST', { concepto: 'x', monto: '-5', dia: 3 })).s === 400, 'recurring bill with a negative amount refused');
     r = await call('/simular', A, 'POST', { movimientos: [{ monto: '300', tipo: 'egreso' }] });
     ok(r.j.guardado === false && r.j.despues.dias_negativos.length > 0, 'POST /simular never saves');
     r = await call('/plan/extender', A, 'POST', { meses: 1 });
