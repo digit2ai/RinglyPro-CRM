@@ -220,6 +220,7 @@ async function linaTests() {
     ok(/FALTAN/.test(pfdSrc) && /AFECTA/.test(pfdSrc) && /p\.saldo_min\.v < 0/.test(pfdSrc), 'top bar: when negative, how much is missing and which payment it hits'); }
   ok(/PAGOS EN NEGATIVO/.test(pfdSrc) && /if \(!rows\.length\) return;/.test(pfdSrc) && /PUNTO MÁS BAJO/.test(pfdSrc), 'panel: bottom-right box lists the payments that land below zero, only when there are any');
   ok(/'Pagos afectados: '/.test(pfdSrc), 'MÍNIMO key names the affected payments');
+  ok(/closing balance of the quarter/.test(pfdSrc) && /z\.fecha < q\.hasta/.test(pfdSrc), 'inset: each quarter shows its closing balance');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');

@@ -239,7 +239,7 @@
         var vals = pts.map(function (d) { return d.saldo; }).concat([0, p.saldo_hoy.v]);
         var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
         var X = function (iso) { return mx + 10 + (Date.parse(iso) - t0) / (t1 - t0) * (mw - 20); };
-        var Y = function (v) { return my + 14 + (hi - v) / ((hi - lo) || 1) * (mh - 34); };
+        var Y = function (v) { return my + 30 + (hi - v) / ((hi - lo) || 1) * (mh - 46); };
         if (s.zona) o.push('<rect x="' + X(s.zona.desde < s.hoy ? s.hoy : s.zona.desde) + '" y="' + (my + 1) + '" width="' + Math.max(3, X(s.zona.hasta) - X(s.zona.desde < s.hoy ? s.hoy : s.zona.desde)) + '" height="' + (mh - 2) + '" fill="rgba(255,204,0,.18)"/>');
         if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
         // quarter lines: a dashed rule where each quarter starts, its name centred in its span
@@ -248,6 +248,10 @@
           var x0 = Math.max(X(q.desde), mx + 10), x1 = Math.min(X(q.hasta), mx + mw - 10);
           if (i > 0) o.push('<line x1="' + x0.toFixed(1) + '" x2="' + x0.toFixed(1) + '" y1="' + (my + 2) + '" y2="' + (my + mh - 2) + '" stroke="#9aa7b8" stroke-width="1" stroke-dasharray="3 3"/>');
           if (x1 - x0 > 26) o.push('<text x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (my + 12) + '" fill="#cfd8e3" font-size="10" text-anchor="middle">' + esc(q.nombre) + '</text>');
+          // closing balance of the quarter: last balance before the next quarter starts (or the plan's end)
+          var ult = i === qs.length - 1, cq = p.saldo_hoy.v;
+          pts.forEach(function (z) { if (z.fecha < q.hasta || (ult && z.fecha <= q.hasta)) cq = z.saldo; });
+          if (x1 - x0 > 34) o.push('<text x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (my + 24) + '" fill="' + (cq < 0 ? C.red : '#fff') + '" font-size="10" font-weight="700" text-anchor="middle">' + (cq < 0 ? '-' : '') + '$' + Math.round(Math.abs(cq)).toLocaleString('en-US') + '</text>');
         });
         // the balance itself: closing balance of each day, joined, no payment steps
         var cierre = {}; pts.forEach(function (q) { cierre[q.fecha] = q.saldo; });
