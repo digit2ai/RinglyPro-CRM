@@ -188,6 +188,7 @@ async function linaTests() {
   const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('orbHtml() +');
   ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
   ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
+  ok(/data-edit="' \+ r\.id/.test(ui) && /function openEdit\(id\)/.test(ui) && /method: 'PATCH', body: cambios/.test(ui), 'every movement row has an Editar button that PATCHes only what changed');
   ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
@@ -281,6 +282,10 @@ async function apiTests() {
     const [[own]] = await sequelize.query('SELECT user_id, tenant_id FROM sf_movimientos WHERE id = :id', { replacements: { id: r.j.data.id } });
     ok(own.user_id === 990097 && own.tenant_id === 990015, 'row owned by the session user, not the body');
     ok((await call('/movimientos', A, 'POST', { fecha: TODAY, concepto: 'x', tipo: 'egreso', monto: '-5', categoria: 'otro' })).s === 400, 'negative amount refused');
+    const planRow = (await call('/movimientos', A)).j.data.find(x => x.origen === 'plan' && x.concepto === 'Casa de mi hija');
+    r = await call('/movimientos/' + planRow.id, A, 'PATCH', { fecha: '2026-12-02', monto: '4200', concepto: 'Casa de mi hija (ajuste)' });
+    ok(r.s === 200 && r.j.data.fecha === '2026-12-02' && r.j.data.monto === '4200.00' && r.j.data.origen === 'plan', 'edit a plan row: date, amount and concept change, it stays a plan row');
+    ok((await call('/movimientos/' + planRow.id, A, 'PATCH', { monto: 'abc' })).s === 400, 'edit with an invalid amount is refused');
     ok((await call('/movimientos', A, 'POST', { fecha: '2026-02-30', concepto: 'x', tipo: 'egreso', monto: '5', categoria: 'otro' })).s === 400, 'impossible date refused');
     await call('/movimientos/' + r.j.data.id, A, 'DELETE');
     // Lina over HTTP

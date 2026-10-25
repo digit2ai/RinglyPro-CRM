@@ -276,6 +276,7 @@
         var act = v === 'plan' ? '<button class="btn btn-sm btn-ghost" data-done="' + r.id + '">Cumplido</button>'
           : v === 'cumplido' ? '<button class="btn btn-sm btn-ghost" data-undo="' + r.id + '">Deshacer</button>'
             : '<button class="btn btn-sm btn-ghost" data-del="' + r.id + '">Borrar</button>';
+        act = '<button class="btn btn-sm btn-ghost" data-edit="' + r.id + '">Editar</button> ' + act;
         return '<tr style="' + bg + 'border-left:3px solid ' + color[v] + '">' +
           '<td style="white-space:nowrap">' + esc(fechaCorta(r.fecha)) + (r.es_minimo ? '<div style="font-size:11px;color:var(--warning);font-weight:700">PUNTO MÁS BAJO</div>' : '') + '</td>' +
           '<td>' + esc(r.concepto) + '</td><td style="color:var(--text-secondary)">' + esc(CAT_LABEL[r.categoria] || r.categoria) + '</td>' +
@@ -285,6 +286,7 @@
       }).join('') + '</tbody></table>';
     el.querySelectorAll('[data-done]').forEach(function (b) { b.onclick = function () { openDone(Number(b.getAttribute('data-done'))); }; });
     el.querySelectorAll('[data-undo]').forEach(function (b) { b.onclick = function () { sf('/movimientos/' + b.getAttribute('data-undo'), { method: 'PATCH', body: { estado: 'pendiente' } }).then(refresh); }; });
+    el.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { openEdit(Number(b.getAttribute('data-edit'))); }; });
     el.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { if (confirm('¿Borrar este movimiento?')) sf('/movimientos/' + b.getAttribute('data-del'), { method: 'DELETE' }).then(refresh); }; });
   }
 
@@ -310,6 +312,38 @@
     var m = document.getElementById('sf-f-monto'); if (m) setTimeout(function () { m.focus(); }, 50);
   }
   function val(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+
+  // Edit any movement (plan or real). Only the fields that changed are sent.
+  function openEdit(id) {
+    var r = state.movs.filter(function (x) { return x.id === id; })[0]; if (!r) return;
+    var cumplido = r.origen === 'plan' && r.estado === 'cumplido';
+    openModal('Editar movimiento',
+      '<p style="margin-bottom:10px;color:var(--text-secondary);font-size:13px">' + (r.origen === 'plan' ? 'Movimiento del plan' + (cumplido ? ' (cumplido)' : '') : 'Movimiento real') + '</p>' +
+      '<div class="form-row">' + field('Fecha', '<input type="date" id="sf-e-fecha" value="' + esc(r.fecha) + '" style="font-size:16px">') +
+      field(cumplido ? 'Monto planeado' : 'Monto', '<input type="text" inputmode="decimal" id="sf-e-monto" value="' + esc(r.monto) + '" style="font-size:16px">') + '</div>' +
+      (cumplido ? field('Monto real pagado o recibido', '<input type="text" inputmode="decimal" id="sf-e-real" value="' + esc(r.monto_real || r.monto) + '" style="font-size:16px">') : '') +
+      field('Concepto', '<input type="text" id="sf-e-concepto" value="' + esc(r.concepto) + '" style="font-size:16px">') +
+      '<div class="form-row">' + field('Tipo', '<select id="sf-e-tipo" style="font-size:16px"><option value="egreso"' + (r.tipo === 'egreso' ? ' selected' : '') + '>Egreso</option><option value="ingreso"' + (r.tipo === 'ingreso' ? ' selected' : '') + '>Ingreso</option></select>') +
+      field('Categoría', '<select id="sf-e-cat" style="font-size:16px">' + CATS.map(function (c) { return '<option value="' + c[0] + '"' + (c[0] === r.categoria ? ' selected' : '') + '>' + c[1] + '</option>'; }).join('') + '</select>') + '</div>' +
+      '<p id="sf-e-err" style="color:var(--danger);font-size:13px"></p>' +
+      '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-del" style="color:var(--danger);border-color:var(--danger)">Borrar este movimiento</button>',
+      function () {
+        var cambios = {};
+        var campos = { fecha: val('sf-e-fecha'), monto: val('sf-e-monto'), concepto: val('sf-e-concepto'), tipo: val('sf-e-tipo'), categoria: val('sf-e-cat') };
+        Object.keys(campos).forEach(function (k) { if (String(campos[k]) !== String(r[k])) cambios[k] = campos[k]; });
+        if (cumplido && val('sf-e-real') !== String(r.monto_real || r.monto)) cambios.monto_real = val('sf-e-real');
+        if (!Object.keys(cambios).length) { closeModal(); return; }
+        return sf('/movimientos/' + id, { method: 'PATCH', body: cambios }).then(function (j) {
+          if (!j.success) { document.getElementById('sf-e-err').textContent = j.error || 'No se pudo guardar'; return; }
+          closeModal(); refresh();
+        });
+      });
+    var del = document.getElementById('sf-e-del');
+    if (del) del.onclick = function () {
+      if (!confirm('¿Borrar "' + r.concepto + '" del ' + fechaLarga(r.fecha) + '?')) return;
+      sf('/movimientos/' + id, { method: 'DELETE' }).then(function (j) { if (j.success) { closeModal(); refresh(); } else document.getElementById('sf-e-err').textContent = j.error || 'No se pudo borrar'; });
+    };
+  }
 
   function openDone(id) {
     var r = state.movs.filter(function (x) { return x.id === id; })[0]; if (!r) return;
