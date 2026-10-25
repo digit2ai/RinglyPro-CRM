@@ -260,6 +260,28 @@
       }
     })();
 
+    // ---------------- bottom right: payments that land below zero (only when there are any) ----------------
+    (function () {
+      var rows = p.en_negativo || [];
+      if (!rows.length) return;
+      var bx = 700, by = 540, bw = 282, bh = 154, max = 4;
+      var shown = rows.slice(0, max), iMin = -1;
+      rows.forEach(function (r, i) { if (r.minimo) iMin = i; });
+      if (iMin >= max) shown[max - 1] = rows[iMin];
+      o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="#000" stroke="' + C.red + '" stroke-width="2"/>');
+      o.push('<text x="' + (bx + 8) + '" y="' + (by + 17) + '" fill="' + C.red + '" font-size="13" font-weight="700">PAGOS EN NEGATIVO</text>');
+      if (rows.length > shown.length) o.push('<text x="' + (bx + bw - 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="12" text-anchor="end">+' + (rows.length - shown.length) + ' más</text>');
+      shown.forEach(function (r, i) {
+        var y = by + 40 + i * 29;
+        if (r.minimo) o.push('<rect x="' + (bx + 2) + '" y="' + (y - 15) + '" width="' + (bw - 4) + '" height="27" fill="rgba(255,176,32,.16)"/>');
+        o.push('<text x="' + (bx + 8) + '" y="' + y + '" fill="' + (r.minimo ? C.amber : '#fff') + '" font-size="13">' + esc(fc(r.fecha)) + '</text>');
+        if (r.minimo) o.push('<text x="' + (bx + 8) + '" y="' + (y + 10) + '" fill="' + C.amber + '" font-size="8" font-weight="700">PUNTO MÁS BAJO</text>');
+        o.push('<text x="' + (bx + 64) + '" y="' + y + '" fill="#fff" font-size="13">' + esc(sinMes(r.concepto).slice(0, 15)) + '</text>');
+        o.push('<text x="' + (bx + 210) + '" y="' + y + '" fill="#cfd8e3" font-size="12" text-anchor="end">' + esc(String(r.monto).replace(/\.00$/, '')) + '</text>');
+        o.push('<text x="' + (bx + bw - 8) + '" y="' + y + '" fill="' + C.red + '" font-size="13" font-weight="700" text-anchor="end">' + esc(r.saldo) + '</text>');
+      });
+    })();
+
     // ---------------- top bar ----------------
     (function () {
       var prox = p.proximo_pago;
