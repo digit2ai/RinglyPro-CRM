@@ -160,6 +160,33 @@ body.vert .step p{font-size:21px}
 body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}body.vert .cover .col.grow{max-width:none!important}body.vert .price .amt{font-size:76px}body.vert .price li{font-size:21px}
 .cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
 
+
+/* ── el orbe animado de OrbUp (copiado de orbup.html), en la última lámina ── */
+.orbx{width:400px;height:400px;position:relative}
+body.vert .orbx{width:560px;height:560px;margin-top:10px}
+.orbx::before{content:"";position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.30),rgba(236,72,153,.16) 45%,transparent 70%);filter:blur(10px)}
+.orbx .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.orbx .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.orbx .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.orbx .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.orbx .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.orbx .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.orbx .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.orbx .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.orbx .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
+@keyframes orbRingPulse{0%{opacity:.9;stroke-width:1.5}100%{opacity:0;stroke-width:.5}}
+.orbx .orb-particles{opacity:0}
+.orbx .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+.orbx .orb-svg{position:relative;filter:drop-shadow(0 8px 42px rgba(34,211,238,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+.slide > .d2stars{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
 /* ── reproductor ───────────────────────────────────────────────────── */
 .dock{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(7,11,22,.92);border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;backdrop-filter:blur(8px)}
 .orb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 0 0 rgba(34,211,238,.6)}
@@ -434,7 +461,8 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
   </section>
 
   <!-- 14 cierre -->
-  <section class="slide cover" data-t="Siguiente paso">
+  <section class="slide cover" data-t="Siguiente paso" id="lastSlide">
+    <canvas class="d2stars" id="d2stars" aria-hidden="true"></canvas>
     <div class="row">
       <div class="col grow">
         <img class="hlogo stag d1" src="../logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
@@ -442,7 +470,94 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
         <p class="lead stag d3">Conecte Digit2AI MCP Neural y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</p>
         <span class="cta stag d4">digit2ai.com/mcp</span>
       </div>
-      <div class="col" style="align-items:center"><div class="gate-orb" style="width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 40%,#6d28d9);box-shadow:0 0 80px rgba(34,211,238,.45),0 0 160px rgba(139,92,246,.35);animation:pulse 3s ease-in-out infinite"></div></div>
+      <div class="col" style="align-items:center"><div class="orbx" aria-hidden="true">
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+      </div></div>
     </div>
   </section>
 
@@ -586,7 +701,34 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
     prog.style.width = (i / slides.length * 100) + '%';
     paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
     if (slides[i].querySelector('#orbit')) placeOrbit();
+    if (slides[i].id === 'lastSlide') stars();
     narrate();
+  }
+
+  // Constelación de puntos detrás del orbe (la misma de orbup.html), solo en la última lámina.
+  var starsOn = false;
+  function stars(){
+    var c = document.getElementById('d2stars'); if (!c || !c.getContext || starsOn) return;
+    starsOn = true;
+    var ctx = c.getContext('2d'), pts = [];
+    var COLORS = ['rgba(140,165,255,','rgba(230,73,128,','rgba(255,146,43,','rgba(190,205,255,'];
+    var W = c.width = (document.body.classList.contains('vert') ? 720 : 1280) * 2;
+    var H = c.height = (document.body.classList.contains('vert') ? 1280 : 720) * 2;
+    for (var k = 0; k < 90; k++) pts.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.5, vy: (Math.random()-.5)*.5, r: Math.random()*3.2+1.2, c: COLORS[k % 4] });
+    (function frame(){
+      if (!slides[i] || slides[i].id !== 'lastSlide') { starsOn = false; return; }
+      ctx.clearRect(0, 0, W, H);
+      for (var a = 0; a < pts.length; a++){
+        var p = pts[a]; p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1;
+        for (var b = a + 1; b < pts.length; b++){
+          var q = pts[b], dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 260){ ctx.strokeStyle = 'rgba(150,170,255,' + ((1 - d/260) * .18) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+        }
+      }
+      for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + '0.8)'; ctx.fill(); }
+      requestAnimationFrame(frame);
+    })();
   }
   function toggle(){
     if (!voiceOn) { voiceOn = true; show(i); return; }
