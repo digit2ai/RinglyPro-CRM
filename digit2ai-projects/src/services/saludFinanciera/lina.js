@@ -197,6 +197,45 @@ function textoCalculo(cur, foco) {
   return s + ' ' + c.salud;
 }
 
+// "¿Qué tengo que hacer para no quedar en negativo?" — how much, by when, and
+// options each verified by re-running the engine (never an obligation, never
+// the investment when the owner said it is not negotiable).
+function textoEvitarNegativo(cur, rows, opts, prefs) {
+  if (!cur.dias_negativos.length) return `No quedas en negativo ningún día: lo más bajo es ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}.`;
+  const primer = cur.dias_negativos[0].fecha;
+  const falta = -cur.saldo_min;
+  const meta = Math.ceil(falta / 100) * 100;
+  const partes = [`Te faltan ${fmt(falta)}: tu saldo baja de cero el ${fl(primer)} y llega a ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}. Necesitas ese dinero antes del ${fl(primer)}.`];
+  const sinNeg = (a) => !a.dias_negativos.length;
+  const opciones = [];
+  // 1) an extra income before the first negative day
+  const antes = engine.addDays(primer, -1) >= cur.today ? engine.addDays(primer, -1) : cur.today;
+  const s1 = engine.simulate(rows, [{ fecha: antes, tipo: 'ingreso', monto: (meta / 100).toFixed(2), concepto: 'Ingreso extra', categoria: 'ingreso_extra' }], opts).despues;
+  if (sinNeg(s1)) opciones.push(`un ingreso extra de ${fmt(meta)} antes del ${fl(primer)} (lo más bajo quedaría en ${fmt(s1.saldo_min)})`);
+  // 2) spend less per week in the weeks left before that day
+  const n = rows.map(engine.norm);
+  const semanas = n.filter(r => r.origen === 'plan' && r.categoria === 'gasto_semanal' && r.estado !== 'cumplido' && r.fecha >= cur.today && r.fecha < primer);
+  if (semanas.length) {
+    const porSemana = Math.ceil(meta / semanas.length / 100) * 100;
+    const ids = new Set(semanas.map(r => String(r.id)));
+    if (porSemana <= Math.min(...semanas.map(r => r.cents))) {
+      const s2 = engine.analyze(rows.map(r => (ids.has(String(r.id)) ? { ...r, cents: engine.norm(r).cents - porSemana, monto: ((engine.norm(r).cents - porSemana) / 100).toFixed(2) } : r)), opts);
+      if (sinNeg(s2)) opciones.push(`gastar ${fmt(porSemana)} menos por semana en las ${semanas.length} semanas que faltan (tu presupuesto quedaría en ${fmt(cur.presupuesto_semanal - porSemana)} semanales)`);
+    }
+  }
+  // 3) reduce or move a non-obligation outflow before that day (never corte, pago Lina, hija; never the investment if ruled out)
+  const cand = n.filter(r => r.tipo === 'egreso' && r.fecha >= cur.today && r.fecha <= primer && !(r.origen === 'plan' && r.estado === 'cumplido') &&
+    ['otro', 'gasto_personal', 'servicios'].concat(noTocaInversion(prefs) ? [] : ['inversion']).includes(r.categoria) && r.categoria !== 'gasto_semanal' && r.cents >= meta)
+    .sort((a, b) => b.cents - a.cents)[0];
+  if (cand) {
+    const s3 = engine.analyze(rows.map(r => (String(r.id) === String(cand.id) ? { ...r, cents: cand.cents - meta, monto: ((cand.cents - meta) / 100).toFixed(2) } : r)), opts);
+    if (sinNeg(s3)) opciones.push(`bajar "${cand.concepto}" del ${fl(cand.fecha)} en ${fmt(meta)}`);
+  }
+  if (opciones.length) partes.push('Opciones que lo resuelven: ' + opciones.join('; o ') + '.');
+  if (noTocaInversion(prefs)) partes.push('No toqué la inversión porque me dijiste que no es negociable.');
+  return partes.join(' ');
+}
+
 function textoMantener(cur, rows, opts, foco) {
   const p = fin.planMantener(cur, foco && foco > cur.today ? foco : null);
   const partes = [];
@@ -205,19 +244,21 @@ function textoMantener(cur, rows, opts, foco) {
     : `Hoy la proyección ya está ${fmt(-p.margen)} ${cur.colchon_meta > 0 ? 'por debajo de tu colchón' : 'en negativo'} en su punto más bajo (${fmt(p.saldo_min)} el ${fl(p.fecha_min)}), así que no hay margen para gastos extra.`);
   if (p.ingresos_que_deben_llegar.length) partes.push(`Tienen que llegar: ${p.ingresos_que_deben_llegar.slice(0, 5).map(i => `${i.concepto} ${fmt(i.monto)} el ${fl(i.fecha)}`).join(', ')}.`);
   partes.push(`Y necesitas quedarte en ${fmt(p.presupuesto)} por semana${p.semanas_de_presupuesto ? ` durante ${plural(p.semanas_de_presupuesto, 'semana', 'semanas')}` : ''}.`);
-  const recs = recomendaciones(rows, opts, cur);
+  const recs = recomendaciones(rows, opts, cur, (opts && opts.preferencias) || []);
   if (recs.length && cur.saldo_min < cur.colchon_meta) partes.push('Para mejorarla: ' + recs[0].texto);
   return partes.join(' ');
 }
 
 // Every option re-runs the engine on a modified copy, so each carries its real effect.
-function recomendaciones(rows, opts, cur) {
+function noTocaInversion(prefs) { return (prefs || []).some(p => /inversi/i.test(p) && /(no es negociable|no se toca|intocable|no la toques|no reduzcas|no negociable|fija)/i.test(p)); }
+
+function recomendaciones(rows, opts, cur, prefs) {
   const out = [];
   const today = opts.today;
   const n = rows.map(engine.norm);
   const withChange = (fn) => engine.analyze(rows.map(r => fn({ ...r })), opts);
   if (cur.saldo_min < cur.colchon_meta) {
-    const inv = n.find(r => r.categoria === 'inversion' && r.tipo === 'egreso' && r.fecha >= today && !(r.origen === 'plan' && r.estado === 'cumplido'));
+    const inv = noTocaInversion(prefs) ? null : n.find(r => r.categoria === 'inversion' && r.tipo === 'egreso' && r.fecha >= today && !(r.origen === 'plan' && r.estado === 'cumplido'));
     if (inv) {
       const reduce = Math.min(inv.cents, Math.ceil((cur.colchon_meta - cur.saldo_min) / 100) * 100);
       if (reduce > 0) {
@@ -363,7 +404,8 @@ function heuristic(pregunta, rows, opts, state = {}) {
       const pre = cur.dias_negativos.length && cur.dias_negativos[0].fecha !== f ? alerta : '';
       return out(pre + textoExplicarSaldo(cur, f));
     }
-    case 'mantener': return out(alerta + textoMantener(cur, rows, opts, foco));
+    case 'evitar_negativo': return out(textoEvitarNegativo(cur, rows, opts, state.preferencias));
+    case 'mantener': return out(alerta + textoMantener(cur, rows, { ...opts, preferencias: state.preferencias }, foco));
     case 'saldo_fecha': return out(alerta + textoSaldoFecha(cur, ent.fecha || today));
     case 'resumen_mes': return out(alerta + textoResumenMes(cur, ent.mes));
     case 'punto_bajo': case 'cuidado': return out(alerta + textoZona(cur));
@@ -382,7 +424,8 @@ function heuristic(pregunta, rows, opts, state = {}) {
       return out(`${alerta}En los próximos 30 días: ` + p.map(x => `${x.concepto} ${x.monto} el ${fl(x.fecha)} (${x.cubierto ? 'cubierto' : 'no cubierto'})`).join('; ') + '.');
     }
     case 'recomendar': {
-      const recs = recomendaciones(rows, opts, cur);
+      if (cur.dias_negativos.length) return out(textoEvitarNegativo(cur, rows, opts, state.preferencias));
+      const recs = recomendaciones(rows, opts, cur, state.preferencias);
       return out(`${alerta}Tu salud está en ${cur.score}% (${cur.color}). ` + recs.map((r, i) => `${i + 1}) ${r.texto}`).join(' '), { recomendaciones: recs });
     }
     case 'estado': {

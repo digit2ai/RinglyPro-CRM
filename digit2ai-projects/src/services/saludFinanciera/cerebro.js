@@ -254,7 +254,7 @@ function makeTools(ctx) {
       return a.steps.filter(s => s.row.tipo === 'egreso' && s.row.fecha >= opts.today && s.row.fecha <= hasta && s.amount > 0 && !(s.row.origen === 'plan' && s.row.estado === 'cumplido'))
         .map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, monto: fmt(s.amount), saldo_despues: fmt(s.saldo), cubierto: s.saldo >= 0 }));
     },
-    async recomendaciones() { const lina = require('./lina'); const rs = await rows(); return lina.recomendaciones(rs, opts, await analyze()).map(r => r.texto); },
+    async recomendaciones() { const lina = require('./lina'); const rs = await rows(); return lina.recomendaciones(rs, opts, await analyze(), await store.preferencias(sequelize, user)).map(r => r.texto); },
     async como_se_calcula() { return fin.comoSeCalcula(await analyze()); },
     async buscar_conocimiento({ pregunta }) { const nlu = require('./nlu'); const h = kb.buscar(nlu.words(nlu.norm(pregunta))); return h ? { pregunta: h.entrada.p, respuesta: kb.responder(h.entrada, await analyze(), fin) } : { encontrado: false }; },
 

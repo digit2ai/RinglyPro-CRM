@@ -308,7 +308,7 @@ router.post('/lina', async (req, res) => {
       brainStatus.ultimo_error = motivo; brainStatus.ultimo_error_at = new Date().toISOString();
       req._sfMotivo = motivo;
     }
-    const out = await lina.answer(pregunta, rows, opts, { historial, client: null, state });
+    const out = await lina.answer(pregunta, rows, opts, { historial, client: null, state: { ...state, preferencias: await store.preferencias(deps.sequelize, req.sf) } });
     if (client && req._sfMotivo) out.motivo_respaldo = req._sfMotivo;
 
     let texto = out.texto, cambio = null, pendiente = state.pendiente;

@@ -164,6 +164,10 @@ async function linaTests() {
   ok(H('sí').ejecutar === undefined, 'sí with nothing pending executes nothing');
   ok(H('¿vale la pena adelantar algo?').desconocido === true, 'open question is handed to the model path');
 
+  const negR = [...rows, { id: 995, fecha: '2026-12-06', concepto: 'x', tipo: 'egreso', monto: '1000', categoria: 'otro', origen: 'real' }];
+  r = lina.heuristic('que tengo que hacer para no estar en saldo negativo', negR, o, { preferencias: ['La inversión no es negociable'] });
+  ok(r.intent === 'evitar_negativo' && /Te faltan/.test(r.texto) && /ingreso extra/.test(r.texto) && !/Reduce la inversión|bajar "Inversión"/.test(r.texto) && /no es negociable/.test(r.texto), 'no quedar en negativo: how much, by when, verified options, investment untouched when ruled out', r.texto);
+  ok(!/inversi/i.test(lina.heuristic('¿qué debo hacer?', negR, o, { preferencias: ['La inversión no es negociable'] }).texto.replace(/No toqué la inversión[^.]*\./, '')), 'a saved rule keeps the investment out of every recommendation');
   console.log('\n[2c] Lina memory: 50+ financial-health Q&A');
   const kb = require('./src/services/saludFinanciera/conocimiento');
   ok(kb.QA.length >= 50 && new Set(kb.QA.map(q => q.id)).size === kb.QA.length, 'memory holds at least 50 distinct questions', kb.QA.length);

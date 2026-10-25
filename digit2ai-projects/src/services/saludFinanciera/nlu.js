@@ -175,6 +175,7 @@ const R = {
   semana: /\bsemana\b/,
   mesGastado: /\b(llevo gastado|he gastado|gaste este mes|gastado este mes|cuanto llevo|mis gastos del mes|gastos de este mes)\b/,
   proximos: /\b(proximos? pagos?|que tengo que pagar|que pagos (vienen|tengo)|que viene|que sigue|que me toca pagar)\b/,
+  evitarNegativo: /\b(no (estar|quedar|caer|terminar) en (saldo )?(negativo|rojo)|salir del (negativo|rojo)|evitar (quedar en )?(el |saldo )?negativo|tapar el (hueco|negativo)|cubrir el (hueco|negativo)|no quedarme sin dinero)\b/,
   recomendar: /\b(que debo hacer|que hago|recomienda\w*|recomendacion\w*|consejo\w*|aconseja\w*|como mejoro|que me sugieres|sugerencia\w*|como subo|como aumento)\b/,
   estado: /\b(como estoy|como voy|como van|como estan|mis finanzas|mi salud|resumen|como ando|como esta mi dinero|situacion)\b/,
   saludo: /^(hola|buenos dias|buenas tardes|buenas noches|buenas|hey|oye)( lina)?$/,
@@ -207,6 +208,7 @@ function interpret(original, today) {
     const tp = tipo || (/\b(resta|restale|descuenta)\b/.test(t) ? 'egreso' : /\b(suma|sumale)\b/.test(t) ? 'ingreso' : 'egreso');
     return { intent: 'agregar', ...e, tipo: tp, categoria: categoria(t, tp, monto), concepto: concepto(original, t, tp) };
   }
+  if (R.evitarNegativo.test(t)) return { intent: 'evitar_negativo', ...e };
   if (R.alcanza.test(t)) return { intent: 'alcanza', ...e };
   if (R.explicarSaldo.test(t)) return { intent: 'explicar_saldo', ...e };
   if (R.mantener.test(t)) return { intent: 'mantener', ...e };
