@@ -150,8 +150,9 @@ function analyze(rawRows, opts = {}) {
   let score = A + B + C + D;
   const limitado = negativos.length > 0 && score > 49;
   if (negativos.length) score = Math.min(score, 49);
-  const color = score >= 75 ? 'verde' : score >= 50 ? 'amarillo' : 'rojo';
-  const frase = color === 'verde' ? 'Vas bien' : color === 'amarillo' ? 'Cuidado' : 'Vas mal';
+  // Two colours only (owner decision 2026-10-25): verde from 50, amarillo below. No negative wording.
+  const color = score >= 50 ? 'verde' : 'amarillo';
+  const frase = color === 'verde' ? 'Vas bien' : 'Hay que ajustar';
 
   // Next big payment: the next obligation or any egreso of $1,000+ from today.
   const proximoGrande = proj.steps.find(s => s.row.tipo === 'egreso' && s.row.fecha >= today &&
@@ -172,6 +173,7 @@ function analyze(rawRows, opts = {}) {
     presupuesto_semanal: presupuesto,
     semana: { desde: ws, hasta: we, gastado, restante: presupuesto - gastado },
     dias_negativos: negativos,
+    obligaciones: { total: obligaciones.length, cubiertas: obligaciones.length - descubiertas.length, hasta: obligaciones.length ? obligaciones[obligaciones.length - 1].row.fecha : null },
     obligaciones_descubiertas: descubiertas.map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, saldo: s.saldo })),
     proximo_pago: proximoGrande ? { id: proximoGrande.row.id, fecha: proximoGrande.row.fecha, concepto: proximoGrande.row.concepto, monto: proximoGrande.amount, saldo_despues: proximoGrande.saldo, cubierto: proximoGrande.saldo >= 0 } : null,
     steps: proj.steps,
@@ -194,6 +196,7 @@ function publicSummary(a) {
     colchon_meta: fmt(a.colchon_meta),
     semana: { desde: a.semana.desde, hasta: a.semana.hasta, gastado: fmt(a.semana.gastado), presupuesto: fmt(a.presupuesto_semanal), restante: fmt(a.semana.restante) },
     dias_negativos: a.dias_negativos.map(d => ({ fecha: d.fecha, saldo: fmt(d.saldo) })),
+    obligaciones: a.obligaciones,
     obligaciones_descubiertas: a.obligaciones_descubiertas.map(o => ({ ...o, saldo: fmt(o.saldo) })),
     proximo_pago: a.proximo_pago ? { ...a.proximo_pago, monto: fmt(a.proximo_pago.monto), saldo_despues: fmt(a.proximo_pago.saldo_despues) } : null
   };

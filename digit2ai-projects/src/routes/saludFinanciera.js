@@ -11,6 +11,7 @@
 const express = require('express');
 const { sequelize } = require('../models');
 const engine = require('../services/saludFinanciera/engine');
+const fin = require('../services/saludFinanciera/finanzas');
 const store = require('../services/saludFinanciera/store');
 const lina = require('../services/saludFinanciera/lina');
 const { toCents, fmt } = require('../services/saludFinanciera/money');
@@ -68,6 +69,13 @@ function withSaldo(rows, a) {
   });
 }
 
+// Projected closing balance of a month (projection and plan base).
+function cierre(a, ym) {
+  const r = fin.resumenMes(a, ym);
+  const plan = fin.balanceAt(a.serie.plan, r.hasta).saldo;
+  return { mes: ym, nombre: engine.MESES[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4), hasta: r.hasta, saldo: fmt(r.saldo_fin), saldo_plan: fmt(plan), sobre_plan: r.saldo_fin >= plan };
+}
+
 router.get('/acceso', (req, res) => res.json({ success: true, ok: true }));
 
 router.get('/salud', async (req, res) => {
@@ -77,6 +85,8 @@ router.get('/salud', async (req, res) => {
     res.set('Cache-Control', 'no-store').json({
       success: true,
       ...engine.publicSummary(a),
+      cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
+      cierre_ultimo_mes: a.serie.proyeccion.length ? cierre(a, a.serie.proyeccion[a.serie.proyeccion.length - 1].fecha.slice(0, 7)) : null,
       serie: { plan: a.serie.plan.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })), proyeccion: a.serie.proyeccion.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })) }
     });
   } catch (e) { console.error('[SaludFinanciera] salud', e); res.status(500).json({ success: false, error: e.message }); }

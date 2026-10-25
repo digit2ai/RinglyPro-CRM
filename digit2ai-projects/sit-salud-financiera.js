@@ -35,14 +35,14 @@ async function engineTests() {
   const a = engine.analyze(rows, { today: TODAY });
   ok(a.saldo_final === 446848, 'saldo final 4,468.48', fmt(a.saldo_final));
   ok(a.saldo_min === 6848 && a.fecha_min === '2026-12-11', 'saldo mínimo 68.48 el 2026-12-11', [fmt(a.saldo_min), a.fecha_min]);
-  ok(near(a.score_exacto, 63, 0.5) && a.color === 'amarillo', 'acceptance 1: salud ~63% amarillo', a.score);
+  ok(near(a.score_exacto, 63, 0.5) && a.color === 'verde' && a.frase === 'Vas bien', 'acceptance 1: salud ~63% (verde: two colours, owner decision)', a.score);
   ok(near(a.A, 2.74, 0.06) && a.B === 30 && a.C === 20 && a.D === 10, 'A=2.74 B=30 C=20 D=10', [a.A, a.B, a.C, a.D]);
   const b = engine.analyze([...rows, { id: 900, fecha: TODAY, concepto: 'x', tipo: 'egreso', monto: '50', categoria: 'otro', origen: 'real' }], { today: TODAY });
   ok(b.saldo_min === 1848, 'acceptance 2: +$50 real hoy -> mínimo 18.48', fmt(b.saldo_min));
-  ok(near(b.score_exacto, 60, 0.6) && b.color === 'amarillo', 'acceptance 2: salud ~60%', b.score);
+  ok(near(b.score_exacto, 60, 0.6) && b.color === 'verde', 'acceptance 2: salud ~60%', b.score);
   // Hard rule: any negative day caps at 49.
   const neg = engine.analyze([...rows, { id: 901, fecha: TODAY, concepto: 'x', tipo: 'egreso', monto: '300', categoria: 'otro', origen: 'real' }], { today: TODAY });
-  ok(neg.dias_negativos.length > 0 && neg.score <= 49 && neg.color === 'rojo', 'regla dura: negativo -> max 49 rojo', neg.score);
+  ok(neg.dias_negativos.length > 0 && neg.score <= 49 && neg.color === 'amarillo' && neg.frase === 'Hay que ajustar', 'regla dura: negativo -> max 49, amarillo', neg.score);
   const dip = engine.analyze([...rows, { id: 904, fecha: '2026-12-11', concepto: 'x', tipo: 'egreso', monto: '300', categoria: 'otro', origen: 'real' }, { id: 905, fecha: '2026-12-12', concepto: 'y', tipo: 'ingreso', monto: '300', categoria: 'otro', origen: 'real' }], { today: TODAY });
   ok(dip.score === 49 && dip.limitado_por_negativo, 'regla dura: one negative day caps a 60-point score at 49', dip.score);
   // Weekly budget: real personal spending is absorbed up to $100, the excess lowers the projection.
@@ -74,7 +74,7 @@ async function linaTests() {
   console.log('\n[2] Lina (heuristic path, no key)');
   const rows = seed(); const o = { today: TODAY };
   let r = await lina.answer('¿Cómo estoy hoy?', rows, o);
-  ok(/62\.7%|63%/.test(r.texto) && /amarillo/.test(r.texto) && /11 de diciembre/.test(r.texto), '"¿Cómo estoy hoy?" -> ~63%, amarillo, 11 de diciembre', r.texto);
+  ok(/62\.7%|63%/.test(r.texto) && /verde/.test(r.texto) && !/Cuidado/.test(r.texto) && /11 de diciembre/.test(r.texto), '"¿Cómo estoy hoy?" -> ~63%, verde, 11 de diciembre', r.texto);
   ok(r.composed_by === 'lina', 'recognised question answered by Lina deterministic engine (no model)');
   r = await lina.answer('Si compro algo de $300 hoy, ¿cómo quedo?', rows, o);
   ok(/negativo/.test(r.texto) && /no guard/.test(r.texto) && !r.propuesta, '"$300 hoy" -> negativo, nothing saved', r.texto);
@@ -130,7 +130,7 @@ async function linaTests() {
   const OPEN = '¿Vale la pena adelantar algún pago?';
   r = await lina.answer('¿Cómo estoy?', rows, o, { client: fake('no debería llamarse'), model: 'x' });
   ok(r.composed_by === 'lina', 'recognised intent never goes to the model');
-  r = await lina.answer(OPEN, rows, o, { client: fake('Tu salud está en 62.7%, amarillo. Tu punto más bajo es $68.48 el 11 de diciembre.'), model: 'x' });
+  r = await lina.answer(OPEN, rows, o, { client: fake('Tu salud está en 62.7%, verde. Tu punto más bajo es $68.48 el 11 de diciembre.'), model: 'x' });
   ok(r.composed_by === 'model', 'model reply with sourced numbers is kept', r);
   r = await lina.answer(OPEN, rows, o, { client: fake('Tu salud está en 81%, y tienes $12,345.00.'), model: 'x' });
   ok(!/12,345/.test(r.texto) && /cifras sin fuente/.test(r.motivo_respaldo || ''), 'model reply with an invented number is discarded', r.motivo_respaldo);
@@ -190,7 +190,7 @@ async function apiTests() {
     }
     ok((await call('/salud', WRONGMAIL)).s === 404, 'owner id with a non-owner email -> 404');
     let r = await call('/salud', A);
-    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'amarillo' && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 amarillo, $68.48 on 2026-12-11', r.j);
+    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
     r = await call('/movimientos', A);
     ok(r.j.data.length === 37 && r.j.data.every(x => x.origen === 'plan'), 'seed: 37 plan rows');
     ok(r.j.data.some(x => x.fecha === '2026-12-11' && x.es_minimo) && r.j.data[r.j.data.length - 1].saldo === '$4,468.48', 'table: running balance + low point flagged');

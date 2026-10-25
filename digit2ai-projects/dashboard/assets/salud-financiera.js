@@ -28,7 +28,7 @@
   function fechaCorta(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' ' + MESES[Number(p[1]) - 1].slice(0, 3) + ' ' + p[0].slice(2); }
   function fechaLarga(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' de ' + MESES[Number(p[1]) - 1]; }
   function todayNY() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); }
-  function colorVar(c) { return c === 'verde' ? 'var(--success)' : c === 'amarillo' ? 'var(--warning)' : 'var(--danger)'; }
+  function colorVar(c) { return c === 'verde' ? 'var(--success)' : 'var(--warning)'; }
 
   // ---------- nav: only the owner ever sees the item ----------
   window.sfInitNav = function () {
@@ -114,7 +114,7 @@
   function drawKpi(s) {
     var c = colorVar(s.color);
     var neg = s.dias_negativos && s.dias_negativos.length
-      ? '<div style="margin-top:10px;color:var(--danger);font-weight:600">Tu saldo queda en negativo el ' + esc(fechaLarga(s.dias_negativos[0].fecha)) + ' (' + esc(s.dias_negativos[0].saldo) + '). La salud se limita a 49%.</div>' : '';
+      ? '<div style="margin-top:10px;color:var(--warning);font-weight:600">Atención: tu saldo queda en negativo el ' + esc(fechaLarga(s.dias_negativos[0].fecha)) + ' (' + esc(s.dias_negativos[0].saldo) + '). La salud se limita a 49%.</div>' : '';
     document.getElementById('sf-kpi').style.borderTop = '4px solid ' + c;
     document.getElementById('sf-kpi').innerHTML =
       '<div class="stat-label" style="color:var(--text-secondary);font-size:13px;text-transform:uppercase;letter-spacing:.06em">Salud financiera</div>' +
@@ -129,16 +129,29 @@
       (sub ? '<div class="stat-change ' + (subClass || 'stat-neutral') + '">' + sub + '</div>' : '') + '</div>';
   }
 
+  function vsPlan(c) {
+    if (!c) return '';
+    return c.saldo === c.saldo_plan ? 'Igual al plan' : (c.sobre_plan ? 'Arriba del plan (' + esc(c.saldo_plan) + ')' : 'Plan: ' + esc(c.saldo_plan));
+  }
+
   function drawCards(s) {
-    var p = s.proximo_pago;
     var restNeg = s.semana.restante.charAt(0) === '-';
+    var cm = s.cierre_mes_actual, cu = s.cierre_ultimo_mes;
+    var ob = s.obligaciones || { total: 0, cubiertas: 0 };
+    var todo = ob.total > 0 && ob.cubiertas === ob.total;
+    var tranquilidad = ob.total === 0
+      ? card('Tus pagos', 'Sin pagos pendientes', 'Nada que cubrir por ahora', 'green', 'stat-up')
+      : card('Tus pagos están cubiertos', ob.cubiertas + ' de ' + ob.total,
+          todo ? 'Corte, pago Lina y casa de tu hija, hasta el ' + esc(fechaLarga(ob.hasta))
+               : 'Revisa el ' + esc(fechaLarga(s.obligaciones_descubiertas[0].fecha)) + ': ' + esc(s.obligaciones_descubiertas[0].concepto),
+          todo ? 'green' : 'yellow', todo ? 'stat-up' : 'stat-neutral');
     document.getElementById('sf-cards').innerHTML =
       card('Saldo hoy', s.saldo_hoy, esc(fechaLarga(s.hoy)), 'blue') +
-      card('Saldo final proyectado', s.saldo_final, 'Plan: ' + esc(s.saldo_final_plan), 'blue') +
+      (cm ? card('Cierre de ' + esc(cm.nombre.split(' ')[0]), cm.saldo, vsPlan(cm), cm.sobre_plan ? 'green' : 'yellow', cm.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
+      (cu ? card('Saldo final proyectado &middot; ' + esc(cu.nombre), cu.saldo, vsPlan(cu), cu.sobre_plan ? 'green' : 'yellow', cu.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
+      tranquilidad +
       card('Saldo mínimo proyectado', s.saldo_min, esc(fechaLarga(s.fecha_min)), s.saldo_min.charAt(0) === '-' ? 'red' : 'yellow', s.saldo_min.charAt(0) === '-' ? 'stat-down' : 'stat-neutral') +
-      card('Gasto de esta semana', s.semana.gastado + ' / ' + s.semana.presupuesto, restNeg ? 'Te pasaste ' + esc(s.semana.restante.replace('-', '')) : 'Te quedan ' + esc(s.semana.restante), restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up') +
-      (p ? card('Próximo pago grande', p.monto, esc(p.concepto) + ' &middot; ' + esc(fechaLarga(p.fecha)) + ' &middot; ' + (p.cubierto ? 'Cubierto' : 'No cubierto'), p.cubierto ? 'green' : 'red', p.cubierto ? 'stat-up' : 'stat-down')
-        : card('Próximo pago grande', 'Ninguno', 'Sin pagos grandes pendientes', 'green'));
+      card('Gasto de esta semana', s.semana.gastado + ' / ' + s.semana.presupuesto, restNeg ? 'Te pasaste ' + esc(s.semana.restante.replace('-', '')) : 'Te quedan ' + esc(s.semana.restante), restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up');
   }
 
   // Plain SVG line chart: plan base vs projection (step lines, end-of-day balances).
