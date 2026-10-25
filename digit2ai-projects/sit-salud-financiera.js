@@ -183,6 +183,8 @@ async function linaTests() {
   ok(/rec\.continuous = true/.test(ui) && /SILENCIO_MS = 3000/.test(ui), 'listening keeps going through pauses (continuous + 3 s silence)');
   const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('orbHtml() +');
   ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
+  ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
+  ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
   console.log('\n[3] Lina model path (fake client)');
@@ -257,7 +259,7 @@ async function apiTests() {
     }
     ok((await call('/salud', WRONGMAIL)).s === 404, 'owner id with a non-owner email -> 404');
     let r = await call('/salud', A);
-    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.cierre_fin_de_ano.mes === '2026-12' && r.j.cierre_fin_de_ano.saldo === '$3,668.48' && r.j.cierres_proximos.map(c => c.mes + ' ' + c.saldo).join() === '2026-11 $1,868.48,2026-12 $3,668.48,2027-01 $4,468.48' && r.j.zona.desde === '2026-12-06' && r.j.tendencia.sube === false && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
+    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.cierre_fin_de_ano.mes === '2026-12' && r.j.cierre_fin_de_ano.saldo === '$3,668.48' && r.j.cierres_proximos.map(c => c.mes + ' ' + c.saldo).join() === '2026-11 $1,868.48,2026-12 $3,668.48,2027-01 $4,468.48' && r.j.cierres_trimestre.map(c => c.mes).join() === '2026-10,2026-11,2026-12' && r.j.semana.proxima_semana === '$200.00' && r.j.zona.desde === '2026-12-06' && r.j.tendencia.sube === false && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
     r = await call('/movimientos', A);
     ok(r.j.data.length === 37 && r.j.data.every(x => x.origen === 'plan'), 'seed: 37 plan rows');
     ok(r.j.data.some(x => x.fecha === '2026-12-11' && x.es_minimo) && r.j.data[r.j.data.length - 1].saldo === '$4,468.48', 'table: running balance + low point flagged');

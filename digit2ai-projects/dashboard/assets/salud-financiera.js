@@ -69,6 +69,7 @@
       '<button class="btn btn-primary" id="sfAskBtn">Preguntar</button></div>' +
       '<div id="sfChips" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">' + CHIPS.map(function (c) { return '<button class="btn btn-sm btn-ghost" data-chip="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>' +
       '<div class="controls" style="justify-content:center;margin-top:10px">' +
+      '<button id="sfVoz" aria-pressed="false">Voz: apagada</button>' +
       '<button id="sfPause" disabled>&#10074;&#10074; Pausar</button><button id="sfStop" disabled>&#9632; Detener</button></div>' +
       '</div>';
   }
@@ -166,7 +167,7 @@
   function cierresCard(cs) {
     if (!cs || !cs.length) return '';
     var neg = cs.some(function (c) { return c.saldo.charAt(0) === '-'; });
-    return '<div class="card card-stat card-accent-' + (neg ? 'yellow' : 'green') + '" style="min-width:0"><div class="stat-label">Saldo final proyectado</div>' +
+    return '<div class="card card-stat card-accent-' + (neg ? 'yellow' : 'green') + '" style="min-width:0"><div class="stat-label">Saldo final proyectado del trimestre</div>' +
       cs.map(function (c) {
         var n = c.nombre.charAt(0).toUpperCase() + c.nombre.slice(1);
         return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 0;border-top:1px solid var(--border)">' +
@@ -180,23 +181,21 @@
     var restNeg = sem.restante.charAt(0) === '-';
     var acum = sem.acumulado_previo && sem.acumulado_previo !== '$0.00';
     var cm = s.cierre_mes_actual;
-    var ob = s.obligaciones || { total: 0, cubiertas: 0 };
-    var todo = ob.total > 0 && ob.cubiertas === ob.total;
     var z = s.zona;
     var pagos = '<div style="min-width:0" class="card card-stat card-accent-' + (s.tendencia && s.tendencia.sube ? 'green' : 'yellow') + '">' +
-      '<div class="stat-label">' + (ob.total ? (todo ? 'Tus pagos están cubiertos' : 'Pagos cubiertos') : 'Tus pagos') + '</div>' +
-      '<div class="stat-value" style="font-size:26px">' + (ob.total ? ob.cubiertas + ' de ' + ob.total : 'Sin pagos') + '</div>' +
+      '<div class="stat-label">Neural Intelligence</div>' +
       tendenciaHtml(s) + '</div>';
     document.getElementById('sf-cards').innerHTML =
       card('Saldo hoy', s.saldo_hoy, esc(fechaLarga(s.hoy)), 'blue') +
       (cm ? card('Cierre de ' + esc(cm.nombre.split(' ')[0]), cm.saldo, vsPlan(cm), cm.sobre_plan ? 'green' : 'yellow', cm.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
-      cierresCard(s.cierres_proximos) +
+      cierresCard(s.cierres_trimestre || s.cierres_proximos) +
       pagos +
       card('Saldo mínimo proyectado', s.saldo_min,
         z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)),
         s.saldo_min.charAt(0) === '-' ? 'red' : 'yellow', s.saldo_min.charAt(0) === '-' ? 'stat-down' : 'stat-neutral') +
       card('Gasto de esta semana', sem.gastado + ' / ' + sem.disponible,
-        (restNeg ? 'Te pasaste ' + esc(sem.restante.replace('-', '')) : 'Te quedan ' + esc(sem.restante)) + (acum ? ' &middot; incluye ' + esc(sem.acumulado_previo) + ' que no gastaste antes' : ''),
+        (restNeg ? 'Te pasaste ' + esc(sem.restante.replace('-', '')) : 'Te quedan ' + esc(sem.restante)) + (acum ? ' &middot; incluye ' + esc(sem.acumulado_previo) + ' acumulado' : '') +
+          (!restNeg && sem.proxima_semana ? ' &middot; si no gastas más, la próxima semana tendrás ' + esc(sem.proxima_semana) : ''),
         restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up');
   }
 
@@ -357,6 +356,8 @@
       else { state.audio.pause(); this.innerHTML = '&#9654; Reanudar'; setOrb('idle'); }
     };
     document.getElementById('sfStop').onclick = stopAudio;
+    document.getElementById('sfVoz').onclick = function () { var on = !vozOn(); try { localStorage.setItem('sf_voz', on ? '1' : '0'); } catch (e) {} if (!on) stopAudio(); pintarVoz(); };
+    pintarVoz();
     document.querySelectorAll('#sfChips [data-chip]').forEach(function (b) { b.onclick = function () { ask(b.getAttribute('data-chip'), 'texto'); }; });
     brainLine();
     sf('/lina/historial?limit=6').then(function (j) {
@@ -480,8 +481,13 @@
     document.getElementById('sfPause').innerHTML = '&#10074;&#10074; Pausar';
   }
 
+  // Narration is OFF by default (owner request); the choice is remembered on this device.
+  function vozOn() { try { return localStorage.getItem('sf_voz') === '1'; } catch (e) { return false; } }
+  function pintarVoz() { var b = document.getElementById('sfVoz'); if (!b) return; var on = vozOn(); b.textContent = on ? 'Voz: encendida' : 'Voz: apagada'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+
   function speak(text) {
     stopAudio();
+    if (!vozOn()) return;
     fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: paraVoz(text).slice(0, 1900), voice: 'lina' }) })
       .then(function (r) { if (!r.ok) throw new Error('tts'); return r.blob(); })
       .then(function (blob) {
