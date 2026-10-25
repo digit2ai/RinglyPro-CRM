@@ -7,7 +7,7 @@
    Mapping (cockpit -> money):
      Altímetro (derecha) ...... SALDO hoy, con marcas del punto más bajo y del cero
      Variómetro (VSI) ......... cambio del saldo en 7 días (sube / baja)
-     Cinta de velocidad (izq) . FLUJO neto de los próximos 30 días (entra - sale)
+     Cinta de velocidad (izq) . COSTO del mes: lo que salió del día 1 a hoy
      Horizonte artificial ..... pitch = tendencia a 30 días; alabeo = desvío contra el plan
      HSI / compás ............. rumbo = salud (%); curso magenta = meta 100%
      Mapa (abajo izq) ......... proyección de los próximos meses, hoy, mínimo y zona de cuidado
@@ -147,12 +147,12 @@
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
     o.push('</g>');
 
-    // ---------------- left tape: FLUJO 30D ----------------
+    // ---------------- left tape: COSTO del mes (del día 1 a hoy, en negativo: dinero que salió) ----------------
     (function () {
-      var x = 120, w = 104, y0 = 112, h = 380, mid = y0 + h / 2, v = p.flujo_30.v;
+      var x = 120, w = 104, y0 = 112, h = 380, mid = y0 + h / 2, v = -((p.costo_mes && p.costo_mes.v) || 0);
       var step = nice(Math.max(Math.abs(v), 1000) * 1.5 / 2), pps = 52;
       o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.38)"/>');
-      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="17">FLUJO <tspan font-size="21" font-weight="700">30D</tspan></text>');
+      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="17">COSTO <tspan font-size="21" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].slice(0, 3).toUpperCase()) + '</tspan></text>');
       o.push('<svg x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" overflow="hidden">');
       var first = Math.floor((v - (h / 2) / pps * step) / step) * step;
       for (var t = first; t <= v + (h / 2) / pps * step + step; t += step) {
@@ -165,7 +165,7 @@
       o.push('</svg>');
       o.push('<path d="M ' + (x - 8) + ' ' + (mid - 26) + ' h 98 l 14 26 l -14 26 h -98 z" fill="#000" stroke="#fff" stroke-width="2"/>');
       o.push('<text x="' + (x + 80) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="34" font-weight="700" text-anchor="end">' + k(v) + '</text>');
-      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="15">GASTO MES <tspan font-size="19" font-weight="700" fill="' + C.cyan + '">' + esc(k(p.gasto_mes.v)) + '</tspan></text>');
+      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="15">PERSONAL <tspan font-size="19" font-weight="700" fill="' + C.cyan + '">' + esc(k(p.gasto_mes.v)) + '</tspan></text>');
     })();
 
     // ---------------- right tape: SALDO (altimeter) + VSI ----------------

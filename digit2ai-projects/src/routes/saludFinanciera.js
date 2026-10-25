@@ -94,11 +94,14 @@ function instrumentos(a, rows) {
   const ym = a.today.slice(0, 7);
   const gastoMes = rows.filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha.slice(0, 7) === ym).reduce((x, r) => x + toCents(r.monto), 0);
   const prox = a.proximo_pago;
+  // what has gone out this month so far: every outflow from the 1st up to and including today
+  const costoMes = a.steps.filter(s => s.row.tipo === 'egreso' && s.row.fecha >= ym + '-01' && s.row.fecha <= a.today).reduce((x, s) => x + s.amount, 0);
   // every outflow from today that leaves the balance below zero, in ledger order (the panel's "en negativo" box)
   const neg = a.steps.filter(s => s.row.fecha >= a.today && s.row.tipo === 'egreso' && s.amount !== 0 && s.saldo < 0);
   const enNegativo = neg.map(s => ({ fecha: s.row.fecha, concepto: s.row.concepto, monto: fmt(-s.amount), saldo: fmt(s.saldo), minimo: s.row.fecha === a.fecha_min && s.saldo === a.saldo_min }));
   return {
     en_negativo: enNegativo,
+    costo_mes: d(costoMes),
     saldo_hoy: d(a.saldo_hoy), saldo_min: d(a.saldo_min), fecha_min: a.fecha_min, saldo_final: d(a.saldo_final), saldo_final_plan: d(a.saldo_final_plan),
     entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
     desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes),
