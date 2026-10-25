@@ -360,7 +360,17 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
   const end = new Date(Date.UTC(ly, lm - 1 + meses + 1, 0)).toISOString().slice(0, 10);
   const hasta = end;
   const have = new Set(rows.map(r => r.fecha + '|' + r.categoria));
-  const conceptos = new Set(rows.map(r => (r.concepto || '').toLowerCase()));
+  // A monthly payment is identified by category + the month AND YEAR it belongs to. Concepts carry only the
+  // month name ('Corte – febrero' paid on 2027-01-29), so the year comes from the date, moved forward when the
+  // named month is far behind the paid month (a December payment for January).
+  const pagado = new Set();
+  for (const r of rows) {
+    const m = MESES.findIndex(n => (r.concepto || '').toLowerCase().includes(n));
+    if (m < 0 || !['corte', 'pago_lina'].includes(r.categoria)) continue;
+    const [y, mm] = r.fecha.split('-').map(Number);
+    const year = y + (m + 1 < mm - 6 ? 1 : 0);
+    pagado.add(r.categoria + '|' + year + '-' + String(m + 1).padStart(2, '0'));
+  }
   const nuevos = [];
   const add = (fecha, concepto, tipo, monto, categoria) => nuevos.push({ fecha, concepto, tipo, monto, categoria, origen: 'plan', estado: 'pendiente' });
 
@@ -375,7 +385,7 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
     if (f < desde) continue;
     const mes = MESES[Number(k.slice(5, 7)) - 1];
     const c = `Pago Lina – ${mes}`;
-    if (!conceptos.has(c.toLowerCase())) add(f, c, 'egreso', '1500.00', 'pago_lina');
+    if (!pagado.has('pago_lina|' + k)) add(f, c, 'egreso', '1500.00', 'pago_lina');
   }
   // Corte on the 6th of each month.
   let cursor = desde.slice(0, 7);
@@ -383,7 +393,7 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
     const f = cursor + '-06';
     const mes = MESES[Number(cursor.slice(5, 7)) - 1];
     const c = `Corte – ${mes}`;
-    if (f >= desde && f <= hasta && !conceptos.has(c.toLowerCase())) add(f, c, 'egreso', '4300.00', 'corte');
+    if (f >= desde && f <= hasta && !pagado.has('corte|' + cursor)) add(f, c, 'egreso', '4300.00', 'corte');
     const [y, m] = cursor.split('-').map(Number);
     cursor = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
   }

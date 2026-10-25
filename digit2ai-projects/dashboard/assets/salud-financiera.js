@@ -16,7 +16,6 @@
     ['ahorro', 'Ahorro'], ['inversion', 'Inversión'], ['corte', 'Corte'], ['pago_lina', 'Pago Lina'], ['hija', 'Casa de mi hija'], ['servicios', 'Servicios'], ['gasto_semanal', 'Gastos semana']
   ];
   var CHIPS = ['¿Cómo estoy hoy?', '¿Cuánto tendré el 1 de diciembre?', '¿Por qué tengo este saldo hoy?', '¿Cómo se calcula la proyección?', '¿Qué hago para mantenerla?', 'Agrega un gasto de 45 en comida'];
-  var CAT_LABEL = {}; CATS.forEach(function (c) { CAT_LABEL[c[0]] = c[1]; });
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   var state = { salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
 
@@ -31,7 +30,6 @@
   function fechaCorta(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' ' + MESES[Number(p[1]) - 1].slice(0, 3) + ' ' + p[0].slice(2); }
   function fechaLarga(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' de ' + MESES[Number(p[1]) - 1]; }
   function todayNY() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); }
-  function colorVar(c) { return c === 'verde' ? 'var(--success)' : 'var(--warning)'; }
 
   // ---------- nav: only the owner ever sees the item ----------
   window.sfInitNav = function () {
@@ -86,14 +84,13 @@
     try { if (location.pathname !== '/projects/salud-financiera') history.replaceState(null, '', '/projects/salud-financiera'); } catch (e) {}
     container.innerHTML =
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
-      '<div class="card" id="sf-kpi" style="margin-bottom:16px;text-align:center;padding:24px"><div class="spinner"></div></div>' +
       '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
       (SHOW_LINA ? orbHtml() : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
       '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"></div></div>' +
-      '<div class="card card-accent-blue" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
+      '<div class="card card-accent-blue" id="sf-mov-card" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
       '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
       '<div id="sf-table" style="overflow-x:auto"></div></div>' +
@@ -109,21 +106,27 @@
 
   function loadSalud() {
     return sf('/salud').then(function (s) {
-      if (!s.success) { document.getElementById('sf-kpi').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
-      state.salud = s; drawKpi(s); drawCards(s); if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
+      if (!s.success) { document.getElementById('sf-cards').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
+      state.salud = s; drawCards(s); if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
     });
   }
 
-  function drawKpi(s) {
-    var c = colorVar(s.color);
-    var neg = s.dias_negativos && s.dias_negativos.length
-      ? '<div style="margin-top:10px;color:var(--warning);font-weight:600">Atención: tu saldo queda en negativo el ' + esc(fechaLarga(s.dias_negativos[0].fecha)) + ' (' + esc(s.dias_negativos[0].saldo) + '). La salud se limita a 49%.</div>' : '';
-    document.getElementById('sf-kpi').style.borderTop = '4px solid ' + c;
-    document.getElementById('sf-kpi').innerHTML =
-      '<div class="stat-label" style="color:var(--text-secondary);font-size:13px;text-transform:uppercase;letter-spacing:.06em">Salud financiera</div>' +
-      '<div style="font-size:64px;font-weight:800;line-height:1.1;color:' + c + '">' + Math.round(s.score) + '%</div>' +
-      '<div style="font-size:20px;font-weight:700;color:' + c + '">' + esc(s.frase) + '</div>' +
-      '<div style="color:var(--text-secondary);margin-top:6px;font-size:14px">Tu punto más bajo: ' + esc(s.saldo_min) + ' el ' + esc(fechaLarga(s.fecha_min)) + '</div>' + neg;
+  // Saldo mínimo proyectado, for the whole plan or for the month/year picked.
+  function minimoCard(s, z) {
+    var sel = state.minSel || '';
+    var m = sel ? (s.minimos_mes || []).filter(function (x) { return x.mes === sel; })[0] : null;
+    var valor = m ? m.minimo : s.saldo_min;
+    var sub = m ? esc(fechaLarga(m.fecha)) + (m.negativo ? ' &middot; queda en negativo' : '')
+      : (z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)));
+    var neg = valor.charAt(0) === '-';
+    var opts = '<option value="">Todo el plan</option>' + (s.minimos_mes || []).map(function (x) {
+      return '<option value="' + x.mes + '"' + (x.mes === sel ? ' selected' : '') + '>' + esc(x.nombre.charAt(0).toUpperCase() + x.nombre.slice(1)) + '</option>';
+    }).join('');
+    return '<div class="card card-stat card-accent-' + (neg ? 'red' : 'yellow') + '" style="min-width:0">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap"><div class="stat-label">Saldo mínimo proyectado</div>' +
+      '<select id="sf-min-mes" aria-label="Mes y año" style="font-size:16px;padding:4px 6px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);max-width:100%">' + opts + '</select></div>' +
+      '<div class="stat-value" style="font-size:26px">' + esc(valor) + '</div>' +
+      '<div class="stat-change ' + (neg ? 'stat-down' : 'stat-neutral') + '">' + sub + '</div></div>';
   }
 
   function card(label, value, sub, accent, subClass) {
@@ -191,13 +194,13 @@
       (cm ? card('Cierre de ' + esc(cm.nombre.split(' ')[0]), cm.saldo, vsPlan(cm), cm.sobre_plan ? 'green' : 'yellow', cm.sobre_plan ? 'stat-up' : 'stat-neutral') : '') +
       cierresCard(s.cierres_trimestre || s.cierres_proximos) +
       pagos +
-      card('Saldo mínimo proyectado', s.saldo_min,
-        z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)),
-        s.saldo_min.charAt(0) === '-' ? 'red' : 'yellow', s.saldo_min.charAt(0) === '-' ? 'stat-down' : 'stat-neutral') +
+      minimoCard(s, z) +
       (s.sin_presupuesto && s.gasto_personal_mes ? gastoMesCard(s.gasto_personal_mes) : card('Gasto de esta semana', sem.gastado + ' / ' + sem.disponible,
         (restNeg ? 'Te pasaste ' + esc(sem.restante.replace('-', '')) : 'Te quedan ' + esc(sem.restante)) + (acum ? ' &middot; incluye ' + esc(sem.acumulado_previo) + ' acumulado' : '') +
           (!restNeg && sem.proxima_semana ? ' &middot; si no gastas más, la próxima semana tendrás ' + esc(sem.proxima_semana) : ''),
         restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up'));
+    var ms = document.getElementById('sf-min-mes');
+    if (ms) ms.onchange = function () { state.minSel = this.value; drawCards(state.salud); };
   }
 
   // Real personal spending this month and what it does to the projected low point.
@@ -225,7 +228,7 @@
     if (!rows.length) { el.innerHTML = '<p class="section-hint">No hay movimientos en este mes.</p>'; return; }
     var color = { plan: 'var(--text-muted)', real: 'var(--info)', cumplido: 'var(--success)' };
     var label = { plan: 'Plan', real: 'Real', cumplido: 'Cumplido' };
-    el.innerHTML = '<table class="data-table" style="width:100%;min-width:640px"><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th style="text-align:right">Monto</th><th style="text-align:right">Saldo</th><th>Estado</th><th></th></tr></thead><tbody>' +
+    el.innerHTML = '<style>@media (max-width:700px){#sf-mov-card{padding:12px 8px}#sf-table .sf-hide-m{display:none}#sf-table .sf-yr{display:none}#sf-table td,#sf-table th{padding:7px 4px;font-size:12px}#sf-table td.sf-concepto{word-break:break-word;white-space:normal}#sf-table tr[data-row]{cursor:pointer}}</style><table class="data-table" style="width:100%"><thead><tr><th>Fecha</th><th>Concepto</th><th style="text-align:right">Monto</th><th style="text-align:right">Saldo</th><th class="sf-hide-m">Estado</th><th class="sf-hide-m"></th></tr></thead><tbody>' +
       rows.map(function (r) {
         var v = r.estado_visual; var neg = r.saldo && r.saldo.charAt(0) === '-';
         var bg = r.es_minimo ? 'background:rgba(245,158,11,.14);' : '';
@@ -235,15 +238,17 @@
           : v === 'cumplido' ? '<button class="btn btn-sm btn-ghost" data-undo="' + r.id + '">Deshacer</button>'
             : '<button class="btn btn-sm btn-ghost" data-del="' + r.id + '">Borrar</button>';
         act = '<button class="btn btn-sm btn-ghost" data-edit="' + r.id + '">Editar</button> ' + act;
-        return '<tr style="' + bg + 'border-left:3px solid ' + color[v] + '">' +
-          '<td style="white-space:nowrap">' + esc(fechaCorta(r.fecha)) + (r.es_minimo ? '<div style="font-size:11px;color:var(--warning);font-weight:700">PUNTO MÁS BAJO</div>' : '') + '</td>' +
-          '<td>' + esc(r.concepto) + '</td><td style="color:var(--text-secondary)">' + esc(CAT_LABEL[r.categoria] || r.categoria) + '</td>' +
+        return '<tr data-row="' + r.id + '" style="' + bg + 'border-left:3px solid ' + color[v] + '">' +
+          '<td style="white-space:nowrap">' + esc(fechaCorta(r.fecha).replace(/ \d\d$/, '')) + '<span class="sf-yr"> ' + esc(r.fecha.slice(2, 4)) + '</span>' + (r.es_minimo ? '<div style="font-size:11px;color:var(--warning);font-weight:700">PUNTO MÁS BAJO</div>' : '') + '</td>' +
+          '<td class="sf-concepto">' + esc(r.concepto) + '</td>' +
           '<td style="text-align:right;white-space:nowrap;color:' + (r.tipo === 'ingreso' ? 'var(--success)' : 'var(--text-primary)') + '">' + esc(monto) + planned + '</td>' +
           '<td style="text-align:right;white-space:nowrap;font-weight:600;color:' + (neg ? 'var(--danger)' : 'var(--text-primary)') + '">' + esc(r.saldo) + '</td>' +
-          '<td><span style="font-size:12px;color:' + color[v] + ';font-weight:600">' + label[v] + '</span></td><td style="white-space:nowrap">' + act + '</td></tr>';
+          '<td class="sf-hide-m"><span style="font-size:12px;color:' + color[v] + ';font-weight:600">' + label[v] + '</span></td><td class="sf-hide-m" style="white-space:nowrap">' + act + '</td></tr>';
       }).join('') + '</tbody></table>';
     el.querySelectorAll('[data-done]').forEach(function (b) { b.onclick = function () { openDone(Number(b.getAttribute('data-done'))); }; });
     el.querySelectorAll('[data-undo]').forEach(function (b) { b.onclick = function () { sf('/movimientos/' + b.getAttribute('data-undo'), { method: 'PATCH', body: { estado: 'pendiente' } }).then(refresh); }; });
+    // On a phone the action buttons are hidden: tapping a row opens Editar (which can also delete).
+    el.querySelectorAll('tr[data-row]').forEach(function (tr) { tr.onclick = function (e) { if (e.target.closest('button')) return; if (window.innerWidth <= 700) openEdit(Number(tr.getAttribute('data-row'))); }; });
     el.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { openEdit(Number(b.getAttribute('data-edit'))); }; });
     el.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { if (confirm('¿Borrar este movimiento?')) sf('/movimientos/' + b.getAttribute('data-del'), { method: 'DELETE' }).then(refresh); }; });
   }
@@ -284,7 +289,8 @@
       '<div class="form-row">' + field('Tipo', '<select id="sf-e-tipo" style="font-size:16px"><option value="egreso"' + (r.tipo === 'egreso' ? ' selected' : '') + '>Egreso</option><option value="ingreso"' + (r.tipo === 'ingreso' ? ' selected' : '') + '>Ingreso</option></select>') +
       field('Categoría', '<select id="sf-e-cat" style="font-size:16px">' + CATS.map(function (c) { return '<option value="' + c[0] + '"' + (c[0] === r.categoria ? ' selected' : '') + '>' + c[1] + '</option>'; }).join('') + '</select>') + '</div>' +
       '<p id="sf-e-err" style="color:var(--danger);font-size:13px"></p>' +
-      '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-del" style="color:var(--danger);border-color:var(--danger)">Borrar este movimiento</button>',
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (r.origen === 'plan' ? '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-done">' + (cumplido ? 'Volver a pendiente' : 'Marcar como cumplido') + '</button>' : '') +
+      '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-del" style="color:var(--danger);border-color:var(--danger)">Borrar este movimiento</button></div>',
       function () {
         var cambios = {};
         var campos = { fecha: val('sf-e-fecha'), monto: val('sf-e-monto'), concepto: val('sf-e-concepto'), tipo: val('sf-e-tipo'), categoria: val('sf-e-cat') };
@@ -296,6 +302,11 @@
           closeModal(); refresh();
         });
       });
+    var done = document.getElementById('sf-e-done');
+    if (done) done.onclick = function () {
+      if (cumplido) sf('/movimientos/' + id, { method: 'PATCH', body: { estado: 'pendiente' } }).then(function () { closeModal(); refresh(); });
+      else { closeModal(); openDone(id); }
+    };
     var del = document.getElementById('sf-e-del');
     if (del) del.onclick = function () {
       if (!confirm('¿Borrar "' + r.concepto + '" del ' + fechaLarga(r.fecha) + '?')) return;

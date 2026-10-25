@@ -121,6 +121,10 @@ router.get('/salud', async (req, res) => {
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
       gasto_personal_mes: gastoPersonalMes(rows, opts, a),
       pfd: instrumentos(a, rows),
+      // projected low point of every month from now to the end of the plan (for the month/year selector)
+      minimos_mes: (() => { const out = []; const last = a.serie.proyeccion.length ? a.serie.proyeccion[a.serie.proyeccion.length - 1].fecha.slice(0, 7) : a.today.slice(0, 7); let ym = a.today.slice(0, 7);
+        while (ym <= last && out.length < 60) { const r = fin.resumenMes(a, ym); out.push({ mes: ym, nombre: engine.MESES[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4), minimo: fmt(r.minimo), fecha: r.fecha_minimo, negativo: r.minimo < 0 });
+          const [y, m] = ym.split('-').map(Number); ym = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7); } return out; })(),
       cierre_fin_de_ano: cierre(a, a.today.slice(0, 4) + '-12'),
       // the closes of the months of the CURRENT QUARTER (owner request 2026-10-25: Q4 = octubre, noviembre, diciembre)
       cierres_trimestre: (() => { const [y, m] = a.today.slice(0, 7).split('-').map(Number); const q0 = Math.floor((m - 1) / 3) * 3; return [1, 2, 3].map(k => cierre(a, y + '-' + String(q0 + k).padStart(2, '0'))); })(),

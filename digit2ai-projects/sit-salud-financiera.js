@@ -111,6 +111,9 @@ async function engineTests() {
   ok(engine.recurrentRows([...rows, ...rr.map((x, i) => ({ ...x, id: 700 + i }))], RECS, TODAY, '2027-01-31').length === 0, 'recurring rows are never duplicated');
   ok(engine.extendPlan(rows, 1, RECS).nuevos.some(x => x.concepto === 'Internet' && x.fecha === '2027-02-28'), 'Extender plan carries recurring bills forward');
   ok(engine.recurrentRows(rows, [{ concepto: 'x', monto: '1', dia: 31 }], '2027-02-01', '2027-02-28')[0].fecha === '2027-02-28', 'day 31 clamps to a short month');
+  const far = engine.extendPlan(rows, 11);
+  ok(far.nuevos.some(n => n.concepto === 'Corte – noviembre' && n.fecha === '2027-11-06') && far.nuevos.some(n => n.concepto === 'Pago Lina – diciembre' && n.fecha.startsWith('2027-12')), 'extend a year out: Nov/Dec 2027 payments are created although Nov/Dec 2026 have the same name');
+  ok(!far.nuevos.some(n => n.concepto === 'Corte – febrero'), 'extend: February 2027 corte (paid 2027-01-29) is still not duplicated');
   // Money is exact.
   ok(toCents('0.10') + toCents('0.20') === toCents('0.30') && toCents('1,500') === 150000 && toCents('4689.48') === 468948, 'money: exact decimal parsing');
   ok(engine.weekStart('2026-10-25') === '2026-10-24' && engine.weekEnd('2026-10-25') === '2026-10-30', 'week runs Saturday to Friday');
@@ -204,6 +207,9 @@ async function linaTests() {
   ok(/window\.drawSfPfd/.test(pfdSrc) && /salud-pfd\.js/.test(idx) && idx.indexOf('salud-pfd.js') < idx.indexOf('salud-financiera.js?'), 'G1000 panel script is loaded before the view');
   ok(!/Saldo en el tiempo|Por qué tu salud está así|function drawChart|function drawDesglose/.test(ui) && /id=\"sf-pfd\"/.test(ui), 'chart and score breakdown replaced by the instrument panel');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
+  ok(/id="sf-min-mes"/.test(ui) && /state\.minSel = this\.value/.test(ui), 'minimum card has a month/year selector');
+  ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
+  ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');
   ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
@@ -284,6 +290,8 @@ async function apiTests() {
       ok(P && P.saldo_hoy.t === '$8,968.48' && P.saldo_min.t === '$68.48' && P.fecha_min === '2026-12-11', 'instrument panel: altimeter and MIN bug are the engine figures', P);
       ok(Math.round((P.entra_30.v - P.sale_30.v) * 100) === Math.round(P.flujo_30.v * 100) && P.saldo_7d.t === '$4,568.48' && Math.round((P.saldo_7d.v - P.saldo_hoy.v) * 100) === Math.round(P.cambio_7d.v * 100), 'instrument panel: flow and 7-day change are consistent sums', [P.flujo_30, P.saldo_7d, P.cambio_7d]);
       ok(P.proximo_pago && P.proximo_pago.concepto === 'Inversión' && P.proximo_pago.dias === 5, 'instrument panel: next payment and days to it'); }
+    { const dic = r.j.minimos_mes.find(m => m.mes === '2026-12');
+      ok(r.j.minimos_mes[0].mes === '2026-10' && dic && dic.minimo === '$68.48' && dic.fecha === '2026-12-11', 'minimum by month: December 2026 is $68.48 on the 11th', dic); }
     r = await call('/movimientos', A);
     ok(r.j.data.length === 37 && r.j.data.every(x => x.origen === 'plan'), 'seed: 37 plan rows');
     ok(r.j.data.some(x => x.fecha === '2026-12-11' && x.es_minimo) && r.j.data[r.j.data.length - 1].saldo === '$4,468.48', 'table: running balance + low point flagged');

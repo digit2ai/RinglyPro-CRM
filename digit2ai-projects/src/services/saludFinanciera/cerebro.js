@@ -332,6 +332,7 @@ function makeTools(ctx) {
         await store.update(sequelize, user, d.id, v);
       } else if (c.accion === 'borrar') await store.insertRow(sequelize, user, d.fila);
       else if (c.accion === 'borrar_lote') { for (const f of d.filas || []) await store.insertRow(sequelize, user, f); }
+      else if (c.accion === 'agregar_lote') { for (const i of d.ids || []) await store.remove(sequelize, user, i); }
       else if (c.accion === 'recurrente_agregar') { await store.desactivarRecurrente(sequelize, user, d.recurrente_id, '0000-01-01'); for (const i of d.filas || []) await store.remove(sequelize, user, i); }
       else if (c.accion === 'recurrente_quitar') { await store.reactivarRecurrente(sequelize, user, d.recurrente_id); for (const f of d.filas || []) await store.insertRow(sequelize, user, f); }
       else return { error: 'Ese cambio no se puede deshacer' };
