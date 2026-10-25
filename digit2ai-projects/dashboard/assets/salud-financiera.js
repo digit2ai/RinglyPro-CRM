@@ -82,11 +82,11 @@
     container.innerHTML =
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
       '<div class="card" id="sf-kpi" style="margin-bottom:16px;text-align:center;padding:24px"><div class="spinner"></div></div>' +
+      '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
       orbHtml() +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
-      '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
       '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Saldo en el tiempo</h3></div>' +
       '<p class="section-hint">Línea punteada: plan base. Línea azul: proyección con lo que realmente pasa.</p><div id="sf-chart"></div></div>' +
       '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Por qué tu salud está así</h3></div><div id="sf-desglose"></div></div>' +
@@ -301,7 +301,7 @@
     document.getElementById('sfAskBtn').onclick = function () { ask(input.value, 'texto'); };
     input.onkeydown = function (e) { if (e.key === 'Enter') ask(input.value, 'texto'); };
     var orb = document.getElementById('sfOrbWrap');
-    orb.onclick = function () { if (state.audio && !state.audio.paused) return stopAudio(); listen(); };
+    orb.onclick = function () { if (state.listening) return finishListening(); if (state.audio && !state.audio.paused) return stopAudio(); listen(); };
     orb.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); orb.onclick(); } };
     document.getElementById('sfPause').onclick = function () {
       if (!state.audio) return;
@@ -317,22 +317,50 @@
     });
   }
 
+  // Listens until you finish: keeps going through pauses and only sends after
+  // SILENCIO_MS without new words (or when you tap the orb again). Browsers end
+  // a recognition session on their own every few seconds; it is restarted.
+  var SILENCIO_MS = 3000, MAX_MS = 90000;
   function listen() {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { status('Este navegador no reconoce voz. Escribe tu pregunta abajo.'); document.getElementById('sfAsk').focus(); return; }
-    try { if (state.rec) state.rec.abort(); } catch (e) {}
-    var rec = new SR(); state.rec = rec; rec.lang = 'es-MX'; rec.interimResults = true; rec.maxAlternatives = 1;
-    var finalText = '';
-    rec.onresult = function (e) {
-      var t = ''; for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-      document.getElementById('sfAsk').value = t;
-      if (e.results[e.results.length - 1].isFinal) finalText = t;
+    if (state.listening) { finishListening(); return; }
+    var acc = '', interim = '', timer = null, started = Date.now();
+    state.listening = true;
+    function show() { document.getElementById('sfAsk').value = (acc + ' ' + interim).trim(); }
+    function arm() { clearTimeout(timer); timer = setTimeout(finishListening, SILENCIO_MS); }
+    function startRec() {
+      var rec = new SR(); state.rec = rec;
+      rec.lang = 'es-MX'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
+      rec.onresult = function (e) {
+        interim = '';
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) acc = (acc + ' ' + e.results[i][0].transcript).trim();
+          else interim += e.results[i][0].transcript;
+        }
+        show(); arm();
+      };
+      rec.onerror = function (ev) { if (ev && (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')) { state.listening = false; setOrb('idle'); status('Necesito permiso para usar el micrófono.'); } };
+      rec.onend = function () {
+        if (!state.listening) return;
+        if (Date.now() - started > MAX_MS) return finishListening();
+        try { startRec(); } catch (e) { finishListening(); }
+      };
+      try { rec.start(); } catch (e) {}
+    }
+    state.finishListening = function () {
+      if (!state.listening) return;
+      state.listening = false; clearTimeout(timer);
+      try { state.rec && state.rec.stop(); } catch (e) {}
+      setOrb('idle'); status('');
+      var t = (acc + ' ' + interim).trim() || document.getElementById('sfAsk').value.trim();
+      if (t) ask(t, 'voz');
     };
-    rec.onerror = function () { setOrb('idle'); status('No te escuché bien. Intenta de nuevo o escribe.'); };
-    rec.onend = function () { setOrb('idle'); var t = finalText || document.getElementById('sfAsk').value; if (t && t.trim()) ask(t, 'voz'); };
-    setOrb('listening'); status('Te escucho...');
-    rec.start();
+    setOrb('listening'); status('Te escucho. Habla con calma; toca el orbe cuando termines.');
+    timer = setTimeout(finishListening, 8000); // nothing said at all: stop after 8 s
+    startRec();
   }
+  function finishListening() { if (state.finishListening) state.finishListening(); }
 
   function ask(text, canal) {
     text = String(text || '').trim(); if (!text) return;
@@ -361,6 +389,19 @@
     box.children[1].onclick = function () { box.remove(); ask('no', 'texto'); };
   }
 
+  // The Spanish neural voice reads "$" as "pesos". All amounts here are US
+  // dollars, so the spoken text says so; the written text keeps "$".
+  function paraVoz(t) {
+    return String(t || '')
+      .replace(/(-)?\$\s?(\d[\d,]*)(?:\.(\d{2}))?/g, function (m, neg, ent, cen) {
+        var n = ent.replace(/,/g, ''); var c = cen ? Number(cen) : 0;
+        return (neg ? 'menos ' : '') + n + (n === '1' ? ' dólar' : ' dólares') + (c ? ' con ' + c + (c === 1 ? ' centavo' : ' centavos') : '');
+      })
+      .replace(/(\d)\s?%/g, '$1 por ciento')
+      .replace(/ – /g, ', ');
+  }
+  window.sfParaVoz = paraVoz;
+
   function stopAudio() {
     if (state.audio) { try { state.audio.pause(); } catch (e) {} state.audio = null; }
     try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
@@ -370,7 +411,7 @@
 
   function speak(text) {
     stopAudio();
-    fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: String(text).slice(0, 1900), voice: 'lina' }) })
+    fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: paraVoz(text).slice(0, 1900), voice: 'lina' }) })
       .then(function (r) { if (!r.ok) throw new Error('tts'); return r.blob(); })
       .then(function (blob) {
         if (!blob || blob.size < 200) throw new Error('empty');
@@ -381,7 +422,7 @@
       })
       .catch(function () {
         if (!window.speechSynthesis) return;
-        var u = new SpeechSynthesisUtterance(text); u.lang = 'es-MX';
+        var u = new SpeechSynthesisUtterance(paraVoz(text)); u.lang = 'es-MX';
         u.onstart = function () { setOrb('speaking'); document.getElementById('sfStop').disabled = false; };
         u.onend = function () { setOrb('idle'); };
         window.speechSynthesis.speak(u);

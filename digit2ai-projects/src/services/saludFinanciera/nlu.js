@@ -201,7 +201,7 @@ function interpret(original, today) {
   if (R.borrar.test(t)) return { intent: 'borrar', ...e };
   if (R.cumplido.test(t) && e.obligacion && !/\b(agrega|anota|registra|suma)\b/.test(t)) return { intent: 'cumplido', ...e };
   if (R.editar.test(t) && monto) return { intent: 'editar', ...e };
-  if (R.agregar.test(t) && !/^(cuanto|que|como|cual)\b/.test(t)) {
+  if (R.agregar.test(t) && !/^(cuanto|que|como|cual|por ?que|para que|debo|vale|conviene)\b/.test(t)) {
     const tp = tipo || (/\b(resta|restale|descuenta)\b/.test(t) ? 'egreso' : /\b(suma|sumale)\b/.test(t) ? 'ingreso' : 'egreso');
     return { intent: 'agregar', ...e, tipo: tp, categoria: categoria(t, tp, monto), concepto: concepto(original, t, tp) };
   }

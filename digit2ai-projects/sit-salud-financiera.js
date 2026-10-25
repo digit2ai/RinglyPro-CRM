@@ -120,6 +120,26 @@ async function linaTests() {
   ok(H('sí').ejecutar === undefined, 'sí with nothing pending executes nothing');
   ok(H('¿vale la pena adelantar algo?').desconocido === true, 'open question is handed to the model path');
 
+  console.log('\n[2c] Lina memory: 50+ financial-health Q&A');
+  const kb = require('./src/services/saludFinanciera/conocimiento');
+  ok(kb.QA.length >= 50 && new Set(kb.QA.map(q => q.id)).size === kb.QA.length, 'memory holds at least 50 distinct questions', kb.QA.length);
+  const miss = kb.QA.filter(q => lina.heuristic(q.p, rows, o, {}).conocimiento !== q.id).map(q => q.id);
+  ok(miss.length === 0, 'each memory question is answered by its own entry', miss);
+  const allText = kb.QA.map(q => q.r(kb.datos(engine.analyze(rows, o), require('./src/services/saludFinanciera/finanzas')))).join(' ');
+  ok(!/(compra acciones|invierte en|criptomoneda|bitcoin|fondo indexado|etf|bolsa de valores)/i.test(allText), 'memory never recommends specific investment products');
+  ok(!/(deja de pagar la corte|no pagues|pospón el pago lina|deja de ayudar)/i.test(allText), 'memory never suggests skipping corte / pago Lina / hija');
+  const fx = kb.QA.find(q => q.id === 'mayor_riesgo').r(kb.datos(engine.analyze(rows, o), require('./src/services/saludFinanciera/finanzas')));
+  ok(/\$68\.48/.test(fx) && /11 de diciembre/.test(fx), 'personal memory answers use engine figures (mayor riesgo -> $68.48, 11 de diciembre)', fx);
+  ok(lina.heuristic('agrega un ingreso extra de 300', rows, o, {}).intent === 'agregar', 'a write is never swallowed by the memory ("ingreso extra")');
+  ok(lina.heuristic('¿Cuánto tendré el 1 de diciembre?', rows, o, {}).intent === 'saldo_fecha', 'a date question is never swallowed by the memory');
+  const ui = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-financiera.js'), 'utf8');
+  const pv = ui.match(/function paraVoz\(t\) \{[\s\S]*?\n  \}/)[0]; const paraVoz = new Function(pv + '; return paraVoz;')();
+  ok(paraVoz('Tienes $1,868.48 y -$131.52') === 'Tienes 1868 dólares con 48 centavos y menos 131 dólares con 52 centavos', 'voice says dólares, never pesos');
+  ok(/paraVoz\(text\)\.slice/.test(ui) && /SpeechSynthesisUtterance\(paraVoz\(text\)\)/.test(ui), 'both voice paths (neural + browser) speak through paraVoz');
+  ok(/rec\.continuous = true/.test(ui) && /SILENCIO_MS = 3000/.test(ui), 'listening keeps going through pauses (continuous + 3 s silence)');
+  const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('orbHtml() +');
+  ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
+
   console.log('\n[3] Lina model path (fake client)');
   const fake = (finalText) => {
     let n = 0;
@@ -255,7 +275,7 @@ async function apiTests() {
   await engineTests();
   await linaTests();
   structuralTests();
-  try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.message); }
+  try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.stack); }
   console.log(`\nSalud Financiera SIT: ${pass}/${pass + fail}`);
   console.log('NOT covered: a real Anthropic call, real voice recognition, the /api/tts/edge audio, a browser.');
   process.exit(fail ? 1 : 0);

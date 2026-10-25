@@ -17,6 +17,7 @@
 const engine = require('./engine');
 const fin = require('./finanzas');
 const nlu = require('./nlu');
+const kb = require('./conocimiento');
 const { toCents, fmt } = require('./money');
 
 const fl = (iso) => engine.fechaLarga(iso);
@@ -45,6 +46,7 @@ function makeTools(rows, opts) {
     explicar_saldo({ fecha } = {}) { return money(fin.explicarSaldo(cur, engine.isISO(fecha) ? fecha : today)); },
     resumen_mes({ mes } = {}) { return /^\d{4}-\d{2}$/.test(mes || '') ? money(fin.resumenMes(cur, mes)) : { error: 'mes AAAA-MM requerido' }; },
     como_se_calcula() { return fin.comoSeCalcula(cur); },
+    buscar_conocimiento({ pregunta } = {}) { const h = kb.buscar(nlu.words(nlu.norm(pregunta))); return h ? { pregunta: h.entrada.p, respuesta: kb.responder(h.entrada, cur, fin) } : { encontrado: false, temas: kb.QA.map(q => q.p) }; },
     plan_para_mantener({ hasta } = {}) { return money(fin.planMantener(cur, engine.isISO(hasta) ? hasta : null)); },
     simular({ movimientos = [] } = {}) {
       const r = engine.simulate(rows, movimientos, opts);
@@ -242,6 +244,15 @@ function heuristic(pregunta, rows, opts, state = {}) {
     }
   }
 
+  // Lina's memory (50 Q&A). Writes, simulations and date questions always win;
+  // general intents yield to a strong match; unknown questions use any match.
+  const HARD = ['agregar', 'cumplido', 'editar', 'borrar', 'confirmar', 'cancelar', 'simular', 'alcanza', 'resumen_mes', 'saldo_fecha', 'semana', 'mes_gastado', 'proximos', 'monto_suelto', 'explicar_calculo'];
+  const hard = HARD.includes(ent.intent) && !(ent.intent === 'simular' && !ent.monto) && !(ent.intent === 'alcanza' && !ent.obligacion) && !(ent.intent === 'saldo_fecha' && ent.solo_fecha);
+  const hit = hard ? null : kb.buscar(ent.texto);
+  if (hit && (['desconocido', 'aclarar', 'saludo', 'gracias'].includes(ent.intent) || hit.puntaje >= 3)) {
+    return out(kb.responder(hit.entrada, cur, fin), { intent: 'conocimiento', conocimiento: hit.entrada.id });
+  }
+
   switch (ent.intent) {
     case 'saludo': return out(`Hola. ${alerta}Tu salud está en ${cur.score}% (${cur.color}) y hoy tienes ${fmt(cur.saldo_hoy)}. Pregúntame lo que quieras de tu dinero, o dime un gasto o un ingreso y lo registro.`);
     case 'gracias': return out('Con gusto. Aquí estoy cuando quieras revisar tus números.');
@@ -376,6 +387,7 @@ const TOOL_DEFS = [
   { name: 'explicar_saldo', description: 'De qué ingresos y egresos se compone el saldo a una fecha.', input_schema: S({ fecha: { type: 'string' } }) },
   { name: 'como_se_calcula', description: 'Reglas de la proyección y de la salud.', input_schema: S({}) },
   { name: 'plan_para_mantener', description: 'Qué tiene que pasar para mantener la proyección: margen, ingresos que deben llegar, pagos y presupuesto semanal.', input_schema: S({ hasta: { type: 'string' } }) },
+  { name: 'buscar_conocimiento', description: 'Memoria de Lina: 50 preguntas y respuestas sobre salud financiera (colchón, presupuesto, deudas, ahorro, hábitos), personalizadas con los datos del usuario.', input_schema: S({ pregunta: { type: 'string' } }, ['pregunta']) },
   { name: 'obtener_movimientos', description: 'Movimientos con su saldo acumulado proyectado.', input_schema: S({ desde: { type: 'string' }, hasta: { type: 'string' }, categoria: { type: 'string', enum: engine.CATEGORIAS } }) },
   { name: 'proximos_pagos', description: 'Pagos pendientes en los próximos N días y si quedan cubiertos.', input_schema: S({ dias: { type: 'integer' } }) },
   { name: 'gasto_semana', description: 'Gastado esta semana (sábado a viernes) contra el presupuesto.', input_schema: S({}) },
