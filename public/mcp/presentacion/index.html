@@ -172,6 +172,15 @@ body.vert ul.sys{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
 body.vert ul.sys li{font-size:20px;border-top:1px solid var(--line)}
 body.vert ul.sys li:nth-child(2){border-top:0}
 
+
+.incl ul.sys li{font-size:17px;justify-content:flex-start}
+.incl .quote{border-color:rgba(139,92,246,.55)}
+.incl .quote .n{color:#a78bfa}
+body.vert .incl{grid-template-columns:1fr!important}
+body.vert .incl ul.sys{display:block}
+body.vert .incl ul.sys li{font-size:21px;border-top:1px solid var(--line)}
+body.vert .incl ul.sys li:first-child{border-top:0}
+
 /* ── el orbe animado de OrbUp (copiado de orbup.html), en la última lámina ── */
 .orbx{width:400px;height:400px;position:relative}
 body.vert .orbx{width:560px;height:560px;margin-top:10px}
@@ -486,6 +495,19 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     <p class="foot">Un consumo de tokens por encima del estándar se cotiza aparte.</p>
   </section>
 
+  <!-- incluido vs cotizado aparte -->
+  <section class="slide" data-t="Qué incluye y qué se cotiza aparte">
+    <div class="kick">Total transparencia</div>
+    <h2>Lo estándar va incluido. <span class="grad">Lo hecho a su medida se cotiza aparte.</span></h2>
+    <div class="grid g2 incl" style="margin-top:24px">
+      <div class="card stag d1"><span class="n">INCLUIDO EN LA SUSCRIPCIÓN</span>
+        <ul class="sys"><li>Diagnóstico con MCP Discovery</li><li>Conexión del cerebro a sus sistemas</li><li>Soluciones estándar: atención 24/7, documentos, conocimiento interno</li><li>La fuerza de trabajo de agentes</li><li>Nuevos agentes cada trimestre</li></ul></div>
+      <div class="card stag d2 quote"><span class="n">SE COTIZA APARTE</span>
+        <ul class="sys"><li>Desarrollo a la medida de su negocio</li><li>Automatizaciones propias de sus procesos</li><li>Optimización de su operación</li><li>Integraciones especiales</li></ul>
+        <p style="margin-top:14px">Antes de empezar usted ve las horas y el costo de cada componente. Nada se cobra sin su aprobación.</p></div>
+    </div>
+  </section>
+
   <!-- 14 cierre -->
   <section class="slide cover" data-t="Siguiente paso" id="lastSlide">
     <canvas class="d2stars" id="d2stars" aria-hidden="true"></canvas>
@@ -596,7 +618,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
-  <span id="cnt">1 / 15</span>
+  <span id="cnt">1 / 16</span>
 </div>
 
 <div class="gate" id="gate"><div class="box">
@@ -653,6 +675,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     'Frente a un solo proveedor de inteligencia artificial, la diferencia es clara. Un proveedor entrega la materia prima: sus propios modelos. La conexión, los agentes, la voz y la auditoría los construye usted. Digit2AI MCP entrega todo eso ya integrado, con los mejores modelos de varios proveedores. Y en lugar de meses, se empieza en semanas.',
     'Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.',
     'Se contrata como un servicio. Un pago único de configuración de setecientos dólares, para crear la instancia de su empresa y conectar el cerebro. Y una suscripción mensual de trescientos noventa y siete dólares, con el consumo estándar de tokens incluido, acceso a la fuerza de trabajo de agentes, y nuevos agentes cada trimestre.',
+    'Para que quede claro qué está incluido. La suscripción incluye el diagnóstico con MCP Discovery, la conexión del cerebro a sus sistemas, las soluciones estándar, como la atención las veinticuatro horas, la lectura de documentos y el conocimiento interno, y toda la fuerza de trabajo de agentes. El desarrollo a la medida de su negocio, las automatizaciones propias de sus procesos y la optimización de su operación se cotizan aparte, con total transparencia: antes de empezar, usted ve las horas y el costo de cada componente, y nada se cobra sin su aprobación.',
     'Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
   ];
 
