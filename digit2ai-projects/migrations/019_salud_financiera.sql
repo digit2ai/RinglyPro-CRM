@@ -42,3 +42,9 @@ CREATE TABLE IF NOT EXISTS sf_config (
   seeded_at           TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS sf_config_tenant_idx ON sf_config (tenant_id);
+
+-- Lina's conversation state: one pending change awaiting "sí", and the date
+-- or month last discussed (so "¿y cómo se calcula eso?" knows what "eso" is).
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS pendiente JSONB;
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS pendiente_at TIMESTAMPTZ;
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS contexto JSONB;

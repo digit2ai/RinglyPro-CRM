@@ -75,7 +75,7 @@ async function linaTests() {
   const rows = seed(); const o = { today: TODAY };
   let r = await lina.answer('¿Cómo estoy hoy?', rows, o);
   ok(/62\.7%|63%/.test(r.texto) && /amarillo/.test(r.texto) && /11 de diciembre/.test(r.texto), '"¿Cómo estoy hoy?" -> ~63%, amarillo, 11 de diciembre', r.texto);
-  ok(r.composed_by === 'heuristic' && r.is_simulated === true, 'keyless answer is labelled heuristic');
+  ok(r.composed_by === 'lina', 'recognised question answered by Lina deterministic engine (no model)');
   r = await lina.answer('Si compro algo de $300 hoy, ¿cómo quedo?', rows, o);
   ok(/negativo/.test(r.texto) && /no guard/.test(r.texto) && !r.propuesta, '"$300 hoy" -> negativo, nothing saved', r.texto);
   r = await lina.answer('Hoy gasté $45', rows, o);
@@ -90,6 +90,36 @@ async function linaTests() {
   r = await lina.answer('¿y lina?', rows, o);
   ok(r.intent === 'aclarar', 'ambiguous "Lina" -> asks which');
 
+  console.log('\n[2b] Financial NLU (the owner\'s own questions)');
+  const H = (q, st) => lina.heuristic(q, rows, o, st || {});
+  r = H('¿Cuánto dinero voy a tener disponible según el plan para el 1 de diciembre?');
+  ok(r.intent === 'saldo_fecha' && /1 de diciembre/.test(r.texto) && /\$1,868\.48/.test(r.texto) && /\$68\.48/.test(r.texto), 'saldo el 1 de diciembre: $1,868.48 and warns of the $68.48 low', r.texto);
+  r = H('¿Por qué hoy aparece un saldo actual de más de $8,000?');
+  ok(r.intent === 'explicar_saldo' && /Ahorro 1 \$4,689\.48/.test(r.texto) && /\$8,968\.48/.test(r.texto), 'why today > $8,000: lists Ahorro 1-4', r.texto);
+  r = H('¿Cuánto voy a tener disponible en diciembre?');
+  ok(r.intent === 'resumen_mes' && /cierras el mes con \$3,668\.48/.test(r.texto), 'diciembre: opens, ins, outs, closes $3,668.48', r.texto);
+  r = H('¿Y cómo se calcula esa proyección?', { contexto: { fecha: '2026-12-01' } });
+  ok(r.intent === 'explicar_calculo' && /Para el 1 de diciembre/.test(r.texto), 'cómo se calcula uses the date under discussion', r.texto);
+  r = H('¿Qué tengo que hacer para mantenerla?');
+  ok(r.intent === 'mantener' && /margen|colchón/.test(r.texto) && /semana/.test(r.texto), 'mantener: margin, incomes, weekly budget');
+  r = H('agrega este gasto: 45 dólares en comida');
+  ok(r.intent === 'agregar' && r.propuesta && r.propuesta.datos.monto === '45.00' && r.propuesta.datos.categoria === 'gasto_personal' && r.propuesta.datos.concepto === 'Comida', 'agrega gasto 45 comida -> proposal');
+  r = H('sí', { pendiente: r.propuesta });
+  ok(r.ejecutar && r.ejecutar.datos.monto === '45.00', 'sí with a pending change -> execute');
+  r = H('súmale un ingreso de quinientos dólares el viernes');
+  ok(r.propuesta && r.propuesta.datos.tipo === 'ingreso' && r.propuesta.datos.monto === '500.00' && r.propuesta.datos.fecha === '2026-10-30', 'súmale ingreso de quinientos el viernes (number in words)');
+  ok(H('no', { pendiente: r.propuesta }).limpiar_pendiente === true, 'no cancels the pending change');
+  r = H('agrega un gasto'); const part = r.propuesta;
+  ok(part && part.falta === 'monto', 'gasto without amount asks how much');
+  r = H('200 para el carro', { pendiente: part });
+  ok(r.propuesta && r.propuesta.datos.monto === '200.00' && r.propuesta.datos.concepto === 'Carro' && !r.propuesta.falta, 'follow-up amount completes the proposal');
+  r = H('cambia el pago lina de diciembre a 1,400');
+  ok(r.propuesta && r.propuesta.accion === 'editar' && r.propuesta.datos.monto === '1400.00', 'cambia pago Lina de diciembre a 1,400');
+  ok(H('¿cuánto tendré a fin de mes?').texto.includes('31 de octubre'), 'a fin de mes -> 31 de octubre');
+  ok(H('¿y en enero?').intent === 'resumen_mes', 'bare month follow-up -> month summary');
+  ok(H('sí').ejecutar === undefined, 'sí with nothing pending executes nothing');
+  ok(H('¿vale la pena adelantar algo?').desconocido === true, 'open question is handed to the model path');
+
   console.log('\n[3] Lina model path (fake client)');
   const fake = (finalText) => {
     let n = 0;
@@ -97,14 +127,17 @@ async function linaTests() {
       ? { content: [{ type: 'tool_use', id: 't1', name: 'obtener_salud', input: {} }] }
       : { content: [{ type: 'text', text: finalText }] }) } };
   };
-  r = await lina.answer('¿Cómo estoy?', rows, o, { client: fake('Tu salud está en 62.7%, amarillo. Tu punto más bajo es $68.48 el 11 de diciembre.'), model: 'x' });
+  const OPEN = '¿Vale la pena adelantar algún pago?';
+  r = await lina.answer('¿Cómo estoy?', rows, o, { client: fake('no debería llamarse'), model: 'x' });
+  ok(r.composed_by === 'lina', 'recognised intent never goes to the model');
+  r = await lina.answer(OPEN, rows, o, { client: fake('Tu salud está en 62.7%, amarillo. Tu punto más bajo es $68.48 el 11 de diciembre.'), model: 'x' });
   ok(r.composed_by === 'model', 'model reply with sourced numbers is kept', r);
-  r = await lina.answer('¿Cómo estoy?', rows, o, { client: fake('Tu salud está en 81%, y tienes $12,345.00.'), model: 'x' });
-  ok(r.composed_by === 'heuristic' && /cifras sin fuente/.test(r.motivo_respaldo || ''), 'model reply with an invented number is discarded', r.motivo_respaldo);
+  r = await lina.answer(OPEN, rows, o, { client: fake('Tu salud está en 81%, y tienes $12,345.00.'), model: 'x' });
+  ok(!/12,345/.test(r.texto) && /cifras sin fuente/.test(r.motivo_respaldo || ''), 'model reply with an invented number is discarded', r.motivo_respaldo);
   const writer = { messages: { create: (() => { let n = 0; return async () => (n++ === 0
     ? { content: [{ type: 'tool_use', id: 't1', name: 'agregar_movimiento', input: { tipo: 'egreso', monto: '45', concepto: 'Comida', categoria: 'gasto_personal' } }] }
     : { content: [{ type: 'text', text: '¿Registro un gasto de $45.00 hoy? ¿Lo registro?' }] }); })() } };
-  r = await lina.answer('Hoy gasté 45', rows, o, { client: writer, model: 'x' });
+  r = await lina.answer('quiero que me ayudes con algo de comida que salió por 45', rows, o, { client: writer, model: 'x' });
   ok(r.propuesta && r.propuesta.accion === 'agregar_movimiento' && rows.length === 37, 'model agregar_movimiento returns a proposal and writes nothing');
 }
 
@@ -185,6 +218,27 @@ async function apiTests() {
     ok(/¿Registro/.test(r.j.texto) && r.j.propuesta && (await call('/movimientos', A)).j.data.length === n0, 'Lina "Hoy gasté $45": asks, nothing saved yet');
     r = await call('/lina/historial', A);
     ok(r.j.data.length === 2 && (await call('/lina/historial', B)).j.data.length === 0, 'conversations stored only for the asking user');
+    // Conversation that writes: agrega -> sí -> written + explained; borra -> sí -> removed.
+    r = await call('/lina', B, 'POST', { pregunta: 'sí' });
+    ok(!r.j.cambio && (await call('/movimientos', A)).j.data.length === n0, "user B saying 'sí' never executes user A's pending change");
+    r = await call('/lina', B, 'POST', { pregunta: 'agrega un gasto de 45 en comida' });
+    ok(r.j.pendiente === true && /¿Registro un egreso de \$45\.00 hoy/.test(r.j.texto) && (await call('/movimientos', B)).j.data.length === 37, 'agrega gasto: asks, nothing written yet');
+    r = await call('/lina', B, 'POST', { pregunta: 'sí', propuesta: { accion: 'agregar_movimiento', datos: { fecha: TODAY, concepto: 'x', tipo: 'egreso', monto: '99999', categoria: 'otro' } } });
+    let list = (await call('/movimientos', B)).j.data;
+    const added = list.find(x => x.origen === 'real');
+    ok(r.j.cambio && added && added.monto === '45.00' && added.concepto === 'Comida', "'sí' writes the STORED proposal (45 Comida), never one sent by the page");
+    ok(/^Listo, registré un egreso de \$45\.00 hoy/.test(r.j.texto) && /presupuesto semanal/.test(r.j.texto) && /salud/i.test(r.j.texto), 'after writing, Lina explains how the projection changed', r.j.texto);
+    r = await call('/lina', B, 'POST', { pregunta: 'sí' });
+    ok(!r.j.cambio && (await call('/movimientos', B)).j.data.length === list.length, 'a second sí executes nothing (no double write)');
+    r = await call('/lina', B, 'POST', { pregunta: 'borra el gasto de 45' });
+    ok(r.j.pendiente === true && /¿Borro/.test(r.j.texto), 'borra el gasto de 45 -> asks');
+    r = await call('/lina', B, 'POST', { pregunta: 'sí' });
+    ok(r.j.cambio && !(await call('/movimientos', B)).j.data.some(x => x.origen === 'real'), 'sí -> gasto borrado');
+    r = await call('/lina', B, 'POST', { pregunta: '¿Cuánto voy a tener el 1 de diciembre?' });
+    ok(/\$1,868\.48/.test(r.j.texto), 'HTTP: saldo al 1 de diciembre', r.j.texto);
+    r = await call('/lina', B, 'POST', { pregunta: 'súmale un ingreso de 1000 el 28 de noviembre' });
+    r = await call('/lina', B, 'POST', { pregunta: 'dale' });
+    ok(r.j.cambio && /El 28 de noviembre tendrás \$7,368\.48 \(antes \$6,368\.48\)/.test(r.j.texto) && /punto más bajo pasa de \$68\.48/.test(r.j.texto), 'income confirmed: explains the new balance and low point', r.j.texto);
     r = await call('/simular', A, 'POST', { movimientos: [{ monto: '300', tipo: 'egreso' }] });
     ok(r.j.guardado === false && r.j.despues.dias_negativos.length > 0, 'POST /simular never saves');
     r = await call('/plan/extender', A, 'POST', { meses: 1 });

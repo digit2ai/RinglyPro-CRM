@@ -174,6 +174,35 @@ function modelClient() {
   } catch (e) { return null; }
 }
 
+// Executes a confirmed proposal with the same validation as POST/PATCH/DELETE.
+async function executeProposal(req, p) {
+  const id = Number(p.id);
+  if (p.accion === 'agregar_movimiento') {
+    const v = store.validate(p.datos || {});
+    if (v.error) return { error: v.error };
+    const row = await store.insertRow(deps.sequelize, req.sf, { ...v.value, origen: 'real' });
+    return { id: row.id };
+  }
+  const cur = Number.isInteger(id) ? await store.get(deps.sequelize, req.sf, id) : null;
+  if (!cur) return { error: 'ese movimiento ya no existe' };
+  if (p.accion === 'borrar') {
+    if (cur.origen !== 'real') return { error: 'los movimientos del plan no se borran desde la conversación' };
+    await store.remove(deps.sequelize, req.sf, id); return { id };
+  }
+  if (p.accion === 'marcar_cumplido') {
+    if (cur.origen !== 'plan') return { error: 'solo los movimientos del plan se marcan como cumplidos' };
+    const v = store.validate({ estado: 'cumplido', monto_real: p.datos && p.datos.monto_real != null ? p.datos.monto_real : cur.monto }, { partial: true });
+    if (v.error) return { error: v.error };
+    await store.update(deps.sequelize, req.sf, id, v.value); return { id };
+  }
+  if (p.accion === 'editar') {
+    const v = store.validate({ monto: p.datos && p.datos.monto }, { partial: true });
+    if (v.error) return { error: v.error };
+    await store.update(deps.sequelize, req.sf, id, v.value); return { id };
+  }
+  return { error: 'acción desconocida' };
+}
+
 router.post('/lina', async (req, res) => {
   try {
     const pregunta = String((req.body || {}).pregunta || '').trim().slice(0, 1000);
@@ -182,12 +211,32 @@ router.post('/lina', async (req, res) => {
     if (linaLimited(req.sf.userId)) return res.status(429).json({ success: false, error: 'Demasiadas preguntas seguidas. Espera un momento.' });
     const historial = Array.isArray(req.body.historial) ? req.body.historial.slice(-6) : [];
     const { rows, opts } = await context(req);
+    const state = await store.getState(deps.sequelize, req.sf);
     const client = modelClient();
-    const out = await lina.answer(pregunta, rows, opts, { historial, client, model: process.env.SALUD_FINANCIERA_MODEL || 'claude-haiku-4-5-20251001' });
-    await store.logConversation(deps.sequelize, req.sf, pregunta, out.texto, canal);
-    res.json({ success: true, texto: out.texto, propuesta: out.propuesta || null, intent: out.intent, composed_by: out.composed_by,
-      is_simulated: out.is_simulated, motivo_respaldo: out.motivo_respaldo || null,
-      audio: { endpoint: '/api/tts/edge', voice: 'lina', text: out.texto } });
+    const out = await lina.answer(pregunta, rows, opts, { historial, client, state, model: process.env.SALUD_FINANCIERA_MODEL || 'claude-haiku-4-5-20251001' });
+
+    let texto = out.texto, cambio = null, pendiente = state.pendiente;
+    if (out.ejecutar) {
+      // The owner said "sí" to a pending change: write it through the same
+      // validation the REST endpoints use, then explain the before/after.
+      const r = await executeProposal(req, out.ejecutar);
+      pendiente = null;
+      if (r.error) texto = `No pude hacerlo: ${r.error}`;
+      else {
+        const after = await context(req);
+        const antes = engine.analyze(rows, opts), despues = engine.analyze(after.rows, after.opts);
+        texto = lina.explicarCambio(out.ejecutar, antes, despues, (out.contexto || {}).fecha || null);
+        cambio = { accion: out.ejecutar.accion, id: r.id };
+      }
+    } else if (out.limpiar_pendiente) pendiente = null;
+    else if (out.propuesta) pendiente = out.propuesta;
+    else if (state.pendiente && !out.propuesta) pendiente = null; // the owner moved on: the old question lapses
+    await store.setState(deps.sequelize, req.sf, { pendiente, contexto: out.contexto || state.contexto });
+
+    await store.logConversation(deps.sequelize, req.sf, pregunta, texto, canal);
+    res.json({ success: true, texto, propuesta: out.propuesta && !out.propuesta.falta ? out.propuesta : null, pendiente: !!pendiente, cambio,
+      intent: out.intent, composed_by: out.composed_by, is_simulated: !!out.is_simulated, motivo_respaldo: out.motivo_respaldo || null,
+      audio: { endpoint: '/api/tts/edge', voice: 'lina', text: texto } });
   } catch (e) { console.error('[SaludFinanciera] lina', e); res.status(500).json({ success: false, error: e.message }); }
 });
 

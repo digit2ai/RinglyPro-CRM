@@ -112,6 +112,19 @@ async function remove(sequelize, user, id) {
   return rows.length > 0;
 }
 
+// Lina's conversation state. A pending change expires after 15 minutes.
+async function getState(sequelize, user) {
+  const [rows] = await sequelize.query("SELECT pendiente, contexto, (pendiente_at > NOW() - INTERVAL '15 minutes') AS vigente FROM sf_config WHERE user_id = :u AND tenant_id = :t",
+    { replacements: { u: user.userId, t: user.tenantId } });
+  const r = rows[0] || {};
+  return { pendiente: r.vigente ? r.pendiente : null, contexto: r.contexto || {} };
+}
+async function setState(sequelize, user, { pendiente, contexto }) {
+  await sequelize.query(`INSERT INTO sf_config (user_id, tenant_id, pendiente, pendiente_at, contexto) VALUES (:u, :t, CAST(:p AS JSONB), CASE WHEN :p IS NULL THEN NULL ELSE NOW() END, CAST(:c AS JSONB))
+    ON CONFLICT (user_id) DO UPDATE SET pendiente = EXCLUDED.pendiente, pendiente_at = EXCLUDED.pendiente_at, contexto = EXCLUDED.contexto`,
+    { replacements: { u: user.userId, t: user.tenantId, p: pendiente ? JSON.stringify(pendiente) : null, c: JSON.stringify(contexto || {}) } });
+}
+
 async function logConversation(sequelize, user, pregunta, respuesta, canal) {
   await sequelize.query(`INSERT INTO sf_conversaciones_lina (tenant_id, user_id, pregunta, respuesta, canal) VALUES (:t, :u, :p, :r, :c)`,
     { replacements: { t: user.tenantId, u: user.userId, p: String(pregunta).slice(0, 4000), r: String(respuesta).slice(0, 8000), c: canal === 'voz' ? 'voz' : 'texto' } });
@@ -123,4 +136,4 @@ async function conversations(sequelize, user, limit = 20) {
   return rows.reverse();
 }
 
-module.exports = { ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };
+module.exports = { getState, setState, ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };

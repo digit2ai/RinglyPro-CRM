@@ -12,6 +12,7 @@
     ['gasto_personal', 'Gasto personal'], ['otro', 'Otro'], ['ingreso_extra', 'Ingreso extra'], ['salario', 'Salario'],
     ['ahorro', 'Ahorro'], ['inversion', 'Inversión'], ['corte', 'Corte'], ['pago_lina', 'Pago Lina'], ['hija', 'Casa de mi hija'], ['gasto_semanal', 'Gastos semana']
   ];
+  var CHIPS = ['¿Cómo estoy hoy?', '¿Cuánto tendré el 1 de diciembre?', '¿Por qué tengo este saldo hoy?', '¿Cómo se calcula la proyección?', '¿Qué hago para mantenerla?', 'Agrega un gasto de 45 en comida'];
   var CAT_LABEL = {}; CATS.forEach(function (c) { CAT_LABEL[c[0]] = c[1]; });
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   var state = { salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
@@ -65,22 +66,27 @@
       '<div style="display:flex;gap:8px;width:100%">' +
       '<input id="sfAsk" type="text" placeholder="Pregúntale a Lina: ¿Cómo estoy hoy?" style="flex:1;min-width:0;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
       '<button class="btn btn-primary" id="sfAskBtn">Preguntar</button></div>' +
+      '<div id="sfChips" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">' + CHIPS.map(function (c) { return '<button class="btn btn-sm btn-ghost" data-chip="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div>' +
       '<div class="controls" style="justify-content:center;margin-top:10px">' +
       '<button id="sfPause" disabled>&#10074;&#10074; Pausar</button><button id="sfStop" disabled>&#9632; Detener</button></div>' +
       '</div>';
   }
 
   // ---------- render ----------
+  function hideHubAssistant(hide) { var w = document.getElementById('nlp-widget'); if (w) w.style.display = hide ? 'none' : ''; }
+  window.sfLeave = function () { hideHubAssistant(false); stopAudio && document.getElementById('sfPause') && stopAudio(); };
+
   window.renderSaludFinanciera = function (container) {
+    hideHubAssistant(true);
     try { if (location.pathname !== '/projects/salud-financiera') history.replaceState(null, '', '/projects/salud-financiera'); } catch (e) {}
     container.innerHTML =
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
       '<div class="card" id="sf-kpi" style="margin-bottom:16px;text-align:center;padding:24px"><div class="spinner"></div></div>' +
+      orbHtml() +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
       '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
-      orbHtml() +
       '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Saldo en el tiempo</h3></div>' +
       '<p class="section-hint">Línea punteada: plan base. Línea azul: proyección con lo que realmente pasa.</p><div id="sf-chart"></div></div>' +
       '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Por qué tu salud está así</h3></div><div id="sf-desglose"></div></div>' +
@@ -290,6 +296,7 @@
       else { state.audio.pause(); this.innerHTML = '&#9654; Reanudar'; setOrb('idle'); }
     };
     document.getElementById('sfStop').onclick = stopAudio;
+    document.querySelectorAll('#sfChips [data-chip]').forEach(function (b) { b.onclick = function () { ask(b.getAttribute('data-chip'), 'texto'); }; });
     sf('/lina/historial?limit=6').then(function (j) {
       if (!j.success) return;
       j.data.forEach(function (h) { bubble('yo', esc(h.pregunta)); bubble('lina', esc(h.respuesta)); state.historial.push({ rol: 'yo', texto: h.pregunta }, { rol: 'lina', texto: h.respuesta }); });
@@ -323,28 +330,22 @@
       setOrb('idle'); status('');
       if (!j.success) { bubble('lina', esc(j.error || 'No pude responder.')); return; }
       state.historial.push({ rol: 'yo', texto: text }, { rol: 'lina', texto: j.texto });
-      var b = bubble('lina', esc(j.texto) + (j.composed_by === 'heuristic' ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">Respuesta calculada sin modelo de IA</div>' : ''));
-      if (j.propuesta) proposal(b, j.propuesta);
+      var b = bubble('lina', esc(j.texto) + (''));
+      if (j.pendiente && j.propuesta) proposal(b);
+      if (j.cambio) refresh();
       speak(j.texto);
     }).catch(function () { setOrb('idle'); bubble('lina', 'No hay conexión. Intenta otra vez.'); });
   }
 
-  // Lina never saves: a proposal becomes a write only on this tap.
-  function proposal(b, p) {
+  // Lina never saves on her own: Sí sends "sí" through the conversation, the
+  // server executes the proposal IT stored (not anything from the page) and
+  // Lina explains how the projection changed.
+  function proposal(b) {
     var box = document.createElement('div'); box.style.cssText = 'display:flex;gap:8px;margin-top:8px';
-    box.innerHTML = '<button class="btn btn-sm btn-primary">Sí, regístralo</button><button class="btn btn-sm btn-ghost">No</button>';
+    box.innerHTML = '<button class="btn btn-sm btn-primary">Sí</button><button class="btn btn-sm btn-ghost">No</button>';
     b.appendChild(box);
-    var yes = box.children[0], no = box.children[1];
-    no.onclick = function () { box.innerHTML = '<span style="font-size:12.5px;color:var(--text-muted)">No registré nada.</span>'; };
-    yes.onclick = function () {
-      yes.disabled = true;
-      var req = p.accion === 'agregar_movimiento' ? sf('/movimientos', { method: 'POST', body: p.datos })
-        : sf('/movimientos/' + p.id, { method: 'PATCH', body: p.datos });
-      req.then(function (j) {
-        box.innerHTML = '<span style="font-size:12.5px;color:' + (j.success ? 'var(--success)' : 'var(--danger)') + '">' + (j.success ? 'Listo, registrado. Tu salud ya se recalculó.' : esc(j.error || 'No se pudo registrar')) + '</span>';
-        if (j.success) refresh();
-      });
-    };
+    box.children[0].onclick = function () { box.remove(); ask('sí', 'texto'); };
+    box.children[1].onclick = function () { box.remove(); ask('no', 'texto'); };
   }
 
   function stopAudio() {

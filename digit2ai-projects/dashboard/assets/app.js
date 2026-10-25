@@ -523,6 +523,7 @@ function navigateTo(view, opts) {
   document.getElementById('page-title').textContent = titles[view] || view;
   // Salud Financiera owns /projects/salud-financiera; leaving it returns the URL to /projects/.
   if (view !== 'salud-financiera' && location.pathname === '/projects/salud-financiera') { try { history.replaceState(null, '', '/projects/'); } catch (e) {} }
+  if (view !== 'salud-financiera' && typeof window.sfLeave === 'function') window.sfLeave();
   renderView(view);
 }
 
@@ -626,6 +627,7 @@ function openCrmEmbed(url, title, el) {
   // Opening Intercom is a natural user gesture — use it to request notification
   // permission so the Hub icon can badge on new messages even while closed.
   if (/intercom/i.test(url)) { try { ensureHubPush(true); } catch (e) {} }
+  if (typeof window.sfLeave === 'function') window.sfLeave();
   _lastDrilldown = null;
   currentView = 'crm-embed';
   document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
