@@ -8,6 +8,9 @@
 (function () {
   'use strict';
   var SF_API = '/projects/api/salud-financiera';
+  // Lina is hidden from the dashboard for now (owner request 2026-10-25). Set to true to bring her back;
+  // the API, the brain and every Lina function stay in place.
+  var SHOW_LINA = false;
   var CATS = [
     ['gasto_personal', 'Gasto personal'], ['otro', 'Otro'], ['ingreso_extra', 'Ingreso extra'], ['salario', 'Salario'],
     ['ahorro', 'Ahorro'], ['inversion', 'Inversión'], ['corte', 'Corte'], ['pago_lina', 'Pago Lina'], ['hija', 'Casa de mi hija'], ['servicios', 'Servicios'], ['gasto_semanal', 'Gastos semana']
@@ -85,7 +88,7 @@
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
       '<div class="card" id="sf-kpi" style="margin-bottom:16px;text-align:center;padding:24px"><div class="spinner"></div></div>' +
       '<div class="card-grid" id="sf-cards" style="margin-bottom:16px"></div>' +
-      orbHtml() +
+      (SHOW_LINA ? orbHtml() : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
@@ -100,7 +103,7 @@
     document.getElementById('sf-add').onclick = openAdd;
     document.getElementById('sf-extend').onclick = extendPlan;
     document.getElementById('sf-mes').onchange = function () { state.mes = this.value; loadMovs(); };
-    wireLina();
+    if (SHOW_LINA) wireLina();
     return refresh();
   };
 

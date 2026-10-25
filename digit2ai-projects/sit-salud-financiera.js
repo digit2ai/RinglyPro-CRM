@@ -193,8 +193,9 @@ async function linaTests() {
   ok(paraVoz('Tienes $1,868.48 y -$131.52') === 'Tienes 1868 dólares con 48 centavos y menos 131 dólares con 52 centavos', 'voice says dólares, never pesos');
   ok(/paraVoz\(text\)\.slice/.test(ui) && /SpeechSynthesisUtterance\(paraVoz\(text\)\)/.test(ui), 'both voice paths (neural + browser) speak through paraVoz');
   ok(/rec\.continuous = true/.test(ui) && /SILENCIO_MS = 3000/.test(ui), 'listening keeps going through pauses (continuous + 3 s silence)');
-  const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('orbHtml() +');
+  const iK = ui.indexOf('id="sf-cards"'), iL = ui.indexOf('(SHOW_LINA ? orbHtml()');
   ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
+  ok(/var SHOW_LINA = false;/.test(ui) && /if \(SHOW_LINA\) wireLina\(\);/.test(ui), 'Lina is hidden from the dashboard for now (one switch brings her back)');
   ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
   ok(/data-edit="' \+ r\.id/.test(ui) && /function openEdit\(id\)/.test(ui) && /method: 'PATCH', body: cambios/.test(ui), 'every movement row has an Editar button that PATCHes only what changed');
   ok(/function gastoMesCard\(g\)/.test(ui) && /Bajó tu saldo mínimo proyectado/.test(ui), 'personal-spending card: this month, and its effect on the projected low point');
