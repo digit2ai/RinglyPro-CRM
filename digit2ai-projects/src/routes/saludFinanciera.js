@@ -290,7 +290,7 @@ router.post('/lina', async (req, res) => {
     const historial = (await store.conversations(deps.sequelize, req.sf, 8)).flatMap(c => [{ rol: 'yo', texto: c.pregunta }, { rol: 'lina', texto: c.respuesta }]);
 
     // A pending "sí/no" from the rule reader is still honoured first.
-    const pendienteActivo = state.pendiente && /^(si|sí|no|dale|ok|confirmo|cancela)\b/i.test(pregunta.trim());
+    const pendienteActivo = state.pendiente && /^(si|sí|no|dale|ok|confirmo|cancela)(?=$|[\s,.!¡?])/i.test(pregunta.trim()); // \b fails after "í"
     if (client && !pendienteActivo) {
       let b = null, motivo = null;
       try {
