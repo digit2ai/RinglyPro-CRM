@@ -161,6 +161,17 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
 .cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
 
 
+
+/* sistemas por industria */
+ul.sys{list-style:none;margin-top:12px}
+ul.sys li{font-family:var(--fd);font-weight:600;font-size:18px;padding:8px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+ul.sys li:first-child{border-top:0}
+ul.sys em,.foot em.ag{font-style:normal;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:2px 8px}
+body.vert .sysgrid{grid-template-columns:1fr!important}
+body.vert ul.sys{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+body.vert ul.sys li{font-size:20px;border-top:1px solid var(--line)}
+body.vert ul.sys li:nth-child(2){border-top:0}
+
 /* ── el orbe animado de OrbUp (copiado de orbup.html), en la última lámina ── */
 .orbx{width:400px;height:400px;position:relative}
 body.vert .orbx{width:560px;height:560px;margin-top:10px}
@@ -226,7 +237,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
           <defs><linearGradient id="gU" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
           <rect x="10" y="90" width="210" height="120" rx="18" fill="#0f1728" stroke="rgba(120,150,200,.35)"/>
           <text x="115" y="142" text-anchor="middle" fill="#eaf0fb" font="700 18px Space Grotesk" style="font:700 18px var(--fd)">Su empresa</text>
-          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">CRM · ERP · correo · datos</text>
+          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">SAP · Oracle · CONTPAQi</text>
           <rect x="220" y="132" width="26" height="36" rx="4" fill="#131e33" stroke="#22d3ee"/>
           <g class="plug"><rect x="246" y="138" width="40" height="24" rx="3" fill="#c7d2e3"/><rect x="286" y="126" width="70" height="48" rx="8" fill="url(#gU)"/></g>
           <g class="glow"><circle class="pulse" cx="440" cy="150" r="70" fill="url(#gU)" opacity=".95"/></g>
@@ -243,12 +254,12 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     <div class="kick">El punto de partida</div>
     <h2>Su empresa ya tiene sistemas.<br><span class="grad">Lo que les falta es inteligencia.</span></h2>
     <div class="grid g3" style="margin-top:28px">
-      <div class="card stag d1"><span class="n">HOY</span><h3>Sistemas que funcionan</h3><p>CRM, ERP, correo, calendario y bases de datos. Nadie quiere cambiarlos.</p></div>
+      <div class="card stag d1"><span class="n">HOY</span><h3>Sistemas que funcionan</h3><p>SAP, Oracle, NetSuite, CONTPAQi, Shopify: años de datos y procesos. Nadie quiere cambiarlos.</p></div>
       <div class="card stag d2"><span class="n">EL OBSTÁCULO</span><h3>Integrar la IA es lento</h3><p>Hacerlo por cuenta propia suele significar meses de desarrollo y un equipo especializado.</p></div>
       <div class="card stag d3"><span class="n">Y ADEMÁS</span><h3>Un contrato por proveedor</h3><p>Cada servicio de IA se contrata, se configura y se paga por separado.</p></div>
     </div>
     <div class="row" style="margin-top:20px;flex:0;gap:10px;flex-wrap:wrap;flex-direction:row">
-      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>CRM</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>ERP</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Correo</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Calendario</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Base de datos</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Contabilidad</span>
+      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>SAP</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Oracle</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>NetSuite</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Dynamics 365</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>CONTPAQi</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Aspel</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>QuickBooks</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Shopify</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>VTEX</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Samsara</span>
     </div>
   </section>
 
@@ -260,10 +271,10 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     <div class="row" style="margin-top:8px">
       <svg class="usb" id="usbL" viewBox="0 0 900 330" aria-hidden="true" style="max-height:340px">
         <defs><linearGradient id="gU2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-        <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">CRM</text></g>
-        <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">ERP</text></g>
-        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">Correo y calendario</text></g>
-        <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">Bases de datos</text></g>
+        <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">SAP · Oracle</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">NetSuite · Dynamics</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">CONTPAQi · Aspel</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">Shopify · VTEX</text></g>
         <path d="M210 47 H290 M210 117 H290 M210 187 H290 M210 257 H290 M290 47 V257" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
         <rect x="290" y="128" width="40" height="44" rx="5" fill="#131e33" stroke="#22d3ee"/>
         <text x="310" y="200" text-anchor="middle" style="font:600 13px var(--fb)" fill="#9db0cc">API</text>
@@ -275,10 +286,10 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
       </svg>
       <svg class="usb" id="usbV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
         <defs><linearGradient id="gU3" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-        <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">CRM</text></g>
-        <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">ERP</text></g>
-        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:20px">Correo y calendario</text></g>
-        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:22px">Bases de datos</text></g>
+        <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">SAP · Oracle</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">NetSuite · Dynamics</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:20px">CONTPAQi · Aspel</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:22px">Shopify · VTEX</text></g>
         <path d="M160 170 V205 H460 V170 M310 205 V240" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
         <rect x="284" y="240" width="52" height="44" rx="6" fill="#131e33" stroke="#22d3ee"/>
         <text x="360" y="268" style="font:600 18px var(--fb)" fill="#9db0cc">API</text>
@@ -289,6 +300,21 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
         <text class="glow" x="310" y="666" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">de IA</text>
       </svg>
     </div>
+  </section>
+
+  <!-- 4 sistemas por industria -->
+  <section class="slide" data-t="Se conecta con lo que ya usa">
+    <div class="kick">Se conecta con lo que ya usa</div>
+    <h2>Retail, transporte y finanzas: <span class="grad">sus sistemas de siempre.</span></h2>
+    <div class="grid g3 sysgrid" style="margin-top:22px">
+      <div class="card stag d1"><span class="n">RETAIL Y COMERCIO</span>
+        <ul class="sys"><li>SAP Retail</li><li>Oracle Retail</li><li>Dynamics 365 Commerce</li><li>Shopify</li><li>VTEX</li><li>Odoo</li></ul></div>
+      <div class="card stag d2"><span class="n">TRANSPORTE Y LOGÍSTICA</span>
+        <ul class="sys"><li>Oracle Transportation Management</li><li>SAP TM</li><li>Blue Yonder</li><li>Manhattan Associates</li><li>McLeod Software</li><li>Samsara</li></ul></div>
+      <div class="card stag d3"><span class="n">FINANZAS Y ERP</span>
+        <ul class="sys"><li>SAP Business One</li><li>Oracle NetSuite</li><li>QuickBooks · Sage</li><li>Siigo · Alegra</li><li>CONTPAQi · Aspel <em>agente</em></li><li>SAINT · Profit Plus <em>agente</em></li></ul></div>
+    </div>
+    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = sistema local sin API pública: se instala un agente ligero en su servidor. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
   </section>
 
   <!-- 4 qué es -->
@@ -313,7 +339,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
         <path id="p1" class="path" d="M200 165 H360"/>
         <path id="p2a" class="path" d="M540 165 C600 165 600 70 680 70"/><path id="p2b" class="path" d="M540 165 H680"/><path id="p2c" class="path" d="M540 165 C600 165 600 260 680 260"/>
         <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
-        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">CRM · ERP · correo</text>
+        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">SAP · Oracle · CONTPAQi</text>
         <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">MCP</text>
         <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Agente</text>
         <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Agente</text>
@@ -332,7 +358,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
         <path id="v1" class="path" d="M310 120 V230"/>
         <path id="v2a" class="path" d="M310 350 C310 400 110 400 110 450"/><path id="v2b" class="path" d="M310 350 V450"/><path id="v2c" class="path" d="M310 350 C310 400 510 400 510 450"/>
         <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
-        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">CRM · ERP · correo</text>
+        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">SAP · Oracle · CONTPAQi</text>
         <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">MCP</text>
         <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
         <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
@@ -401,7 +427,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     <div class="kick">Qué no es</div>
     <h2>No compite con sus sistemas. <span class="grad">Los hace más inteligentes.</span></h2>
     <div class="grid g4" style="margin-top:28px">
-      <div class="card stag d1"><h3>No reemplaza</h3><p>Su CRM, ERP, contabilidad y aplicaciones siguen igual. Se conecta a ellos.</p></div>
+      <div class="card stag d1"><h3>No reemplaza</h3><p>Su SAP, Oracle, CONTPAQi o QuickBooks siguen igual. Se conecta a ellos.</p></div>
       <div class="card stag d2"><h3>No es dueño de nada suyo</h3><p>Su propiedad intelectual, productos y datos siguen siendo suyos.</p></div>
       <div class="card stag d3"><h3>No es un modelo propio</h3><p>Usa los modelos de los líderes del mercado y los combina.</p></div>
       <div class="card stag d4"><h3>No decide por usted</h3><p>Enviar, pagar o publicar siempre espera la aprobación de una persona.</p></div>
@@ -570,7 +596,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
-  <span id="cnt">1 / 14</span>
+  <span id="cnt">1 / 15</span>
 </div>
 
 <div class="gate" id="gate"><div class="box">
@@ -614,14 +640,15 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
   // Un texto por lámina. Cifras en palabras para que la voz las lea bien.
   var NARR = [
     'Hola, soy Lina, de Digit2AI. En unos minutos le voy a mostrar cómo su empresa puede usar la inteligencia artificial más avanzada del mundo, sin cambiar los sistemas que ya tiene. Imagínelo como una memoria USB: se conecta, y su empresa gana una capacidad nueva.',
-    'Su empresa ya tiene sistemas que funcionan: un CRM, un ERP, correo, calendario y bases de datos. Lo que les falta es inteligencia. Y llevar la inteligencia artificial hasta ellos por cuenta propia suele significar meses de desarrollo, un equipo especializado, y un contrato distinto con cada proveedor.',
-    'Digit2AI MCP funciona como un USB para la inteligencia de negocio. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su empresa a la inteligencia artificial de los mejores proveedores del mundo. Se conecta por la API de sus sistemas, como un USB a un puerto. No se reemplaza nada.',
+    'Su empresa ya tiene sistemas que funcionan: S A P u Oracle, NetSuite, Dynamics, CONTPAQi, Aspel, QuickBooks, Shopify. Años de datos y de procesos que nadie quiere cambiar. Lo que les falta es inteligencia. Y llevar la inteligencia artificial hasta ellos por cuenta propia suele significar meses de desarrollo, un equipo especializado, y un contrato distinto con cada proveedor.',
+    'Digit2AI MCP funciona como un USB para la inteligencia de negocio. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su S A P, su Oracle, su CONTPAQi o su Shopify a la inteligencia artificial de los mejores proveedores del mundo. Se conecta por la API de sus sistemas, como un USB a un puerto. No se reemplaza nada.',
+    'Funciona con los sistemas que ya usa su industria. En retail y comercio: S A P, Oracle Retail, Dynamics, Shopify, Vtex y Odoo. En transporte y logística: Oracle Transportation Management, S A P T M, Blue Yonder, Manhattan, McLeod y Samsara. En finanzas: S A P Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, CONTPAQi, Aspel, SAINT y Profit. Si su sistema tiene API, se conecta directo. Si es un sistema local sin API pública, se instala un agente ligero en su servidor. La conexión exacta se confirma en el diagnóstico.',
     'Dentro hay cuatro piezas. Un cerebro central, que recibe cada solicitud y reparte el trabajo. Más de cien agentes especializados, cada uno con un rol, reglas y entregables. Conectores estándar MCP, un protocolo abierto para conectar la inteligencia artificial con sistemas reales. Y varios proveedores: para cada tarea se usa el servicio que mejor la resuelve.',
     'Así funciona. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agentes la atienden. Cada agente usa el mejor servicio disponible para su tarea. Y el resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con inteligencia artificial.',
     'Detrás del cerebro están los líderes del mercado. Anthropic para razonar y redactar. OpenAI para lenguaje y contenido. Google para modelos multimodales, mapas, calendario y correo. Amazon Web Services para almacenamiento y voz telefónica. Microsoft Azure para voces neuronales. GitHub para el código, y Render para los servidores. Usted no contrata ni configura ninguno por separado. Y si un proveedor falla o sube de precio, se cambia sin que usted lo note.',
     'Es una fuerza de trabajo completa: negocio, investigación, ingeniería, datos, finanzas, legal, ventas, industria y diseño. El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre, y cada cliente recibe los nuevos agentes de forma automática.',
     'Sirve para que su empresa use la inteligencia artificial en el trabajo diario, no solo en un chat. Atención al cliente las veinticuatro horas, en español y en inglés. Lectura de facturas, contratos y formularios. Respuestas con los manuales de la empresa, citando la fuente. Tareas repetitivas entre sistemas. Ventas y mercadeo. Y software a la medida, publicado en semanas.',
-    'También importa lo que no es. No reemplaza su CRM, su ERP ni su contabilidad: se conecta a ellos. No es dueño de nada suyo: sus datos y su propiedad intelectual siguen siendo suyos. No es un modelo propio: combina los modelos de los líderes. Y no decide por usted: enviar, pagar o publicar siempre espera la aprobación de una persona.',
+    'También importa lo que no es. No reemplaza su S A P, su Oracle ni su CONTPAQi: se conecta a ellos. No es dueño de nada suyo: sus datos y su propiedad intelectual siguen siendo suyos. No es un modelo propio: combina los modelos de los líderes. Y no decide por usted: enviar, pagar o publicar siempre espera la aprobación de una persona.',
     'La seguridad está escrita en el sistema, no solo en las instrucciones a la inteligencia artificial. Cada empresa ve solo su propia información. Nada se envía, se paga ni se publica sin autorización. Cada acción de cada agente queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.',
     'Frente a un solo proveedor de inteligencia artificial, la diferencia es clara. Un proveedor entrega la materia prima: sus propios modelos. La conexión, los agentes, la voz y la auditoría los construye usted. Digit2AI MCP entrega todo eso ya integrado, con los mejores modelos de varios proveedores. Y en lugar de meses, se empieza en semanas.',
     'Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.',
