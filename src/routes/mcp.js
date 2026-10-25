@@ -21,6 +21,7 @@ const WorkflowEngine = require(path.join(projectRoot, 'mcp-integrations/workflow
 const { parseNaturalDate, parseDuration, formatFriendlyDate } = require('../utils/date-parser');
 const crypto = require('crypto');
 const { requireOwnClient } = require('../middleware/client-access');
+const { requireFeature } = require('../config/legacy-features');
 
 // Admin keys come from the environment ONLY. The old fallbacks were written in
 // this public repository, so anyone could use them. Unset = the route is closed.
@@ -1374,7 +1375,7 @@ router.post('/gohighlevel/connect', async (req, res) => {
 });
 
 // Vagaro connection
-router.post('/vagaro/connect', async (req, res) => {
+router.post('/vagaro/connect', requireFeature('vagaro'), async (req, res) => {
   console.log('🔗 Vagaro connection request received');
   const { clientId, clientSecretKey, merchantId, region } = req.body;
 
@@ -1434,7 +1435,7 @@ router.post('/vagaro/connect', async (req, res) => {
 });
 
 // Vagaro register webhook token (for multi-tenant webhook verification)
-router.post('/vagaro/register-webhook', async (req, res) => {
+router.post('/vagaro/register-webhook', requireFeature('vagaro'), async (req, res) => {
   const { businessId, webhookToken, apiKey } = req.body;
 
   // Basic validation
@@ -1465,7 +1466,7 @@ router.post('/vagaro/register-webhook', async (req, res) => {
 });
 
 // Business Collector connection
-router.post('/business-collector/connect', async (req, res) => {
+router.post('/business-collector/connect', requireFeature('lead_search'), async (req, res) => {
   console.log('🔗 Business Collector connection request received');
   const { clientId } = req.body;
 
@@ -1515,7 +1516,7 @@ router.post('/business-collector/connect', async (req, res) => {
 });
 
 // Business Collector - Full collection
-router.post('/business-collector/collect', async (req, res) => {
+router.post('/business-collector/collect', requireFeature('lead_search'), async (req, res) => {
   console.log('📊 Business Collector collection request received');
   const { sessionId, category, geography, maxResults, clientId } = req.body;
 
@@ -1849,7 +1850,7 @@ router.post('/business-collector/collect', async (req, res) => {
 });
 
 // Business Collector - Quick collection (no session required)
-router.get('/business-collector/quick', async (req, res) => {
+router.get('/business-collector/quick', requireFeature('lead_search'), async (req, res) => {
   console.log('⚡ Quick business collection request received');
   const { category, geography, max, client_id } = req.query;
 
@@ -6590,7 +6591,7 @@ No text in image.`;
 // These routes MUST come before the generic /:crm/:operation catch-all route
 // otherwise /webhooks/vagaro would match as :crm=webhooks, :operation=vagaro
 
-router.post('/webhooks/:source', async (req, res) => {
+router.post('/webhooks/:source', (req, res, next) => (req.params.source === 'vagaro' ? requireFeature('vagaro')(req, res, next) : next()), async (req, res) => {
   const { source } = req.params;
   const event = req.headers['x-webhook-event'] || req.body?.type || 'unknown';
   const signature = req.headers['x-vagaro-signature'] || req.headers['x-webhook-signature'];

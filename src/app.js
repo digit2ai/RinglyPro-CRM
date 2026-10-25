@@ -1943,7 +1943,7 @@ console.log('✅ Photo Studio routes mounted at /api/photo-studio');
 app.use('/api/pixlypro', pixlyproRoutes); // PixlyPro AI-assisted photo enhancement
 console.log('✅ PixlyPro routes mounted at /api/pixlypro');
 
-app.use('/api/vagaro', vagaroRoutes); // Vagaro salon/spa scheduling integration
+app.use('/api/vagaro', require('./config/legacy-features').requireFeature('vagaro'), vagaroRoutes); // off unless VAGARO_ENABLED=on // Vagaro salon/spa scheduling integration
 console.log('✅ Vagaro routes mounted at /api/vagaro');
 
 app.use('/api/whatsapp', whatsappRoutes); // WhatsApp Business bilingual AI assistant
@@ -2405,7 +2405,7 @@ app.use('/api/linas-treasures/partner', linasTreasuresPartnerRoutes); // Partner
 console.log('💍 Lina\'s Treasures e-commerce routes mounted at /api/linas-treasures');
 
 // Outbound Caller routes (Twilio integration)
-app.use('/api/outbound-caller', outboundCallerRoutes);
+app.use('/api/outbound-caller', require('./config/legacy-features').requireFeature('outbound_caller'), outboundCallerRoutes); // off unless OUTBOUND_CALLER_ENABLED=on
 console.log('📞 Outbound Caller routes mounted at /api/outbound-caller');
 
 // Call Report routes (ElevenLabs daily analytics)
