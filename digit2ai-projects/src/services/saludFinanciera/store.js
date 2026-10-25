@@ -142,13 +142,40 @@ async function desactivarRecurrente(sequelize, user, id, desde) {
   if (!rows.length) return null;
   // its future, still-pending plan rows go with it; history stays
   const [del] = await sequelize.query(`DELETE FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND origen = 'plan' AND estado = 'pendiente'
-    AND lower(concepto) = lower(:c) AND fecha >= :desde RETURNING id`, { replacements: { u: user.userId, t: user.tenantId, c: rows[0].concepto, desde } });
-  return { concepto: rows[0].concepto, borrados: del.length };
+    AND lower(concepto) = lower(:c) AND fecha >= :desde RETURNING ${COLS}`, { replacements: { u: user.userId, t: user.tenantId, c: rows[0].concepto, desde } });
+  return { concepto: rows[0].concepto, borrados: del.length, filas: del };
 }
 
-async function logConversation(sequelize, user, pregunta, respuesta, canal) {
-  await sequelize.query(`INSERT INTO sf_conversaciones_lina (tenant_id, user_id, pregunta, respuesta, canal) VALUES (:t, :u, :p, :r, :c)`,
-    { replacements: { t: user.tenantId, u: user.userId, p: String(pregunta).slice(0, 4000), r: String(respuesta).slice(0, 8000), c: canal === 'voz' ? 'voz' : 'texto' } });
+async function reactivarRecurrente(sequelize, user, id) {
+  await sequelize.query('UPDATE sf_recurrentes SET activo = TRUE WHERE id = :id AND user_id = :u AND tenant_id = :t', { replacements: { id, u: user.userId, t: user.tenantId } });
+}
+
+// ---- Lina's brain: undo log + standing preferences ----
+async function registrarCambio(sequelize, user, accion, descripcion, datos) {
+  const [rows] = await sequelize.query(`INSERT INTO sf_cambios (tenant_id, user_id, accion, descripcion, datos) VALUES (:t, :u, :a, :d, CAST(:x AS JSONB)) RETURNING id`,
+    { replacements: { t: user.tenantId, u: user.userId, a: accion, d: String(descripcion).slice(0, 500), x: JSON.stringify(datos || {}) } });
+  return rows[0].id;
+}
+async function ultimoCambio(sequelize, user) {
+  const [rows] = await sequelize.query('SELECT id, accion, descripcion, datos, created_at FROM sf_cambios WHERE user_id = :u AND tenant_id = :t AND NOT deshecho ORDER BY id DESC LIMIT 1',
+    { replacements: { u: user.userId, t: user.tenantId } });
+  return rows[0] || null;
+}
+async function marcarDeshecho(sequelize, user, id) {
+  await sequelize.query('UPDATE sf_cambios SET deshecho = TRUE WHERE id = :id AND user_id = :u AND tenant_id = :t', { replacements: { id, u: user.userId, t: user.tenantId } });
+}
+async function preferencias(sequelize, user) {
+  const [rows] = await sequelize.query('SELECT preferencias FROM sf_config WHERE user_id = :u AND tenant_id = :t', { replacements: { u: user.userId, t: user.tenantId } });
+  return (rows[0] && Array.isArray(rows[0].preferencias)) ? rows[0].preferencias : [];
+}
+async function setPreferencias(sequelize, user, lista) {
+  await sequelize.query('UPDATE sf_config SET preferencias = CAST(:p AS JSONB) WHERE user_id = :u AND tenant_id = :t',
+    { replacements: { u: user.userId, t: user.tenantId, p: JSON.stringify(lista.slice(0, 30)) } });
+}
+
+async function logConversation(sequelize, user, pregunta, respuesta, canal, motor = null, detalle = null) {
+  await sequelize.query(`INSERT INTO sf_conversaciones_lina (tenant_id, user_id, pregunta, respuesta, canal, motor, detalle) VALUES (:t, :u, :p, :r, :c, :m, CAST(:d AS JSONB))`,
+    { replacements: { t: user.tenantId, u: user.userId, p: String(pregunta).slice(0, 4000), r: String(respuesta).slice(0, 8000), c: canal === 'voz' ? 'voz' : 'texto', m: motor, d: detalle ? JSON.stringify(detalle).slice(0, 20000) : null } });
 }
 
 async function conversations(sequelize, user, limit = 20) {
@@ -157,4 +184,4 @@ async function conversations(sequelize, user, limit = 20) {
   return rows.reverse();
 }
 
-module.exports = { recurrentes, insertRecurrente, desactivarRecurrente, getState, setState, ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };
+module.exports = { reactivarRecurrente, registrarCambio, ultimoCambio, marcarDeshecho, preferencias, setPreferencias, recurrentes, insertRecurrente, desactivarRecurrente, getState, setState, ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };

@@ -69,3 +69,22 @@ CREATE TABLE IF NOT EXISTS sf_recurrentes (
 );
 CREATE INDEX IF NOT EXISTS sf_recurrentes_tenant_idx ON sf_recurrentes (tenant_id);
 CREATE INDEX IF NOT EXISTS sf_recurrentes_user_idx ON sf_recurrentes (user_id);
+
+-- 2026-10-25: Lina's brain. Every write she makes is recorded so it can be
+-- undone; the owner's standing rules live in sf_config.preferencias; each
+-- conversation row records which engine answered and what tools it used.
+CREATE TABLE IF NOT EXISTS sf_cambios (
+  id             SERIAL PRIMARY KEY,
+  tenant_id      INTEGER NOT NULL,
+  user_id        INTEGER NOT NULL,
+  accion         TEXT NOT NULL,
+  descripcion    TEXT NOT NULL,
+  datos          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  deshecho       BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS sf_cambios_tenant_idx ON sf_cambios (tenant_id);
+CREATE INDEX IF NOT EXISTS sf_cambios_user_idx ON sf_cambios (user_id, id);
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS preferencias JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE sf_conversaciones_lina ADD COLUMN IF NOT EXISTS motor TEXT;
+ALTER TABLE sf_conversaciones_lina ADD COLUMN IF NOT EXISTS detalle JSONB;

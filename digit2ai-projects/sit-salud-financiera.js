@@ -245,6 +245,8 @@ async function apiTests() {
     await sequelize.query('DELETE FROM sf_movimientos WHERE user_id IN (990097,990098)').catch(() => {});
     await sequelize.query('DELETE FROM sf_conversaciones_lina WHERE user_id IN (990097,990098)').catch(() => {});
     await sequelize.query('DELETE FROM sf_config WHERE user_id IN (990097,990098)').catch(() => {});
+    await sequelize.query('DELETE FROM sf_cambios WHERE user_id IN (990097,990098)').catch(() => {});
+    await sequelize.query('DELETE FROM sf_recurrentes WHERE user_id IN (990097,990098)').catch(() => {});
     await sequelize.query("DELETE FROM d2_user_access WHERE email LIKE 'sit-sf-%@example.test'").catch(() => {});
   };
   try {
@@ -317,6 +319,87 @@ async function apiTests() {
     r = await call('/plan/extender', A, 'POST', { meses: 1 });
     const r2 = await call('/plan/extender', A, 'POST', { meses: 0 });
     ok(r.j.creados > 0 && r2.j.creados >= 0, 'extender plan creates rows');
+    { // own scope for section [6]
+    // ---------------- [6] Lina's brain (model-first, fake scripted client) ----------------
+    console.log('\n[6] Cerebro de Lina (scripted fake model)');
+    const cerebro = require('./src/services/saludFinanciera/cerebro');
+    const lastResult = (p) => { const m = p.messages[p.messages.length - 1]; const tr = Array.isArray(m.content) ? m.content.find(c => c.type === 'tool_result') : null; return tr ? JSON.parse(tr.content) : null; };
+    const script = (steps) => { let i = 0; const calls = []; return { calls, messages: { create: async (p) => { calls.push(p); const st = steps[Math.min(i++, steps.length - 1)]; return typeof st === 'function' ? st(p) : st; } } }; };
+    const use = (name, input) => ({ content: [{ type: 'tool_use', id: 'tu' + Math.random(), name, input }] });
+    const say = (text) => ({ content: [{ type: 'text', text }] });
+    const movB = async () => (await call('/movimientos', B)).j.data;
+    await sequelize.query("DELETE FROM sf_cambios WHERE user_id IN (990097,990098)");
+
+    // "gasto de 50 dólares personales el día de hoy" -> written at once
+    route._deps.modelClient = script([use('agregar_movimiento', { tipo: 'egreso', monto: '50', concepto: 'Gasto personal', categoria: 'gasto_personal' }),
+      (p) => { const r = lastResult(p); return say('Listo: ' + r.hecho + '. Dime "deshaz" si me equivoqué.'); }]);
+    let before = (await movB()).length; let r;
+    r = await call('/lina', B, 'POST', { pregunta: 'gasto de 50 dólares personales el día de hoy' });
+    let list = await movB();
+    const added50 = list.find(x => x.origen === 'real' && x.monto === '50.00' && x.categoria === 'gasto_personal' && x.fecha === TODAY);
+    ok(r.j.composed_by === 'claude' && added50 && list.length === before + 1 && r.j.cambios.length === 1, 'brain: "gasto de 50 dólares personales hoy" is written immediately as gasto personal', r.j);
+    ok(/50\.00/.test(r.j.texto) && /deshaz/.test(r.j.texto), 'brain: says what it did and offers undo', r.j.texto);
+
+    // "remueve esos 50 dólares..." -> search then delete by the id the search returned
+    route._deps.modelClient = script([use('buscar_movimientos', { monto: '50', origen: 'real', categoria: 'gasto_personal' }),
+      (p) => { const r = lastResult(p); return use('borrar_movimiento', { id: r.movimientos[0].id }); },
+      (p) => say('Listo: ' + lastResult(p).hecho + '.')]);
+    r = await call('/lina', B, 'POST', { pregunta: 'remueve esos 50 dólares de gastos personales que pusimos hoy' });
+    ok(r.j.cambios.length === 1 && !(await movB()).some(x => x.id === added50.id), 'brain: "remueve esos 50..." finds the row and deletes it');
+
+    // "deshaz" -> the deleted row comes back
+    route._deps.modelClient = script([use('deshacer_ultimo_cambio', {}), (p) => say(lastResult(p).hecho + '.')]);
+    r = await call('/lina', B, 'POST', { pregunta: 'deshaz eso' });
+    ok((await movB()).some(x => x.origen === 'real' && x.monto === '50.00' && x.categoria === 'gasto_personal'), 'brain: "deshaz" restores the deleted movement');
+
+    // memory: the next call carries the previous exchange
+    const mem = script([say('Sí, lo recuerdo.')]);
+    route._deps.modelClient = mem;
+    await call('/lina', B, 'POST', { pregunta: '¿te acuerdas?' });
+    ok(JSON.stringify(mem.calls[0].messages).includes('remueve esos 50'), 'brain: conversation memory comes from the server');
+
+    // preferences are saved and reach the next system prompt
+    route._deps.modelClient = script([use('guardar_preferencia', { texto: 'La inversión no es negociable' }), say('Entendido, la inversión no se toca.')]);
+    await call('/lina', B, 'POST', { pregunta: 'la inversión no es negociable' });
+    const pref = script([say('Ok.')]);
+    route._deps.modelClient = pref;
+    await call('/lina', B, 'POST', { pregunta: 'hola' });
+    ok(JSON.stringify(pref.calls[0].system).includes('La inversión no es negociable'), 'brain: a saved rule reaches every later system prompt');
+
+    // number guard: an invented figure is sent back once; a sourced retry is kept
+    const guard = script([use('situacion_actual', {}), say('Tienes $12,345.67 y vas bien.'), (p) => say('Tu salud está en ' + 'según la herramienta.')]);
+    route._deps.modelClient = guard;
+    r = await call('/lina', B, 'POST', { pregunta: '¿cuál es la situación el día de hoy?' });
+    ok(guard.calls.length === 3 && /Control de cifras/.test(JSON.stringify(guard.calls[2].messages)) && !/12,345/.test(r.j.texto), 'brain: invented figure -> sent back once, never shown', r.j.texto);
+    route._deps.modelClient = script([say('Tienes $99,999.99.'), say('Sigues teniendo $88,888.88.')]);
+    r = await call('/lina', B, 'POST', { pregunta: '¿cómo estoy?' });
+    ok(r.j.composed_by !== 'claude' && /cifras sin fuente/.test(r.j.motivo_respaldo || '') && !/99,999|88,888/.test(r.j.texto), 'brain: inventing twice -> discarded, rules answer with the reason');
+
+    // model down -> rules, and the status line says why
+    route._deps.modelClient = { messages: { create: async () => { throw new Error('credit balance is too low'); } } };
+    r = await call('/lina', B, 'POST', { pregunta: '¿cuánto tendré el 1 de diciembre?' });
+    ok(r.j.composed_by !== 'claude' && /credit balance/.test(r.j.motivo_respaldo || '') && /1 de diciembre/.test(r.j.texto), 'brain down -> rule reader answers, with the reason');
+    ok(/credit balance/.test((await call('/lina/estado', B)).j.ultimo_error || ''), '/lina/estado reports the last brain error');
+
+    // calculation tools, called directly
+    const ctxB = { sequelize, user: { userId: 990098, tenantId: 990015 }, today: TODAY, opts: {} };
+    const { tools } = cerebro.makeTools(ctxB);
+    const ritmo = await tools.proyectar_al_ritmo({ dias: 7 });
+    ok(ritmo.hasta === '2026-11-01' && /Muestra corta/.test(ritmo.basado_en.nota || '') && ritmo.saldo_en_esa_fecha_al_ritmo, '"¿cómo voy a estar en una semana al mismo ritmo?" -> projection with the short-sample warning', ritmo);
+    const rango = await tools.saldo_en_rango({ desde: '2026-12-12', hasta: '2026-12-18' });
+    ok(rango.mas_bajo && rango.saldo_al_terminar && rango.movimientos.length > 0, 'saldo_en_rango: low, end and movements of a week', rango);
+    const sim = await tools.simular({ movimientos: [{ tipo: 'egreso', monto: '1000', fecha: TODAY }], consultar_desde: '2026-12-19', consultar_hasta: '2026-12-25' });
+    ok(sim.guardado === false && sim.rango && toCents(sim.rango.antes.al_terminar) - toCents(sim.rango.despues.al_terminar) === 100000, '"si gasto $1,000 extra" in a December week -> exactly $1,000 lower, nothing saved');
+    ok(!cerebro.TOOL_DEFS.some(t => /user|tenant/i.test(JSON.stringify(t.input_schema))), 'no tool accepts a user or tenant argument');
+    ok(cerebro.unsourced('Tienes $8,948.48 el 6 de diciembre', cerebro.allowedFrom(['"$8,948.48"'])).length === 0 && cerebro.unsourced('Tienes $8,949', cerebro.allowedFrom(['"$8,948.48"'])).length === 1, 'number guard: copied figure passes, altered figure is caught');
+    // a model id the account does not have -> the next one answers
+    const tried = [];
+    route._deps.modelClient = { messages: { create: async (p) => { tried.push(p.model); if (tried.length === 1) { const e = new Error('model: not_found_error'); e.status = 404; throw e; } return { content: [{ type: 'text', text: 'Hola, aquí estoy.' }] }; } } };
+    r = await call('/lina', B, 'POST', { pregunta: 'hola' });
+    ok(r.j.composed_by === 'claude' && tried.length === 2 && tried[0] !== tried[1], 'missing model id -> the next model in the chain answers', tried);
+    route._deps.modelClient = false;
+    }
+
   } finally {
     await clean();
     server.close();

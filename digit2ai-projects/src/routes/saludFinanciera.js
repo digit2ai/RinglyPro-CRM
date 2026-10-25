@@ -14,6 +14,7 @@ const engine = require('../services/saludFinanciera/engine');
 const fin = require('../services/saludFinanciera/finanzas');
 const store = require('../services/saludFinanciera/store');
 const lina = require('../services/saludFinanciera/lina');
+const cerebro = require('../services/saludFinanciera/cerebro');
 const { toCents, fmt } = require('../services/saludFinanciera/money');
 
 const router = express.Router();
@@ -212,7 +213,7 @@ router.delete('/recurrentes/:id(\\d+)', async (req, res) => {
   try {
     const r = await store.desactivarRecurrente(deps.sequelize, req.sf, Number(req.params.id), deps.today());
     if (!r) return res.status(404).json({ success: false, error: 'No encontrado' });
-    res.json({ success: true, ...r });
+    res.json({ success: true, concepto: r.concepto, borrados: r.borrados });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -231,7 +232,7 @@ function modelClient() {
     const { anthropicEnabled } = require('../../../src/config/anthropic-flags');
     if (!process.env.ANTHROPIC_API_KEY || !anthropicEnabled('salud_financiera')) return null;
     const Anthropic = require('@anthropic-ai/sdk');
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 45000, maxRetries: 1 });
   } catch (e) { return null; }
 }
 
@@ -264,17 +265,50 @@ async function executeProposal(req, p) {
   return { error: 'acción desconocida' };
 }
 
+// What the owner sees under Lina: is the brain on, and if not, why.
+const brainStatus = { ultimo_ok: null, ultimo_error: null, ultimo_error_at: null };
+const MODEL = () => process.env.SALUD_FINANCIERA_MODEL || 'claude-sonnet-5';
+router.get('/lina/estado', (req, res) => {
+  let habilitado = false;
+  try { habilitado = require('../../../src/config/anthropic-flags').anthropicEnabled('salud_financiera'); } catch (e) {}
+  const activo = !!modelClient();
+  res.json({ success: true, cerebro: activo ? 'claude' : 'reglas', modelo: cerebro.modeloActivo() || MODEL(), llave: !!process.env.ANTHROPIC_API_KEY, habilitado,
+    ultimo_ok: brainStatus.ultimo_ok, ultimo_error: brainStatus.ultimo_error, ultimo_error_at: brainStatus.ultimo_error_at });
+});
+
 router.post('/lina', async (req, res) => {
   try {
     const pregunta = String((req.body || {}).pregunta || '').trim().slice(0, 1000);
     const canal = (req.body || {}).canal === 'voz' ? 'voz' : 'texto';
     if (!pregunta) return res.status(400).json({ success: false, error: 'pregunta requerida' });
     if (linaLimited(req.sf.userId)) return res.status(429).json({ success: false, error: 'Demasiadas preguntas seguidas. Espera un momento.' });
-    const historial = Array.isArray(req.body.historial) ? req.body.historial.slice(-6) : [];
     const { rows, opts } = await context(req);
     const state = await store.getState(deps.sequelize, req.sf);
     const client = modelClient();
-    const out = await lina.answer(pregunta, rows, opts, { historial, client, state, model: process.env.SALUD_FINANCIERA_MODEL || 'claude-haiku-4-5-20251001' });
+    // Conversation memory comes from the server, not the page.
+    const historial = (await store.conversations(deps.sequelize, req.sf, 8)).flatMap(c => [{ rol: 'yo', texto: c.pregunta }, { rol: 'lina', texto: c.respuesta }]);
+
+    // A pending "sí/no" from the rule reader is still honoured first.
+    const pendienteActivo = state.pendiente && /^(si|sí|no|dale|ok|confirmo|cancela)\b/i.test(pregunta.trim());
+    if (client && !pendienteActivo) {
+      let b = null, motivo = null;
+      try {
+        b = await cerebro.responder({ client, model: MODEL(), ctx: { sequelize: deps.sequelize, user: req.sf, today: opts.today, opts }, pregunta, historial });
+      } catch (e) { motivo = 'modelo no disponible: ' + String(e.message || e).slice(0, 200); }
+      if (b && (b.texto || b.cambios.length)) {
+        const texto = b.texto || cerebro.textoDeCambios(b.cambios);
+        brainStatus.ultimo_ok = new Date().toISOString();
+        if (state.pendiente) await store.setState(deps.sequelize, req.sf, { pendiente: null, contexto: state.contexto });
+        await store.logConversation(deps.sequelize, req.sf, pregunta, texto, canal, b.texto ? 'claude' : 'claude-cambios', { herramientas: b.herramientas, verificado: b.verificado, motivo: b.motivo || null });
+        return res.json({ success: true, texto, cambios: b.cambios, cambio: b.cambios.length ? { accion: b.cambios[b.cambios.length - 1].accion } : null, propuesta: null, pendiente: false,
+          intent: 'cerebro', composed_by: 'claude', is_simulated: false, motivo_respaldo: null, audio: { endpoint: '/api/tts/edge', voice: 'lina', text: texto } });
+      }
+      motivo = motivo || (b && b.motivo) || 'sin respuesta';
+      brainStatus.ultimo_error = motivo; brainStatus.ultimo_error_at = new Date().toISOString();
+      req._sfMotivo = motivo;
+    }
+    const out = await lina.answer(pregunta, rows, opts, { historial, client: null, state });
+    if (client && req._sfMotivo) out.motivo_respaldo = req._sfMotivo;
 
     let texto = out.texto, cambio = null, pendiente = state.pendiente;
     if (out.ejecutar) {
@@ -294,7 +328,7 @@ router.post('/lina', async (req, res) => {
     else if (state.pendiente && !out.propuesta) pendiente = null; // the owner moved on: the old question lapses
     await store.setState(deps.sequelize, req.sf, { pendiente, contexto: out.contexto || state.contexto });
 
-    await store.logConversation(deps.sequelize, req.sf, pregunta, texto, canal);
+    await store.logConversation(deps.sequelize, req.sf, pregunta, texto, canal, 'reglas', { motivo: out.motivo_respaldo || (client ? null : 'sin llave o desactivado') });
     res.json({ success: true, texto, propuesta: out.propuesta && !out.propuesta.falta ? out.propuesta : null, pendiente: !!pendiente, cambio,
       intent: out.intent, composed_by: out.composed_by, is_simulated: !!out.is_simulated, motivo_respaldo: out.motivo_respaldo || null,
       audio: { endpoint: '/api/tts/edge', voice: 'lina', text: texto } });

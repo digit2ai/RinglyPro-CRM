@@ -62,6 +62,7 @@
       '<div class="orb-caption"><span class="orb-cap-idle">Toca el orbe y habla</span><span class="orb-cap-active" id="sfCapActive">Escuchando</span></div>' +
       '</div>' +
       '<div class="status" id="sfStatus" style="text-align:center"></div>' +
+      '<div id="sfBrain" style="text-align:center;font-size:11.5px;color:var(--text-muted);margin-top:2px"></div>' +
       '<div id="sfChat" style="width:100%;max-height:260px;overflow-y:auto;text-align:left;margin:10px 0"></div>' +
       '<div style="display:flex;gap:8px;width:100%">' +
       '<input id="sfAsk" type="text" placeholder="Pregúntale a Lina: ¿Cómo estoy hoy?" style="flex:1;min-width:0;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
@@ -357,6 +358,7 @@
     };
     document.getElementById('sfStop').onclick = stopAudio;
     document.querySelectorAll('#sfChips [data-chip]').forEach(function (b) { b.onclick = function () { ask(b.getAttribute('data-chip'), 'texto'); }; });
+    brainLine();
     sf('/lina/historial?limit=6').then(function (j) {
       if (!j.success) return;
       j.data.forEach(function (h) { state.historial.push({ rol: 'yo', texto: h.pregunta }, { rol: 'lina', texto: h.respuesta }); });
@@ -421,9 +423,11 @@
       setOrb('idle'); status('');
       if (!j.success) { bubble('lina', esc(j.error || 'No pude responder.')); return; }
       state.historial.push({ rol: 'yo', texto: text }, { rol: 'lina', texto: j.texto });
-      var b = bubble('lina', esc(j.texto) + (''));
+      var nota = j.composed_by !== 'claude' && j.motivo_respaldo ? '<div style="font-size:11px;color:var(--warning);margin-top:4px">Respondí con reglas básicas porque mi cerebro falló: ' + esc(j.motivo_respaldo) + '</div>' : '';
+      var b = bubble('lina', esc(j.texto) + nota);
       if (j.pendiente && j.propuesta) proposal(b);
-      if (j.cambio) refresh();
+      if (j.cambio || (j.cambios && j.cambios.length)) { refresh(); deshacerBtn(b); }
+      brainLine();
       speak(j.texto);
     }).catch(function () { setOrb('idle'); bubble('lina', 'No hay conexión. Intenta otra vez.'); });
   }
@@ -451,6 +455,23 @@
       .replace(/ – /g, ', ');
   }
   window.sfParaVoz = paraVoz;
+
+  // After Lina changes data, one tap reverses it (the server keeps the undo log).
+  function deshacerBtn(b) {
+    var x = document.createElement('div'); x.style.cssText = 'margin-top:8px';
+    x.innerHTML = '<button class="btn btn-sm btn-ghost">Deshacer</button>';
+    b.appendChild(x);
+    x.firstChild.onclick = function () { x.remove(); ask('deshaz el último cambio', 'texto'); };
+  }
+  function brainLine() {
+    sf('/lina/estado').then(function (e) {
+      var el = document.getElementById('sfBrain'); if (!el || !e.success) return;
+      el.style.color = e.cerebro === 'claude' ? 'var(--text-muted)' : 'var(--warning)';
+      el.textContent = e.cerebro === 'claude'
+        ? 'Cerebro: Claude (' + e.modelo + ')' + (e.ultimo_error && (!e.ultimo_ok || e.ultimo_error_at > e.ultimo_ok) ? ' · último fallo: ' + e.ultimo_error : ' · activo')
+        : 'Cerebro sin conexión (' + (!e.llave ? 'falta la llave de Anthropic' : (!e.habilitado ? 'desactivado' : 'no disponible')) + '): respondo con reglas básicas';
+    }).catch(function () {});
+  }
 
   function stopAudio() {
     if (state.audio) { try { state.audio.pause(); } catch (e) {} state.audio = null; }
