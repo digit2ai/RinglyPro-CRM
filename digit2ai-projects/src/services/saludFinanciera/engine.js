@@ -167,7 +167,10 @@ function analyze(rawRows, opts = {}) {
   else { for (const [w, v] of Object.entries(wb.weeks)) if (w < ws) acumulado = v.disponible - Math.min(v.gastado, v.disponible); }
   const presupuestoSemana = wb.weeks[ws] ? wb.weeks[ws].presupuesto : presupuesto;
   const disponible = presupuestoSemana + acumulado;
-  const C = gastado <= disponible ? 20 : 20 * Math.max(0, 1 - (gastado - disponible) / presupuesto);
+  // The owner removed the weekly budget (2026-10-25): with no gasto_semanal rows in the plan there is no
+  // budget to break, so C is full and the week is not judged; personal spending still hits the balance.
+  const sinPresupuesto = !rows.some(r => r.origen === 'plan' && r.categoria === 'gasto_semanal');
+  const C = sinPresupuesto || gastado <= disponible ? 20 : 20 * Math.max(0, 1 - (gastado - disponible) / presupuesto);
   // D. Obligaciones cubiertas (10), from today forward, checked right after each payment.
   const obligaciones = proj.steps.filter(s => s.row.tipo === 'egreso' && OBLIGACIONES.includes(s.row.categoria) && s.row.fecha >= today);
   const descubiertas = obligaciones.filter(s => s.saldo < 0);
@@ -200,7 +203,8 @@ function analyze(rawRows, opts = {}) {
     presupuesto_semanal: presupuesto,
     semana: { desde: ws, hasta: we, gastado, presupuesto: presupuestoSemana, acumulado_previo: acumulado, disponible, restante: disponible - gastado },
     zona,
-    tendencia: tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }),
+    sin_presupuesto: sinPresupuesto,
+    tendencia: tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible: sinPresupuesto ? Infinity : disponible, zona, sinPresupuesto }),
     dias_negativos: negativos,
     obligaciones: { total: obligaciones.length, cubiertas: obligaciones.length - descubiertas.length, hasta: obligaciones.length ? obligaciones[obligaciones.length - 1].row.fecha : null },
     obligaciones_descubiertas: descubiertas.map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, monto: s.amount, saldo: s.saldo })),
@@ -225,6 +229,7 @@ function publicSummary(a) {
     colchon_meta: fmt(a.colchon_meta),
     semana: { desde: a.semana.desde, hasta: a.semana.hasta, gastado: fmt(a.semana.gastado), presupuesto: fmt(a.semana.presupuesto), acumulado_previo: fmt(a.semana.acumulado_previo), disponible: fmt(a.semana.disponible), restante: fmt(a.semana.restante),
       proxima_semana: a.semana.restante > 0 ? fmt(a.semana.restante + a.presupuesto_semanal) : null },
+    sin_presupuesto: a.sin_presupuesto,
     zona: a.zona,
     tendencia: a.tendencia ? { sube: a.tendencia.sube, malas: a.tendencia.malas.map(razon), buenas: a.tendencia.buenas.map(razon) } : null,
     dias_negativos: a.dias_negativos.map(d => ({ fecha: d.fecha, saldo: fmt(d.saldo) })),
@@ -284,7 +289,7 @@ function zonaCuidado(forward, min, colchon) {
 }
 
 /** Up or down, and why — every reason is a fact the engine already computed. */
-function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }) {
+function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona, sinPresupuesto }) {
   const malas = [], buenas = [];
   if (negativos.length) malas.push({ tipo: 'negativo', fecha: negativos[0].fecha, saldo: negativos[0].saldo });
   if (descubiertas.length) malas.push({ tipo: 'pago_descubierto', pagos: descubiertas.map(s => ({ concepto: s.row.concepto, fecha: s.row.fecha })) });
@@ -293,8 +298,10 @@ function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFin
   else if (min.saldo >= colchon && min.saldo >= 0) buenas.push({ tipo: colchon > 0 ? 'sobre_colchon' : 'sin_negativos', saldo: min.saldo, colchon });
   if (saldoFinal < saldoFinalPlan) malas.push({ tipo: 'bajo_plan', diferencia: saldoFinalPlan - saldoFinal });
   else buenas.push({ tipo: saldoFinal > saldoFinalPlan ? 'sobre_plan' : 'en_plan', diferencia: saldoFinal - saldoFinalPlan });
-  if (gastado > disponible) malas.push({ tipo: 'semana_excedida', exceso: gastado - disponible });
-  else buenas.push({ tipo: 'semana_ok', restante: disponible - gastado });
+  if (!sinPresupuesto) {
+    if (gastado > disponible) malas.push({ tipo: 'semana_excedida', exceso: gastado - disponible });
+    else buenas.push({ tipo: 'semana_ok', restante: disponible - gastado });
+  }
   return { sube: malas.length === 0, malas, buenas };
 }
 
@@ -380,9 +387,11 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
     const [y, m] = cursor.split('-').map(Number);
     cursor = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
   }
-  // Weekly personal budget closes every Friday.
-  let fri = desde; while (dow(fri) !== 5) fri = addDays(fri, 1);
-  for (; fri <= hasta; fri = addDays(fri, 7)) if (!have.has(fri + '|gasto_semanal')) add(fri, 'Gastos semana', 'egreso', '100.00', 'gasto_semanal');
+  // Weekly personal budget closes every Friday — only while the plan still has one (the owner removed it 2026-10-25).
+  if (rows.some(r => r.categoria === 'gasto_semanal')) {
+    let fri = desde; while (dow(fri) !== 5) fri = addDays(fri, 1);
+    for (; fri <= hasta; fri = addDays(fri, 7)) if (!have.has(fri + '|gasto_semanal')) add(fri, 'Gastos semana', 'egreso', '100.00', 'gasto_semanal');
+  }
 
   for (const x of recurrentRows(rawRows, recurrentes, desde, hasta)) nuevos.push(x);
   nuevos.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.tipo === 'ingreso' ? -1 : 1));

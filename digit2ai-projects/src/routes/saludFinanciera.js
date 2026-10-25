@@ -70,6 +70,17 @@ function withSaldo(rows, a) {
   });
 }
 
+// Real personal spending this month, and how it moves the projected low point
+// (the same projection re-run without those rows — a measured effect, not an estimate).
+function gastoPersonalMes(rows, opts, a) {
+  const ym = a.today.slice(0, 7);
+  const delMes = rows.filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha.slice(0, 7) === ym);
+  const total = delMes.reduce((x, r) => x + toCents(r.monto), 0);
+  const sin = delMes.length ? engine.analyze(rows.filter(r => !delMes.includes(r)), opts) : a;
+  return { mes: ym, nombre: engine.MESES[Number(ym.slice(5, 7)) - 1], gastado: fmt(total), movimientos: delMes.length,
+    saldo_min: fmt(a.saldo_min), fecha_min: a.fecha_min, saldo_min_sin_gastos: fmt(sin.saldo_min), baja_el_minimo: fmt(sin.saldo_min - a.saldo_min) };
+}
+
 // Projected closing balance of a month (projection and plan base).
 function cierre(a, ym) {
   const r = fin.resumenMes(a, ym);
@@ -87,6 +98,7 @@ router.get('/salud', async (req, res) => {
       success: true,
       ...engine.publicSummary(a),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
+      gasto_personal_mes: gastoPersonalMes(rows, opts, a),
       cierre_fin_de_ano: cierre(a, a.today.slice(0, 4) + '-12'),
       // the closes of the months of the CURRENT QUARTER (owner request 2026-10-25: Q4 = octubre, noviembre, diciembre)
       cierres_trimestre: (() => { const [y, m] = a.today.slice(0, 7).split('-').map(Number); const q0 = Math.floor((m - 1) / 3) * 3; return [1, 2, 3].map(k => cierre(a, y + '-' + String(q0 + k).padStart(2, '0'))); })(),

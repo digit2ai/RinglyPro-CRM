@@ -53,9 +53,9 @@ REGLAS DE CIFRAS (obligatorias)
 - Nunca calculas de memoria, ni sumas ni restas tú. Toda cifra que digas debe salir de una herramienta; cópiala tal cual la da la herramienta (por ejemplo $8,948.48). Si necesitas un número que ninguna herramienta te dio, llama a la herramienta adecuada (simular, saldo_en_rango, proyectar_al_ritmo...).
 - Si no hay datos suficientes, dilo.
 
-CATEGORÍAS: gasto_personal (comida, gasolina, compras, salidas, cosas del día a día; sale del presupuesto semanal), servicios (facturas mensuales: teléfono, internet, software), corte, pago_lina (el pago mensual de $1,500; "Lina" sola eres tú), hija (casa de su hija), inversion, ahorro, salario, ingreso_extra, gasto_semanal (presupuesto del plan), otro.
+CATEGORÍAS: gasto_personal (comida, gasolina, compras, salidas, cosas del día a día; baja el saldo en su fecha), servicios (facturas mensuales: teléfono, internet, software), corte, pago_lina (el pago mensual de $1,500; "Lina" sola eres tú), hija (casa de su hija), inversion, ahorro, salario, ingreso_extra, gasto_semanal (presupuesto del plan), otro.
 
-PRIORIDADES AL ACONSEJAR: 1) no quedar en negativo, 2) cubrir corte, pago Lina, casa de su hija y servicios, 3) respetar el presupuesto semanal, 4) invertir solo lo que sobra. Nunca sugieras dejar de pagar la corte, el pago Lina ni lo de su hija. No recomiendes productos de inversión específicos.
+PRIORIDADES AL ACONSEJAR: 1) no quedar en negativo, 2) cubrir corte, pago Lina, casa de su hija y servicios, 3) controlar los gastos personales, sobre todo antes del punto más bajo, 4) invertir solo lo que sobra. Nunca sugieras dejar de pagar la corte, el pago Lina ni lo de su hija. No recomiendes productos de inversión específicos.
 ${prefs.length ? '\nREGLAS DEL USUARIO (respétalas siempre):\n' + prefs.map((p, i) => `${i + 1}. ${p}`).join('\n') + '\n' : ''}${recs.length ? '\nPAGOS MENSUALES RECURRENTES ACTIVOS: ' + recs.map(r => `${r.concepto} ${fmt(toCents(r.monto))} ${r.fin_de_mes ? 'a fin de mes' : 'el día ' + r.dia}`).join('; ') + '\n' : ''}
 Si el usuario te dice una regla o preferencia permanente ("la inversión no es negociable"), guárdala con guardar_preferencia.
 FORMA: 2 a 5 frases, sin markdown, sin listas con viñetas, sin emojis. Primero el dato, luego la recomendación.`;
@@ -331,6 +331,7 @@ function makeTools(ctx) {
         for (const k of Object.keys(d.antes || {})) if (allowed.includes(k)) v[k] = d.antes[k];
         await store.update(sequelize, user, d.id, v);
       } else if (c.accion === 'borrar') await store.insertRow(sequelize, user, d.fila);
+      else if (c.accion === 'borrar_lote') { for (const f of d.filas || []) await store.insertRow(sequelize, user, f); }
       else if (c.accion === 'recurrente_agregar') { await store.desactivarRecurrente(sequelize, user, d.recurrente_id, '0000-01-01'); for (const i of d.filas || []) await store.remove(sequelize, user, i); }
       else if (c.accion === 'recurrente_quitar') { await store.reactivarRecurrente(sequelize, user, d.recurrente_id); for (const f of d.filas || []) await store.insertRow(sequelize, user, f); }
       else return { error: 'Ese cambio no se puede deshacer' };

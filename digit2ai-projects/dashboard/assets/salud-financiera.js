@@ -193,10 +193,19 @@
       card('Saldo mínimo proyectado', s.saldo_min,
         z ? esc(rango(z.desde, z.hasta)) + (z.bajo_colchon ? ' &middot; mejor no gastar' : '') : esc(fechaLarga(s.fecha_min)),
         s.saldo_min.charAt(0) === '-' ? 'red' : 'yellow', s.saldo_min.charAt(0) === '-' ? 'stat-down' : 'stat-neutral') +
-      card('Gasto de esta semana', sem.gastado + ' / ' + sem.disponible,
+      (s.sin_presupuesto && s.gasto_personal_mes ? gastoMesCard(s.gasto_personal_mes) : card('Gasto de esta semana', sem.gastado + ' / ' + sem.disponible,
         (restNeg ? 'Te pasaste ' + esc(sem.restante.replace('-', '')) : 'Te quedan ' + esc(sem.restante)) + (acum ? ' &middot; incluye ' + esc(sem.acumulado_previo) + ' acumulado' : '') +
           (!restNeg && sem.proxima_semana ? ' &middot; si no gastas más, la próxima semana tendrás ' + esc(sem.proxima_semana) : ''),
-        restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up');
+        restNeg ? 'red' : 'green', restNeg ? 'stat-down' : 'stat-up'));
+  }
+
+  // Real personal spending this month and what it does to the projected low point.
+  function gastoMesCard(g) {
+    var mes = g.nombre.charAt(0).toUpperCase() + g.nombre.slice(1);
+    var efecto = g.movimientos
+      ? 'Bajó tu saldo mínimo proyectado ' + esc(g.baja_el_minimo) + ': sin estos gastos sería ' + esc(g.saldo_min_sin_gastos) + ', hoy es ' + esc(g.saldo_min) + ' (' + esc(fechaLarga(g.fecha_min)) + ')'
+      : 'Sin gastos personales registrados este mes. Cada dólar que gastes antes del ' + esc(fechaLarga(g.fecha_min)) + ' baja igual tu saldo mínimo (' + esc(g.saldo_min) + ')';
+    return card('Gasto personal de ' + esc(mes), g.gastado, efecto, g.movimientos ? 'yellow' : 'green', 'stat-neutral');
   }
 
   // Plain SVG line chart: plan base vs projection (step lines, end-of-day balances).

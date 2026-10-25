@@ -95,6 +95,14 @@ async function engineTests() {
   ok(pd && /Software/.test(pd.texto) && !/y \d+ más/.test(pd.texto) && two.obligaciones_descubiertas.every(x => x.monto && x.saldo), 'uncovered payments are all named, with amount and resulting balance (no "y 1 más")', pd && pd.texto);
   ok(!/<path d="' \+ d \+ '"/.test(fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-financiera.js'), 'utf8')), 'payments card has no curve');
 
+  // No weekly budget (owner removed the $100 rows): personal spending simply lowers the balance.
+  const sinW = rows.filter(r => r.categoria !== 'gasto_semanal'); const o = { today: TODAY };
+  const nw = engine.analyze([...sinW, { id: 996, fecha: TODAY, concepto: 'c', tipo: 'egreso', monto: '300', categoria: 'gasto_personal', origen: 'real' }], o);
+  ok(nw.sin_presupuesto === true && nw.C === 20 && !nw.tendencia.malas.some(m => m.tipo === 'semana_excedida'), 'no weekly budget: C full, the week is never judged');
+  ok(nw.saldo_final === engine.analyze(sinW, o).saldo_final - 30000, 'no weekly budget: a $300 personal expense lowers the projection by exactly $300');
+  ok(!engine.extendPlan(sinW, 2).nuevos.some(n => n.categoria === 'gasto_semanal'), 'Extender plan stops creating weekly budget rows once they are gone');
+  ok(/No tienes un presupuesto semanal fijo/.test(lina.heuristic('cuanto me queda para gastar esta semana', sinW, o, {}).texto), 'Lina talks about the month, not a weekly budget, when there is none');
+
   // Monthly recurring bills: end of month and a fixed day, never duplicated.
   const RECS = [{ concepto: 'Internet', monto: '150.00', fin_de_mes: true }, { concepto: 'Software', monto: '100.00', dia: 7 }];
   const rr = engine.recurrentRows(rows, RECS, TODAY, '2027-01-31');
@@ -189,6 +197,7 @@ async function linaTests() {
   ok(iK > 0 && iL > iK, 'KPIs come first, Lina below them');
   ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
   ok(/data-edit="' \+ r\.id/.test(ui) && /function openEdit\(id\)/.test(ui) && /method: 'PATCH', body: cambios/.test(ui), 'every movement row has an Editar button that PATCHes only what changed');
+  ok(/function gastoMesCard\(g\)/.test(ui) && /Bajó tu saldo mínimo proyectado/.test(ui), 'personal-spending card: this month, and its effect on the projected low point');
   ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 

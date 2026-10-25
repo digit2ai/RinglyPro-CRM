@@ -411,6 +411,11 @@ function heuristic(pregunta, rows, opts, state = {}) {
     case 'punto_bajo': case 'cuidado': return out(alerta + textoZona(cur));
     case 'semana': {
       const s = cur.semana;
+      if (cur.sin_presupuesto) {
+        const ym = today.slice(0, 7);
+        const g = rows.map(engine.norm).filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha.slice(0, 7) === ym).reduce((x, r) => x + r.cents, 0);
+        return out(`No tienes un presupuesto semanal fijo. Este mes llevas ${fmt(g)} en gastos personales; cada dólar que gastes antes del ${fl(cur.fecha_min)} baja igual tu punto más bajo (${fmt(cur.saldo_min)}).`);
+      }
       return out(`Esta semana (del ${fl(s.desde)} al ${fl(s.hasta)}) tienes ${fmt(s.disponible)} para gastos personales${s.acumulado_previo > 0 ? `: ${fmt(s.presupuesto)} de la semana más ${fmt(s.acumulado_previo)} que no gastaste antes` : ''}. Llevas ${fmt(s.gastado)}, así que ${s.restante >= 0 ? `te quedan ${fmt(s.restante)}` : `te pasaste ${fmt(-s.restante)}`}. Lo que no gastes se acumula para la próxima semana.`);
     }
     case 'mes_gastado': {
