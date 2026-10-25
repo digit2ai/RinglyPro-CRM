@@ -81,6 +81,27 @@ function gastoPersonalMes(rows, opts, a) {
     saldo_min: fmt(a.saldo_min), fecha_min: a.fecha_min, saldo_min_sin_gastos: fmt(sin.saldo_min), baja_el_minimo: fmt(sin.saldo_min - a.saldo_min) };
 }
 
+// Figures for the G1000-style instrument panel — every one read off the engine's
+// ledger (dollars as numbers for positioning, plus the formatted string to print).
+function instrumentos(a, rows) {
+  const d = (c) => ({ v: Math.round(c) / 100, t: fmt(c) });
+  const en = (n) => engine.addDays(a.today, n);
+  const tramo = (n) => a.steps.filter(s => s.row.fecha > a.today && s.row.fecha <= en(n) && s.amount !== 0);
+  const t30 = tramo(30);
+  const entra = t30.filter(s => s.row.tipo === 'ingreso').reduce((x, s) => x + s.amount, 0);
+  const sale = t30.filter(s => s.row.tipo === 'egreso').reduce((x, s) => x + s.amount, 0);
+  const s7 = fin.balanceAt(a.serie.proyeccion, en(7)).saldo, s30 = fin.balanceAt(a.serie.proyeccion, en(30)).saldo;
+  const ym = a.today.slice(0, 7);
+  const gastoMes = rows.filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha.slice(0, 7) === ym).reduce((x, r) => x + toCents(r.monto), 0);
+  const prox = a.proximo_pago;
+  return {
+    saldo_hoy: d(a.saldo_hoy), saldo_min: d(a.saldo_min), fecha_min: a.fecha_min, saldo_final: d(a.saldo_final), saldo_final_plan: d(a.saldo_final_plan),
+    entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
+    desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes),
+    proximo_pago: prox ? { concepto: prox.concepto, fecha: prox.fecha, monto: fmt(prox.monto), dias: Math.round((Date.parse(prox.fecha) - Date.parse(a.today)) / 864e5), cubierto: prox.cubierto } : null
+  };
+}
+
 // Projected closing balance of a month (projection and plan base).
 function cierre(a, ym) {
   const r = fin.resumenMes(a, ym);
@@ -99,6 +120,7 @@ router.get('/salud', async (req, res) => {
       ...engine.publicSummary(a),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
       gasto_personal_mes: gastoPersonalMes(rows, opts, a),
+      pfd: instrumentos(a, rows),
       cierre_fin_de_ano: cierre(a, a.today.slice(0, 4) + '-12'),
       // the closes of the months of the CURRENT QUARTER (owner request 2026-10-25: Q4 = octubre, noviembre, diciembre)
       cierres_trimestre: (() => { const [y, m] = a.today.slice(0, 7).split('-').map(Number); const q0 = Math.floor((m - 1) / 3) * 3; return [1, 2, 3].map(k => cierre(a, y + '-' + String(q0 + k).padStart(2, '0'))); })(),

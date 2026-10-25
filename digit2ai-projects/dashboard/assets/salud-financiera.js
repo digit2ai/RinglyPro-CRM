@@ -92,9 +92,7 @@
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
-      '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Saldo en el tiempo</h3></div>' +
-      '<p class="section-hint">Línea punteada: plan base. Línea azul: proyección con lo que realmente pasa.</p><div id="sf-chart"></div></div>' +
-      '<div class="card card-accent-blue" style="margin-bottom:16px"><div class="section-header"><h3>Por qué tu salud está así</h3></div><div id="sf-desglose"></div></div>' +
+      '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"></div></div>' +
       '<div class="card card-accent-blue" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
       '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
@@ -112,7 +110,7 @@
   function loadSalud() {
     return sf('/salud').then(function (s) {
       if (!s.success) { document.getElementById('sf-kpi').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
-      state.salud = s; drawKpi(s); drawCards(s); drawChart(s); drawDesglose(s);
+      state.salud = s; drawKpi(s); drawCards(s); if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
     });
   }
 
@@ -209,58 +207,6 @@
       ? 'Bajó tu saldo mínimo proyectado ' + esc(g.baja_el_minimo) + ': sin estos gastos sería ' + esc(g.saldo_min_sin_gastos) + ', hoy es ' + esc(g.saldo_min) + ' (' + esc(fechaLarga(g.fecha_min)) + ')'
       : 'Sin gastos personales registrados este mes. Cada dólar que gastes antes del ' + esc(fechaLarga(g.fecha_min)) + ' baja igual tu saldo mínimo (' + esc(g.saldo_min) + ')';
     return card('Gasto personal de ' + esc(mes), g.gastado, efecto, g.movimientos ? 'yellow' : 'green', 'stat-neutral');
-  }
-
-  // Plain SVG line chart: plan base vs projection (step lines, end-of-day balances).
-  function drawChart(s) {
-    var el = document.getElementById('sf-chart');
-    var plan = s.serie.plan, pro = s.serie.proyeccion;
-    var all = plan.concat(pro);
-    if (!all.length) { el.innerHTML = '<p class="section-hint">Sin datos.</p>'; return; }
-    var dates = all.map(function (d) { return d.fecha; }).sort();
-    var t0 = Date.parse(dates[0]), t1 = Date.parse(dates[dates.length - 1]) || t0 + 1;
-    if (t1 === t0) t1 = t0 + 864e5;
-    var vals = all.map(function (d) { return d.saldo; }).concat([0]);
-    var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
-    var W = 900, H = 260, L = 64, R = 12, T = 12, B = 30;
-    var x = function (iso) { return L + (Date.parse(iso) - t0) / (t1 - t0) * (W - L - R); };
-    var y = function (v) { return T + (vmax - v) / ((vmax - vmin) || 1) * (H - T - B); };
-    var path = function (ser) {
-      var d = ''; ser.forEach(function (p, i) { d += (i ? 'H' + x(p.fecha).toFixed(1) + 'V' : 'M' + x(p.fecha).toFixed(1) + ',') + y(p.saldo).toFixed(1); }); return d;
-    };
-    var ticks = [vmin, (vmin + vmax) / 2, vmax].map(function (v) {
-      return '<text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--text-muted)">$' + Math.round(v).toLocaleString('en-US') + '</text>' +
-        '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--border)" stroke-width="1"/>';
-    }).join('');
-    var months = []; var seen = {};
-    dates.forEach(function (d) { var k = d.slice(0, 7); if (!seen[k]) { seen[k] = 1; months.push(k); } });
-    var mlab = months.map(function (k) { var iso = k + '-01'; var xx = Math.max(L, x(iso)); return '<text x="' + xx + '" y="' + (H - 8) + '" font-size="11" fill="var(--text-muted)">' + MESES[Number(k.slice(5, 7)) - 1].slice(0, 3) + '</text>'; }).join('');
-    var minP = pro.filter(function (d) { return d.fecha === s.fecha_min; })[0];
-    var zero = vmin < 0 ? '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--danger)" stroke-dasharray="3 3"/>' : '';
-    el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block" role="img" aria-label="Saldo proyectado contra plan base">' +
-      ticks + zero + mlab +
-      '<path d="' + path(plan) + '" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-dasharray="6 4"/>' +
-      '<path d="' + path(pro) + '" fill="none" stroke="var(--accent)" stroke-width="2.5"/>' +
-      (minP ? '<circle cx="' + x(minP.fecha) + '" cy="' + y(minP.saldo) + '" r="5" fill="' + colorVar(s.color) + '"/><text x="' + Math.min(W - 120, x(minP.fecha) + 8) + '" y="' + (y(minP.saldo) - 8) + '" font-size="12" fill="var(--text-primary)">Mínimo ' + esc(s.saldo_min) + '</text>' : '') +
-      '</svg>' +
-      '<div style="display:flex;gap:16px;font-size:12.5px;color:var(--text-secondary);margin-top:6px"><span><span style="display:inline-block;width:18px;border-top:2px dashed var(--text-muted);vertical-align:middle"></span> Plan base</span><span><span style="display:inline-block;width:18px;border-top:3px solid var(--accent);vertical-align:middle"></span> Proyección real</span></div>';
-  }
-
-  function drawDesglose(s) {
-    var parts = [
-      s.colchon_meta === '$0.00'
-        ? ['A', 'Sin quedar en negativo', s.A, 40, 'Saldo mínimo ' + s.saldo_min + (s.saldo_min.charAt(0) === '-' ? ': queda en negativo' : ': nunca queda en negativo')]
-        : ['A', 'Colchón', s.A, 40, 'Saldo mínimo ' + s.saldo_min + ' contra la meta de ' + s.colchon_meta],
-      ['B', 'Apego al plan', s.B, 30, 'Saldo final ' + s.saldo_final + ' contra el plan ' + s.saldo_final_plan],
-      ['C', 'Presupuesto de la semana', s.C, 20, 'Gastado ' + s.semana.gastado + ' de ' + s.semana.disponible + ' disponibles (con lo acumulado)'],
-      ['D', 'Obligaciones cubiertas', s.D, 10, s.obligaciones_descubiertas.length ? 'Hay pagos que quedan en negativo' : 'Corte, pago Lina, casa de tu hija y servicios cubiertos']
-    ];
-    document.getElementById('sf-desglose').innerHTML = parts.map(function (p) {
-      var pct = Math.max(0, Math.min(100, p[2] / p[3] * 100));
-      return '<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:14px"><span><strong>' + p[0] + '.</strong> ' + p[1] + '</span><span><strong>' + p[2] + '</strong> / ' + p[3] + ' pts</span></div>' +
-        '<div style="height:8px;background:var(--bg-tertiary);border-radius:6px;margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct >= 75 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)') + '"></div></div>' +
-        '<div style="font-size:12.5px;color:var(--text-secondary)">' + esc(p[4]) + '</div></div>';
-    }).join('') + (s.limitado_por_negativo ? '<p style="color:var(--danger);font-size:13px">Regla dura: algún día queda en negativo, así que la salud no pasa de 49%.</p>' : '');
   }
 
   function loadMovs() {

@@ -199,6 +199,11 @@ async function linaTests() {
   ok(/function vozOn\(\) \{ try \{ return localStorage\.getItem\('sf_voz'\) === '1'/.test(ui) && /if \(!vozOn\(\)\) return;/.test(ui), 'voice is muted by default and only speaks when switched on');
   ok(/data-edit="' \+ r\.id/.test(ui) && /function openEdit\(id\)/.test(ui) && /method: 'PATCH', body: cambios/.test(ui), 'every movement row has an Editar button that PATCHes only what changed');
   ok(/function gastoMesCard\(g\)/.test(ui) && /Bajó tu saldo mínimo proyectado/.test(ui), 'personal-spending card: this month, and its effect on the projected low point');
+  const pfdSrc = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-pfd.js'), 'utf8');
+  const idx = fs.readFileSync(path.join(__dirname, 'dashboard/index.html'), 'utf8');
+  ok(/window\.drawSfPfd/.test(pfdSrc) && /salud-pfd\.js/.test(idx) && idx.indexOf('salud-pfd.js') < idx.indexOf('salud-financiera.js?'), 'G1000 panel script is loaded before the view');
+  ok(!/Saldo en el tiempo|Por qué tu salud está así|function drawChart|function drawDesglose/.test(ui) && /id=\"sf-pfd\"/.test(ui), 'chart and score breakdown replaced by the instrument panel');
+  ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(/Neural Intelligence/.test(ui) && !/ob\.cubiertas \+ ' de '/.test(ui), 'payments card is Neural Intelligence, no "N de M" count');
   ok(/getElementById\('sfChat'\)\.innerHTML = ''/.test(ui) && /var last = j\.data\[j\.data\.length - 1\]/.test(ui), 'chat shows only the latest question and answer');
 
@@ -275,6 +280,10 @@ async function apiTests() {
     ok((await call('/salud', WRONGMAIL)).s === 404, 'owner id with a non-owner email -> 404');
     let r = await call('/salud', A);
     ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.cierre_fin_de_ano.mes === '2026-12' && r.j.cierre_fin_de_ano.saldo === '$3,668.48' && r.j.cierres_proximos.map(c => c.mes + ' ' + c.saldo).join() === '2026-11 $1,868.48,2026-12 $3,668.48,2027-01 $4,468.48' && r.j.cierres_trimestre.map(c => c.mes).join() === '2026-10,2026-11,2026-12' && r.j.semana.proxima_semana === '$200.00' && r.j.zona.desde === '2026-12-06' && r.j.tendencia.sube === false && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
+    { const P = r.j.pfd;
+      ok(P && P.saldo_hoy.t === '$8,968.48' && P.saldo_min.t === '$68.48' && P.fecha_min === '2026-12-11', 'instrument panel: altimeter and MIN bug are the engine figures', P);
+      ok(Math.round((P.entra_30.v - P.sale_30.v) * 100) === Math.round(P.flujo_30.v * 100) && P.saldo_7d.t === '$4,568.48' && Math.round((P.saldo_7d.v - P.saldo_hoy.v) * 100) === Math.round(P.cambio_7d.v * 100), 'instrument panel: flow and 7-day change are consistent sums', [P.flujo_30, P.saldo_7d, P.cambio_7d]);
+      ok(P.proximo_pago && P.proximo_pago.concepto === 'Inversión' && P.proximo_pago.dias === 5, 'instrument panel: next payment and days to it'); }
     r = await call('/movimientos', A);
     ok(r.j.data.length === 37 && r.j.data.every(x => x.origen === 'plan'), 'seed: 37 plan rows');
     ok(r.j.data.some(x => x.fecha === '2026-12-11' && x.es_minimo) && r.j.data[r.j.data.length - 1].saldo === '$4,468.48', 'table: running balance + low point flagged');
