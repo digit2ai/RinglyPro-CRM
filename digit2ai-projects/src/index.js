@@ -218,6 +218,9 @@ app.use('/api/v1/campaigns', authenticateToken, campaignRoutes);
 app.use('/api/v1/workflows', authenticateToken, workflowRoutes);
 app.use('/api/v1/meeting-minutes', authenticateToken, meetingMinutesRoutes);
 app.use('/api/v1/contracts', authenticateToken, contractsRoutes);
+// Salud Financiera — owner-only personal finance dashboard + Lina advisor.
+// Same login and session as the rest of the Hub; non-owners get 404.
+app.use('/api/salud-financiera', express.json({ limit: '64kb' }), authenticateToken, require('./routes/saludFinanciera'));
 
 // Public contract signoff endpoint (token-gated, no auth header).
 // The Client opens this from their email/magic-link page; they submit

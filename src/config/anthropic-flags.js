@@ -76,6 +76,12 @@ const REGISTRY = {
     sites: ['verticals/vallemilagro/src/llm.js (agente Valle y agente Scout con búsqueda web)'],
     off_behaviour: 'Valle responde por la ruta sin modelo, marcada; el Scout no corre y lo dice',
     note: 'Los tokens y las búsquedas los cubre la Asociación. El Scout programado solo corre con VALLEMILAGRO_SCOUT=on.' },
+  // ENABLED on creation 2026-10-25: owner-only personal finance advisor (Lina) in
+  // the Projects Hub. Every figure comes from the engine; a reply with a number
+  // no tool produced is discarded for the deterministic answer.
+  salud_financiera: { status: 'enabled', names: ['Salud Financiera'], disabled_on: null,
+    sites: ['digit2ai-projects/src/routes/saludFinanciera.js modelClient() (POST /projects/api/salud-financiera/lina)'],
+    off_behaviour: "deterministic intent reader, composed_by:'heuristic'" },
   speakup:          { status: 'enabled', names: ['SpeakUp'], disabled_on: D,
     sites: ['src/factory/llm.js (API client)', 'src/factory/claude-subscription.js available() (subscription CLI: chat, research, planner)', 'src/services/ai-editor.js', 'src/claudecode/runner.js (Claude Code tab)'],
     off_behaviour: 'labelled heuristic/offline replies; Claude Code runs fail with the reason',

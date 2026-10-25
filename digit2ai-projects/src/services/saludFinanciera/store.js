@@ -1,0 +1,126 @@
+'use strict';
+/**
+ * Persistence for Salud Financiera. Raw SQL, every statement filtered by the
+ * authenticated user_id (and tenant_id). Tables carry the `sf_` prefix because
+ * they share the Projects Hub database with every other module.
+ * Money columns are NUMERIC(12,2) and travel as exact decimal strings.
+ */
+const fs = require('fs');
+const path = require('path');
+const { toCents, toDecimalString } = require('./money');
+const { seedRows } = require('./seed');
+const { CATEGORIAS, isISO } = require('./engine');
+
+let ready = null;
+
+function ensure(sequelize) {
+  if (!ready) {
+    const sql = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'migrations', '019_salud_financiera.sql'), 'utf8');
+    ready = sequelize.query(sql).catch(e => { ready = null; throw e; });
+  }
+  return ready;
+}
+
+const COLS = 'id, fecha::text AS fecha, concepto, tipo, monto::text AS monto, monto_real::text AS monto_real, categoria, origen, estado, nota, created_at';
+
+async function config(sequelize, user) {
+  const [rows] = await sequelize.query('SELECT colchon_meta::text AS colchon_meta, presupuesto_semanal::text AS presupuesto_semanal, seeded_at FROM sf_config WHERE user_id = :u AND tenant_id = :t',
+    { replacements: { u: user.userId, t: user.tenantId } });
+  return rows[0] || null;
+}
+
+// Seeds the owner's plan base once. The marker in sf_config means deleting
+// every row never silently brings the seed back.
+async function seedIfNeeded(sequelize, user) {
+  const c = await config(sequelize, user);
+  if (c && c.seeded_at) return false;
+  const t = await sequelize.transaction();
+  try {
+    await sequelize.query(`INSERT INTO sf_config (user_id, tenant_id, seeded_at) VALUES (:u, :t, NOW())
+      ON CONFLICT (user_id) DO UPDATE SET seeded_at = COALESCE(sf_config.seeded_at, NOW())`, { replacements: { u: user.userId, t: user.tenantId }, transaction: t });
+    const [[{ n }]] = await sequelize.query('SELECT COUNT(*)::int AS n FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t',
+      { replacements: { u: user.userId, t: user.tenantId }, transaction: t });
+    if (n === 0) {
+      for (const r of seedRows()) await insertRow(sequelize, user, r, t);
+    }
+    await t.commit();
+    return n === 0;
+  } catch (e) { await t.rollback(); throw e; }
+}
+
+async function list(sequelize, user, f = {}) {
+  const where = ['user_id = :u', 'tenant_id = :t'];
+  const rep = { u: user.userId, t: user.tenantId };
+  if (f.desde && isISO(f.desde)) { where.push('fecha >= :desde'); rep.desde = f.desde; }
+  if (f.hasta && isISO(f.hasta)) { where.push('fecha <= :hasta'); rep.hasta = f.hasta; }
+  if (f.categoria && CATEGORIAS.includes(f.categoria)) { where.push('categoria = :cat'); rep.cat = f.categoria; }
+  const [rows] = await sequelize.query(`SELECT ${COLS} FROM sf_movimientos WHERE ${where.join(' AND ')} ORDER BY fecha, CASE tipo WHEN 'ingreso' THEN 0 ELSE 1 END, id`, { replacements: rep });
+  return rows;
+}
+
+async function get(sequelize, user, id) {
+  const [rows] = await sequelize.query(`SELECT ${COLS} FROM sf_movimientos WHERE id = :id AND user_id = :u AND tenant_id = :t`,
+    { replacements: { id, u: user.userId, t: user.tenantId } });
+  return rows[0] || null;
+}
+
+// Validates a movement. Returns { value } or { error }.
+function validate(b, { partial = false } = {}) {
+  const v = {};
+  if (!partial || b.fecha !== undefined) { if (!isISO(b.fecha)) return { error: 'fecha inválida (AAAA-MM-DD)' }; v.fecha = b.fecha; }
+  if (!partial || b.concepto !== undefined) {
+    const c = String(b.concepto || '').trim();
+    if (!c || c.length > 200) return { error: 'concepto requerido (máximo 200 caracteres)' };
+    v.concepto = c;
+  }
+  if (!partial || b.tipo !== undefined) { if (!['ingreso', 'egreso'].includes(b.tipo)) return { error: "tipo debe ser 'ingreso' o 'egreso'" }; v.tipo = b.tipo; }
+  if (!partial || b.monto !== undefined) {
+    const c = toCents(b.monto);
+    if (c == null || c <= 0 || c >= 1e12) return { error: 'monto debe ser positivo, con hasta 2 decimales' };
+    v.monto = toDecimalString(c);
+  }
+  if (!partial || b.categoria !== undefined) { if (!CATEGORIAS.includes(b.categoria)) return { error: 'categoría inválida' }; v.categoria = b.categoria; }
+  if (b.nota !== undefined) v.nota = b.nota == null ? null : String(b.nota).slice(0, 1000);
+  if (b.monto_real !== undefined) {
+    if (b.monto_real === null || b.monto_real === '') v.monto_real = null;
+    else { const c = toCents(b.monto_real); if (c == null || c < 0 || c >= 1e12) return { error: 'monto_real inválido' }; v.monto_real = toDecimalString(c); }
+  }
+  if (b.estado !== undefined) { if (!['pendiente', 'cumplido'].includes(b.estado)) return { error: "estado debe ser 'pendiente' o 'cumplido'" }; v.estado = b.estado; }
+  return { value: v };
+}
+
+async function insertRow(sequelize, user, r, transaction) {
+  const [rows] = await sequelize.query(`INSERT INTO sf_movimientos (tenant_id, user_id, fecha, concepto, tipo, monto, monto_real, categoria, origen, estado, nota)
+    VALUES (:t, :u, :fecha, :concepto, :tipo, :monto, :monto_real, :categoria, :origen, :estado, :nota) RETURNING ${COLS}`,
+    { replacements: { t: user.tenantId, u: user.userId, fecha: r.fecha, concepto: r.concepto, tipo: r.tipo, monto: r.monto,
+      monto_real: r.monto_real || null, categoria: r.categoria, origen: r.origen, estado: r.origen === 'plan' ? (r.estado || 'pendiente') : null, nota: r.nota || null }, transaction });
+  return rows[0];
+}
+
+async function update(sequelize, user, id, v) {
+  const keys = Object.keys(v);
+  if (!keys.length) return get(sequelize, user, id);
+  const sets = keys.map(k => `${k} = :${k}`).join(', ');
+  const [rows] = await sequelize.query(`UPDATE sf_movimientos SET ${sets}, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t RETURNING ${COLS}`,
+    { replacements: { ...v, id, u: user.userId, t: user.tenantId } });
+  return rows[0] || null;
+}
+
+async function remove(sequelize, user, id) {
+  const [rows] = await sequelize.query('DELETE FROM sf_movimientos WHERE id = :id AND user_id = :u AND tenant_id = :t RETURNING id',
+    { replacements: { id, u: user.userId, t: user.tenantId } });
+  return rows.length > 0;
+}
+
+async function logConversation(sequelize, user, pregunta, respuesta, canal) {
+  await sequelize.query(`INSERT INTO sf_conversaciones_lina (tenant_id, user_id, pregunta, respuesta, canal) VALUES (:t, :u, :p, :r, :c)`,
+    { replacements: { t: user.tenantId, u: user.userId, p: String(pregunta).slice(0, 4000), r: String(respuesta).slice(0, 8000), c: canal === 'voz' ? 'voz' : 'texto' } });
+}
+
+async function conversations(sequelize, user, limit = 20) {
+  const [rows] = await sequelize.query(`SELECT id, pregunta, respuesta, canal, created_at FROM sf_conversaciones_lina WHERE user_id = :u AND tenant_id = :t ORDER BY id DESC LIMIT :l`,
+    { replacements: { u: user.userId, t: user.tenantId, l: Math.min(100, Math.max(1, limit)) } });
+  return rows.reverse();
+}
+
+module.exports = { ensure, config, seedIfNeeded, list, get, validate, insertRow, update, remove, logConversation, conversations };

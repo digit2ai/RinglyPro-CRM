@@ -144,7 +144,10 @@ async function showApp() {
   // PWA shortcut deep-links: /projects/?view=email|messages|calendar|...
   const vp = new URLSearchParams(location.search).get('view');
   const allowed = ['overview', 'inbox', 'messages', 'email', 'contacts', 'projects', 'calendar', 'tasks', 'minutes', 'staff', 'settings', 'followups'];
-  navigateTo(allowed.includes(vp) ? vp : 'overview');
+  // Salud Financiera is owner-only: the nav item appears only if the API says so.
+  if (typeof window.sfInitNav === 'function') window.sfInitNav();
+  const wantsSF = location.pathname === '/projects/salud-financiera' || vp === 'salud-financiera';
+  navigateTo(wantsSF ? 'salud-financiera' : (allowed.includes(vp) ? vp : 'overview'));
 }
 
 // =====================================================
@@ -515,9 +518,11 @@ function navigateTo(view, opts) {
   const titles = {
     overview: 'Home', inbox: 'Project Request Inbox', messages: 'Calls & Messages', email: 'Email', followups: 'Calls To Follow Up', emailfollowups: 'Emails to Follow Up', contacts: 'People & Pipeline', projects: 'My Projects',
     calendar: 'Calendar', tasks: 'My To-Do List', minutes: 'Meeting Minutes', staff: 'Staff & Roles',
-    notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings'
+    notifications: 'Alerts & Updates', ai: 'Ask AI', activity: 'Recent History', settings: 'Settings', 'salud-financiera': 'Salud Financiera'
   };
   document.getElementById('page-title').textContent = titles[view] || view;
+  // Salud Financiera owns /projects/salud-financiera; leaving it returns the URL to /projects/.
+  if (view !== 'salud-financiera' && location.pathname === '/projects/salud-financiera') { try { history.replaceState(null, '', '/projects/'); } catch (e) {} }
   renderView(view);
 }
 
@@ -542,6 +547,7 @@ async function renderView(view) {
       case 'ai': renderAIWorkspace(container); break;
       case 'activity': await renderActivity(container); break;
       case 'settings': renderSettings(container); break;
+      case 'salud-financiera': if (window.renderSaludFinanciera) await window.renderSaludFinanciera(container); break;
       case 'contact-detail': await renderContactDetail(container, view._id); break;
       case 'project-detail': await renderProjectDetail(container, view._id); break;
     }
