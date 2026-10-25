@@ -7,7 +7,7 @@
    Mapping (cockpit -> money):
      Altímetro (derecha) ...... SALDO hoy, con marcas del punto más bajo y del cero
      Variómetro (VSI) ......... cambio del saldo en 7 días (sube / baja)
-     Cinta de velocidad (izq) . COSTO del mes: lo que salió del día 1 a hoy
+     Cinta de velocidad (izq) . del día 1 a hoy: verde lo que entró, rojo lo que salió
      Horizonte artificial ..... pitch = tendencia a 30 días; alabeo = desvío contra el plan
      HSI / compás ............. rumbo = salud (%); curso magenta = meta 100%
      Mapa (abajo izq) ......... proyección de los próximos meses, hoy, mínimo y zona de cuidado
@@ -147,24 +147,35 @@
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
     o.push('</g>');
 
-    // ---------------- left tape: COSTO del mes (del día 1 a hoy, en negativo: dinero que salió) ----------------
+    // ---------------- left tape: this month so far, 1st to today: green = what came in, red = what went out ----------------
     (function () {
-      var x = 120, w = 104, y0 = 112, h = 380, mid = y0 + h / 2, v = -((p.costo_mes && p.costo_mes.v) || 0);
-      var step = nice(Math.max(Math.abs(v), 1000) * 1.5 / 2), pps = 52;
+      var x = 120, w = 104, y0 = 112, h = 380;
+      var inc = (p.ingreso_mes && p.ingreso_mes.v) || 0, out = -((p.costo_mes && p.costo_mes.v) || 0);
+      var span = Math.max(inc - out, 1000), step = nice(span / 5), c = (inc + out) / 2;
+      var ladder = [1, 2, 2.5, 5], e = Math.pow(10, Math.floor(Math.log10(span / 8))), li = 0;
+      step = ladder[0] * e;
+      while ((h - 90) / (span / step) < 40) { li++; if (li === ladder.length) { li = 0; e *= 10; } step = ladder[li] * e; }
+      var pps = Math.min(60, (h - 90) / (span / step)); // both readouts always fit, labels at least 40px apart
+      var Yt = function (t) { return h / 2 - (t - c) / step * pps; };
       o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.38)"/>');
-      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="17">COSTO <tspan font-size="21" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].slice(0, 3).toUpperCase()) + '</tspan></text>');
+      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="13">ENTRA/SALE <tspan font-size="17" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</tspan></text>');
       o.push('<svg x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" overflow="hidden">');
-      var first = Math.floor((v - (h / 2) / pps * step) / step) * step;
-      for (var t = first; t <= v + (h / 2) / pps * step + step; t += step) {
-        var yy = h / 2 - (t - v) / step * pps;
+      var first = Math.floor((c - (h / 2) / pps * step) / step) * step;
+      for (var t = first; t <= c + (h / 2) / pps * step + step; t += step) {
+        var yy = Yt(t);
         o.push('<line x1="' + (w - 22) + '" y1="' + yy + '" x2="' + (w - 8) + '" y2="' + yy + '" stroke="#fff" stroke-width="2"/><text x="' + (w - 28) + '" y="' + (yy + 8) + '" fill="#fff" font-size="22" text-anchor="end">' + k(t) + '</text>');
       }
-      // color band: green above zero, red below
-      var y0z = h / 2 - (0 - v) / step * pps;
+      var y0z = Yt(0);
       o.push('<rect x="' + (w - 7) + '" y="-1000" width="7" height="' + (1000 + y0z) + '" fill="' + C.green + '"/><rect x="' + (w - 7) + '" y="' + y0z + '" width="7" height="1000" fill="' + C.red + '"/>');
       o.push('</svg>');
-      o.push('<path d="M ' + (x - 8) + ' ' + (mid - 26) + ' h 98 l 14 26 l -14 26 h -98 z" fill="#000" stroke="#fff" stroke-width="2"/>');
-      o.push('<text x="' + (x + 80) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="34" font-weight="700" text-anchor="end">' + k(v) + '</text>');
+      // two readouts, kept apart when the figures are close
+      var yi = y0 + Yt(inc), yo = y0 + Yt(out), gap = 54;
+      if (yo - yi < gap) { var mm = (yi + yo) / 2; yi = mm - gap / 2; yo = mm + gap / 2; }
+      yi = clamp(yi, y0 + 24, y0 + h - 24 - gap); yo = clamp(yo, yi + gap, y0 + h - 24);
+      [[yi, inc, C.green, '+'], [yo, out, C.red, '']].forEach(function (b) {
+        o.push('<path d="M ' + (x - 8) + ' ' + (b[0] - 22) + ' h 98 l 12 22 l -12 22 h -98 z" fill="#000" stroke="' + b[2] + '" stroke-width="2"/>');
+        o.push('<text x="' + (x + 82) + '" y="' + (b[0] + 10) + '" fill="' + b[2] + '" font-size="28" font-weight="700" text-anchor="end">' + (b[1] > 0 ? b[3] : '') + k(b[1]) + '</text>');
+      });
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="15">PERSONAL <tspan font-size="19" font-weight="700" fill="' + C.cyan + '">' + esc(k(p.gasto_mes.v)) + '</tspan></text>');
     })();
 

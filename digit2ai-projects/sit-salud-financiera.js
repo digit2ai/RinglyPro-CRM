@@ -221,7 +221,7 @@ async function linaTests() {
   ok(/PAGOS EN NEGATIVO/.test(pfdSrc) && /if \(!rows\.length\) return;/.test(pfdSrc) && /PUNTO MÁS BAJO/.test(pfdSrc), 'panel: bottom-right box lists the payments that land below zero, only when there are any');
   ok(/'Pagos afectados: '/.test(pfdSrc), 'MÍNIMO key names the affected payments');
   ok(/closing balance of the quarter/.test(pfdSrc) && /z\.fecha < q\.hasta/.test(pfdSrc), 'inset: each quarter shows its closing balance');
-  ok(/v = -\(\(p\.costo_mes/.test(pfdSrc) && !/v = p\.flujo_30\.v/.test(pfdSrc), 'left tape: cost of the month so far, not the 30-day flow');
+  ok(/out = -\(\(p\.costo_mes/.test(pfdSrc) && /p\.ingreso_mes/.test(pfdSrc) && !/v = p\.flujo_30\.v/.test(pfdSrc), 'left tape: income (green) and cost (red) of the month so far');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');
