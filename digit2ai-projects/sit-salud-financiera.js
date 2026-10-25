@@ -204,12 +204,15 @@ async function linaTests() {
   { const pf = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-pfd.js'), 'utf8');
   ok(/Gasto personal de/.test(pf) && /Bajó tu mínimo/.test(pf), 'panel RESUMEN: personal spending this month and its effect on the low point');
   ok(/data-minsel/.test(pf) && /state\.minSel = this\.value/.test(pf), 'panel RESUMEN: minimum with a month/year selector');
-  ok(/Saldo final del trimestre/.test(pf) && /Cierre de /.test(pf) && /Salud financiera/.test(pf) && /Neural Intelligence/.test(pf) && /state = \{ tecla: 'RESUMEN'/.test(pf), 'panel RESUMEN (default) carries every former card: hoy, cierre, trimestre, mínimo, gasto, salud, neural');
+  ok(!/Saldo final del trimestre/.test(pf) && /Cierre de /.test(pf) && /Salud financiera/.test(pf) && /Neural Intelligence/.test(pf) && /state = \{ tecla: 'RESUMEN'/.test(pf), 'panel RESUMEN (default) carries hoy, cierre, mínimo, gasto, salud, neural (trimestre tile removed, owner 2026-10-25)');
   ok(!/id="sf-cards"|function drawCards/.test(ui), 'the separate KPI cards are gone from the view'); }
   const pfdSrc = fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-pfd.js'), 'utf8');
   const idx = fs.readFileSync(path.join(__dirname, 'dashboard/index.html'), 'utf8');
   ok(/window\.drawSfPfd/.test(pfdSrc) && /salud-pfd\.js/.test(idx) && idx.indexOf('salud-pfd.js') < idx.indexOf('salud-financiera.js?'), 'G1000 panel script is loaded before the view');
   ok(!/Saldo en el tiempo|Por qué tu salud está así|function drawChart|function drawDesglose/.test(ui) && /id=\"sf-pfd\"/.test(ui), 'chart and score breakdown replaced by the instrument panel');
+  {
+    const m = /function sinMes\(c\) \{[\s\S]*?\n  \}/.exec(pfdSrc); const sinMes = m && new Function(m[0] + '; return sinMes;')();
+    ok(sinMes && sinMes('Pago Lina \u2013 noviembre') === 'Pago Lina' && sinMes('Corte \u2013 diciembre 2026') === 'Corte' && sinMes('Renta') === 'Renta', 'top bar: next payment shows the concept without the month'); }
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');

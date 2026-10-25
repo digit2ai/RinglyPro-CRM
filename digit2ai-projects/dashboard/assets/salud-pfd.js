@@ -34,14 +34,13 @@
       '<div style="color:' + (color || C.cyan) + ';font-size:22px;font-weight:700;margin-top:2px">' + value + '</div>' +
       (sub ? '<div style="color:#c9d2de;font-size:12.5px;line-height:1.35;margin-top:3px">' + sub + '</div>' : '') + '</div>';
   }
+  function sinMes(c) {
+    return String(c || '').replace(/\s*[-\u2013\u2014]?\s*\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b(\s+\d{4})?/ig, '').replace(/\s*[-\u2013\u2014]\s*$/, '').trim() || String(c || '');
+  }
   function resumen(s) {
     var p = s.pfd, cm = s.cierre_mes_actual, t = s.tendencia || { malas: [], buenas: [], sube: true }, h = [];
     h.push(tile('Saldo hoy', esc(p.saldo_hoy.t), esc(fl(s.hoy)), '#fff'));
     if (cm) h.push(tile('Cierre de ' + esc(cm.nombre.split(' ')[0]), esc(cm.saldo), cm.saldo === cm.saldo_plan ? 'Igual al plan' : 'Plan: ' + esc(cm.saldo_plan), cm.saldo.charAt(0) === '-' ? C.red : '#fff'));
-    var q = s.cierres_trimestre || [];
-    h.push(tile('Saldo final del trimestre', '', q.map(function (c) {
-      return '<div style="display:flex;justify-content:space-between;gap:8px"><span>' + esc(c.nombre.charAt(0).toUpperCase() + c.nombre.slice(1)) + '</span><b style="color:' + (c.saldo.charAt(0) === '-' ? C.red : '#fff') + ';font-size:15px">' + esc(c.saldo) + '</b></div>';
-    }).join('')));
     // minimum with its month/year selector
     var m = state.minSel ? (s.minimos_mes || []).filter(function (x) { return x.mes === state.minSel; })[0] : null;
     var mv = m ? m.minimo : p.saldo_min.t;
@@ -253,7 +252,7 @@
       o.push('<text x="270" y="26" fill="' + a1[1] + '" font-size="20" font-weight="700">' + esc(a1[0]) + '</text>');
       o.push('<text x="430" y="26" fill="' + a2[1] + '" font-size="20" font-weight="700">' + esc(a2[0]) + '</text>');
       o.push('<text x="270" y="54" fill="' + a3[1] + '" font-size="20" font-weight="700">' + esc(a3[0]) + '</text>');
-      if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="18" font-weight="700">' + esc(prox.concepto.toUpperCase().slice(0, 16)) + ' <tspan fill="#fff" font-size="15">EN</tspan> ' + prox.dias + '<tspan font-size="15">D</tspan></text>');
+      if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="17" font-weight="700">' + esc(sinMes(prox.concepto).toUpperCase().slice(0, 12)) + ' <tspan fill="#fff" font-size="14">EN</tspan> ' + prox.dias + '<tspan font-size="14">D</tspan> <tspan fill="#fff">' + esc(String(prox.monto).replace(/\.00$/, '')) + '</tspan></text>');
       o.push('<text x="986" y="26" fill="#fff" font-size="17" text-anchor="end">MÍN <tspan fill="' + (p.saldo_min.v < 0 ? C.red : C.cyan) + '" font-size="22" font-weight="700">' + esc(p.saldo_min.t) + '</tspan> ' + esc(fc(p.fecha_min)) + '</text>');
       o.push('<text x="986" y="54" fill="#fff" font-size="17" text-anchor="end">FINAL <tspan fill="' + C.cyan + '" font-size="22" font-weight="700">' + esc(p.saldo_final.t) + '</tspan></text>');
     })();
