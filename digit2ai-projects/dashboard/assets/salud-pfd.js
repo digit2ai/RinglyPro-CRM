@@ -34,6 +34,19 @@
       '<div style="color:' + (color || C.cyan) + ';font-size:22px;font-weight:700;margin-top:2px">' + value + '</div>' +
       (sub ? '<div style="color:#c9d2de;font-size:12.5px;line-height:1.35;margin-top:3px">' + sub + '</div>' : '') + '</div>';
   }
+  // calendar quarters between two ISO dates: [{nombre:'Q4-26', desde, hasta}]
+  function trimestres(desde, hasta) {
+    var out = [], y = +desde.slice(0, 4), q = Math.floor((+desde.slice(5, 7) - 1) / 3);
+    for (var n = 0; n < 40; n++) {
+      var ini = y + '-' + ('0' + (q * 3 + 1)).slice(-2) + '-01';
+      if (ini > hasta) break;
+      var ny = q === 3 ? y + 1 : y, nq = (q + 1) % 4;
+      var fin = ny + '-' + ('0' + (nq * 3 + 1)).slice(-2) + '-01';
+      out.push({ nombre: 'Q' + (q + 1) + '-' + String(y).slice(2), desde: ini < desde ? desde : ini, hasta: fin > hasta ? hasta : fin });
+      y = ny; q = nq;
+    }
+    return out;
+  }
   function sinMes(c) {
     return String(c || '').replace(/\s*[-\u2013\u2014]?\s*\b(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre)\b(\s+\d{4})?/ig, '').replace(/\s*[-\u2013\u2014]\s*$/, '').trim() || String(c || '');
   }
@@ -227,15 +240,24 @@
         var Y = function (v) { return my + 14 + (hi - v) / ((hi - lo) || 1) * (mh - 34); };
         if (s.zona) o.push('<rect x="' + X(s.zona.desde < s.hoy ? s.hoy : s.zona.desde) + '" y="' + (my + 1) + '" width="' + Math.max(3, X(s.zona.hasta) - X(s.zona.desde < s.hoy ? s.hoy : s.zona.desde)) + '" height="' + (mh - 2) + '" fill="rgba(255,204,0,.18)"/>');
         if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
+        // quarter lines: a dashed rule where each quarter starts, its name centred in its span
+        var qs = trimestres(s.hoy, pts[pts.length - 1].fecha);
+        qs.forEach(function (q, i) {
+          var x0 = Math.max(X(q.desde), mx + 10), x1 = Math.min(X(q.hasta), mx + mw - 10);
+          if (i > 0) o.push('<line x1="' + x0.toFixed(1) + '" x2="' + x0.toFixed(1) + '" y1="' + (my + 2) + '" y2="' + (my + mh - 2) + '" stroke="#9aa7b8" stroke-width="1" stroke-dasharray="3 3"/>');
+          if (x1 - x0 > 26) o.push('<text x="' + ((x0 + x1) / 2).toFixed(1) + '" y="' + (my + 12) + '" fill="#cfd8e3" font-size="10" text-anchor="middle">' + esc(q.nombre) + '</text>');
+        });
+        // the balance itself: closing balance of each day, joined, no payment steps
+        var cierre = {}; pts.forEach(function (q) { cierre[q.fecha] = q.saldo; });
+        var dias = Object.keys(cierre).sort();
         var d = 'M ' + X(s.hoy).toFixed(1) + ',' + Y(p.saldo_hoy.v).toFixed(1);
-        pts.forEach(function (q) { d += 'H' + X(q.fecha).toFixed(1) + 'V' + Y(q.saldo).toFixed(1); });
-        o.push('<path d="' + d + '" fill="none" stroke="' + C.mag + '" stroke-width="3"/>');
+        dias.forEach(function (k) { d += ' L ' + X(k).toFixed(1) + ',' + Y(cierre[k]).toFixed(1); });
+        o.push('<path d="' + d + '" fill="none" stroke="' + C.mag + '" stroke-width="2.5" stroke-linejoin="round"/>');
         o.push('<circle cx="' + X(p.fecha_min) + '" cy="' + Y(p.saldo_min.v) + '" r="5" fill="' + (p.saldo_min.v < 0 ? C.red : C.amber) + '"/><text x="' + clamp(X(p.fecha_min) + 7, mx + 4, mx + mw - 70) + '" y="' + (Y(p.saldo_min.v) + 18 > my + mh - 4 ? Y(p.saldo_min.v) - 8 : Y(p.saldo_min.v) + 18) + '" fill="#fff" font-size="13">MÍN ' + esc(fc(p.fecha_min)) + '</text>');
         // aircraft at today
         var ax = X(s.hoy), ay = Y(p.saldo_hoy.v);
         o.push('<path transform="translate(' + ax + ' ' + ay + ') rotate(90)" d="M 0 -11 l 3 8 h 9 v 3 h -9 l -1 6 h 4 v 3 h -12 v -3 h 4 l -1 -6 h -9 v -3 h 9 z" fill="#fff"/>');
       }
-      o.push('<text x="' + (mx + 6) + '" y="' + (my + mh - 6) + '" fill="#fff" font-size="12">PROYECCIÓN</text>');
     })();
 
     // ---------------- top bar ----------------
@@ -250,7 +272,12 @@
       var a2 = (s.obligaciones_descubiertas || []).length ? ['PAGO SIN CUBRIR', C.red] : ['PAGOS OK', C.green];
       var a3 = (s.dias_negativos || []).length ? ['NEGATIVO ' + fc(s.dias_negativos[0].fecha), C.red] : ['SIN NEGATIVOS', C.green];
       o.push('<text x="270" y="26" fill="' + a1[1] + '" font-size="20" font-weight="700">' + esc(a1[0]) + '</text>');
-      o.push('<text x="430" y="26" fill="' + a2[1] + '" font-size="20" font-weight="700">' + esc(a2[0]) + '</text>');
+      var desc = s.obligaciones_descubiertas || [];
+      if (p.saldo_min.v < 0) {
+        var falta = '$' + Math.ceil(-p.saldo_min.v).toLocaleString('en-US');
+        var af = desc.length ? ' <tspan fill="#fff" font-size="11" font-weight="400">AFECTA</tspan> <tspan font-size="12">' + esc(sinMes(desc[0].concepto).toUpperCase().slice(0, 15) + ' ' + fc(desc[0].fecha)) + (desc.length > 1 ? ' +' + (desc.length - 1) : '') + '</tspan>' : '';
+        o.push('<text x="430" y="26" fill="' + C.red + '" font-size="18" font-weight="700"><tspan fill="#fff" font-size="12" font-weight="400">FALTAN</tspan> ' + esc(falta) + af + '</text>');
+      } else o.push('<text x="430" y="26" fill="' + a2[1] + '" font-size="20" font-weight="700">' + esc(a2[0]) + '</text>');
       o.push('<text x="270" y="54" fill="' + a3[1] + '" font-size="20" font-weight="700">' + esc(a3[0]) + '</text>');
       if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="17" font-weight="700">' + esc(sinMes(prox.concepto).toUpperCase().slice(0, 12)) + ' <tspan fill="#fff" font-size="14">EN</tspan> ' + prox.dias + '<tspan font-size="14">D</tspan> <tspan fill="#fff">' + esc(String(prox.monto).replace(/\.00$/, '')) + '</tspan></text>');
       o.push('<text x="986" y="26" fill="#fff" font-size="17" text-anchor="end">MÍN <tspan fill="' + (p.saldo_min.v < 0 ? C.red : C.cyan) + '" font-size="22" font-weight="700">' + esc(p.saldo_min.t) + '</tspan> ' + esc(fc(p.fecha_min)) + '</text>');

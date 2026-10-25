@@ -213,6 +213,11 @@ async function linaTests() {
   {
     const m = /function sinMes\(c\) \{[\s\S]*?\n  \}/.exec(pfdSrc); const sinMes = m && new Function(m[0] + '; return sinMes;')();
     ok(sinMes && sinMes('Pago Lina \u2013 noviembre') === 'Pago Lina' && sinMes('Corte \u2013 diciembre 2026') === 'Corte' && sinMes('Renta') === 'Renta', 'top bar: next payment shows the concept without the month'); }
+  { const m = /function trimestres\(desde, hasta\) \{[\s\S]*?\n  \}/.exec(pfdSrc); const tq = m && new Function(m[0] + '; return trimestres;')();
+    const qs = tq ? tq('2026-10-25', '2027-12-31') : [];
+    ok(qs.map(q => q.nombre).join() === 'Q4-26,Q1-27,Q2-27,Q3-27,Q4-27' && qs[0].desde === '2026-10-25' && qs[1].desde === '2027-01-01' && qs[4].hasta === '2027-12-31', 'inset: quarter marks Q4-26 to Q4-27', qs);
+    ok(!/'H' \+ X\(q\.fecha\)/.test(pfdSrc) && /cierre\[q\.fecha\] = q\.saldo/.test(pfdSrc), 'inset: balance curve (daily closes joined), not payment steps');
+    ok(/FALTAN/.test(pfdSrc) && /AFECTA/.test(pfdSrc) && /p\.saldo_min\.v < 0/.test(pfdSrc), 'top bar: when negative, how much is missing and which payment it hits'); }
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');
