@@ -119,7 +119,13 @@ async function linaTests() {
   r = H('¿Cuánto dinero voy a tener disponible según el plan para el 1 de diciembre?');
   ok(r.intent === 'saldo_fecha' && /1 de diciembre/.test(r.texto) && /\$1,868\.48/.test(r.texto) && /\$68\.48/.test(r.texto), 'saldo el 1 de diciembre: $1,868.48 and warns of the $68.48 low', r.texto);
   r = H('¿Por qué hoy aparece un saldo actual de más de $8,000?');
-  ok(r.intent === 'explicar_saldo' && /Ahorro 1 \$4,689\.48/.test(r.texto) && /\$8,968\.48/.test(r.texto), 'why today > $8,000: lists Ahorro 1-4', r.texto);
+  ok(r.intent === 'explicar_saldo' && /Hoy tienes \$8,968\.48 porque entran \$8,968\.48 \(Ahorro 1, Ahorro 2, Ahorro 3 y Ahorro 4\)/.test(r.texto) && /15,500/.test(r.texto), 'why today > $8,000: cause in one sentence + the next big outflow', r.texto);
+  const negRows = [...rows, { id: 970, fecha: '2026-12-06', concepto: 'Internet', tipo: 'egreso', monto: '1000', categoria: 'servicios', origen: 'plan', estado: 'pendiente' }];
+  const negA = engine.analyze(negRows, o);
+  r = lina.heuristic('por que mi saldo queda en negativo el 6 de diciembre', negRows, o, {});
+  const falta = fmt(-require('./src/services/saludFinanciera/finanzas').saldoEnFecha(negA, '2026-12-06').saldo);
+  ok(/^El 6 de diciembre quedas en -\$/.test(r.texto) && r.texto.includes('te faltan ' + falta) && /La causa:/.test(r.texto) && /Inversión/.test(r.texto) && r.texto.includes('necesitas liberar ' + falta), 'negative date: the day trigger, the cause, and what to free up (not a list of rows)', r.texto);
+  ok(r.texto.split(/(?<=\.) /).length <= 5 && !/movimientos del plan cuentan/.test(r.texto), 'explanation stays short (no inventory)');
   r = H('¿Cuánto voy a tener disponible en diciembre?');
   ok(r.intent === 'resumen_mes' && /cierras el mes con \$3,668\.48/.test(r.texto), 'diciembre: opens, ins, outs, closes $3,668.48', r.texto);
   r = H('¿Y cómo se calcula esa proyección?', { contexto: { fecha: '2026-12-01' } });

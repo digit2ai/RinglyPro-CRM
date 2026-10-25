@@ -84,6 +84,41 @@ function resumenMes(a, ym) {
     movimientos: steps.length, grandes, fuera_de_plan: first > lastDate(a), ultimo_dato: lastDate(a) };
 }
 
+/**
+ * WHY the balance is what it is on a date — cause, not inventory.
+ *  - the day itself: balance before that day's moves, what moves that day
+ *  - the stretch from today to that date: total in, total out, and the
+ *    outflows that weigh the most (the cause)
+ *  - what it would take: amount to free up to stay at zero and at the colchón
+ * Every figure is a sum or lookup of the engine's ledger steps.
+ */
+function porQueSaldo(a, fecha) {
+  const saldo = balanceAt(a.serie.proyeccion, fecha).saldo;
+  const antesDelDia = balanceAt(a.serie.proyeccion, engine.addDays(fecha, -1)).saldo;
+  const delDia = a.steps.filter(s => s.row.fecha === fecha && s.amount !== 0);
+  const desde = fecha > a.today ? engine.addDays(a.today, 1) : fecha;
+  const tramo = a.steps.filter(s => s.row.fecha >= desde && s.row.fecha <= fecha && s.amount !== 0);
+  const entra = tramo.filter(s => s.row.tipo === 'ingreso').reduce((x, s) => x + s.amount, 0);
+  const sale = tramo.filter(s => s.row.tipo === 'egreso').reduce((x, s) => x + s.amount, 0);
+  // Group small repeating items (weekly budget, bills) so one big payment is not hidden behind six small ones.
+  const g = {};
+  for (const s of tramo.filter(x => x.row.tipo === 'egreso' && x.amount > 0)) {
+    const k = ['gasto_semanal', 'servicios', 'gasto_personal'].includes(s.row.categoria) ? 'cat:' + s.row.categoria : 'row:' + s.row.id;
+    g[k] = g[k] || { nombre: k.startsWith('cat:') ? CAT[s.row.categoria] : s.row.concepto, fecha: s.row.fecha, monto: 0, n: 0, grupo: k.startsWith('cat:') };
+    g[k].monto += s.amount; g[k].n++;
+  }
+  const pesan = Object.values(g).sort((x, y) => y.monto - x.monto).slice(0, 3);
+  return {
+    fecha, saldo, saldo_inicio: fecha > a.today ? a.saldo_hoy : antesDelDia, desde_hoy: fecha > a.today,
+    antes_del_dia: antesDelDia,
+    del_dia: delDia.map(s => ({ concepto: s.row.concepto, tipo: s.row.tipo, monto: s.amount })),
+    entra, sale, pesan,
+    falta_para_cero: saldo < 0 ? -saldo : 0,
+    falta_para_colchon: saldo < a.colchon_meta ? a.colchon_meta - saldo : 0,
+    colchon: a.colchon_meta
+  };
+}
+
 /** The rules, in words, plus the figures that drive them today. */
 function comoSeCalcula(a) {
   return {
@@ -127,4 +162,4 @@ function impacto(antes, despues, fechaFoco) {
   return r;
 }
 
-module.exports = { CAT, fl, saldoEnFecha, explicarSaldo, resumenMes, comoSeCalcula, planMantener, impacto, balanceAt };
+module.exports = { CAT, fl, porQueSaldo, saldoEnFecha, explicarSaldo, resumenMes, comoSeCalcula, planMantener, impacto, balanceAt };

@@ -138,17 +138,47 @@ function textoResumenMes(cur, ym) {
     (grandes ? `Lo principal del mes: ${grandes}.` : '');
 }
 
+// Cause, not inventory: 2 to 4 short sentences.
 function textoExplicarSaldo(cur, fecha) {
-  const e = fin.explicarSaldo(cur, fecha);
-  const top = (gs) => gs.map(g => g.items.length <= 4
-    ? g.items.map(i => `${i.concepto} ${fmt(i.monto)}`).join(', ')
-    : `${CAT[g.categoria]} ${fmt(g.total)} (${plural(g.items.length, 'movimiento', 'movimientos')})`).join('; ');
-  const cuando = fecha === cur.today ? 'Hoy' : `Al ${fl(fecha)}`;
-  let s = `${cuando} el saldo es ${fmt(e.saldo)} porque suma ${fmt(e.total_ingresos)} de ingresos (${top(e.ingresos) || 'ninguno'})`;
-  s += e.total_egresos ? ` y resta ${fmt(e.total_egresos)} de egresos (${top(e.egresos)}).` : ' y todavía no ha salido nada.';
-  if (e.movimientos_del_plan_asumidos) s += ` ${plural(e.movimientos_del_plan_asumidos, 'movimiento del plan cuenta', 'movimientos del plan cuentan')} como hecho en su fecha; si alguno no llegó o fue distinto, dímelo y lo corrijo.`;
-  if (e.proximos_grandes.length) s += ` Ojo, ese saldo no se queda así: ${e.proximos_grandes.map(p => `el ${fl(p.fecha)} ${p.tipo === 'ingreso' ? 'entra' : 'sale'} ${p.concepto} ${fmt(p.monto)} y quedas en ${fmt(p.saldo)}`).join('; ')}.`;
-  return s;
+  const p = fin.porQueSaldo(cur, fecha);
+  const lista = (xs) => xs.length === 1 ? xs[0] : xs.slice(0, -1).join(', ') + ' y ' + xs[xs.length - 1];
+  const item = (x) => x.grupo ? `${x.nombre} (${fmt(x.monto)} en ${x.n} pagos)` : `${x.nombre} (${fmt(x.monto)}, ${fl(x.fecha)})`;
+  const cuando = fecha === cur.today ? 'Hoy' : `El ${fl(fecha)}`;
+  const out = [];
+
+  if (!p.desde_hoy) {
+    // today or a past date: what moved that day
+    const ing = p.del_dia.filter(m => m.tipo === 'ingreso'), egr = p.del_dia.filter(m => m.tipo === 'egreso');
+    const sIng = ing.reduce((x, m) => x + m.monto, 0), sEgr = egr.reduce((x, m) => x + m.monto, 0);
+    let t = `${cuando} tienes ${fmt(p.saldo)} porque `;
+    if (!p.del_dia.length) t += `no hubo movimientos y vienes con ese saldo.`;
+    else {
+      const partes = [];
+      if (p.antes_del_dia) partes.push(`venías con ${fmt(p.antes_del_dia)}`);
+      if (sIng) partes.push(`entran ${fmt(sIng)} (${lista(ing.slice(0, 4).map(m => m.concepto))})`);
+      if (sEgr) partes.push(`salen ${fmt(sEgr)}`); else partes.push('todavía no sale nada');
+      t += lista(partes) + '.';
+    }
+    out.push(t);
+    const prox = cur.steps.find(s => s.row.fecha > fecha && s.row.tipo === 'egreso' && s.amount >= 100000);
+    if (prox) out.push(`Ojo: el ${fl(prox.row.fecha)} sale ${prox.row.concepto} (${fmt(prox.amount)}) y bajas a ${fmt(prox.saldo)}.`);
+    return out.join(' ');
+  }
+
+  // a future date: the day's trigger, then the cause over the stretch
+  const salidasDia = p.del_dia.filter(m => m.tipo === 'egreso');
+  if (p.saldo < 0 && p.antes_del_dia >= 0 && salidasDia.length) {
+    const entrDia = p.del_dia.filter(m => m.tipo === 'ingreso');
+    out.push(`${cuando} quedas en ${fmt(p.saldo)} porque ese día pagas ${lista(salidasDia.map(m => `${m.concepto} (${fmt(m.monto)})`))}${entrDia.length ? ` y solo entran ${lista(entrDia.map(m => `${m.concepto} (${fmt(m.monto)})`))}` : ''}, y llegabas con ${fmt(p.antes_del_dia)}: te faltan ${fmt(-p.saldo)}.`);
+  } else {
+    out.push(`${cuando} ${p.saldo < 0 ? 'quedas en' : 'tienes'} ${fmt(p.saldo)}.`);
+  }
+  out.push(p.sale > p.entra
+    ? `La causa: de hoy al ${fl(fecha)} salen ${fmt(p.sale)} y entran ${fmt(p.entra)}, ${fmt(p.sale - p.entra)} más de lo que entra, y eso se come lo que tienes hoy (${fmt(p.saldo_inicio)}). Lo que más pesa es ${lista(p.pesan.slice(0, 2).map(item))}.`
+    : `De hoy al ${fl(fecha)} entran ${fmt(p.entra)} y salen ${fmt(p.sale)}, así que sumas ${fmt(p.entra - p.sale)} a lo que tienes hoy (${fmt(p.saldo_inicio)}).`);
+  if (p.falta_para_cero) out.push(`Para no quedar en negativo necesitas liberar ${fmt(p.falta_para_cero)} antes de esa fecha; para mantener tu colchón de ${fmt(p.colchon)}, ${fmt(p.falta_para_colchon)}.`);
+  else if (p.falta_para_colchon) out.push(`Estás ${fmt(p.falta_para_colchon)} por debajo de tu colchón de ${fmt(p.colchon)} ese día.`);
+  return out.join(' ');
 }
 
 function textoCalculo(cur, foco) {
@@ -325,7 +355,11 @@ function heuristic(pregunta, rows, opts, state = {}) {
     }
 
     case 'explicar_calculo': return out(textoCalculo(cur, foco));
-    case 'explicar_saldo': return out(alerta + textoExplicarSaldo(cur, ent.fecha && !ent.hoy ? ent.fecha : (ent.hoy ? today : (foco || today))));
+    case 'explicar_saldo': {
+      const f = ent.fecha && !ent.hoy ? ent.fecha : (ent.hoy ? today : (foco || today));
+      const pre = cur.dias_negativos.length && cur.dias_negativos[0].fecha !== f ? alerta : '';
+      return out(pre + textoExplicarSaldo(cur, f));
+    }
     case 'mantener': return out(alerta + textoMantener(cur, rows, opts, foco));
     case 'saldo_fecha': return out(alerta + textoSaldoFecha(cur, ent.fecha || today));
     case 'resumen_mes': return out(alerta + textoResumenMes(cur, ent.mes));
