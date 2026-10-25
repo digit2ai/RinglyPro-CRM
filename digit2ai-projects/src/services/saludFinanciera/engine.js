@@ -20,7 +20,7 @@
 const { toCents, fmt } = require('./money');
 
 const CATEGORIAS = ['ahorro', 'salario', 'ingreso_extra', 'inversion', 'corte', 'pago_lina', 'hija', 'gasto_semanal', 'gasto_personal', 'servicios', 'otro'];
-const OBLIGACIONES = ['corte', 'pago_lina', 'hija'];
+const OBLIGACIONES = ['corte', 'pago_lina', 'hija', 'servicios'];
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 // ---------- dates (YYYY-MM-DD strings, UTC arithmetic) ----------
@@ -61,26 +61,44 @@ function sortForLedger(a, b) {
 }
 
 // Amount each row moves the balance by, in the projection.
-function effectiveAmounts(rows, presupuestoCents) {
-  const spent = {}; // weekStart -> cents of real gasto_personal
-  for (const r of rows) {
-    if (r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal') {
-      const w = weekStart(r.fecha); spent[w] = (spent[w] || 0) + r.cents;
-    }
+/**
+ * Weekly personal budget WITH ROLLOVER (owner request 2026-10-25): what you
+ * do not spend in a week carries to the next. Per weekly plan row:
+ *   available = this week's budget + carry from earlier weeks
+ *   charge    = budget - min(spent this week, available)   (may be negative:
+ *               spending carried money releases what was reserved before)
+ *   carry     = available - min(spent, available)
+ * Real personal spending hits the balance on its own date, so over time the
+ * total out equals the budgets, and only spending beyond what was available
+ * lowers the projection for good.
+ */
+function weeklyBudget(rows) {
+  const spent = {};
+  for (const r of rows) if (r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal') { const w = weekStart(r.fecha); spent[w] = (spent[w] || 0) + r.cents; }
+  const weekly = rows.filter(r => r.origen === 'plan' && r.categoria === 'gasto_semanal').sort(sortForLedger);
+  const charges = new Map(); const weeks = {}; let carry = 0;
+  for (const r of weekly) {
+    const w = weekStart(r.fecha);
+    const s = spent[w] || 0;
+    const available = r.cents + carry;
+    const used = Math.min(s, available);
+    const charge = r.estado === 'cumplido' ? (r.realCents != null ? r.realCents : r.cents) : r.cents - used;
+    weeks[w] = { presupuesto: r.cents, acumulado_previo: carry, disponible: available, gastado: s };
+    carry = r.estado === 'cumplido' ? 0 : available - used;
+    charges.set(r, charge);
   }
-  const absorbed = {}; // spent already offset against a pending weekly row
+  return { charges, weeks, carry_final: carry, spent };
+}
+
+function effectiveAmounts(rows) {
+  const wb = weeklyBudget(rows);
   const out = new Map();
-  for (const r of [...rows].sort(sortForLedger)) {
+  for (const r of rows) {
     let amt;
     if (r.origen === 'real') amt = r.cents;
+    else if (wb.charges.has(r)) amt = wb.charges.get(r);
     else if (r.estado === 'cumplido') amt = r.realCents != null ? r.realCents : r.cents;
-    else if (r.categoria === 'gasto_semanal') {
-      const w = weekStart(r.fecha);
-      const avail = Math.max(0, (spent[w] || 0) - (absorbed[w] || 0));
-      const take = Math.min(avail, r.cents);
-      absorbed[w] = (absorbed[w] || 0) + take;
-      amt = r.cents - take;
-    } else amt = r.cents;
+    else amt = r.cents;
     out.set(r, amt);
   }
   return out;
@@ -117,7 +135,7 @@ function analyze(rawRows, opts = {}) {
   const colchon = opts.colchonCents != null ? opts.colchonCents : 100000;
   const presupuesto = opts.presupuestoCents != null ? opts.presupuestoCents : 10000;
   const rows = rawRows.map(norm);
-  const amounts = effectiveAmounts(rows, presupuesto);
+  const amounts = effectiveAmounts(rows);
   const proj = ledger(rows, amounts);
   const plan = planBase(rows);
 
@@ -141,12 +159,20 @@ function analyze(rawRows, opts = {}) {
   const ws = weekStart(today), we = weekEnd(today);
   const gastado = rows.filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha >= ws && r.fecha <= we)
     .reduce((s, r) => s + r.cents, 0);
-  const C = gastado <= presupuesto ? 20 : 20 * Math.max(0, 1 - (gastado - presupuesto) / presupuesto);
+  // Available this week = its budget + what earlier weeks left unspent.
+  const wb = weeklyBudget(rows);
+  let acumulado = 0;
+  if (wb.weeks[ws]) acumulado = wb.weeks[ws].acumulado_previo;
+  else { for (const [w, v] of Object.entries(wb.weeks)) if (w < ws) acumulado = v.disponible - Math.min(v.gastado, v.disponible); }
+  const presupuestoSemana = wb.weeks[ws] ? wb.weeks[ws].presupuesto : presupuesto;
+  const disponible = presupuestoSemana + acumulado;
+  const C = gastado <= disponible ? 20 : 20 * Math.max(0, 1 - (gastado - disponible) / presupuesto);
   // D. Obligaciones cubiertas (10), from today forward, checked right after each payment.
   const obligaciones = proj.steps.filter(s => s.row.tipo === 'egreso' && OBLIGACIONES.includes(s.row.categoria) && s.row.fecha >= today);
   const descubiertas = obligaciones.filter(s => s.saldo < 0);
   const D = descubiertas.length ? 0 : 10;
 
+  const zona = zonaCuidado(forward, min, colchon);
   let score = A + B + C + D;
   const limitado = negativos.length > 0 && score > 49;
   if (negativos.length) score = Math.min(score, 49);
@@ -171,7 +197,9 @@ function analyze(rawRows, opts = {}) {
     saldo_final_plan: saldoFinalPlan,
     colchon_meta: colchon,
     presupuesto_semanal: presupuesto,
-    semana: { desde: ws, hasta: we, gastado, restante: presupuesto - gastado },
+    semana: { desde: ws, hasta: we, gastado, presupuesto: presupuestoSemana, acumulado_previo: acumulado, disponible, restante: disponible - gastado },
+    zona,
+    tendencia: tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }),
     dias_negativos: negativos,
     obligaciones: { total: obligaciones.length, cubiertas: obligaciones.length - descubiertas.length, hasta: obligaciones.length ? obligaciones[obligaciones.length - 1].row.fecha : null },
     obligaciones_descubiertas: descubiertas.map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, saldo: s.saldo })),
@@ -194,12 +222,31 @@ function publicSummary(a) {
     saldo_final: fmt(a.saldo_final),
     saldo_final_plan: fmt(a.saldo_final_plan),
     colchon_meta: fmt(a.colchon_meta),
-    semana: { desde: a.semana.desde, hasta: a.semana.hasta, gastado: fmt(a.semana.gastado), presupuesto: fmt(a.presupuesto_semanal), restante: fmt(a.semana.restante) },
+    semana: { desde: a.semana.desde, hasta: a.semana.hasta, gastado: fmt(a.semana.gastado), presupuesto: fmt(a.semana.presupuesto), acumulado_previo: fmt(a.semana.acumulado_previo), disponible: fmt(a.semana.disponible), restante: fmt(a.semana.restante) },
+    zona: a.zona,
+    tendencia: a.tendencia ? { sube: a.tendencia.sube, malas: a.tendencia.malas.map(razon), buenas: a.tendencia.buenas.map(razon) } : null,
     dias_negativos: a.dias_negativos.map(d => ({ fecha: d.fecha, saldo: fmt(d.saldo) })),
     obligaciones: a.obligaciones,
     obligaciones_descubiertas: a.obligaciones_descubiertas.map(o => ({ ...o, saldo: fmt(o.saldo) })),
     proximo_pago: a.proximo_pago ? { ...a.proximo_pago, monto: fmt(a.proximo_pago.monto), saldo_despues: fmt(a.proximo_pago.saldo_despues) } : null
   };
+}
+
+const fdl = (iso) => { const [, m, d] = iso.split('-').map(Number); return d + ' de ' + MESES[m - 1]; };
+function razon(x) {
+  const t = {
+    negativo: () => `tu saldo queda en negativo el ${fdl(x.fecha)} (${fmt(x.saldo)})`,
+    pago_descubierto: () => `${x.concepto} del ${fdl(x.fecha)} no queda cubierto${x.total > 1 ? ' (y ' + (x.total - 1) + ' más)' : ''}`,
+    bajo_colchon: () => `del ${fdl(x.desde)} al ${fdl(x.hasta)} quedas por debajo de tu colchón de ${fmt(x.colchon)}`,
+    bajo_plan: () => `vas ${fmt(x.diferencia)} por debajo del plan`,
+    semana_excedida: () => `esta semana te pasaste ${fmt(x.exceso)}`,
+    pagos_cubiertos: () => 'todos tus pagos quedan cubiertos',
+    sobre_colchon: () => `tu punto más bajo (${fmt(x.saldo)}) está arriba de tu colchón`,
+    sobre_plan: () => `vas ${fmt(x.diferencia)} arriba del plan`,
+    en_plan: () => 'vas según el plan',
+    semana_ok: () => `te quedan ${fmt(x.restante)} para gastar esta semana`
+  }[x.tipo];
+  return { tipo: x.tipo, texto: t ? t() : x.tipo };
 }
 
 // Hypothetical rows are real movements that are never saved.
@@ -213,6 +260,39 @@ function simulate(rawRows, hypotheticals, opts = {}) {
   if (extra.some(e => e.cents == null || e.cents <= 0 || !isISO(e.fecha))) throw new Error('Movimiento hipotético inválido');
   const after = analyze([...rawRows, ...extra], opts);
   return { antes: base, despues: after, guardado: false };
+}
+
+/**
+ * The stretch of days around the low point when spending is not advisable:
+ * the contiguous run where the balance stays below the colchón. If the low
+ * point is above the colchón, the run where the balance stays at that low.
+ * Days are event days; the balance holds until the next event, so the window
+ * ends the day before the balance recovers.
+ */
+function zonaCuidado(forward, min, colchon) {
+  if (!forward.length) return null;
+  const i = forward.findIndex(d => d.fecha === min.fecha);
+  const umbral = min.saldo < colchon ? colchon : min.saldo + 1;
+  let a = i, b = i;
+  while (a > 0 && forward[a - 1].saldo < umbral) a--;
+  while (b < forward.length - 1 && forward[b + 1].saldo < umbral) b++;
+  const hasta = b < forward.length - 1 ? addDays(forward[b + 1].fecha, -1) : forward[b].fecha;
+  return { desde: forward[a].fecha, hasta, bajo_colchon: min.saldo < colchon, umbral };
+}
+
+/** Up or down, and why — every reason is a fact the engine already computed. */
+function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }) {
+  const malas = [], buenas = [];
+  if (negativos.length) malas.push({ tipo: 'negativo', fecha: negativos[0].fecha, saldo: negativos[0].saldo });
+  if (descubiertas.length) malas.push({ tipo: 'pago_descubierto', fecha: descubiertas[0].row.fecha, concepto: descubiertas[0].row.concepto, total: descubiertas.length });
+  else buenas.push({ tipo: 'pagos_cubiertos' });
+  if (min.saldo < colchon && !negativos.length) malas.push({ tipo: 'bajo_colchon', desde: zona && zona.desde, hasta: zona && zona.hasta, saldo: min.saldo, colchon });
+  else if (min.saldo >= colchon) buenas.push({ tipo: 'sobre_colchon', saldo: min.saldo, colchon });
+  if (saldoFinal < saldoFinalPlan) malas.push({ tipo: 'bajo_plan', diferencia: saldoFinalPlan - saldoFinal });
+  else buenas.push({ tipo: saldoFinal > saldoFinalPlan ? 'sobre_plan' : 'en_plan', diferencia: saldoFinal - saldoFinalPlan });
+  if (gastado > disponible) malas.push({ tipo: 'semana_excedida', exceso: gastado - disponible });
+  else buenas.push({ tipo: 'semana_ok', restante: disponible - gastado });
+  return { sube: malas.length === 0, malas, buenas };
 }
 
 // ---------- plan extension ----------
@@ -309,5 +389,5 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
 module.exports = {
   CATEGORIAS, OBLIGACIONES, MESES,
   isISO, addDays, dow, weekStart, weekEnd, todayNY, fechaLarga, lastDayOfMonth,
-  norm, analyze, publicSummary, simulate, extendPlan, recurrentRows, ledger
+  norm, analyze, publicSummary, weeklyBudget, zonaCuidado, simulate, extendPlan, recurrentRows, ledger
 };

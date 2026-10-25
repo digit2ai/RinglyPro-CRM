@@ -86,6 +86,7 @@ router.get('/salud', async (req, res) => {
       success: true,
       ...engine.publicSummary(a),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
+      cierre_fin_de_ano: cierre(a, a.today.slice(0, 4) + '-12'),
       cierre_ultimo_mes: a.serie.proyeccion.length ? cierre(a, a.serie.proyeccion[a.serie.proyeccion.length - 1].fecha.slice(0, 7)) : null,
       serie: { plan: a.serie.plan.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })), proyeccion: a.serie.proyeccion.map(d => ({ fecha: d.fecha, saldo: d.saldo / 100 })) }
     });

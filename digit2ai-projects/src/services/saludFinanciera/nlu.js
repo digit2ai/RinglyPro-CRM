@@ -170,6 +170,7 @@ const R = {
   explicarSaldo: /\b(por ?que\b(?! no\b)|de donde (sale|salen|viene|vienen)|explica\w*|desglos\w*|que (incluye|compone|forma)|como llego a|como es que tengo|a que se debe|que hay en|que suma)\b/,
   mantener: /\b(mantener\w*|sostener\w*|cumplir (con )?el plan|no salirme|no bajar|para que se cumpla|para llegar|seguir (asi|el plan)|que tengo que hacer para|que necesito para|que debo cuidar|como lo logro|como mantengo)\b/,
   saldoFecha: /\b(cuanto|que saldo|cual (es|sera) (mi|el) saldo|como (voy a estar|estare|cierro|cerrare|termino|me va|quedo)|saldo|disponible|tendre|voy a tener|tengo|habra|me queda|quedara|llego con|cierro)\b/,
+  cuidado: /\b(tener cuidado|tengo que tener cuidado|cuidarme|no (debo|deberia|conviene) gastar|no gastar|fechas? (peligrosa|critica|justa|apretada)s?|cuando no (puedo|debo) gastar|cuando debo cuidar|que fechas)\b/,
   puntoBajo: /\b(punto mas bajo|saldo minimo|mas bajo|minimo|peor momento|mas apretado|mas justo)\b/,
   semana: /\bsemana\b/,
   mesGastado: /\b(llevo gastado|he gastado|gaste este mes|gastado este mes|cuanto llevo|mis gastos del mes|gastos de este mes)\b/,
@@ -209,6 +210,7 @@ function interpret(original, today) {
   if (R.alcanza.test(t)) return { intent: 'alcanza', ...e };
   if (R.explicarSaldo.test(t)) return { intent: 'explicar_saldo', ...e };
   if (R.mantener.test(t)) return { intent: 'mantener', ...e };
+  if (R.cuidado.test(t)) return { intent: 'cuidado', ...e };
   if (R.puntoBajo.test(t)) return { intent: 'punto_bajo', ...e };
   if (R.semana.test(t) && /\b(queda|gastar|llevo|presupuesto|gastado|gaste|disponible|puedo)\b/.test(t) && !e.fecha) return { intent: 'semana', ...e };
   if (R.mesGastado.test(t)) return { intent: 'mes_gastado', ...e };

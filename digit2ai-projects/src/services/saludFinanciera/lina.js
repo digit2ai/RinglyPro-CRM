@@ -103,6 +103,15 @@ function findRows(n, ent, today, { soloReales = false } = {}) {
 }
 
 // ---------------------------------------------------------------- answers
+function textoZona(cur) {
+  const z = cur.zona;
+  if (!z) return `Tu punto más bajo es el ${fl(cur.fecha_min)}, con ${fmt(cur.saldo_min)}.`;
+  const r = z.desde === z.hasta ? `el ${fl(z.desde)}` : `del ${fl(z.desde)} al ${fl(z.hasta)}`;
+  return z.bajo_colchon
+    ? `Ten cuidado ${r}: en esas fechas tu saldo queda por debajo de tu colchón de ${fmt(cur.colchon_meta)} y llega a ${fmt(cur.saldo_min)} el ${fl(cur.fecha_min)}. Entre esas fechas no conviene gastar nada fuera de lo planeado.`
+    : `Tu punto más bajo es ${fmt(cur.saldo_min)} ${r}, y sigue arriba de tu colchón de ${fmt(cur.colchon_meta)}. No hay fechas de riesgo, solo cuida tu presupuesto semanal.`;
+}
+
 function textoSaldoFecha(cur, fecha) {
   const s = fin.saldoEnFecha(cur, fecha);
   if (fecha < cur.today) return `Al cierre del ${fl(fecha)} tenías ${fmt(s.saldo)}.`;
@@ -320,10 +329,10 @@ function heuristic(pregunta, rows, opts, state = {}) {
     case 'mantener': return out(alerta + textoMantener(cur, rows, opts, foco));
     case 'saldo_fecha': return out(alerta + textoSaldoFecha(cur, ent.fecha || today));
     case 'resumen_mes': return out(alerta + textoResumenMes(cur, ent.mes));
-    case 'punto_bajo': return out(`${alerta}Tu punto más bajo es el ${fl(cur.fecha_min)}, con ${fmt(cur.saldo_min)}. Tu meta de colchón es ${fmt(cur.colchon_meta)}.`);
+    case 'punto_bajo': case 'cuidado': return out(alerta + textoZona(cur));
     case 'semana': {
       const s = cur.semana;
-      return out(`Esta semana (del ${fl(s.desde)} al ${fl(s.hasta)}) llevas ${fmt(s.gastado)} de ${fmt(cur.presupuesto_semanal)}: ${s.restante >= 0 ? `te quedan ${fmt(s.restante)}` : `te pasaste ${fmt(-s.restante)}`}.`);
+      return out(`Esta semana (del ${fl(s.desde)} al ${fl(s.hasta)}) tienes ${fmt(s.disponible)} para gastos personales${s.acumulado_previo > 0 ? `: ${fmt(s.presupuesto)} de la semana más ${fmt(s.acumulado_previo)} que no gastaste antes` : ''}. Llevas ${fmt(s.gastado)}, así que ${s.restante >= 0 ? `te quedan ${fmt(s.restante)}` : `te pasaste ${fmt(-s.restante)}`}. Lo que no gastes se acumula para la próxima semana.`);
     }
     case 'mes_gastado': {
       const ym = ent.mes || today.slice(0, 7); let total = 0, k = 0;

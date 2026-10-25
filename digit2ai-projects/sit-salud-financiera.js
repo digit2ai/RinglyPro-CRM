@@ -65,6 +65,22 @@ async function engineTests() {
   ok(ext.nuevos.filter(n => n.categoria === 'salario').map(n => n.fecha).join() === '2027-02-12,2027-02-26,2027-03-12,2027-03-26', 'extend: salary every two Fridays');
   const again = engine.extendPlan([...rows, ...ext.nuevos.map((n, i) => ({ ...n, id: 500 + i }))], 2);
   ok(!again.nuevos.some(n => ext.nuevos.some(e => e.fecha === n.fecha && e.categoria === n.categoria)), 'extend twice: never duplicates');
+  // Weekly budget rollover: unspent money carries to the next week.
+  const r20 = [...rows, { id: 950, fecha: TODAY, concepto: 'c', tipo: 'egreso', monto: '20', categoria: 'gasto_personal', origen: 'real' }];
+  const wk2 = engine.analyze(r20, { today: '2026-11-02' });
+  ok(wk2.semana.acumulado_previo === 8000 && wk2.semana.disponible === 18000, 'rollover: $20 spent in week 1 -> week 2 has $180 available', wk2.semana);
+  const wk2b = engine.analyze([...r20, { id: 951, fecha: '2026-11-02', concepto: 'c', tipo: 'egreso', monto: '170', categoria: 'gasto_personal', origen: 'real' }], { today: '2026-11-02' });
+  ok(wk2b.saldo_final === a.saldo_final && wk2b.C === 20, 'spending carried money ($170 of $180) does not lower the projection', [wk2b.saldo_final, wk2b.C]);
+  const wk2c = engine.analyze([...r20, { id: 952, fecha: '2026-11-02', concepto: 'c', tipo: 'egreso', monto: '230', categoria: 'gasto_personal', origen: 'real' }], { today: '2026-11-02' });
+  ok(wk2c.saldo_final === a.saldo_final - 5000, 'spending beyond the accumulated amount lowers the projection by the excess ($50)', wk2c.saldo_final);
+  ok(a.zona && a.zona.desde === '2026-12-06' && a.zona.hasta === '2026-12-17' && a.zona.bajo_colchon, 'zona de cuidado: del 6 al 17 de diciembre', a.zona);
+  ok(a.tendencia.sube === false && a.tendencia.malas[0].tipo === 'bajo_colchon', 'trend arrow points down with the reason (below colchón)');
+  ok(engine.analyze(rows, { today: TODAY, colchonCents: 5000 }).tendencia.sube === true, 'trend arrow points up when nothing is at risk');
+  const withBill = engine.analyze([...rows, { id: 960, fecha: '2026-12-06', concepto: 'Internet', tipo: 'egreso', monto: '500', categoria: 'servicios', origen: 'plan', estado: 'pendiente' }], { today: TODAY });
+  ok(withBill.obligaciones.total === 9 && withBill.obligaciones_descubiertas.some(o => o.concepto === 'Internet'), 'monthly bills count as payments that must be covered');
+  ok(lina.heuristic('en que fecha tengo que tener cuidado', rows, { today: TODAY }, {}).texto.includes('del 6 de diciembre al 17 de diciembre'), 'Lina: when to be careful -> the window');
+  ok(/acumula/.test(lina.heuristic('cuanto me queda para gastar esta semana', r20, { today: '2026-11-02' }, {}).texto), 'Lina explains the weekly rollover');
+
   // Monthly recurring bills: end of month and a fixed day, never duplicated.
   const RECS = [{ concepto: 'Internet', monto: '150.00', fin_de_mes: true }, { concepto: 'Software', monto: '100.00', dia: 7 }];
   const rr = engine.recurrentRows(rows, RECS, TODAY, '2027-01-31');
@@ -219,7 +235,7 @@ async function apiTests() {
     }
     ok((await call('/salud', WRONGMAIL)).s === 404, 'owner id with a non-owner email -> 404');
     let r = await call('/salud', A);
-    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
+    ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.cierre_fin_de_ano.mes === '2026-12' && r.j.cierre_fin_de_ano.saldo === '$3,668.48' && r.j.zona.desde === '2026-12-06' && r.j.tendencia.sube === false && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
     r = await call('/movimientos', A);
     ok(r.j.data.length === 37 && r.j.data.every(x => x.origen === 'plan'), 'seed: 37 plan rows');
     ok(r.j.data.some(x => x.fecha === '2026-12-11' && x.es_minimo) && r.j.data[r.j.data.length - 1].saldo === '$4,468.48', 'table: running balance + low point flagged');
