@@ -87,6 +87,8 @@
       if (s.zona) ln(C.amber, (s.zona.bajo_colchon ? 'Zona de cuidado' : 'Tramo más justo') + ': del ' + fl(s.zona.desde) + ' al ' + fl(s.zona.hasta) + (s.zona.bajo_colchon ? ' — mejor no gastar.' : '.'));
       if (s.dias_negativos && s.dias_negativos.length) ln(C.red, 'Días en negativo: ' + s.dias_negativos.map(function (d) { return fl(d.fecha) + ' (' + d.saldo + ')'; }).join(', ') + '.');
       else ln(C.green, 'Ningún día queda en negativo.');
+      var neg = p.en_negativo || [];
+      if (neg.length) ln(C.red, 'Pagos afectados: ' + neg.map(function (r) { return r.concepto + ' (' + fl(r.fecha) + ', ' + r.monto + ' → quedas en ' + r.saldo + ')'; }).join('; ') + '.');
     } else if (tecla === 'TRIMESTRE') {
       (s.cierres_trimestre || []).forEach(function (c) { ln(c.saldo.charAt(0) === '-' ? C.red : C.white, 'Cierre de ' + c.nombre + ': ' + c.saldo + (c.saldo !== c.saldo_plan ? ' (plan ' + c.saldo_plan + ')' : '')); });
       ln(C.cyan, 'Saldo final del plan: ' + p.saldo_final.t + ' (' + (p.desvio_plan.v >= 0 ? 'arriba ' : 'abajo ') + 'del plan ' + p.desvio_plan.t.replace('-', '') + ').');
