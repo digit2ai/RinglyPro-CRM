@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b16">
+<title>Digit2AI MCP Neural</title>
+<meta name="description" content="Presentación narrada por Lina: cómo Digit2AI MCP Neural conecta su empresa a la inteligencia artificial de los mejores proveedores, sin cambiar sus sistemas.">
+<link rel="icon" href="../logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>html,body{background:#070b16}</style>
+<style>
+/* Tokens copiados de public/mcp/index.html (digit2ai.com/mcp): el mazo se ve
+   como la página que lo vende. */
+:root{
+  --bg:#070b16; --bg2:#0b1222; --panel:#0f1728; --panel2:#131e33;
+  --line:rgba(120,150,200,.16); --line2:rgba(120,150,200,.28);
+  --txt:#eaf0fb; --mut:#9db0cc; --cy:#22d3ee; --vi:#8b5cf6; --on:#04222a;
+  --ok:#34d399; --warn:#fbbf24;
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --fb:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --W:1280px; --H:720px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--fb);color:var(--txt);background:radial-gradient(1100px 700px at 50% 35%,#0d1830,var(--bg));overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+/* ── escenario: 16:9 por defecto, 9:16 en modo vertical ─────────────── */
+body.vert{--W:720px;--H:1280px}
+.vp{position:fixed;inset:0 0 72px 0;display:flex;align-items:center;justify-content:center}
+#stage{width:var(--W);height:var(--H);position:relative;flex:0 0 auto;transform-origin:center center}
+.slide{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:
+  radial-gradient(700px 420px at 85% 0%,rgba(139,92,246,.20),transparent 70%),
+  radial-gradient(700px 500px at 0% 100%,rgba(34,211,238,.13),transparent 70%),
+  linear-gradient(180deg,var(--bg2),var(--bg));
+  border:1px solid var(--line);box-shadow:0 30px 90px rgba(0,0,0,.55);
+  padding:52px 64px 48px;display:none;flex-direction:column}
+.slide.on{display:flex;animation:in .6s ease both}
+.slide:not(.cover){justify-content:center}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+body.vert .slide{padding:64px 48px 56px}
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);opacity:.35}
+.slide > *{position:relative;z-index:1}
+
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;letter-spacing:.02em;font-size:15px;color:var(--mut)}
+.brand img{width:28px;height:28px;border-radius:7px}
+.brand b{color:var(--txt)}.brand i{font-style:normal;color:var(--cy)}
+.kick{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy);margin-top:18px}
+h1{font-family:var(--fd);font-weight:700;font-size:62px;line-height:1.02;letter-spacing:-.02em;margin-top:12px}
+h2{font-family:var(--fd);font-weight:700;font-size:48px;line-height:1.06;letter-spacing:-.015em;margin-top:10px}
+body.vert h1{font-size:72px}body.vert h2{font-size:58px}
+.grad{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:22px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:900px}
+body.vert .lead{font-size:27px}
+.row{display:flex;gap:40px;align-items:center;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;min-width:0}
+.grow{flex:1}
+body.vert .row{flex-direction:column;align-items:stretch;gap:26px}
+.grid{display:grid;gap:16px;margin-top:22px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+body.vert .g3,body.vert .g4{grid-template-columns:repeat(2,1fr)}
+.card{background:linear-gradient(180deg,rgba(19,30,51,.92),rgba(15,23,40,.92));border:1px solid var(--line2);border-radius:18px;padding:22px 22px 20px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.8}
+.card h3{font-family:var(--fd);font-weight:700;font-size:22px;margin-top:4px}
+.card p{font-size:16.5px;line-height:1.45;color:var(--mut);margin-top:8px}
+body.vert .card{padding:26px 24px}body.vert .card h3{font-size:28px}body.vert .card p{font-size:21px}body.vert .grid{gap:20px}body.vert .kick{font-size:17px}body.vert .n{font-size:16px}
+.n{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--cy);letter-spacing:.1em}
+.stag{opacity:0;animation:up .6s ease forwards}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.d1{animation-delay:.25s}.d2{animation-delay:.5s}.d3{animation-delay:.75s}.d4{animation-delay:1s}.d5{animation-delay:1.25s}.d6{animation-delay:1.5s}.d7{animation-delay:1.75s}.d8{animation-delay:2s}.d9{animation-delay:2.25s}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:rgba(15,23,40,.85);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy)}
+.foot{margin-top:22px;font-size:14px;color:var(--mut)}
+
+/* ── USB: la idea en un solo dibujo ────────────────────────────────── */
+.usb{width:100%;height:auto;max-height:100%}
+.usb .sys rect{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.usb .sys text{fill:#9db0cc;font:600 15px var(--fb)}
+.usb .lit rect{animation:lit 1s ease forwards;animation-delay:var(--dl,2.2s)}
+.usb .lit text{animation:litt 1s ease forwards;animation-delay:var(--dl,2.2s)}
+@keyframes lit{to{fill:#0e2a35;stroke:#22d3ee}}
+@keyframes litt{to{fill:#eaf0fb}}
+.usb .plug{animation:plug 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateX(150px)}
+.usb .plugV{animation:plugV 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateY(190px)}
+@keyframes plugV{to{transform:translateY(0)}}
+@keyframes plug{to{transform:translateX(0)}}
+.usb .wire{stroke-dasharray:6 8;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.usb .glow{opacity:0;animation:glow 1s ease forwards;animation-delay:2s}
+@keyframes glow{to{opacity:1}}
+.usb .pulse{transform-origin:center;transform-box:fill-box;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+/* ── órbita de agentes ─────────────────────────────────────────────── */
+.orbit{position:relative;width:540px;height:540px;flex:0 0 540px;margin:auto}
+body.vert .orbit{width:620px;height:620px;flex-basis:620px}
+.orbit .core{position:absolute;left:50%;top:50%;width:170px;height:170px;margin:-85px 0 0 -85px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 35%,#6d28d9 85%);box-shadow:0 0 60px rgba(34,211,238,.45),0 0 120px rgba(139,92,246,.35);
+  display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--fd);font-weight:700;color:#04222a;font-size:20px;line-height:1.1;animation:pulse 3s ease-in-out infinite}
+.orbit .ring{position:absolute;inset:0;border-radius:50%;border-color:transparent!important;border:1px dashed rgba(34,211,238,.35);animation:spin 60s linear infinite}
+.orbit .ring2{position:absolute;inset:10%;border-radius:50%;border:1px dashed rgba(34,211,238,.4)}
+.orbit .ring3{position:absolute;inset:28%;border-radius:50%;border:1px solid rgba(139,92,246,.35)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit .node{position:absolute;left:50%;top:50%;width:0;height:0}
+.orbit .node span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(15,23,40,.95);border:1px solid var(--line2);border-radius:999px;padding:7px 13px;font-weight:600;font-size:13.5px;color:var(--txt);animation:counter 60s linear infinite}
+@keyframes counter{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+body.vert .orbit .node span{font-size:18px}
+
+/* ── flujo de una solicitud ────────────────────────────────────────── */
+.flow svg{width:100%;height:auto}
+.flow text{font-family:var(--fb)}
+.flow .box{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.flow .hot{fill:#0e2a35;stroke:#22d3ee}
+.flow .lbl{fill:#eaf0fb;font-weight:700;font-size:17px}
+.flow .sub{fill:#9db0cc;font-size:13px}
+.flow .path{stroke:rgba(34,211,238,.4);stroke-width:2;fill:none;stroke-dasharray:5 7;animation:flow 1.4s linear infinite}
+
+/* tabla comparativa */
+table.cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:20px;font-size:15.5px;border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+table.cmp th{font-family:var(--fd);text-align:left;padding:11px 14px;background:#0f1728;color:var(--mut);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+table.cmp th.us{color:var(--on);background:linear-gradient(90deg,var(--cy),#67e8f9)}
+table.cmp td{padding:10px 14px;border-top:1px solid var(--line)}
+table.cmp td.us{color:var(--txt);font-weight:700;background:rgba(34,211,238,.07)}
+table.cmp td.them{color:var(--mut)}
+body.vert table.cmp{font-size:20px}body.vert table.cmp td{padding:14px 12px}body.vert table.cmp th{font-size:15px}
+
+/* precio */
+.price{display:flex;gap:18px;margin-top:24px}
+body.vert .price{flex-direction:column}
+.price .card{flex:1;padding:26px}
+.price .amt{font-family:var(--fd);font-weight:700;font-size:64px;line-height:1;margin-top:10px}
+.price .amt small{font-size:18px;color:var(--mut);font-weight:600;margin-left:6px}
+.price ul{list-style:none;margin-top:14px}
+.price li{font-size:16px;color:var(--mut);padding:5px 0 5px 24px;position:relative}
+.price li::before{content:"";position:absolute;left:2px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--cy)}
+
+/* pasos */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;position:relative}
+.steps::before{content:"";position:absolute;left:4%;right:4%;top:30px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.6}
+body.vert .steps{grid-template-columns:1fr}
+body.vert .steps::before{left:30px;right:auto;top:20px;bottom:20px;width:2px;height:auto}
+.step .dot{width:60px;height:60px;border-radius:50%;background:var(--bg);border:2px solid var(--cy);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:22px;color:var(--cy);box-shadow:0 0 22px rgba(34,211,238,.35);position:relative}
+body.vert .step{display:flex;gap:18px;align-items:flex-start}
+body.vert .step .dot{flex:0 0 60px}
+.step h3{font-family:var(--fd);font-weight:700;font-size:19px;margin-top:12px}
+body.vert .step h3{margin-top:4px;font-size:28px}
+.step p{font-size:15px;color:var(--mut);margin-top:4px;line-height:1.45}
+body.vert .step p{font-size:21px}
+
+/* portada */
+.cover h1{font-size:70px}
+body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}body.vert .cover .col.grow{max-width:none!important}body.vert .price .amt{font-size:76px}body.vert .price li{font-size:21px}
+.cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
+
+/* ── reproductor ───────────────────────────────────────────────────── */
+.dock{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(7,11,22,.92);border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;backdrop-filter:blur(8px)}
+.orb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 0 0 rgba(34,211,238,.6)}
+.orb.sp{animation:pul 1.2s ease-in-out infinite}
+@keyframes pul{70%{box-shadow:0 0 0 14px rgba(34,211,238,0)}}
+.cap{flex:1;min-width:0}
+#capT{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cy)}
+#capX{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{background:#131e33;color:var(--txt);border:1px solid var(--line2);border-radius:12px;min-width:44px;height:44px;font-weight:700;font-size:16px}
+#cnt{font-size:13px;font-weight:600;min-width:54px;text-align:center;color:var(--mut)}
+#prog{position:fixed;left:0;bottom:72px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));width:0;z-index:21;transition:width .3s}
+.gate{position:fixed;inset:0;z-index:40;background:rgba(4,7,15,.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.gate.off{display:none}
+.gate .box{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:30px;max-width:440px;width:100%;text-align:center}
+.gate .orbbig{width:84px;height:84px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 50px rgba(34,211,238,.5);animation:pulse 2.6s ease-in-out infinite}
+.gate h1{font-size:30px;margin-top:16px}
+.gate p{font-size:15px;color:var(--mut);margin:10px 0 18px;line-height:1.5}
+.gate button{display:block;width:100%;border:0;border-radius:999px;padding:14px;font-weight:700;font-size:16px;margin-top:10px;min-height:48px}
+#start{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on)}
+#silent{background:transparent;color:var(--txt);border:1px solid var(--line2)!important}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+</head>
+<body>
+<div class="vp"><div id="stage">
+
+  <!-- 1 portada -->
+  <section class="slide cover" data-t="Bienvenida">
+    <div class="brand"><img src="../logo.png" alt=""><span><b>DIGIT</b><i>2</i><b>AI</b> · MCP NEURAL</span></div>
+    <div class="row">
+      <div class="col grow">
+        <div class="kick stag d1">Inteligencia artificial para su empresa</div>
+        <h1 class="stag d2">Conecte su empresa a la <span class="grad">IA de los mejores proveedores.</span></h1>
+        <p class="lead stag d3">Como una memoria USB: se conecta por la API de sus sistemas y su empresa gana una capacidad nueva. Sin cambiar nada de lo que ya funciona.</p>
+      </div>
+      <div class="col grow" style="max-width:520px;width:100%">
+        <svg class="usb" viewBox="0 0 520 300" aria-hidden="true">
+          <defs><linearGradient id="gU" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+          <rect x="10" y="90" width="210" height="120" rx="18" fill="#0f1728" stroke="rgba(120,150,200,.35)"/>
+          <text x="115" y="142" text-anchor="middle" fill="#eaf0fb" font="700 18px Space Grotesk" style="font:700 18px var(--fd)">Su empresa</text>
+          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">CRM · ERP · correo · datos</text>
+          <rect x="220" y="132" width="26" height="36" rx="4" fill="#131e33" stroke="#22d3ee"/>
+          <g class="plug"><rect x="246" y="138" width="40" height="24" rx="3" fill="#c7d2e3"/><rect x="286" y="126" width="70" height="48" rx="8" fill="url(#gU)"/></g>
+          <g class="glow"><circle class="pulse" cx="440" cy="150" r="70" fill="url(#gU)" opacity=".95"/></g>
+          <text class="glow" x="440" y="146" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">Cerebro</text>
+          <text class="glow" x="440" y="168" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">MCP</text>
+          <g class="glow"><path class="wire" d="M356 150 H370" stroke="#22d3ee" stroke-width="3"/></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 el problema -->
+  <section class="slide" data-t="El punto de partida">
+    <div class="kick">El punto de partida</div>
+    <h2>Su empresa ya tiene sistemas.<br><span class="grad">Lo que les falta es inteligencia.</span></h2>
+    <div class="grid g3" style="margin-top:28px">
+      <div class="card stag d1"><span class="n">HOY</span><h3>Sistemas que funcionan</h3><p>CRM, ERP, correo, calendario y bases de datos. Nadie quiere cambiarlos.</p></div>
+      <div class="card stag d2"><span class="n">EL OBSTÁCULO</span><h3>Integrar la IA es lento</h3><p>Hacerlo por cuenta propia suele significar meses de desarrollo y un equipo especializado.</p></div>
+      <div class="card stag d3"><span class="n">Y ADEMÁS</span><h3>Un contrato por proveedor</h3><p>Cada servicio de IA se contrata, se configura y se paga por separado.</p></div>
+    </div>
+    <div class="row" style="margin-top:20px;flex:0;gap:10px;flex-wrap:wrap;flex-direction:row">
+      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>CRM</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>ERP</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Correo</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Calendario</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Base de datos</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Contabilidad</span>
+    </div>
+  </section>
+
+  <!-- 3 USB -->
+  <section class="slide" data-t="Un USB para la inteligencia de negocio">
+    <div class="kick">La idea</div>
+    <h2>Un USB para la <span class="grad">inteligencia de negocio.</span></h2>
+    <p class="lead">Igual que un USB le da a su computadora una capacidad nueva en segundos, Digit2AI MCP conecta su empresa a un ecosistema inteligente. Se conecta por la API de sus sistemas. No se reemplaza nada.</p>
+    <div class="row" style="margin-top:8px">
+      <svg class="usb" id="usbL" viewBox="0 0 900 330" aria-hidden="true" style="max-height:340px">
+        <defs><linearGradient id="gU2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">CRM</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">ERP</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">Correo y calendario</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">Bases de datos</text></g>
+        <path d="M210 47 H290 M210 117 H290 M210 187 H290 M210 257 H290 M290 47 V257" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="290" y="128" width="40" height="44" rx="5" fill="#131e33" stroke="#22d3ee"/>
+        <text x="310" y="200" text-anchor="middle" style="font:600 13px var(--fb)" fill="#9db0cc">API</text>
+        <g class="plug" style="transform:translateX(230px)"><rect x="330" y="136" width="56" height="28" rx="3" fill="#c7d2e3"/><rect x="386" y="120" width="96" height="60" rx="10" fill="url(#gU2)"/><text x="434" y="156" text-anchor="middle" style="font:700 16px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M482 150 H640" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="720" cy="150" r="82" fill="url(#gU2)"/></g>
+        <text class="glow" x="720" y="146" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Ecosistema</text>
+        <text class="glow" x="720" y="170" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+      <svg class="usb" id="usbV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gU3" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">CRM</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">ERP</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:20px">Correo y calendario</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:22px">Bases de datos</text></g>
+        <path d="M160 170 V205 H460 V170 M310 205 V240" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="284" y="240" width="52" height="44" rx="6" fill="#131e33" stroke="#22d3ee"/>
+        <text x="360" y="268" style="font:600 18px var(--fb)" fill="#9db0cc">API</text>
+        <g class="plugV"><rect x="292" y="284" width="36" height="56" rx="3" fill="#c7d2e3"/><rect x="250" y="340" width="120" height="110" rx="14" fill="url(#gU3)"/><text x="310" y="404" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M310 450 V540" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="310" cy="640" r="105" fill="url(#gU3)"/></g>
+        <text class="glow" x="310" y="634" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">Ecosistema</text>
+        <text class="glow" x="310" y="666" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4 qué es -->
+  <section class="slide" data-t="Qué hay dentro">
+    <div class="kick">Qué es</div>
+    <h2>IA avanzada que llega <span class="grad">ya integrada.</span></h2>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card stag d1"><span class="n">01</span><h3>Un cerebro central</h3><p>Recibe cada solicitud, decide qué agentes la atienden, reparte el trabajo y entrega un solo resultado.</p></div>
+      <div class="card stag d2"><span class="n">02</span><h3>Más de 100 agentes</h3><p>Cada agente tiene un rol, reglas y entregables: análisis, ingeniería, finanzas, cumplimiento, ventas, voz y datos.</p></div>
+      <div class="card stag d3"><span class="n">03</span><h3>Conectores estándar MCP</h3><p>Un protocolo abierto para conectar la IA con sistemas reales: CRM, correo, calendario, ERP y bases de datos.</p></div>
+      <div class="card stag d4"><span class="n">04</span><h3>Varios proveedores</h3><p>Para cada tarea se usa el servicio que mejor la resuelve. Si uno falla o sube de precio, se cambia.</p></div>
+    </div>
+  </section>
+
+  <!-- 5 cómo funciona -->
+  <section class="slide" data-t="Cómo funciona">
+    <div class="kick">Cómo funciona</div>
+    <h2>Una solicitud, <span class="grad">un solo resultado.</span></h2>
+    <div class="row flow" style="margin-top:6px">
+      <svg id="flowL" viewBox="0 0 1150 330" aria-hidden="true">
+        <defs><linearGradient id="gF" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="p1" class="path" d="M200 165 H360"/>
+        <path id="p2a" class="path" d="M540 165 C600 165 600 70 680 70"/><path id="p2b" class="path" d="M540 165 H680"/><path id="p2c" class="path" d="M540 165 C600 165 600 260 680 260"/>
+        <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
+        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">CRM · ERP · correo</text>
+        <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Agente</text>
+        <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Agente</text>
+        <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Agente</text>
+        <rect class="box" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Mejor servicio</text><text class="sub" x="1047" y="183" text-anchor="middle">para cada tarea</text>
+        <circle r="7" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2a"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2b"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2c"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3a"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3b"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3c"/></animateMotion></circle>
+      </svg>
+      <svg id="flowV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gF2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="v1" class="path" d="M310 120 V230"/>
+        <path id="v2a" class="path" d="M310 350 C310 400 110 400 110 450"/><path id="v2b" class="path" d="M310 350 V450"/><path id="v2c" class="path" d="M310 350 C310 400 510 400 510 450"/>
+        <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
+        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">CRM · ERP · correo</text>
+        <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="430" y="450" width="160" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Mejor servicio</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">para cada tarea</text>
+        <circle r="8" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#v1"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2a"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2b"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2c"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3a"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3b"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3c"/></animateMotion></circle>
+      </svg>
+    </div>
+    <p class="lead" style="margin-top:4px">El resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con IA.</p>
+  </section>
+
+  <!-- 6 proveedores -->
+  <section class="slide" data-t="Lo mejor de cada proveedor">
+    <div class="kick">Lo mejor de cada proveedor</div>
+    <h2>Los líderes del mercado, <span class="grad">bajo un solo cerebro.</span></h2>
+    <div class="grid g4" style="margin-top:24px">
+      <div class="card stag d1"><h3>Anthropic</h3><p>Razonamiento, redacción, agentes y programación asistida.</p></div>
+      <div class="card stag d2"><h3>OpenAI</h3><p>Modelos de lenguaje y generación de contenido.</p></div>
+      <div class="card stag d3"><h3>Google</h3><p>Modelos multimodales, mapas, calendario y correo.</p></div>
+      <div class="card stag d4"><h3>Amazon Web Services</h3><p>Almacenamiento seguro de archivos y voz telefónica.</p></div>
+      <div class="card stag d5"><h3>Microsoft Azure</h3><p>Voces neuronales en español e inglés.</p></div>
+      <div class="card stag d6"><h3>GitHub</h3><p>Código, versiones y automatización de pruebas.</p></div>
+      <div class="card stag d7"><h3>Render</h3><p>Servidores, bases de datos y despliegue continuo.</p></div>
+      <div class="card stag d8"><h3>Otros</h3><p>Telefonía, mensajería, pagos y correo.</p></div>
+    </div>
+    <p class="foot">Usted no contrata, configura ni paga cada servicio por separado. Las marcas pertenecen a sus dueños.</p>
+  </section>
+
+  <!-- 7 agentes -->
+  <section class="slide" data-t="La fuerza de trabajo">
+    <div class="row">
+      <div class="col grow">
+        <div class="kick">Una fuerza de trabajo de agentes</div>
+        <h2>Más de cien agentes, <span class="grad">activos solo cuando hacen falta.</span></h2>
+        <p class="lead">El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre y cada cliente recibe los nuevos agentes automáticamente.</p>
+      </div>
+      <div class="orbit" id="orbit">
+        <div class="ring2"></div><div class="ring3"></div><div class="ring"></div>
+        <div class="core">Cerebro<br>MCP</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 para qué sirve -->
+  <section class="slide" data-t="Para qué sirve">
+    <div class="kick">Para qué sirve</div>
+    <h2>IA en el trabajo diario, <span class="grad">no solo en un chat.</span></h2>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card stag d1"><h3>Atención 24/7</h3><p>Asistentes de voz y texto en español e inglés que responden, agendan y toman mensajes.</p></div>
+      <div class="card stag d2"><h3>Documentos</h3><p>Lectura de facturas, contratos y formularios, con la fuente de cada dato señalada.</p></div>
+      <div class="card stag d3"><h3>Conocimiento interno</h3><p>Respuestas con los manuales y políticas de la empresa, citando de dónde salen.</p></div>
+      <div class="card stag d4"><h3>Automatización</h3><p>Tareas repetitivas entre sistemas: copiar datos, dar seguimiento, recordar vencimientos.</p></div>
+      <div class="card stag d5"><h3>Ventas y mercadeo</h3><p>Calificación de prospectos y borradores de campañas, aprobados por una persona.</p></div>
+      <div class="card stag d6"><h3>Software a la medida</h3><p>Aplicaciones nuevas construidas, probadas y publicadas en semanas.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 qué no es -->
+  <section class="slide" data-t="Qué no es">
+    <div class="kick">Qué no es</div>
+    <h2>No compite con sus sistemas. <span class="grad">Los hace más inteligentes.</span></h2>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card stag d1"><h3>No reemplaza</h3><p>Su CRM, ERP, contabilidad y aplicaciones siguen igual. Se conecta a ellos.</p></div>
+      <div class="card stag d2"><h3>No es dueño de nada suyo</h3><p>Su propiedad intelectual, productos y datos siguen siendo suyos.</p></div>
+      <div class="card stag d3"><h3>No es un modelo propio</h3><p>Usa los modelos de los líderes del mercado y los combina.</p></div>
+      <div class="card stag d4"><h3>No decide por usted</h3><p>Enviar, pagar o publicar siempre espera la aprobación de una persona.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 seguridad -->
+  <section class="slide" data-t="Seguridad y control">
+    <div class="kick">Seguridad y control</div>
+    <h2>Las reglas están escritas <span class="grad">en el sistema.</span></h2>
+    <p class="lead">No solo en las instrucciones a la IA.</p>
+    <div class="grid g4" style="margin-top:22px">
+      <div class="card stag d1"><span class="n">DATOS</span><h3>Separados</h3><p>Cada empresa ve solo su propia información.</p></div>
+      <div class="card stag d2"><span class="n">APROBACIÓN</span><h3>Humana</h3><p>Nada se envía, se paga ni se publica sin autorización.</p></div>
+      <div class="card stag d3"><span class="n">REGISTRO</span><h3>Completo</h3><p>Cada acción de cada agente queda registrada.</p></div>
+      <div class="card stag d4"><span class="n">CIFRAS</span><h3>Nunca inventadas</h3><p>Si un dato no existe, el sistema lo dice. No lo adivina.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 comparación -->
+  <section class="slide" data-t="Frente a un solo proveedor">
+    <div class="kick">Frente a un solo proveedor de IA</div>
+    <h2>Un proveedor entrega la materia prima. <span class="grad">MCP la entrega integrada.</span></h2>
+    <table class="cmp">
+      <tr><th>Aspecto</th><th>Un solo proveedor</th><th class="us">Digit2AI MCP</th></tr>
+      <tr><td>Modelos</td><td class="them">Solo los suyos</td><td class="us">Los mejores de varios</td></tr>
+      <tr><td>Conexión con sus sistemas</td><td class="them">La construye usted</td><td class="us">Ya integrada por MCP</td></tr>
+      <tr><td>Agentes por función</td><td class="them">Los arma usted</td><td class="us">Más de cien, listos</td></tr>
+      <tr><td>Voz, telefonía y mensajería</td><td class="them">Aparte</td><td class="us">Incluidas</td></tr>
+      <tr><td>Aprobación y auditoría</td><td class="them">La diseña usted</td><td class="us">Incorporadas</td></tr>
+      <tr><td>Si un proveedor falla o sube precios</td><td class="them">Queda atado</td><td class="us">Se cambia de proveedor</td></tr>
+      <tr><td>Tiempo para empezar</td><td class="them">Meses</td><td class="us">Semanas</td></tr>
+    </table>
+  </section>
+
+  <!-- 12 cómo empezar -->
+  <section class="slide" data-t="Cómo empezar">
+    <div class="kick">Cómo empezar</div>
+    <h2>Pequeño y seguro: <span class="grad">máximo cuatro semanas.</span></h2>
+    <div class="steps">
+      <div class="step stag d1"><div class="dot">1</div><div><h3>Diagnóstico</h3><p>Medimos costo, riesgo y calidad de datos, y entregamos una hoja de ruta.</p></div></div>
+      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer paso seguro</h3><p>Elegimos un proceso de bajo riesgo y alto valor.</p></div></div>
+      <div class="step stag d3"><div class="dot">3</div><div><h3>Conexión</h3><p>El cerebro MCP se conecta a los sistemas que ese proceso usa.</p></div></div>
+      <div class="step stag d4"><div class="dot">4</div><div><h3>Resultados medidos</h3><p>Medimos con datos reales antes de crecer a la siguiente fase.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 13 inversión -->
+  <section class="slide" data-t="Inversión">
+    <div class="kick">Inversión</div>
+    <h2>Se contrata <span class="grad">como un servicio.</span></h2>
+    <div class="price">
+      <div class="card stag d1"><span class="n">CONFIGURACIÓN INICIAL</span><div class="amt">$700<small>USD · pago único</small></div><ul><li>Creación de la instancia de su empresa</li><li>Conexión del cerebro MCP a sus sistemas</li></ul></div>
+      <div class="card stag d2"><span class="n">SUSCRIPCIÓN MENSUAL</span><div class="amt">$397<small>USD / mes</small></div><ul><li>Consumo de tokens estándar incluido</li><li>Acceso a la fuerza de trabajo de agentes</li><li>Nuevos agentes cada trimestre</li></ul></div>
+    </div>
+    <p class="foot">Un consumo de tokens por encima del estándar se cotiza aparte.</p>
+  </section>
+
+  <!-- 14 cierre -->
+  <section class="slide cover" data-t="Siguiente paso">
+    <div class="brand"><img src="../logo.png" alt=""><span><b>DIGIT</b><i>2</i><b>AI</b> · MCP NEURAL</span></div>
+    <div class="row">
+      <div class="col grow">
+        <div class="kick stag d1">Siguiente paso</div>
+        <h1 class="stag d2">Convierta su empresa en una <span class="grad">empresa inteligente.</span></h1>
+        <p class="lead stag d3">Conecte Digit2AI MCP Neural y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</p>
+        <span class="cta stag d4">digit2ai.com/mcp</span>
+      </div>
+      <div class="col" style="align-items:center"><div class="gate-orb" style="width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 40%,#6d28d9);box-shadow:0 0 80px rgba(34,211,238,.45),0 0 160px rgba(139,92,246,.35);animation:pulse 3s ease-in-out infinite"></div></div>
+    </div>
+  </section>
+
+</div></div>
+
+<div id="prog"></div>
+<div class="dock">
+  <div class="orb" id="orb" aria-hidden="true"></div>
+  <div class="cap"><div id="capT">Lina</div><div id="capX">Pulse reproducir para escuchar a Lina.</div></div>
+  <button id="prev" aria-label="Lámina anterior">‹</button>
+  <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
+  <button id="next" aria-label="Lámina siguiente">›</button>
+  <span id="cnt">1 / 14</span>
+</div>
+
+<div class="gate" id="gate"><div class="box">
+  <div class="orbbig"></div>
+  <h1>Digit2AI MCP Neural</h1>
+  <p>Lina le explica, en unos minutos, cómo conectar su empresa a la inteligencia artificial de los mejores proveedores.</p>
+  <button id="start">Escuchar a Lina</button>
+  <button id="silent">Ver sin audio</button>
+</div></div>
+
+<script>
+(function(){
+  // Vertical: teléfono, pantalla más alta que ancha, o ?formato=vertical (para grabar el MP4).
+  var q = new URLSearchParams(location.search);
+  function wantVert(){ return q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
+  function applyMode(){
+    var v = wantVert();
+    document.body.classList.toggle('vert', v);
+    document.getElementById('flowL').style.display = v ? 'none' : '';
+    document.getElementById('flowV').style.display = v ? '' : 'none';
+    document.getElementById('usbL').style.display = v ? 'none' : '';
+    document.getElementById('usbV').style.display = v ? '' : 'none';
+  }
+
+  // Órbita: nueve áreas de la fuerza de trabajo, repartidas en el anillo.
+  var AREAS = ['Núcleo siempre activo','Preparación para IA','Ingeniería','Datos y ML','IA nativa y confianza','Negocio y ventas','Finanzas, legal y talento','Industria y diseño','Servicios de IA'];
+  var orbit = document.getElementById('orbit');
+  var ring = orbit.querySelector('.ring');
+  function placeOrbit(){
+    [].slice.call(ring.querySelectorAll('.node')).forEach(function(n){ n.remove(); });
+    var R = orbit.clientWidth / 2 * 0.80;
+    AREAS.forEach(function(a, k){
+      var ang = (k / AREAS.length) * Math.PI * 2 - Math.PI / 2;
+      var n = document.createElement('div'); n.className = 'node';
+      n.style.transform = 'translate(' + (Math.cos(ang) * R) + 'px,' + (Math.sin(ang) * R) + 'px)';
+      var s = document.createElement('span'); s.textContent = a; n.appendChild(s);
+      ring.appendChild(n);
+    });
+  }
+
+  // Un texto por lámina. Cifras en palabras para que la voz las lea bien.
+  var NARR = [
+    'Hola, soy Lina, de Digit2AI. En unos minutos le voy a mostrar cómo su empresa puede usar la inteligencia artificial más avanzada del mundo, sin cambiar los sistemas que ya tiene. Imagínelo como una memoria USB: se conecta, y su empresa gana una capacidad nueva.',
+    'Su empresa ya tiene sistemas que funcionan: un CRM, un ERP, correo, calendario y bases de datos. Lo que les falta es inteligencia. Y llevar la inteligencia artificial hasta ellos por cuenta propia suele significar meses de desarrollo, un equipo especializado, y un contrato distinto con cada proveedor.',
+    'Digit2AI MCP funciona como un USB para la inteligencia de negocio. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su empresa a la inteligencia artificial de los mejores proveedores del mundo. Se conecta por la API de sus sistemas, como un USB a un puerto. No se reemplaza nada.',
+    'Dentro hay cuatro piezas. Un cerebro central, que recibe cada solicitud y reparte el trabajo. Más de cien agentes especializados, cada uno con un rol, reglas y entregables. Conectores estándar MCP, un protocolo abierto para conectar la inteligencia artificial con sistemas reales. Y varios proveedores: para cada tarea se usa el servicio que mejor la resuelve.',
+    'Así funciona. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agentes la atienden. Cada agente usa el mejor servicio disponible para su tarea. Y el resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con inteligencia artificial.',
+    'Detrás del cerebro están los líderes del mercado. Anthropic para razonar y redactar. OpenAI para lenguaje y contenido. Google para modelos multimodales, mapas, calendario y correo. Amazon Web Services para almacenamiento y voz telefónica. Microsoft Azure para voces neuronales. GitHub para el código, y Render para los servidores. Usted no contrata ni configura ninguno por separado. Y si un proveedor falla o sube de precio, se cambia sin que usted lo note.',
+    'Es una fuerza de trabajo completa: negocio, investigación, ingeniería, datos, finanzas, legal, ventas, industria y diseño. El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre, y cada cliente recibe los nuevos agentes de forma automática.',
+    'Sirve para que su empresa use la inteligencia artificial en el trabajo diario, no solo en un chat. Atención al cliente las veinticuatro horas, en español y en inglés. Lectura de facturas, contratos y formularios. Respuestas con los manuales de la empresa, citando la fuente. Tareas repetitivas entre sistemas. Ventas y mercadeo. Y software a la medida, publicado en semanas.',
+    'También importa lo que no es. No reemplaza su CRM, su ERP ni su contabilidad: se conecta a ellos. No es dueño de nada suyo: sus datos y su propiedad intelectual siguen siendo suyos. No es un modelo propio: combina los modelos de los líderes. Y no decide por usted: enviar, pagar o publicar siempre espera la aprobación de una persona.',
+    'La seguridad está escrita en el sistema, no solo en las instrucciones a la inteligencia artificial. Cada empresa ve solo su propia información. Nada se envía, se paga ni se publica sin autorización. Cada acción de cada agente queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.',
+    'Frente a un solo proveedor de inteligencia artificial, la diferencia es clara. Un proveedor entrega la materia prima: sus propios modelos. La conexión, los agentes, la voz y la auditoría los construye usted. Digit2AI MCP entrega todo eso ya integrado, con los mejores modelos de varios proveedores. Y en lugar de meses, se empieza en semanas.',
+    'Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.',
+    'Se contrata como un servicio. Un pago único de configuración de setecientos dólares, para crear la instancia de su empresa y conectar el cerebro. Y una suscripción mensual de trescientos noventa y siete dólares, con el consumo estándar de tokens incluido, acceso a la fuerza de trabajo de agentes, y nuevos agentes cada trimestre.',
+    'Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
+  ];
+
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '▶︎';
+
+  function fit(){
+    applyMode();
+    var W = document.body.classList.contains('vert') ? 720 : 1280, H = document.body.classList.contains('vert') ? 1280 : 720;
+    var s = Math.min(window.innerWidth / W, (window.innerHeight - 72) / H) * 0.97;
+    stage.style.transform = 'scale(' + s + ')';
+    placeOrbit();
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t !== token || !audio || !audio.duration) return;
+        capAt(audio.currentTime / audio.duration);
+        prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Lina · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    if (slides[i].querySelector('#orbit')) placeOrbit();
+    narrate();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  // Deslizar en el teléfono
+  var x0 = null;
+  document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive:true });
+  document.addEventListener('touchend', function(e){
+    if (x0 === null || !gate.classList.contains('off')) return;
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+  }, { passive:true });
+  slides[0].classList.add('on');
+  window.addEventListener('beforeunload', stopAll);
+  window.MCPDECK = { show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
+})();
+</script>
+</body>
+</html>
