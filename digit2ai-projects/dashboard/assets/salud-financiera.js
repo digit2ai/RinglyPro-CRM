@@ -141,32 +141,24 @@
     return 'Del ' + (m1 === m2 ? Number(desde.slice(8)) : fechaLarga(desde)) + ' al ' + fechaLarga(hasta);
   }
 
-  // Small step curve of the projected balance from today on, with an arrow:
-  // up when nothing is at risk, down when something is — and the reason.
+  // Arrow up when nothing is at risk, down when something is — with every
+  // reason and each payment that is not covered, named.
   function tendenciaHtml(s) {
     var t = s.tendencia; if (!t) return '';
-    var pts = (s.serie && s.serie.proyeccion || []).filter(function (d) { return d.fecha >= s.hoy; });
-    if (!pts.length || pts[0].fecha !== s.hoy) pts.unshift({ fecha: s.hoy, saldo: Number(String(s.saldo_hoy).replace(/[$,]/g, '')) });
-    var W = 220, H = 56, P = 4;
-    var vals = pts.map(function (d) { return d.saldo; });
-    var lo = Math.min.apply(null, vals.concat([0])), hi = Math.max.apply(null, vals);
-    var t0 = Date.parse(pts[0].fecha), t1 = Date.parse(pts[pts.length - 1].fecha); if (t1 === t0) t1 = t0 + 864e5;
-    var x = function (iso) { return P + (Date.parse(iso) - t0) / (t1 - t0) * (W - 2 * P); };
-    var y = function (v) { return P + (hi - v) / ((hi - lo) || 1) * (H - 2 * P); };
-    var d = ''; pts.forEach(function (p, i) { d += (i ? 'H' + x(p.fecha).toFixed(1) + 'V' : 'M' + x(p.fecha).toFixed(1) + ',') + y(p.saldo).toFixed(1); });
     var col = t.sube ? 'var(--success)' : 'var(--warning)';
-    var minP = pts.reduce(function (m, p) { return p.saldo < m.saldo ? p : m; }, pts[0]);
-    var zero = lo < 0 ? '<line x1="' + P + '" x2="' + (W - P) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="var(--text-muted)" stroke-dasharray="2 3"/>' : '';
     var arrow = t.sube
-      ? '<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4.5v8h-5v-8H5z" fill="' + col + '"/></svg>'
-      : '<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-7-8h4.5V4h5v8H19z" fill="' + col + '"/></svg>';
-    var razones = t.sube ? t.buenas.slice(0, 2) : t.malas.slice(0, 2);
-    var texto = (t.sube ? 'Sube: ' : 'Baja: ') + razones.map(function (r) { return r.texto; }).join('; ') + '.';
-    return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' + arrow +
-      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" width="100%" height="' + H + '" style="display:block;flex:1 1 0;min-width:0;max-width:100%" role="img" aria-label="Tendencia de tu saldo">' + zero +
-      '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2"/>' +
-      '<circle cx="' + x(minP.fecha) + '" cy="' + y(minP.saldo) + '" r="3" fill="' + col + '"/></svg></div>' +
-      '<div style="font-size:12.5px;line-height:1.4;color:' + col + '">' + esc(texto.charAt(0).toUpperCase() + texto.slice(1)) + '</div>';
+      ? '<svg width="28" height="28" style="flex:0 0 28px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 8h-4.5v8h-5v-8H5z" fill="' + col + '"/></svg>'
+      : '<svg width="28" height="28" style="flex:0 0 28px" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-7-8h4.5V4h5v8H19z" fill="' + col + '"/></svg>';
+    var hayLista = (s.obligaciones_descubiertas || []).length > 0;
+    var razones = t.sube ? t.buenas.slice(0, 2) : t.malas.filter(function (r) { return !(hayLista && r.tipo === 'pago_descubierto'); });
+    var texto = (t.sube ? 'Sube: ' : 'Baja: ') + (razones.length ? '' : 'hay pagos sin cubrir') + razones.map(function (r) { return r.texto; }).join('; ') + '.';
+    var lista = (s.obligaciones_descubiertas || []).map(function (p) {
+      return '<li style="margin:4px 0"><strong>' + esc(p.concepto) + '</strong> &middot; ' + esc(fechaLarga(p.fecha)) + ' &middot; ' + esc(p.monto) +
+        '<br><span style="color:var(--text-secondary)">después de pagarlo quedas en ' + esc(p.saldo) + '</span></li>';
+    }).join('');
+    return '<div style="display:flex;align-items:flex-start;gap:8px;margin-top:6px">' + arrow +
+      '<div style="font-size:13px;line-height:1.45;color:' + col + '">' + esc(texto.charAt(0).toUpperCase() + texto.slice(1)) + '</div></div>' +
+      (lista ? '<div style="font-size:12.5px;margin-top:8px;color:var(--text-primary)">No quedan cubiertos:<ul style="margin:4px 0 0 16px;padding:0">' + lista + '</ul></div>' : '');
   }
 
   function drawCards(s) {

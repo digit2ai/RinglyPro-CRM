@@ -203,7 +203,7 @@ function analyze(rawRows, opts = {}) {
     tendencia: tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }),
     dias_negativos: negativos,
     obligaciones: { total: obligaciones.length, cubiertas: obligaciones.length - descubiertas.length, hasta: obligaciones.length ? obligaciones[obligaciones.length - 1].row.fecha : null },
-    obligaciones_descubiertas: descubiertas.map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, saldo: s.saldo })),
+    obligaciones_descubiertas: descubiertas.map(s => ({ id: s.row.id, fecha: s.row.fecha, concepto: s.row.concepto, monto: s.amount, saldo: s.saldo })),
     proximo_pago: proximoGrande ? { id: proximoGrande.row.id, fecha: proximoGrande.row.fecha, concepto: proximoGrande.row.concepto, monto: proximoGrande.amount, saldo_despues: proximoGrande.saldo, cubierto: proximoGrande.saldo >= 0 } : null,
     steps: proj.steps,
     serie: { proyeccion: proj.days, plan: plan.days },
@@ -228,7 +228,7 @@ function publicSummary(a) {
     tendencia: a.tendencia ? { sube: a.tendencia.sube, malas: a.tendencia.malas.map(razon), buenas: a.tendencia.buenas.map(razon) } : null,
     dias_negativos: a.dias_negativos.map(d => ({ fecha: d.fecha, saldo: fmt(d.saldo) })),
     obligaciones: a.obligaciones,
-    obligaciones_descubiertas: a.obligaciones_descubiertas.map(o => ({ ...o, saldo: fmt(o.saldo) })),
+    obligaciones_descubiertas: a.obligaciones_descubiertas.map(o => ({ ...o, monto: fmt(o.monto), saldo: fmt(o.saldo) })),
     proximo_pago: a.proximo_pago ? { ...a.proximo_pago, monto: fmt(a.proximo_pago.monto), saldo_despues: fmt(a.proximo_pago.saldo_despues) } : null
   };
 }
@@ -237,7 +237,7 @@ const fdl = (iso) => { const [, m, d] = iso.split('-').map(Number); return d + '
 function razon(x) {
   const t = {
     negativo: () => `tu saldo queda en negativo el ${fdl(x.fecha)} (${fmt(x.saldo)})`,
-    pago_descubierto: () => `${x.concepto} del ${fdl(x.fecha)} no queda cubierto${x.total > 1 ? ' (y ' + (x.total - 1) + ' más)' : ''}`,
+    pago_descubierto: () => { const n = x.pagos.map(p => `${p.concepto} (${fdl(p.fecha)})`); return (n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' y ' + n[n.length - 1]) + (n.length === 1 ? ' no queda cubierto' : ' no quedan cubiertos'); },
     bajo_colchon: () => `del ${fdl(x.desde)} al ${fdl(x.hasta)} quedas por debajo de tu colchón de ${fmt(x.colchon)}`,
     bajo_plan: () => `vas ${fmt(x.diferencia)} por debajo del plan`,
     semana_excedida: () => `esta semana te pasaste ${fmt(x.exceso)}`,
@@ -286,7 +286,7 @@ function zonaCuidado(forward, min, colchon) {
 function tendencia({ negativos, descubiertas, min, colchon, saldoFinal, saldoFinalPlan, gastado, disponible, zona }) {
   const malas = [], buenas = [];
   if (negativos.length) malas.push({ tipo: 'negativo', fecha: negativos[0].fecha, saldo: negativos[0].saldo });
-  if (descubiertas.length) malas.push({ tipo: 'pago_descubierto', fecha: descubiertas[0].row.fecha, concepto: descubiertas[0].row.concepto, total: descubiertas.length });
+  if (descubiertas.length) malas.push({ tipo: 'pago_descubierto', pagos: descubiertas.map(s => ({ concepto: s.row.concepto, fecha: s.row.fecha })) });
   else buenas.push({ tipo: 'pagos_cubiertos' });
   if (colchon > 0 && min.saldo < colchon && !negativos.length) malas.push({ tipo: 'bajo_colchon', desde: zona && zona.desde, hasta: zona && zona.hasta, saldo: min.saldo, colchon });
   else if (min.saldo >= colchon && min.saldo >= 0) buenas.push({ tipo: colchon > 0 ? 'sobre_colchon' : 'sin_negativos', saldo: min.saldo, colchon });

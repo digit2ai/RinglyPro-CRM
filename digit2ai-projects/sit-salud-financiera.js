@@ -88,6 +88,13 @@ async function engineTests() {
   ok(z0neg.A === 0 && z0neg.score <= 49 && z0neg.zona.bajo_colchon, 'colchón 0: a negative day still caps at 49 and opens the care window');
   ok(!/colchón de \$0/.test(lina.heuristic('en que fecha tengo que tener cuidado', rows, { today: TODAY, colchonCents: 0 }, {}).texto), 'colchón 0: Lina never mentions a "$0 colchón"');
 
+  const two = engine.publicSummary(engine.analyze([...rows,
+    { id: 990, fecha: '2026-12-06', concepto: 'Internet', tipo: 'egreso', monto: '500', categoria: 'servicios', origen: 'plan', estado: 'pendiente' },
+    { id: 991, fecha: '2026-12-07', concepto: 'Software', tipo: 'egreso', monto: '100', categoria: 'servicios', origen: 'plan', estado: 'pendiente' }], { today: TODAY }));
+  const pd = two.tendencia.malas.find(m => m.tipo === 'pago_descubierto');
+  ok(pd && /Software/.test(pd.texto) && !/y \d+ más/.test(pd.texto) && two.obligaciones_descubiertas.every(x => x.monto && x.saldo), 'uncovered payments are all named, with amount and resulting balance (no "y 1 más")', pd && pd.texto);
+  ok(!/<path d="' \+ d \+ '"/.test(fs.readFileSync(path.join(__dirname, 'dashboard/assets/salud-financiera.js'), 'utf8')), 'payments card has no curve');
+
   // Monthly recurring bills: end of month and a fixed day, never duplicated.
   const RECS = [{ concepto: 'Internet', monto: '150.00', fin_de_mes: true }, { concepto: 'Software', monto: '100.00', dia: 7 }];
   const rr = engine.recurrentRows(rows, RECS, TODAY, '2027-01-31');
