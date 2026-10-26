@@ -225,6 +225,7 @@ async function linaTests() {
   { const m = /function curvePitch\(s, p\) \{[\s\S]*?\n  \}/.exec(pfdSrc); const cp = m && new Function('clamp', m[0] + '; return curvePitch;')((v, a, b) => Math.max(a, Math.min(b, v)));
     const ser = (a, b) => ({ hoy: '2026-10-25', serie: { proyeccion: [{ fecha: '2026-10-25', saldo: a }, { fecha: '2026-11-24', saldo: b }, { fecha: '2027-12-31', saldo: b }] } });
     ok(cp && cp(ser(5000, 9000), { saldo_hoy: { v: 5000 }, cambio_30d: { v: 4000 } }) > 0 && cp(ser(5000, 1000), { saldo_hoy: { v: 5000 }, cambio_30d: { v: -4000 } }) < 0 && /var bank = 0;/.test(pfdSrc) && /rotate\(' \+ \(90 - pitch\)/.test(pfdSrc), 'horizon: nose follows the map curve (up when it rises, down when it falls), no banking, map plane tilts the same'); }
+  ok(/Pagos de hoy/.test(pfdSrc) && /data-pago-id/.test(pfdSrc) && /window\.sfOpenEdit\(id/.test(pfdSrc) && /window\.sfOpenEdit = function/.test(ui), 'RESUMEN: Pagos de hoy card, each payment opens Editar movimiento');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');

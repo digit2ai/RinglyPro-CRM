@@ -175,6 +175,11 @@
   function val(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
 
   // Edit any movement (plan or real). Only the fields that changed are sent.
+  // also opened from the panel's "Pagos de hoy" card; the table may be filtered to another month, so the card passes the row
+  window.sfOpenEdit = function (id, row) {
+    if (row && !(state.movs || []).some(function (x) { return x.id === id; })) (state.movs = state.movs || []).push(row);
+    openEdit(id);
+  };
   function openEdit(id) {
     var r = state.movs.filter(function (x) { return x.id === id; })[0]; if (!r) return;
     var cumplido = r.origen === 'plan' && r.estado === 'cumplido';

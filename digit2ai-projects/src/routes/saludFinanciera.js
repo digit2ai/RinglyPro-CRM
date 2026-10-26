@@ -102,6 +102,11 @@ function instrumentos(a, rows) {
   const enNegativo = neg.map(s => ({ fecha: s.row.fecha, concepto: s.row.concepto, monto: fmt(-s.amount), saldo: fmt(s.saldo), minimo: s.row.fecha === a.fecha_min && s.saldo === a.saldo_min }));
   return {
     en_negativo: enNegativo,
+    // plan payments still to make today (and any earlier one never marked done): the "Pagos de hoy" card
+    pagos_hoy: rows.filter(r => r.tipo === 'egreso' && r.origen === 'plan' && r.estado !== 'cumplido' && r.fecha <= a.today)
+      .sort((x, y) => x.fecha < y.fecha ? -1 : x.fecha > y.fecha ? 1 : x.id - y.id)
+      .map(r => ({ id: r.id, fecha: r.fecha, concepto: r.concepto, monto: fmt(-toCents(r.monto)), vencido: r.fecha < a.today,
+        row: { id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real } })),
     costo_mes: d(costoMes), ingreso_mes: d(ingresoMes),
     saldo_hoy: d(a.saldo_hoy), saldo_min: d(a.saldo_min), fecha_min: a.fecha_min, saldo_final: d(a.saldo_final), saldo_final_plan: d(a.saldo_final_plan),
     entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),

@@ -53,6 +53,14 @@
   function resumen(s) {
     var p = s.pfd, cm = s.cierre_mes_actual, t = s.tendencia || { malas: [], buenas: [], sube: true }, h = [];
     h.push(tile('Saldo hoy', esc(p.saldo_hoy.t), esc(fl(s.hoy)), '#fff'));
+    // payments due today (and overdue ones): each opens "Editar movimiento"
+    var ph = p.pagos_hoy || [];
+    var tot = ph.reduce(function (x, r) { return x + Math.round(Math.abs(parseFloat(String(r.monto).replace(/[^0-9.\-]/g, ''))) * 100); }, 0);
+    h.push(tile('Pagos de hoy', ph.length ? '-$' + (tot / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'Nada que pagar',
+      ph.length ? ph.map(function (r) {
+        return '<a href="#" data-pago-id="' + r.id + '" style="display:block;color:' + (r.vencido ? C.red : C.cyan) + ';text-decoration:underline;padding:3px 0">' +
+          esc(fc(r.fecha)) + ' · ' + esc(r.concepto) + ' · ' + esc(r.monto) + (r.vencido ? ' · vencido' : '') + '</a>';
+      }).join('') : 'No tienes pagos pendientes para hoy.', ph.length ? C.red : C.green));
     if (cm) h.push(tile('Cierre de ' + esc(cm.nombre.split(' ')[0]), esc(cm.saldo), cm.saldo === cm.saldo_plan ? 'Igual al plan' : 'Plan: ' + esc(cm.saldo_plan), cm.saldo.charAt(0) === '-' ? C.red : '#fff'));
     // minimum with its month/year selector
     var m = state.minSel ? (s.minimos_mes || []).filter(function (x) { return x.mes === state.minSel; })[0] : null;
@@ -336,7 +344,7 @@
         o.push('<text x="430" y="26" fill="' + C.red + '" font-size="18" font-weight="700"><tspan fill="#fff" font-size="12" font-weight="400">FALTAN</tspan> ' + esc(falta) + af + '</text>');
       } else o.push('<text x="430" y="26" fill="' + a2[1] + '" font-size="20" font-weight="700">' + esc(a2[0]) + '</text>');
       o.push('<text x="270" y="54" fill="' + a3[1] + '" font-size="20" font-weight="700">' + esc(a3[0]) + '</text>');
-      if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="17" font-weight="700">' + esc(sinMes(prox.concepto).toUpperCase().slice(0, 12)) + ' <tspan fill="#fff" font-size="14">EN</tspan> ' + prox.dias + '<tspan font-size="14">D</tspan> <tspan fill="#fff">' + esc(String(prox.monto).replace(/\.00$/, '')) + '</tspan></text>');
+      if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="17" font-weight="700">' + esc(sinMes(prox.concepto).toUpperCase().slice(0, 12)) + (prox.dias <= 0 ? ' <tspan fill="#fff" font-size="14">HOY</tspan>' : ' <tspan fill="#fff" font-size="14">EN</tspan> ' + prox.dias + '<tspan font-size="14">D</tspan>') + ' <tspan fill="#fff">' + esc(String(prox.monto).replace(/\.00$/, '')) + '</tspan></text>');
       o.push('<text x="986" y="26" fill="#fff" font-size="17" text-anchor="end">MÍN <tspan fill="' + (p.saldo_min.v < 0 ? C.red : C.cyan) + '" font-size="22" font-weight="700">' + esc(p.saldo_min.t) + '</tspan> ' + esc(fc(p.fecha_min)) + '</text>');
       o.push('<text x="986" y="54" fill="#fff" font-size="17" text-anchor="end">FINAL <tspan fill="' + C.cyan + '" font-size="22" font-weight="700">' + esc(p.saldo_final.t) + '</tspan></text>');
     })();
@@ -355,6 +363,13 @@
       '<div style="color:#9aa4b2;font-size:12px;letter-spacing:.08em;margin-bottom:6px">' + esc(state.tecla) + '</div>' +
       (state.tecla === 'RESUMEN' ? resumen(s) : insights(s, state.tecla).map(function (l) { return '<div style="color:' + l.c + '">' + esc(l.t) + '</div>'; }).join('')) + '</div>');
     el.innerHTML = o.join('');
+    el.querySelectorAll('[data-pago-id]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var id = Number(a.getAttribute('data-pago-id')), r = (p.pagos_hoy || []).filter(function (x) { return x.id === id; })[0];
+        if (window.sfOpenEdit) window.sfOpenEdit(id, r && r.row);
+      });
+    });
     var ms = el.querySelector('[data-minsel]');
     if (ms) ms.addEventListener('change', function () { state.minSel = this.value; window.drawSfPfd(el, s); });
     el.querySelectorAll('[data-tecla]').forEach(function (g) {
