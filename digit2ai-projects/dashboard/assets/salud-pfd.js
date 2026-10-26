@@ -8,7 +8,7 @@
      Altímetro (derecha) ...... SALDO hoy, con marcas del punto más bajo y del cero
      Variómetro (VSI) ......... cambio del saldo en 7 días (sube / baja)
      Cinta de velocidad (izq) . del día 1 a hoy: verde lo que entró, rojo lo que salió
-     Horizonte artificial ..... pitch = neto del mes (entró - salió); sin alabeo
+     Horizonte artificial ..... pitch = ángulo de la curva del mapa de hoy a 30 días; sin alabeo
      HSI / compás ............. rumbo = salud (%); curso magenta = meta 100%
      Mapa (abajo izq) ......... proyección de los próximos meses, hoy, mínimo y zona de cuidado
      Barra superior ........... próximo pago, mínimo, saldo final; anuncios de estado
@@ -109,13 +109,23 @@
   }
 
   // ------------------------------------------------------------ the instrument
+  // The nose follows the balance curve drawn in the map: the angle of the curve from today to 30 days out,
+  // measured with the SAME scales the map uses (262x154 box, 0 and today always in range), clamped to the ladder.
+  function curvePitch(s, p) {
+    var pts = (s.serie && s.serie.proyeccion || []).filter(function (d) { return d.fecha >= s.hoy; });
+    if (pts.length < 2) return 0;
+    var t0 = Date.parse(s.hoy), t1 = Date.parse(pts[pts.length - 1].fecha); if (t1 <= t0) return 0;
+    var vals = pts.map(function (d) { return d.saldo; }).concat([0, p.saldo_hoy.v]);
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    var dx = 30 * 864e5 / (t1 - t0) * (262 - 20), dy = p.cambio_30d.v / ((hi - lo) || 1) * (154 - 46);
+    return clamp(Math.atan2(dy, dx) * 180 / Math.PI, -20, 20);
+  }
   window.drawSfPfd = function (el, s) {
     if (!el || !s || !s.pfd) return;
     var p = s.pfd, W = 1000, H = 760, cx = 500, cy = 300;
     var ppd = 7; // pixels per degree of pitch
-    // owner 2026-10-25: only up or down. Nose up = this month more came in than went out; no banking.
-    var inMes = (p.ingreso_mes && p.ingreso_mes.v) || 0, outMes = (p.costo_mes && p.costo_mes.v) || 0, netMes = inMes - outMes;
-    var pitch = clamp(netMes / Math.max(inMes + outMes, 1000) * 15, -15, 15);
+    // owner 2026-10-25: only up or down, and the nose follows the curve in the map (no banking)
+    var pitch = curvePitch(s, p);
     var bank = 0;
     var sube = s.tendencia ? s.tendencia.sube : true;
     var o = [];
@@ -146,12 +156,12 @@
     // aircraft symbol (fixed, yellow)
     o.push('<path d="M ' + (cx - 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy - 4) + ' L ' + (cx + 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy + 12) + ' Z" fill="#ffd400" stroke="#6b5a00" stroke-width="1.5"/>');
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
-    // what the pitch means, in dollars: this month so far, what came in minus what went out
+    // what the pitch means, in dollars: how much the balance changes over the next 30 days
     (function () {
-      var v = netMes, col = v >= 0 ? C.green : C.red;
+      var v = p.cambio_30d.v, col = v >= 0 ? C.green : C.red;
       var txt = (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
       o.push('<rect x="' + (cx - 78) + '" y="' + (cy + 92) + '" width="156" height="30" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
-      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">NETO ' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + ' <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
+      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">30D <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
     })();
     o.push('</g>');
 
@@ -281,7 +291,7 @@
         o.push('<circle cx="' + X(p.fecha_min) + '" cy="' + Y(p.saldo_min.v) + '" r="5" fill="' + (p.saldo_min.v < 0 ? C.red : C.amber) + '"/><text x="' + clamp(X(p.fecha_min) + 7, mx + 4, mx + mw - 70) + '" y="' + (Y(p.saldo_min.v) + 18 > my + mh - 4 ? Y(p.saldo_min.v) - 8 : Y(p.saldo_min.v) + 18) + '" fill="#fff" font-size="13">MÍN ' + esc(fc(p.fecha_min)) + '</text>');
         // aircraft at today
         var ax = X(s.hoy), ay = Y(p.saldo_hoy.v);
-        o.push('<path transform="translate(' + ax + ' ' + ay + ') rotate(90)" d="M 0 -11 l 3 8 h 9 v 3 h -9 l -1 6 h 4 v 3 h -12 v -3 h 4 l -1 -6 h -9 v -3 h 9 z" fill="#fff"/>');
+        o.push('<path transform="translate(' + ax + ' ' + ay + ') rotate(' + (90 - pitch).toFixed(1) + ')" d="M 0 -11 l 3 8 h 9 v 3 h -9 l -1 6 h 4 v 3 h -12 v -3 h 4 l -1 -6 h -9 v -3 h 9 z" fill="#fff"/>');
       }
     })();
 

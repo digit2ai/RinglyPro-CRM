@@ -222,7 +222,9 @@ async function linaTests() {
   ok(/'Pagos afectados: '/.test(pfdSrc), 'MÍNIMO key names the affected payments');
   ok(/closing balance of the quarter/.test(pfdSrc) && /z\.fecha < q\.hasta/.test(pfdSrc), 'inset: each quarter shows its closing balance');
   ok(/out = -\(\(p\.costo_mes/.test(pfdSrc) && /p\.ingreso_mes/.test(pfdSrc) && !/v = p\.flujo_30\.v/.test(pfdSrc), 'left tape: income (green) and cost (red) of the month so far');
-  ok(/var bank = 0;/.test(pfdSrc) && /var pitch = clamp\(netMes/.test(pfdSrc) && /var v = netMes, col/.test(pfdSrc), 'horizon: nose up when the month brought in more than it cost, no banking, net in dollars');
+  { const m = /function curvePitch\(s, p\) \{[\s\S]*?\n  \}/.exec(pfdSrc); const cp = m && new Function('clamp', m[0] + '; return curvePitch;')((v, a, b) => Math.max(a, Math.min(b, v)));
+    const ser = (a, b) => ({ hoy: '2026-10-25', serie: { proyeccion: [{ fecha: '2026-10-25', saldo: a }, { fecha: '2026-11-24', saldo: b }, { fecha: '2027-12-31', saldo: b }] } });
+    ok(cp && cp(ser(5000, 9000), { saldo_hoy: { v: 5000 }, cambio_30d: { v: 4000 } }) > 0 && cp(ser(5000, 1000), { saldo_hoy: { v: 5000 }, cambio_30d: { v: -4000 } }) < 0 && /var bank = 0;/.test(pfdSrc) && /rotate\(' \+ \(90 - pitch\)/.test(pfdSrc), 'horizon: nose follows the map curve (up when it rises, down when it falls), no banking, map plane tilts the same'); }
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');
