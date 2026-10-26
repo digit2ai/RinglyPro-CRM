@@ -238,7 +238,7 @@
     (function () {
       var hx = cx, hy = 640, r = 150, hdg = clamp(s.score, 0, 100) * 3.6, crs = 360;
       o.push('<g clip-path="url(#pfdClip)">');
-      o.push('<circle cx="' + hx + '" cy="' + hy + '" r="' + (r + 6) + '" fill="rgba(0,0,0,.55)"/>');
+      o.push('<circle cx="' + hx + '" cy="' + hy + '" r="' + (r + 6) + '" fill="#2a1d10"/>');
       o.push('<g transform="rotate(' + (-hdg).toFixed(1) + ' ' + hx + ' ' + hy + ')">');
       for (var a = 0; a < 360; a += 5) {
         var rad = (a - 90) * Math.PI / 180, len = a % 30 === 0 ? 20 : a % 10 === 0 ? 13 : 8;
