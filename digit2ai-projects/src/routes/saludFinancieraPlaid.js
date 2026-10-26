@@ -37,7 +37,7 @@ function ownerRouter(deps) {
     if (!plaid.configured()) return res.status(503).json({ success: false, error: 'Plaid no está configurado: falta ' + plaid.missing().join(', ') });
     try {
       const body = {
-        client_name: 'Salud Financiera', language: 'es', country_codes: ['US'],
+        client_name: 'Salud Financiera', language: (process.env.PLAID_LINK_LANGUAGE || 'en'), country_codes: ['US'],
         user: { client_user_id: 'sf-' + req.sf.userId },
         products: ['transactions'],            // READ-ONLY: transactions only. Never auth/transfer/identity/signal.
         transactions: { days_requested: 730 },  // owner decision 2026-10-26: maximum, set once at the first link
@@ -70,7 +70,7 @@ function ownerRouter(deps) {
     try {
       const item = await sync.itemWithToken(deps.sequelize, 'id = :id AND user_id = :u AND tenant_id = :t', { id: Number(req.body && req.body.id), u: req.sf.userId, t: req.sf.tenantId });
       if (!item) return res.status(404).json({ success: false, error: 'No encontrado' });
-      const body = { client_name: 'Salud Financiera', language: 'es', country_codes: ['US'], user: { client_user_id: 'sf-' + req.sf.userId }, webhook: plaid.webhookUrl() };
+      const body = { client_name: 'Salud Financiera', language: (process.env.PLAID_LINK_LANGUAGE || 'en'), country_codes: ['US'], user: { client_user_id: 'sf-' + req.sf.userId }, webhook: plaid.webhookUrl() };
       if (req.body && req.body.cuentas_nuevas) body.update = { account_selection_enabled: true };
       if (process.env.PLAID_REDIRECT_URI) body.redirect_uri = process.env.PLAID_REDIRECT_URI;
       // update mode: the existing access token, NO products -> same Item, no new Trial slot

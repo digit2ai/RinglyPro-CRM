@@ -508,7 +508,7 @@ async function plaidTests({ call, A, B, sequelize }) {
   r = await call('/plaid/link-token', A, 'POST');
   const lt = calls.filter(c => c.p === '/link/token/create').pop();
   ok(r.s === 200 && r.j.data.link_token === 'link-sandbox-sit', 'link-token returns the Plaid link token');
-  ok(lt && JSON.stringify(lt.body.products) === '["transactions"]' && lt.body.transactions.days_requested === 730 && lt.body.language === 'es' && /\/plaid\/webhook$/.test(lt.body.webhook) && !lt.body.access_token, 'link token: products = transactions ONLY, 730 days, es, webhook set', lt && lt.body);
+  ok(lt && JSON.stringify(lt.body.products) === '["transactions"]' && lt.body.transactions.days_requested === 730 && lt.body.language === 'en' && /\/plaid\/webhook$/.test(lt.body.webhook) && !lt.body.access_token, 'link token: products = transactions ONLY, 730 days, en, webhook set', lt && lt.body);
   ok(lt && !/auth|transfer|identity|signal|payment/i.test(JSON.stringify(lt.body.products) + JSON.stringify(lt.body.required_if_supported_products || []) + JSON.stringify(lt.body.additional_consented_products || [])), 'no Auth/Transfer/Identity/Signal/payment product is ever requested');
 
   // --- exchange ---
