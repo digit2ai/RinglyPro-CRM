@@ -202,7 +202,7 @@
         o.push('<path d="M ' + (x - 8) + ' ' + (b[0] - 22) + ' h 98 l 12 22 l -12 22 h -98 z" fill="#000" stroke="' + b[2] + '" stroke-width="2"/>');
         o.push('<text x="' + (x + 82) + '" y="' + (b[0] + 10) + '" fill="' + b[2] + '" font-size="28" font-weight="700" text-anchor="end">' + (b[1] > 0 ? b[3] : '') + k(b[1]) + '</text>');
       });
-      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="15">PERSONAL <tspan font-size="19" font-weight="700" fill="' + C.cyan + '">' + esc(k(p.gasto_mes.v)) + '</tspan></text>');
+      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="15">BANK <tspan font-size="19" font-weight="700" fill="' + C.cyan + '">' + esc(k(p.gasto_mes.v)) + '</tspan></text>');
     })();
 
     // ---------------- right tape: SALDO (altimeter) + VSI ----------------
