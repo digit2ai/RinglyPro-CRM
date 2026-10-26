@@ -99,6 +99,7 @@
     document.getElementById('sf-extend').onclick = extendPlan;
     document.getElementById('sf-mes').onchange = function () { state.mes = this.value; loadMovs(); };
     if (SHOW_LINA) wireLina();
+    resumeOAuth();
     return refresh();
   };
 
@@ -182,21 +183,40 @@
     return state.plaidLoading;
   }
   // itemId null = new connection; a number = update mode (same Item, renews consent, no new slot)
+  function linkHandlers(itemId) {
+    return {
+      onSuccess: function (publicToken, meta) {
+        try { localStorage.removeItem('sf_plaid_link'); } catch (e) {}
+        if (itemId) sf('/plaid/update-done', { method: 'POST', body: { id: itemId } }).then(function () { setTimeout(refresh, 4000); });
+        else sf('/plaid/exchange', { method: 'POST', body: { public_token: publicToken, institution: meta && meta.institution ? { name: meta.institution.name, institution_id: meta.institution.institution_id } : null } })
+          .then(function (x) { if (!x.success) alert(x.error || 'No se pudo conectar'); setTimeout(refresh, 6000); refresh(); });
+      },
+      onExit: function (err, meta) {
+        if (err) alert('El banco no terminó la conexión: ' + (err.display_message || err.error_message || err.error_code || 'error') + (err.error_code ? ' (' + err.error_code + ')' : ''));
+      }
+    };
+  }
   function bankLink(itemId) {
     var tokenCall = itemId ? sf('/plaid/update-token', { method: 'POST', body: { id: itemId } }) : sf('/plaid/link-token', { method: 'POST' });
     Promise.all([tokenCall, loadPlaidScript()]).then(function (res) {
       var j = res[0];
       if (!j.success) { alert(j.error || 'No se pudo abrir la conexión con el banco'); return; }
-      var h = window.Plaid.create({
-        token: j.data.link_token,
-        onSuccess: function (publicToken, meta) {
-          if (itemId) sf('/plaid/update-done', { method: 'POST', body: { id: itemId } }).then(function () { setTimeout(refresh, 4000); });
-          else sf('/plaid/exchange', { method: 'POST', body: { public_token: publicToken, institution: meta && meta.institution ? { name: meta.institution.name, institution_id: meta.institution.institution_id } : null } })
-            .then(function (x) { if (!x.success) alert(x.error || 'No se pudo conectar'); setTimeout(refresh, 6000); refresh(); });
-        },
-        onExit: function (err) { if (err && err.display_message) alert(err.display_message); }
-      });
+      // banks like Bank of America log in on their own page (OAuth) and may come back to this URL:
+      // keep the link token so the flow can resume (Plaid: receivedRedirectUri)
+      try { localStorage.setItem('sf_plaid_link', JSON.stringify({ token: j.data.link_token, itemId: itemId || null, at: Date.now() })); } catch (e) {}
+      var h = window.Plaid.create(Object.assign({ token: j.data.link_token }, linkHandlers(itemId)));
       h.open();
+    }).catch(function (e) { alert(e.message); });
+  }
+  // returning from the bank's own login page (?oauth_state_id=...): resume the same Link session
+  function resumeOAuth() {
+    if (!/[?&]oauth_state_id=/.test(location.search)) return;
+    var saved = null; try { saved = JSON.parse(localStorage.getItem('sf_plaid_link') || 'null'); } catch (e) {}
+    var href = location.href;
+    try { history.replaceState(null, '', '/projects/salud-financiera'); } catch (e) {}
+    if (!saved || !saved.token || Date.now() - saved.at > 30 * 60 * 1000) { alert('La conexión con el banco expiró. Vuelve a pulsar "Conectar".'); return; }
+    loadPlaidScript().then(function () {
+      window.Plaid.create(Object.assign({ token: saved.token, receivedRedirectUri: href }, linkHandlers(saved.itemId))).open();
     }).catch(function (e) { alert(e.message); });
   }
   function bankAccounts(itemId) {
