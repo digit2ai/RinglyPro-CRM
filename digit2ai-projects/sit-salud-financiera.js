@@ -222,7 +222,7 @@ async function linaTests() {
   ok(/'Pagos afectados: '/.test(pfdSrc), 'MÍNIMO key names the affected payments');
   ok(/closing balance of the quarter/.test(pfdSrc) && /z\.fecha < q\.hasta/.test(pfdSrc), 'inset: each quarter shows its closing balance');
   ok(/out = -\(\(p\.costo_mes/.test(pfdSrc) && /p\.ingreso_mes/.test(pfdSrc) && !/v = p\.flujo_30\.v/.test(pfdSrc), 'left tape: income (green) and cost (red) of the month so far');
-  ok(/how much the balance changes over the next 30 days/.test(pfdSrc) && /p\.cambio_30d\.v, col/.test(pfdSrc), 'horizon: 30-day change shown in dollars');
+  ok(/var bank = 0;/.test(pfdSrc) && /var pitch = clamp\(netMes/.test(pfdSrc) && /var v = netMes, col/.test(pfdSrc), 'horizon: nose up when the month brought in more than it cost, no banking, net in dollars');
   ok(['HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'].every(k => pfdSrc.includes("'" + k + "'")), 'panel softkeys: HOY, MÍNIMO, TRIMESTRE, PAGOS, RITMO, ALERTAS');
   ok(!/sf-kpi|function drawKpi/.test(ui), 'the big health % card is gone');
   ok(!/<th>Categoría<\/th>/.test(ui) && /sf-hide-m/.test(ui), 'movements table: no Categoría column, Estado hidden on phones');

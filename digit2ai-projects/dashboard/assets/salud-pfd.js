@@ -8,7 +8,7 @@
      Altímetro (derecha) ...... SALDO hoy, con marcas del punto más bajo y del cero
      Variómetro (VSI) ......... cambio del saldo en 7 días (sube / baja)
      Cinta de velocidad (izq) . del día 1 a hoy: verde lo que entró, rojo lo que salió
-     Horizonte artificial ..... pitch = tendencia a 30 días; alabeo = desvío contra el plan
+     Horizonte artificial ..... pitch = neto del mes (entró - salió); sin alabeo
      HSI / compás ............. rumbo = salud (%); curso magenta = meta 100%
      Mapa (abajo izq) ......... proyección de los próximos meses, hoy, mínimo y zona de cuidado
      Barra superior ........... próximo pago, mínimo, saldo final; anuncios de estado
@@ -113,9 +113,10 @@
     if (!el || !s || !s.pfd) return;
     var p = s.pfd, W = 1000, H = 760, cx = 500, cy = 300;
     var ppd = 7; // pixels per degree of pitch
-    var base = Math.max(Math.abs(p.saldo_hoy.v), 1000);
-    var pitch = clamp(p.cambio_30d.v / base * 40, -15, 15);
-    var bank = clamp(p.desvio_plan.v / Math.max(Math.abs(p.saldo_final_plan.v), 1000) * 60, -30, 30);
+    // owner 2026-10-25: only up or down. Nose up = this month more came in than went out; no banking.
+    var inMes = (p.ingreso_mes && p.ingreso_mes.v) || 0, outMes = (p.costo_mes && p.costo_mes.v) || 0, netMes = inMes - outMes;
+    var pitch = clamp(netMes / Math.max(inMes + outMes, 1000) * 15, -15, 15);
+    var bank = 0;
     var sube = s.tendencia ? s.tendencia.sube : true;
     var o = [];
     o.push('<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;border-radius:10px;font-family:Arial Narrow,Helvetica Neue,Arial,sans-serif" role="img" aria-label="Panel de instrumentos de tus finanzas">');
@@ -145,12 +146,12 @@
     // aircraft symbol (fixed, yellow)
     o.push('<path d="M ' + (cx - 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy - 4) + ' L ' + (cx + 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy + 12) + ' Z" fill="#ffd400" stroke="#6b5a00" stroke-width="1.5"/>');
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
-    // what the pitch means, in dollars: how much the balance changes over the next 30 days
+    // what the pitch means, in dollars: this month so far, what came in minus what went out
     (function () {
-      var v = p.cambio_30d.v, col = v >= 0 ? C.green : C.red;
+      var v = netMes, col = v >= 0 ? C.green : C.red;
       var txt = (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
       o.push('<rect x="' + (cx - 78) + '" y="' + (cy + 92) + '" width="156" height="30" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
-      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">30D <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
+      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">NETO ' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + ' <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
     })();
     o.push('</g>');
 
