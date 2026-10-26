@@ -12,6 +12,7 @@
 const express = require('express');
 const plaid = require('../services/saludFinanciera/plaidClient');
 const sync = require('../services/saludFinanciera/plaidSync');
+const reservaSvc = require('../services/saludFinanciera/reserva');
 const verifier = require('../services/saludFinanciera/plaidWebhook');
 const store = require('../services/saludFinanciera/store');
 
@@ -19,6 +20,31 @@ function later(fn) { setImmediate(() => { Promise.resolve().then(fn).catch(e => 
 function plaidError(res, e) {
   const status = e && e.code === 'VAULT_UNREADABLE' ? 409 : 502;
   return res.status(status).json({ success: false, error: (e && e.message) ? String(e.message).slice(0, 300) : 'Error con Plaid', code: e && e.code });
+}
+
+// Corte reserve: the account with rol 'corte' (••7485) must hold the next Corte + cushion; every payday says
+// how much to keep there and how much can go to the 'gastos' account (••5122).
+async function reservaCorte(deps, user, items, recurrentes) {
+  const cuentas = items.filter(i => i.estado !== 'desconectado').flatMap(i => i.cuentas);
+  const cc = cuentas.find(c => c.rol === 'corte');
+  if (!cc) return { estado: 'sin_cuenta' };
+  const gastos = cuentas.find(c => c.rol === 'gastos') || null;
+  const hoy = deps.today();
+  const q = (sql) => deps.sequelize.query(sql, { replacements: { u: user.userId, t: user.tenantId, hoy } }).then(r => r[0]);
+  const cortes = await q("SELECT fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND origen = 'plan' AND categoria = 'corte' AND estado = 'pendiente' AND fecha >= :hoy ORDER BY fecha LIMIT 1");
+  const pagos = await q("SELECT fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND origen = 'plan' AND categoria = 'salario' AND estado = 'pendiente' AND fecha >= :hoy ORDER BY fecha LIMIT 8");
+  const [ult] = await q("SELECT MAX(monto_real)::text AS m FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND origen = 'plan' AND categoria = 'corte' AND estado = 'cumplido'");
+  const cents = (v) => v == null ? null : Math.round(Number(v) * 100);
+  let corte = null;
+  if (cortes[0]) {
+    // the bank's real Corte (TFS $4,307.99) beats the plan's round number
+    const real = Math.max(cents(ult && ult.m) || 0, ...recurrentes.filter(r => r.categoria === 'corte' && r.activo && r.direccion === 'salida').map(r => cents(r.monto_ultimo) || 0));
+    corte = { fecha: cortes[0].fecha, montoCents: Math.max(cents(cortes[0].monto), real) };
+  }
+  const [cfg] = await q('SELECT colchon_corte::text AS c FROM sf_config WHERE user_id = :u AND tenant_id = :t');
+  const saldo = cc.saldo_disponible != null ? cc.saldo_disponible : cc.saldo_actual;
+  const r = reservaSvc.calcular({ hoy, saldoCents: cents(saldo), corte, pagos: pagos.map(p => ({ fecha: p.fecha, montoCents: cents(p.monto) })), colchonCents: cfg && cfg.c != null ? cents(cfg.c) : 20000 });
+  return { ...r, cuenta: { mask: cc.mask, nombre: cc.nombre, saldo_at: cc.saldo_at }, gastos: gastos ? { mask: gastos.mask } : null };
 }
 
 function ownerRouter(deps) {
@@ -29,7 +55,9 @@ function ownerRouter(deps) {
       const items = await sync.items(deps.sequelize, req.sf);
       const alertas = await sync.alertas(deps.sequelize, req.sf, true);
       const recurrentes = await sync.recurrentesDe(deps.sequelize, req.sf);
-      res.json({ success: true, data: { configurado: plaid.configured(), falta: plaid.missing(), entorno: plaid.env(), items, alertas, recurrentes } });
+      let reserva = null;
+      try { reserva = await reservaCorte(deps, req.sf, items, recurrentes); } catch (e) { reserva = { estado: 'error', error: e.message }; }
+      res.json({ success: true, data: { configurado: plaid.configured(), falta: plaid.missing(), entorno: plaid.env(), items, alertas, recurrentes, reserva } });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
   });
 
@@ -120,8 +148,18 @@ function ownerRouter(deps) {
 
   r.patch('/cuentas/:id(\\d+)', async (req, res) => {
     try {
-      if (typeof (req.body || {}).incluir !== 'boolean') return res.status(400).json({ success: false, error: 'incluir debe ser true o false' });
-      const out = await sync.setIncluir(deps.sequelize, req.sf, Number(req.params.id), req.body.incluir);
+      const b = req.body || {};
+      if ('rol' in b) {
+        if (![null, 'corte', 'gastos'].includes(b.rol)) return res.status(400).json({ success: false, error: 'rol debe ser corte, gastos o null' });
+        const [[acct]] = await deps.sequelize.query('SELECT id FROM sf_plaid_accounts WHERE id = :id AND user_id = :u AND tenant_id = :t', { replacements: { id: Number(req.params.id), u: req.sf.userId, t: req.sf.tenantId } });
+        if (!acct) return res.status(404).json({ success: false, error: 'No encontrado' });
+        // one account per role
+        if (b.rol) await deps.sequelize.query('UPDATE sf_plaid_accounts SET rol = NULL WHERE user_id = :u AND tenant_id = :t AND rol = :r', { replacements: { u: req.sf.userId, t: req.sf.tenantId, r: b.rol } });
+        await deps.sequelize.query('UPDATE sf_plaid_accounts SET rol = :r WHERE id = :id', { replacements: { r: b.rol, id: acct.id } });
+        if (typeof b.incluir !== 'boolean') return res.json({ success: true, data: { rol: b.rol } });
+      }
+      if (typeof b.incluir !== 'boolean') return res.status(400).json({ success: false, error: 'incluir debe ser true o false' });
+      const out = await sync.setIncluir(deps.sequelize, req.sf, Number(req.params.id), b.incluir);
       if (!out) return res.status(404).json({ success: false, error: 'No encontrado' });
       res.json({ success: true, data: out });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }

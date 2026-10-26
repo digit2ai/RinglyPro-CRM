@@ -36,9 +36,9 @@ function money(c) { return '$' + (Math.abs(c) / 100).toLocaleString('en-US', { m
 async function items(sequelize, user) {
   const [rows] = await sequelize.query(`SELECT id, item_id, institution_id, institution_name, estado, importar_desde::text AS importar_desde, consent_expira, historial_completo, recurrencia, ultimo_sync, ultimo_error, created_at
     FROM sf_plaid_items WHERE user_id = :u AND tenant_id = :t ORDER BY id`, { replacements: { u: user.userId, t: user.tenantId } });
-  const [accts] = await sequelize.query('SELECT id, item_id, account_id, nombre, mask, tipo, subtipo, incluir FROM sf_plaid_accounts WHERE user_id = :u AND tenant_id = :t ORDER BY id',
+  const [accts] = await sequelize.query('SELECT id, item_id, account_id, nombre, mask, tipo, subtipo, incluir, rol, saldo_actual::text AS saldo_actual, saldo_disponible::text AS saldo_disponible, saldo_at FROM sf_plaid_accounts WHERE user_id = :u AND tenant_id = :t ORDER BY id',
     { replacements: { u: user.userId, t: user.tenantId } });
-  return rows.map(r => ({ ...r, cuentas: accts.filter(a => a.item_id === r.item_id).map(a => ({ id: a.id, nombre: a.nombre, mask: a.mask, tipo: a.tipo, subtipo: a.subtipo, incluir: a.incluir })) }));
+  return rows.map(r => ({ ...r, cuentas: accts.filter(a => a.item_id === r.item_id).map(a => ({ id: a.id, nombre: a.nombre, mask: a.mask, tipo: a.tipo, subtipo: a.subtipo, incluir: a.incluir, rol: a.rol || null, saldo_actual: a.saldo_actual == null ? null : String(a.saldo_actual), saldo_disponible: a.saldo_disponible == null ? null : String(a.saldo_disponible), saldo_at: a.saldo_at || null })) }));
 }
 async function itemWithToken(sequelize, where, rep) {
   const [rows] = await sequelize.query(`SELECT * FROM sf_plaid_items WHERE ${where} LIMIT 1`, { replacements: rep });
@@ -55,10 +55,14 @@ async function loadAccounts(sequelize, item) {
   const user = userOf(item);
   const r = await plaid.call('/accounts/get', {}, { accessTokenEnc: item.access_token_enc });
   for (const a of r.accounts || []) {
-    await sequelize.query(`INSERT INTO sf_plaid_accounts (tenant_id, user_id, item_id, account_id, nombre, mask, tipo, subtipo, incluir)
-      VALUES (:t, :u, :item, :acct, :nombre, :mask, :tipo, :subtipo, :incluir)
-      ON CONFLICT (account_id) DO UPDATE SET nombre = EXCLUDED.nombre, mask = EXCLUDED.mask, tipo = EXCLUDED.tipo, subtipo = EXCLUDED.subtipo`,
+    const bal = a.balances || {};
+    const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
+    await sequelize.query(`INSERT INTO sf_plaid_accounts (tenant_id, user_id, item_id, account_id, nombre, mask, tipo, subtipo, incluir, saldo_actual, saldo_disponible, saldo_at)
+      VALUES (:t, :u, :item, :acct, :nombre, :mask, :tipo, :subtipo, :incluir, :sact, :sdisp, NOW())
+      ON CONFLICT (account_id) DO UPDATE SET nombre = EXCLUDED.nombre, mask = EXCLUDED.mask, tipo = EXCLUDED.tipo, subtipo = EXCLUDED.subtipo,
+        saldo_actual = EXCLUDED.saldo_actual, saldo_disponible = EXCLUDED.saldo_disponible, saldo_at = NOW()`,
       { replacements: { t: user.tenantId, u: user.userId, item: item.item_id, acct: a.account_id, nombre: a.official_name || a.name || null, mask: a.mask || null,
+        sact: num(bal.current), sdisp: num(bal.available),
         tipo: a.type || null, subtipo: a.subtype || null,
         // owner decision 2026-10-26: only CHECKING counts by default (the card is already paid as "Corte")
         incluir: a.type === 'depository' && a.subtype === 'checking' } });
@@ -151,8 +155,40 @@ async function applyChanges(sequelize, item, ch, ctx, transaction) {
   async function unapply(row) {
     if (!row.mov_id) return;
     if (row.enlace === 'nuevo') await q("DELETE FROM sf_movimientos WHERE id = :id AND user_id = :u AND tenant_id = :t AND fuente = 'plaid'", { id: row.mov_id });
-    else if (row.enlace === 'plan') await q("UPDATE sf_movimientos SET estado = 'pendiente', monto_real = NULL, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t AND origen = 'plan'", { id: row.mov_id });
     await q('UPDATE sf_plaid_txn SET mov_id = NULL, enlace = NULL, updated_at = NOW() WHERE id = :id', { id: row.id });
+    // a plan row confirmed by several deposits (split paycheck) keeps the parts that are still there
+    if (row.enlace === 'plan') await recalcPlan(row.mov_id);
+  }
+
+  // monto_real of a bank-confirmed plan row = the sum of every deposit linked to it (one paycheck can arrive
+  // split across two accounts on the same day); no deposit left -> back to pendiente
+  async function recalcPlan(movId) {
+    const [[sum]] = await q("SELECT COUNT(*)::int AS n, COALESCE(SUM(ABS(monto_cents)), 0)::bigint AS c FROM sf_plaid_txn WHERE mov_id = :m AND enlace = 'plan'", { m: movId });
+    if (!sum.n) await q("UPDATE sf_movimientos SET estado = 'pendiente', monto_real = NULL, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t AND origen = 'plan'", { id: movId });
+    else await q("UPDATE sf_movimientos SET estado = 'cumplido', monto_real = :m, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t AND origen = 'plan'", { m: (Number(sum.c) / 100).toFixed(2), id: movId });
+  }
+  const esSueldo = (row) => row.pfc_detailed === 'INCOME_SALARY' || /payroll/i.test(String(row.nombre || ''));
+  // A paycheck split across accounts (e.g. 2,665.24 + 1,142.24 = Salario 3,807.48): each part joins the same plan
+  // Salario while the parts add up to no more than the plan amount + 2%.
+  async function matchSplitSalary(row, cents, fecha) {
+    if (!esSueldo(row)) return false;
+    const [cands] = await q(`SELECT m.id, m.concepto, m.estado, m.fecha::text AS fecha, m.monto::text AS monto,
+        COALESCE((SELECT SUM(ABS(x.monto_cents)) FROM sf_plaid_txn x WHERE x.mov_id = m.id AND x.enlace = 'plan'), 0)::bigint AS ya,
+        EXISTS (SELECT 1 FROM sf_plaid_txn x WHERE x.mov_id = m.id AND x.enlace = 'cumplido') AS marcado
+      FROM sf_movimientos m WHERE m.user_id = :u AND m.tenant_id = :t AND m.origen = 'plan' AND m.tipo = 'ingreso' AND m.categoria = 'salario'
+        AND m.fecha BETWEEN :d1 AND :d2 ORDER BY ABS(m.fecha - CAST(:fecha AS DATE)), m.id`, { d1: addDays(fecha, -5), d2: addDays(fecha, 5), fecha });
+    for (const p of cands) {
+      const tope = Math.round(Number(p.monto) * 100 * 1.02);
+      if (p.marcado || (p.estado === 'cumplido' && Number(p.ya) === 0)) continue; // marked paid by hand: leave it alone
+      if (Number(p.ya) + Math.abs(cents) > tope) continue;
+      await q("UPDATE sf_plaid_txn SET mov_id = :m, enlace = 'plan', updated_at = NOW() WHERE id = :id", { m: p.id, id: row.id });
+      if (Number(p.ya) === 0) await q("INSERT INTO sf_cambios (tenant_id, user_id, accion, descripcion, datos) VALUES (:t, :u, 'cumplido', :d, CAST(:x AS JSONB))",
+        { d: `El banco confirmó "${p.concepto}" del ${p.fecha} (sueldo en partes)`, x: JSON.stringify({ id: p.id, antes: { estado: 'pendiente', monto_real: null }, banco: true }) });
+      await recalcPlan(p.id);
+      stats.plan++;
+      return true;
+    }
+    return false;
   }
 
   // Matches a bank transaction to a plan row. A PENDING row becomes cumplido with the bank amount
@@ -170,6 +206,7 @@ async function applyChanges(sequelize, item, ch, ctx, transaction) {
       return true;
     }
     await q("UPDATE sf_movimientos SET estado = 'cumplido', monto_real = :monto, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t", { monto, id: plan.id });
+    // (a later split part may still join this row through matchSplitSalary; recalcPlan keeps the sum)
     await q("INSERT INTO sf_cambios (tenant_id, user_id, accion, descripcion, datos) VALUES (:t, :u, 'cumplido', :d, CAST(:x AS JSONB))",
       { d: `El banco confirmó "${plan.concepto}" del ${plan.fecha} por ${money(cents)}`, x: JSON.stringify({ id: plan.id, antes: { estado: 'pendiente', monto_real: null }, banco: true }) });
     await q("UPDATE sf_plaid_txn SET mov_id = :m, enlace = 'plan', updated_at = NOW() WHERE id = :id", { m: plan.id, id: row.id });
@@ -188,7 +225,7 @@ async function applyChanges(sequelize, item, ch, ctx, transaction) {
       const [[mov]] = await q('SELECT id, categoria_manual, pendiente_banco FROM sf_movimientos WHERE id = :id AND user_id = :u AND tenant_id = :t', { id: row.mov_id });
       if (!mov) return; // the owner deleted it: never re-create
       // a pending charge that just POSTED gets one more chance to match the plan (it is now final)
-      if (row.enlace === 'nuevo' && mov.pendiente_banco && !row.pending && await matchPlan(row, tipo, cents, monto, fecha)) {
+      if (row.enlace === 'nuevo' && mov.pendiente_banco && !row.pending && (await matchPlan(row, tipo, cents, monto, fecha) || (tipo === 'ingreso' && await matchSplitSalary(row, cents, fecha)))) {
         await q("DELETE FROM sf_movimientos WHERE id = :id AND user_id = :u AND tenant_id = :t AND fuente = 'plaid'", { id: mov.id });
         return;
       }
@@ -198,13 +235,15 @@ async function applyChanges(sequelize, item, ch, ctx, transaction) {
           categoria = COALESCE(:cat, categoria), updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t`,
           { fecha, tipo, monto, concepto: row.nombre, comercio: row.comercio, pend: !!row.pending, cat, id: mov.id });
       } else if (row.enlace === 'plan') {
-        await q("UPDATE sf_movimientos SET monto_real = :monto, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t AND estado = 'cumplido'", { monto, id: mov.id });
+        await recalcPlan(mov.id);
       }
       stats.actualizados++;
       return;
     }
     // 1) a plan row: exact amount (salary, bills and other income may vary up to 2%), +-5 days
     if (await matchPlan(row, tipo, cents, monto, fecha)) return;
+    // 1b) one part of a paycheck that arrives split across accounts
+    if (tipo === 'ingreso' && await matchSplitSalary(row, cents, fecha)) return;
     // 2) an unlinked manual real row (exact amount, +-3 days)
     const [[man]] = await q(`SELECT id FROM sf_movimientos m WHERE user_id = :u AND tenant_id = :t AND origen = 'real' AND fuente = 'manual'
       AND tipo = :tipo AND monto = :monto AND fecha BETWEEN :d1 AND :d2
@@ -274,6 +313,8 @@ async function syncItem(sequelize, item, ctx = {}) {
         { replacements: { c: ch.cursor, hist: ch.status === 'HISTORICAL_UPDATE_COMPLETE', id: item.id }, transaction });
       return s;
     });
+    // the bank's own balance per account, refreshed on every sync (/accounts/get is included with Transactions)
+    try { await loadAccounts(sequelize, item); } catch (e) { /* the balance is informative; the sync already succeeded */ }
     return { ...stats, status: ch.status, added: ch.added.length, modified: ch.modified.length, removed: ch.removed.length };
   })();
   running.set(item.item_id, p);

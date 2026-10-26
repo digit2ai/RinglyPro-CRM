@@ -516,6 +516,15 @@ async function plaidTests({ call, A, B, sequelize }) {
   ok((await call('/plaid/exchange', A, 'POST', { public_token: 'not-a-token' })).s === 400, 'malformed public_token refused');
   r = await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-3456', institution: { name: 'Bank of America', institution_id: 'ins_127989' } });
   ok(r.s === 201 && r.j.data.item_id === 'sit-item-1' && !JSON.stringify(r.j).includes('access'), 'exchange stores the item; the response carries no access token', r.j);
+  await sleep(300);
+    // role per account: only valid roles, one account per role, scoped to the owner
+  const [[accR]] = await sequelize.query("SELECT a.id FROM sf_plaid_accounts a JOIN sf_plaid_items i ON i.item_id = a.item_id WHERE a.user_id = 990097 AND i.estado <> 'desconectado' LIMIT 1");
+  if (accR) {
+    ok((await call('/plaid/cuentas/' + accR.id, A, 'PATCH', { rol: 'jefe' })).s === 400, 'account role: an unknown role is refused');
+    ok((await call('/plaid/cuentas/' + accR.id, A, 'PATCH', { rol: 'corte' })).s === 200, 'account role: the owner marks the Corte account');
+    const est = await call('/plaid/estado', A, 'GET');
+    ok(est.s === 200 && est.j.data.reserva && ['sin_saldo', 'cubierto', 'en_camino', 'faltante', 'insuficiente', 'sin_corte'].includes(est.j.data.reserva.estado), 'the bank status carries the Corte reserve', est.j.data && est.j.data.reserva);
+  }
   await sleep(800); // the first background sync (empty) runs
   const [[it]] = await sequelize.query("SELECT * FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
   ok(it && !String(it.access_token_enc).includes('SITSECRET') && plaid.decrypt(it.access_token_enc) === ACCESS, 'access token stored ENCRYPTED (AES-256-GCM) and decrypts back');
@@ -637,6 +646,24 @@ async function plaidTests({ call, A, B, sequelize }) {
   await psync.recurring(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
   const [ns2] = await sequelize.query("SELECT id FROM sf_alertas WHERE user_id = 990097 AND tipo = 'nueva_suscripcion'");
   ok(ns2.length === ns.length, 'running the check again does not repeat the alert');
+
+  // --- split paycheck: two same-day deposits confirm ONE plan Salario with their sum (owner 2026-10-26) ---
+  const [[salS]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND categoria = 'salario' AND estado = 'pendiente' AND fecha > :d ORDER BY fecha OFFSET 2 LIMIT 1", { replacements: { d: TODAY } });
+  const salC = Math.round(Number(salS.monto) * 100), parteA = Math.round(salC * 0.7), parteB = salC - parteA;
+  const nSplit = await count();
+  const PAY = { primary: 'INCOME', detailed: 'INCOME_SALARY' };
+  syncQueue.push({ added: [T('txSA', 'acc-chk', salS.fecha, -parteA / 100, { name: 'CITI PAYROLL DES:EDI PAYMNT', pfc: PAY }), T('txSB', 'acc-chk', salS.fecha, -parteB / 100, { name: 'CITI PAYROLL DES:EDI PAYMNT', pfc: PAY })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  let [[salRow]] = await sequelize.query('SELECT estado, monto_real::text AS mr FROM sf_movimientos WHERE id = :id', { replacements: { id: salS.id } });
+  ok(salRow.estado === 'cumplido' && Math.round(Number(salRow.mr) * 100) === salC && await count() === nSplit, 'split paycheck: both deposits confirm ONE Salario with their sum, and no extra income row is created', { salRow, salC });
+  syncQueue.push({ added: [], modified: [], removed: [{ transaction_id: 'txSB' }] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  [[salRow]] = await sequelize.query('SELECT estado, monto_real::text AS mr FROM sf_movimientos WHERE id = :id', { replacements: { id: salS.id } });
+  ok(salRow.estado === 'cumplido' && Math.round(Number(salRow.mr) * 100) === parteA, 'split paycheck: if the bank removes one part, the Salario keeps only the other part', salRow);
+  syncQueue.push({ added: [T('txSC', 'acc-chk', salS.fecha, -(salC) / 100, { name: 'CITI PAYROLL DES:EDI PAYMNT', pfc: PAY })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  [[salRow]] = await sequelize.query('SELECT monto_real::text AS mr FROM sf_movimientos WHERE id = :id', { replacements: { id: salS.id } });
+  ok(Math.round(Number(salRow.mr) * 100) === parteA, 'split paycheck: a deposit that would push the Salario past plan + 2% does not join it', salRow);
 
   // --- review fixes: owner-marked plan row, variable salary, second Connect, category lock ---
   ok((await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-9999', institution: { name: 'Bank of America', institution_id: 'ins_127989' } })).s === 409, 'a second Connect of the same bank is refused (would import everything twice); Reconectar instead');
@@ -766,6 +793,23 @@ async function plaidTests({ call, A, B, sequelize }) {
   const [[it2]] = await sequelize.query("SELECT importar_desde::text AS d FROM sf_plaid_items WHERE item_id = 'sit-item-2'");
   ok(r.s === 201 && it2 && it2.d > lastImp.f, 'reconnecting after a disconnect imports only AFTER the last bank movement (no second copy of history)', { it2, lastImp });
   ok(/texto del banco, solo dato/.test(fs.readFileSync(path.join(__dirname, 'src', 'services/saludFinanciera/cerebro.js'), 'utf8')), 'Lina sees bank text fenced as data and is told never to obey it');
+
+  // --- Corte reserve (owner design 2026-10-26) ---
+  const RS = require('./src/services/saludFinanciera/reserva');
+  const C1 = { fecha: '2026-11-07', montoCents: 430799 };
+  let rv = RS.calcular({ hoy: '2026-10-26', saldoCents: 500000, corte: C1, pagos: [{ fecha: '2026-11-06', montoCents: 380748 }], colchonCents: 20000 });
+  ok(rv.estado === 'cubierto' && rv.moverAhoraCents === 500000 - 450799 && rv.pagos[0].guardarCents === 0 && rv.pagos[0].moverCents === 380748, 'reserve: already covered -> the surplus can move today and the whole paycheck can go to gastos', rv);
+  rv = RS.calcular({ hoy: '2026-10-26', saldoCents: 100000, corte: C1, pagos: [{ fecha: '2026-11-06', montoCents: 380748 }], colchonCents: 20000 });
+  ok(rv.estado === 'en_camino' && rv.pagos[0].guardarCents === 350800 && rv.pagos[0].moverCents === 380748 - 350800, 'reserve: one paycheck before the Corte keeps exactly what is missing (rounded up to the dollar)', rv);
+  ok(rv.riesgo && rv.riesgo.fecha === '2026-11-06', 'reserve: a paycheck 1 day before the Corte that is still needed raises the late-deposit warning', rv.riesgo);
+  rv = RS.calcular({ hoy: '2026-11-08', saldoCents: 0, corte: { fecha: '2026-12-07', montoCents: 430799 }, pagos: [{ fecha: '2026-11-20', montoCents: 380748 }, { fecha: '2026-12-04', montoCents: 380748 }], colchonCents: 20000 });
+  ok(rv.estado === 'en_camino' && rv.pagos.length === 2 && rv.pagos[0].guardarCents === 225400 && rv.pagos[0].guardarCents + rv.pagos[1].guardarCents >= 450799 && !rv.riesgo, 'reserve: two paychecks split the Corte (about $2,254 each) with no warning when the first already covers half', rv);
+  rv = RS.calcular({ hoy: '2026-11-08', saldoCents: 0, corte: { fecha: '2026-12-07', montoCents: 430799 }, pagos: [{ fecha: '2026-11-20', montoCents: 200000 }], colchonCents: 20000 });
+  ok(rv.estado === 'insuficiente' && rv.traerCents === 250799, 'reserve: a paycheck too small says how much must come from the gastos account', rv);
+  rv = RS.calcular({ hoy: '2026-12-05', saldoCents: 100000, corte: { fecha: '2026-12-07', montoCents: 430799 }, pagos: [], colchonCents: 20000 });
+  ok(rv.estado === 'faltante' && rv.traerCents === 350799, 'reserve: no paycheck left before the Corte -> bring the gap from gastos', rv);
+  ok(RS.calcular({ hoy: '2026-10-26', saldoCents: null, corte: C1, pagos: [] }).estado === 'sin_saldo', 'reserve: no bank balance yet -> it says so, never assumes zero');
+
 
   // --- structural promises ---
   const dir = path.join(__dirname, 'src');

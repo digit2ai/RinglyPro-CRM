@@ -375,7 +375,10 @@ function extendPlan(rawRows, meses = 1, recurrentes = []) {
   const add = (fecha, concepto, tipo, monto, categoria) => nuevos.push({ fecha, concepto, tipo, monto, categoria, origen: 'plan', estado: 'pendiente' });
 
   const salarios = salaryDatesBetween(desde, hasta);
-  for (const f of salarios) if (!have.has(f + '|salario')) add(f, 'Salario', 'ingreso', '3800.00', 'salario');
+  // the salary amount follows the latest one in the plan (owner set 3,807.48 on 2026-10-26), 3800.00 only as a fallback
+  const ultSal = rows.filter(r => r.categoria === 'salario').sort((x, y) => (x.fecha < y.fecha ? 1 : -1))[0];
+  const montoSal = ultSal && Number(ultSal.monto) > 0 ? Number(ultSal.monto).toFixed(2) : '3800.00';
+  for (const f of salarios) if (!have.has(f + '|salario')) add(f, 'Salario', 'ingreso', montoSal, 'salario');
 
   // Pago Lina on the first salary of each month (salary dates may come from the existing plan too).
   const allSalaries = salaryDatesBetween('2026-11-01', hasta);

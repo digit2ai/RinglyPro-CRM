@@ -119,6 +119,32 @@
       state.bank = j.data; drawBank();
     }).catch(function () {});
   }
+  function money(n) { return (n < 0 ? '-' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function fechaCorta(iso) { var m = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']; var p = String(iso).split('-'); return Number(p[2]) + ' ' + m[Number(p[1]) - 1]; }
+  // Corte reserve: how much to keep in the corte account on each payday (owner design 2026-10-26)
+  function reservaHtml(d) {
+    var r = d.reserva; if (!r || !d.items.length) return '';
+    var c = function (x) { return money((x || 0) / 100); };
+    var cuenta = r.cuenta ? '••' + r.cuenta.mask : 'la cuenta del Corte', gastos = r.gastos ? '••' + r.gastos.mask : 'la cuenta de gastos';
+    if (r.estado === 'sin_cuenta') return '<p class="section-hint">Marca en <b>Cuentas</b> cuál recibe el sueldo y paga el Corte, y cuál paga lo demás.</p>';
+    if (r.estado === 'sin_saldo') return '<p class="section-hint">Esperando el saldo de ' + esc(cuenta) + ' desde el banco. Pulsa "Sincronizar ahora".</p>';
+    if (r.estado === 'sin_corte' || r.estado === 'error') return '';
+    var col = { cubierto: 'var(--success)', en_camino: 'var(--success)', faltante: 'var(--danger)', insuficiente: 'var(--danger)' }[r.estado] || 'var(--text-muted)';
+    var h = '<div style="border:1px solid var(--border);border-left:4px solid ' + col + ';border-radius:8px;padding:10px 12px;margin:6px 0 10px">' +
+      '<div style="font-weight:700;margin-bottom:4px">Reserva del Corte</div>' +
+      '<div style="font-size:14px">Corte del <b>' + esc(fechaCorta(r.corte.fecha)) + '</b>: ' + c(r.corte.montoCents) + ' + colchón ' + c(r.colchonCents) + ' = <b>' + c(r.objetivoCents) + '</b>. Hoy en ' + esc(cuenta) + ': <b>' + c(r.saldoCents) + '</b>.</div>';
+    if (r.estado === 'cubierto') h += '<div style="color:var(--success);font-weight:600;margin-top:4px">Cubierto. Puedes pasar ' + c(r.moverAhoraCents) + ' a ' + esc(gastos) + ' hoy.</div>';
+    if (r.estado === 'faltante') h += '<div style="color:var(--danger);font-weight:600;margin-top:4px">Faltan ' + c(r.traerCents) + ' y no hay sueldo antes del Corte: pásalos de ' + esc(gastos) + ' a ' + esc(cuenta) + '.</div>';
+    if (r.pagos && r.pagos.length) {
+      h += '<div style="font-size:14px;margin-top:6px">' + r.pagos.map(function (p) {
+        return 'Sueldo del <b>' + esc(fechaCorta(p.fecha)) + '</b> (' + c(p.montoCents) + '): deja <b>' + c(p.guardarCents) + '</b> en ' + esc(cuenta) + ' y pasa <b>' + c(p.moverCents) + '</b> a ' + esc(gastos) + '.';
+      }).join('<br>') + '</div>';
+    }
+    if (r.estado === 'insuficiente') h += '<div style="color:var(--danger);font-weight:600;margin-top:4px">Aun guardando todo el sueldo faltan ' + c(r.traerCents) + ': pásalos de ' + esc(gastos) + ' antes del Corte.</div>';
+    if (r.riesgo) h += '<div style="color:var(--warning,#d97706);font-size:13px;margin-top:4px">Ojo: el sueldo del ' + esc(fechaCorta(r.riesgo.fecha)) + ' llega justo antes del Corte. Si se retrasa, faltarían ' + c(r.riesgo.faltaSinEseCents) + '. Mejor deja ese dinero desde el sueldo anterior.</div>';
+    if (r.cuenta && r.cuenta.saldo_at) h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Saldo del banco: ' + esc(haceCuanto(r.cuenta.saldo_at)) + '.</div>';
+    return h + '</div>';
+  }
   function drawBank() {
     var el = document.getElementById('sf-bank'), d = state.bank; if (!el || !d) return;
     var h = '<div class="card card-accent-blue" style="padding:12px 14px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Banco</h3>' +
@@ -129,6 +155,7 @@
       h += '<p class="section-hint">Conecta tu cuenta de Bank of America para que tus compras, depósitos y suscripciones lleguen solos. Solo se leen datos: nunca se mueve dinero.</p>' +
         '<button class="btn btn-primary" id="sf-bank-connect">Conectar Bank of America</button>';
     }
+    h += reservaHtml(d);
     d.items.forEach(function (it) {
       var e = ESTADO_BANCO[it.estado] || ESTADO_BANCO.activo;
       var vence = it.consent_expira ? String(it.consent_expira).slice(0, 10) : null;
@@ -138,7 +165,7 @@
           '<span style="flex:1 1 220px">' + esc(it.institution_name) + ': ' + (it.estado !== 'activo' ? esc(e[0]) : 'el permiso vence el ' + esc(vence)) + '. Renuévalo para seguir importando.</span>' +
           '<button class="btn btn-sm btn-primary" data-bank-update="' + it.id + '">Reconectar</button></div>';
       }
-      var incl = it.cuentas.filter(function (c) { return c.incluir; }).map(function (c) { return c.nombre + (c.mask ? ' ••' + c.mask : ''); });
+      var incl = it.cuentas.filter(function (c) { return c.incluir; }).map(function (c) { var sb = c.saldo_disponible != null ? c.saldo_disponible : c.saldo_actual; return (c.mask ? '••' + c.mask : c.nombre) + (sb != null ? ' ' + money(Number(sb)) : '') + (c.rol === 'corte' ? ' (Corte)' : c.rol === 'gastos' ? ' (gastos)' : ''); });
       h += '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px">' +
         '<div><b>' + esc(it.institution_name) + '</b> <span style="color:' + e[1] + ';font-weight:600;font-size:13px">· ' + esc(e[0]) + '</span>' +
         '<div style="font-size:13px;color:var(--text-muted)">Última sincronización: ' + esc(haceCuanto(it.ultimo_sync)) + (vence ? ' · permiso hasta ' + esc(vence) : '') + ' · cuentas que cuentan: ' + esc(incl.join(', ') || 'ninguna') + '</div>' +
@@ -227,8 +254,9 @@
     var it = (state.bank.items || []).filter(function (x) { return x.id === itemId; })[0]; if (!it) return;
     openModal('Cuentas de ' + it.institution_name,
       '<p class="section-hint">Solo las cuentas marcadas cuentan en tu salud financiera. Recomendado: solo la cuenta de cheques (la tarjeta ya la pagas como "Corte"; incluirla contaría cada compra dos veces).</p>' +
-      it.cuentas.map(function (c) { return '<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:15px"><input type="checkbox" data-acct="' + c.id + '"' + (c.incluir ? ' checked' : '') + ' style="width:20px;height:20px"> ' + esc(c.nombre || 'Cuenta') + (c.mask ? ' ••' + esc(c.mask) : '') + ' <span style="color:var(--text-muted);font-size:12px">' + esc(c.subtipo || c.tipo || '') + '</span></label>'; }).join(''),
+      it.cuentas.map(function (c) { return '<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:15px"><input type="checkbox" data-acct="' + c.id + '"' + (c.incluir ? ' checked' : '') + ' style="width:20px;height:20px"> ' + esc(c.nombre || 'Cuenta') + (c.mask ? ' ••' + esc(c.mask) : '') + ' <span style="color:var(--text-muted);font-size:12px">' + esc(c.subtipo || c.tipo || '') + '</span>' + ' <select data-rol="' + c.id + '" style="margin-left:auto"><option value="">—</option><option value="corte"' + (c.rol === 'corte' ? ' selected' : '') + '>Recibe sueldo y paga el Corte</option><option value="gastos"' + (c.rol === 'gastos' ? ' selected' : '') + '>Paga los demás gastos</option></select></label>'; }).join(''),
       function () { closeModal(); });
+    document.querySelectorAll('[data-rol]').forEach(function (sel) { sel.onchange = function () { sf('/plaid/cuentas/' + sel.getAttribute('data-rol'), { method: 'PATCH', body: { rol: sel.value || null } }).then(function () { refresh(); }); }; });
     document.querySelectorAll('[data-acct]').forEach(function (cb) { cb.onchange = function () {
       cb.disabled = true;
       sf('/plaid/cuentas/' + cb.getAttribute('data-acct'), { method: 'PATCH', body: { incluir: cb.checked } }).then(function () { cb.disabled = false; refresh(); });

@@ -232,3 +232,11 @@ ALTER TABLE sf_plaid_webhooks ADD COLUMN IF NOT EXISTS claimed_at TIMESTAMPTZ;
 ALTER TABLE sf_plaid_webhooks ADD COLUMN IF NOT EXISTS intentos INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE sf_plaid_txn DROP CONSTRAINT IF EXISTS sf_plaid_txn_enlace_check;
 ALTER TABLE sf_plaid_txn ADD CONSTRAINT sf_plaid_txn_enlace_check CHECK (enlace IS NULL OR enlace IN ('nuevo','plan','cumplido','manual'));
+
+-- 2026-10-26: bank balances per account (from /accounts/get, free with Transactions), the account's role
+-- (corte = receives the paycheck and pays the Corte; gastos = everything else) and the Corte cushion
+ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS saldo_actual NUMERIC(12,2);
+ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS saldo_disponible NUMERIC(12,2);
+ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS saldo_at TIMESTAMPTZ;
+ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS rol TEXT;
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS colchon_corte NUMERIC(12,2) DEFAULT 200;
