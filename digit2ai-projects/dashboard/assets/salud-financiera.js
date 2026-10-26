@@ -122,7 +122,7 @@
   function drawBank() {
     var el = document.getElementById('sf-bank'), d = state.bank; if (!el || !d) return;
     var h = '<div class="card card-accent-blue" style="padding:12px 14px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Banco</h3>' +
-      '<span style="font-size:12px;color:var(--text-muted)">Solo lectura · ' + (d.entorno === 'production' ? 'producción' : 'prueba (sandbox)') + '</span></div>';
+      '<span style="font-size:12px;color:var(--text-muted)">Solo lectura · ' + (d.entorno === 'production' ? 'producción' : 'prueba (sandbox)') + ' · <a href="/salud-financiera-privacy.html" target="_blank" rel="noopener">Privacidad</a></span></div>';
     if (!d.configurado) {
       h += '<p class="section-hint">La conexión con el banco todavía no está configurada en el servidor. Falta: ' + esc((d.falta || []).join(', ')) + '.</p>';
     } else if (!d.items.length) {
