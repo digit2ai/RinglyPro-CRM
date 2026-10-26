@@ -85,6 +85,8 @@ app.use(['/api/v1/billing/webhook', '/jobup/api/v1/billing/webhook'], (req, res,
 // Planea: webhook de Stripe de las cotizaciones. Cuerpo crudo ANTES del parser global
 // (mismo motivo que JobUp arriba): una firma de Stripe cubre los bytes exactos.
 app.use('/planea/quote/stripe/webhook', express.raw({ type: 'application/json' }));
+// Salud Financiera: webhook de Plaid. Su firma (ES256) cubre el SHA-256 de los bytes exactos.
+app.use('/projects/api/salud-financiera/plaid/webhook', express.raw({ type: '*/*', limit: '256kb' }));
 
 // WordPress como proveedor de identidad — el webhook monta su propio
 // express.raw y DEBE ir antes del parser global: el HMAC cubre los bytes

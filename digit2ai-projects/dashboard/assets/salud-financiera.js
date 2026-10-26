@@ -89,6 +89,7 @@
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
+      '<div id="sf-bank" style="margin-bottom:16px"></div>' +
       '<div class="card card-accent-blue" id="sf-mov-card" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
       '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
@@ -101,7 +102,114 @@
     return refresh();
   };
 
-  function refresh() { return Promise.all([loadSalud(), loadMovs()]); }
+  function refresh() { return Promise.all([loadSalud(), loadMovs(), loadBank()]); }
+
+  // ---------- Bank of America via Plaid (READ-ONLY) ----------
+  function haceCuanto(ts) {
+    if (!ts) return 'nunca';
+    var m = Math.round((Date.now() - Date.parse(ts)) / 60000);
+    if (m < 2) return 'hace un momento'; if (m < 60) return 'hace ' + m + ' min'; var h = Math.round(m / 60); if (h < 48) return 'hace ' + h + ' h'; return 'hace ' + Math.round(h / 24) + ' días';
+  }
+  var ESTADO_BANCO = { activo: ['Conectado', 'var(--success)'], login_requerido: ['Hay que volver a iniciar sesión', 'var(--danger)'], por_desconectar: ['Se va a desconectar', 'var(--warning)'], desconectado: ['Desconectado', 'var(--danger)'] };
+  function loadBank() {
+    var el = document.getElementById('sf-bank'); if (!el) return Promise.resolve();
+    return sf('/plaid/estado').then(function (j) {
+      if (!j.success) { el.innerHTML = ''; return; }
+      state.bank = j.data; drawBank();
+    }).catch(function () {});
+  }
+  function drawBank() {
+    var el = document.getElementById('sf-bank'), d = state.bank; if (!el || !d) return;
+    var h = '<div class="card card-accent-blue" style="padding:12px 14px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Banco</h3>' +
+      '<span style="font-size:12px;color:var(--text-muted)">Solo lectura · ' + (d.entorno === 'production' ? 'producción' : 'prueba (sandbox)') + '</span></div>';
+    if (!d.configurado) {
+      h += '<p class="section-hint">La conexión con el banco todavía no está configurada en el servidor. Falta: ' + esc((d.falta || []).join(', ')) + '.</p>';
+    } else if (!d.items.length) {
+      h += '<p class="section-hint">Conecta tu cuenta de Bank of America para que tus compras, depósitos y suscripciones lleguen solos. Solo se leen datos: nunca se mueve dinero.</p>' +
+        '<button class="btn btn-primary" id="sf-bank-connect">Conectar Bank of America</button>';
+    }
+    d.items.forEach(function (it) {
+      var e = ESTADO_BANCO[it.estado] || ESTADO_BANCO.activo;
+      var vence = it.consent_expira ? String(it.consent_expira).slice(0, 10) : null;
+      var pronto = vence && (Date.parse(vence) - Date.now() < 30 * 864e5);
+      if (it.estado !== 'activo' || pronto) {
+        h += '<div style="background:rgba(239,68,68,.12);border:1px solid var(--danger);border-radius:8px;padding:10px;margin:8px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+          '<span style="flex:1 1 220px">' + esc(it.institution_name) + ': ' + (it.estado !== 'activo' ? esc(e[0]) : 'el permiso vence el ' + esc(vence)) + '. Renuévalo para seguir importando.</span>' +
+          '<button class="btn btn-sm btn-primary" data-bank-update="' + it.id + '">Reconectar</button></div>';
+      }
+      var incl = it.cuentas.filter(function (c) { return c.incluir; }).map(function (c) { return c.nombre + (c.mask ? ' ••' + c.mask : ''); });
+      h += '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px">' +
+        '<div><b>' + esc(it.institution_name) + '</b> <span style="color:' + e[1] + ';font-weight:600;font-size:13px">· ' + esc(e[0]) + '</span>' +
+        '<div style="font-size:13px;color:var(--text-muted)">Última sincronización: ' + esc(haceCuanto(it.ultimo_sync)) + (vence ? ' · permiso hasta ' + esc(vence) : '') + ' · cuentas que cuentan: ' + esc(incl.join(', ') || 'ninguna') + '</div>' +
+        (it.ultimo_error ? '<div style="font-size:12px;color:var(--danger)">Último error: ' + esc(it.ultimo_error) + '</div>' : '') + '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-sm btn-ghost" data-bank-sync="1">Sincronizar ahora</button>' +
+        '<button class="btn btn-sm btn-ghost" data-bank-accounts="' + it.id + '">Cuentas</button>' +
+        '<button class="btn btn-sm btn-ghost" data-bank-update="' + it.id + '">Reconectar</button>' +
+        '<button class="btn btn-sm btn-ghost" data-bank-off="' + it.id + '" style="color:var(--danger)">Desconectar</button></div></div>';
+    });
+    if ((d.alertas || []).length) {
+      h += '<div style="margin-top:10px">' + d.alertas.map(function (a) {
+        return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:7px 0;font-size:14px"><span>' + esc(a.texto) + '</span>' +
+          '<button class="btn btn-sm btn-ghost" data-alerta-ok="' + a.id + '">Entendido</button></div>';
+      }).join('') + '</div>';
+    }
+    var subs = (d.recurrentes || []).filter(function (r) { return r.direccion === 'salida' && r.activo; });
+    if (subs.length) h += '<div style="margin-top:8px"><button class="btn btn-sm btn-ghost" id="sf-bank-subs">Cobros recurrentes (' + subs.length + ')</button></div>';
+    h += '</div>';
+    el.innerHTML = h;
+    var c = document.getElementById('sf-bank-connect'); if (c) c.onclick = function () { bankLink(null); };
+    el.querySelectorAll('[data-bank-update]').forEach(function (b) { b.onclick = function () { bankLink(Number(b.getAttribute('data-bank-update'))); }; });
+    el.querySelectorAll('[data-bank-sync]').forEach(function (b) { b.onclick = function () { b.disabled = true; b.textContent = 'Sincronizando…'; sf('/plaid/sync', { method: 'POST' }).then(function () { setTimeout(refresh, 6000); }); }; });
+    el.querySelectorAll('[data-bank-accounts]').forEach(function (b) { b.onclick = function () { bankAccounts(Number(b.getAttribute('data-bank-accounts'))); }; });
+    el.querySelectorAll('[data-bank-off]').forEach(function (b) { b.onclick = function () {
+      if (!confirm('¿Desconectar el banco? Los movimientos ya importados se quedan. En el plan de prueba de Plaid ese cupo no se recupera.')) return;
+      sf('/plaid/item/' + b.getAttribute('data-bank-off'), { method: 'DELETE' }).then(function () { refresh(); });
+    }; });
+    el.querySelectorAll('[data-alerta-ok]').forEach(function (b) { b.onclick = function () { sf('/plaid/alertas/' + b.getAttribute('data-alerta-ok'), { method: 'PATCH', body: { leida: true } }).then(loadBank); }; });
+    var sb = document.getElementById('sf-bank-subs'); if (sb) sb.onclick = function () {
+      openModal('Cobros recurrentes', '<table class="data-table" style="width:100%"><thead><tr><th>Concepto</th><th>Frecuencia</th><th style="text-align:right">Último</th><th>Próximo</th></tr></thead><tbody>' +
+        subs.map(function (r) { return '<tr><td>' + esc(r.descripcion) + (r.fuente === 'detector' ? ' <span style="font-size:11px;color:var(--text-muted)">(detectado por la app)</span>' : '') + '</td><td>' + esc({ WEEKLY: 'semanal', BIWEEKLY: 'quincenal', SEMI_MONTHLY: '2 al mes', MONTHLY: 'mensual', ANNUALLY: 'anual' }[r.frecuencia] || r.frecuencia || '') + '</td><td style="text-align:right">' + (r.monto_ultimo ? '$' + esc(r.monto_ultimo) : '') + '</td><td>' + esc(r.proxima_fecha || '') + '</td></tr>'; }).join('') + '</tbody></table>', function () { closeModal(); });
+    };
+  }
+  function loadPlaidScript() {
+    if (window.Plaid) return Promise.resolve();
+    if (state.plaidLoading) return state.plaidLoading;
+    state.plaidLoading = new Promise(function (ok, bad) {
+      var s = document.createElement('script'); s.src = 'https://cdn.plaid.com/link/v2/stable/link-initialize.js';
+      s.onload = function () { ok(); }; s.onerror = function () { state.plaidLoading = null; bad(new Error('No se pudo cargar Plaid Link')); };
+      document.head.appendChild(s);
+    });
+    return state.plaidLoading;
+  }
+  // itemId null = new connection; a number = update mode (same Item, renews consent, no new slot)
+  function bankLink(itemId) {
+    var tokenCall = itemId ? sf('/plaid/update-token', { method: 'POST', body: { id: itemId } }) : sf('/plaid/link-token', { method: 'POST' });
+    Promise.all([tokenCall, loadPlaidScript()]).then(function (res) {
+      var j = res[0];
+      if (!j.success) { alert(j.error || 'No se pudo abrir la conexión con el banco'); return; }
+      var h = window.Plaid.create({
+        token: j.data.link_token,
+        onSuccess: function (publicToken, meta) {
+          if (itemId) sf('/plaid/update-done', { method: 'POST', body: { id: itemId } }).then(function () { setTimeout(refresh, 4000); });
+          else sf('/plaid/exchange', { method: 'POST', body: { public_token: publicToken, institution: meta && meta.institution ? { name: meta.institution.name, institution_id: meta.institution.institution_id } : null } })
+            .then(function (x) { if (!x.success) alert(x.error || 'No se pudo conectar'); setTimeout(refresh, 6000); refresh(); });
+        },
+        onExit: function (err) { if (err && err.display_message) alert(err.display_message); }
+      });
+      h.open();
+    }).catch(function (e) { alert(e.message); });
+  }
+  function bankAccounts(itemId) {
+    var it = (state.bank.items || []).filter(function (x) { return x.id === itemId; })[0]; if (!it) return;
+    openModal('Cuentas de ' + it.institution_name,
+      '<p class="section-hint">Solo las cuentas marcadas cuentan en tu salud financiera. Recomendado: solo la cuenta de cheques (la tarjeta ya la pagas como "Corte"; incluirla contaría cada compra dos veces).</p>' +
+      it.cuentas.map(function (c) { return '<label style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--border);font-size:15px"><input type="checkbox" data-acct="' + c.id + '"' + (c.incluir ? ' checked' : '') + ' style="width:20px;height:20px"> ' + esc(c.nombre || 'Cuenta') + (c.mask ? ' ••' + esc(c.mask) : '') + ' <span style="color:var(--text-muted);font-size:12px">' + esc(c.subtipo || c.tipo || '') + '</span></label>'; }).join(''),
+      function () { closeModal(); });
+    document.querySelectorAll('[data-acct]').forEach(function (cb) { cb.onchange = function () {
+      cb.disabled = true;
+      sf('/plaid/cuentas/' + cb.getAttribute('data-acct'), { method: 'PATCH', body: { incluir: cb.checked } }).then(function () { cb.disabled = false; refresh(); });
+    }; });
+  }
 
   function loadSalud() {
     return sf('/salud').then(function (s) {
@@ -138,7 +246,7 @@
         act = '<button class="btn btn-sm btn-ghost" data-edit="' + r.id + '">Editar</button> ' + act;
         return '<tr data-row="' + r.id + '" style="' + bg + 'border-left:3px solid ' + color[v] + '">' +
           '<td style="white-space:nowrap">' + esc(fechaCorta(r.fecha).replace(/ \d\d$/, '')) + '<span class="sf-yr"> ' + esc(r.fecha.slice(2, 4)) + '</span>' + (r.es_minimo ? '<div style="font-size:11px;color:var(--warning);font-weight:700">PUNTO MÁS BAJO</div>' : '') + '</td>' +
-          '<td class="sf-concepto">' + esc(r.concepto) + '</td>' +
+          '<td class="sf-concepto">' + esc(r.concepto) + (r.fuente === 'plaid' ? ' <span style="font-size:10px;font-weight:700;color:var(--accent,#3b82f6);border:1px solid currentColor;border-radius:4px;padding:0 4px">BANCO</span>' : '') + (r.pendiente_banco ? ' <span style="font-size:10px;color:var(--warning)">pendiente</span>' : '') + '</td>' +
           '<td style="text-align:right;white-space:nowrap;color:' + (r.tipo === 'ingreso' ? 'var(--success)' : 'var(--text-primary)') + '">' + esc(monto) + planned + '</td>' +
           '<td style="text-align:right;white-space:nowrap;font-weight:600;color:' + (neg ? 'var(--danger)' : 'var(--text-primary)') + '">' + esc(r.saldo) + '</td>' +
           '<td class="sf-hide-m"><span style="font-size:12px;color:' + color[v] + ';font-weight:600">' + label[v] + '</span></td><td class="sf-hide-m" style="white-space:nowrap">' + act + '</td></tr>';
@@ -191,6 +299,7 @@
       field('Concepto', '<input type="text" id="sf-e-concepto" value="' + esc(r.concepto) + '" style="font-size:16px">') +
       '<div class="form-row">' + field('Tipo', '<select id="sf-e-tipo" style="font-size:16px"><option value="egreso"' + (r.tipo === 'egreso' ? ' selected' : '') + '>Egreso</option><option value="ingreso"' + (r.tipo === 'ingreso' ? ' selected' : '') + '>Ingreso</option></select>') +
       field('Categoría', '<select id="sf-e-cat" style="font-size:16px">' + CATS.map(function (c) { return '<option value="' + c[0] + '"' + (c[0] === r.categoria ? ' selected' : '') + '>' + c[1] + '</option>'; }).join('') + '</select>') + '</div>' +
+      (r.fuente === 'plaid' ? '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" id="sf-e-regla"> Usar esta categoría siempre para ' + esc(r.comercio || r.concepto) + '</label>' : '') +
       '<p id="sf-e-err" style="color:var(--danger);font-size:13px"></p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (r.origen === 'plan' ? '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-done">' + (cumplido ? 'Volver a pendiente' : 'Marcar como cumplido') + '</button>' : '') +
       '<button type="button" class="btn btn-sm btn-ghost" id="sf-e-del" style="color:var(--danger);border-color:var(--danger)">Borrar este movimiento</button></div>',
@@ -199,10 +308,13 @@
         var campos = { fecha: val('sf-e-fecha'), monto: val('sf-e-monto'), concepto: val('sf-e-concepto'), tipo: val('sf-e-tipo'), categoria: val('sf-e-cat') };
         Object.keys(campos).forEach(function (k) { if (String(campos[k]) !== String(r[k])) cambios[k] = campos[k]; });
         if (cumplido && val('sf-e-real') !== String(r.monto_real || r.monto)) cambios.monto_real = val('sf-e-real');
-        if (!Object.keys(cambios).length) { closeModal(); return; }
-        return sf('/movimientos/' + id, { method: 'PATCH', body: cambios }).then(function (j) {
+        var regla = document.getElementById('sf-e-regla') && document.getElementById('sf-e-regla').checked;
+        if (!Object.keys(cambios).length && !regla) { closeModal(); return; }
+        var pre = Object.keys(cambios).length ? sf('/movimientos/' + id, { method: 'PATCH', body: cambios }) : Promise.resolve({ success: true });
+        return pre.then(function (j) {
           if (!j.success) { document.getElementById('sf-e-err').textContent = j.error || 'No se pudo guardar'; return; }
-          closeModal(); refresh();
+          var after = regla ? sf('/plaid/regla', { method: 'POST', body: { movimiento_id: id, categoria: val('sf-e-cat') } }) : Promise.resolve();
+          return after.then(function () { closeModal(); refresh(); });
         });
       });
     var done = document.getElementById('sf-e-done');

@@ -30,6 +30,10 @@ const agentsRoutes = require('./routes/agents');
 
 const app = express();
 
+// Salud Financiera: Plaid webhook. PUBLIC, raw body, BEFORE the JSON parser and
+// before any auth: the Plaid ES256 signature over the exact bytes is the only door.
+app.use('/api/salud-financiera/plaid/webhook', require('./routes/saludFinancieraPlaid').webhookRouter(require('./routes/saludFinanciera')._deps));
+
 // Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -1253,6 +1257,11 @@ app.get('*', (req, res) => {
     } catch (pollErr) {
       console.log('[D2AI-Projects] build poller boot error:', pollErr.message);
     }
+
+    // Salud Financiera: daily bank backup sync (production only, SALUD_FINANCIERA_PLAID_SYNC=off stops it)
+    try {
+      if (require('./services/saludFinanciera/plaidSync').start(require('./models').sequelize)) console.log('[D2AI-Projects] Salud Financiera bank sync poller started');
+    } catch (e) { console.log('[D2AI-Projects] bank sync poller boot error:', e.message); }
 
     // All four scheduled email pollers are gated by EMAIL_AUTOSEND_DISABLED.
     // User reported SendGrid mail landing in spam; auto-send is off by

@@ -293,6 +293,8 @@ async function apiTests() {
     await sequelize.query('DELETE FROM sf_config WHERE user_id IN (990097,990098)').catch(() => {});
     await sequelize.query('DELETE FROM sf_cambios WHERE user_id IN (990097,990098)').catch(() => {});
     await sequelize.query('DELETE FROM sf_recurrentes WHERE user_id IN (990097,990098)').catch(() => {});
+    for (const tb of ['sf_plaid_txn', 'sf_plaid_accounts', 'sf_plaid_items', 'sf_plaid_recurrentes', 'sf_alertas', 'sf_categoria_reglas']) await sequelize.query('DELETE FROM ' + tb + ' WHERE user_id IN (990097,990098)').catch(() => {});
+    await sequelize.query("DELETE FROM sf_plaid_webhooks WHERE item_id IN ('sit-item-1','sit-item-2','someone-else')").catch(() => {});
     await sequelize.query("DELETE FROM d2_user_access WHERE email LIKE 'sit-sf-%@example.test'").catch(() => {});
   };
   try {
@@ -456,11 +458,319 @@ async function apiTests() {
     route._deps.modelClient = false;
     }
 
+    try { await plaidTests({ call, A, B, sequelize }); } catch (e) { fail++; console.log('  FAIL plaid section crashed:', e.stack); }
   } finally {
     await clean();
     server.close();
     await sequelize.close();
   }
+}
+
+
+// ---------------------------------------------------------------------------
+// [7] Bank of America via Plaid — fake Plaid transport, zero keys, real DB with throwaway users
+// ---------------------------------------------------------------------------
+async function plaidTests({ call, A, B, sequelize }) {
+  console.log('\n[7] Plaid (fake transport, throwaway users)');
+  const crypto = require('crypto');
+  const plaid = require('./src/services/saludFinanciera/plaidClient');
+  const psync = require('./src/services/saludFinanciera/plaidSync');
+  const verifier = require('./src/services/saludFinanciera/plaidWebhook');
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const saved = { id: process.env.PLAID_CLIENT_ID, sec: process.env.PLAID_SECRET, key: process.env.SALUD_FINANCIERA_PLAID_KEY, env: process.env.PLAID_ENV };
+  delete process.env.PLAID_CLIENT_ID; delete process.env.PLAID_SECRET; delete process.env.SALUD_FINANCIERA_PLAID_KEY; process.env.PLAID_ENV = 'sandbox';
+
+  let r = await call('/plaid/estado', A);
+  ok(r.s === 200 && r.j.data.configurado === false && r.j.data.falta.length === 3, 'no Plaid env -> estado says not configured and names what is missing', r.j);
+  ok((await call('/plaid/link-token', A, 'POST')).s === 503, 'no Plaid env -> link-token 503, nothing faked');
+
+  process.env.PLAID_CLIENT_ID = 'sit-client'; process.env.PLAID_SECRET = 'sit-secret'; process.env.SALUD_FINANCIERA_PLAID_KEY = 'sit-key-0123456789-0123456789-abcdef';
+  const ACCESS = 'access-sandbox-SITSECRET-0001';
+  const ec = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const jwk = { ...ec.publicKey.export({ format: 'jwk' }), kid: 'sit-kid-1', alg: 'ES256', use: 'sig', created_at: 1, expired_at: null };
+  const calls = []; let syncQueue = []; let cursorN = 0; let syncFailOnce = false; let exchangeItem = 'sit-item-1'; let keyCalls = 0; let recurringMode = 'unsupported'; let recurringStreams = [];
+  plaid.setTransport(async (p, body) => {
+    calls.push({ p, body });
+    if (['/item/get', '/accounts/get', '/transactions/sync', '/transactions/recurring/get', '/item/remove'].includes(p) && body.access_token !== ACCESS) throw Object.assign(new Error('bad token'), { status: 400, code: 'INVALID_ACCESS_TOKEN' });
+    if (p === '/link/token/create') return { link_token: 'link-sandbox-sit', expiration: '2030-01-01T00:00:00Z' };
+    if (p === '/item/public_token/exchange') return { access_token: ACCESS, item_id: exchangeItem };
+    if (p === '/accounts/get') return { accounts: [{ account_id: 'acc-chk', name: 'Adv Plus Banking', mask: '1234', type: 'depository', subtype: 'checking' }, { account_id: 'acc-cc', name: 'Customized Cash', mask: '9876', type: 'credit', subtype: 'credit card' }] };
+    if (p === '/item/get') return { item: { item_id: 'sit-item-1', institution_id: 'ins_127989', consent_expiration_time: new Date(Date.now() + 365 * 864e5).toISOString() } };
+    if (p === '/transactions/sync' && syncFailOnce) { syncFailOnce = false; throw Object.assign(new Error('plaid down'), { status: 500, code: 'INTERNAL_SERVER_ERROR' }); }
+    if (p === '/transactions/sync') { const page = syncQueue.shift(); cursorN++; return page ? { has_more: false, next_cursor: 'cur-' + cursorN, transactions_update_status: 'HISTORICAL_UPDATE_COMPLETE', ...page } : { added: [], modified: [], removed: [], has_more: false, next_cursor: 'cur-' + cursorN, transactions_update_status: 'HISTORICAL_UPDATE_COMPLETE' }; }
+    if (p === '/transactions/recurring/get') { if (recurringMode === 'unsupported') throw Object.assign(new Error('not enabled'), { status: 400, code: 'PRODUCTS_NOT_SUPPORTED' }); return { outflow_streams: recurringStreams, inflow_streams: [] }; }
+    if (p === '/item/remove') return { request_id: 'x' };
+    if (p === '/webhook_verification_key/get') { keyCalls++; return body.key_id === jwk.kid ? { key: jwk } : {}; }
+    throw new Error('unexpected ' + p);
+  });
+
+  // --- link token: transactions only, 730 days, Spanish, our webhook ---
+  r = await call('/plaid/link-token', A, 'POST');
+  const lt = calls.filter(c => c.p === '/link/token/create').pop();
+  ok(r.s === 200 && r.j.data.link_token === 'link-sandbox-sit', 'link-token returns the Plaid link token');
+  ok(lt && JSON.stringify(lt.body.products) === '["transactions"]' && lt.body.transactions.days_requested === 730 && lt.body.language === 'es' && /\/plaid\/webhook$/.test(lt.body.webhook) && !lt.body.access_token, 'link token: products = transactions ONLY, 730 days, es, webhook set', lt && lt.body);
+  ok(lt && !/auth|transfer|identity|signal|payment/i.test(JSON.stringify(lt.body.products) + JSON.stringify(lt.body.required_if_supported_products || []) + JSON.stringify(lt.body.additional_consented_products || [])), 'no Auth/Transfer/Identity/Signal/payment product is ever requested');
+
+  // --- exchange ---
+  ok((await call('/plaid/exchange', A, 'POST', { public_token: 'not-a-token' })).s === 400, 'malformed public_token refused');
+  r = await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-3456', institution: { name: 'Bank of America', institution_id: 'ins_127989' } });
+  ok(r.s === 201 && r.j.data.item_id === 'sit-item-1' && !JSON.stringify(r.j).includes('access'), 'exchange stores the item; the response carries no access token', r.j);
+  await sleep(800); // the first background sync (empty) runs
+  const [[it]] = await sequelize.query("SELECT * FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(it && !String(it.access_token_enc).includes('SITSECRET') && plaid.decrypt(it.access_token_enc) === ACCESS, 'access token stored ENCRYPTED (AES-256-GCM) and decrypts back');
+  r = await call('/plaid/estado', A);
+  ok(r.s === 200 && r.j.data.items.length === 1 && !JSON.stringify(r.j).includes('SITSECRET') && !JSON.stringify(r.j).includes('access_token'), 'estado lists the bank with no token in any form');
+  const cuentas = r.j.data.items[0].cuentas;
+  ok(cuentas.find(c => c.subtipo === 'checking').incluir === true && cuentas.find(c => c.tipo === 'credit').incluir === false, 'only CHECKING counts by default (card off, owner decision)', cuentas);
+  ok((await call('/plaid/estado', B)).j.data.items.length === 0, 'user B sees none of user A\'s bank');
+  ok((await call('/plaid/cuentas/' + cuentas[0].id, B, 'PATCH', { incluir: false })).s === 404 && (await call('/plaid/item/' + it.id, B, 'DELETE')).s === 404, 'user B cannot touch user A\'s accounts or item');
+
+  // --- first real sync: plan match, manual link, new row, excluded card, old history ---
+  const desde = (await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' })).importar_desde;
+  const [[plan]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND estado = 'pendiente' AND tipo = 'egreso' AND categoria = 'corte' ORDER BY fecha LIMIT 1");
+  const add = (iso, n) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  const man = await call('/movimientos', A, 'POST', { fecha: plan.fecha, concepto: 'Café a mano', tipo: 'egreso', monto: '12.34', categoria: 'gasto_personal' });
+  const count = async () => Number((await sequelize.query('SELECT COUNT(*)::int AS n FROM sf_movimientos WHERE user_id = 990097'))[0][0].n);
+  const n0 = await count();
+  const T = (id, acct, date, amount, extra = {}) => ({ transaction_id: id, account_id: acct, date, name: extra.name || 'TX ' + id, merchant_name: extra.merchant || null, amount, pending: !!extra.pending, pending_transaction_id: extra.pid || null, personal_finance_category: extra.pfc || null });
+  const firstPage = { added: [
+    T('txA', 'acc-chk', add(plan.fecha, 2), Number(plan.monto), { name: 'BANK OF AMERICA CREDIT CARD PAYMENT', pfc: { primary: 'LOAN_PAYMENTS', detailed: 'LOAN_PAYMENTS_CREDIT_CARD_PAYMENT' } }),
+    T('txB', 'acc-chk', plan.fecha, 45.67, { merchant: 'Starbucks', pending: true, pfc: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_COFFEE' } }),
+    T('txC', 'acc-cc', plan.fecha, 99, { merchant: 'Amazon', pfc: { primary: 'GENERAL_MERCHANDISE', detailed: 'GENERAL_MERCHANDISE_ONLINE_MARKETPLACES' } }),
+    T('txD', 'acc-chk', '2025-01-15', 300, { merchant: 'Old store' }),
+    T('txF', 'acc-chk', add(plan.fecha, 1), 12.34, { merchant: 'Café local' })
+  ], modified: [], removed: [] };
+  syncQueue.push(firstPage);
+  const it1 = await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' });
+  let st = await psync.syncItem(sequelize, it1, { today: TODAY });
+  const [[pl]] = await sequelize.query('SELECT estado, monto_real::text AS mr FROM sf_movimientos WHERE id = :id', { replacements: { id: plan.id } });
+  ok(pl.estado === 'cumplido' && Number(pl.mr) === Number(plan.monto) && st.plan === 1, 'bank payment of the same amount within 5 days marks the PLAN row cumplido (no duplicate row)', { pl, st });
+  const [[log]] = await sequelize.query("SELECT datos FROM sf_cambios WHERE user_id = 990097 AND accion = 'cumplido' ORDER BY id DESC LIMIT 1");
+  ok(log && log.datos.banco === true && log.datos.antes.estado === 'pendiente', 'that automatic mark is logged in sf_cambios, so it can be undone');
+  ok(st.manual === 1 && st.nuevos === 1, 'manual row linked (not duplicated), one new bank row (the coffee)', st);
+  ok(await count() === n0 + 1, 'exactly one movement added for five bank transactions (card excluded, old history kept out, plan + manual matched)');
+  const [[cof]] = await sequelize.query("SELECT m.* FROM sf_movimientos m JOIN sf_plaid_txn x ON x.mov_id = m.id WHERE x.transaction_id = 'txB'");
+  ok(cof && cof.fuente === 'plaid' && cof.pendiente_banco === true && cof.categoria === 'gasto_personal' && cof.origen === 'real', 'new bank row: fuente plaid, pending, PFC v2 FOOD_AND_DRINK -> gasto_personal', cof);
+  const [[cc]] = await sequelize.query("SELECT mov_id FROM sf_plaid_txn WHERE transaction_id = 'txC'");
+  const [[old]] = await sequelize.query("SELECT mov_id FROM sf_plaid_txn WHERE transaction_id = 'txD'");
+  ok(cc && cc.mov_id === null && old && old.mov_id === null, 'card transaction and pre-plan history are kept for detection but never reach the balance');
+  const [[cur]] = await sequelize.query("SELECT cursor, historial_completo FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(cur.cursor && cur.cursor.startsWith('cur-') && cur.historial_completo === true, 'cursor saved in the same transaction; historical status recorded');
+
+  // --- idempotent: the same page again adds nothing ---
+  syncQueue.push(firstPage);
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  ok(await count() === n0 + 1, 're-delivering the same transactions inserts nothing (dedupe by transaction_id)');
+
+  // --- pending -> posted keeps the same movement ---
+  syncQueue.push({ added: [T('txB-posted', 'acc-chk', add(plan.fecha, 1), 45.67, { merchant: 'Starbucks', pid: 'txB', pfc: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_COFFEE' } })], modified: [], removed: [{ transaction_id: 'txB', account_id: 'acc-chk' }] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[cof2]] = await sequelize.query("SELECT m.id, m.pendiente_banco FROM sf_movimientos m JOIN sf_plaid_txn x ON x.mov_id = m.id WHERE x.transaction_id = 'txB-posted'");
+  ok(cof2 && cof2.id === cof.id && cof2.pendiente_banco === false && await count() === n0 + 1, 'pending -> posted: SAME movement, no longer pending, no duplicate', { cof2 });
+
+  // --- a pending that never posts is removed ---
+  syncQueue.push({ added: [T('txG', 'acc-chk', add(plan.fecha, 3), 20, { pending: true, merchant: 'Gas' })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const nG = await count();
+  syncQueue.push({ added: [], modified: [], removed: [{ transaction_id: 'txG', account_id: 'acc-chk' }] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  ok(nG === n0 + 2 && await count() === n0 + 1, 'a pending charge that disappears (removed) is deleted from the app', { nG });
+
+  // --- removed plan match goes back to pendiente ---
+  syncQueue.push({ added: [], modified: [], removed: [{ transaction_id: 'txA', account_id: 'acc-chk' }] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[pl2]] = await sequelize.query('SELECT estado, monto_real FROM sf_movimientos WHERE id = :id', { replacements: { id: plan.id } });
+  ok(pl2.estado === 'pendiente' && pl2.monto_real === null, 'when the bank removes the matched payment, the plan row goes back to pendiente');
+
+  // --- manual category survives a re-sync; owner-deleted row is never re-created ---
+  await call('/movimientos/' + cof.id, A, 'PATCH', { categoria: 'otro' });
+  syncQueue.push({ added: [], modified: [T('txB-posted', 'acc-chk', add(plan.fecha, 1), 45.67, { merchant: 'Starbucks', pfc: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_COFFEE' } })], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[cof3]] = await sequelize.query('SELECT categoria, categoria_manual FROM sf_movimientos WHERE id = :id', { replacements: { id: cof.id } });
+  ok(cof3.categoria === 'otro' && cof3.categoria_manual === true, 'a category set by hand is not overwritten by the bank', cof3);
+  await call('/movimientos/' + cof.id, A, 'DELETE');
+  syncQueue.push({ added: [], modified: [T('txB-posted', 'acc-chk', add(plan.fecha, 1), 46.00, { merchant: 'Starbucks' })], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  ok(await count() === n0, 'a bank movement the owner deleted is never re-created by a re-sync');
+
+  // --- merchant rule ---
+  syncQueue.push({ added: [T('txH', 'acc-chk', add(plan.fecha, 4), 8.5, { merchant: 'Chipotle', pfc: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_FAST_FOOD' } })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[chip]] = await sequelize.query("SELECT m.id FROM sf_movimientos m JOIN sf_plaid_txn x ON x.mov_id = m.id WHERE x.transaction_id = 'txH'");
+  r = await call('/plaid/regla', A, 'POST', { movimiento_id: chip.id, categoria: 'servicios' });
+  syncQueue.push({ added: [T('txI', 'acc-chk', add(plan.fecha, 5), 9.25, { merchant: 'Chipotle', pfc: { primary: 'FOOD_AND_DRINK', detailed: 'FOOD_AND_DRINK_FAST_FOOD' } })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[chip2]] = await sequelize.query("SELECT m.categoria FROM sf_movimientos m JOIN sf_plaid_txn x ON x.mov_id = m.id WHERE x.transaction_id = 'txI'");
+  ok(r.s === 200 && chip2 && chip2.categoria === 'servicios', 'a merchant rule beats the Plaid category for future charges', { r: r.j, chip2 });
+  ok((await call('/plaid/regla', B, 'POST', { movimiento_id: chip.id, categoria: 'otro' })).s === 404, 'user B cannot write a rule on user A\'s movement');
+
+  // --- include / exclude an account re-applies with no Plaid call ---
+  const ccRow = cuentas.find(c => c.tipo === 'credit');
+  const before = calls.length;
+  r = await call('/plaid/cuentas/' + ccRow.id, A, 'PATCH', { incluir: true });
+  const [[ccOn]] = await sequelize.query("SELECT mov_id FROM sf_plaid_txn WHERE transaction_id = 'txC'");
+  r = await call('/plaid/cuentas/' + ccRow.id, A, 'PATCH', { incluir: false });
+  const [[ccOff]] = await sequelize.query("SELECT mov_id FROM sf_plaid_txn WHERE transaction_id = 'txC'");
+  ok(ccOn.mov_id !== null && ccOff.mov_id === null && calls.length === before, 'switching the card on brings its rows in, off takes them out, without calling Plaid', { ccOn, ccOff });
+
+  // --- recurring: Plaid add-on unavailable -> our detector, labelled ---
+  const monthly = (id, d, amt, m) => T(id, 'acc-chk', d, amt, { merchant: m, pfc: { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_TV_AND_MOVIES' } });
+  syncQueue.push({ added: [monthly('nf1', add(TODAY, -62), 15.49, 'Netflix'), monthly('nf2', add(TODAY, -32), 15.49, 'Netflix'), monthly('nf3', add(TODAY, -2), 15.49, 'Netflix')], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  let rec = await psync.recurring(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[itr]] = await sequelize.query("SELECT recurrencia FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  const [alerts1] = await sequelize.query("SELECT tipo, texto FROM sf_alertas WHERE user_id = 990097 ORDER BY id");
+  ok(itr.recurrencia === 'detector' && rec.fuente === 'detector' && rec.streams >= 1, 'Recurring add-on not enabled -> falls back to our own detector', rec);
+  ok(alerts1.some(a => a.tipo === 'resumen_recurrentes' && /Netflix/.test(a.texto) && /detectados por la app/.test(a.texto)), 'first run: ONE summary alert listing what was found, labelled as the app\'s detection', alerts1);
+  syncQueue.push({ added: [monthly('nf4', add(TODAY, 28), 16.99, 'Netflix')], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  await psync.recurring(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: add(TODAY, 30) });
+  const [chg] = await sequelize.query("SELECT texto FROM sf_alertas WHERE user_id = 990097 AND tipo = 'cambio_monto'");
+  ok(chg.length === 1 && /15\.49/.test(chg[0].texto) && /16\.99/.test(chg[0].texto), 'a recurring charge that changes amount raises a cambio_monto alert', chg);
+  // Plaid's own streams when the add-on IS enabled
+  await sequelize.query("UPDATE sf_plaid_items SET recurrencia = 'plaid' WHERE item_id = 'sit-item-1'");
+  recurringMode = 'ok'; recurringStreams = [{ stream_id: 'st-spotify', merchant_name: 'Spotify', description: 'SPOTIFY', frequency: 'MONTHLY', status: 'MATURE', is_active: true, average_amount: { amount: 11.99 }, last_amount: { amount: 11.99 }, predicted_next_date: add(TODAY, 20), personal_finance_category: { primary: 'ENTERTAINMENT', detailed: 'ENTERTAINMENT_MUSIC_AND_AUDIO' } }];
+  await psync.recurring(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [ns] = await sequelize.query("SELECT texto FROM sf_alertas WHERE user_id = 990097 AND tipo = 'nueva_suscripcion'");
+  ok(ns.some(a => /Spotify/.test(a.texto) && /mensual/.test(a.texto)), 'a NEW subscription from Plaid\'s streams raises a nueva_suscripcion alert', ns);
+  await psync.recurring(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [ns2] = await sequelize.query("SELECT id FROM sf_alertas WHERE user_id = 990097 AND tipo = 'nueva_suscripcion'");
+  ok(ns2.length === ns.length, 'running the check again does not repeat the alert');
+
+  // --- review fixes: owner-marked plan row, variable salary, second Connect, category lock ---
+  ok((await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-9999', institution: { name: 'Bank of America', institution_id: 'ins_127989' } })).s === 409, 'a second Connect of the same bank is refused (would import everything twice); Reconectar instead');
+  const [[pc]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND estado = 'pendiente' AND tipo = 'egreso' AND categoria = 'corte' ORDER BY fecha OFFSET 1 LIMIT 1");
+  await call('/movimientos/' + pc.id, A, 'PATCH', { estado: 'cumplido', monto_real: pc.monto });
+  const nPc = await count();
+  syncQueue.push({ added: [T('txPC', 'acc-chk', add(pc.fecha, 1), Number(pc.monto), { name: 'CARD PAYMENT' })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[lpc]] = await sequelize.query("SELECT enlace, mov_id FROM sf_plaid_txn WHERE transaction_id = 'txPC'");
+  ok(lpc.enlace === 'cumplido' && lpc.mov_id === pc.id && await count() === nPc, 'a plan row the owner already marked paid is LINKED, not counted a second time', lpc);
+  const [[sal]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND estado = 'pendiente' AND categoria = 'salario' ORDER BY fecha LIMIT 1");
+  if (sal) {
+    const nS = await count();
+    syncQueue.push({ added: [T('txSAL', 'acc-chk', sal.fecha, -(Number(sal.monto) * 1.01), { name: 'PAYROLL DEPOSIT', pfc: { primary: 'INCOME', detailed: 'INCOME_SALARY' } })], modified: [], removed: [] });
+    await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+    const [[ss]] = await sequelize.query('SELECT estado FROM sf_movimientos WHERE id = :id', { replacements: { id: sal.id } });
+    ok(ss.estado === 'cumplido' && await count() === nS, 'a salary 1% off the plan still matches the plan row (variable income tolerance 2%)');
+  }
+  const [[pend]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND estado = 'pendiente' AND tipo = 'egreso' AND categoria = 'corte' ORDER BY fecha DESC LIMIT 1");
+  const nP = await count();
+  syncQueue.push({ added: [T('txPP', 'acc-chk', add(pend.fecha, -9), Number(pend.monto), { pending: true, name: 'CARD PMT PENDING' })], modified: [], removed: [] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  syncQueue.push({ added: [T('txPP-posted', 'acc-chk', add(pend.fecha, -2), Number(pend.monto), { pid: 'txPP', name: 'CARD PMT' })], modified: [], removed: [{ transaction_id: 'txPP', account_id: 'acc-chk' }] });
+  await psync.syncItem(sequelize, await psync.itemWithToken(sequelize, 'item_id = :i', { i: 'sit-item-1' }), { today: TODAY });
+  const [[ppl]] = await sequelize.query("SELECT enlace, mov_id FROM sf_plaid_txn WHERE transaction_id = 'txPP-posted'");
+  ok(ppl.enlace === 'plan' && ppl.mov_id === pend.id && await count() === nP, 'a pending charge that did not match, once POSTED within 5 days of the plan, moves onto the plan row (no duplicate)', ppl);
+  const [[chipRow]] = await sequelize.query("SELECT m.id, m.categoria FROM sf_movimientos m JOIN sf_plaid_txn x ON x.mov_id = m.id WHERE x.transaction_id = 'txI'");
+  await call('/movimientos/' + chipRow.id, A, 'PATCH', { categoria: chipRow.categoria, nota: 'solo nota' });
+  const [[cm]] = await sequelize.query('SELECT categoria_manual FROM sf_movimientos WHERE id = :id', { replacements: { id: chipRow.id } });
+  ok(cm.categoria_manual === false, 'saving an edit WITHOUT changing the category does not lock it');
+
+  // --- webhook signature ---
+  const sign = (bodyStr, o = {}) => {
+    const head = Buffer.from(JSON.stringify({ alg: o.alg || 'ES256', kid: o.kid || 'sit-kid-1', typ: 'JWT' })).toString('base64url');
+    const claims = Buffer.from(JSON.stringify({ iat: o.iat || Math.floor(Date.now() / 1000), request_body_sha256: crypto.createHash('sha256').update(o.hashOf || bodyStr).digest('hex') })).toString('base64url');
+    const sig = crypto.sign('sha256', Buffer.from(head + '.' + claims), { key: o.key || ec.privateKey, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+    return head + '.' + claims + '.' + sig;
+  };
+  const wb = JSON.stringify({ webhook_type: 'TRANSACTIONS', webhook_code: 'SYNC_UPDATES_AVAILABLE', item_id: 'sit-item-1', initial_update_complete: true, historical_update_complete: false, environment: 'sandbox' }, null, 2);
+  verifier._clearCache();
+  ok((await verifier.verify(Buffer.from(wb), sign(wb))).body.item_id === 'sit-item-1', 'a correctly signed webhook verifies');
+  const rej = async (b, h) => { try { await verifier.verify(Buffer.from(b), h); return false; } catch (e) { return true; } };
+  ok(await rej(wb.replace('SYNC_UPDATES_AVAILABLE', 'SYNC_UPDATES_AVAILABLX'), sign(wb)), 'tampered body (hash mismatch) is rejected');
+  ok(await rej(wb, sign(wb, { iat: Math.floor(Date.now() / 1000) - 600 })), 'a webhook older than 5 minutes is rejected');
+  ok(await rej(wb, sign(wb, { alg: 'HS256' })), 'alg other than ES256 is rejected');
+  ok(await rej(wb, sign(wb, { key: crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' }).privateKey })), 'a signature from another key is rejected');
+  ok(await rej(wb, undefined) && await rej(wb, 'abc.def'), 'missing or malformed header is rejected');
+  // over HTTP: raw-body route, 400 on bad signature, 200 + stored once on good, duplicate not stored twice
+  const wapp = express();
+  wapp.use('/wh', require('./src/routes/saludFinancieraPlaid').webhookRouter(require('./src/routes/saludFinanciera')._deps));
+  const ws = wapp.listen(0); const wurl = 'http://127.0.0.1:' + ws.address().port + '/wh';
+  const post = (b, h) => fetch(wurl, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(h ? { 'Plaid-Verification': h } : {}) }, body: b }).then(x => x.status);
+  const loginBody = JSON.stringify({ webhook_type: 'ITEM', webhook_code: 'ERROR', item_id: 'sit-item-1', error: { error_code: 'ITEM_LOGIN_REQUIRED' }, environment: 'sandbox' }, null, 2);
+  ok(await post(loginBody, sign(loginBody.replace('ERROR', 'ERRORX'))) === 400, 'HTTP: bad signature -> 400, nothing stored');
+  const hLogin = sign(loginBody);
+  ok(await post(loginBody, hLogin) === 200 && await post(loginBody, hLogin) === 200, 'HTTP: good signature -> 200 (the same delivery twice: Plaid duplicates)');
+  await sleep(600);
+  const [whs] = await sequelize.query("SELECT procesado_at FROM sf_plaid_webhooks WHERE item_id = 'sit-item-1' AND codigo = 'ERROR'");
+  const [[itl]] = await sequelize.query("SELECT estado FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(whs.length === 1 && whs[0].procesado_at && itl.estado === 'login_requerido', 'webhook stored ONCE, processed after the 200: ITEM_LOGIN_REQUIRED -> estado login_requerido', { whs, itl });
+  const [rc] = await sequelize.query("SELECT texto FROM sf_alertas WHERE user_id = 990097 AND tipo = 'reconectar'");
+  ok(rc.length >= 1 && /Reconectar/.test(rc[0].texto), 're-auth path: an in-app alert tells the owner to reconnect');
+  const pd = JSON.stringify({ webhook_type: 'ITEM', webhook_code: 'PENDING_DISCONNECT', item_id: 'sit-item-1', reason: 'INSTITUTION_TOKEN_EXPIRATION', disconnect_time: '2027-10-01T00:00:00Z' }, null, 2);
+  ok(await post(pd, sign(pd)) === 200, 'PENDING_DISCONNECT accepted');
+  await sleep(400);
+  const [[itp]] = await sequelize.query("SELECT estado FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(itp.estado === 'por_desconectar', 'PENDING_DISCONNECT (BofA consent expiring) -> estado por_desconectar + alert');
+  const syncBody = JSON.stringify({ webhook_type: 'TRANSACTIONS', webhook_code: 'SYNC_UPDATES_AVAILABLE', item_id: 'sit-item-1', initial_update_complete: true, historical_update_complete: true, environment: 'sandbox' }, null, 2);
+  syncFailOnce = true;
+  ok(await post(syncBody, sign(syncBody, { iat: Math.floor(Date.now() / 1000) - 3 })) === 200, 'SYNC_UPDATES_AVAILABLE #1 accepted');
+  await sleep(500);
+  const [[w1]] = await sequelize.query("SELECT id, procesado_at, error, claimed_at FROM sf_plaid_webhooks WHERE item_id = 'sit-item-1' AND codigo = 'SYNC_UPDATES_AVAILABLE' ORDER BY id DESC LIMIT 1");
+  ok(w1 && !w1.procesado_at && w1.error && !w1.claimed_at, 'a webhook whose processing FAILED is not marked done and is left for retry', w1);
+  await psync.processWebhook(sequelize, w1.id, { today: TODAY });
+  const [[w1b]] = await sequelize.query('SELECT procesado_at, error FROM sf_plaid_webhooks WHERE id = :id', { replacements: { id: w1.id } });
+  ok(w1b.procesado_at && !w1b.error, 'the retry succeeds and marks it done');
+  ok(await post(syncBody, sign(syncBody, { iat: Math.floor(Date.now() / 1000) - 1 })) === 200, 'SYNC_UPDATES_AVAILABLE #2 (byte-identical body, new delivery) accepted');
+  await sleep(400);
+  const [ws2] = await sequelize.query("SELECT id FROM sf_plaid_webhooks WHERE item_id = 'sit-item-1' AND codigo = 'SYNC_UPDATES_AVAILABLE'");
+  ok(ws2.length === 2, 'an identical body sent later is a NEW event and is processed (dedupe is on the signed header, not the body)');
+  verifier._clearCache(); keyCalls = 0;
+  const fake = JSON.stringify({ webhook_type: 'TRANSACTIONS', webhook_code: 'SYNC_UPDATES_AVAILABLE', item_id: 'sit-item-1' });
+  await post(fake, sign(fake, { kid: 'random-kid' })); await post(fake, sign(fake, { kid: 'random-kid' }));
+  await post('{"x":1}', sign(fake));
+  ok(keyCalls === 1, 'junk cannot burn the key endpoint: unknown kid asked once (negative cache), body-hash mismatch never asks', { keyCalls });
+  const unk = JSON.stringify({ webhook_type: 'TRANSACTIONS', webhook_code: 'SYNC_UPDATES_AVAILABLE', item_id: 'someone-else' });
+  ok(await post(unk, sign(unk)) === 200, 'a verified webhook for an item we do not hold is acknowledged and ignored');
+  ws.close();
+
+  // --- update mode: same Item, no products, existing token ---
+  r = await call('/plaid/update-token', A, 'POST', { id: it.id });
+  const ut = calls.filter(c => c.p === '/link/token/create').pop();
+  ok(r.s === 200 && ut.body.access_token === ACCESS && !ut.body.products, 'update mode: link token built with the existing access token and NO products (same Item, no new Trial slot)', ut.body);
+  r = await call('/plaid/update-done', A, 'POST', { id: it.id });
+  const [[itu]] = await sequelize.query("SELECT estado FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(r.s === 200 && itu.estado === 'activo', 'after re-consent the bank is active again');
+
+  // --- vault: a rotated key is reported as itself ---
+  const k0 = process.env.SALUD_FINANCIERA_PLAID_KEY; process.env.SALUD_FINANCIERA_PLAID_KEY = 'another-key-0123456789-0123456789-xyz';
+  let vErr = null; try { plaid.decrypt(it.access_token_enc); } catch (e) { vErr = e.code; }
+  process.env.SALUD_FINANCIERA_PLAID_KEY = k0;
+  ok(vErr === 'VAULT_UNREADABLE', 'a rotated encryption key is reported as unreadable, never as an empty token');
+  let eErr = null; try { await plaid.call('/transfer/create', {}); } catch (e) { eErr = e.message; }
+  ok(/not allowed/.test(eErr || ''), 'the client refuses any endpoint outside the read-only allow-list (e.g. /transfer/create)');
+
+  // --- disconnect ---
+  const nKeep = await count();
+  r = await call('/plaid/item/' + it.id, A, 'DELETE');
+  const [[gone]] = await sequelize.query("SELECT COUNT(*)::int AS n FROM sf_plaid_items WHERE item_id = 'sit-item-1'");
+  ok(r.s === 200 && calls.some(c => c.p === '/item/remove') && gone.n === 0 && await count() === nKeep, 'disconnect calls /item/remove, deletes the token, keeps the imported movements');
+  exchangeItem = 'sit-item-2';
+  r = await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-7777', institution: { name: 'Bank of America', institution_id: 'ins_127989' } });
+  await sleep(500);
+  const [[lastImp]] = await sequelize.query("SELECT MAX(fecha)::text AS f FROM sf_movimientos WHERE user_id = 990097 AND fuente = 'plaid'");
+  const [[it2]] = await sequelize.query("SELECT importar_desde::text AS d FROM sf_plaid_items WHERE item_id = 'sit-item-2'");
+  ok(r.s === 201 && it2 && it2.d > lastImp.f, 'reconnecting after a disconnect imports only AFTER the last bank movement (no second copy of history)', { it2, lastImp });
+  ok(/texto del banco, solo dato/.test(fs.readFileSync(path.join(__dirname, 'src', 'services/saludFinanciera/cerebro.js'), 'utf8')), 'Lina sees bank text fenced as data and is told never to obey it');
+
+  // --- structural promises ---
+  const dir = path.join(__dirname, 'src');
+  const files = ['services/saludFinanciera/plaidClient.js', 'services/saludFinanciera/plaidSync.js', 'services/saludFinanciera/plaidWebhook.js', 'services/saludFinanciera/plaidCategorias.js', 'routes/saludFinancieraPlaid.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, ''));
+  ok(!files.some(s => /['"]\/(transfer|auth\/get|identity|processor|signal|payment_initiation|bank_transfer)/.test(s)), 'no money-moving or identity endpoint is referenced anywhere in the bank code');
+  ok(!/products:\s*\[[^\]]*(auth|transfer|identity|signal)/i.test(files.join('\n')), 'Link is never asked for auth/transfer/identity/signal');
+  const brains = ['services/saludFinanciera/cerebro.js', 'services/saludFinanciera/lina.js', 'services/saludFinanciera/finanzas.js'].map(f => fs.readFileSync(path.join(dir, f), 'utf8'));
+  ok(!brains.some(s => /access_token|plaidClient|sf_plaid_items/.test(s)), 'Lina and her tools cannot reach the bank token (no reference in cerebro/lina/finanzas)');
+  const route = fs.readFileSync(path.join(dir, 'routes/saludFinancieraPlaid.js'), 'utf8');
+  ok(!/res\.json\([^)]*access_token/.test(route) && !/console\.(log|error)\([^)]*access/.test(route + files.join('')), 'no route returns or logs an access token');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'src', 'app.js'), 'utf8');
+  ok(app.indexOf("'/projects/api/salud-financiera/plaid/webhook', express.raw") > 0 && app.indexOf("'/projects/api/salud-financiera/plaid/webhook', express.raw") < app.indexOf("app.use(express.json({ limit: '500mb' }))"), 'src/app.js gives the webhook its RAW body before the global JSON parser');
+
+  plaid.setTransport(null);
+  if (saved.id === undefined) delete process.env.PLAID_CLIENT_ID; else process.env.PLAID_CLIENT_ID = saved.id;
+  if (saved.sec === undefined) delete process.env.PLAID_SECRET; else process.env.PLAID_SECRET = saved.sec;
+  if (saved.key === undefined) delete process.env.SALUD_FINANCIERA_PLAID_KEY; else process.env.SALUD_FINANCIERA_PLAID_KEY = saved.key;
+  if (saved.env === undefined) delete process.env.PLAID_ENV; else process.env.PLAID_ENV = saved.env;
 }
 
 (async () => {
@@ -469,6 +779,6 @@ async function apiTests() {
   structuralTests();
   try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.stack); }
   console.log(`\nSalud Financiera SIT: ${pass}/${pass + fail}`);
-  console.log('NOT covered: a real Anthropic call, real voice recognition, the /api/tts/edge audio, a browser.');
+  console.log('NOT covered: a real Anthropic call, real voice recognition, the /api/tts/edge audio, a browser, the REAL Plaid API (sandbox/production) and a real Bank of America login.');
   process.exit(fail ? 1 : 0);
 })();

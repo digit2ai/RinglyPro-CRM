@@ -52,6 +52,9 @@ router.use(async (req, res, next) => {
   }
 });
 
+// Bank of America via Plaid (READ-ONLY). Same owner gate as everything above.
+router.use('/plaid', require('./saludFinancieraPlaid').ownerRouter(deps));
+
 async function context(req) {
   const rows = await store.list(deps.sequelize, req.sf);
   const cfg = await store.config(deps.sequelize, req.sf);

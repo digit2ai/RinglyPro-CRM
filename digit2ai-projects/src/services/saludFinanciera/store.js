@@ -21,7 +21,7 @@ function ensure(sequelize) {
   return ready;
 }
 
-const COLS = 'id, fecha::text AS fecha, concepto, tipo, monto::text AS monto, monto_real::text AS monto_real, categoria, origen, estado, nota, created_at';
+const COLS = 'id, fecha::text AS fecha, concepto, tipo, monto::text AS monto, monto_real::text AS monto_real, categoria, origen, estado, nota, created_at, fuente, pendiente_banco, comercio, categoria_manual';
 
 async function config(sequelize, user) {
   const [rows] = await sequelize.query('SELECT colchon_meta::text AS colchon_meta, presupuesto_semanal::text AS presupuesto_semanal, seeded_at FROM sf_config WHERE user_id = :u AND tenant_id = :t',
@@ -100,7 +100,9 @@ async function insertRow(sequelize, user, r, transaction) {
 async function update(sequelize, user, id, v) {
   const keys = Object.keys(v);
   if (!keys.length) return get(sequelize, user, id);
-  const sets = keys.map(k => `${k} = :${k}`).join(', ');
+  let sets = keys.map(k => `${k} = :${k}`).join(', ');
+  // a category CHANGED by hand is never overwritten by a bank re-sync (an unchanged one stays free)
+  if (keys.includes('categoria')) sets += ', categoria_manual = (categoria_manual OR categoria IS DISTINCT FROM :categoria)';
   const [rows] = await sequelize.query(`UPDATE sf_movimientos SET ${sets}, updated_at = NOW() WHERE id = :id AND user_id = :u AND tenant_id = :t RETURNING ${COLS}`,
     { replacements: { ...v, id, u: user.userId, t: user.tenantId } });
   return rows[0] || null;
