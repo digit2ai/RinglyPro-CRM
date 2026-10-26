@@ -488,12 +488,13 @@ async function plaidTests({ call, A, B, sequelize }) {
   const ACCESS = 'access-sandbox-SITSECRET-0001';
   const ec = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
   const jwk = { ...ec.publicKey.export({ format: 'jwk' }), kid: 'sit-kid-1', alg: 'ES256', use: 'sig', created_at: 1, expired_at: null };
-  const calls = []; let syncQueue = []; let cursorN = 0; let syncFailOnce = false; let exchangeItem = 'sit-item-1'; let keyCalls = 0; let recurringMode = 'unsupported'; let recurringStreams = [];
+  const calls = []; let syncQueue = []; let cursorN = 0; let syncFailOnce = false; let exchangeItem = 'sit-item-1'; let keyCalls = 0; let recurringMode = 'unsupported'; let recurringStreams = []; let acctsBiz = false;
   plaid.setTransport(async (p, body) => {
     calls.push({ p, body });
     if (['/item/get', '/accounts/get', '/transactions/sync', '/transactions/recurring/get', '/item/remove'].includes(p) && body.access_token !== ACCESS) throw Object.assign(new Error('bad token'), { status: 400, code: 'INVALID_ACCESS_TOKEN' });
     if (p === '/link/token/create') return { link_token: 'link-sandbox-sit', expiration: '2030-01-01T00:00:00Z' };
     if (p === '/item/public_token/exchange') return { access_token: ACCESS, item_id: exchangeItem };
+    if (p === '/accounts/get' && acctsBiz) return { accounts: [{ account_id: 'acc-biz', name: 'Business Adv Fundamentals', mask: '2619', type: 'depository', subtype: 'checking' }] };
     if (p === '/accounts/get') return { accounts: [{ account_id: 'acc-chk', name: 'Adv Plus Banking', mask: '1234', type: 'depository', subtype: 'checking' }, { account_id: 'acc-cc', name: 'Customized Cash', mask: '9876', type: 'credit', subtype: 'credit card' }] };
     if (p === '/item/get') return { item: { item_id: 'sit-item-1', institution_id: 'ins_127989', consent_expiration_time: new Date(Date.now() + 365 * 864e5).toISOString() } };
     if (p === '/transactions/sync' && syncFailOnce) { syncFailOnce = false; throw Object.assign(new Error('plaid down'), { status: 500, code: 'INTERNAL_SERVER_ERROR' }); }
@@ -639,6 +640,18 @@ async function plaidTests({ call, A, B, sequelize }) {
 
   // --- review fixes: owner-marked plan row, variable salary, second Connect, category lock ---
   ok((await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-9999', institution: { name: 'Bank of America', institution_id: 'ins_127989' } })).s === 409, 'a second Connect of the same bank is refused (would import everything twice); Reconectar instead');
+  // a second login at the same bank with the SAME account is refused, and the orphan login is removed at Plaid
+  const rmBefore = calls.filter(c => c.p === '/item/remove').length;
+  ok((await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-8888', institution: { name: 'Bank of America', institution_id: 'ins_127989' }, cuentas: ['1234'] })).s === 409 && calls.filter(c => c.p === '/item/remove').length === rmBefore + 1, 'same account through a second login: refused and the extra Plaid login is removed');
+  // ...but a second login with DIFFERENT accounts (the business login) is accepted and starts at the plan start
+  const [[pStart]] = await sequelize.query("SELECT MIN(fecha)::text AS f FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan'");
+  acctsBiz = true; const prevItem = exchangeItem; exchangeItem = 'sit-item-biz';
+  r = await call('/plaid/exchange', A, 'POST', { public_token: 'public-sandbox-abcdef12-6666', institution: { name: 'Bank of America', institution_id: 'ins_127989' }, cuentas: ['2619'] });
+  await sleep(400);
+  const [[biz]] = await sequelize.query("SELECT id, importar_desde::text AS d FROM sf_plaid_items WHERE item_id = 'sit-item-biz'");
+  ok(r.s === 201 && biz && biz.d === (pStart.f < TODAY ? pStart.f : TODAY), 'a second login with different accounts (business) connects and imports from the plan start', { s: r.s, biz, pStart });
+  if (biz) await call('/plaid/item/' + biz.id, A, 'DELETE');
+  acctsBiz = false; exchangeItem = prevItem;
   const [[pc]] = await sequelize.query("SELECT id, fecha::text AS fecha, monto::text AS monto FROM sf_movimientos WHERE user_id = 990097 AND origen = 'plan' AND estado = 'pendiente' AND tipo = 'egreso' AND categoria = 'corte' ORDER BY fecha OFFSET 1 LIMIT 1");
   await call('/movimientos/' + pc.id, A, 'PATCH', { estado: 'cumplido', monto_real: pc.monto });
   const nPc = await count();

@@ -145,9 +145,11 @@
         (it.ultimo_error ? '<div style="font-size:12px;color:var(--danger)">Último error: ' + esc(it.ultimo_error) + '</div>' : '') + '</div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-sm btn-ghost" data-bank-sync="1">Sincronizar ahora</button>' +
         '<button class="btn btn-sm btn-ghost" data-bank-accounts="' + it.id + '">Cuentas</button>' +
+        '<button class="btn btn-sm btn-ghost" data-bank-add="' + it.id + '">Agregar cuentas</button>' +
         '<button class="btn btn-sm btn-ghost" data-bank-update="' + it.id + '">Reconectar</button>' +
         '<button class="btn btn-sm btn-ghost" data-bank-off="' + it.id + '" style="color:var(--danger)">Desconectar</button></div></div>';
     });
+    if (d.configurado && d.items.length) h += '<div style="margin-top:8px"><button class="btn btn-sm btn-ghost" id="sf-bank-connect">+ Conectar otra cuenta (otro usuario del banco)</button></div>';
     if ((d.alertas || []).length) {
       h += '<div style="margin-top:10px">' + d.alertas.map(function (a) {
         return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:7px 0;font-size:14px"><span>' + esc(a.texto) + '</span>' +
@@ -160,6 +162,7 @@
     el.innerHTML = h;
     var c = document.getElementById('sf-bank-connect'); if (c) c.onclick = function () { bankLink(null); };
     el.querySelectorAll('[data-bank-update]').forEach(function (b) { b.onclick = function () { bankLink(Number(b.getAttribute('data-bank-update'))); }; });
+    el.querySelectorAll('[data-bank-add]').forEach(function (b) { b.onclick = function () { bankLink(Number(b.getAttribute('data-bank-add')), true); }; });
     el.querySelectorAll('[data-bank-sync]').forEach(function (b) { b.onclick = function () { b.disabled = true; b.textContent = 'Sincronizando…'; sf('/plaid/sync', { method: 'POST' }).then(function () { setTimeout(refresh, 6000); }); }; });
     el.querySelectorAll('[data-bank-accounts]').forEach(function (b) { b.onclick = function () { bankAccounts(Number(b.getAttribute('data-bank-accounts'))); }; });
     el.querySelectorAll('[data-bank-off]').forEach(function (b) { b.onclick = function () {
@@ -188,7 +191,7 @@
       onSuccess: function (publicToken, meta) {
         try { localStorage.removeItem('sf_plaid_link'); } catch (e) {}
         if (itemId) sf('/plaid/update-done', { method: 'POST', body: { id: itemId } }).then(function () { setTimeout(refresh, 4000); });
-        else sf('/plaid/exchange', { method: 'POST', body: { public_token: publicToken, institution: meta && meta.institution ? { name: meta.institution.name, institution_id: meta.institution.institution_id } : null } })
+        else sf('/plaid/exchange', { method: 'POST', body: { public_token: publicToken, institution: meta && meta.institution ? { name: meta.institution.name, institution_id: meta.institution.institution_id } : null, cuentas: (meta && meta.accounts || []).map(function (a) { return a.mask; }) } })
           .then(function (x) { if (!x.success) alert(x.error || 'No se pudo conectar'); setTimeout(refresh, 6000); refresh(); });
       },
       onExit: function (err, meta) {
@@ -196,8 +199,9 @@
       }
     };
   }
-  function bankLink(itemId) {
-    var tokenCall = itemId ? sf('/plaid/update-token', { method: 'POST', body: { id: itemId } }) : sf('/plaid/link-token', { method: 'POST' });
+  // nuevas = true: same login, pick extra accounts (update mode with account selection, no new slot)
+  function bankLink(itemId, nuevas) {
+    var tokenCall = itemId ? sf('/plaid/update-token', { method: 'POST', body: { id: itemId, cuentas_nuevas: !!nuevas } }) : sf('/plaid/link-token', { method: 'POST' });
     Promise.all([tokenCall, loadPlaidScript()]).then(function (res) {
       var j = res[0];
       if (!j.success) { alert(j.error || 'No se pudo abrir la conexión con el banco'); return; }

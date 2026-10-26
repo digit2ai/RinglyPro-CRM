@@ -81,7 +81,7 @@ async function refreshItemInfo(sequelize, item) {
 }
 
 /** connect: public_token -> access_token (server side only), store encrypted, load accounts. */
-async function connect(sequelize, user, publicToken, institution, today) {
+async function connect(sequelize, user, publicToken, institution, today, opts = {}) {
   const ex = await plaid.call('/item/public_token/exchange', { public_token: String(publicToken) });
   if (!ex || !ex.access_token || !ex.item_id) throw new Error('Plaid no devolvió el acceso');
   const enc = plaid.encrypt(ex.access_token);
@@ -89,8 +89,11 @@ async function connect(sequelize, user, publicToken, institution, today) {
   let desde = plan && plan.f && plan.f < today ? plan.f : today;
   // a re-connection is a NEW Item with new transaction ids: start the day after the last bank import,
   // or everything already imported would come in a second time
-  const [[last]] = await sequelize.query("SELECT MAX(fecha)::text AS f FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND fuente = 'plaid'", { replacements: { u: user.userId, t: user.tenantId } });
-  if (last && last.f && last.f >= desde) desde = addDays(last.f, 1);
+  // an ADDITIONAL login (other accounts, e.g. the business one) starts at the plan start like the first one did
+  if (!opts.adicional) {
+    const [[last]] = await sequelize.query("SELECT MAX(fecha)::text AS f FROM sf_movimientos WHERE user_id = :u AND tenant_id = :t AND fuente = 'plaid'", { replacements: { u: user.userId, t: user.tenantId } });
+    if (last && last.f && last.f >= desde) desde = addDays(last.f, 1);
+  }
   const name = institution && typeof institution.name === 'string' ? institution.name.slice(0, 100) : 'Bank of America';
   const instId = institution && typeof institution.institution_id === 'string' ? institution.institution_id.slice(0, 60) : null;
   const [[row]] = await sequelize.query(`INSERT INTO sf_plaid_items (tenant_id, user_id, item_id, institution_id, institution_name, access_token_enc, importar_desde)

@@ -51,14 +51,27 @@ function ownerRouter(deps) {
 
   r.post('/exchange', async (req, res) => {
     if (!plaid.configured()) return res.status(503).json({ success: false, error: 'Plaid no está configurado' });
-    // one bank login is one Item: a second Connect would import everything twice (and burn a Trial slot)
-    const ya = await sync.items(deps.sequelize, req.sf);
-    const inst = req.body && req.body.institution && typeof req.body.institution.institution_id === 'string' ? req.body.institution.institution_id : null;
-    if (ya.some(i => i.estado !== 'desconectado' && (!inst || !i.institution_id || i.institution_id === inst))) return res.status(409).json({ success: false, error: 'Ese banco ya está conectado. Usa "Reconectar" para renovar el permiso.' });
     const pt = req.body && req.body.public_token;
     if (typeof pt !== 'string' || !/^public-[a-z]+-[\w-]{8,}$/i.test(pt)) return res.status(400).json({ success: false, error: 'public_token inválido' });
+    const ya = (await sync.items(deps.sequelize, req.sf)).filter(i => i.estado !== 'desconectado');
+    const inst = req.body && req.body.institution && typeof req.body.institution.institution_id === 'string' ? req.body.institution.institution_id : null;
+    const masks = Array.isArray(req.body && req.body.cuentas) ? req.body.cuentas.map(m => String(m || '').replace(/\D/g, '').slice(-4)).filter(Boolean) : null;
+    // a second login at the same bank is allowed (e.g. the business login) as long as it brings DIFFERENT accounts;
+    // the same account twice would import everything twice. Without the account list we stay strict.
+    let repetida = false;
+    if (masks && masks.length) {
+      const ya4 = new Set(ya.flatMap(i => (i.cuentas || []).map(c => String(c.mask || ''))));
+      repetida = masks.some(m => ya4.has(m));
+    } else repetida = ya.some(i => !inst || !i.institution_id || i.institution_id === inst);
+    if (repetida) {
+      // Plaid already created the login when Link finished: remove it so it is not billed or left orphaned
+      if (masks && masks.length) {
+        try { const ex = await plaid.call('/item/public_token/exchange', { public_token: pt }); if (ex && ex.access_token) await plaid.call('/item/remove', { access_token: ex.access_token }); } catch (e) { /* best effort */ }
+      }
+      return res.status(409).json({ success: false, error: 'Esa cuenta ya está conectada. Usa "Reconectar" para renovar el permiso o "Agregar cuentas" para sumar otras del mismo usuario.' });
+    }
     try {
-      const item = await sync.connect(deps.sequelize, req.sf, pt, req.body.institution, deps.today());
+      const item = await sync.connect(deps.sequelize, req.sf, pt, req.body.institution, deps.today(), { adicional: ya.length > 0 });
       // first sync starts the webhooks (Plaid sends SYNC_UPDATES_AVAILABLE only after one call)
       later(async () => { const full = await sync.itemWithToken(deps.sequelize, 'id = :id', { id: item.id }); await sync.syncItem(deps.sequelize, full, { today: deps.today() }); });
       res.status(201).json({ success: true, data: item });
@@ -71,7 +84,7 @@ function ownerRouter(deps) {
       const item = await sync.itemWithToken(deps.sequelize, 'id = :id AND user_id = :u AND tenant_id = :t', { id: Number(req.body && req.body.id), u: req.sf.userId, t: req.sf.tenantId });
       if (!item) return res.status(404).json({ success: false, error: 'No encontrado' });
       const body = { client_name: 'Salud Financiera', language: (process.env.PLAID_LINK_LANGUAGE || 'en'), country_codes: ['US'], user: { client_user_id: 'sf-' + req.sf.userId }, webhook: plaid.webhookUrl() };
-      if (req.body && req.body.cuentas_nuevas) body.update = { account_selection_enabled: true };
+      if (req.body && req.body.cuentas_nuevas === true) body.update = { account_selection_enabled: true };
       if (process.env.PLAID_REDIRECT_URI) body.redirect_uri = process.env.PLAID_REDIRECT_URI;
       // update mode: the existing access token, NO products -> same Item, no new Trial slot
       const out = await plaid.call('/link/token/create', body, { accessTokenEnc: item.access_token_enc });
