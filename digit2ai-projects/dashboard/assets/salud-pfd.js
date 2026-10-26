@@ -263,10 +263,7 @@
         '<line x1="' + hx + '" y1="' + (hy + 52) + '" x2="' + hx + '" y2="' + (hy + r - 22) + '" stroke="' + C.mag + '" stroke-width="5"/></g>');
       o.push('</g>');
       o.push('<path d="M ' + hx + ' ' + (hy - 30) + ' l -8 22 h -26 v 8 h 26 l 4 18 h -10 v 6 h 28 v -6 h -10 l 4 -18 h 26 v -8 h -26 z" fill="#fff"/>');
-      o.push('<rect x="' + (hx - 44) + '" y="' + (hy - r - 44) + '" width="88" height="36" fill="#000" stroke="#fff" stroke-width="2"/><text x="' + hx + '" y="' + (hy - r - 18) + '" fill="#fff" font-size="26" font-weight="700" text-anchor="middle">' + Math.round(s.score) + '%</text>');
       o.push('</g>');
-      o.push('<rect x="' + (hx - 230) + '" y="' + (hy - r - 32) + '" width="130" height="30" fill="#000"/><text x="' + (hx - 222) + '" y="' + (hy - r - 10) + '" fill="#fff" font-size="16">PLAN <tspan fill="' + C.cyan + '" font-size="20" font-weight="700">' + (p.desvio_plan.v >= 0 ? '+' : '') + esc(k(p.desvio_plan.v)) + '</tspan></text>');
-      o.push('<rect x="' + (hx + 100) + '" y="' + (hy - r - 32) + '" width="130" height="30" fill="#000"/><text x="' + (hx + 108) + '" y="' + (hy - r - 10) + '" fill="#fff" font-size="16">META <tspan fill="' + C.mag + '" font-size="20" font-weight="700">100%</tspan></text>');
     })();
 
     // ---------------- inset map: projection with today, min and the care window ----------------
