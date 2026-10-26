@@ -343,7 +343,6 @@
       var prox = p.proximo_pago;
       o.push('<rect x="0" y="0" width="' + W + '" height="64" fill="#000"/><line x1="0" y1="64" x2="' + W + '" y2="64" stroke="#555"/>');
       o.push('<text x="14" y="26" fill="#fff" font-size="17">HOY <tspan fill="' + C.cyan + '" font-size="22" font-weight="700">' + esc(p.saldo_hoy.t) + '</tspan></text>');
-      o.push('<text x="14" y="54" fill="#fff" font-size="17">7D  <tspan fill="' + C.cyan + '" font-size="22" font-weight="700">' + esc(p.saldo_7d.t) + '</tspan></text>');
       o.push('<line x1="250" y1="6" x2="250" y2="58" stroke="#555"/><line x1="720" y1="6" x2="720" y2="58" stroke="#555"/>');
       // annunciators
       var a1 = sube ? ['PLAN OK', C.green] : ['ATENCIÓN', C.amber];
