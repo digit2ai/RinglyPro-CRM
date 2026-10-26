@@ -95,7 +95,10 @@ function instrumentos(a, rows) {
   const sale = t30.filter(s => s.row.tipo === 'egreso').reduce((x, s) => x + s.amount, 0);
   const s7 = fin.balanceAt(a.serie.proyeccion, en(7)).saldo, s30 = fin.balanceAt(a.serie.proyeccion, en(30)).saldo;
   const ym = a.today.slice(0, 7);
-  const gastoMes = rows.filter(r => r.origen === 'real' && r.tipo === 'egreso' && r.categoria === 'gasto_personal' && r.fecha.slice(0, 7) === ym).reduce((x, r) => x + toCents(r.monto), 0);
+  // PERSONAL (owner 2026-10-26): every bank outflow this month that is NOT in the plan. A bank charge that matches
+  // a plan row only marks that row cumplido and never lands here; moves between his own accounts are not spending.
+  const PROPIA = /online banking transfer|zelle payment (to|from) manuel stagg|zelle payment from digit2ai/i;
+  const gastoMes = rows.filter(r => r.fuente === 'plaid' && r.origen === 'real' && r.tipo === 'egreso' && r.fecha.slice(0, 7) === ym && !PROPIA.test(r.concepto || '')).reduce((x, r) => x + toCents(r.monto), 0);
   const prox = a.proximo_pago;
   // what has gone out this month so far: every outflow from the 1st up to and including today
   const delMes = (tipo) => a.steps.filter(s => s.row.tipo === tipo && s.row.fecha >= ym + '-01' && s.row.fecha <= a.today).reduce((x, s) => x + s.amount, 0);

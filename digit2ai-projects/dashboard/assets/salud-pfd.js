@@ -89,7 +89,7 @@
     if (tecla === 'HOY') {
       ln(C.white, 'Saldo hoy ' + p.saldo_hoy.t + ' · salud ' + Math.round(s.score) + '% (' + s.frase + ').');
       ln(C.cyan, 'En 7 días tendrás ' + p.saldo_7d.t + ' (' + (p.cambio_7d.v >= 0 ? 'sube ' : 'baja ') + p.cambio_7d.t.replace('-', '') + ').');
-      ln(C.white, 'Gasto personal de este mes: ' + p.gasto_mes.t + '.');
+      ln(C.white, 'Gastos del banco fuera del plan este mes: ' + p.gasto_mes.t + '.');
     } else if (tecla === 'MÍNIMO') {
       ln(p.saldo_min.v < 0 ? C.red : C.amber, 'Punto más bajo ' + p.saldo_min.t + ' el ' + fl(p.fecha_min) + '.');
       if (s.zona) ln(C.amber, (s.zona.bajo_colchon ? 'Zona de cuidado' : 'Tramo más justo') + ': del ' + fl(s.zona.desde) + ' al ' + fl(s.zona.hasta) + (s.zona.bajo_colchon ? ' — mejor no gastar.' : '.'));
