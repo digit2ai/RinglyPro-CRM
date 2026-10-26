@@ -328,8 +328,8 @@ function lastDayOfMonth(y, m) { return new Date(Date.UTC(y, m, 0)).toISOString()
  * it twice never duplicates.
  */
 function recurrentRows(rawRows, recurrentes, desde, hasta) {
-  const plan = rawRows.map(norm).filter(r => r.origen === 'plan');
-  const have = new Set(plan.map(r => (r.concepto || '').toLowerCase() + '|' + r.fecha.slice(0, 7)));
+  // a month already carrying this concept (planned OR really recorded) is never projected again
+  const have = new Set(rawRows.map(norm).map(r => (r.concepto || '').toLowerCase() + '|' + r.fecha.slice(0, 7)));
   const out = [];
   if (!desde || !hasta || desde > hasta) return out;
   for (const rec of recurrentes || []) {
