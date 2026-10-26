@@ -172,7 +172,7 @@
       var k0 = function (n) { return '$' + Math.round(Math.abs(n)).toLocaleString('en-US'); };
       o.push('<rect x="' + (cx - 150) + '" y="' + (cy + 86) + '" width="300" height="54" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
       o.push('<text x="' + cx + '" y="' + (cy + 106) + '" fill="#fff" font-size="14" text-anchor="middle">PRÓX. 30D  <tspan fill="' + C.green + '" font-weight="700">ENTRAN ' + esc(k0(p.entra_30.v)) + '</tspan>  <tspan fill="' + C.red + '" font-weight="700">SALEN ' + esc(k0(p.sale_30.v)) + '</tspan></text>');
-      o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">NETO <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
+      o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">SALDO EN 30D <tspan fill="' + (p.saldo_30d.v < 0 ? C.red : C.green) + '" font-size="19" font-weight="700">' + esc(p.saldo_30d.t) + '</tspan></text>');
     })();
     o.push('</g>');
 
@@ -270,6 +270,12 @@
         '<line x1="' + hx + '" y1="' + (hy + 52) + '" x2="' + hx + '" y2="' + (hy + r - 22) + '" stroke="' + C.mag + '" stroke-width="5"/></g>');
       o.push('</g>');
       o.push('<path d="M ' + hx + ' ' + (hy - 30) + ' l -8 22 h -26 v 8 h 26 l 4 18 h -10 v 6 h 28 v -6 h -10 l 4 -18 h 26 v -8 h -26 z" fill="#fff"/>');
+      // owner 2026-10-26: balance in 7 days (left) and 14 days (right), from today
+      [['7D', p.saldo_7d, hx - 250], ['14D', p.saldo_14d, hx + 100]].forEach(function (b) {
+        if (!b[1]) return;
+        o.push('<rect x="' + b[2] + '" y="' + (hy - r - 40) + '" width="150" height="36" rx="3" fill="#000" stroke="' + (b[1].v < 0 ? C.red : C.green) + '" stroke-width="1.5"/>' +
+          '<text x="' + (b[2] + 75) + '" y="' + (hy - r - 15) + '" fill="#fff" font-size="15" text-anchor="middle">' + b[0] + ' <tspan fill="' + (b[1].v < 0 ? C.red : C.green) + '" font-size="19" font-weight="700">' + esc(b[1].t) + '</tspan></text>');
+      });
       o.push('</g>');
     })();
 

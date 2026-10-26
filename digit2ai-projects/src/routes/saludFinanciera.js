@@ -93,7 +93,7 @@ function instrumentos(a, rows) {
   const t30 = tramo(30);
   const entra = t30.filter(s => s.row.tipo === 'ingreso').reduce((x, s) => x + s.amount, 0);
   const sale = t30.filter(s => s.row.tipo === 'egreso').reduce((x, s) => x + s.amount, 0);
-  const s7 = fin.balanceAt(a.serie.proyeccion, en(7)).saldo, s30 = fin.balanceAt(a.serie.proyeccion, en(30)).saldo;
+  const s7 = fin.balanceAt(a.serie.proyeccion, en(7)).saldo, s14 = fin.balanceAt(a.serie.proyeccion, en(14)).saldo, s30 = fin.balanceAt(a.serie.proyeccion, en(30)).saldo;
   const ym = a.today.slice(0, 7);
   // PERSONAL (owner 2026-10-26): every bank outflow this month that is NOT in the plan. A bank charge that matches
   // a plan row only marks that row cumplido and never lands here; moves between his own accounts are not spending.
@@ -115,7 +115,7 @@ function instrumentos(a, rows) {
         row: { id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real } })),
     costo_mes: d(costoMes), ingreso_mes: d(ingresoMes),
     saldo_hoy: d(a.saldo_hoy), saldo_min: d(a.saldo_min), fecha_min: a.fecha_min, saldo_final: d(a.saldo_final), saldo_final_plan: d(a.saldo_final_plan),
-    entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
+    entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), saldo_14d: d(s14), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
     desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes),
     proximo_pago: prox ? { concepto: prox.concepto, fecha: prox.fecha, monto: fmt(prox.monto), dias: Math.round((Date.parse(prox.fecha) - Date.parse(a.today)) / 864e5), cubierto: prox.cubierto } : null
   };
