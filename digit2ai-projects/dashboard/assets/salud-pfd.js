@@ -145,6 +145,13 @@
     // aircraft symbol (fixed, yellow)
     o.push('<path d="M ' + (cx - 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy - 4) + ' L ' + (cx + 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy + 12) + ' Z" fill="#ffd400" stroke="#6b5a00" stroke-width="1.5"/>');
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
+    // what the pitch means, in dollars: how much the balance changes over the next 30 days
+    (function () {
+      var v = p.cambio_30d.v, col = v >= 0 ? C.green : C.red;
+      var txt = (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
+      o.push('<rect x="' + (cx - 78) + '" y="' + (cy + 92) + '" width="156" height="30" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
+      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">30D <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
+    })();
     o.push('</g>');
 
     // ---------------- left tape: this month so far, 1st to today: green = what came in, red = what went out ----------------
