@@ -231,20 +231,21 @@
       // label: beside the bug while it clears the HSI boxes, otherwise inside the tape bottom
       o.push('<path d="M ' + (x - 14) + ' ' + mid + ' l 14 -26 h 104 v 52 h -104 z" fill="#000" stroke="#fff" stroke-width="2"/>');
       o.push('<text x="' + (x + 100) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="32" font-weight="700" text-anchor="end">' + esc(k(v)) + '</text>');
-      // MÍN tape (owner 2026-10-26: replaces the 7-day VSI, G1000 style) — needle at the lowest projected balance,
-      // zero in the middle (red dashed), value inside the needle, date underneath
+      // MÍN tape (owner 2026-10-26): same height and SAME SCALE as the SALDO tape, so the needle sits exactly where
+      // the minimum falls relative to today's balance (white line = today, red dashed = $0); value inside, date below
       (function () {
-        var vx = x + w + 6, vw = 62, vh = 300, vmid = mid, mv = p.saldo_min.v;
-        var rng = nice(Math.max(Math.abs(mv), 1000) * 1.25 / 2) * 2;
+        var vx = x + w + 6, vw = 62, mv = p.saldo_min.v;
         var mcol = mv < 0 ? C.red : (s.zona && s.zona.bajo_colchon ? C.amber : C.green);
-        o.push('<rect x="' + vx + '" y="' + (vmid - vh / 2) + '" width="' + vw + '" height="' + vh + '" fill="rgba(0,0,0,.38)"/>');
-        [-2, -1, 1, 2].forEach(function (i) { var yy = vmid - i * vh / 5; o.push('<line x1="' + vx + '" y1="' + yy + '" x2="' + (vx + 10) + '" y2="' + yy + '" stroke="#fff" stroke-width="2"/>'); });
-        o.push('<line x1="' + vx + '" y1="' + vmid + '" x2="' + (vx + vw) + '" y2="' + vmid + '" stroke="' + C.red + '" stroke-width="2.5" stroke-dasharray="6 4"/>');
-        var yv = vmid - clamp(mv / rng, -1, 1) * (vh / 2 - 14);
+        o.push('<rect x="' + vx + '" y="' + y0 + '" width="' + vw + '" height="' + h + '" fill="rgba(0,0,0,.38)"/>');
+        for (var n = -4; n <= 4; n++) { var ty = mid + n * pps; if (ty > y0 + 4 && ty < y0 + h - 4) o.push('<line x1="' + vx + '" y1="' + ty + '" x2="' + (vx + 10) + '" y2="' + ty + '" stroke="#fff" stroke-width="2"/>'); }
+        o.push('<line x1="' + vx + '" y1="' + mid + '" x2="' + (vx + vw) + '" y2="' + mid + '" stroke="#fff" stroke-width="2"/>');
+        var yz = mid - (0 - v) / step * pps;
+        if (yz > y0 && yz < y0 + h) o.push('<line x1="' + vx + '" y1="' + yz + '" x2="' + (vx + vw) + '" y2="' + yz + '" stroke="' + C.red + '" stroke-width="2.5" stroke-dasharray="6 4"/>');
+        var yv = clamp(mid - (mv - v) / step * pps, y0 + 15, y0 + h - 15);
         o.push('<path d="M ' + (vx + 2) + ' ' + yv + ' l 12 -13 h ' + (vw - 4) + ' v 26 h -' + (vw - 4) + ' z" fill="#000" stroke="' + mcol + '" stroke-width="2"/>');
         o.push('<text x="' + (vx + 14 + (vw - 4) / 2) + '" y="' + (yv + 6) + '" fill="' + mcol + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(mv)) + '</text>');
-        o.push('<text x="' + (vx + vw / 2) + '" y="' + (vmid - vh / 2 - 6) + '" fill="#fff" font-size="13" text-anchor="middle">MÍN</text>');
-        o.push('<text x="' + (vx + vw / 2) + '" y="' + (vmid + vh / 2 + 18) + '" fill="' + mcol + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
+        o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">MÍN</text>');
+        o.push('<rect x="' + vx + '" y="' + (y0 + h) + '" width="' + vw + '" height="34" fill="#000"/><text x="' + (vx + vw / 2) + '" y="' + (y0 + h + 23) + '" fill="' + mcol + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
       })();
       // SALUD box (the "baro" box)
       var col = s.color === 'verde' ? C.green : C.amber;
