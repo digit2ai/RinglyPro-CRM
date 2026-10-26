@@ -351,37 +351,40 @@ async function recurring(sequelize, item, ctx = {}) {
       { replacements: { u: user.userId, t: user.tenantId, item: item.item_id, d: addDays(today, -400) } });
     streams = detectar(txns, today);
   }
-  const [[prev]] = await sequelize.query('SELECT COUNT(*)::int AS n FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t', { replacements: { u: user.userId, t: user.tenantId } });
-  const primera = prev.n === 0;
   const nuevos = [];
+  await sequelize.transaction(async (transaction) => {
+  await sequelize.query('SELECT pg_advisory_xact_lock(hashtext(:k))', { replacements: { k: 'sf_plaid_rec:' + user.tenantId + ':' + user.userId }, transaction });
+  const [[prev]] = await sequelize.query('SELECT COUNT(*)::int AS n FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t', { replacements: { u: user.userId, t: user.tenantId }, transaction });
+  const primera = prev.n === 0;
   for (const s of streams) {
     const cat = categoria({ comercio: s.comercio, nombre: s.descripcion, pfc_primary: s.pfc_primary, pfc_detailed: s.pfc_detailed, tipo: s.direccion === 'salida' ? 'egreso' : 'ingreso' });
-    const [[old]] = await sequelize.query('SELECT id, monto_ultimo::text AS monto_ultimo FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t AND stream_id = :s', { replacements: { u: user.userId, t: user.tenantId, s: fuente + ':' + s.stream_id } });
+    const [[old]] = await sequelize.query('SELECT id, monto_ultimo::text AS monto_ultimo FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t AND stream_id = :s', { replacements: { u: user.userId, t: user.tenantId, s: fuente + ':' + s.stream_id }, transaction });
     const rep = { t: user.tenantId, u: user.userId, s: fuente + ':' + s.stream_id, fuente, dir: s.direccion, desc: String(s.descripcion).slice(0, 200), com: s.comercio, frec: s.frecuencia, st: s.status, act: !!s.activo,
       prom: s.monto_promedio, ult: s.monto_ultimo, prox: s.proxima_fecha, cat };
     if (!old) {
       await sequelize.query(`INSERT INTO sf_plaid_recurrentes (tenant_id, user_id, stream_id, fuente, direccion, descripcion, comercio, frecuencia, status, activo, monto_promedio, monto_ultimo, proxima_fecha, categoria)
-        VALUES (:t, :u, :s, :fuente, :dir, :desc, :com, :frec, :st, :act, :prom, :ult, :prox, :cat)`, { replacements: rep });
+        VALUES (:t, :u, :s, :fuente, :dir, :desc, :com, :frec, :st, :act, :prom, :ult, :prox, :cat)`, { replacements: rep, transaction });
       const relevante = s.direccion === 'salida' && s.activo && s.status !== 'TOMBSTONED' && s.status !== 'UNKNOWN';
       if (relevante) nuevos.push(s);
       if (relevante && !primera) {
         await addAlerta(sequelize, user, 'nueva_suscripcion', rep.s,
-          `Nuevo cobro recurrente: ${rep.desc}${s.monto_ultimo ? ' ' + '$' + Number(s.monto_ultimo).toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}${FREQ[s.frecuencia] ? ' (' + FREQ[s.frecuencia] + ')' : ''}${fuente === 'detector' ? ' · detectado por la app' : ''}.`);
+          `Nuevo cobro recurrente: ${rep.desc}${s.monto_ultimo ? ' ' + '$' + Number(s.monto_ultimo).toLocaleString('en-US', { minimumFractionDigits: 2 }) : ''}${FREQ[s.frecuencia] ? ' (' + FREQ[s.frecuencia] + ')' : ''}${fuente === 'detector' ? ' · detectado por la app' : ''}.`, transaction);
       }
     } else {
       if (s.direccion === 'salida' && old.monto_ultimo && s.monto_ultimo && Math.abs(Number(old.monto_ultimo) - Number(s.monto_ultimo)) >= 0.01) {
         await addAlerta(sequelize, user, 'cambio_monto', rep.s + ':' + s.monto_ultimo,
-          `${rep.desc} cambió de monto: $${Number(old.monto_ultimo).toFixed(2)} → $${Number(s.monto_ultimo).toFixed(2)}.`);
+          `${rep.desc} cambió de monto: $${Number(old.monto_ultimo).toFixed(2)} → $${Number(s.monto_ultimo).toFixed(2)}.`, transaction);
       }
       await sequelize.query(`UPDATE sf_plaid_recurrentes SET descripcion = :desc, comercio = :com, frecuencia = :frec, status = :st, activo = :act, monto_promedio = :prom, monto_ultimo = :ult,
-        proxima_fecha = :prox, categoria = :cat, updated_at = NOW() WHERE user_id = :u AND tenant_id = :t AND stream_id = :s`, { replacements: rep });
+        proxima_fecha = :prox, categoria = :cat, updated_at = NOW() WHERE user_id = :u AND tenant_id = :t AND stream_id = :s`, { replacements: rep, transaction });
     }
   }
   if (primera && nuevos.length) {
     const lista = nuevos.slice(0, 8).map(s => s.descripcion).join(', ');
     await addAlerta(sequelize, user, 'resumen_recurrentes', item.item_id,
-      `Encontré ${nuevos.length} cobro${nuevos.length === 1 ? '' : 's'} recurrente${nuevos.length === 1 ? '' : 's'} en tu banco: ${lista}${nuevos.length > 8 ? '…' : ''}.${fuente === 'detector' ? ' (detectados por la app)' : ''}`);
+      `Encontré ${nuevos.length} cobro${nuevos.length === 1 ? '' : 's'} recurrente${nuevos.length === 1 ? '' : 's'} en tu banco: ${lista}${nuevos.length > 8 ? '…' : ''}.${fuente === 'detector' ? ' (detectados por la app)' : ''}`, transaction);
   }
+  });
   return { fuente, streams: streams.length, nuevos: nuevos.length };
 }
 
