@@ -168,8 +168,11 @@
     (function () {
       var v = p.cambio_30d.v, col = v >= 0 ? C.green : C.red;
       var txt = (v >= 0 ? '+' : '-') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
-      o.push('<rect x="' + (cx - 78) + '" y="' + (cy + 92) + '" width="156" height="30" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
-      o.push('<text x="' + cx + '" y="' + (cy + 114) + '" fill="#fff" font-size="15" text-anchor="middle">30D <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
+      // owner 2026-10-26: say what comes in and goes out over the next 30 days, then the net
+      var k0 = function (n) { return '$' + Math.round(Math.abs(n)).toLocaleString('en-US'); };
+      o.push('<rect x="' + (cx - 150) + '" y="' + (cy + 86) + '" width="300" height="54" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
+      o.push('<text x="' + cx + '" y="' + (cy + 106) + '" fill="#fff" font-size="14" text-anchor="middle">PRÓX. 30D  <tspan fill="' + C.green + '" font-weight="700">ENTRAN ' + esc(k0(p.entra_30.v)) + '</tspan>  <tspan fill="' + C.red + '" font-weight="700">SALEN ' + esc(k0(p.sale_30.v)) + '</tspan></text>');
+      o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">NETO <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(txt) + '</tspan></text>');
     })();
     o.push('</g>');
 
