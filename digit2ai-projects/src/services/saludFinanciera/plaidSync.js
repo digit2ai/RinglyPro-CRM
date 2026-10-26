@@ -160,7 +160,7 @@ async function applyChanges(sequelize, item, ch, ctx, transaction) {
   async function matchPlan(row, tipo, cents, monto, fecha) {
     const [[plan]] = await q(`SELECT id, concepto, estado, fecha::text AS fecha FROM sf_movimientos m WHERE user_id = :u AND tenant_id = :t AND origen = 'plan'
       AND tipo = :tipo AND fecha BETWEEN :d1 AND :d2
-      AND (monto = :monto OR (categoria IN ('salario','servicios','ingreso_extra') AND ABS(monto - :monto) <= monto * 0.02))
+      AND (monto = :monto OR (categoria IN ('salario','servicios','ingreso_extra','corte') AND ABS(monto - :monto) <= monto * 0.02))
       AND NOT EXISTS (SELECT 1 FROM sf_plaid_txn x WHERE x.mov_id = m.id AND x.enlace IN ('plan','cumplido'))
       ORDER BY (estado = 'pendiente') DESC, ABS(monto - :monto), ABS(fecha - CAST(:fecha AS DATE)), id LIMIT 1`, { tipo, monto, d1: addDays(fecha, -5), d2: addDays(fecha, 5), fecha });
     if (!plan) return false;
