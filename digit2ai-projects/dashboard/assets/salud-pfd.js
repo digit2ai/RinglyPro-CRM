@@ -231,28 +231,20 @@
       // label: beside the bug while it clears the HSI boxes, otherwise inside the tape bottom
       o.push('<path d="M ' + (x - 14) + ' ' + mid + ' l 14 -26 h 104 v 52 h -104 z" fill="#000" stroke="#fff" stroke-width="2"/>');
       o.push('<text x="' + (x + 100) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="32" font-weight="700" text-anchor="end">' + esc(k(v)) + '</text>');
-      // MÍNIMO (owner 2026-10-26: replaces the 7-day VSI) — the lowest projected balance, when, and how far away
+      // MÍN tape (owner 2026-10-26: replaces the 7-day VSI, G1000 style) — needle at the lowest projected balance,
+      // zero in the middle (red dashed), value inside the needle, date underneath
       (function () {
-        var mx0 = x + w + 6, mw0 = 1000 - mx0 - 6, my0 = y0 - 30, mh0 = h + 64, mv = p.saldo_min.v;
+        var vx = x + w + 6, vw = 62, vh = 300, vmid = mid, mv = p.saldo_min.v;
+        var rng = nice(Math.max(Math.abs(mv), 1000) * 1.25 / 2) * 2;
         var mcol = mv < 0 ? C.red : (s.zona && s.zona.bajo_colchon ? C.amber : C.green);
-        var hoyD = new Date(); hoyD.setHours(12, 0, 0, 0);
-        var dias = Math.round((new Date(p.fecha_min + 'T12:00:00') - hoyD) / 864e5);
-        var cxm = mx0 + mw0 / 2;
-        o.push('<rect x="' + mx0 + '" y="' + my0 + '" width="' + mw0 + '" height="' + mh0 + '" rx="4" fill="#000" stroke="' + mcol + '" stroke-width="2.5"/>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 26) + '" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">MÍNIMO</text>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 70) + '" fill="' + mcol + '" font-size="30" font-weight="700" text-anchor="middle">' + esc(k(mv)) + '</text>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 104) + '" fill="#fff" font-size="20" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 128) + '" fill="#cfd8e3" font-size="15" text-anchor="middle">' + (dias <= 0 ? 'HOY' : 'EN ' + dias + ' D') + '</text>');
-        o.push('<line x1="' + (mx0 + 10) + '" y1="' + (my0 + 146) + '" x2="' + (mx0 + mw0 - 10) + '" y2="' + (my0 + 146) + '" stroke="#555"/>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 172) + '" fill="#fff" font-size="14" text-anchor="middle">' + (mv < 0 ? 'FALTAN' : 'SOBRE $0') + '</text>');
-        o.push('<text x="' + cxm + '" y="' + (my0 + 198) + '" fill="' + mcol + '" font-size="22" font-weight="700" text-anchor="middle">' + esc('$' + k(Math.abs(mv))) + '</text>');
-        if (s.zona && s.zona.desde && s.zona.hasta && (mv < 0 || s.zona.bajo_colchon)) {
-          o.push('<text x="' + cxm + '" y="' + (my0 + 236) + '" fill="' + C.amber + '" font-size="14" text-anchor="middle">CUIDADO</text>');
-          o.push('<text x="' + cxm + '" y="' + (my0 + 258) + '" fill="#fff" font-size="15" text-anchor="middle">' + esc(fc(s.zona.desde)) + '</text>');
-          o.push('<text x="' + cxm + '" y="' + (my0 + 278) + '" fill="#fff" font-size="15" text-anchor="middle">→ ' + esc(fc(s.zona.hasta)) + '</text>');
-        } else {
-          o.push('<text x="' + cxm + '" y="' + (my0 + 246) + '" fill="' + C.green + '" font-size="15" text-anchor="middle">SIN</text><text x="' + cxm + '" y="' + (my0 + 266) + '" fill="' + C.green + '" font-size="15" text-anchor="middle">NEGATIVOS</text>');
-        }
+        o.push('<rect x="' + vx + '" y="' + (vmid - vh / 2) + '" width="' + vw + '" height="' + vh + '" fill="rgba(0,0,0,.38)"/>');
+        [-2, -1, 1, 2].forEach(function (i) { var yy = vmid - i * vh / 5; o.push('<line x1="' + vx + '" y1="' + yy + '" x2="' + (vx + 10) + '" y2="' + yy + '" stroke="#fff" stroke-width="2"/>'); });
+        o.push('<line x1="' + vx + '" y1="' + vmid + '" x2="' + (vx + vw) + '" y2="' + vmid + '" stroke="' + C.red + '" stroke-width="2.5" stroke-dasharray="6 4"/>');
+        var yv = vmid - clamp(mv / rng, -1, 1) * (vh / 2 - 14);
+        o.push('<path d="M ' + (vx + 2) + ' ' + yv + ' l 12 -13 h ' + (vw - 4) + ' v 26 h -' + (vw - 4) + ' z" fill="#000" stroke="' + mcol + '" stroke-width="2"/>');
+        o.push('<text x="' + (vx + 14 + (vw - 4) / 2) + '" y="' + (yv + 6) + '" fill="' + mcol + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(mv)) + '</text>');
+        o.push('<text x="' + (vx + vw / 2) + '" y="' + (vmid - vh / 2 - 6) + '" fill="#fff" font-size="13" text-anchor="middle">MÍN</text>');
+        o.push('<text x="' + (vx + vw / 2) + '" y="' + (vmid + vh / 2 + 18) + '" fill="' + mcol + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
       })();
       // SALUD box (the "baro" box)
       var col = s.color === 'verde' ? C.green : C.amber;
