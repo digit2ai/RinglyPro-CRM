@@ -321,7 +321,12 @@
     return out;
   }
   function anyFilter() { var f = state.f; return !!(f.q || f.desde || f.hasta || f.min || f.max || f.bank); }
+  // the boxes on screen are the truth: the browser can restore their values after a reload without firing any event
+  function readInputs() {
+    ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { var e = document.getElementById('sf-' + k); if (e) state.f[k] = e.value; });
+  }
   function redraw() {
+    readInputs();
     var rows = filtered(), chip = document.getElementById('sf-chip');
     if (chip) {
       var parts = [];
@@ -339,17 +344,19 @@
     drawTable(rows, state.fmin);
   }
   function wireFilters() {
-    var f = state.f, t = null;
+    // state.f is replaced by Limpiar and by the Bank card, so never hold a reference to it here (that was the bug)
+    var t = null;
     var q = document.getElementById('sf-q');
-    q.oninput = function () { var v = this.value; clearTimeout(t); t = setTimeout(function () { f.q = v; redraw(); }, 150); };
+    q.oninput = function () { clearTimeout(t); t = setTimeout(redraw, 150); };
+    q.onsearch = redraw;
     ['desde', 'hasta'].forEach(function (k) {
       document.getElementById('sf-' + k).onchange = function () {
-        f[k] = this.value;
+        state.f[k] = this.value;
         // a date range may cross months: read every month, not just the one selected
         if (this.value && state.mes && this.value.slice(0, 7) !== state.mes) { state.mes = ''; loadMovs(); } else redraw();
       };
     });
-    ['min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).oninput = function () { f[k] = this.value; redraw(); }; });
+    ['min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).oninput = function () { redraw(); }; });
     document.getElementById('sf-clear').onclick = function () {
       state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null };
       ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).value = ''; });
