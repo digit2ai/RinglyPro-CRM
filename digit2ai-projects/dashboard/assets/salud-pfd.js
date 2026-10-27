@@ -79,6 +79,11 @@
     var neural = (t.sube ? t.buenas.slice(0, 2) : t.malas).map(function (x) { return esc(x.texto.charAt(0).toUpperCase() + x.texto.slice(1)) + '.'; }).join('<br>') +
       ((s.obligaciones_descubiertas || []).length ? '<br><span style="color:#fff">No quedan cubiertos:</span> ' + s.obligaciones_descubiertas.map(function (o) { return esc(o.concepto) + ' (' + esc(fl(o.fecha)) + ', ' + esc(o.monto) + ' → ' + esc(o.saldo) + ')'; }).join('; ') : '');
     h.push(tile('Neural Intelligence', t.sube ? '▲ Sube' : '▼ Baja', neural, t.sube ? C.green : C.amber));
+    // BANK (owner 2026-10-27): same figure as the BANK readout on the left tape; tapping it filters the table below
+    var bn = p.gasto_mes_n || 0;
+    h.push('<div data-bank role="button" tabindex="0" style="cursor:pointer">' + tile('Gastos del banco · ' + esc(MESES_L[Number(s.hoy.slice(5, 7)) - 1]), esc(p.gasto_mes.t),
+      (bn ? bn + (bn === 1 ? ' cargo' : ' cargos') + ' del banco fuera del plan, del 1 al ' + Number(s.hoy.slice(8, 10)) + '. ' : 'Ningún cargo del banco fuera del plan este mes. ') +
+      '<span style="color:' + C.cyan + ';text-decoration:underline">Ver en la tabla</span>', C.cyan) + '</div>');
     return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">' + h.join('') + '</div>';
   }
 
@@ -387,6 +392,12 @@
         if (window.sfOpenEdit) window.sfOpenEdit(id, r && r.row);
       });
     });
+    var bk = el.querySelector('[data-bank]');
+    if (bk) {
+      var goBank = function () { if (window.sfFilterBank) window.sfFilterBank(p.gasto_mes_ids || [], s.hoy); };
+      bk.addEventListener('click', goBank);
+      bk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goBank(); } });
+    }
     var ms = el.querySelector('[data-minsel]');
     if (ms) ms.addEventListener('change', function () { state.minSel = this.value; window.drawSfPfd(el, s); });
     el.querySelectorAll('[data-tecla]').forEach(function (g) {

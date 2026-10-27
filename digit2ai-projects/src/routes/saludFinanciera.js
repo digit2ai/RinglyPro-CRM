@@ -98,7 +98,8 @@ function instrumentos(a, rows) {
   // PERSONAL (owner 2026-10-26): every bank outflow this month that is NOT in the plan. A bank charge that matches
   // a plan row only marks that row cumplido and never lands here; moves between his own accounts are not spending.
   const PROPIA = /online banking transfer|zelle payment (to|from) manuel stagg|zelle payment from digit2ai/i;
-  const gastoMes = rows.filter(r => r.fuente === 'plaid' && r.origen === 'real' && r.tipo === 'egreso' && r.fecha.slice(0, 7) === ym && !PROPIA.test(r.concepto || '')).reduce((x, r) => x + toCents(r.monto), 0);
+  const bankRows = rows.filter(r => r.fuente === 'plaid' && r.origen === 'real' && r.tipo === 'egreso' && r.fecha.slice(0, 7) === ym && r.fecha <= a.today && !PROPIA.test(r.concepto || ''));
+  const gastoMes = bankRows.reduce((x, r) => x + toCents(r.monto), 0);
   const prox = a.proximo_pago;
   // what has gone out this month so far: every outflow from the 1st up to and including today
   const delMes = (tipo) => a.steps.filter(s => s.row.tipo === tipo && s.row.fecha >= ym + '-01' && s.row.fecha <= a.today).reduce((x, s) => x + s.amount, 0);
@@ -118,7 +119,7 @@ function instrumentos(a, rows) {
     entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), saldo_14d: d(s14),
     // owner 2026-10-26: closing balance of each quarter of NEXT year (Q1..Q4), from the projection
     trimestres_prox: (() => { const y = Number(a.today.slice(0, 4)) + 1; return ['03-31', '06-30', '09-30', '12-31'].map((md, i) => ({ q: 'Q' + (i + 1), anio: y, saldo: d(fin.balanceAt(a.serie.proyeccion, y + '-' + md).saldo) })); })(), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
-    desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes),
+    desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes), gasto_mes_ids: bankRows.map(r => r.id), gasto_mes_n: bankRows.length,
     proximo_pago: prox ? { concepto: prox.concepto, fecha: prox.fecha, monto: fmt(prox.monto), dias: Math.round((Date.parse(prox.fecha) - Date.parse(a.today)) / 864e5), cubierto: prox.cubierto } : null
   };
 }

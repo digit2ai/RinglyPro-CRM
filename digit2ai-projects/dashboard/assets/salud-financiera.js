@@ -17,7 +17,7 @@
   ];
   var CHIPS = ['¿Cómo estoy hoy?', '¿Cuánto tendré el 1 de diciembre?', '¿Por qué tengo este saldo hoy?', '¿Cómo se calcula la proyección?', '¿Qué hago para mantenerla?', 'Agrega un gasto de 45 en comida'];
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  var state = { salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
+  var state = { f: { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null }, fmin: null, salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; }); }
   function tok() { try { return localStorage.getItem('d2ai_token') || localStorage.getItem('token') || ''; } catch (e) { return ''; } }
@@ -93,11 +93,20 @@
       '<div class="card card-accent-blue" id="sf-mov-card" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
       '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
+      '<div id="sf-filt" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">' +
+      '<input id="sf-q" type="search" placeholder="Buscar concepto, monto o fecha" aria-label="Buscar" style="flex:1 1 220px;min-width:0;padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
+      '<label style="display:flex;gap:4px;align-items:center;font-size:12px;color:var(--text-muted)">Desde<input id="sf-desde" type="date" style="padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></label>' +
+      '<label style="display:flex;gap:4px;align-items:center;font-size:12px;color:var(--text-muted)">Hasta<input id="sf-hasta" type="date" style="padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></label>' +
+      '<input id="sf-min" type="number" inputmode="decimal" step="0.01" placeholder="Monto mín" aria-label="Monto mínimo" style="width:110px;padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
+      '<input id="sf-max" type="number" inputmode="decimal" step="0.01" placeholder="Monto máx" aria-label="Monto máximo" style="width:110px;padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
+      '<button class="btn btn-sm btn-ghost" id="sf-clear">Limpiar</button></div>' +
+      '<div id="sf-chip"></div>' +
       '<div id="sf-table" style="overflow-x:auto"></div></div>' +
       '</div>';
     document.getElementById('sf-add').onclick = openAdd;
     document.getElementById('sf-extend').onclick = extendPlan;
     document.getElementById('sf-mes').onchange = function () { state.mes = this.value; loadMovs(); };
+    wireFilters();
     if (SHOW_LINA) wireLina();
     resumeOAuth();
     return refresh();
@@ -277,16 +286,97 @@
       state.movs = j.data; state.meses = j.meses;
       var sel = document.getElementById('sf-mes');
       if (sel) sel.innerHTML = '<option value="">Todos los meses</option>' + j.meses.map(function (m) { return '<option value="' + m + '"' + (m === state.mes ? ' selected' : '') + '>' + MESES[Number(m.slice(5, 7)) - 1] + ' ' + m.slice(0, 4) + '</option>'; }).join('');
-      drawTable(j.data, j.fecha_min);
+      state.fmin = j.fecha_min; redraw();
     });
   }
 
+  // ---------- table filters (owner 2026-10-27): search, date range, amount range, sortable Fecha/Concepto/Monto, bank chip
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : null; }
+  function fold(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function filtered() {
+    var f = state.f, q = fold(f.q).trim(), mn = num(f.min), mx = num(f.max);
+    var bank = f.bank ? f.bank.reduce(function (o, id) { o[id] = 1; return o; }, {}) : null;
+    var out = state.movs.filter(function (r) {
+      if (bank && !bank[r.id]) return false;
+      if (f.desde && r.fecha < f.desde) return false;
+      if (f.hasta && r.fecha > f.hasta) return false;
+      var m = Math.abs(num(r.efectivo || r.monto) || 0);
+      if (mn != null && m < mn) return false;
+      if (mx != null && m > mx) return false;
+      if (q) {
+        var hay = fold([r.concepto, r.comercio, r.nota, r.fecha, fechaCorta(r.fecha), r.monto, r.efectivo, r.categoria].join(' '));
+        if (!q.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0 || hay.replace(/,/g, '').indexOf(w.replace(/,/g, '')) >= 0; })) return false;
+      }
+      return true;
+    });
+    if (f.sort) {
+      out = out.slice().sort(function (a, b) {
+        var x, y;
+        if (f.sort === 'fecha') { x = a.fecha + String(a.id).padStart(9, '0'); y = b.fecha + String(b.id).padStart(9, '0'); }
+        else if (f.sort === 'concepto') { x = fold(a.concepto); y = fold(b.concepto); }
+        else { x = (a.tipo === 'ingreso' ? 1 : -1) * Math.abs(num(a.efectivo || a.monto) || 0); y = (b.tipo === 'ingreso' ? 1 : -1) * Math.abs(num(b.efectivo || b.monto) || 0); }
+        return (x < y ? -1 : x > y ? 1 : 0) * f.dir;
+      });
+    }
+    return out;
+  }
+  function anyFilter() { var f = state.f; return !!(f.q || f.desde || f.hasta || f.min || f.max || f.bank); }
+  function redraw() {
+    var rows = filtered(), chip = document.getElementById('sf-chip');
+    if (chip) {
+      var parts = [];
+      if (state.f.bank) parts.push('Gastos del banco fuera del plan');
+      if (anyFilter()) {
+        var tot = rows.reduce(function (x, r) { return x + (r.tipo === 'ingreso' ? 1 : -1) * Math.round(Math.abs(num(r.efectivo || r.monto) || 0) * 100); }, 0);
+        parts.push(rows.length + (rows.length === 1 ? ' movimiento' : ' movimientos') + ' · total ' + money(tot / 100));
+      }
+      chip.innerHTML = parts.length ? '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px">' +
+        '<span style="background:rgba(34,211,238,.12);color:var(--info);border:1px solid currentColor;border-radius:999px;padding:3px 10px">' + esc(parts.join(' · ')) + '</span>' +
+        (state.f.bank ? '<button class="btn btn-sm btn-ghost" id="sf-unbank">Quitar filtro del banco</button>' : '') + '</div>' : '';
+      var ub = document.getElementById('sf-unbank');
+      if (ub) ub.onclick = function () { state.f.bank = null; redraw(); };
+    }
+    drawTable(rows, state.fmin);
+  }
+  function wireFilters() {
+    var f = state.f, t = null;
+    var q = document.getElementById('sf-q');
+    q.oninput = function () { var v = this.value; clearTimeout(t); t = setTimeout(function () { f.q = v; redraw(); }, 150); };
+    ['desde', 'hasta'].forEach(function (k) {
+      document.getElementById('sf-' + k).onchange = function () {
+        f[k] = this.value;
+        // a date range may cross months: read every month, not just the one selected
+        if (this.value && state.mes && this.value.slice(0, 7) !== state.mes) { state.mes = ''; loadMovs(); } else redraw();
+      };
+    });
+    ['min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).oninput = function () { f[k] = this.value; redraw(); }; });
+    document.getElementById('sf-clear').onclick = function () {
+      state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null };
+      ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).value = ''; });
+      redraw();
+    };
+  }
+  // the Bank card in the instrument panel: this month's bank debits outside the plan, from the 1st to today
+  window.sfFilterBank = function (ids, hoy) {
+    var ym = String(hoy).slice(0, 7);
+    state.f = { q: '', desde: ym + '-01', hasta: hoy, min: '', max: '', sort: 'fecha', dir: 1, bank: ids.slice() };
+    var set = function (k, v) { var e = document.getElementById('sf-' + k); if (e) e.value = v; };
+    set('q', ''); set('desde', state.f.desde); set('hasta', state.f.hasta); set('min', ''); set('max', '');
+    var card = document.getElementById('sf-mov-card');
+    var done = function () { if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    if (state.mes !== ym) { state.mes = ym; loadMovs().then(done); } else { redraw(); done(); }
+  };
+
+  function sortTh(k, label, st) {
+    var on = state.f.sort === k, arrow = on ? (state.f.dir === 1 ? ' ▲' : ' ▼') : '';
+    return '<th data-sort="' + k + '" title="Ordenar por ' + label.toLowerCase() + '" style="cursor:pointer;user-select:none;' + st + (on ? 'color:var(--info);' : '') + '">' + label + arrow + '</th>';
+  }
   function drawTable(rows, fmin) {
     var el = document.getElementById('sf-table');
-    if (!rows.length) { el.innerHTML = '<p class="section-hint">No hay movimientos en este mes.</p>'; return; }
+    if (!rows.length) { el.innerHTML = '<p class="section-hint">' + (anyFilter() ? 'Ningún movimiento coincide con el filtro.' : 'No hay movimientos en este mes.') + '</p>'; return; }
     var color = { plan: 'var(--text-muted)', real: 'var(--info)', cumplido: 'var(--success)' };
     var label = { plan: 'Plan', real: 'Real', cumplido: 'Cumplido' };
-    el.innerHTML = '<style>@media (max-width:700px){#sf-mov-card{padding:12px 8px}#sf-table .sf-hide-m{display:none}#sf-table .sf-yr{display:none}#sf-table td,#sf-table th{padding:7px 4px;font-size:12px}#sf-table td.sf-concepto{word-break:break-word;white-space:normal}#sf-table tr[data-row]{cursor:pointer}}</style><table class="data-table" style="width:100%"><thead><tr><th>Fecha</th><th>Concepto</th><th style="text-align:right">Monto</th><th style="text-align:right">Saldo</th><th class="sf-hide-m">Estado</th><th class="sf-hide-m"></th></tr></thead><tbody>' +
+    el.innerHTML = '<style>@media (max-width:700px){#sf-mov-card{padding:12px 8px}#sf-table .sf-hide-m{display:none}#sf-table .sf-yr{display:none}#sf-table td,#sf-table th{padding:7px 4px;font-size:12px}#sf-table td.sf-concepto{word-break:break-word;white-space:normal}#sf-table tr[data-row]{cursor:pointer}}</style><table class="data-table" style="width:100%"><thead><tr>' + sortTh('fecha', 'Fecha', '') + sortTh('concepto', 'Concepto', '') + sortTh('monto', 'Monto', 'text-align:right') + '<th style="text-align:right">Saldo</th><th class="sf-hide-m">Estado</th><th class="sf-hide-m"></th></tr></thead><tbody>' +
       rows.map(function (r) {
         var v = r.estado_visual; var neg = r.saldo && r.saldo.charAt(0) === '-';
         var bg = r.es_minimo ? 'background:rgba(245,158,11,.14);' : '';
@@ -308,6 +398,13 @@
     // On a phone the action buttons are hidden: tapping a row opens Editar (which can also delete).
     el.querySelectorAll('tr[data-row]').forEach(function (tr) { tr.onclick = function (e) { if (e.target.closest('button')) return; if (window.innerWidth <= 700) openEdit(Number(tr.getAttribute('data-row'))); }; });
     el.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { openEdit(Number(b.getAttribute('data-edit'))); }; });
+    el.querySelectorAll('th[data-sort]').forEach(function (th) {
+      th.onclick = function () {
+        var k = th.getAttribute('data-sort');
+        if (state.f.sort === k) { if (state.f.dir === 1) state.f.dir = -1; else { state.f.sort = ''; state.f.dir = 1; } } else { state.f.sort = k; state.f.dir = 1; }
+        redraw();
+      };
+    });
     el.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () { if (confirm('¿Borrar este movimiento?')) sf('/movimientos/' + b.getAttribute('data-del'), { method: 'DELETE' }).then(refresh); }; });
   }
 
