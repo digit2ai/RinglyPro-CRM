@@ -115,7 +115,9 @@ function instrumentos(a, rows) {
         row: { id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real } })),
     costo_mes: d(costoMes), ingreso_mes: d(ingresoMes),
     saldo_hoy: d(a.saldo_hoy), saldo_min: d(a.saldo_min), fecha_min: a.fecha_min, saldo_final: d(a.saldo_final), saldo_final_plan: d(a.saldo_final_plan),
-    entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), saldo_14d: d(s14), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
+    entra_30: d(entra), sale_30: d(sale), flujo_30: d(entra - sale), saldo_7d: d(s7), saldo_14d: d(s14),
+    // owner 2026-10-26: closing balance of each quarter of NEXT year (Q1..Q4), from the projection
+    trimestres_prox: (() => { const y = Number(a.today.slice(0, 4)) + 1; return ['03-31', '06-30', '09-30', '12-31'].map((md, i) => ({ q: 'Q' + (i + 1), anio: y, saldo: d(fin.balanceAt(a.serie.proyeccion, y + '-' + md).saldo) })); })(), cambio_7d: d(s7 - a.saldo_hoy), saldo_30d: d(s30), cambio_30d: d(s30 - a.saldo_hoy),
     desvio_plan: d(a.saldo_final - a.saldo_final_plan), gasto_mes: d(gastoMes),
     proximo_pago: prox ? { concepto: prox.concepto, fecha: prox.fecha, monto: fmt(prox.monto), dias: Math.round((Date.parse(prox.fecha) - Date.parse(a.today)) / 864e5), cubierto: prox.cubierto } : null
   };

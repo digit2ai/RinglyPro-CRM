@@ -357,8 +357,13 @@
       } else o.push('<text x="430" y="26" fill="' + a2[1] + '" font-size="20" font-weight="700">' + esc(a2[0]) + '</text>');
       o.push('<text x="270" y="54" fill="' + a3[1] + '" font-size="20" font-weight="700">' + esc(a3[0]) + '</text>');
       if (prox) o.push('<text x="470" y="54" fill="' + C.mag + '" font-size="17" font-weight="700">' + esc(sinMes(prox.concepto).toUpperCase().slice(0, 12)) + (prox.dias <= 0 ? ' <tspan fill="#fff" font-size="14">HOY</tspan>' : ' <tspan fill="#fff" font-size="14">EN</tspan> ' + prox.dias + '<tspan font-size="14">D</tspan>') + ' <tspan fill="#fff">' + esc(String(prox.monto).replace(/\.00$/, '')) + '</tspan></text>');
-      o.push('<text x="986" y="26" fill="#fff" font-size="17" text-anchor="end">MÍN <tspan fill="' + (p.saldo_min.v < 0 ? C.red : C.cyan) + '" font-size="22" font-weight="700">' + esc(p.saldo_min.t) + '</tspan> ' + esc(fc(p.fecha_min)) + '</text>');
-      o.push('<text x="986" y="54" fill="#fff" font-size="17" text-anchor="end">FINAL <tspan fill="' + C.cyan + '" font-size="22" font-weight="700">' + esc(p.saldo_final.t) + '</tspan></text>');
+      // MÍN under HOY (owner 2026-10-26)
+      o.push('<text x="14" y="54" fill="#fff" font-size="17">MÍN <tspan fill="' + (p.saldo_min.v < 0 ? C.red : C.cyan) + '" font-size="22" font-weight="700">' + esc(p.saldo_min.t) + '</tspan> <tspan font-size="14">' + esc(fc(p.fecha_min)) + '</tspan></text>');
+      // closing balance of each quarter of next year, replacing FINAL
+      (p.trimestres_prox || []).forEach(function (t, i) {
+        var tx = i % 2 === 0 ? 860 : 986, ty = i < 2 ? 26 : 54;
+        o.push('<text x="' + tx + '" y="' + ty + '" fill="#fff" font-size="15" text-anchor="end">' + esc(t.q + ' ' + String(t.anio).slice(2)) + ' <tspan fill="' + (t.saldo.v < 0 ? C.red : C.cyan) + '" font-size="20" font-weight="700">' + esc(k(t.saldo.v)) + '</tspan></text>');
+      });
     })();
 
     // ---------------- softkeys ----------------
