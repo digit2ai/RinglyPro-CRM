@@ -234,18 +234,18 @@
       // MÍN tape (owner 2026-10-26): same height and SAME SCALE as the SALDO tape, so the needle sits exactly where
       // the minimum falls relative to today's balance (white line = today, red dashed = $0); value inside, date below
       (function () {
-        var vx = x + w + 6, vw = 62, mv = p.saldo_min.v;
+        var vx = x + w + 6, vw = 116, mv = p.saldo_min.v;
         var mcol = mv < 0 ? C.red : (s.zona && s.zona.bajo_colchon ? C.amber : C.green);
         o.push('<rect x="' + vx + '" y="' + y0 + '" width="' + vw + '" height="' + h + '" fill="rgba(0,0,0,.38)"/>');
         for (var n = -4; n <= 4; n++) { var ty = mid + n * pps; if (ty > y0 + 4 && ty < y0 + h - 4) o.push('<line x1="' + vx + '" y1="' + ty + '" x2="' + (vx + 10) + '" y2="' + ty + '" stroke="#fff" stroke-width="2"/>'); }
         o.push('<line x1="' + vx + '" y1="' + mid + '" x2="' + (vx + vw) + '" y2="' + mid + '" stroke="#fff" stroke-width="2"/>');
         var yz = mid - (0 - v) / step * pps;
         if (yz > y0 && yz < y0 + h) o.push('<line x1="' + vx + '" y1="' + yz + '" x2="' + (vx + vw) + '" y2="' + yz + '" stroke="' + C.red + '" stroke-width="2.5" stroke-dasharray="6 4"/>');
-        var yv = clamp(mid - (mv - v) / step * pps, y0 + 15, y0 + h - 15);
-        o.push('<path d="M ' + (vx + 2) + ' ' + yv + ' l 12 -13 h ' + (vw - 4) + ' v 26 h -' + (vw - 4) + ' z" fill="#000" stroke="' + mcol + '" stroke-width="2"/>');
-        o.push('<text x="' + (vx + 14 + (vw - 4) / 2) + '" y="' + (yv + 6) + '" fill="' + mcol + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(mv)) + '</text>');
-        o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">MÍN</text>');
-        o.push('<rect x="' + vx + '" y="' + (y0 + h) + '" width="' + vw + '" height="34" fill="#000"/><text x="' + (vx + vw / 2) + '" y="' + (y0 + h + 23) + '" fill="' + mcol + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
+        var yv = clamp(mid - (mv - v) / step * pps, y0 + 24, y0 + h - 24);
+        o.push('<path d="M ' + (vx + 2) + ' ' + yv + ' l 14 -22 h ' + (vw - 18) + ' v 44 h -' + (vw - 18) + ' z" fill="#000" stroke="' + mcol + '" stroke-width="2.5"/>');
+        o.push('<text x="' + (vx + 16 + (vw - 18) / 2) + '" y="' + (yv + 10) + '" fill="' + mcol + '" font-size="30" font-weight="700" text-anchor="middle">' + esc(k(mv)) + '</text>');
+        o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="18" font-weight="700" text-anchor="middle">MÍN</text>');
+        o.push('<rect x="' + vx + '" y="' + (y0 + h) + '" width="' + vw + '" height="34" fill="#000"/><text x="' + (vx + vw / 2) + '" y="' + (y0 + h + 24) + '" fill="' + mcol + '" font-size="19" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha_min)) + '</text>');
       })();
       // SALUD box (the "baro" box)
       var col = s.color === 'verde' ? C.green : C.amber;
