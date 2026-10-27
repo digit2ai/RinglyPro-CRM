@@ -12,16 +12,17 @@
   function money(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 
   // ---------- icons ----------
-  var DIAMOND = '<svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-3px"><path d="M12 2 L22 12 L12 22 L2 12 Z" fill="none" stroke="#14201b" stroke-width="1.6"/><path d="M9 14 L12 8 L15 14" fill="none" stroke="#14201b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // Logo oficial de Planea (el mismo del encabezado del sitio), en oscuro sobre las pantallas claras.
+  var LOGO = '<img src="/planea/portal/planea-logo-white.png?v=2" alt="Planea" style="height:17px;width:auto;display:block;margin-top:18px;filter:brightness(0)">';
   var HB = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c6b64" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>';
   var SUN = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#5c6b64" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>';
   var SPARK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#0a100e"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><circle cx="17.5" cy="16.5" r="1.6"/></svg>';
-  var ARROW = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#14201b" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="6"/><path d="M12 8l4 6H8z" fill="#14201b" stroke="none"/></svg>';
+  var MARK = '<img src="/planea/portal/planea-icon.png?v=2" alt="Planea" style="width:100%;height:100%;display:block">';
   var PEN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#5c6b64" stroke-width="1.8"><path d="M15 4l5 5L8 21H3v-5z"/></svg>';
   var CLOSE = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#5c6b64" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg>';
 
   // ---------- shared blocks ----------
-  function header() { return '<div class="psim-hd"><span class="psim-ic">' + HB + '</span><span class="psim-logo">' + DIAMOND + '&nbsp;Planea</span><span class="psim-ic">' + SUN + '</span></div>'; }
+  function header() { return '<div class="psim-hd"><span class="psim-ic">' + HB + '</span><span class="psim-logo">' + LOGO + '</span><span class="psim-ic">' + SUN + '</span></div>'; }
   function ring(sz) { sz = sz || 60; var r = sz / 2 - 5, c = 2 * Math.PI * r, off = c * (1 - SCORE / 100);
     return '<svg viewBox="0 0 ' + sz + ' ' + sz + '" width="' + sz + '" height="' + sz + '"><circle cx="' + sz / 2 + '" cy="' + sz / 2 + '" r="' + r + '" fill="none" stroke="#e3ede8" stroke-width="5"/><circle cx="' + sz / 2 + '" cy="' + sz / 2 + '" r="' + r + '" fill="none" stroke="#35a768" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 ' + sz / 2 + ' ' + sz / 2 + ')"/><text x="' + sz / 2 + '" y="' + (sz / 2 + 6) + '" text-anchor="middle" fill="#14201b" font-size="' + (sz * 0.3) + '" font-weight="800" font-family="Inter,sans-serif">' + SCORE + '</text></svg>'; }
   function scoreBox() { return '<div class="psim-scb">' + ring(58) + '<div class="psim-scl">PUNTAJE PLANEA</div><div class="psim-scr">' + RANGO + '</div></div>'; }
@@ -40,7 +41,7 @@
   var SCREENS = {
     login: function () {
       return '<div class="psim-scroll psim-login">' +
-        '<div class="psim-lg-mark">' + ARROW + '</div>' +
+        '<div class="psim-lg-mark">' + MARK + '</div>' +
         '<h2 class="psim-lg-h">Iniciar sesión</h2>' +
         '<label class="psim-lbl">Correo electrónico</label><div class="psim-inp psim-inp-ph">tu@correo.com</div>' +
         '<label class="psim-lbl">Contraseña</label><div class="psim-inp">••••••••</div>' +
@@ -161,7 +162,7 @@
     '.psim-pilar{width:100%;margin-top:9px;text-align:left}.psim-pilar-t{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-bottom:3px}' +
     '.psim-area{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid rgba(0,0,0,.06)}.psim-area-dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}.psim-area-n{flex:1;font-weight:700;font-size:12.5px}.psim-area-s{font-size:13px}' +
     '.psim-login{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:60px;background:radial-gradient(120% 80% at 50% 0,rgba(47,158,99,.12),transparent 55%)}' +
-    '.psim-lg-mark{width:64px;height:64px;border-radius:16px;border:1px solid rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;margin-bottom:16px}' +
+    '.psim-lg-mark{width:64px;height:64px;border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(10,40,40,.18);margin-bottom:16px}' +
     '.psim-lg-h{font-family:"Source Sans 3",sans-serif;font-weight:800;font-size:26px;margin:0 0 22px}' +
     '.psim-lbl{align-self:flex-start;font-weight:700;font-size:12px;margin:12px 0 6px}' +
     '.psim-inp{width:100%;background:#fff;color:#14201b;border:1px solid rgba(0,0,0,.14);border-radius:12px;padding:13px 14px;font-size:13px;text-align:left}.psim-inp-ph{color:#8792a0}' +
