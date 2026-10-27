@@ -419,6 +419,38 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// SYNTHEX AI DOMAIN: synthexai.com serves the Synthex AI landing at its ROOT
+// (client Gustavo; same page as aiagent.ringlypro.com/SynthexAI).
+//
+// Registered with the other brand domains, near the top, for the same reason:
+// Express matches in registration order. www 301s to the apex. ONLY the three
+// paths the page itself calls fall through to the main app: the embedded brain
+// animation, the narration voice and the demo-request form. Everything else
+// ends in a Synthex 404, never the CRM (the jobmd.io/admin lesson). Exact path
+// matches only, so no redirect here ever echoes a caller-supplied path.
+// ═════════════════════════════════════════════════════════════════════════
+const SYNTHEX_HOSTS = new Set(['synthexai.com', 'www.synthexai.com']);
+const SYNTHEX_PASS_THROUGH = new Set([
+  '/ringlypro-architect-factory.html',          // the live MCP brain (iframe, ?brand=synthex)
+  '/api/tts/edge',                              // Lina / Ava narration
+  '/projects/api/v1/intake/public/request'      // "Agendar demostración" form
+]);
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!SYNTHEX_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://synthexai.com' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  if (SYNTHEX_PASS_THROUGH.has(path)) return next();
+  if (path === '/' || path === '/index.html') {
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.sendFile(require('path').join(__dirname, '../public/synthexai/index.html'));
+  }
+  if (/^\/synthexai\/?$/i.test(path)) return res.redirect(301, '/');
+  res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthex AI</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B0F17;color:#fff;font:16px Inter,system-ui,sans-serif;text-align:center"><div><p style="color:#94A3B8">Página no encontrada · Page not found</p><a href="/" style="color:#00F2FE">synthexai.com</a></div></body>');
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // LEVELUP MEDIA MARKETING DOMAIN: levelupmediamarketing.com serves the
 // verticals/levelup router at its ROOT (baseUrl ''), so every {{BASE}} in its
 // pages, manifest and worker resolves to the root. www 301s to the apex.
