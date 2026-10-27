@@ -12,8 +12,8 @@
   function money(n) { return '$' + Number(n).toLocaleString('es-CO'); }
 
   // ---------- icons ----------
-  // Logo oficial de Planea (el mismo del encabezado del sitio), en oscuro sobre las pantallas claras.
-  var LOGO = '<img src="/planea/portal/planea-logo-white.png?v=2" alt="Planea" style="height:17px;width:auto;display:block;margin-top:18px;filter:brightness(0)">';
+  // Logo oficial de Planea en blanco, sobre la barra verde de Planea (como en la app real).
+  var LOGO = '<img src="/planea/portal/planea-logo-white.png?v=2" alt="Planea" style="height:17px;width:auto;display:block">';
   var HB = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c6b64" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>';
   var SUN = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#5c6b64" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>';
   var SPARK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#0a100e"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><circle cx="17.5" cy="16.5" r="1.6"/></svg>';
@@ -129,7 +129,7 @@
     '.psim-notch{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:96px;height:22px;background:#0c100e;border-radius:0 0 14px 14px;z-index:5}' +
     '.psim-screen{height:100%;background:#f4f8f6;color:#14201b;border-radius:34px;overflow:hidden;display:flex;flex-direction:column;position:relative}' +
     '.psim-fade{animation:psimfade .45s ease}@keyframes psimfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}' +
-    '.psim-hd{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 14px 4px}' +
+    '.psim-hd{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:42px 14px 10px;background:#16373A;margin-bottom:8px}.psim-hd svg{stroke:#e8f1ee}.psim-hd .psim-ic{border-color:rgba(255,255,255,.16);background:rgba(255,255,255,.06)}' +
     '.psim-ic{width:30px;height:30px;border-radius:9px;border:1px solid rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center}' +
     '.psim-logo{font-weight:800;font-size:15px;letter-spacing:-.01em}' +
     '.psim-scroll{flex:1;overflow-y:auto;padding:6px 14px 84px;scrollbar-width:none}.psim-scroll::-webkit-scrollbar{display:none}' +
