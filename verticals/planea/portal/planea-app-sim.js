@@ -13,7 +13,7 @@
 
   // ---------- icons ----------
   // Logo oficial de Planea en blanco, sobre la barra verde de Planea (como en la app real).
-  var LOGO = '<img src="/planea/portal/planea-logo-white.png?v=2" alt="Planea" style="height:17px;width:auto;display:block">';
+  var LOGO = '<img src="/planea/portal/planea-logo-white.png?v=2" alt="Planea" style="height:22px;width:auto;display:block">';
   var HB = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#5c6b64" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>';
   var SUN = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#5c6b64" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>';
   var SPARK = '<svg viewBox="0 0 24 24" width="18" height="18" fill="#0a100e"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><circle cx="17.5" cy="16.5" r="1.6"/></svg>';
