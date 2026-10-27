@@ -360,7 +360,9 @@
     document.getElementById('sf-clear').onclick = function () {
       state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null };
       ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).value = ''; });
-      redraw();
+      // owner 2026-10-27: Limpiar clears EVERYTHING, the month selector included, back to the table as it first loads
+      var ms = document.getElementById('sf-mes'); if (ms) ms.value = '';
+      if (state.mes) { state.mes = ''; loadMovs(); } else redraw();
     };
   }
   // the Bank card in the instrument panel: this month's bank debits outside the plan, from the 1st to today
