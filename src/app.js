@@ -4590,6 +4590,14 @@ app.get(/^\/google([0-9a-f]{16,32})\.html$/i, (req, res, next) => {
   res.type('text/html').send('google-site-verification: google' + want + '.html');
 });
 
+// Synthex AI landing (client Gustavo): /SynthexAI in any capitalisation. The file
+// lives in public/synthexai/ but Render's filesystem is case-sensitive, so the
+// mixed-case address the client shares would otherwise 404.
+app.get(/^\/synthexai\/?$/i, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, '../public/synthexai/index.html'));
+});
+
 app.get('/orbup', (req, res) => {
   const content = fs.readFileSync(path.join(__dirname, '../orbup.html'), 'utf8');
   const ogImage = 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a580cb0850486cc574d737d.png';

@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Synthex AI</title>
+<meta name="description" content="Synthex AI: la inteligencia artificial de los mejores proveedores, unida en un solo cerebro MCP con más de cien agentes y conectada a los sistemas que ya usas.">
+<meta property="og:title" content="Synthex AI">
+<meta property="og:description" content="Inteligencia que sintetiza datos. Sistemas que ejecutan a escala.">
+<meta name="theme-color" content="#0B0F17">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>html,body{background:#0B0F17}</style>
+<style>
+/* Identidad de Synthex AI según la guía de Gustavo: base Obsidian, acento cian
+   eléctrico para acción, cobalto/violeta para degradados; Geist para títulos,
+   Inter para texto, JetBrains Mono para etiquetas y datos. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B0F17;--bg2:#0E1320;--card:#161F30;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);
+  --txt:#FFFFFF;--mut:#94A3B8;--cy:#00F2FE;--cy2:#00E5FF;--co:#4F46E5;--vi:#6366F1;--on:#0B0F17;
+  --fh:'Geist','Inter',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --fb:'Inter',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --fm:'JetBrains Mono','Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --maxw:1160px;
+}
+html{scroll-behavior:smooth}
+body{color:var(--txt);font-family:var(--fb);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;background:var(--bg)}
+html[lang="es"] .en,html[lang="en"] .es{display:none!important}
+[hidden]{display:none!important}
+a{color:var(--cy)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--fh);letter-spacing:-.02em;line-height:1.1}
+h1{font-size:clamp(36px,4.6vw,58px);font-weight:800}
+h2{font-size:clamp(28px,3.4vw,42px);font-weight:700;margin-bottom:14px}
+h3{font-size:19px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
+.lead{color:var(--mut);font-size:clamp(17px,1.4vw,20px);max-width:760px}
+.grad{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mono{font-family:var(--fm)}
+.kick{font-family:var(--fm);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cy);margin-bottom:12px;display:block}
+
+/* navegación */
+nav{position:sticky;top:0;z-index:30;background:rgba(11,15,23,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--txt);font-family:var(--fh);font-weight:700;font-size:20px;letter-spacing:-.02em}
+.logo svg{flex:0 0 auto}
+.logo small{font-weight:600;color:var(--cy)}
+.links{display:flex;gap:26px;font-size:15px}
+.links a{color:var(--mut);text-decoration:none}
+.links a:hover{color:var(--txt)}
+.navr{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--mut);font:600 12.5px var(--fm);min-width:44px;min-height:40px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--cy);color:var(--on)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:12px;font-weight:600;text-decoration:none;border:1px solid var(--line2);color:var(--txt);background:transparent;font-family:var(--fb);font-size:16px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.btn.pri{background:var(--cy);color:var(--on);border-color:var(--cy);font-weight:700;box-shadow:0 0 0 0 rgba(0,242,254,.0)}
+.btn.pri:hover{box-shadow:0 8px 30px rgba(0,242,254,.28);transform:translateY(-1px)}
+.btn:focus-visible,.lang button:focus-visible,.links a:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+nav .btn{min-height:40px;padding:0 16px;font-size:14px;border-radius:10px}
+@media(max-width:900px){.links{display:none}}
+@media(max-width:520px){nav .btn{display:none}}
+
+section{padding:88px 0;border-bottom:1px solid var(--line)}
+section.alt{background:var(--bg2)}
+
+/* hero */
+.hero{padding:76px 0 84px;position:relative;overflow:hidden;
+  background:radial-gradient(800px 420px at 85% -5%,rgba(99,102,241,.22),transparent 60%),radial-gradient(700px 380px at -5% 105%,rgba(0,242,254,.12),transparent 60%)}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;
+  mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%)}
+.hgrid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+@media(max-width:980px){.hgrid{grid-template-columns:1fr}}
+.pill{display:inline-flex;align-items:center;gap:10px;font-family:var(--fm);font-size:12.5px;color:var(--mut);background:rgba(22,31,48,.6);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;margin-bottom:22px}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.hero h1{margin-bottom:20px}
+.hero h1 .l2{display:block}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.proof{margin-top:22px;font-size:13.5px;color:var(--mut)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.badges span{font-family:var(--fm);font-size:12px;color:#c4cfdd;border:1px solid var(--line2);border-radius:8px;padding:5px 10px;background:rgba(22,31,48,.5)}
+
+/* consola simulada */
+.win{background:rgba(22,31,48,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(0,242,254,.28);border-radius:18px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(99,102,241,.15) inset,0 0 60px rgba(0,242,254,.08);overflow:hidden}
+.win .tb{display:flex;align-items:center;gap:7px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.win .tb i{width:11px;height:11px;border-radius:50%;background:#2a3446}
+.win .tb i:nth-child(1){background:#f87171}.win .tb i:nth-child(2){background:#fbbf24}.win .tb i:nth-child(3){background:#34d399}
+.win .tb span{margin-left:8px;font-family:var(--fm);font-size:12px;color:var(--mut)}
+.wbody{display:grid;grid-template-columns:1.25fr 1fr}
+@media(max-width:520px){.wbody{grid-template-columns:1fr}}
+.code{padding:18px 16px 20px;font-family:var(--fm);font-size:12px;line-height:1.85;color:#c4cfdd;border-right:1px solid var(--line);min-height:252px}
+@media(max-width:520px){.code{border-right:0;border-bottom:1px solid var(--line)}}
+.code .c{color:#64748b}.code .k{color:var(--cy)}.code .v{color:#a5b4fc}.code .ok{color:#34d399}
+.code .ln{opacity:0;animation:type .01s forwards}
+@keyframes type{to{opacity:1}}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--cy);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+.metrics{padding:18px;display:flex;flex-direction:column;gap:14px}
+.m small{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.m b{font-family:var(--fh);font-weight:700;font-size:34px;color:var(--cy);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+.m b em{font-style:normal;font-size:16px;color:var(--mut);font-weight:600;margin-left:4px}
+.bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar span{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--cy),var(--vi));animation:load 2.8s ease-in-out infinite}
+@keyframes load{0%{width:8%}60%{width:96%}100%{width:96%}}
+.wnote{padding:9px 14px;border-top:1px solid var(--line);font-family:var(--fm);font-size:11px;color:#64748b}
+
+/* tarjetas */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;position:relative;transition:border-color .2s}
+.card:hover{border-color:rgba(0,242,254,.35)}
+.card p{color:var(--mut);font-size:15.5px}
+.card .tag{font-family:var(--fm);font-size:12px;color:var(--cy);letter-spacing:.08em;display:block;margin-bottom:10px}
+.card.no{border-left:3px solid #f87171}
+.usp{margin-top:34px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.usp li{list-style:none;border-left:2px solid var(--cy);padding:4px 0 4px 14px;color:var(--mut);font-size:15px}
+.usp b{display:block;color:var(--txt);font-size:15.5px;margin-bottom:2px;font-weight:600}
+
+/* diagrama */
+.dia{margin-top:30px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.dia svg{width:100%;height:auto;display:block}
+
+/* tablas */
+.tw{overflow-x:auto;margin-top:26px;border:1px solid var(--line);border-radius:16px}
+table{width:100%;border-collapse:collapse;min-width:540px;font-size:15.5px}
+th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--fm);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);background:var(--card);font-weight:500}
+th.us{color:var(--cy)}
+tr:last-child td{border-bottom:0}
+td.hi{color:var(--txt);font-weight:600}
+td.lo{color:var(--mut)}
+td.us{color:var(--txt);font-weight:600;background:rgba(0,242,254,.04)}
+
+/* sistemas */
+.sys{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:32px}
+.sys ul{list-style:none;margin-top:6px}
+.sys li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-weight:500}
+.sys li:first-child{border-top:0}
+.sys em{font-style:normal;font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#fbbf24;border:1px solid rgba(251,191,36,.4);border-radius:999px;padding:2px 8px}
+
+/* agentes */
+.agents{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:30px}
+.ag{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.ag h3{font-size:16px}
+.ag p{color:var(--mut);font-size:14px;line-height:1.5}
+
+/* precios */
+.price{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));margin-top:30px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+.pc.feat{border-color:rgba(0,242,254,.6);box-shadow:0 0 0 1px rgba(0,242,254,.35) inset,0 20px 60px rgba(0,242,254,.06)}
+.pc .amt{font-family:var(--fh);font-size:48px;font-weight:800;letter-spacing:-.03em;margin:8px 0}
+.pc .amt small{font-size:15px;color:var(--mut);font-weight:500;letter-spacing:0}
+.pc p{color:var(--mut);font-size:15px}
+.pc ul{margin-top:14px;padding-left:18px;color:var(--mut);font-size:15px}
+.pc li{margin-bottom:6px}
+.split{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:16px}
+.split .card ul{list-style:none;margin-top:6px}
+.split .card li{padding:7px 0;border-top:1px solid var(--line);font-size:15px}
+.split .card li:first-child{border-top:0}
+.split .q{border-color:rgba(99,102,241,.5)}
+.split .q .tag{color:#a5b4fc}
+
+/* formulario */
+.lead-f{max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;margin-top:30px}
+.fg{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin:16px 0}
+.fg label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.fg .full{grid-column:1/-1}
+.fg input,.fg select,.fg textarea{font:16px var(--fb);color:var(--txt);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;min-height:46px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:2px solid var(--cy);outline-offset:1px}
+.fg .bad{border-color:#f87171}
+@media(max-width:640px){.fg{grid-template-columns:1fr}}
+.msg{padding:14px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);font-size:15px;max-width:820px;margin-top:16px}
+.msg.ok{border-color:#34d399;color:#d1fae5}.msg.bad{border-color:#f87171;color:#fee2e2}
+.fine{margin-top:14px;color:var(--mut);font-size:13.5px}
+
+/* pasos */
+ol.steps{list-style:none;counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:30px}
+ol.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+ol.steps li::before{content:"0" counter(s);font-family:var(--fm);font-size:13px;color:var(--cy);display:block;margin-bottom:8px}
+ol.steps p{color:var(--mut);font-size:15px}
+
+.final{text-align:center;background:radial-gradient(700px 300px at 50% 0%,rgba(99,102,241,.18),transparent 70%)}
+.final .lead{margin:0 auto 28px}
+footer{padding:30px 0 44px;color:var(--mut);font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:640px){section{padding:64px 0}.hero{padding:48px 0 60px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important}.code .ln{opacity:1}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Synthex AI">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs>
+        <rect x="1" y="1" width="30" height="30" rx="8" fill="url(#lg)"/>
+        <path d="M22 9.5h-8.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H10" fill="none" stroke="#0B0F17" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="22" cy="9.5" r="2.2" fill="#0B0F17"/><circle cx="10" cy="23.5" r="2.2" fill="#0B0F17"/>
+      </svg>
+      <span>Synthex <small>AI</small></span>
+    </a>
+    <div class="links">
+      <a href="#producto"><span class="es">Producto</span><span class="en">Product</span></a>
+      <a href="#como"><span class="es">Cómo funciona</span><span class="en">How it works</span></a>
+      <a href="#sistemas"><span class="es">Integraciones</span><span class="en">Integrations</span></a>
+      <a href="#precio"><span class="es">Precios</span><span class="en">Pricing</span></a>
+    </div>
+    <div class="navr">
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-set-lang="es" aria-pressed="true">ES</button>
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn pri" href="#demo"><span class="es">Comenzar ahora</span><span class="en">Get started</span> &rarr;</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hgrid">
+    <div>
+      <span class="pill"><i></i>Synthex Engine v2.4 · <span class="es">Modelos de síntesis y automatización</span><span class="en">Synthesis and automation models</span></span>
+      <h1>
+        <span class="es">Inteligencia que <span class="grad">sintetiza datos.</span><span class="l2">Sistemas que ejecutan a escala.</span></span>
+        <span class="en">Intelligence that <span class="grad">synthesizes data.</span><span class="l2">Systems that execute at scale.</span></span>
+      </h1>
+      <p class="lead">
+        <span class="es">Synthex AI une la lógica de tus operaciones con la IA de los mejores proveedores del mundo (Anthropic, OpenAI, Google, AWS y Microsoft Azure) bajo un solo cerebro MCP con más de cien agentes especializados. Se conecta a los sistemas que ya usas, sin reemplazar nada.</span>
+        <span class="en">Synthex AI joins the logic of your operations with the AI of the world's best providers (Anthropic, OpenAI, Google, AWS and Microsoft Azure) under one MCP brain with more than one hundred specialized agents. It plugs into the systems you already use, replacing nothing.</span>
+      </p>
+      <div class="cta">
+        <a class="btn pri" href="#demo"><span class="es">Desplegar Synthex</span><span class="en">Deploy Synthex</span> &rarr;</a>
+        <a class="btn" href="#demo"><span class="es">Agendar demostración</span><span class="en">Book a demo</span></a>
+      </div>
+      <p class="proof"><span class="es">Sin configuración compleja · Compatible con tu stack actual · Datos cifrados y separados por empresa</span><span class="en">No complex setup · Works with your current stack · Encrypted data, separated per company</span></p>
+      <div class="badges"><span>REST API</span><span>MCP</span><span>Python</span><span>AWS</span><span>SAP</span><span>Oracle</span><span>Snowflake</span></div>
+    </div>
+
+    <div class="win" aria-label="Simulación de la interfaz de Synthex">
+      <div class="tb"><i></i><i></i><i></i><span>synthex · pipeline</span></div>
+      <div class="wbody">
+        <div class="code" id="code" aria-hidden="true">
+          <div class="ln" style="animation-delay:.2s"><span class="c">$</span> synthex run <span class="k">--pipeline</span> ventas</div>
+          <div class="ln" style="animation-delay:.9s"><span class="c">&gt;</span> input: <span class="v">1.4M rows</span> · SAP + Shopify</div>
+          <div class="ln" style="animation-delay:1.6s"><span class="c">&gt;</span> <span class="k">Synthex Core</span> · 6 agents</div>
+          <div class="ln" style="animation-delay:2.3s"><span class="c">&gt;</span> sources cited · 0 guessed</div>
+          <div class="ln" style="animation-delay:3s"><span class="c">&gt;</span> approval: <span class="v">pending human</span></div>
+          <div class="ln" style="animation-delay:3.7s"><span class="c">&gt;</span> synthesized output: <span class="ok">verified</span></div>
+          <div class="ln" style="animation-delay:4.2s"><span class="cursor"></span></div>
+        </div>
+        <div class="metrics">
+          <div class="m"><small><span class="es">Latencia</span><span class="en">Latency</span></small><b id="mLat">14<em>ms</em></b></div>
+          <div class="m"><small><span class="es">Precisión de inferencia</span><span class="en">Inference accuracy</span></small><b>99.8<em>%</em></b></div>
+          <div class="m"><small><span class="es">Tokens / seg</span><span class="en">Tokens / sec</span></small><b id="mTok">420</b><div class="bar"><span></span></div></div>
+        </div>
+      </div>
+      <div class="wnote"><span class="es">Simulación de interfaz · valores ilustrativos, no medidos</span><span class="en">Interface simulation · illustrative values, not measured</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="producto" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Qué es</span><span class="en">What it is</span></span>
+    <h2><span class="es">IA avanzada que llega <span class="grad">ya integrada.</span></span><span class="en">Advanced AI that arrives <span class="grad">already integrated.</span></span></h2>
+    <p class="lead"><span class="es">Un servicio de inteligencia artificial avanzada, como el que ofrecen Anthropic u OpenAI, con una diferencia: llega integrado y listo para trabajar dentro de tu empresa. Funciona como un USB: se conecta y tu empresa gana una capacidad nueva.</span><span class="en">An advanced AI service, like the ones Anthropic or OpenAI offer, with one difference: it arrives integrated and ready to work inside your company. It works like a USB: plug it in and your company gains a new capability.</span></p>
+    <div class="grid">
+      <div class="card"><span class="tag">01</span><h3><span class="es">Un cerebro central</span><span class="en">One central brain</span></h3><p><span class="es">Recibe cada solicitud, decide qué agentes la atienden, reparte el trabajo y entrega un solo resultado.</span><span class="en">It takes each request, decides which agents handle it, splits the work and returns one result.</span></p></div>
+      <div class="card"><span class="tag">02</span><h3><span class="es">Más de cien agentes</span><span class="en">Over one hundred agents</span></h3><p><span class="es">Cada agente tiene un rol, reglas y entregables: análisis, ingeniería, finanzas, cumplimiento, ventas, voz y datos.</span><span class="en">Each agent has a role, rules and deliverables: analysis, engineering, finance, compliance, sales, voice and data.</span></p></div>
+      <div class="card"><span class="tag">03</span><h3><span class="es">Conectores estándar MCP</span><span class="en">Standard MCP connectors</span></h3><p><span class="es">Un protocolo abierto para conectar la IA con sistemas reales: ERP, CRM, correo, calendario y bases de datos.</span><span class="en">An open protocol that connects AI to real systems: ERP, CRM, email, calendar and databases.</span></p></div>
+      <div class="card"><span class="tag">04</span><h3><span class="es">Varios proveedores</span><span class="en">Many providers</span></h3><p><span class="es">Cada tarea usa el servicio que mejor la resuelve. Si uno falla o sube de precio, se cambia sin que lo notes.</span><span class="en">Each task uses the service that does it best. If one fails or gets pricier, it is swapped without you noticing.</span></p></div>
+    </div>
+    <ul class="usp">
+      <li><b><span class="es">Se conecta, no reemplaza</span><span class="en">It plugs in, replaces nothing</span></b><span class="es">Tu equipo sigue trabajando igual, ahora con IA.</span><span class="en">Your team keeps working the same way, now with AI.</span></li>
+      <li><b><span class="es">Resultados en semanas</span><span class="en">Results in weeks</span></b><span class="es">No contratas ni configuras cada proveedor por separado.</span><span class="en">No signing up for or configuring each provider separately.</span></li>
+      <li><b><span class="es">Sigues siendo el dueño</span><span class="en">You remain the owner</span></b><span class="es">Tus datos y tu propiedad intelectual siguen siendo tuyos.</span><span class="en">Your data and intellectual property stay yours.</span></li>
+      <li><b><span class="es">Siempre al día</span><span class="en">Always up to date</span></b><span class="es">Cuando sale un modelo mejor o un nuevo agente, lo recibes sin hacer nada.</span><span class="en">When a better model or new agent comes out, you get it without doing anything.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="sistemas">
+  <div class="wrap">
+    <span class="kick"><span class="es">Integraciones</span><span class="en">Integrations</span></span>
+    <h2><span class="es">Se conecta con lo que <span class="grad">ya usas.</span></span><span class="en">It connects to what you <span class="grad">already use.</span></span></h2>
+    <p class="lead"><span class="es">Retail, transporte y finanzas: tus sistemas de siempre, ahora con inteligencia.</span><span class="en">Retail, transport and finance: your usual systems, now with intelligence.</span></p>
+    <div class="sys">
+      <div class="card"><span class="tag"><span class="es">RETAIL Y COMERCIO</span><span class="en">RETAIL AND COMMERCE</span></span><ul><li>SAP Retail</li><li>Oracle Retail</li><li>Dynamics 365 Commerce</li><li>Shopify</li><li>VTEX</li><li>Odoo</li></ul></div>
+      <div class="card"><span class="tag"><span class="es">TRANSPORTE Y LOGÍSTICA</span><span class="en">TRANSPORT AND LOGISTICS</span></span><ul><li>Oracle Transportation Management</li><li>SAP TM</li><li>Blue Yonder</li><li>Manhattan Associates</li><li>McLeod Software</li><li>Samsara</li></ul></div>
+      <div class="card"><span class="tag"><span class="es">FINANZAS Y ERP</span><span class="en">FINANCE AND ERP</span></span><ul><li>SAP Business One</li><li>Oracle NetSuite</li><li>QuickBooks · Sage</li><li>Siigo · Alegra</li><li>CONTPAQi · Aspel <em><span class="es">agente</span><span class="en">agent</span></em></li><li>SAINT · Profit Plus <em><span class="es">agente</span><span class="en">agent</span></em></li></ul></div>
+    </div>
+    <p class="fine"><span class="es">Con API, la conexión es directa. «Agente» = sistema local sin API pública: se instala un agente ligero en tu servidor. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</span><span class="en">With an API, the connection is direct. "Agent" = local system without a public API: a light agent is installed on your server. The exact connection is confirmed in the assessment. Trademarks belong to their owners.</span></p>
+  </div>
+</section>
+
+<section id="como" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Cómo funciona</span><span class="en">How it works</span></span>
+    <h2><span class="es">Una solicitud, <span class="grad">un solo resultado.</span></span><span class="en">One request, <span class="grad">one result.</span></span></h2>
+    <p class="lead"><span class="es">La solicitud baja de tu empresa al cerebro, el cerebro la reparte entre agentes, y cada agente usa el mejor servicio disponible. El resultado vuelve por el mismo camino.</span><span class="en">The request goes from your company to the brain, the brain splits it among agents, and each agent uses the best service available. The result comes back the same way.</span></p>
+    <div class="dia">
+      <svg viewBox="0 0 760 470" role="img" aria-label="Tu empresa, cerebro Synthex, agentes y proveedores" font-family="Inter,system-ui,sans-serif">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#94A3B8"/></marker>
+          <linearGradient id="gb" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE" stop-opacity=".16"/><stop offset="1" stop-color="#6366F1" stop-opacity=".16"/></linearGradient></defs>
+        <g fill="none" stroke="#94A3B8" stroke-width="1.4"><path d="M380 92V140" marker-end="url(#ar)" marker-start="url(#ar)"/><path d="M380 204V252" marker-end="url(#ar)"/><path d="M380 316V364" marker-end="url(#ar)"/></g>
+        <g font-size="12" fill="#94A3B8" font-family="JetBrains Mono,monospace">
+          <text x="392" y="121" class="es">conectores MCP: el enchufe tipo USB</text><text x="392" y="121" class="en">MCP connectors: the USB-style plug</text>
+          <text x="392" y="233" class="es">activa solo los agentes necesarios</text><text x="392" y="233" class="en">activates only the agents needed</text>
+          <text x="392" y="345" class="es">el mejor modelo para cada tarea</text><text x="392" y="345" class="en">the best model for each task</text>
+        </g>
+        <rect x="24" y="28" width="712" height="64" rx="12" fill="#161F30" stroke="rgba(255,255,255,.15)"/>
+        <text x="380" y="55" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Tu empresa</tspan><tspan class="en">Your company</tspan></text>
+        <text x="380" y="76" text-anchor="middle" font-size="12.5" fill="#94A3B8">SAP · Oracle · NetSuite · CONTPAQi · Shopify</text>
+        <rect x="24" y="140" width="712" height="64" rx="12" fill="url(#gb)" stroke="#00F2FE" stroke-width="1.6"/>
+        <text x="380" y="167" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Cerebro Synthex (MCP)</tspan><tspan class="en">Synthex brain (MCP)</tspan></text>
+        <text x="380" y="188" text-anchor="middle" font-size="12.5" fill="#cbd5e1"><tspan class="es">Recibe la solicitud, elige los agentes, reparte el trabajo y une el resultado</tspan><tspan class="en">Takes the request, picks the agents, splits the work and joins the result</tspan></text>
+        <rect x="24" y="252" width="712" height="64" rx="12" fill="rgba(99,102,241,.12)" stroke="#6366F1" stroke-width="1.4"/>
+        <text x="380" y="279" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Más de cien agentes por función</tspan><tspan class="en">Over one hundred agents by function</tspan></text>
+        <text x="380" y="300" text-anchor="middle" font-size="12.5" fill="#94A3B8"><tspan class="es">Ingeniería, datos, negocio, finanzas y legal, industria, servicios de IA</tspan><tspan class="en">Engineering, data, business, finance and legal, industry, AI services</tspan></text>
+        <rect x="24" y="364" width="712" height="88" rx="12" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.15)"/>
+        <text x="40" y="386" font-size="12" font-weight="600" fill="#94A3B8"><tspan class="es">Proveedores integrados (y otros terceros)</tspan><tspan class="en">Integrated providers (and other third parties)</tspan></text>
+        <g fill="none" stroke="rgba(255,255,255,.18)"><rect x="40" y="398" width="90" height="38" rx="8"/><rect x="138" y="398" width="90" height="38" rx="8"/><rect x="236" y="398" width="90" height="38" rx="8"/><rect x="334" y="398" width="90" height="38" rx="8"/><rect x="432" y="398" width="90" height="38" rx="8"/><rect x="530" y="398" width="90" height="38" rx="8"/><rect x="628" y="398" width="92" height="38" rx="8"/></g>
+        <g font-size="13" font-weight="600" fill="#fff" text-anchor="middle"><text x="85" y="422">Anthropic</text><text x="183" y="422">OpenAI</text><text x="281" y="422">Google</text><text x="379" y="422">AWS</text><text x="477" y="422">Azure</text><text x="575" y="422">GitHub</text><text x="674" y="422">Render</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="proveedores">
+  <div class="wrap">
+    <span class="kick"><span class="es">Lo mejor de cada proveedor</span><span class="en">The best of each provider</span></span>
+    <h2><span class="es">Los líderes del mercado, <span class="grad">bajo un solo cerebro.</span></span><span class="en">Market leaders, <span class="grad">under one brain.</span></span></h2>
+    <p class="lead"><span class="es">No contratas, configuras ni pagas por separado cada uno de estos servicios.</span><span class="en">You don't sign up for, configure or pay for each of these services separately.</span></p>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Proveedor</span><span class="en">Provider</span></th><th><span class="es">Qué aporta</span><span class="en">What it brings</span></th></tr></thead>
+      <tbody>
+        <tr><td class="hi">Anthropic (Claude)</td><td class="lo"><span class="es">Razonamiento, redacción, agentes y programación asistida</span><span class="en">Reasoning, writing, agents and assisted coding</span></td></tr>
+        <tr><td class="hi">OpenAI (ChatGPT)</td><td class="lo"><span class="es">Modelos de lenguaje y generación de contenido</span><span class="en">Language models and content generation</span></td></tr>
+        <tr><td class="hi">Google (Gemini y Cloud)</td><td class="lo"><span class="es">Modelos multimodales, mapas, calendario y correo</span><span class="en">Multimodal models, maps, calendar and email</span></td></tr>
+        <tr><td class="hi">Amazon Web Services</td><td class="lo"><span class="es">Almacenamiento seguro de archivos y voz telefónica</span><span class="en">Secure file storage and phone voice</span></td></tr>
+        <tr><td class="hi">Microsoft Azure</td><td class="lo"><span class="es">Voces neuronales en español e inglés</span><span class="en">Neural voices in Spanish and English</span></td></tr>
+        <tr><td class="hi">GitHub</td><td class="lo"><span class="es">Código, versiones y automatización de pruebas</span><span class="en">Code, versioning and test automation</span></td></tr>
+        <tr><td class="hi">Render</td><td class="lo"><span class="es">Servidores, bases de datos y despliegue continuo</span><span class="en">Servers, databases and continuous deployment</span></td></tr>
+        <tr><td class="hi"><span class="es">Otros terceros</span><span class="en">Other third parties</span></td><td class="lo"><span class="es">Telefonía, mensajería, pagos y correo</span><span class="en">Telephony, messaging, payments and email</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="agentes" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Fuerza de trabajo</span><span class="en">Workforce</span></span>
+    <h2><span class="es">Agentes que se activan <span class="grad">solo cuando hacen falta.</span></span><span class="en">Agents that activate <span class="grad">only when needed.</span></span></h2>
+    <p class="lead"><span class="es">El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre y recibes los nuevos agentes automáticamente.</span><span class="en">The brain activates only the agents each task needs. The workforce grows every quarter and you get new agents automatically.</span></p>
+    <div class="agents">
+      <div class="ag"><h3><span class="es">Núcleo siempre activo</span><span class="en">Always-on core</span></h3><p><span class="es">Negocio, investigación, correos, software, triage, actas, voz y alertas</span><span class="en">Business, research, email, software, triage, minutes, voice and alerts</span></p></div>
+      <div class="ag"><h3><span class="es">Preparación para IA</span><span class="en">AI readiness</span></h3><p><span class="es">Costo, riesgo, datos y hoja de ruta</span><span class="en">Cost, risk, data and roadmap</span></p></div>
+      <div class="ag"><h3><span class="es">Ingeniería</span><span class="en">Engineering</span></h3><p><span class="es">Desarrollo, seguridad, pruebas y despliegue</span><span class="en">Development, security, testing and release</span></p></div>
+      <div class="ag"><h3><span class="es">Datos y ML</span><span class="en">Data and ML</span></h3><p><span class="es">Extracción, análisis, pronósticos y tableros</span><span class="en">Extraction, analysis, forecasting and dashboards</span></p></div>
+      <div class="ag"><h3><span class="es">IA nativa y confianza</span><span class="en">AI-native and trust</span></h3><p><span class="es">Evaluación, citas, seguridad de IA y costos</span><span class="en">Evaluation, citations, AI safety and cost</span></p></div>
+      <div class="ag"><h3><span class="es">Negocio y ventas</span><span class="en">Business and sales</span></h3><p><span class="es">Estrategia, precios, mercadeo y retención</span><span class="en">Strategy, pricing, marketing and retention</span></p></div>
+      <div class="ag"><h3><span class="es">Finanzas, legal y talento</span><span class="en">Finance, legal and talent</span></h3><p><span class="es">Contabilidad, contratos, cumplimiento y privacidad</span><span class="en">Accounting, contracts, compliance and privacy</span></p></div>
+      <div class="ag"><h3><span class="es">Industria y diseño</span><span class="en">Industry and design</span></h3><p><span class="es">Salud, logística, agro, pagos, experiencia y traducción</span><span class="en">Health, logistics, agro, payments, UX and translation</span></p></div>
+      <div class="ag"><h3><span class="es">Servicios de IA</span><span class="en">AI services</span></h3><p><span class="es">Expertos que diseñan y verifican cada servicio</span><span class="en">Experts who design and verify every service</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="usos">
+  <div class="wrap">
+    <span class="kick"><span class="es">Para qué sirve</span><span class="en">What it is for</span></span>
+    <h2><span class="es">IA en el trabajo diario, <span class="grad">no solo en un chat.</span></span><span class="en">AI in daily work, <span class="grad">not just in a chat.</span></span></h2>
+    <div class="grid">
+      <div class="card"><h3><span class="es">Atención 24/7</span><span class="en">24/7 service</span></h3><p><span class="es">Asistentes de voz y texto en español e inglés que responden, agendan y toman mensajes.</span><span class="en">Voice and text assistants in Spanish and English that answer, book and take messages.</span></p></div>
+      <div class="card"><h3><span class="es">Documentos</span><span class="en">Documents</span></h3><p><span class="es">Lectura de facturas, contratos y formularios, con la fuente de cada dato señalada.</span><span class="en">Reading invoices, contracts and forms, with the source of each value marked.</span></p></div>
+      <div class="card"><h3><span class="es">Conocimiento interno</span><span class="en">Internal knowledge</span></h3><p><span class="es">Respuestas con los manuales y políticas de tu empresa, citando de dónde salen.</span><span class="en">Answers from your company's manuals and policies, citing where they come from.</span></p></div>
+      <div class="card"><h3><span class="es">Automatización</span><span class="en">Automation</span></h3><p><span class="es">Tareas repetitivas entre sistemas: copiar datos, dar seguimiento, recordar vencimientos.</span><span class="en">Repetitive work across systems: copying data, follow-ups, deadline reminders.</span></p></div>
+      <div class="card"><h3><span class="es">Ventas y mercadeo</span><span class="en">Sales and marketing</span></h3><p><span class="es">Calificación de prospectos y borradores de campañas, aprobados por una persona.</span><span class="en">Lead scoring and campaign drafts, approved by a person.</span></p></div>
+      <div class="card"><h3><span class="es">Software a la medida</span><span class="en">Custom software</span></h3><p><span class="es">Aplicaciones nuevas construidas, probadas y publicadas en semanas.</span><span class="en">New apps built, tested and launched in weeks.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="seguridad" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Seguridad y control</span><span class="en">Security and control</span></span>
+    <h2><span class="es">Las reglas viven <span class="grad">en el sistema.</span></span><span class="en">The rules live <span class="grad">in the system.</span></span></h2>
+    <p class="lead"><span class="es">No solo en las instrucciones a la IA. Y lo que Synthex no es: no reemplaza tus sistemas, no es dueño de nada tuyo, no es un modelo propio y no decide por ti.</span><span class="en">Not only in the AI's instructions. And what Synthex is not: it does not replace your systems, owns nothing of yours, is not its own model and does not decide for you.</span></p>
+    <div class="grid">
+      <div class="card"><span class="tag">DATA</span><h3><span class="es">Datos separados</span><span class="en">Separated data</span></h3><p><span class="es">Cada empresa ve solo su propia información.</span><span class="en">Each company sees only its own information.</span></p></div>
+      <div class="card"><span class="tag">APPROVAL</span><h3><span class="es">Aprobación humana</span><span class="en">Human approval</span></h3><p><span class="es">Nada se envía, se paga ni se publica sin autorización.</span><span class="en">Nothing is sent, paid or published without authorization.</span></p></div>
+      <div class="card"><span class="tag">AUDIT</span><h3><span class="es">Registro completo</span><span class="en">Full audit trail</span></h3><p><span class="es">Cada acción de cada agente queda registrada.</span><span class="en">Every action by every agent is logged.</span></p></div>
+      <div class="card"><span class="tag">TRUTH</span><h3><span class="es">Sin cifras inventadas</span><span class="en">No invented figures</span></h3><p><span class="es">Si un dato no existe, el sistema lo dice. No lo adivina.</span><span class="en">If a value does not exist, the system says so. It does not guess.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="diferencia">
+  <div class="wrap">
+    <span class="kick"><span class="es">Frente a un solo proveedor</span><span class="en">Versus a single provider</span></span>
+    <h2><span class="es">Un proveedor entrega la materia prima. <span class="grad">Synthex la entrega integrada.</span></span><span class="en">A provider delivers the raw material. <span class="grad">Synthex delivers it integrated.</span></span></h2>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Aspecto</span><span class="en">Aspect</span></th><th><span class="es">Un solo proveedor</span><span class="en">One provider</span></th><th class="us">Synthex AI</th></tr></thead>
+      <tbody>
+        <tr><td class="hi"><span class="es">Modelos</span><span class="en">Models</span></td><td class="lo"><span class="es">Solo los suyos</span><span class="en">Only its own</span></td><td class="us"><span class="es">Los mejores de varios</span><span class="en">The best of several</span></td></tr>
+        <tr><td class="hi"><span class="es">Conexión con tus sistemas</span><span class="en">Connection to your systems</span></td><td class="lo"><span class="es">La construyes tú</span><span class="en">You build it</span></td><td class="us"><span class="es">Ya integrada por MCP</span><span class="en">Already integrated via MCP</span></td></tr>
+        <tr><td class="hi"><span class="es">Agentes por función</span><span class="en">Agents by function</span></td><td class="lo"><span class="es">Los armas tú</span><span class="en">You assemble them</span></td><td class="us"><span class="es">Más de cien, listos</span><span class="en">Over one hundred, ready</span></td></tr>
+        <tr><td class="hi"><span class="es">Voz, telefonía y mensajería</span><span class="en">Voice, phone and messaging</span></td><td class="lo"><span class="es">Aparte</span><span class="en">Separate</span></td><td class="us"><span class="es">Incluidas</span><span class="en">Included</span></td></tr>
+        <tr><td class="hi"><span class="es">Aprobación y auditoría</span><span class="en">Approval and audit</span></td><td class="lo"><span class="es">La diseñas tú</span><span class="en">You design it</span></td><td class="us"><span class="es">Incorporadas</span><span class="en">Built in</span></td></tr>
+        <tr><td class="hi"><span class="es">Si un proveedor falla o sube precios</span><span class="en">If a provider fails or raises prices</span></td><td class="lo"><span class="es">Quedas atado</span><span class="en">You're locked in</span></td><td class="us"><span class="es">Se cambia de proveedor</span><span class="en">The provider is swapped</span></td></tr>
+        <tr><td class="hi"><span class="es">Tiempo para empezar</span><span class="en">Time to start</span></td><td class="lo"><span class="es">Meses</span><span class="en">Months</span></td><td class="us"><span class="es">Semanas</span><span class="en">Weeks</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="precio" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Precios</span><span class="en">Pricing</span></span>
+    <h2><span class="es">Se contrata <span class="grad">como un servicio.</span></span><span class="en">Contracted <span class="grad">as a service.</span></span></h2>
+    <p class="lead"><span class="es">Un pago único de configuración y una suscripción mensual.</span><span class="en">A one-time setup fee and a monthly subscription.</span></p>
+    <div class="price">
+      <div class="pc">
+        <span class="kick" style="margin:0"><span class="es">Configuración inicial</span><span class="en">Initial setup</span></span>
+        <div class="amt">$700 <small>USD · <span class="es">pago único</span><span class="en">one time</span></small></div>
+        <p><span class="es">Creación de la instancia de tu empresa y conexión del cerebro MCP.</span><span class="en">Creating your company's instance and connecting the MCP brain.</span></p>
+      </div>
+      <div class="pc feat">
+        <span class="kick" style="margin:0"><span class="es">Suscripción mensual</span><span class="en">Monthly subscription</span></span>
+        <div class="amt">$397 <small>USD / <span class="es">mes</span><span class="en">month</span></small></div>
+        <p><span class="es">Uso de la inteligencia artificial avanzada y mantenimiento del ecosistema.</span><span class="en">Use of the advanced AI and ecosystem maintenance.</span></p>
+        <ul>
+          <li><span class="es">Consumo de tokens estándar incluido</span><span class="en">Standard token usage included</span></li>
+          <li><span class="es">Acceso a la fuerza de trabajo de agentes</span><span class="en">Access to the agent workforce</span></li>
+          <li><span class="es">Nuevos agentes cada trimestre</span><span class="en">New agents every quarter</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="split">
+      <div class="card"><span class="tag"><span class="es">INCLUIDO EN LA SUSCRIPCIÓN</span><span class="en">INCLUDED IN THE SUBSCRIPTION</span></span><ul>
+        <li><span class="es">Diagnóstico de tu operación</span><span class="en">Assessment of your operation</span></li>
+        <li><span class="es">Conexión del cerebro a tus sistemas</span><span class="en">Connecting the brain to your systems</span></li>
+        <li><span class="es">Soluciones estándar: atención 24/7, documentos, conocimiento interno</span><span class="en">Standard solutions: 24/7 service, documents, internal knowledge</span></li>
+        <li><span class="es">La fuerza de trabajo de agentes</span><span class="en">The agent workforce</span></li></ul></div>
+      <div class="card q"><span class="tag"><span class="es">SE COTIZA APARTE</span><span class="en">QUOTED SEPARATELY</span></span><ul>
+        <li><span class="es">Desarrollo a la medida de tu negocio</span><span class="en">Development tailored to your business</span></li>
+        <li><span class="es">Automatizaciones propias de tus procesos</span><span class="en">Automations specific to your processes</span></li>
+        <li><span class="es">Optimización de tu operación e integraciones especiales</span><span class="en">Optimizing your operation and special integrations</span></li></ul>
+        <p class="fine"><span class="es">Antes de empezar ves las horas y el costo de cada componente. Nada se cobra sin tu aprobación.</span><span class="en">Before starting you see the hours and cost of each component. Nothing is charged without your approval.</span></p></div>
+    </div>
+    <p class="fine"><span class="es">Un consumo de tokens por encima del estándar se cotiza aparte.</span><span class="en">Token usage above the standard is quoted separately.</span></p>
+  </div>
+</section>
+
+<section id="empezar">
+  <div class="wrap">
+    <span class="kick"><span class="es">Cómo empezar</span><span class="en">How to start</span></span>
+    <h2><span class="es">Pequeño y seguro: <span class="grad">máximo cuatro semanas.</span></span><span class="en">Small and safe: <span class="grad">four weeks at most.</span></span></h2>
+    <ol class="steps">
+      <li><h3><span class="es">Diagnóstico</span><span class="en">Assessment</span></h3><p><span class="es">Medimos costo, riesgo y calidad de datos, y entregamos una hoja de ruta.</span><span class="en">We measure cost, risk and data quality, and deliver a roadmap.</span></p></li>
+      <li><h3><span class="es">Primer paso seguro</span><span class="en">A safe first step</span></h3><p><span class="es">Elegimos un proceso de bajo riesgo y alto valor.</span><span class="en">We pick a low-risk, high-value process.</span></p></li>
+      <li><h3><span class="es">Conexión</span><span class="en">Connection</span></h3><p><span class="es">El cerebro se conecta a los sistemas que ese proceso usa.</span><span class="en">The brain connects to the systems that process uses.</span></p></li>
+      <li><h3><span class="es">Resultados medidos</span><span class="en">Measured results</span></h3><p><span class="es">Medimos con datos reales antes de crecer a la siguiente fase.</span><span class="en">We measure with real data before growing to the next phase.</span></p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="demo" class="final">
+  <div class="wrap">
+    <span class="kick"><span class="es">Siguiente paso</span><span class="en">Next step</span></span>
+    <h2><span class="es">Convierte tu empresa en una <span class="grad">empresa inteligente.</span></span><span class="en">Turn your company into an <span class="grad">intelligent company.</span></span></h2>
+    <p class="lead"><span class="es">Cuéntanos de tu empresa y agendamos una demostración con tus sistemas reales.</span><span class="en">Tell us about your company and we will book a demo with your real systems.</span></p>
+    <form id="leadForm" class="lead-f" novalidate style="margin:0 auto;text-align:left">
+      <div class="fg">
+        <label><span class="es">Nombre completo *</span><span class="en">Full name *</span><input name="full_name" required maxlength="120" autocomplete="name"></label>
+        <label><span class="es">Correo *</span><span class="en">Email *</span><input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+        <label><span class="es">Teléfono / WhatsApp *</span><span class="en">Phone / WhatsApp *</span><input name="phone" type="tel" required maxlength="40" autocomplete="tel"></label>
+        <label><span class="es">Empresa *</span><span class="en">Company *</span><input name="company_name" required maxlength="120" autocomplete="organization"></label>
+        <label><span class="es">País</span><span class="en">Country</span><input name="country" maxlength="80" autocomplete="country-name"></label>
+        <label><span class="es">Industria</span><span class="en">Industry</span><input name="industry" maxlength="120"></label>
+        <label class="full"><span class="es">¿Qué quieres lograr con la IA? *</span><span class="en">What do you want to achieve with AI? *</span><textarea name="problem" required maxlength="4000" rows="4"></textarea></label>
+        <label class="full"><span class="es">¿Qué sistemas usas hoy? (SAP, Oracle, CONTPAQi...)</span><span class="en">What systems do you use today? (SAP, Oracle, NetSuite...)</span><input name="existing_stack" maxlength="500"></label>
+      </div>
+      <p class="fine" style="margin:0 0 14px"><span class="es">Al enviar, aceptas que el equipo de Synthex AI te contacte por correo o teléfono sobre tu solicitud.</span><span class="en">By sending, you agree that the Synthex AI team may contact you by email or phone about your request.</span></p>
+      <button type="submit" class="btn pri" id="sendBtn"><span class="es">Agendar demostración</span><span class="en">Book a demo</span> &rarr;</button>
+      <div id="msg" class="msg" role="status" hidden></div>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Synthex AI</span>
+    <span><span class="es">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub, Render y los sistemas mencionados son marcas de sus respectivos dueños. Synthex AI no está afiliada a ellos.</span><span class="en">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub, Render and the systems named are trademarks of their respective owners. Synthex AI is not affiliated with them.</span></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // Idioma: español por defecto, inglés con el selector de arriba a la derecha.
+  var btns = document.querySelectorAll('[data-set-lang]');
+  function set(l){
+    document.documentElement.lang = l;
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-set-lang') === l ? 'true' : 'false'); });
+    try { localStorage.setItem('synthex_lang', l); } catch(e) {}
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-set-lang')); }); });
+  var saved = null; try { saved = localStorage.getItem('synthex_lang'); } catch(e) {}
+  if (saved === 'en' || saved === 'es') set(saved);
+
+  // La consola simulada respira: valores ilustrativos que varían un poco, rotulados como tales.
+  var lat = document.getElementById('mLat'), tok = document.getElementById('mTok');
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(function(){
+    lat.firstChild.nodeValue = String(12 + Math.round(Math.random() * 4));
+    tok.textContent = String(405 + Math.round(Math.random() * 30));
+  }, 1400);
+
+  // Solicitud de demostración: entra al mismo intake de proyectos, marcada como Synthex AI. Sin pago en línea.
+  var form = document.getElementById('leadForm'), btn = document.getElementById('sendBtn'), msg = document.getElementById('msg');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function show(kind, es, en){ msg.hidden = false; msg.className = 'msg ' + kind; msg.textContent = L() === 'en' ? en : es; }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var d = {}; new FormData(form).forEach(function(v, k){ d[k] = String(v).trim(); });
+    var missing = false;
+    ['full_name','email','phone','company_name','problem'].forEach(function(k){
+      var el = form.elements[k]; var bad = !d[k] || (k === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d[k]));
+      el.classList.toggle('bad', bad); if (bad) missing = true;
+    });
+    if (missing){ show('bad', 'Completa los campos marcados con *.', 'Please complete the fields marked with *.'); return; }
+    btn.disabled = true; show('', 'Enviando...', 'Sending...');
+    fetch('/projects/api/v1/intake/public/request', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+      full_name:d.full_name, email:d.email, phone:d.phone, company_name:d.company_name, country:d.country, industry:d.industry,
+      existing_stack:d.existing_stack, problem:d.problem,
+      project_title:'Synthex AI - ' + d.company_name,
+      project_description:'Solicitud de demostración de Synthex AI desde aiagent.ringlypro.com/SynthexAI.\n\n' + d.problem,
+      ai_category:['Synthex AI'], heard_from:'SynthexAI landing', utm_source:'synthexai-landing', utm_campaign:'synthexai-demo',
+      referrer_url: document.referrer || ''
+    }) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(x){
+        if (!x.ok || !x.j.success) throw new Error('lead_failed');
+        form.querySelectorAll('input,textarea,select').forEach(function(el){ el.disabled = true; });
+        show('ok', 'Recibimos tu solicitud. Te contactaremos para agendar la demostración.', 'We received your request. We will contact you to book the demo.');
+      })
+      .catch(function(){ btn.disabled = false; show('bad', 'No se pudo enviar. Intenta de nuevo en un momento.', 'Could not send. Please try again in a moment.'); });
+  });
+})();
+</script>
+</body>
+</html>
