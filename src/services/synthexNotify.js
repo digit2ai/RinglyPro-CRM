@@ -8,13 +8,13 @@
  *   #00F2FE to indigo #6366F1, Geist/Inter) with a calendar invite (.ics).
  *   To the owner:  a short alert (SYNTHEX_NOTIFY_EMAIL || D2AI_LEAD_NOTIFY_EMAIL || info@digit2ai.com).
  *
- * From: "Synthex SAI" <SYNTHEX_FROM_EMAIL || synthex@digit2ai.com>.
+ * From: "Synthex SAI" <SYNTHEX_FROM_EMAIL || no-reply@digit2ai.com>.
  * The address must be a verified SendGrid sender. SYNTHEX_EMAIL=off stops all sends.
  */
 
 // A dedicated address, NOT the shared SENDGRID_FROM_EMAIL: that one is the owner's own mailbox, and a mail app
 // shows a saved contact's name ("Digit2Ai") instead of the From name. digit2ai.com is authenticated in SendGrid.
-const FROM = () => process.env.SYNTHEX_FROM_EMAIL || 'synthex@digit2ai.com';
+const FROM = () => process.env.SYNTHEX_FROM_EMAIL || 'no-reply@digit2ai.com';
 const OWNER = () => process.env.SYNTHEX_NOTIFY_EMAIL || process.env.D2AI_LEAD_NOTIFY_EMAIL || 'info@digit2ai.com';
 const SITE = 'https://synthexsai.com';
 
