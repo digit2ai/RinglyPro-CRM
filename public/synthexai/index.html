@@ -365,6 +365,33 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
 .slot-d{font-weight:700;font-size:15px}
 .slot-b{width:100%;justify-content:center;min-height:44px}
 
+/* "Agendar demostración": calendar window (pick a time, then details, then thanks) */
+.bk-ov{position:fixed;inset:0;z-index:2147483100;background:rgba(5,8,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+.bk-ov[hidden]{display:none}
+.bk{width:min(720px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.55);position:relative;padding:26px 24px 22px}
+.bk::before{content:"";position:absolute;left:24px;right:24px;top:0;height:3px;background:linear-gradient(90deg,var(--cy),var(--vi));border-radius:3px}
+.bk-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font-size:22px;cursor:pointer}
+.bk h3{font-family:var(--fd);font-size:24px;margin:0 40px 4px 0}
+.bk .sub{color:var(--mut);font-size:15px;margin:0 0 16px}
+.bk-steps{display:flex;flex-wrap:wrap;gap:8px;margin:0 48px 16px 0;font-family:var(--fm);font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.bk-steps span{color:var(--mut)}.bk-steps span.on{color:var(--cyt)}
+.bk-days{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+.bk-day{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bk-day b{font-size:15px}
+.bk-t{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font:600 15px var(--fb);cursor:pointer}
+.bk-t:hover,.bk-t:focus-visible{border-color:var(--cy)}
+.bk-t.sel{background:var(--cy);color:#04121a;border-color:var(--cy)}
+.bk-pick{margin:4px 0 14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(0,242,254,.35);background:rgba(0,242,254,.06);font-weight:600}
+.bk-f{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.bk-f label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.bk-f input{min-height:48px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);color:var(--txt);padding:0 14px;font:16px var(--fb)}
+.bk-f input.bad{border-color:#f87171}
+.bk-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.bk-err{color:var(--badt);font-size:14px;margin-top:10px}
+.bk-ok{text-align:center;padding:10px 4px}
+.bk-ok .ic{width:64px;height:64px;border-radius:50%;margin:4px auto 14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--cy),var(--vi));color:#04121a;font-size:30px;font-weight:700}
+@media(max-width:640px){.bk-days{grid-template-columns:1fr}.bk-f{grid-template-columns:1fr}.bk{padding:22px 16px 18px}.bk h3{font-size:21px}}
+
 </style>
 </head>
 <body>
@@ -456,7 +483,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       </p>
       <div class="cta">
         <a class="btn pri" href="#demo"><span class="es">Desplegar Synthex</span><span class="en">Deploy Synthex</span> &rarr;</a>
-        <a class="btn" href="#demo"><span class="es">Agendar demostración</span><span class="en">Book a demo</span></a>
+        <a class="btn" href="#demo" data-book-demo><span class="es">Agendar demostración</span><span class="en">Book a demo</span></a>
       </div>
       <p class="proof"><span class="es">No reemplaza tu sistema, se conecta a él · Cifrado punto a punto y entornos aislados por cliente · Prueba de concepto de 4 semanas</span><span class="en">It does not replace your system, it plugs into it · End-to-end encryption and an isolated environment per client · 4-week proof of concept</span></p>
       <div class="badges"><span>REST API</span><span>MCP</span><span>Saint</span><span>Profit Plus</span><span>Galac</span><span>SAP</span><span>Oracle</span><span>Odoo</span></div>
@@ -1096,6 +1123,133 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   });
   function ph(){ inp.placeholder = L() === 'en' ? 'How do I pay from Venezuela?' : '¿Cómo les pago desde Venezuela?'; }
   new MutationObserver(ph).observe(document.documentElement, { attributes:true, attributeFilter:['lang'] }); ph();
+})();
+</script>
+<div class="bk-ov" id="bkOv" hidden>
+  <div class="bk" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+    <button type="button" class="bk-x" id="bkX" aria-label="Cerrar / Close">&times;</button>
+    <div id="bkBody"></div>
+  </div>
+</div>
+<script>
+(function(){
+  // "Agendar demostración": 1) tres días con horarios libres del calendario de Digit2AI Projects,
+  // 2) nombre, correo, teléfono y empresa, 3) se agenda, SendGrid envía la confirmación y aquí se agradece.
+  var ov = document.getElementById('bkOv'), body = document.getElementById('bkBody'), last = null;
+  var st = { days: null, start: null, minutes: 60 };
+  var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function T(es, en){ return L() === 'en' ? en : es; }
+  function loc(){ return L() === 'en' ? 'en-US' : 'es-VE'; }
+  function cap(x){ return x.charAt(0).toUpperCase() + x.slice(1); }
+  function fDay(iso){ return cap(new Intl.DateTimeFormat(loc(), { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso))); }
+  function fTime(iso){ return new Intl.DateTimeFormat(loc(), { hour:'numeric', minute:'2-digit' }).format(new Date(iso)); }
+  function when(iso){ return new Intl.DateTimeFormat(loc(), { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)) + ', ' + fTime(iso); }
+  function dot(t){ return /\.$/.test(t) ? t : t + '.'; }
+  function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function head(step, title, sub){
+    body.innerHTML = '';
+    var s = el('div', 'bk-steps');
+    [T('1 · Horario','1 · Time'), T('2 · Tus datos','2 · Your details'), T('3 · Listo','3 · Done')].forEach(function(t, i){ var x = el('span', i + 1 === step ? 'on' : '', t); s.appendChild(x); });
+    body.appendChild(s);
+    var h = el('h3', null, title); h.id = 'bkTitle'; body.appendChild(h);
+    if (sub) body.appendChild(el('p', 'sub', sub));
+  }
+  function stepTime(){
+    head(1, T('Agenda tu demostración', 'Book your demo'),
+      T('Elige el día y la hora que mejor te quede. Horas en tu zona horaria', 'Pick the day and time that suits you. Times in your time zone') + (tz ? ' (' + tz + ')' : '') + ' · ' + st.minutes + ' min.');
+    if (!st.days) { body.appendChild(el('p', 'fine', T('Cargando horarios disponibles…', 'Loading available times…'))); return; }
+    if (!st.days.length) { body.appendChild(el('p', 'fine', T('No hay horarios libres en este momento. Déjanos tus datos en el formulario de abajo y te contactamos.', 'No times are free right now. Leave your details in the form below and we will contact you.'))); return; }
+    var g = el('div', 'bk-days');
+    st.days.forEach(function(d){
+      var c = el('div', 'bk-day'); c.appendChild(el('b', null, fDay(d.slots[0])));
+      d.slots.forEach(function(iso){
+        var b = el('button', 'bk-t' + (iso === st.start ? ' sel' : ''), fTime(iso)); b.type = 'button';
+        b.addEventListener('click', function(){ st.start = iso; stepDetails(); });
+        c.appendChild(b);
+      });
+      g.appendChild(c);
+    });
+    body.appendChild(g);
+  }
+  var saved = { nombre:'', email:'', telefono:'', empresa:'' };
+  function field(name, label, type, ac){
+    var l = el('label'); l.appendChild(document.createTextNode(label));
+    var i = document.createElement('input'); i.name = name; i.type = type || 'text'; i.autocomplete = ac || 'off'; i.maxLength = 160; i.value = saved[name] || '';
+    i.addEventListener('input', function(){ saved[name] = i.value; i.classList.remove('bad'); });
+    l.appendChild(i); return l;
+  }
+  function stepDetails(){
+    head(2, T('Tus datos', 'Your details'), T('Te enviaremos la confirmación por correo.', 'We will email you the confirmation.'));
+    body.appendChild(el('div', 'bk-pick', cap(when(st.start))));
+    var f = el('div', 'bk-f');
+    f.appendChild(field('nombre', T('Nombre y apellido *', 'Full name *'), 'text', 'name'));
+    f.appendChild(field('email', T('Correo *', 'Email *'), 'email', 'email'));
+    f.appendChild(field('telefono', T('Teléfono / WhatsApp *', 'Phone / WhatsApp *'), 'tel', 'tel'));
+    f.appendChild(field('empresa', T('Empresa', 'Company'), 'text', 'organization'));
+    body.appendChild(f);
+    var err = el('div', 'bk-err'); err.setAttribute('role', 'status'); body.appendChild(err);
+    var row = el('div', 'bk-row');
+    var back = el('button', 'btn', T('Cambiar horario', 'Change time')); back.type = 'button'; back.addEventListener('click', stepTime);
+    var go = el('button', 'btn pri', T('Confirmar demostración', 'Confirm demo')); go.type = 'button';
+    row.appendChild(back); row.appendChild(go); body.appendChild(row);
+    body.appendChild(el('p', 'fine', T('Al confirmar, aceptas que el equipo de Synthex SAI te contacte por correo o teléfono sobre tu demostración.', 'By confirming, you agree that the Synthex SAI team may contact you by email or phone about your demo.')));
+    setTimeout(function(){ var i = body.querySelector('input[name=nombre]'); if (i) i.focus(); }, 30);
+    go.addEventListener('click', function(){
+      var bad = [];
+      if (saved.nombre.trim().length < 2) bad.push('nombre');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(saved.email.trim())) bad.push('email');
+      if (saved.telefono.replace(/\D/g, '').length < 7) bad.push('telefono');
+      body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', bad.indexOf(i.name) !== -1); });
+      if (bad.length) { err.textContent = T('Revisa los campos marcados.', 'Please check the highlighted fields.'); return; }
+      go.disabled = true; back.disabled = true; err.textContent = T('Agendando…', 'Booking…');
+      fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+        nombre: saved.nombre.trim(), email: saved.email.trim(), telefono: saved.telefono.trim(), empresa: saved.empresa.trim(),
+        tema: T('Demostración agendada desde el botón del inicio', 'Demo booked from the hero button'), start: st.start, lang: L(), tz: tz }) })
+        .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
+        .then(function(x){
+          if (x.j.booked) return stepDone(x.j);
+          go.disabled = false; back.disabled = false;
+          if (x.j.error === 'slot_taken') { err.textContent = T('Ese horario se acaba de ocupar. Elige otro.', 'That time was just taken. Please pick another.'); st.days = null; st.start = null; load(); return; }
+          if (x.s === 429) { err.textContent = T('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Please wait a few minutes.'); return; }
+          if (x.j.fields) body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', x.j.fields.indexOf(i.name) !== -1); });
+          err.textContent = T('No se pudo agendar. Revisa tus datos e intenta de nuevo.', 'Could not book. Check your details and try again.');
+        })
+        .catch(function(){ go.disabled = false; back.disabled = false; err.textContent = T('No se pudo agendar. Intenta de nuevo.', 'Could not book. Please try again.'); });
+    });
+  }
+  function stepDone(j){
+    body.innerHTML = '';
+    var s = el('div', 'bk-steps'); [T('1 · Horario','1 · Time'), T('2 · Tus datos','2 · Your details'), T('3 · Listo','3 · Done')].forEach(function(t, i){ s.appendChild(el('span', i === 2 ? 'on' : '', t)); }); body.appendChild(s);
+    var ok = el('div', 'bk-ok');
+    ok.appendChild(el('div', 'ic', '\u2713'));
+    var first = saved.nombre.trim().split(' ')[0];
+    var h = el('h3', null, T('¡Muchísimas gracias, ' + first + '!', 'Thank you so much, ' + first + '!')); h.id = 'bkTitle'; h.style.margin = '0 0 8px'; ok.appendChild(h);
+    ok.appendChild(el('p', 'sub', (j.already ? T('Ya tenías una demostración agendada para el ', 'You already had a demo booked for ') : T('Tu demostración quedó agendada para el ', 'Your demo is booked for ')) + dot(when(j.start))));
+    ok.appendChild(el('p', 'sub', j.email_sent
+      ? T('Vas a recibir un correo de confirmación en ' + saved.email.trim() + ' con la invitación para tu calendario. Si no lo ves, revisa tu carpeta de spam.', 'You will receive a confirmation email at ' + saved.email.trim() + ' with a calendar invite. If you do not see it, check your spam folder.')
+      : T('El equipo de Synthex SAI te contactará para confirmar.', 'The Synthex SAI team will contact you to confirm.')));
+    var c = el('button', 'btn pri', T('Cerrar', 'Close')); c.type = 'button'; c.addEventListener('click', close); ok.appendChild(c);
+    body.appendChild(ok);
+  }
+  function load(){
+    stepTime();
+    fetch('/api/synthex-lina/public/slots').then(function(r){ return r.json(); }).then(function(j){
+      st.days = (j && j.ok && j.days) ? j.days : []; st.minutes = (j && j.minutes) || 60; stepTime();
+    }).catch(function(){ st.days = []; stepTime(); });
+  }
+  function open(e){
+    if (e) e.preventDefault();
+    last = document.activeElement; ov.hidden = false; document.body.style.overflow = 'hidden';
+    st.days = null; st.start = null; load();
+    setTimeout(function(){ document.getElementById('bkX').focus(); }, 30);
+  }
+  function close(){ ov.hidden = true; document.body.style.overflow = ''; if (last && last.focus) last.focus(); }
+  document.querySelectorAll('[data-book-demo]').forEach(function(b){ b.addEventListener('click', open); });
+  document.getElementById('bkX').addEventListener('click', close);
+  ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !ov.hidden) close(); });
+  window.SynthexBookDemo = open;
 })();
 </script>
 </body>
