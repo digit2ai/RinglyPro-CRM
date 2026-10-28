@@ -64,7 +64,7 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(agentConfig('synthex', 'en').name === 'Ava', 'english persona');
   const ag = getAgent('synthex');
   ok(!/USD|685/.test(JSON.stringify(cfg)), 'config leaks no prompt');
-  ok(ag.tools.definiciones.map((d) => d.name).join() === 'horarios_disponibles,agendar_reunion', 'tools');
+  ok(ag.tools.definiciones.map((d) => d.name).join() === 'horarios_disponibles,calcular_ahorro,agendar_reunion', 'tools');
   ok(/NO ERES UNA NARRADORA/.test(ag.persona.es) && /agendar una reunión/.test(ag.persona.es), 'persona is conversational and sells');
 
   // the orb fills {saludo} from the visitor clock
@@ -81,6 +81,19 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(/Hypercare/.test(sys) && /Stripe o PayPal/.test(sys), 'core facts in prompt');
   ok(/ENTRENAMIENTO DEL DUEÑO/.test(sys) && /SENIAT/.test(sys), 'owner training in prompt');
   ok(/Tus ÚNICAS fuentes son el CONOCIMIENTO/.test(sys), 'rules allow knowledge');
+
+  // savings estimate = the landing calculator's formula (10 people, 20 h, $3, 50% -> 433 h, $2,600, $1,300, +$912)
+  const { estimate } = require('../src/routes/synthex-lina')._test;
+  let e = estimate({ personas: 10, horas_semana: 20, costo_hora: 3, porcentaje_automatizado: 50 });
+  ok(e.ok && e.horas_liberadas_mes === 433 && e.costo_manual_mes_usd === 2600 && e.valor_horas_liberadas_mes_usd === 1300 && e.diferencia_mes_usd === 912, 'same numbers as the page calculator');
+  e = estimate({ personas: 5, horas_semana: 20, costo_hora: 3 });
+  ok(e.ok && e.datos.porcentaje_es_supuesto && e.datos.porcentaje_automatizado === 50, 'missing percentage = 50% assumption, flagged');
+  ok(estimate({ personas: 5, horas_semana: 20, costo_hora: 3, porcentaje_automatizado: 0.4 }).datos.porcentaje_automatizado === 40, '0.4 read as 40%');
+  ok(!estimate({ personas: 0, horas_semana: 20, costo_hora: 3 }).ok, 'bad input refused');
+  const dc = await post('/api/synthex-lina/calc', { personas: 1, horas_semana: 1, costo_hora: 1 }, { 'X-Forwarded-For': '8.8.8.8' });
+  ok(dc.status === 404, 'calc refused from outside');
+  const pageSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/index.html'), 'utf8');
+  ok(/hrsMes = p \* h \* 52 \/ 12/.test(pageSrc) && /dif = val - 388/.test(pageSrc), 'page calculator still uses the formula Lina copies');
 
   // the tools are closed to the internet
   let d = await post('/api/synthex-lina/book', { nombre: 'X', email: 'a@b.co', telefono: '5551234567', start: slotA.toISOString(), confirmado: true }, { 'X-Forwarded-For': '8.8.8.8' });

@@ -131,6 +131,43 @@ router.get('/slots', onlyBrain, async (req, res) => {
   }
 });
 
+// ── savings estimate: the SAME arithmetic as the calculator on synthexsai.com ──
+// hours/month = people x hours/week x 52 / 12; value = freed hours x hourly cost;
+// difference = value - the USD 388 subscription. Lina never does this math herself:
+// a model that multiplies in its head is a model that quotes a wrong saving.
+const SUBSCRIPTION = 388;
+function estimate(b) {
+  const n = (v) => Number(String(v == null ? '' : v).replace(/[^0-9.,-]/g, '').replace(',', '.'));
+  const personas = n(b.personas), horas = n(b.horas_semana), costo = n(b.costo_hora);
+  let pct = n(b.porcentaje_automatizado);
+  const supuesto = !isFinite(pct) || pct <= 0;
+  if (supuesto) pct = 50;
+  if (pct > 0 && pct <= 1) pct *= 100;
+  const bad = [];
+  if (!(personas >= 1 && personas <= 1000)) bad.push('personas');
+  if (!(horas >= 1 && horas <= 80)) bad.push('horas_semana');
+  if (!(costo > 0 && costo <= 1000)) bad.push('costo_hora');
+  if (!(pct >= 5 && pct <= 90)) bad.push('porcentaje_automatizado');
+  if (bad.length) return { ok: false, error: 'faltan o no son válidos: ' + bad.join(', '), nota: 'Pide solo esos datos.' };
+  const hrsMes = personas * horas * 52 / 12;
+  const manual = hrsMes * costo, libres = hrsMes * pct / 100, valor = libres * costo, dif = valor - SUBSCRIPTION;
+  const r = (x) => Math.round(x);
+  return {
+    ok: true,
+    datos: { personas, horas_semana: horas, costo_hora: costo, porcentaje_automatizado: pct, porcentaje_es_supuesto: supuesto },
+    horas_manuales_mes: r(hrsMes),
+    costo_manual_mes_usd: r(manual),
+    horas_liberadas_mes: r(libres),
+    valor_horas_liberadas_mes_usd: r(valor),
+    suscripcion_mes_usd: SUBSCRIPTION,
+    diferencia_mes_usd: r(dif),
+    diferencia_anual_usd: r(dif * 12),
+    nota: 'Es un estimado con los datos de la persona; el porcentaje automatizado es un supuesto y el diagnóstico lo mide con su operación real. Di las cifras en palabras y redondeadas. Si la diferencia es negativa, dilo con honestidad (el valor está en las horas que se liberan para crecer) y no la maquilles.'
+  };
+}
+
+router.post('/calc', onlyBrain, express.json({ limit: '2kb' }), (req, res) => res.json(estimate(req.body || {})));
+
 // ── book ──────────────────────────────────────────────────────────────────
 const clean = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, n);
 
@@ -329,4 +366,4 @@ router.get('/health', (req, res) => {
 
 module.exports = router;
 module.exports.knowledgeFor = knowledgeFor;
-module.exports._test = { validate, fromVoiceBrain, label, setCrmLookup: (f) => { crmLookup = f; } };
+module.exports._test = { estimate, validate, fromVoiceBrain, label, setCrmLookup: (f) => { crmLookup = f; } };
