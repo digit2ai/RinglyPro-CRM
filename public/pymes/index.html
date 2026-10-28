@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b16">
+<title>Automatización de Negocios</title>
+<meta name="description" content="Presentación narrada por Lina: cómo cualquier empresa conecta sus sistemas de siempre a la inteligencia artificial, como un USB, para reducir costos y crecer sin parar.">
+<link rel="icon" href="../mcp/logo.png">
+<link rel="preload" as="image" href="../mcp/logo.png">
+<style>html,body{background:#070b16}</style>
+<style>
+/* Tokens y tipografía copiados de public/mcp/index.html (digit2ai.com/mcp). La
+   página no descarga fuentes: Space Grotesk e Inter solo se usan si están
+   instaladas, y si no, cae a la fuente del sistema. Aquí igual, a propósito:
+   así el mazo se ve exactamente como la página que lo vende. */
+:root{
+  --bg:#070b16; --bg2:#0b1222; --panel:#0f1728; --panel2:#131e33;
+  --line:rgba(120,150,200,.16); --line2:rgba(120,150,200,.28);
+  --txt:#eaf0fb; --mut:#9db0cc; --cy:#22d3ee; --vi:#8b5cf6; --on:#04222a;
+  --ok:#34d399; --warn:#fbbf24;
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --fb:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --W:1280px; --H:720px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--fb);color:var(--txt);background:radial-gradient(1100px 700px at 50% 35%,#0d1830,var(--bg));overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+/* ── escenario: 16:9 por defecto, 9:16 en modo vertical ─────────────── */
+body.vert{--W:720px;--H:1280px}
+.vp{position:fixed;inset:0 0 72px 0;display:flex;align-items:center;justify-content:center}
+#stage{width:var(--W);height:var(--H);position:relative;flex:0 0 auto;transform-origin:center center}
+.slide{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:
+  radial-gradient(700px 420px at 85% 0%,rgba(139,92,246,.20),transparent 70%),
+  radial-gradient(700px 500px at 0% 100%,rgba(34,211,238,.13),transparent 70%),
+  linear-gradient(180deg,var(--bg2),var(--bg));
+  border:1px solid var(--line);box-shadow:0 30px 90px rgba(0,0,0,.55);
+  padding:52px 64px 48px;display:none;flex-direction:column}
+.slide.on{display:flex;animation:in .6s ease both}
+.slide{justify-content:center}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+body.vert .slide{padding:64px 48px 56px}
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);opacity:.35}
+.slide > *{position:relative;z-index:1}
+
+.brand{font-family:var(--fd);font-weight:700;font-size:19px;letter-spacing:.04em;color:var(--txt)}
+.brand b{color:var(--cy)}.brand span{color:var(--mut);font-weight:500}
+body.vert .brand{font-size:24px}
+.hlogo{display:block;width:340px;height:auto;border-radius:14px;border:1px solid var(--line)}
+body.vert .hlogo{width:440px}
+.kick{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy);margin-top:18px}
+h1{font-family:var(--fd);font-weight:700;font-size:62px;line-height:1.1;letter-spacing:-.01em;margin-top:12px}
+h2{font-family:var(--fd);font-weight:700;font-size:48px;line-height:1.12;letter-spacing:-.01em;margin-top:10px}
+body.vert h1{font-size:72px}body.vert h2{font-size:58px}
+.grad{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:22px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:900px}
+body.vert .lead{font-size:27px}
+.row{display:flex;gap:40px;align-items:center;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;min-width:0}
+.grow{flex:1}
+body.vert .row{flex-direction:column;align-items:stretch;gap:26px}
+.grid{display:grid;gap:16px;margin-top:22px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+body.vert .g3,body.vert .g4{grid-template-columns:repeat(2,1fr)}
+.card{background:linear-gradient(180deg,rgba(19,30,51,.92),rgba(15,23,40,.92));border:1px solid var(--line2);border-radius:18px;padding:22px 22px 20px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.8}
+.card h3{font-family:var(--fd);font-weight:700;font-size:22px;margin-top:4px}
+.card p{font-size:16.5px;line-height:1.45;color:var(--mut);margin-top:8px}
+body.vert .card{padding:26px 24px}body.vert .card h3{font-size:28px}body.vert .card p{font-size:21px}body.vert .grid{gap:20px}body.vert .kick{font-size:17px}body.vert .n{font-size:16px}
+.n{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--cy);letter-spacing:.1em}
+.stag{opacity:0;animation:up .6s ease forwards}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.d1{animation-delay:.25s}.d2{animation-delay:.5s}.d3{animation-delay:.75s}.d4{animation-delay:1s}.d5{animation-delay:1.25s}.d6{animation-delay:1.5s}.d7{animation-delay:1.75s}.d8{animation-delay:2s}.d9{animation-delay:2.25s}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:rgba(15,23,40,.85);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy)}
+.foot{margin-top:22px;font-size:14px;color:var(--mut)}
+
+/* ── USB: la idea en un solo dibujo ────────────────────────────────── */
+.usb{width:100%;height:auto;max-height:100%}
+.usb .sys rect{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.usb .sys text{fill:#9db0cc;font:600 15px var(--fb)}
+.usb .lit rect{animation:lit 1s ease forwards;animation-delay:var(--dl,2.2s)}
+.usb .lit text{animation:litt 1s ease forwards;animation-delay:var(--dl,2.2s)}
+@keyframes lit{to{fill:#0e2a35;stroke:#22d3ee}}
+@keyframes litt{to{fill:#eaf0fb}}
+.usb .plug{animation:plug 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateX(150px)}
+.usb .plugV{animation:plugV 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateY(190px)}
+@keyframes plugV{to{transform:translateY(0)}}
+@keyframes plug{to{transform:translateX(0)}}
+.usb .wire{stroke-dasharray:6 8;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.usb .glow{opacity:0;animation:glow 1s ease forwards;animation-delay:2s}
+@keyframes glow{to{opacity:1}}
+.usb .pulse{transform-origin:center;transform-box:fill-box;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+/* ── órbita de agentes ─────────────────────────────────────────────── */
+.orbit{position:relative;width:540px;height:540px;flex:0 0 540px;margin:auto}
+body.vert .orbit{width:620px;height:620px;flex-basis:620px}
+.orbit .core{position:absolute;left:50%;top:50%;width:170px;height:170px;margin:-85px 0 0 -85px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 35%,#6d28d9 85%);box-shadow:0 0 60px rgba(34,211,238,.45),0 0 120px rgba(139,92,246,.35);
+  display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--fd);font-weight:700;color:#04222a;font-size:20px;line-height:1.1;animation:pulse 3s ease-in-out infinite}
+.orbit .ring{position:absolute;inset:0;border-radius:50%;border-color:transparent!important;border:1px dashed rgba(34,211,238,.35);animation:spin 60s linear infinite}
+.orbit .ring2{position:absolute;inset:10%;border-radius:50%;border:1px dashed rgba(34,211,238,.4)}
+.orbit .ring3{position:absolute;inset:28%;border-radius:50%;border:1px solid rgba(139,92,246,.35)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit .node{position:absolute;left:50%;top:50%;width:0;height:0}
+.orbit .node span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(15,23,40,.95);border:1px solid var(--line2);border-radius:999px;padding:7px 13px;font-weight:600;font-size:13.5px;color:var(--txt);animation:counter 60s linear infinite}
+@keyframes counter{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+body.vert .orbit .node span{font-size:18px}
+
+/* ── flujo de una solicitud ────────────────────────────────────────── */
+.flow svg{width:100%;height:auto}
+.flow text{font-family:var(--fb)}
+.flow .box{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.flow .hot{fill:#0e2a35;stroke:#22d3ee}
+.flow .lbl{fill:#eaf0fb;font-weight:700;font-size:17px}
+.flow .sub{fill:#9db0cc;font-size:13px}
+.flow .path{stroke:rgba(34,211,238,.4);stroke-width:2;fill:none;stroke-dasharray:5 7;animation:flow 1.4s linear infinite}
+
+/* tabla comparativa */
+table.cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:20px;font-size:15.5px;border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+table.cmp th{font-family:var(--fd);text-align:left;padding:11px 14px;background:#0f1728;color:var(--mut);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+table.cmp th.us{color:var(--on);background:linear-gradient(90deg,var(--cy),#67e8f9)}
+table.cmp td{padding:10px 14px;border-top:1px solid var(--line)}
+table.cmp td.us{color:var(--txt);font-weight:700;background:rgba(34,211,238,.07)}
+table.cmp td.them{color:var(--mut)}
+body.vert table.cmp{font-size:20px}body.vert table.cmp td{padding:14px 12px}body.vert table.cmp th{font-size:15px}
+
+/* precio */
+.price{display:flex;gap:18px;margin-top:24px}
+body.vert .price{flex-direction:column}
+.price .card{flex:1;padding:26px}
+.price .amt{font-family:var(--fd);font-weight:700;font-size:64px;line-height:1;margin-top:10px}
+.price .amt small{font-size:18px;color:var(--mut);font-weight:600;margin-left:6px}
+.price ul{list-style:none;margin-top:14px}
+.price li{font-size:16px;color:var(--mut);padding:5px 0 5px 24px;position:relative}
+.price li::before{content:"";position:absolute;left:2px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--cy)}
+
+/* pasos */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;position:relative}
+.steps::before{content:"";position:absolute;left:4%;right:4%;top:30px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.6}
+body.vert .steps{grid-template-columns:1fr}
+body.vert .steps::before{left:30px;right:auto;top:20px;bottom:20px;width:2px;height:auto}
+.step .dot{width:60px;height:60px;border-radius:50%;background:var(--bg);border:2px solid var(--cy);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:22px;color:var(--cy);box-shadow:0 0 22px rgba(34,211,238,.35);position:relative}
+body.vert .step{display:flex;gap:18px;align-items:flex-start}
+body.vert .step .dot{flex:0 0 60px}
+.step h3{font-family:var(--fd);font-weight:700;font-size:19px;margin-top:12px}
+body.vert .step h3{margin-top:4px;font-size:28px}
+.step p{font-size:15px;color:var(--mut);margin-top:4px;line-height:1.45}
+body.vert .step p{font-size:21px}
+
+/* portada */
+.cover h1{font-size:56px;max-width:640px}
+body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}body.vert .cover .col.grow{max-width:none!important}body.vert .price .amt{font-size:76px}body.vert .price li{font-size:21px}
+.cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
+
+
+
+/* sistemas por industria */
+ul.sys{list-style:none;margin-top:12px}
+ul.sys li{font-family:var(--fd);font-weight:600;font-size:18px;padding:8px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+ul.sys li:first-child{border-top:0}
+ul.sys em,.foot em.ag{font-style:normal;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:2px 8px}
+body.vert .sysgrid{grid-template-columns:1fr!important}
+body.vert ul.sys{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+body.vert ul.sys li{font-size:20px;border-top:1px solid var(--line)}
+body.vert ul.sys li:nth-child(2){border-top:0}
+
+
+.incl ul.sys li{font-size:17px;justify-content:flex-start}
+.incl .quote{border-color:rgba(139,92,246,.55)}
+.incl .quote .n{color:#a78bfa}
+body.vert .incl{grid-template-columns:1fr!important}
+body.vert .incl ul.sys{display:block}
+body.vert .incl ul.sys li{font-size:21px;border-top:1px solid var(--line)}
+body.vert .incl ul.sys li:first-child{border-top:0}
+
+/* ── el orbe animado de OrbUp (copiado de orbup.html), en la última lámina ── */
+.orbx{width:400px;height:400px;position:relative}
+body.vert .orbx{width:560px;height:560px;margin-top:10px}
+.orbx::before{content:"";position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.30),rgba(236,72,153,.16) 45%,transparent 70%);filter:blur(10px)}
+.orbx .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.orbx .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.orbx .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.orbx .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.orbx .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.orbx .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.orbx .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.orbx .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.orbx .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
+@keyframes orbRingPulse{0%{opacity:.9;stroke-width:1.5}100%{opacity:0;stroke-width:.5}}
+.orbx .orb-particles{opacity:0}
+.orbx .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+.orbx .orb-svg{position:relative;filter:drop-shadow(0 8px 42px rgba(34,211,238,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+.slide > .d2stars{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ── reproductor ───────────────────────────────────────────────────── */
+.dock{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(7,11,22,.92);border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;backdrop-filter:blur(8px)}
+.orb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 0 0 rgba(34,211,238,.6)}
+.orb.sp{animation:pul 1.2s ease-in-out infinite}
+@keyframes pul{70%{box-shadow:0 0 0 14px rgba(34,211,238,0)}}
+.cap{flex:1;min-width:0}
+#capT{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cy)}
+#capX{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{background:#131e33;color:var(--txt);border:1px solid var(--line2);border-radius:12px;min-width:44px;height:44px;font-weight:700;font-size:16px}
+#cnt{font-size:13px;font-weight:600;min-width:54px;text-align:center;color:var(--mut)}
+#prog{position:fixed;left:0;bottom:72px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));width:0;z-index:21;transition:width .3s}
+.gate{position:fixed;inset:0;z-index:40;background:rgba(4,7,15,.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.gate.off{display:none}
+.gate .box{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:30px;max-width:440px;width:100%;text-align:center}
+.gate .orbbig{width:84px;height:84px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 50px rgba(34,211,238,.5);animation:pulse 2.6s ease-in-out infinite}
+.gate h1{font-size:30px;margin-top:16px}
+.gate p{font-size:15px;color:var(--mut);margin:10px 0 18px;line-height:1.5}
+.gate button{display:block;width:100%;border:0;border-radius:999px;padding:14px;font-weight:700;font-size:16px;margin-top:10px;min-height:48px}
+#start{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on)}
+#silent{background:transparent;color:var(--txt);border:1px solid var(--line2)!important}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+<style>
+/* ── simuladores ──────────────────────────────────────────────────── */
+.simtag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:3px 10px;margin-left:10px;vertical-align:middle}
+.simbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.sbtn{background:#131e33;color:var(--txt);border:1px solid var(--line2);border-radius:999px;padding:10px 16px;font-weight:600;font-size:14px;min-height:44px}
+.sbtn.on{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);border-color:transparent}
+body.vert .sbtn{font-size:19px;padding:12px 18px}
+
+/* voz */
+.phone{width:380px;flex:0 0 380px;height:470px;border-radius:34px;border:2px solid var(--line2);background:#0a1020;padding:18px 16px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+body.vert .phone{width:100%;flex-basis:auto;height:620px}
+.phone .ph{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.phone .ph .dotlive{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.4s infinite}
+.phone .ph b{font-family:var(--fd);font-size:16px}.phone .ph small{color:var(--mut);font-size:12px;display:block}
+.chat{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:9px;padding-top:12px;justify-content:flex-end}
+.msg{max-width:86%;padding:9px 13px;border-radius:16px;font-size:14.5px;line-height:1.4;animation:up .35s ease both}
+.msg.ai{background:linear-gradient(90deg,rgba(34,211,238,.18),rgba(139,92,246,.18));border:1px solid rgba(34,211,238,.35);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.cl{background:#1a2640;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.sys{align-self:center;background:transparent;color:var(--ok);font-size:12.5px;font-weight:700;letter-spacing:.04em;border:1px dashed rgba(52,211,153,.5)}
+body.vert .msg{font-size:19px}
+.outs{display:grid;gap:10px;margin-top:14px}
+.out{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line2);border-radius:12px;padding:10px 14px;font-size:15px;color:var(--mut);background:rgba(15,23,40,.85)}
+.out b{color:var(--txt);font-family:var(--fd)}
+.out.ok b{color:var(--ok)}
+body.vert .out{font-size:20px}
+
+/* contabilidad */
+.acc{display:grid;grid-template-columns:330px 1fr;gap:24px;margin-top:20px;align-items:start}
+body.vert .acc{grid-template-columns:1fr}
+.inv{background:#f4f6fb;color:#1b2333;border-radius:14px;padding:18px 20px;font-size:14px;box-shadow:0 14px 40px rgba(0,0,0,.4);position:relative}
+.inv h4{font-family:var(--fd);font-size:18px;color:#0f1728}
+.inv .r{display:flex;justify-content:space-between;padding:6px 6px;border-radius:6px;margin-top:4px;transition:background .3s}
+.inv .r.hi{background:rgba(34,211,238,.35)}
+.inv .scan{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#22d3ee,transparent);top:0;opacity:0}
+.inv.scanning .scan{animation:scanY 1.6s ease-in-out;opacity:1}
+@keyframes scanY{from{top:0}to{top:100%}}
+body.vert .inv{font-size:19px}
+table.led{width:100%;border-collapse:collapse;font-size:14.5px;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+table.led th{background:#0f1728;color:var(--mut);text-align:left;padding:9px 10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+table.led td{padding:9px 10px;border-top:1px solid var(--line)}
+table.led tr.new td{animation:rowin .8s ease both;background:rgba(34,211,238,.10)}
+@keyframes rowin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.st{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;letter-spacing:.04em}
+.st.ok{color:var(--ok);border:1px solid rgba(52,211,153,.5)}.st.wait{color:var(--warn);border:1px solid rgba(251,191,36,.5)}
+body.vert table.led{font-size:18px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.kpi{border:1px solid var(--line2);border-radius:12px;padding:10px 14px;background:rgba(15,23,40,.85)}
+.kpi small{color:var(--mut);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.kpi b{display:block;font-family:var(--fd);font-size:26px;margin-top:2px}
+body.vert .kpi b{font-size:32px}
+
+/* operaciones */
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px;min-height:330px}
+body.vert .board{grid-template-columns:1fr 1fr;min-height:0}
+.lane{background:rgba(15,23,40,.75);border:1px solid var(--line2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.lane h5{font-family:var(--fd);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--cy);display:flex;justify-content:space-between}
+.tk{background:#131e33;border:1px solid var(--line2);border-left:3px solid var(--cy);border-radius:10px;padding:8px 10px;font-size:13px;animation:up .4s ease both}
+.tk b{display:block;font-family:var(--fd);font-size:14px}.tk small{color:var(--mut)}
+body.vert .tk{font-size:17px}body.vert .tk b{font-size:19px}body.vert .lane h5{font-size:16px}
+
+/* calculadora */
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:20px}
+body.vert .calc{grid-template-columns:1fr}
+.sl{margin-top:14px}
+.sl label{display:flex;justify-content:space-between;font-size:15px;color:var(--mut)}
+.sl label b{color:var(--txt);font-family:var(--fd);font-size:17px}
+.sl input{width:100%;margin-top:8px;accent-color:#22d3ee;height:28px}
+body.vert .sl label{font-size:20px}
+.res .big{font-family:var(--fd);font-weight:700;font-size:44px;line-height:1.05;margin-top:4px}
+.res .row2{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:10px 0;font-size:16px;color:var(--mut)}
+.res .row2 b{color:var(--txt);font-family:var(--fd)}
+body.vert .res .row2{font-size:20px}
+
+/* antes y después */
+table.ba td.bef{color:var(--mut)}
+table.ba td.aft{color:var(--txt);font-weight:700;background:rgba(52,211,153,.07)}
+table.ba th.aft{color:#04222a;background:linear-gradient(90deg,var(--ok),#6ee7b7)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+body.vert .three{grid-template-columns:1fr}
+body.vert .orbx{width:380px;height:380px}
+.three .card .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--cy),var(--vi));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;color:#04222a;font-size:20px}
+</style>
+</head>
+<body>
+<div class="vp"><div id="stage">
+
+  <!-- 1 portada -->
+  <section class="slide cover" data-t="Bienvenida">
+    <div class="row">
+      <div class="col grow">
+        <img class="hlogo stag d1" src="../mcp/logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
+        <h1 class="stag d2">Automatice su negocio. <span class="grad">Crezca sin parar.</span></h1>
+        <p class="lead stag d3">Se conecta como un USB a los sistemas que su empresa ya usa: WhatsApp, Excel, su CRM o su ERP. Cuesta menos que una contratación y trabaja las veinticuatro horas.</p>
+      </div>
+      <div class="col grow" style="max-width:520px;width:100%">
+        <svg class="usb" viewBox="0 0 520 300" aria-hidden="true">
+          <defs><linearGradient id="gU" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+          <rect x="10" y="90" width="210" height="120" rx="18" fill="#0f1728" stroke="rgba(120,150,200,.35)"/>
+          <text x="115" y="142" text-anchor="middle" style="font:700 18px var(--fd)" fill="#eaf0fb">Su empresa</text>
+          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">WhatsApp · Excel · CRM</text>
+          <rect x="220" y="132" width="26" height="36" rx="4" fill="#131e33" stroke="#22d3ee"/>
+          <g class="plug"><rect x="246" y="138" width="40" height="24" rx="3" fill="#c7d2e3"/><rect x="286" y="126" width="70" height="48" rx="8" fill="url(#gU)"/></g>
+          <g class="glow"><circle class="pulse" cx="440" cy="150" r="70" fill="url(#gU)" opacity=".95"/></g>
+          <text class="glow" x="440" y="146" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">Cerebro</text>
+          <text class="glow" x="440" y="168" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">MCP</text>
+          <g class="glow"><path class="wire" d="M356 150 H370" stroke="#22d3ee" stroke-width="3"/></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 punto de partida -->
+  <section class="slide" data-t="El punto de partida">
+    <div class="kick">El punto de partida</div>
+    <h2>Su negocio ya funciona.<br><span class="grad">Pero mucho se hace a mano.</span></h2>
+    <div class="grid g3" style="margin-top:28px">
+      <div class="card stag d1"><span class="n">HOY</span><h3>Herramientas de todos los días</h3><p>Pedidos por WhatsApp, cuentas en Excel, clientes en un CRM, proyectos en MS Project. Funcionan, y nadie quiere cambiarlas.</p></div>
+      <div class="card stag d2"><span class="n">EL COSTO OCULTO</span><h3>Horas copiando datos</h3><p>El mismo dato se escribe tres veces: en el chat, en la hoja de cálculo y en la factura. Cada copia es tiempo y un posible error.</p></div>
+      <div class="card stag d3"><span class="n">EL LÍMITE</span><h3>Crecer es contratar</h3><p>Más clientes significan más llamadas, más facturas y más seguimiento. Hasta hoy, eso solo se resolvía con más personas.</p></div>
+    </div>
+    <div class="row" style="margin-top:20px;flex:0;gap:10px;flex-wrap:wrap;flex-direction:row">
+      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>WhatsApp</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Excel</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>MS Access</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>MS Project</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Google Sheets</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Outlook · Gmail</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>HubSpot</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Zoho</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>QuickBooks</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Odoo</span>
+    </div>
+  </section>
+
+  <!-- 3 USB -->
+  <section class="slide" data-t="Se conecta como un USB">
+    <div class="kick">La idea</div>
+    <h2>Se conecta como un USB. <span class="grad">Su empresa gana inteligencia.</span></h2>
+    <p class="lead">Igual que un USB le da a su computadora una capacidad nueva en segundos, Digit2AI MCP conecta sus herramientas de siempre a un equipo de inteligencia artificial. No se reemplaza nada y su equipo sigue trabajando igual.</p>
+    <div class="row" style="margin-top:8px">
+      <svg class="usb" id="usbL" viewBox="0 0 900 330" aria-hidden="true" style="max-height:340px">
+        <defs><linearGradient id="gU2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">WhatsApp · Correo</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">Excel · Access</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">MS Project · CRM</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">Contabilidad · ERP</text></g>
+        <path d="M210 47 H290 M210 117 H290 M210 187 H290 M210 257 H290 M290 47 V257" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="290" y="128" width="40" height="44" rx="5" fill="#131e33" stroke="#22d3ee"/>
+        <g class="plug" style="transform:translateX(230px)"><rect x="330" y="136" width="56" height="28" rx="3" fill="#c7d2e3"/><rect x="386" y="120" width="96" height="60" rx="10" fill="url(#gU2)"/><text x="434" y="156" text-anchor="middle" style="font:700 16px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M482 150 H640" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="720" cy="150" r="82" fill="url(#gU2)"/></g>
+        <text class="glow" x="720" y="146" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Equipo</text>
+        <text class="glow" x="720" y="170" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+      <svg class="usb" id="usbV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gU3" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">WhatsApp · Correo</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">Excel · Access</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:22px">MS Project · CRM</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:20px">Contabilidad · ERP</text></g>
+        <path d="M160 170 V205 H460 V170 M310 205 V240" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="284" y="240" width="52" height="44" rx="6" fill="#131e33" stroke="#22d3ee"/>
+        <g class="plugV"><rect x="292" y="284" width="36" height="56" rx="3" fill="#c7d2e3"/><rect x="250" y="340" width="120" height="110" rx="14" fill="url(#gU3)"/><text x="310" y="404" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M310 450 V540" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="310" cy="640" r="105" fill="url(#gU3)"/></g>
+        <text class="glow" x="310" y="634" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">Equipo</text>
+        <text class="glow" x="310" y="666" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 4 sistemas -->
+  <section class="slide" data-t="Funciona con lo que ya usa">
+    <div class="kick">Funciona con lo que ya usa</div>
+    <h2>Desde una hoja de Excel <span class="grad">hasta un ERP completo.</span></h2>
+    <div class="grid g3 sysgrid" style="margin-top:22px">
+      <div class="card stag d1"><span class="n">HERRAMIENTAS DEL DÍA A DÍA</span>
+        <ul class="sys"><li>WhatsApp Business</li><li>Excel · Google Sheets</li><li>MS Access <em>agente</em></li><li>MS Project</li><li>Outlook · Gmail</li><li>Google Calendar</li></ul></div>
+      <div class="card stag d2"><span class="n">CLIENTES Y VENTAS (CRM)</span>
+        <ul class="sys"><li>HubSpot</li><li>Salesforce</li><li>Zoho CRM</li><li>Pipedrive</li><li>GoHighLevel</li><li>Monday.com</li></ul></div>
+      <div class="card stag d3"><span class="n">CONTABILIDAD Y ERP</span>
+        <ul class="sys"><li>QuickBooks · Xero</li><li>Siigo · Alegra</li><li>Odoo</li><li>SAP Business One</li><li>Dynamics 365 Business Central</li><li>CONTPAQi · Aspel <em>agente</em></li></ul></div>
+    </div>
+    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = programa local sin API pública: se instala un agente ligero en su equipo. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
+  </section>
+
+  <!-- 5 tres automatizaciones -->
+  <section class="slide" data-t="Tres áreas que se automatizan">
+    <div class="kick">Qué se automatiza</div>
+    <h2>Tres áreas que hoy cuestan horas. <span class="grad">Mañana trabajan solas.</span></h2>
+    <div class="three">
+      <div class="card stag d1"><div class="ic">01</div><h3 style="margin-top:14px">Servicio al cliente por voz</h3><p>Un asistente atiende llamadas y mensajes las veinticuatro horas, en español y en inglés: responde, agenda citas, toma pedidos y avisa a su equipo cuando hace falta una persona.</p></div>
+      <div class="card stag d2"><div class="ic">02</div><h3 style="margin-top:14px">Contabilidad automática</h3><p>Lee facturas y recibos, captura cada dato en su sistema contable, concilia los pagos del banco y le avisa de lo que vence. Usted revisa y aprueba.</p></div>
+      <div class="card stag d3"><div class="ic">03</div><h3 style="margin-top:14px">Operación automatizada</h3><p>Un pedido que llega por WhatsApp se registra, se asigna, se le da seguimiento y se factura, sin que nadie vuelva a escribir el mismo dato.</p></div>
+    </div>
+    <p class="foot">Las tres siguientes láminas son simuladores con datos de ejemplo. Puede tocar los botones.</p>
+  </section>
+
+  <!-- 6 simulador voz -->
+  <section class="slide" data-t="Simulador: servicio al cliente por voz" data-sim="voz">
+    <div class="kick">Simulador 1 <span class="simtag">datos de ejemplo</span></div>
+    <h2 style="font-size:40px">Servicio al cliente por voz, <span class="grad">las veinticuatro horas.</span></h2>
+    <div class="row" style="margin-top:14px;align-items:flex-start">
+      <div class="phone">
+        <div class="ph"><span class="dotlive"></span><div><b>Asistente de su empresa</b><small id="vzWhen">Llamada entrante</small></div></div>
+        <div class="chat" id="vzChat"></div>
+      </div>
+      <div class="col grow">
+        <p class="lead" style="margin-top:0;font-size:19px">Elija una situación y vea cómo responde el asistente:</p>
+        <div class="simbar" id="vzBtns">
+          <button class="sbtn on" data-vz="0">Agendar una cita</button>
+          <button class="sbtn" data-vz="1">Estado de un pedido</button>
+          <button class="sbtn" data-vz="2">Llamada a las 11 p. m.</button>
+        </div>
+        <div class="outs" id="vzOut"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 simulador contabilidad -->
+  <section class="slide" data-t="Simulador: contabilidad automática" data-sim="conta">
+    <div class="kick">Simulador 2 <span class="simtag">datos de ejemplo</span></div>
+    <h2 style="font-size:40px">Contabilidad automática: <span class="grad">de la factura al libro.</span></h2>
+    <div class="acc">
+      <div>
+        <div class="inv" id="ctInv"><div class="scan"></div>
+          <h4 id="ctProv">Factura</h4>
+          <div class="r" data-f="fecha"><span>Fecha</span><b id="ctFecha"></b></div>
+          <div class="r" data-f="concepto"><span>Concepto</span><b id="ctConc"></b></div>
+          <div class="r" data-f="sub"><span>Subtotal</span><b id="ctSub"></b></div>
+          <div class="r" data-f="iva"><span>Impuesto</span><b id="ctIva"></b></div>
+          <div class="r" data-f="total"><span>Total</span><b id="ctTot"></b></div>
+        </div>
+        <div class="simbar"><button class="sbtn on" id="ctNext">Procesar otra factura</button></div>
+      </div>
+      <div>
+        <table class="led"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Cuenta</th><th>Total</th><th>Banco</th></tr></thead><tbody id="ctRows"></tbody></table>
+        <div class="kpis">
+          <div class="kpi"><small>Facturas leídas</small><b id="ctN">0</b></div>
+          <div class="kpi"><small>Conciliadas</small><b id="ctC">0</b></div>
+          <div class="kpi"><small>Captura manual</small><b>0</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 simulador operaciones -->
+  <section class="slide" data-t="Simulador: operación automatizada" data-sim="ops">
+    <div class="kick">Simulador 3 <span class="simtag">datos de ejemplo</span></div>
+    <h2 style="font-size:40px">Un pedido por WhatsApp, <span class="grad">hasta la factura, solo.</span></h2>
+    <div class="board" id="opBoard">
+      <div class="lane"><h5>Llega por WhatsApp <span data-c="0">0</span></h5></div>
+      <div class="lane"><h5>Registrado <span data-c="1">0</span></h5></div>
+      <div class="lane"><h5>Asignado <span data-c="2">0</span></h5></div>
+      <div class="lane"><h5>Entregado <span data-c="3">0</span></h5></div>
+      <div class="lane"><h5>Facturado <span data-c="4">0</span></h5></div>
+    </div>
+    <div class="simbar"><button class="sbtn on" id="opNew">Nuevo pedido</button><span class="foot" style="margin-top:0;align-self:center">Cada tarjeta avanza sola. Nadie vuelve a escribir el pedido.</span></div>
+  </section>
+
+  <!-- 9 antes y después -->
+  <section class="slide" data-t="Un caso real: antes y después">
+    <div class="kick">Un caso real · empresa de transporte de materiales</div>
+    <h2 style="font-size:40px">Lo que cambia y <span class="grad">lo que no.</span></h2>
+    <p class="lead" style="font-size:18px;margin-top:8px">Una empresa que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Estas son las diferencias en su forma de trabajar.</p>
+    <table class="cmp ba">
+      <tr><th>Tema</th><th>Antes</th><th class="aft">Después, con la plataforma</th></tr>
+      <tr><td>Cada viaje</td><td class="bef">Se capturaba tres o cuatro veces</td><td class="aft">Una foto y una confirmación</td></tr>
+      <tr><td>Estimación y factura</td><td class="bef">Se armaban a mano en Excel</td><td class="aft">Salen listas desde los viajes</td></tr>
+      <tr><td>Cobranza</td><td class="bef">Se revisaba por separado</td><td class="aft">Siempre a la vista</td></tr>
+      <tr><td>Gastos y combustible</td><td class="bef">Todo en una sola cuenta «general»</td><td class="aft">Por camión y por obra</td></tr>
+      <tr><td>Reunión semanal de pagos</td><td class="bef">Varios Excel con el contador</td><td class="aft">Un solo tablero</td></tr>
+      <tr><td>Choferes y WhatsApp</td><td class="bef">Ticket, vale y WhatsApp personal</td><td class="aft">Igual que antes: nadie cambia su forma de trabajar</td></tr>
+    </table>
+  </section>
+
+  <!-- 10 calculadora -->
+  <section class="slide" data-t="Calcule su caso" data-sim="calc">
+    <div class="kick">Simulador 4 · Calcule su caso</div>
+    <h2 style="font-size:40px">¿Cuánto le cuesta hoy <span class="grad">el trabajo manual?</span></h2>
+    <div class="calc">
+      <div class="card">
+        <div class="sl"><label>Personas que copian datos o atienden lo mismo <b id="cPv">3</b></label><input type="range" id="cP" min="1" max="30" value="3"></div>
+        <div class="sl"><label>Horas por semana, por persona, en tareas repetitivas <b id="cHv">10</b></label><input type="range" id="cH" min="1" max="30" value="10"></div>
+        <div class="sl"><label>Costo por hora de esa persona (USD) <b id="cCv">$8</b></label><input type="range" id="cC" min="3" max="60" value="8"></div>
+        <div class="sl"><label>Parte que se automatiza (supuesto que usted ajusta) <b id="cAv">50%</b></label><input type="range" id="cA" min="10" max="80" step="5" value="50"></div>
+      </div>
+      <div class="card res">
+        <span class="n">HORAS QUE SE LIBERAN CADA MES</span>
+        <div class="big grad" id="cHrs">0</div>
+        <div class="row2"><span>Trabajo manual hoy, por mes</span><b id="cMan">$0</b></div>
+        <div class="row2"><span>Valor de las horas liberadas, por mes</span><b id="cVal">$0</b></div>
+        <div class="row2"><span>Suscripción mensual</span><b>$397</b></div>
+        <div class="row2"><span>Diferencia mensual</span><b id="cDif">$0</b></div>
+        <p class="foot" style="margin-top:8px">Calculado con sus propios datos. El porcentaje es un supuesto; el diagnóstico lo mide con su operación real.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 cómo funciona -->
+  <section class="slide" data-t="Cómo funciona">
+    <div class="kick">Cómo funciona</div>
+    <h2>Una solicitud, <span class="grad">un solo resultado.</span></h2>
+    <div class="row flow" style="margin-top:6px">
+      <svg id="flowL" viewBox="0 0 1150 330" aria-hidden="true">
+        <defs><linearGradient id="gF" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="p1" class="path" d="M200 165 H360"/>
+        <path id="p2a" class="path" d="M540 165 C600 165 600 70 680 70"/><path id="p2b" class="path" d="M540 165 H680"/><path id="p2c" class="path" d="M540 165 C600 165 600 260 680 260"/>
+        <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
+        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">WhatsApp · Excel · CRM</text>
+        <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Voz</text>
+        <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Contabilidad</text>
+        <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Operación</text>
+        <rect class="box" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Resultado</text><text class="sub" x="1047" y="183" text-anchor="middle">de vuelta en su sistema</text>
+        <circle r="7" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2a"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2b"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2c"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3a"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3b"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3c"/></animateMotion></circle>
+      </svg>
+      <svg id="flowV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gF2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="v1" class="path" d="M310 120 V230"/>
+        <path id="v2a" class="path" d="M310 350 C310 400 110 400 110 450"/><path id="v2b" class="path" d="M310 350 V450"/><path id="v2c" class="path" d="M310 350 C310 400 510 400 510 450"/>
+        <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
+        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">WhatsApp · Excel · CRM</text>
+        <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Voz</text>
+        <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Contabilidad</text>
+        <rect class="box" x="430" y="450" width="160" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:19px">Operación</text>
+        <rect class="box" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Resultado</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">de vuelta en su sistema</text>
+        <circle r="8" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#v1"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2a"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2b"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2c"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3a"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3b"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3c"/></animateMotion></circle>
+      </svg>
+    </div>
+    <p class="lead" style="margin-top:4px">Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo. Usted no contrata ninguno por separado.</p>
+  </section>
+
+  <!-- 12 comparación -->
+  <section class="slide" data-t="Frente a hacerlo a mano">
+    <div class="kick">La diferencia</div>
+    <h2>Económico, <span class="grad">pero muy eficiente.</span></h2>
+    <table class="cmp">
+      <tr><th>Aspecto</th><th>Hacerlo a mano o contratar</th><th class="us">Digit2AI MCP</th></tr>
+      <tr><td>Horario</td><td class="them">Horario de oficina</td><td class="us">Veinticuatro horas, todos los días</td></tr>
+      <tr><td>Cuando crece el volumen</td><td class="them">Hay que contratar y capacitar</td><td class="us">El mismo sistema atiende más</td></tr>
+      <tr><td>Captura de datos</td><td class="them">El mismo dato, varias veces</td><td class="us">Una sola vez</td></tr>
+      <tr><td>Errores de copia</td><td class="them">Frecuentes</td><td class="us">Cada dato con su fuente</td></tr>
+      <tr><td>Sus sistemas actuales</td><td class="them">Se quedan igual</td><td class="us">Se quedan igual, ahora conectados</td></tr>
+      <tr><td>Costo</td><td class="them">Un salario por persona</td><td class="us">Desde $397 USD al mes</td></tr>
+      <tr><td>Tiempo para empezar</td><td class="them">Semanas de reclutamiento</td><td class="us">Prueba en máximo cuatro semanas</td></tr>
+    </table>
+  </section>
+
+  <!-- 13 control -->
+  <section class="slide" data-t="Usted mantiene el control">
+    <div class="kick">Seguridad y control</div>
+    <h2>Automatiza el trabajo. <span class="grad">Usted sigue decidiendo.</span></h2>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card stag d1"><span class="n">SUS DATOS</span><h3>Son suyos</h3><p>Cada empresa ve solo su propia información. Nada se comparte.</p></div>
+      <div class="card stag d2"><span class="n">APROBACIÓN</span><h3>Humana</h3><p>Pagar, enviar o publicar siempre espera la aprobación de una persona.</p></div>
+      <div class="card stag d3"><span class="n">REGISTRO</span><h3>Completo</h3><p>Cada acción queda registrada: qué se hizo, cuándo y por qué.</p></div>
+      <div class="card stag d4"><span class="n">CIFRAS</span><h3>Nunca inventadas</h3><p>Si un dato no existe, el sistema lo dice. No lo adivina.</p></div>
+    </div>
+  </section>
+
+  <!-- 14 cómo empezar -->
+  <section class="slide" data-t="Cómo empezar">
+    <div class="kick">Cómo empezar</div>
+    <h2>Paso a paso: <span class="grad">máximo cuatro semanas.</span></h2>
+    <div class="steps">
+      <div class="step stag d1"><div class="dot">1</div><div><h3>Diagnóstico</h3><p>Vemos cómo trabaja hoy y dónde se pierden más horas.</p></div></div>
+      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer proceso</h3><p>Elegimos uno de bajo riesgo y alto valor: llamadas, facturas o pedidos.</p></div></div>
+      <div class="step stag d3"><div class="dot">3</div><div><h3>Conexión</h3><p>Conectamos el cerebro a sus herramientas, como un USB.</p></div></div>
+      <div class="step stag d4"><div class="dot">4</div><div><h3>Resultados medidos</h3><p>Medimos con datos reales antes de automatizar el siguiente proceso.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 15 inversión -->
+  <section class="slide" data-t="Inversión">
+    <div class="kick">Inversión</div>
+    <h2>Se contrata <span class="grad">como un servicio.</span></h2>
+    <div class="price">
+      <div class="card stag d1"><span class="n">CONFIGURACIÓN INICIAL</span><div class="amt">$700<small>USD · pago único</small></div><ul><li>Creación de la instancia de su empresa</li><li>Conexión del cerebro a sus herramientas</li></ul></div>
+      <div class="card stag d2"><span class="n">SUSCRIPCIÓN MENSUAL</span><div class="amt">$397<small>USD / mes</small></div><ul><li>Soluciones estándar incluidas</li><li>Consumo estándar de inteligencia artificial incluido</li><li>Nuevos agentes cada trimestre</li></ul></div>
+    </div>
+    <p class="foot">Los desarrollos a la medida de su negocio se cotizan aparte: antes de empezar usted ve las horas y el costo, y nada se cobra sin su aprobación.</p>
+  </section>
+
+  <!-- 16 cierre -->
+  <section class="slide cover" data-t="El futuro" id="lastSlide">
+    <canvas class="d2stars" id="d2stars" aria-hidden="true"></canvas>
+    <div class="row">
+      <div class="col grow">
+        <img class="hlogo stag d1" src="../mcp/logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
+        <h1 class="stag d2">Este es el futuro: <span class="grad">negocios que se automatizan para crecer.</span></h1>
+        <p class="lead stag d3">Conecte su empresa y empiece a ahorrar horas desde la primera semana. Cualquier empresa puede hacerlo.</p>
+        <span class="cta stag d4">digit2ai.com/mcp</span>
+      </div>
+      <div class="col" style="align-items:center"><div class="orbx" aria-hidden="true">
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+      </div>
+</div>
+    </div>
+  </section>
+
+</div></div>
+
+<div id="prog"></div>
+<div class="dock">
+  <div class="orb" id="orb" aria-hidden="true"></div>
+  <div class="cap"><div id="capT">Lina</div><div id="capX">Pulse reproducir para escuchar a Lina.</div></div>
+  <button id="prev" aria-label="Lámina anterior">‹</button>
+  <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
+  <button id="next" aria-label="Lámina siguiente">›</button>
+  <span id="cnt">1 / 16</span>
+</div>
+
+<div class="gate" id="gate"><div class="box">
+  <div class="orbbig"></div>
+  <h1>Automatización de Negocios</h1>
+  <p>Lina le explica, en unos minutos, cómo su empresa puede automatizar llamadas, contabilidad y operación conectando las herramientas que ya usa.</p>
+  <button id="start">Escuchar a Lina</button>
+  <button id="silent">Ver sin audio</button>
+</div></div>
+
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  function wantVert(){ return q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
+  function applyMode(){
+    var v = wantVert();
+    document.body.classList.toggle('vert', v);
+    document.getElementById('flowL').style.display = v ? 'none' : '';
+    document.getElementById('flowV').style.display = v ? '' : 'none';
+    document.getElementById('usbL').style.display = v ? 'none' : '';
+    document.getElementById('usbV').style.display = v ? '' : 'none';
+  }
+
+  // Un texto por lámina. Cifras en palabras para que la voz las lea bien.
+  var NARR = [
+    'Hola, soy Lina, de Digit2AI. En unos minutos le voy a mostrar cómo cualquier empresa puede automatizar su atención al cliente, su contabilidad y su operación, sin cambiar las herramientas que ya usa. Imagínelo como una memoria USB: se conecta, y su negocio gana una capacidad nueva. Es económico, y trabaja las veinticuatro horas.',
+    'Su negocio ya funciona. Los pedidos llegan por WhatsApp, las cuentas viven en Excel, los clientes en un CRM y los proyectos en Microsoft Project. El problema es que mucho se hace a mano: el mismo dato se escribe tres veces, en el chat, en la hoja de cálculo y en la factura. Y crecer, hasta hoy, significaba contratar a más personas.',
+    'Digit2AI MCP se conecta como un USB. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su WhatsApp, su Excel, su CRM y su contabilidad a un equipo de inteligencia artificial. No se reemplaza nada, y su equipo sigue trabajando igual.',
+    'Funciona con lo que ya usa, desde una hoja de Excel hasta un ERP completo. Herramientas del día a día, como WhatsApp Business, Excel, Google Sheets, Access, Microsoft Project, Outlook y Gmail. CRM, como HubSpot, Salesforce, Zoho, Pipedrive, GoHighLevel y Monday. Y contabilidad o ERP, como QuickBooks, Xero, Siigo, Alegra, Odoo, SAP Business One, Dynamics 365 Business Central, CONTPAQi y Aspel. Si el programa tiene API, se conecta directo. Si no, se instala un agente ligero en su equipo.',
+    'Hay tres áreas que hoy cuestan horas y que pueden trabajar solas. Primero, el servicio al cliente por voz: un asistente que atiende llamadas y mensajes las veinticuatro horas, en español y en inglés. Segundo, la contabilidad automática: lee facturas, las captura, concilia el banco y le avisa de lo que vence. Y tercero, la operación: un pedido que llega por WhatsApp se registra, se asigna y se factura, sin volver a escribirlo. Veamos cada una en un simulador.',
+    'Este es el simulador del asistente de voz. Un cliente llama para agendar una cita, para preguntar por su pedido, o a las once de la noche, cuando su oficina ya cerró. El asistente responde, agenda, consulta el pedido en su sistema y deja todo registrado. Cuando el caso necesita a una persona, avisa a su equipo. Puede tocar los botones para ver cada situación.',
+    'Este es el simulador de contabilidad automática. Llega una factura. El sistema la lee, señala cada dato, el proveedor, la fecha, el concepto y el total, y la registra en su libro contable con la cuenta correcta. Después busca el pago en el banco y la marca como conciliada. Nadie tuvo que capturarla a mano. Usted solo revisa y aprueba.',
+    'Y este es el simulador de operación. Un cliente pide por WhatsApp. El pedido se registra solo, se asigna a la persona o al vehículo disponible, se marca como entregado y se factura. Cada tarjeta avanza sin que nadie vuelva a escribir el pedido. Pulse nuevo pedido para ver cómo fluye.',
+    'Este es un caso real, de una empresa de transporte de materiales que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Antes, cada viaje se capturaba tres o cuatro veces, y la estimación y la factura se armaban a mano. Con la plataforma, cada viaje es una foto y una confirmación, y la factura sale lista desde los viajes. La cobranza siempre está a la vista, los gastos se ven por camión y por obra, y la reunión semanal de pagos usa un solo tablero. Y lo más importante: los choferes siguen trabajando igual.',
+    'Ahora calcule su propio caso. Mueva las barras: cuántas personas copian datos o atienden lo mismo, cuántas horas por semana y cuánto cuesta cada hora. El simulador le muestra cuánto le cuesta hoy el trabajo manual y cuántas horas se liberan cada mes. El porcentaje que se automatiza es un supuesto que usted ajusta. En el diagnóstico lo medimos con su operación real.',
+    'Así funciona por dentro. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agente la atiende: voz, contabilidad u operación. Y el resultado vuelve a su sistema. Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo, y usted no contrata ninguno por separado.',
+    'La diferencia es clara. Hacerlo a mano, o contratar, significa horario de oficina, capacitar a cada persona y escribir el mismo dato varias veces. Con Digit2AI MCP, su empresa atiende las veinticuatro horas, el mismo sistema atiende más volumen cuando usted crece, cada dato se captura una sola vez, y el costo empieza en trescientos noventa y siete dólares al mes. Económico, pero muy eficiente.',
+    'Y usted mantiene el control. Sus datos son suyos, y cada empresa ve solo su propia información. Pagar, enviar o publicar siempre espera la aprobación de una persona. Cada acción queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.',
+    'Se empieza paso a paso, en máximo cuatro semanas. Primero, un diagnóstico de dónde se pierden más horas. Segundo, elegimos un primer proceso de bajo riesgo y alto valor, como las llamadas, las facturas o los pedidos. Tercero, conectamos el cerebro a sus herramientas, como un USB. Y cuarto, medimos con datos reales antes de automatizar el siguiente proceso.',
+    'Se contrata como un servicio. Un pago único de configuración de setecientos dólares, para crear la instancia de su empresa y conectar sus herramientas. Y una suscripción mensual de trescientos noventa y siete dólares, con las soluciones estándar y el consumo estándar de inteligencia artificial incluidos. Lo que se construya a la medida de su negocio se cotiza aparte, y antes de empezar usted ve las horas y el costo.',
+    'Este es el futuro: negocios que se automatizan para crecer sin parar. Cualquier empresa puede hacerlo, y puede empezar a ahorrar horas desde la primera semana. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
+  ];
+
+  /* ── simuladores ─────────────────────────────────────────────────── */
+  var simTimers = [];
+  function later(fn, ms){ simTimers.push(setTimeout(fn, ms)); }
+  function stopSims(){ simTimers.forEach(clearTimeout); simTimers = []; }
+  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function money(n){ return '$' + Math.round(n).toLocaleString('es-MX'); }
+
+  // 1. voz
+  var VOZ = [
+    { when:'Llamada entrante · 10:14 a. m.', lines:[
+      ['ai','Buenos días, gracias por llamar. ¿En qué le puedo ayudar?'],
+      ['cl','Quiero una cita para el jueves en la mañana.'],
+      ['ai','Tengo el jueves a las 9:00 o a las 11:30. ¿Cuál le acomoda?'],
+      ['cl','A las 11:30, por favor.'],
+      ['ai','Listo: jueves a las 11:30. Le envío la confirmación por WhatsApp.'],
+      ['sys','CITA REGISTRADA EN SU CALENDARIO']],
+      out:[['Cita','Jueves 11:30'],['Calendario','Actualizado'],['Confirmación','Enviada por WhatsApp']] },
+    { when:'Mensaje de WhatsApp · 4:52 p. m.', lines:[
+      ['cl','Hola, ¿ya salió mi pedido 1048?'],
+      ['ai','Déjeme revisar. Su pedido 1048 salió hoy a las 3:10 p. m.'],
+      ['ai','La entrega está programada para mañana antes de las 2:00 p. m.'],
+      ['cl','Perfecto, gracias.'],
+      ['sys','CONSULTA RESUELTA DESDE SU SISTEMA DE PEDIDOS']],
+      out:[['Pedido','1048 · en camino'],['Fuente','Su sistema de pedidos'],['Persona necesaria','No']] },
+    { when:'Llamada entrante · 11:07 p. m.', lines:[
+      ['ai','Buenas noches. Nuestra oficina ya cerró, pero yo le puedo ayudar.'],
+      ['cl','Necesito una cotización urgente para mañana.'],
+      ['ai','Con gusto. ¿Me dice qué necesita y para cuándo?'],
+      ['cl','Veinte piezas, para el viernes.'],
+      ['ai','Anotado. Un asesor le llama mañana a primera hora con la cotización.'],
+      ['sys','AVISO ENVIADO A SU EQUIPO DE VENTAS']],
+      out:[['Prospecto','Registrado en su CRM'],['Seguimiento','Mañana, 8:00 a. m.'],['Llamada perdida','Ninguna']] }
+  ];
+  function runVoz(k){
+    stopSims();
+    var s = VOZ[k], chat = document.getElementById('vzChat'), out = document.getElementById('vzOut');
+    [].slice.call(document.querySelectorAll('#vzBtns .sbtn')).forEach(function(b){ b.classList.toggle('on', +b.getAttribute('data-vz') === k); });
+    chat.innerHTML = ''; out.innerHTML = '';
+    document.getElementById('vzWhen').textContent = s.when;
+    s.lines.forEach(function(l, j){ later(function(){ chat.appendChild(el('div', 'msg ' + l[0], l[1])); while (chat.children.length > 7) chat.removeChild(chat.firstChild); }, 500 + j * 1500); });
+    s.out.forEach(function(o, j){ later(function(){ var d = el('div', 'out' + (j === s.out.length - 1 ? ' ok' : '')); d.appendChild(el('span', null, o[0])); d.appendChild(el('b', null, o[1])); out.appendChild(d); }, 500 + s.lines.length * 1500 + j * 400); });
+    later(function(){ runVoz((k + 1) % VOZ.length); }, 500 + s.lines.length * 1500 + 4500);
+  }
+  document.getElementById('vzBtns').addEventListener('click', function(e){ var b = e.target.closest('[data-vz]'); if (b) runVoz(+b.getAttribute('data-vz')); });
+
+  // 2. contabilidad
+  var INV = [
+    { p:'Papelería del Centro', f:'03/11', c:'Material de oficina', s:1250, cta:'Gastos de oficina' },
+    { p:'Gasolinera Norte', f:'04/11', c:'Combustible', s:3480, cta:'Combustible' },
+    { p:'Servicios de Internet', f:'05/11', c:'Internet mensual', s:899, cta:'Servicios' },
+    { p:'Refacciones Express', f:'06/11', c:'Llantas y refacciones', s:6720, cta:'Mantenimiento' }
+  ];
+  var ctK = 0, ctN = 0, ctC = 0;
+  function runConta(){
+    stopSims();
+    var v = INV[ctK % INV.length]; ctK++;
+    var iva = v.s * 0.16, tot = v.s + iva, inv = document.getElementById('ctInv');
+    document.getElementById('ctProv').textContent = v.p;
+    document.getElementById('ctFecha').textContent = v.f;
+    document.getElementById('ctConc').textContent = v.c;
+    document.getElementById('ctSub').textContent = money(v.s);
+    document.getElementById('ctIva').textContent = money(iva);
+    document.getElementById('ctTot').textContent = money(tot);
+    inv.classList.remove('scanning'); void inv.offsetWidth; inv.classList.add('scanning');
+    var rows = [].slice.call(inv.querySelectorAll('.r'));
+    rows.forEach(function(r){ r.classList.remove('hi'); });
+    rows.forEach(function(r, j){ later(function(){ r.classList.add('hi'); }, 400 + j * 350); });
+    var tb = document.getElementById('ctRows'), tr;
+    later(function(){
+      tr = el('tr', 'new', '<td>' + v.f + '</td><td>' + v.p + '</td><td>' + v.cta + '</td><td>' + money(tot) + '</td><td><span class="st wait">Buscando</span></td>');
+      tb.insertBefore(tr, tb.firstChild); while (tb.children.length > 5) tb.removeChild(tb.lastChild);
+      document.getElementById('ctN').textContent = ++ctN;
+    }, 2400);
+    later(function(){ if (tr) tr.lastChild.innerHTML = '<span class="st ok">Conciliada</span>'; document.getElementById('ctC').textContent = ++ctC; }, 3800);
+    later(runConta, 6200);
+  }
+  document.getElementById('ctNext').onclick = runConta;
+
+  // 3. operaciones
+  var CLI = ['Constructora Ríos','Ferretería López','Restaurante El Patio','Clínica San José','Taller Martínez','Hotel Plaza','Distribuidora Sol'];
+  var ITEM = ['20 sacos de cemento','3 viajes de arena','Pedido semanal','Insumos de limpieza','Refacciones','Mantenimiento','10 cajas de producto'];
+  var ASIG = ['Unidad 04','Unidad 07','Ana · ruta norte','Luis · ruta sur','Unidad 02'];
+  var opN = 0, opCards = [];
+  function laneEls(){ return [].slice.call(document.querySelectorAll('#opBoard .lane')); }
+  function opCount(){ var L = laneEls(); L.forEach(function(l, j){ l.querySelector('[data-c]').textContent = l.querySelectorAll('.tk').length; }); }
+  function opPlace(c){
+    var L = laneEls(); if (c.el && c.el.parentNode) c.el.parentNode.removeChild(c.el);
+    var sub = ['Por WhatsApp','Pedido #' + (1040 + c.id),c.asig,'Confirmado con foto','Factura emitida'][c.st];
+    c.el = el('div', 'tk', '<b>' + c.cli + '</b><small>' + c.item + ' · ' + sub + '</small>');
+    if (c.st === 4) c.el.style.borderLeftColor = '#34d399';
+    var lane = L[c.st], tks = lane.querySelectorAll('.tk'); if (tks.length >= 3) lane.removeChild(tks[0]);
+    lane.appendChild(c.el); opCount();
+  }
+  function opNew(){
+    var c = { id: opN, cli: CLI[opN % CLI.length], item: ITEM[opN % ITEM.length], asig: ASIG[opN % ASIG.length], st: 0 }; opN++;
+    opPlace(c);
+    for (var s = 1; s <= 4; s++) (function(s){ later(function(){ if (!c.el || !document.body.contains(c.el)) return; c.st = s; opPlace(c); }, s * 1500); })(s);
+  }
+  function runOps(){
+    stopSims();
+    laneEls().forEach(function(l){ [].slice.call(l.querySelectorAll('.tk')).forEach(function(t){ t.remove(); }); }); opCount();
+    (function loop(){ opNew(); later(loop, 2600); })();
+  }
+  document.getElementById('opNew').onclick = opNew;
+
+  // 4. calculadora: solo aritmética con los datos que el usuario mueve.
+  function calc(){
+    var p = +document.getElementById('cP').value, h = +document.getElementById('cH').value,
+        c = +document.getElementById('cC').value, a = +document.getElementById('cA').value / 100;
+    document.getElementById('cPv').textContent = p;
+    document.getElementById('cHv').textContent = h;
+    document.getElementById('cCv').textContent = '$' + c;
+    document.getElementById('cAv').textContent = Math.round(a * 100) + '%';
+    var hrsMes = p * h * 52 / 12, man = hrsMes * c, lib = hrsMes * a, val = lib * c, dif = val - 397;
+    document.getElementById('cHrs').textContent = Math.round(lib).toLocaleString('es-MX') + ' h';
+    document.getElementById('cMan').textContent = money(man);
+    document.getElementById('cVal').textContent = money(val);
+    var d = document.getElementById('cDif'); d.textContent = (dif >= 0 ? '+' : '−') + money(Math.abs(dif)); d.style.color = dif >= 0 ? 'var(--ok)' : 'var(--warn)';
+  }
+  ['cP','cH','cC','cA'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
+  calc();
+
+  var SIMS = { voz: function(){ runVoz(0); }, conta: function(){ ctK = 0; ctN = 0; ctC = 0; document.getElementById('ctRows').innerHTML = ''; document.getElementById('ctN').textContent = 0; document.getElementById('ctC').textContent = 0; runConta(); }, ops: runOps, calc: calc };
+
+  /* ── reproductor (igual que el mazo de MCP) ─────────────────────── */
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '▶︎';
+
+  function fit(){
+    applyMode();
+    var W = document.body.classList.contains('vert') ? 720 : 1280, H = document.body.classList.contains('vert') ? 1280 : 720;
+    var s = Math.min(window.innerWidth / W, (window.innerHeight - 72) / H) * 0.97;
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){
+    if (t !== token) return;
+    // En los simuladores se deja tiempo extra para mirar antes de avanzar.
+    var extra = slides[i].getAttribute('data-sim') ? 6000 : 0;
+    timer = setTimeout(function(){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }, extra);
+  }
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ orb.classList.remove('sp'); advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t !== token || !audio || !audio.duration) return;
+        capAt(audio.currentTime / audio.duration);
+        prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll(); stopSims();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Lina · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    var sim = slides[i].getAttribute('data-sim'); if (sim && SIMS[sim]) SIMS[sim]();
+    if (slides[i].id === 'lastSlide') stars();
+    narrate();
+  }
+
+  var starsOn = false;
+  function stars(){
+    var c = document.getElementById('d2stars'); if (!c || !c.getContext || starsOn) return;
+    starsOn = true;
+    var ctx = c.getContext('2d'), pts = [];
+    var COLORS = ['rgba(140,165,255,','rgba(230,73,128,','rgba(255,146,43,','rgba(190,205,255,'];
+    var W = c.width = (document.body.classList.contains('vert') ? 720 : 1280) * 2;
+    var H = c.height = (document.body.classList.contains('vert') ? 1280 : 720) * 2;
+    for (var k = 0; k < 90; k++) pts.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.5, vy: (Math.random()-.5)*.5, r: Math.random()*3.2+1.2, c: COLORS[k % 4] });
+    (function frame(){
+      if (!slides[i] || slides[i].id !== 'lastSlide') { starsOn = false; return; }
+      ctx.clearRect(0, 0, W, H);
+      for (var a = 0; a < pts.length; a++){
+        var p = pts[a]; p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1;
+        for (var b = a + 1; b < pts.length; b++){
+          var qq = pts[b], dx = p.x - qq.x, dy = p.y - qq.y, d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 260){ ctx.strokeStyle = 'rgba(150,170,255,' + ((1 - d/260) * .18) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(qq.x, qq.y); ctx.stroke(); }
+        }
+      }
+      for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + '0.8)'; ctx.fill(); }
+      requestAnimationFrame(frame);
+    })();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio && !audio.ended) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  var x0 = null;
+  document.addEventListener('touchstart', function(e){ x0 = (e.target.closest && e.target.closest('input')) ? null : e.touches[0].clientX; }, { passive:true });
+  document.addEventListener('touchend', function(e){
+    if (x0 === null || !gate.classList.contains('off')) return;
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+  }, { passive:true });
+  slides[0].classList.add('on');
+  window.addEventListener('beforeunload', stopAll);
+  window.PYMESDECK = { show: show, count: slides.length, narr: NARR };
+})();
+</script>
+</body>
+</html>
