@@ -78,7 +78,7 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(r.source === 'model' && /Carlos/.test(r.reply), 'model reply');
   const sys = seen[seen.length - 1].system;
   ok(/CONOCIMIENTO/.test(sys) && /685/.test(sys) && /388/.test(sys) && /245/.test(sys), 'base knowledge in prompt');
-  ok(/Hypercare/.test(sys) && /Stripe y PayPal/.test(sys), 'FAQ in prompt');
+  ok(/Hypercare/.test(sys) && /Stripe o PayPal/.test(sys), 'core facts in prompt');
   ok(/ENTRENAMIENTO DEL DUEÑO/.test(sys) && /SENIAT/.test(sys), 'owner training in prompt');
   ok(/Tus ÚNICAS fuentes son el CONOCIMIENTO/.test(sys), 'rules allow knowledge');
 
