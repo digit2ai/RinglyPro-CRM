@@ -20,8 +20,9 @@
  * the owner's Google Calendar included), so a meeting Lina books can never
  * land on one booked from the /mcp checkout, and vice versa.
  *
- * NOTHING IS SENT. The meeting appears in the Projects calendar (workspace 1);
- * no email or text goes to the visitor from here.
+ * A CONFIRMATION EMAIL GOES OUT AFTER THE COMMIT (services/synthexNotify.js, SendGrid,
+ * Synthex SAI branding) to the visitor, plus an alert to the owner. The meeting
+ * appears in the Projects calendar (workspace 1). /public/* serves the demo form.
  */
 
 const express = require('express');
@@ -187,19 +188,11 @@ function validate(b) {
   return { nombre, email, telefono, empresa, tema, errores };
 }
 
-router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res) => {
-  const b = req.body || {};
-  const v = validate(b);
-  if (v.errores.length) {
-    return res.json({
-      booked: false,
-      error: 'datos incompletos o inválidos: ' + v.errores.join(', '),
-      nota: 'Pide de nuevo SOLO esos datos y confírmalos con la persona antes de reintentar.'
-    });
-  }
-  const start = new Date(String(b.start || ''));
-  if (isNaN(start.getTime())) return res.json({ booked: false, error: 'horario inválido: consulta horarios_disponibles y usa un start exacto' });
-
+// One booking path for Lina and for the demo form. Returns the tool-shaped result
+// the model reads; the page reads the same object.
+async function bookMeeting(v, startRaw, lang, origen, tz) {
+  const start = new Date(String(startRaw || ''));
+  if (isNaN(start.getTime())) return { booked: false, error: 'horario inválido: consulta horarios_disponibles y usa un start exacto' };
   const marker = 'synthex_lina:' + crypto.createHash('sha256').update(v.email).digest('hex').slice(0, 16);
   const t = await db().transaction();
   try {
@@ -213,7 +206,7 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
     if (prior.length) {
       await t.commit();
       const iso = new Date(prior[0].start_time).toISOString();
-      return res.json({ booked: true, already: true, start: iso, texto: label(iso, b.lang === 'en' ? 'en' : 'es') });
+      return { booked: true, already: true, start: iso, texto: label(iso, lang) };
     }
 
     const today = await db().query(
@@ -222,18 +215,20 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
       { type: QueryTypes.SELECT, transaction: t, logging: false });
     if ((today[0] && today[0].n) >= PER_DAY) {
       await t.rollback();
-      return res.json({ booked: false, error: 'límite diario de reuniones alcanzado', nota: 'Ofrece que el equipo lo contacte por correo.' });
+      return { booked: false, error: 'límite diario de reuniones alcanzado', nota: 'Ofrece que el equipo lo contacte por correo.' };
     }
 
     const free = await booking().freeSlots(t);
     if (!free.some((s) => s.getTime() === start.getTime())) {
       await t.rollback();
-      return res.json({ booked: false, error: 'ese horario ya no está libre', nota: 'Consulta horarios_disponibles otra vez y ofrece otras opciones.' });
+      return { booked: false, error: 'ese horario ya no está libre', nota: 'Consulta horarios_disponibles otra vez y ofrece otras opciones.' };
     }
 
     const end = new Date(start.getTime() + booking().BOOK_MIN * 60000);
     const description = [
-      'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).',
+      origen === 'lina'
+        ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
+        : 'Reunión con los agentes especializados de Synthex SAI, agendada desde el formulario «Agendar demostración» de synthexsai.com.',
       `Nombre: ${v.nombre}`,
       v.empresa ? `Empresa: ${v.empresa}` : null,
       `Correo: ${v.email}`,
@@ -246,16 +241,71 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
          (workspace_id, project_id, title, description, event_type, start_time, end_time, all_day, language, created_at, updated_at)
        VALUES (1, NULL, :title, :description, 'meeting', :s, :e, false, :lang, NOW(), NOW())`,
       { replacements: { title: `Synthex SAI: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
-          description, s: start.toISOString(), e: end.toISOString(), lang: b.lang === 'en' ? 'en' : 'es' },
+          description, s: start.toISOString(), e: end.toISOString(), lang },
         transaction: t, logging: false });
     await t.commit();
     const iso = start.toISOString();
-    res.json({ booked: true, start: iso, texto: label(iso, b.lang === 'en' ? 'en' : 'es'), zona_horaria: LABEL_TZ });
+    // The confirmation goes out after the commit: a mail hiccup never undoes a booking.
+    const mail = await require('../services/synthexNotify').bookingConfirmed({
+      ...v, start: iso, lang, tz, origen, minutes: booking().BOOK_MIN
+    }).catch((e) => ({ sent: false, reason: e.message }));
+    return { booked: true, start: iso, texto: label(iso, lang), zona_horaria: LABEL_TZ, correo_enviado: !!mail.sent };
   } catch (e) {
     try { await t.rollback(); } catch (_) {}
     console.error('[synthex-lina] book error:', e.message);
-    res.json({ booked: false, error: 'no se pudo guardar la reunión' });
+    return { booked: false, error: 'no se pudo guardar la reunión' };
   }
+}
+
+router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res) => {
+  const b = req.body || {};
+  const v = validate(b);
+  if (v.errores.length) {
+    return res.json({
+      booked: false,
+      error: 'datos incompletos o inválidos: ' + v.errores.join(', '),
+      nota: 'Pide de nuevo SOLO esos datos y confírmalos con la persona antes de reintentar.'
+    });
+  }
+  res.json(await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'lina', null));
+});
+
+// ── the demo form on synthexsai.com (public) ───────────────────────────────
+// The visitor picks one of the free times shown and clicks: that click IS the
+// confirmation. Public, so: a per-IP ceiling, the daily cap, one upcoming meeting
+// per email, and the same validation as Lina's tool. The email it sends has fixed
+// wording; the visitor's own text only appears escaped (their name).
+const hits = new Map();
+function limited(key, max) {
+  const now = Date.now();
+  const arr = (hits.get(key) || []).filter((x) => now - x < 3600000);
+  if (arr.length >= max) { hits.set(key, arr); return true; }
+  arr.push(now); hits.set(key, arr);
+  if (hits.size > 5000) for (const [k, a] of hits) if (!a.some((x) => now - x < 3600000)) hits.delete(k);
+  return false;
+}
+const ipOf = (req) => String(req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
+
+router.get('/public/slots', async (req, res) => {
+  if (limited('slots:' + ipOf(req), 60)) return res.status(429).json({ ok: false, error: 'too_many_requests' });
+  try {
+    const free = await booking().freeSlots();
+    const days = booking().threeByThree(free, ipOf(req) + new Date().toISOString().slice(0, 10));
+    res.json({ ok: true, minutes: booking().BOOK_MIN, days });
+  } catch (e) {
+    console.error('[synthex-lina] public slots error:', e.message);
+    res.status(500).json({ ok: false, error: 'slots_failed' });
+  }
+});
+
+router.post('/public/book', express.json({ limit: '4kb' }), async (req, res) => {
+  if (limited('book:' + ipOf(req), 5)) return res.status(429).json({ booked: false, error: 'too_many_requests' });
+  const b = req.body || {};
+  const v = validate({ ...b, confirmado: true });
+  if (v.errores.length) return res.status(400).json({ booked: false, error: 'invalid', fields: v.errores });
+  const tz = /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(String(b.tz || '')) ? String(b.tz).slice(0, 64) : null;
+  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz);
+  res.status(r.booked ? 200 : (/libre/.test(r.error || '') ? 409 : 400)).json({ booked: r.booked, already: !!r.already, start: r.start, email_sent: !!r.correo_enviado, error: r.booked ? undefined : (/libre/.test(r.error || '') ? 'slot_taken' : 'not_booked') });
 });
 
 // ── training (owner only) ─────────────────────────────────────────────────

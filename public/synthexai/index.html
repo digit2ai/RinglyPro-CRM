@@ -357,6 +357,14 @@ body{background:transparent!important}
 section.alt{background:rgba(14,19,32,.55)}
 html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
 
+/* demo form, step 2: pick a time */
+.slots{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:18px}
+.slots .slot-h{grid-column:1/-1;margin:0;font-family:var(--fd);font-size:20px}
+.slots > .fine{grid-column:1/-1;margin:0}
+.slot-day{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.slot-d{font-weight:700;font-size:15px}
+.slot-b{width:100%;justify-content:center;min-height:44px}
+
 </style>
 </head>
 <body>
@@ -724,6 +732,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       <p class="fine" style="margin:0 0 14px"><span class="es">Al enviar, aceptas que el equipo de Synthex SAI te contacte por correo o teléfono sobre tu solicitud.</span><span class="en">By sending, you agree that the Synthex SAI team may contact you by email or phone about your request.</span></p>
       <button type="submit" class="btn pri" id="sendBtn"><span class="es">Agendar demostración</span><span class="en">Book a demo</span> &rarr;</button>
       <div id="msg" class="msg" role="status" hidden></div>
+      <div id="slotBox" class="slots" hidden></div>
     </form>
   </div>
 </section>
@@ -983,6 +992,55 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   var form = document.getElementById('leadForm'), btn = document.getElementById('sendBtn'), msg = document.getElementById('msg');
   function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
   function show(kind, es, en){ msg.hidden = false; msg.className = 'msg ' + kind; msg.textContent = L() === 'en' ? en : es; }
+  // Paso 2: tres días con horarios libres del calendario de Digit2AI. Al tocar uno se agenda
+  // y SendGrid envía la confirmación con la imagen de Synthex SAI (/api/synthex-lina/public/*).
+  function pickSlot(d){
+    var box = document.getElementById('slotBox');
+    box.hidden = false; box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'Loading available times…' : 'Cargando horarios disponibles…') + '</p>';
+    var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    function fmtDay(iso){ return new Intl.DateTimeFormat(L() === 'en' ? 'en-US' : 'es-VE', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)); }
+    function fmtTime(iso){ return new Intl.DateTimeFormat(L() === 'en' ? 'en-US' : 'es-VE', { hour:'numeric', minute:'2-digit' }).format(new Date(iso)); }
+    fetch('/api/synthex-lina/public/slots').then(function(r){ return r.json(); }).then(function(j){
+      if (!j.ok || !j.days || !j.days.length) { box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'No times are free right now. We will contact you to book.' : 'No hay horarios libres ahora mismo. Te contactaremos para agendar.') + '</p>'; return; }
+      box.innerHTML = '';
+      var h = document.createElement('h3'); h.className = 'slot-h'; h.textContent = L() === 'en' ? 'Choose your demo time' : 'Elige el horario de tu demostración'; box.appendChild(h);
+      var note = document.createElement('p'); note.className = 'fine'; note.textContent = (L() === 'en' ? 'Times in your time zone' : 'Horas en tu zona horaria') + (tz ? ' (' + tz + ')' : '') + ' · ' + j.minutes + ' min'; box.appendChild(note);
+      j.days.forEach(function(day){
+        var col = document.createElement('div'); col.className = 'slot-day';
+        var t = document.createElement('div'); t.className = 'slot-d'; var dn = fmtDay(day.slots[0]); t.textContent = dn.charAt(0).toUpperCase() + dn.slice(1); col.appendChild(t);
+        day.slots.forEach(function(iso){
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'btn slot-b'; b.textContent = fmtTime(iso);
+          b.addEventListener('click', function(){ book(iso, b); });
+          col.appendChild(b);
+        });
+        box.appendChild(col);
+      });
+    }).catch(function(){ box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'Could not load times. We will contact you to book.' : 'No se pudieron cargar los horarios. Te contactaremos para agendar.') + '</p>'; });
+    function book(iso, b){
+      box.querySelectorAll('.slot-b').forEach(function(x){ x.disabled = true; });
+      b.classList.add('pri');
+      fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+        nombre: d.full_name, email: d.email, telefono: d.phone, empresa: d.company_name, tema: (d.problem || '').slice(0, 300), start: iso, lang: L(), tz: tz }) })
+        .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
+        .then(function(x){
+          if (x.j.booked) {
+            var whenTxt = (fmtDay(x.j.start) + ', ' + fmtTime(x.j.start)).replace(/\.$/, '');
+            box.innerHTML = '';
+            var ok = document.createElement('div'); ok.className = 'msg ok';
+            ok.textContent = (L() === 'en'
+              ? (x.j.already ? 'You already have a demo booked: ' : 'Your demo is booked: ') + whenTxt + '.' + (x.j.email_sent ? ' We sent the confirmation to ' + d.email + '.' : '')
+              : (x.j.already ? 'Ya tienes una demostración agendada: ' : 'Tu demostración quedó agendada: ') + whenTxt + '.' + (x.j.email_sent ? ' Te enviamos la confirmación a ' + d.email + '.' : ''));
+            box.appendChild(ok); msg.hidden = true;
+          } else if (x.j.error === 'slot_taken') {
+            show('bad', 'Ese horario se acaba de ocupar. Elige otro.', 'That time was just taken. Please pick another.'); pickSlot(d);
+          } else {
+            box.querySelectorAll('.slot-b').forEach(function(y){ y.disabled = false; }); b.classList.remove('pri');
+            show('bad', 'No se pudo agendar. Revisa tu correo y teléfono, o intenta otro horario.', 'Could not book. Check your email and phone, or try another time.');
+          }
+        })
+        .catch(function(){ box.querySelectorAll('.slot-b').forEach(function(y){ y.disabled = false; }); show('bad', 'No se pudo agendar. Intenta de nuevo.', 'Could not book. Please try again.'); });
+    }
+  }
   form.addEventListener('submit', function(ev){
     ev.preventDefault();
     var d = {}; new FormData(form).forEach(function(v, k){ d[k] = String(v).trim(); });
@@ -1005,7 +1063,9 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       .then(function(x){
         if (!x.ok || !x.j.success) throw new Error('lead_failed');
         form.querySelectorAll('input,textarea,select').forEach(function(el){ el.disabled = true; });
-        show('ok', 'Recibimos tu solicitud. Te contactaremos para agendar la demostración.', 'We received your request. We will contact you to book the demo.');
+        btn.hidden = true;
+        show('ok', 'Recibimos tu solicitud. Ahora elige el día y la hora de tu demostración.', 'We received your request. Now pick the day and time of your demo.');
+        pickSlot(d);
       })
       .catch(function(){ btn.disabled = false; show('bad', 'No se pudo enviar. Intenta de nuevo en un momento.', 'Could not send. Please try again in a moment.'); });
   });

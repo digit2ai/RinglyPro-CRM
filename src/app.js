@@ -437,6 +437,8 @@ const SYNTHEX_PASS_THROUGH = new Set([
   '/embed/voice-orb.js',                        // Lina, the conversational assistant
   '/api/voice-agent/config',                    // her persona boot payload
   '/api/voice-agent/chat',                      // her brain (books meetings via /api/synthex-lina, loopback only)
+  '/api/synthex-lina/public/slots',             // demo form: free times on 3 days
+  '/api/synthex-lina/public/book',              // demo form: book one + Synthex-branded email confirmation
   '/projects/api/v1/intake/public/request'      // "Agendar demostración" form
 ]);
 app.use((req, res, next) => {

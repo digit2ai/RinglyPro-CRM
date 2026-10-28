@@ -52,6 +52,8 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   app.use(express.json());
   app.use('/api/voice-agent', require('../src/routes/voice-agent'));
   app.use('/api/synthex-lina', require('../src/routes/synthex-lina'));
+  const sent = [];
+  require('../src/services/synthexNotify')._test.setSender({ send: async (m) => { sent.push(m); return [{ statusCode: 202 }]; } });
   const srv = http.createServer(app).listen(0);
   process.env.PORT = String(srv.address().port);
   const base = 'http://127.0.0.1:' + process.env.PORT;
@@ -116,10 +118,33 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(/opciones/.test(toolResults[0]) && /texto/.test(toolResults[0]), 'slots reached the model');
   ok(/booked\\":true/.test(toolResults[1]), 'booking result reached the model');
 
+  // Lina's booking sends the branded confirmation + owner alert
+  const conf = sent.find((m) => m.to === 'carlos@ejemplo.com');
+  ok(conf && conf.from.name === 'Synthex SAI' && /confirmada/.test(conf.subject), 'Lina booking emails the client as Synthex SAI');
+  ok(conf && /#0B0F17/.test(conf.html) && /#00F2FE/.test(conf.html) && /Geist/.test(conf.html) && /Synthex <span[^>]*>SAI/.test(conf.html), 'email uses the Synthex theme');
+  ok(conf && conf.attachments && /BEGIN:VCALENDAR/.test(Buffer.from(conf.attachments[0].content, 'base64').toString()), 'calendar invite attached');
+  ok(sent.some((m) => /Nueva reunión Synthex SAI/.test(m.subject)), 'owner alerted');
+
+  // the demo form books publicly (the click is the confirmation)
+  const sl = await (await fetch(base + '/api/synthex-lina/public/slots')).json();
+  ok(sl.ok && sl.days.length && sl.days[0].slots.length, 'public slots');
+  const freeIso = sl.days[0].slots[0];
+  let pb = await post('/api/synthex-lina/public/book', { nombre: 'María Rojas', email: 'maria@ejemplo.com', telefono: '+58 414 555 0000', empresa: 'Distribuidora Rojas', start: freeIso, lang: 'es', tz: 'America/Caracas' });
+  let pj = await pb.json();
+  ok(pb.status === 200 && pj.booked && pj.email_sent, 'form booking works and emails');
+  const mm = sent.find((m) => m.to === 'maria@ejemplo.com');
+  ok(mm && /María/.test(mm.html), 'form confirmation sent to the visitor');
+  ok(!/<b>X/.test(require('../src/services/synthexNotify')._test.html({ nombre: '<b>X</b>', start: freeIso, lang: 'es', minutes: 60 })), 'visitor text is escaped in the email');
+  ok(events.some((e) => /formulario/.test(e.description) && /maria@ejemplo.com/.test(e.description)), 'form meeting in calendar');
+  pb = await post('/api/synthex-lina/public/book', { nombre: 'Pedro Gil', email: 'pedro@ejemplo.com', telefono: '4145550000', start: freeIso, lang: 'es' });
+  ok(pb.status === 409, 'a taken time is refused on the form');
+  pb = await post('/api/synthex-lina/public/book', { nombre: 'Pedro Gil', email: 'nope', telefono: '4145550000', start: freeIso });
+  ok(pb.status === 400, 'bad email refused on the form');
+
   // same email again: no second meeting
   script = [{ content: [{ type: 'tool_use', id: 't3', name: 'agendar_reunion', input: { nombre: 'Carlos Pérez', email: 'CARLOS@ejemplo.com', telefono: '4125551234', start: slotB.toISOString(), confirmado: true } }] }, { content: [{ type: 'text', text: 'Ya tenías una.' }] }];
   await post('/api/voice-agent/chat', { agent: 'synthex', lang: 'es', context: 'p', messages: [{ role: 'user', content: 'otra' }] });
-  ok(events.length === 1 && /already/.test(JSON.stringify(seen[seen.length - 1].messages.slice(-1))), 'one upcoming meeting per email');
+  ok(events.length === 2 && /already/.test(JSON.stringify(seen[seen.length - 1].messages.slice(-1))), 'one upcoming meeting per email');
 
   // validation: no confirmation, bad email, injected name, taken slot
   const { validate } = require('../src/routes/synthex-lina')._test;
@@ -130,7 +155,7 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(validate({ nombre: 'Ana', email: 'a@b.co', telefono: '12', confirmado: true }).errores.includes('telefono'), 'bad phone');
   script = [{ content: [{ type: 'tool_use', id: 't4', name: 'agendar_reunion', input: { nombre: 'Luisa Gómez', email: 'luisa@ejemplo.com', telefono: '4125551234', start: slotA.toISOString(), confirmado: true } }] }, { content: [{ type: 'text', text: 'Esa hora ya no está.' }] }];
   await post('/api/voice-agent/chat', { agent: 'synthex', lang: 'es', context: 'p', messages: [{ role: 'user', content: 'a las diez' }] });
-  ok(events.length === 1 && /ya no está libre/.test(JSON.stringify(seen[seen.length - 1].messages.slice(-1))), 'taken slot refused');
+  ok(events.length === 2 && /ya no está libre/.test(JSON.stringify(seen[seen.length - 1].messages.slice(-1))), 'taken slot refused');
 
   // no model: Lina says so in her own words, not ENRUTA's
   delete process.env.ANTHROPIC_API_KEY;
@@ -156,8 +181,8 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(!/var SEG=/.test(page) && !/niva-panel/.test(page), 'narrator removed');
   ok(/D2AIVoiceOrb\.send\(q\)/.test(page), 'FAQ box goes to Lina');
   const appSrc = require('fs').readFileSync(path.join(__dirname, '../src/app.js'), 'utf8');
-  ok(/'\/api\/voice-agent\/chat'/.test(appSrc) && /'\/embed\/voice-orb\.js'/.test(appSrc), 'synthexsai.com passes Lina through');
-  ok(!/'\/api\/synthex-lina/.test(appSrc.split('SYNTHEX_PASS_THROUGH')[1].split(']);')[0]), 'tools not exposed on the domain');
+  ok(/'\/api\/synthex-lina\/public\/book'/.test(appSrc) && /'\/api\/voice-agent\/chat'/.test(appSrc) && /'\/embed\/voice-orb\.js'/.test(appSrc), 'synthexsai.com passes Lina through');
+  ok(!/'\/api\/synthex-lina\/(book|slots|calc|entrenar)/.test(appSrc.split('SYNTHEX_PASS_THROUGH')[1].split(']);')[0]), 'tools not exposed on the domain');
 
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
