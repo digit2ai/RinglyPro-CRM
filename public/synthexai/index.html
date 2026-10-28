@@ -349,9 +349,52 @@ section,header.hero{scroll-margin-top:64px}
 .ask-mic.on{border-color:#f87171;color:#f87171}
 .ask-row .btn{min-height:48px}
 
+/* Same orb and moving-star background as the last slide of /pymes (owner request 2026-10-28) */
+.niva .orb-wrap::before{content:"";position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.30),rgba(236,72,153,.16) 45%,transparent 70%);filter:blur(10px);pointer-events:none}
+.niva .orb-svg{position:relative;filter:drop-shadow(0 8px 42px rgba(0,242,254,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+body{background:transparent!important}
+#d2stars{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:block}
+section.alt{background:rgba(14,19,32,.55)}
+html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
+
 </style>
 </head>
 <body>
+<canvas id="d2stars" aria-hidden="true"></canvas>
+<script>
+(function(){
+  // Puntos de colores que se mueven y se unen con líneas, como la última lámina de /pymes.
+  var c = document.getElementById('d2stars'); if (!c || !c.getContext) return;
+  var ctx = c.getContext('2d'), pts = [], W = 0, H = 0, R = 1;
+  var COLORS = ['rgba(140,165,255,','rgba(230,73,128,','rgba(255,146,43,','rgba(190,205,255,'];
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size(){
+    R = Math.min(window.devicePixelRatio || 1, 2);
+    W = c.width = Math.round(innerWidth * R); H = c.height = Math.round(innerHeight * R);
+    var n = Math.max(35, Math.min(95, Math.round(innerWidth * innerHeight / 15000)));
+    while (pts.length < n) pts.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.45*R, vy: (Math.random()-.5)*.45*R, r: (Math.random()*2.4+1)*R, c: COLORS[pts.length % 4] });
+    pts.length = n;
+    pts.forEach(function(p){ if (p.x > W) p.x = Math.random()*W; if (p.y > H) p.y = Math.random()*H; });
+  }
+  function draw(){
+    var light = document.documentElement.getAttribute('data-theme') === 'light';
+    var line = light ? 'rgba(79,70,229,' : 'rgba(150,170,255,', lim = 170 * R;
+    ctx.clearRect(0, 0, W, H);
+    for (var a = 0; a < pts.length; a++){
+      var p = pts[a];
+      if (!still) { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1; }
+      for (var b = a + 1; b < pts.length; b++){
+        var q = pts[b], dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
+        if (d < lim){ ctx.strokeStyle = line + ((1 - d/lim) * (light ? .14 : .18)) + ')'; ctx.lineWidth = R; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+      }
+    }
+    for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + (light ? '0.7)' : '0.8)'); ctx.fill(); }
+  }
+  size(); addEventListener('resize', size);
+  if (still) { draw(); new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] }); return; }
+  (function frame(){ draw(); requestAnimationFrame(frame); })();
+})();
+</script>
 
 <nav>
   <div class="wrap">
@@ -756,91 +799,91 @@ section,header.hero{scroll-margin-top:64px}
        aria-describedby="niva-cap">
     <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
     <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <defs>
-        <radialGradient id="orbCore" cx="0.5" cy="0.45">
-          <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
-          <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
-          <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
-          <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
-          <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
-        </radialGradient>
-        <radialGradient id="orbGlow" cx="0.5" cy="0.5">
-          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
-          <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
-          <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
-          <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
-          <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
-          <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
-        </radialGradient>
-        <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#22d3ee"/>
-          <stop offset="0.4" stop-color="#3b82f6"/>
-          <stop offset="0.75" stop-color="#8b5cf6"/>
-          <stop offset="1" stop-color="#ec4899"/>
-        </linearGradient>
-        <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
-          <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
-          <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
-        <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
-      </circle>
-      <g class="orb-ring-outer">
-        <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
-        <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
-        <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
-        <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
-        <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
-      </g>
-      <g class="orb-ring-mid">
-        <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
-        <g fill="#a5f3fc">
-          <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
-          <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
-          <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
-          <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
-        </g>
-      </g>
-      <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
-      <g class="orb-scan">
-        <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-      </g>
-      <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
-      <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
-      <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
-      <g class="orb-particles">
-        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
-        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
-        <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
-        <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
-      </g>
-      <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
-        <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
-      </circle>
-      <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
-      <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
-        <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
-      </circle>
-      <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
-        <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
-      </circle>
-      <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
-        <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
-      </circle>
-      <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
-        <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
-      </ellipse>
-      <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
-        <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
-        <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
-      </g>
-    </svg>
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#00F2FE" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#6366F1" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#00F2FE" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#6366F1" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#00F2FE" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#00F2FE"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#6366F1"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#00F2FE" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#00F2FE" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#00F2FE" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#6366F1" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#00F2FE"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#6366F1" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#00F2FE" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
     <div class="orb-caption" id="niva-cap">
       <span class="orb-cap-idle" id="nivaCapIdle">Toca para hablar con Lina</span>
       <span class="orb-cap-active" id="nivaCapActive">Lina te escucha</span>
