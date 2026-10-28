@@ -6,7 +6,7 @@
  *
  *   GET  /slots    free meeting times (tool, loopback only)
  *   POST /book     books the meeting into the Digit2AI calendar (tool, loopback only)
- *   /entrenar      the owner's training page + API (Basic auth, ARCHITECT_USER/PASSWORD)
+ *   /entrenar      the owner's training page + API (the owner's Projects email and password)
  *
  * THE TOOLS ANSWER ONLY THE VOICE BRAIN. src/routes/voice-agent.js runs a pack's
  * tools by HTTP back to 127.0.0.1, with no proxy header. A request from the
@@ -222,26 +222,47 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
 });
 
 // ── training (owner only) ─────────────────────────────────────────────────
-function safeEq(a, b) {
-  const x = crypto.createHash('sha256').update(String(a)).digest();
-  const y = crypto.createHash('sha256').update(String(b)).digest();
-  return crypto.timingSafeEqual(x, y);
-}
-function ownerOnly(req, res, next) {
-  const U = process.env.ARCHITECT_USER || '', P = process.env.ARCHITECT_PASSWORD || '';
-  if (!U || !P) return res.status(503).type('text').send('Cerrado: falta ARCHITECT_USER / ARCHITECT_PASSWORD en Render.');
+// The owner signs in with the SAME email and password as aiagent.ringlypro.com/projects
+// (the CRM users table, bcrypt), and only emails in SYNTHEX_LINA_OWNER_EMAILS may enter.
+// Basic auth: the browser asks once and remembers it for the tab. Ten failed tries per IP
+// in 15 minutes and the door closes for that IP.
+const OWNERS = () => String(process.env.SYNTHEX_LINA_OWNER_EMAILS || 'mstagg@digit2ai.com')
+  .split(/[,\s]+/).map((e) => e.trim().toLowerCase()).filter(Boolean);
+const failed = new Map();
+let crmLookup = async (email) => {
+  const rows = await require('../config/database').query(
+    'SELECT password_hash FROM users WHERE LOWER(email) = :e LIMIT 1',
+    { replacements: { e: email }, type: QueryTypes.SELECT, logging: false });
+  return rows[0] && rows[0].password_hash;
+};
+const DUMMY = '$2a$12$abcdefghijklmnopqrstuuJcB6W6fK3k0n1i3m3e0YcJ9mL0pQkS.';
+async function ownerOnly(req, res, next) {
+  const ip = String(req.headers['cf-connecting-ip'] || (req.headers['x-forwarded-for'] || '').split(',')[0] || req.ip || '').trim();
+  const now = Date.now();
+  const tries = (failed.get(ip) || []).filter((t) => now - t < 900000);
+  const ask = (code, msg) => {
+    res.set('WWW-Authenticate', 'Basic realm="Entrenar a Lina (usa tu acceso de Projects)", charset="UTF-8"');
+    return res.status(code).type('text').send(msg);
+  };
+  if (tries.length >= 10) return res.status(429).type('text').send('Demasiados intentos. Espera 15 minutos.');
   const h = String(req.headers.authorization || '');
-  let user = '', pass = '';
+  let email = '', pass = '';
   if (h.startsWith('Basic ')) {
     const raw = Buffer.from(h.slice(6), 'base64').toString('utf8');
-    const i = raw.indexOf(':'); user = raw.slice(0, i); pass = raw.slice(i + 1);
+    const k = raw.indexOf(':'); email = raw.slice(0, k).trim().toLowerCase(); pass = raw.slice(k + 1);
   }
-  const okU = safeEq(user.toLowerCase(), U.toLowerCase());
-  const okP = safeEq(pass, P);
-  if (!(okU && okP)) {
-    res.set('WWW-Authenticate', 'Basic realm="Entrenar a Lina", charset="UTF-8"');
-    return res.status(401).type('text').send('Inicia sesión.');
+  if (!email || !pass) return ask(401, 'Inicia sesión con tu correo y contraseña de Projects.');
+  let ok = false;
+  try {
+    const bcrypt = require('bcryptjs');
+    const hash = OWNERS().includes(email) ? await crmLookup(email) : null;
+    ok = await bcrypt.compare(pass, hash || DUMMY) && !!hash;
+  } catch (e) {
+    console.error('[synthex-lina] sign-in check failed:', e.message);
+    return res.status(503).type('text').send('No se pudo comprobar el acceso. Intenta de nuevo.');
   }
+  if (!ok) { tries.push(now); failed.set(ip, tries); return ask(401, 'Correo o contraseña incorrectos.'); }
+  failed.delete(ip);
   res.set('Cache-Control', 'no-store');
   res.set('X-Robots-Tag', 'noindex');
   next();
@@ -303,9 +324,9 @@ router.post('/entrenar/api/:id/activo', ownerOnly, express.json({ limit: '1kb' }
 });
 
 router.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'synthex-lina', training_gate: !!(process.env.ARCHITECT_USER && process.env.ARCHITECT_PASSWORD), label_tz: LABEL_TZ });
+  res.json({ ok: true, service: 'synthex-lina', training_owners: OWNERS().length, label_tz: LABEL_TZ });
 });
 
 module.exports = router;
 module.exports.knowledgeFor = knowledgeFor;
-module.exports._test = { validate, fromVoiceBrain, label };
+module.exports._test = { validate, fromVoiceBrain, label, setCrmLookup: (f) => { crmLookup = f; } };

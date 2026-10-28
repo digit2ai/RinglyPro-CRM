@@ -124,17 +124,18 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   r = await (await post('/api/voice-agent/chat', { agent: 'synthex', lang: 'es', context: 'p', messages: [{ role: 'user', content: 'hola' }] })).json();
   ok(/formulario/.test(r.reply) && !/seis cero dos/.test(r.reply), 'own offline reply');
 
-  // training page fails shut without the credential
-  delete process.env.ARCHITECT_USER; delete process.env.ARCHITECT_PASSWORD;
+  // training page: the owner's Projects login, owner emails only
+  const bc = require('bcryptjs'); const hash = await bc.hash('projects-pass-1', 4);
+  require('../src/routes/synthex-lina')._test.setCrmLookup(async (e) => (e === 'mstagg@digit2ai.com' || e === 'other@x.com') ? hash : null);
+  const basic = (u, pw) => ({ Authorization: 'Basic ' + Buffer.from(u + ':' + pw).toString('base64') });
   d = await fetch(base + '/api/synthex-lina/entrenar');
-  ok(d.status === 503, 'training closed without credential');
-  process.env.ARCHITECT_USER = 'owner@x.com'; process.env.ARCHITECT_PASSWORD = 'secret-pass-123';
-  d = await fetch(base + '/api/synthex-lina/entrenar');
-  ok(d.status === 401, 'training asks to sign in');
-  d = await fetch(base + '/api/synthex-lina/entrenar', { headers: { Authorization: 'Basic ' + Buffer.from('owner@x.com:wrong').toString('base64') } });
+  ok(d.status === 401 && /Basic/.test(d.headers.get('www-authenticate') || ''), 'training asks to sign in');
+  d = await fetch(base + '/api/synthex-lina/entrenar', { headers: basic('mstagg@digit2ai.com', 'wrong') });
   ok(d.status === 401, 'wrong password refused');
-  d = await fetch(base + '/api/synthex-lina/entrenar', { headers: { Authorization: 'Basic ' + Buffer.from('OWNER@x.com:secret-pass-123').toString('base64') } });
-  ok(d.status === 200 && /Entrenar a Lina/.test(await d.text()), 'owner gets the page');
+  d = await fetch(base + '/api/synthex-lina/entrenar', { headers: basic('other@x.com', 'projects-pass-1') });
+  ok(d.status === 401, 'a CRM user who is not the owner is refused');
+  d = await fetch(base + '/api/synthex-lina/entrenar', { headers: basic('MStagg@digit2ai.com', 'projects-pass-1') });
+  ok(d.status === 200 && /Entrenar a Lina/.test(await d.text()), 'owner gets the page with the Projects password');
 
   // landing: no narrator left, orb wired
   const page = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/index.html'), 'utf8');
