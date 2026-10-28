@@ -309,15 +309,15 @@ body.embed-stage > .viewport{display:block !important;width:100%;margin:0 !impor
 </head>
 <body>
 <script>
-/* ?brand=synthex relabels the embedded brain for the Synthex AI landing
+/* ?brand=synthex relabels the embedded brain for the Synthex SAI landing
    (/SynthexAI). Only the labels change; the animation is the same. Without the
    parameter nothing here runs, so digit2ai.com keeps its own labels. */
 if(/[?&]brand=synthex/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
   var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
-  set('.label-c','&#9660; SYNTHEX AI MCP BRAIN &#9650;');
+  set('.label-c','&#9660; SYNTHEX SAI MCP BRAIN &#9650;');
   set('.sealed','<b></b>100+ AGENT WORKFORCE · WIRED VIA OPEN MCP');
-  set('.dm-brain .t','SYNTHEX AI');
-  document.title='Synthex AI MCP Brain';
+  set('.dm-brain .t','SYNTHEX SAI');
+  document.title='Synthex SAI MCP Brain';
 });}
 </script>
 <script>if(/[?&]embed=/i.test(location.search)){document.documentElement.className+=' embed';document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('embed-stage');window.dispatchEvent(new Event('resize'));});}</script>

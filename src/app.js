@@ -463,7 +463,7 @@ app.use((req, res, next) => {
     return res.sendFile(require('path').join(__dirname, '../public/synthexai', path.slice(1)));
   }
   if (/^\/synthexai\/?$/i.test(path)) return res.redirect(301, '/');
-  res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthex AI</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B0F17;color:#fff;font:16px Inter,system-ui,sans-serif;text-align:center"><div><p style="color:#94A3B8">Página no encontrada · Page not found</p><a href="/" style="color:#00F2FE">synthexsai.com</a></div></body>');
+  res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthex SAI</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B0F17;color:#fff;font:16px Inter,system-ui,sans-serif;text-align:center"><div><p style="color:#94A3B8">Página no encontrada · Page not found</p><a href="/" style="color:#00F2FE">synthexsai.com</a></div></body>');
 });
 
 // ═════════════════════════════════════════════════════════════════════════
