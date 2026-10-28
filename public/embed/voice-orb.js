@@ -344,7 +344,7 @@
       } catch (e) { /* page hook failed: fall back to page text */ }
       fetch(API + '/api/voice-agent/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent: AGENT, lang: cfg.lang, context: ctx, messages: history.slice(-12) })
+        body: JSON.stringify({ agent: AGENT, lang: cfg.lang, context: ctx, messages: history.slice(-40) })
       })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -446,7 +446,7 @@
       unlockAudio();
       setState('connecting');
 
-      var greet = cfg.greeting;
+      var greet = withSaludo(cfg.greeting);
       history.push({ role: 'assistant', content: greet });
 
       // No speech recognition (Firefox, some in-app browsers): the agent still
@@ -475,6 +475,16 @@
           setCap(greet, false);
           speak(greet);
         });
+    }
+
+    // A greeting may carry {saludo}: it becomes good morning / afternoon / evening
+    // by the VISITOR's own clock, which the server cannot know.
+    function withSaludo(g) {
+      if (!g || g.indexOf('{saludo}') === -1) return g;
+      var h = new Date().getHours();
+      var es = cfg.lang === 'es';
+      var w = h < 12 ? (es ? 'Buenos días' : 'Good morning') : h < 19 ? (es ? 'Buenas tardes' : 'Good afternoon') : (es ? 'Buenas noches' : 'Good evening');
+      return g.replace('{saludo}', w);
     }
 
     function sendTyped() {
@@ -540,6 +550,13 @@
     // Public handle so a host page can open the orb from its own button.
     return {
       open: open, close: close,
+      /** Open the orb and send a typed question, as if the visitor typed it in the panel. */
+      send: function (text) {
+        var t = String(text || '').trim(); if (!t) return;
+        root.classList.add('is-open');
+        if (!history.length) history.push({ role: 'assistant', content: withSaludo(cfg.greeting) });
+        input.value = t; sendTyped();
+      },
       /**
        * Override what the agent is allowed to talk about. Single-page apps
        * (a slide deck, a dashboard route) can push structured context that is

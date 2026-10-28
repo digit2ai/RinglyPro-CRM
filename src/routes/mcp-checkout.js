@@ -350,3 +350,6 @@ router.post('/book', express.json({ limit: '2kb' }), async (req, res) => {
 
 module.exports = router;
 module.exports._test = { candidateSlots, nyOffset, setStripe: c => { stripeClient = c; } };
+// Shared with the Synthex SAI voice assistant (src/routes/synthex-lina.js): the same free-slot
+// rule, so a meeting Lina books can never land on top of one booked here.
+module.exports._booking = { freeSlots, threeByThree, db, BOOK_MIN, BOOK_TZ };

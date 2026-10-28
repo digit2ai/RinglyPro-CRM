@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Entrenar a Lina · Synthex SAI</title>
+<style>
+:root{--bg:#0B0F17;--card:#131a28;--line:rgba(255,255,255,.12);--txt:#f1f5f9;--mut:#a3b0c2;--cy:#00F2FE;--ok:#34d399;--bad:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:26px;margin:0 0 6px}
+p.lead{color:var(--mut);margin:0 0 22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+label{display:block;font-weight:600;font-size:14px;margin:10px 0 6px}
+input,textarea{width:100%;background:#0b111c;border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:12px;font:16px Inter,system-ui,sans-serif}
+textarea{min-height:150px;resize:vertical}
+button{min-height:44px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--txt);padding:0 18px;font-weight:600;cursor:pointer;font-size:15px}
+button.pri{background:var(--cy);color:#04121a;border-color:var(--cy)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.msg{margin-top:10px;font-size:14px}
+.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.it{border-top:1px solid var(--line);padding:14px 0}
+.it:first-child{border-top:0}
+.it h3{margin:0 0 4px;font-size:16px}
+.it pre{white-space:pre-wrap;font:14px/1.5 Inter,system-ui,sans-serif;color:var(--mut);margin:6px 0 0}
+.off{opacity:.5}
+.tag{font-size:12px;color:var(--mut)}
+details summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+.bar{height:6px;border-radius:6px;background:#1f2937;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:var(--cy)}
+a{color:var(--cy)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Entrenar a Lina</h1>
+  <p class="lead">Todo lo que escribas aquí lo usa Lina en sus respuestas en synthexsai.com, desde el próximo minuto. Escribe como le explicarías a una persona nueva del equipo: preguntas frecuentes, respuestas, cómo manejar una objeción, datos de un servicio. Si algo contradice lo que ya sabe, manda lo que escribas aquí. <a href="https://synthexsai.com/" target="_blank" rel="noopener">Probar a Lina</a></p>
+
+  <div class="card">
+    <strong id="formTitle">Nueva entrada</strong>
+    <label for="titulo">Título (por ejemplo: «Si preguntan por facturación electrónica»)</label>
+    <input id="titulo" maxlength="200">
+    <label for="contenido">Lo que Lina debe saber o responder</label>
+    <textarea id="contenido" maxlength="8000"></textarea>
+    <div class="row">
+      <button class="pri" id="guardar" type="button">Guardar</button>
+      <button id="cancelar" type="button" hidden>Cancelar edición</button>
+      <span class="tag" id="uso"></span>
+    </div>
+    <div class="bar"><i id="barra" style="width:0"></i></div>
+    <div class="msg" id="msg" role="status"></div>
+  </div>
+
+  <div class="card">
+    <strong>Lo que ya le enseñaste</strong>
+    <div id="lista"><p class="tag">Cargando…</p></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Lo que Lina sabe de fábrica (no se edita aquí)</summary>
+      <pre id="base" style="white-space:pre-wrap;color:var(--mut);font:14px/1.5 Inter,system-ui,sans-serif"></pre>
+    </details>
+  </div>
+</div>
+<script>
+(function(){
+  var API = 'entrenar/api', editId = null;
+  var $ = function(id){ return document.getElementById(id); };
+  function msg(t, ok){ var m=$('msg'); m.textContent=t||''; m.className='msg '+(ok?'ok':'bad'); }
+  function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+  function load(){
+    fetch(API, { credentials:'same-origin' }).then(function(r){ return r.json(); }).then(function(d){
+      if(!d.ok){ $('lista').textContent='No se pudo cargar: '+(d.error||''); return; }
+      $('base').textContent = d.base || '';
+      $('uso').textContent = d.usado.toLocaleString('es') + ' de ' + d.limite.toLocaleString('es') + ' caracteres usados';
+      $('barra').style.width = Math.min(100, Math.round(d.usado / d.limite * 100)) + '%';
+      var L = $('lista'); L.innerHTML='';
+      if(!d.entradas.length){ L.appendChild(el('p','tag','Todavía no hay entradas. Lina usa lo que sabe de fábrica.')); return; }
+      d.entradas.forEach(function(e){
+        var it = el('div','it'+(e.activo?'':' off'));
+        it.appendChild(el('h3',null,e.titulo + (e.activo?'':' (desactivada)')));
+        it.appendChild(el('pre',null,e.contenido));
+        var row = el('div','row');
+        var ed = el('button',null,'Editar'); ed.type='button';
+        ed.onclick=function(){ editId=e.id; $('titulo').value=e.titulo; $('contenido').value=e.contenido; $('formTitle').textContent='Editando'; $('cancelar').hidden=false; window.scrollTo({top:0,behavior:'smooth'}); };
+        var tg = el('button',null,e.activo?'Desactivar':'Activar'); tg.type='button';
+        tg.onclick=function(){
+          fetch(API+'/'+e.id+'/activo',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Synthex':'1'},body:JSON.stringify({activo:!e.activo})})
+            .then(function(r){ return r.json(); }).then(function(){ load(); });
+        };
+        row.appendChild(ed); row.appendChild(tg); it.appendChild(row); L.appendChild(it);
+      });
+    }).catch(function(){ $('lista').textContent='No se pudo cargar.'; });
+  }
+  function reset(){ editId=null; $('titulo').value=''; $('contenido').value=''; $('formTitle').textContent='Nueva entrada'; $('cancelar').hidden=true; }
+  $('cancelar').onclick=function(){ reset(); msg(''); };
+  $('guardar').onclick=function(){
+    var body={ id:editId, titulo:$('titulo').value.trim(), contenido:$('contenido').value.trim() };
+    if(!body.titulo || !body.contenido){ msg('Escribe el título y el contenido.'); return; }
+    $('guardar').disabled=true;
+    fetch(API,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-Synthex':'1'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json(); }).then(function(d){
+        $('guardar').disabled=false;
+        if(!d.ok){ msg(d.error||'No se pudo guardar.'); return; }
+        msg('Guardado. Lina lo usa desde el próximo minuto.', true); reset(); load();
+      }).catch(function(){ $('guardar').disabled=false; msg('No se pudo guardar.'); });
+  };
+  load();
+})();
+</script>
+</body>
+</html>

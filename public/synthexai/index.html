@@ -293,24 +293,10 @@ html[data-theme="light"] .sl input{accent-color:#0891B2}
 .niva .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
 .orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 /* compact control chip — anchored UNDER the orb, right-aligned so it never covers the slide text */
-.niva-panel{position:absolute;top:calc(100% + 12px);right:0;left:auto;bottom:auto;transform:none;width:max-content;max-width:min(78vw,240px);
   background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:14px;
   padding:11px 12px;box-shadow:0 20px 56px rgba(0,0,0,.6);display:none}
-.niva-panel{display:none !important}   /* chip removed — controls are: tap orb (play/pause) + top language toggle */
 /* during a session, keep the status caption visible even when the orb dims to 'idle' on pause */
-.niva.session .orb-cap-idle{display:none !important}
-.niva.session .orb-cap-active{display:inline !important}
 /* header, voice picker and HD toggle removed from the chip — minimal by design */
-.niva-hd,.niva-row,#nivaPlay{display:none}
-.niva-lang{display:flex;gap:5px;margin-bottom:8px}
-.niva-lang button{flex:1;padding:5px 12px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--mut);font:600 12px var(--font-display);letter-spacing:.04em;cursor:pointer}
-.niva-lang button.on{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#062b33;border-color:transparent}
-.niva-ctrls{display:flex;gap:6px;margin-bottom:0}
-.niva-ctrls button{flex:1;padding:8px 12px;min-height:0;border-radius:9px;border:1px solid var(--line2);background:rgba(34,211,238,.07);color:var(--txt);font:600 13px var(--font-body);cursor:pointer}
-.niva-ctrls button:disabled{opacity:.4;cursor:default}
-.niva-status{font-size:11.5px;color:var(--mut);margin-top:8px;min-height:15px;line-height:1.4;text-align:center}
-.niva-close{position:absolute;top:5px;right:8px;background:none;border:0;color:var(--dim);font-size:16px;cursor:pointer;line-height:1;padding:2px 5px}
-.niva-close:hover{color:var(--txt)}
 @media (max-width:900px){.niva{--orb-size:clamp(122px,24vw,150px)}}
 @media (max-width:640px){
   .niva{right:12px;top:auto;bottom:16px;transform:none}
@@ -334,7 +320,16 @@ section,header.hero{scroll-margin-top:64px}
 .brain-embed{position:relative;width:100%;margin:28px auto 0;aspect-ratio:12/7;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 26px 80px rgba(0,0,0,.5);background:#070a12}
 .brain-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
 /* Synthex: the orb lives in the bottom-right corner so it never covers the brain or the console */
-.niva{top:auto;bottom:28px;right:28px;transform:none;--orb-size:clamp(120px,11vw,150px)}
+.niva{top:auto;bottom:76px;right:28px;transform:none;--orb-size:clamp(160px,13vw,200px)}
+/* Lina's conversation panel opens to the LEFT of the big orb; the orb itself is the launcher */
+.d2orb-launch{display:none!important}
+.d2orb-root{right:calc(clamp(160px,13vw,200px) + 64px)!important;bottom:84px!important}
+.d2orb-cap{max-height:240px!important}
+@media (max-width:640px){
+  .niva{--orb-size:clamp(140px,38vw,160px);right:14px;bottom:clamp(44px,8vh,72px)}
+  .d2orb-root{left:12px!important;right:12px!important;bottom:calc(clamp(140px,38vw,160px) + clamp(44px,8vh,72px) + 34px)!important;align-items:stretch!important}
+  .d2orb-panel{width:auto!important}
+}
 
 /* preguntas frecuentes + pregúntale a Lina */
 .faq{display:grid;gap:12px;margin-top:26px}
@@ -346,8 +341,6 @@ section,header.hero{scroll-margin-top:64px}
 .qa[open] summary::after{content:"\2212"}
 .qa .qn{font-family:var(--fm);font-size:13px;color:var(--cyt);flex:none}
 .qa .qb{padding:0 20px 18px 20px;color:var(--mut);font-size:15.5px;line-height:1.6}
-.qsay{margin-top:12px;background:transparent;border:1px solid var(--line2);color:var(--txt);border-radius:999px;padding:8px 14px;min-height:40px;font:600 13px var(--fb);cursor:pointer}
-.qsay:hover,.qsay:focus-visible{border-color:var(--cy)}
 .ask{margin-top:26px;background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:20px}
 .ask-l{display:block;font-family:var(--fd);font-weight:700;font-size:17px;margin-bottom:10px}
 .ask-row{display:flex;gap:10px;flex-wrap:wrap}
@@ -355,8 +348,6 @@ section,header.hero{scroll-margin-top:64px}
 .ask-mic{width:48px;height:48px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .ask-mic.on{border-color:#f87171;color:#f87171}
 .ask-row .btn{min-height:48px}
-.ask-out{margin-top:14px;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:rgba(0,242,254,.05);font-size:15.5px;line-height:1.6}
-.ask-out b{display:block;font-family:var(--fd);margin-bottom:4px}
 
 </style>
 </head>
@@ -706,48 +697,47 @@ section,header.hero{scroll-margin-top:64px}
         <button type="button" id="askMic" class="ask-mic" aria-label="Preguntar con la voz / Ask by voice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
         <button type="button" id="askGo" class="btn pri"><span class="es">Preguntar</span><span class="en">Ask</span></button>
       </div>
-      <div id="askOut" class="ask-out" role="status" aria-live="polite" hidden></div>
     </div>
     <div class="faq">
       <details class="qa" data-k="datos informacion confidencial confidencialidad seguridad seguro cifrado privacidad fuga fiscal seniat sensible margenes costos clientes quienes entrenar modelos data information privacy security encrypted leak who train" data-id="datos">
         <summary><span class="qn">01</span><span class="qt"><span class="es">¿Quiénes son ustedes y qué hacen con mi información sensible?</span><span class="en">Who are you, and what do you do with my sensitive information?</span></span></summary>
-        <div class="qb"><p><span class="es">Synthex SAI opera con cifrado punto a punto y entornos aislados por cliente. Tu información no se comparte ni se usa para entrenar modelos públicos: solo se procesan metadatos operativos para automatizar el flujo dentro de tu misma empresa o negocio.</span><span class="en">Synthex SAI runs with end-to-end encryption and an isolated environment for each client. Your information is not shared or used to train public models: only operational metadata is processed, to automate the flow inside your own company or business.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">Synthex SAI opera con cifrado punto a punto y entornos aislados por cliente. Tu información no se comparte ni se usa para entrenar modelos públicos: solo se procesan metadatos operativos para automatizar el flujo dentro de tu misma empresa o negocio.</span><span class="en">Synthex SAI runs with end-to-end encryption and an isolated environment for each client. Your information is not shared or used to train public models: only operational metadata is processed, to automate the flow inside your own company or business.</span></p></div>
       </details>
       <details class="qa" data-k="pago pagar funciona falla riesgo anticipo configuracion garantia prueba concepto semanas 685 245 mitad resultados risk pay works fail deposit setup guarantee proof concept weeks" data-id="riesgo">
         <summary><span class="qn">02</span><span class="qt"><span class="es">¿Y si pago la configuración y el sistema no funciona?</span><span class="en">What if I pay for the setup and the system doesn't work?</span></span></summary>
-        <div class="qb"><p><span class="es">Empiezas con una prueba de concepto de 4 semanas. El anticipo de USD 245 es la puerta de entrada: compromete los recursos de desarrollo. El saldo de la configuración base inicial (USD 685 en total) se paga al final de las 4 semanas, cuando ves la solución operativa y validas tus propios datos funcionando. La suscripción empieza a correr desde la fecha en que estés listo para generar datos con tus propias soluciones.</span><span class="en">You start with a 4-week proof of concept. The USD 245 deposit is the way in: it commits the development resources. The rest of the base setup (USD 685 in total) is paid at the end of the 4 weeks, once you see the solution running and validate your own data working. The subscription starts counting on the day you are ready to generate data with your own solutions.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">Empiezas con una prueba de concepto de 4 semanas. El anticipo de USD 245 es la puerta de entrada: compromete los recursos de desarrollo. El saldo de la configuración base inicial (USD 685 en total) se paga al final de las 4 semanas, cuando ves la solución operativa y validas tus propios datos funcionando. La suscripción empieza a correr desde la fecha en que estés listo para generar datos con tus propias soluciones.</span><span class="en">You start with a 4-week proof of concept. The USD 245 deposit is the way in: it commits the development resources. The rest of the base setup (USD 685 in total) is paid at the end of the 4 weeks, once you see the solution running and validate your own data working. The subscription starts counting on the day you are ready to generate data with your own solutions.</span></p></div>
       </details>
       <details class="qa" data-k="reemplazar reemplaza botar cambiar sistema actual excel software administrativo contable inventario aprender cero saint profit galac replace throw away change current system learn scratch" data-id="reemplazo">
         <summary><span class="qn">03</span><span class="qt"><span class="es">¿Tengo que botar mi sistema actual o cambiar mi forma de trabajar?</span><span class="en">Do I have to throw out my current system or change how I work?</span></span></summary>
-        <div class="qb"><p><span class="es">No. Synthex SAI no reemplaza tu sistema: se conecta a él. Automatiza las tareas repetitivas por encima de tu software administrativo, contable o de inventarios, o de tus hojas de Excel, y resuelve en minutos lo que hoy te toma horas.</span><span class="en">No. Synthex SAI does not replace your system: it connects to it. It automates the repetitive work on top of your admin, accounting or inventory software, or your Excel sheets, and solves in minutes what takes you hours today.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">No. Synthex SAI no reemplaza tu sistema: se conecta a él. Automatiza las tareas repetitivas por encima de tu software administrativo, contable o de inventarios, o de tus hojas de Excel, y resuelve en minutos lo que hoy te toma horas.</span><span class="en">No. Synthex SAI does not replace your system: it connects to it. It automates the repetitive work on top of your admin, accounting or inventory software, or your Excel sheets, and solves in minutes what takes you hours today.</span></p></div>
       </details>
       <details class="qa" data-k="pago pagar mensual venezuela divisas efectivo tarjeta stripe paypal metodo cobro dolares payment pay monthly card method dollars cash" data-id="pagos">
         <summary><span class="qn">04</span><span class="qt"><span class="es">¿Cómo les pago mensualmente desde Venezuela?</span><span class="en">How do I pay you every month from Venezuela?</span></span></summary>
-        <div class="qb"><p><span class="es">Con esquemas flexibles adaptados a la realidad corporativa, a través de plataformas de pago empresariales sin fricciones: Stripe y PayPal.</span><span class="en">With flexible options adapted to how companies actually operate, through business payment platforms with no friction: Stripe and PayPal.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">Con esquemas flexibles adaptados a la realidad corporativa, a través de plataformas de pago empresariales sin fricciones: Stripe y PayPal.</span><span class="en">With flexible options adapted to how companies actually operate, through business payment platforms with no friction: Stripe and PayPal.</span></p></div>
       </details>
       <details class="qa" data-k="empleados personal equipo tecnicos complejo usar whatsapp voz nota chat despacho almacen rechazo dificil employees staff team technical complex use voice note hard" data-id="personal">
         <summary><span class="qn">05</span><span class="qt"><span class="es">Mis empleados no son técnicos. ¿Lo van a querer usar?</span><span class="en">My employees aren't technical. Will they want to use it?</span></span></summary>
-        <div class="qb"><p><span class="es">La interfaz principal puede ser tan sencilla como un mensaje por WhatsApp o una nota de voz. Si tu empleado sabe enviar una nota de voz o escribir un chat, ya sabe usar Synthex SAI.</span><span class="en">The main interface can be as simple as a WhatsApp message or a voice note. If your employee can send a voice note or type a chat, they already know how to use Synthex SAI.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">La interfaz principal puede ser tan sencilla como un mensaje por WhatsApp o una nota de voz. Si tu empleado sabe enviar una nota de voz o escribir un chat, ya sabe usar Synthex SAI.</span><span class="en">The main interface can be as simple as a WhatsApp message or a voice note. If your employee can send a voice note or type a chat, they already know how to use Synthex SAI.</span></p></div>
       </details>
       <details class="qa" data-k="grande grandes corporaciones pequena pyme negocio caro costosa futurista abstracta multinacional para mi big large small business expensive futuristic abstract" data-id="pyme">
         <summary><span class="qn">06</span><span class="qt"><span class="es">¿La inteligencia artificial no es solo para corporaciones grandes?</span><span class="en">Isn't artificial intelligence only for large corporations?</span></span></summary>
-        <div class="qb"><p><span class="es">No. Los problemas de tu operación diaria son reales: compras innecesarias, viajes vacíos en transporte, inventarios que no cuadran y facturas con errores humanos. No vendemos «IA abstracta»: vendemos soluciones directas, automatización de procesos y reducción de costos operativos.</span><span class="en">No. The problems in your daily operation are real: unnecessary purchases, empty trips in transport, inventories that don't reconcile and invoices with human errors. We don't sell "abstract AI": we sell direct solutions, process automation and lower operating costs.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">No. Los problemas de tu operación diaria son reales: compras innecesarias, viajes vacíos en transporte, inventarios que no cuadran y facturas con errores humanos. No vendemos «IA abstracta»: vendemos soluciones directas, automatización de procesos y reducción de costos operativos.</span><span class="en">No. The problems in your daily operation are real: unnecessary purchases, empty trips in transport, inventories that don't reconcile and invoices with human errors. We don't sell "abstract AI": we sell direct solutions, process automation and lower operating costs.</span></p></div>
       </details>
       <details class="qa" data-k="soporte cae falla caida error responde ayuda hypercare especialistas tecnico humano nube abandonado support down outage help specialists human cloud" data-id="soporte">
         <summary><span class="qn">07</span><span class="qt"><span class="es">Si el sistema se cae un martes a mediodía, ¿quién me responde?</span><span class="en">If the system goes down on a Tuesday at noon, who answers?</span></span></summary>
-        <div class="qb"><p><span class="es">El soporte de Synthex SAI incluye Hypercare: resolución automática inmediata de incidencias, respaldada por especialistas técnicos y un equipo con presencia comercial directa.</span><span class="en">Synthex SAI support includes Hypercare: immediate automatic resolution of incidents, backed by technical specialists and a team with a direct commercial presence.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">El soporte de Synthex SAI incluye Hypercare: resolución automática inmediata de incidencias, respaldada por especialistas técnicos y un equipo con presencia comercial directa.</span><span class="en">Synthex SAI support includes Hypercare: immediate automatic resolution of incidents, backed by technical specialists and a team with a direct commercial presence.</span></p></div>
       </details>
       <details class="qa" data-k="retorno inversion recupero recuperar 388 mensual suscripcion ahorro metrica horas combustible mermas costo fijo vale roi return investment recover subscription savings metric fuel worth" data-id="retorno">
         <summary><span class="qn">08</span><span class="qt"><span class="es">¿En cuánto tiempo recupero los USD 388 mensuales?</span><span class="en">How long until I recover the USD 388 a month?</span></span></summary>
-        <div class="qb"><p><span class="es">Durante la prueba de concepto de 4 semanas se fija una métrica clara de ahorro: horas-hombre recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro demostrado no supera el costo de la suscripción, no se continúa.</span><span class="en">During the 4-week proof of concept a clear savings metric is set: staff hours recovered, fuel saved or losses avoided. If the savings shown do not exceed the cost of the subscription, it does not continue.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">Durante la prueba de concepto de 4 semanas se fija una métrica clara de ahorro: horas-hombre recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro demostrado no supera el costo de la suscripción, no se continúa.</span><span class="en">During the 4-week proof of concept a clear savings metric is set: staff hours recovered, fuel saved or losses avoided. If the savings shown do not exceed the cost of the subscription, it does not continue.</span></p></div>
       </details>
       <details class="qa" data-k="cancelar cancelo salir atrapado dependencia proveedor quedan datos exportar excel csv base propiedad secuestrado cancel leave locked trapped vendor keep export own property" data-id="salida">
         <summary><span class="qn">09</span><span class="qt"><span class="es">¿Qué pasa si luego quiero cancelar? ¿Se quedan con mis datos?</span><span class="en">What happens if I want to cancel later? Do you keep my data?</span></span></summary>
-        <div class="qb"><p><span class="es">No. Toda la data estructurada y los reportes que genera la plataforma son propiedad exclusiva tuya, y se exportan en formatos universales (Excel, CSV o base de datos) en cualquier momento.</span><span class="en">No. All the structured data and reports the platform produces belong to you alone, and they can be exported in universal formats (Excel, CSV or a database) at any time.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">No. Toda la data estructurada y los reportes que genera la plataforma son propiedad exclusiva tuya, y se exportan en formatos universales (Excel, CSV o base de datos) en cualquier momento.</span><span class="en">No. All the structured data and reports the platform produces belong to you alone, and they can be exported in universal formats (Excel, CSV or a database) at any time.</span></p></div>
       </details>
       <details class="qa" data-k="fortaleza solidez empresa respaldo confianza contrato alianzas experiencia technologies quien estan detras strength solid company backing trust contract alliances experience" data-id="respaldo">
         <summary><span class="qn">10</span><span class="qt"><span class="es">¿Qué fortaleza tienen como empresa?</span><span class="en">How strong are you as a company?</span></span></summary>
-        <div class="qb"><p><span class="es">Te respalda Synthex SAI Technologies, una entidad con experiencia, junto con sus alianzas institucionales: una garantía para tu empresa o negocio al firmar el contrato de servicio.</span><span class="en">You are backed by Synthex SAI Technologies, an experienced entity, together with its institutional alliances: a guarantee for your company or business when you sign the service contract.</span></p><button type="button" class="qsay" aria-label="Escuchar / Listen">&#9658; <span class="es">Que Lina lo explique</span><span class="en">Have Ava explain it</span></button></div>
+        <div class="qb"><p><span class="es">Te respalda Synthex SAI Technologies, una entidad con experiencia, junto con sus alianzas institucionales: una garantía para tu empresa o negocio al firmar el contrato de servicio.</span><span class="en">You are backed by Synthex SAI Technologies, an experienced entity, together with its institutional alliances: a guarantee for your company or business when you sign the service contract.</span></p></div>
       </details>
     </div>
   </div>
@@ -762,7 +752,7 @@ section,header.hero{scroll-margin-top:64px}
 
 <div class="niva" id="niva">
   <div class="orb-wrap" id="nivaOrb" role="button" tabindex="0" data-state="idle"
-       aria-label="Narradora de Synthex SAI: toca para escuchar / Synthex SAI narrator: tap to listen"
+       aria-label="Hablar con Lina, la asistente virtual de Synthex SAI / Talk to the Synthex SAI virtual assistant"
        aria-describedby="niva-cap">
     <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
     <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -852,268 +842,51 @@ section,header.hero{scroll-margin-top:64px}
       </g>
     </svg>
     <div class="orb-caption" id="niva-cap">
-      <span class="orb-cap-idle" id="nivaCapIdle">Toca para escuchar a Lina</span>
-      <span class="orb-cap-active" id="nivaCapActive">Open controls</span>
+      <span class="orb-cap-idle" id="nivaCapIdle">Toca para hablar con Lina</span>
+      <span class="orb-cap-active" id="nivaCapActive">Lina te escucha</span>
     </div>
-  </div>
-  <div class="niva-panel" role="dialog" aria-label="Voice walkthrough">
-    <button class="niva-close" id="nivaClose" aria-label="Close / Cerrar">&times;</button>
-    <div class="niva-hd">
-      <div class="niva-mini" id="nivaMini" aria-hidden="true"></div>
-      <div>
-        <div class="niva-name">Synthex SAI · Lina / Ava</div>
-        <div class="niva-role" id="nivaRole">AI narration of this deck</div>
-      </div>
-    </div>
-    <div class="niva-lang" role="group" aria-label="Language">
-      <button id="nivaEn" class="on" type="button">English</button>
-      <button id="nivaEs" type="button">Espa&ntilde;ol</button>
-    </div>
-    <div class="niva-ctrls">
-      <button class="primary" id="nivaPlay" type="button">&#9658;&nbsp;<span id="nivaPlayTxt">Play walkthrough</span></button>
-      <button id="nivaPause" type="button" disabled aria-label="Pause">&#10073;&#10073;</button>
-      <button id="nivaStop" type="button" disabled aria-label="Stop">&#9632;</button>
-    </div>
-    <div class="niva-row">
-      <label id="nivaAccentLbl" for="nivaAccent">Voice</label>
-      <select id="nivaAccent" aria-label="Voice"></select>
-    </div>
-    <div class="niva-row">
-      <label><input type="checkbox" id="nivaNeural" checked> <span id="nivaHdLbl">Neural HD</span></label>
-      <span class="niva-mode" id="nivaMode"></span>
-    </div>
-    <div class="niva-status" id="nivaStatus" aria-live="polite"></div>
   </div>
 </div>
 
+<div data-voice-orb data-agent="synthex" data-position="bottom-right" data-accent="#00F2FE" data-accent2="#6366F1"></div>
+<script src="/embed/voice-orb.js?v=2" defer></script>
 <script>
 (function(){
-  // ---- Narration: index 0 = intro, 1..11 = slides 1..11 (numbers spelled out for natural TTS) ----
-  var SEG={
-    es:[
-      "Hola, soy Lina, la voz de Synthex SAI. En unos minutos te explico toda la página: qué es Synthex, cómo se conecta a tus sistemas y cuánto cuesta. Toca el orbe cuando quieras pausar.",
-      "Synthex SAI es inteligencia que sintetiza datos y sistemas que ejecutan a escala. Une la lógica de tus operaciones con la inteligencia artificial de los mejores proveedores del mundo, bajo un solo cerebro MCP con más de cien agentes especializados. Se conecta a los sistemas que ya usas, sin reemplazar nada. A la derecha puedes calcular tu propio caso: mueve las barras con cuántas personas hacen trabajo repetitivo, cuántas horas y cuánto cuesta cada hora, y verás cuántas horas se liberan cada mes y cuánto valen frente a la suscripción. El porcentaje que se automatiza es un supuesto que tú ajustas.",
-      "Este es el cerebro en acción. En el centro está el cerebro MCP, y alrededor, los agentes principales: análisis de negocio, investigación, alcance, arquitectura, clasificación de correos, actas, voz, hallazgos, servicios de inteligencia artificial y preparación para la inteligencia artificial. El protocolo abierto MCP lleva el contexto entre ellos y coordina el trabajo en tiempo real.",
-      "Synthex es un servicio de inteligencia artificial avanzada, como el de Anthropic u OpenAI, con una diferencia: llega integrado y listo para trabajar dentro de tu empresa, como un USB. Tiene cuatro piezas: un cerebro central, más de cien agentes, conectores estándar MCP y varios proveedores. Tu equipo sigue trabajando igual, y tus datos siguen siendo tuyos.",
-      "Se conecta con lo que ya usas. En Venezuela, con los sistemas administrativos de siempre: Saint, Profit Plus, Galac, a2, Valery y Data Pro. En retail, SAP, Oracle, Dynamics, Shopify, VTEX y Odoo. En transporte, Oracle Transportation Management, SAP TM, Blue Yonder, Manhattan, McLeod y Samsara. En finanzas, SAP Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, Dynamics, CONTPAQi y Aspel. Si tu sistema tiene API, la conexión es directa. Si es un sistema local sin API pública, se instala un agente ligero en tu servidor.",
-      "Así funciona. La solicitud baja de tu empresa al cerebro, el cerebro la reparte entre los agentes, y cada agente usa el mejor servicio disponible. El resultado vuelve por el mismo camino, hasta tu sistema.",
-      "Detrás del cerebro están los líderes del mercado: Anthropic, OpenAI, Google, Amazon Web Services, Microsoft Azure, GitHub y Render. No contratas, configuras ni pagas cada uno por separado. Y si un proveedor falla o sube de precio, se cambia sin que lo notes.",
-      "La fuerza de trabajo cubre negocio, investigación, ingeniería, datos, finanzas, legal, ventas, industria y diseño. El cerebro activa solo los agentes que cada tarea necesita, y cada trimestre llegan agentes nuevos sin que tengas que hacer nada.",
-      "Sirve para el trabajo diario, no solo para un chat, y no es solo para corporaciones grandes. No vendemos inteligencia artificial abstracta: resolvemos compras innecesarias, viajes vacíos, inventarios que no cuadran y facturas con errores. Y si tu equipo sabe enviar una nota de voz por WhatsApp, ya sabe usarlo. Atención las veinticuatro horas en español e inglés. Lectura de facturas, contratos y formularios. Respuestas con los manuales de tu empresa, citando la fuente. Automatización entre sistemas. Ventas y mercadeo. Y software a la medida.",
-      "Las reglas de seguridad viven en el sistema. Hay cifrado punto a punto y un entorno aislado por cliente, y tu información no se usa para entrenar modelos públicos. Tus datos y reportes se exportan en Excel, CSV o base de datos cuando quieras. El soporte Hypercare resuelve incidencias de inmediato, con especialistas detrás. Nada se envía, se paga ni se publica sin autorización. Cada acción de cada agente queda registrada. Y si un dato no existe, el sistema lo dice, en lugar de adivinarlo.",
-      "Frente a un solo proveedor, la diferencia es clara. Un proveedor entrega la materia prima, y tú construyes la conexión, los agentes, la voz y la auditoría. Synthex lo entrega todo integrado, con los mejores modelos de varios proveedores, y se empieza en semanas, no en meses.",
-      "Se contrata como un servicio. La configuración inicial es de seiscientos ochenta y cinco dólares: empiezas con un anticipo de doscientos cuarenta y cinco, y el saldo lo pagas al final de la prueba de cuatro semanas, cuando ves la solución funcionando con tus propios datos. La suscripción es de trescientos ochenta y ocho dólares al mes, con el consumo estándar de tokens incluido, y empieza a correr cuando estás listo para generar datos. Puedes pagar desde Venezuela con Stripe o PayPal. El diagnóstico, la conexión y las soluciones estándar van incluidos. El desarrollo a la medida y las automatizaciones propias de tu negocio se cotizan aparte, y antes de empezar ves las horas y el costo de cada componente.",
-      "Se empieza pequeño y seguro, con una prueba de concepto de cuatro semanas: un diagnóstico, un primer proceso de bajo riesgo y alto valor, y la conexión con tus sistemas. Se fija una métrica clara de ahorro, como horas recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro no supera el costo de la suscripción, no se continúa.",
-      "Para empezar, llena el formulario y agendamos una demostración con tus sistemas reales.",
-      "Abajo están las diez preguntas que más nos hacen: qué pasa con tu información, qué pasa si el sistema no funciona, cómo pagar desde Venezuela, quién te responde si algo falla y si te puedes llevar tus datos. Y si tienes otra duda, escríbela o dímela en la caja Pregúntale a Lina, y te respondo. Soy Lina, de Synthex SAI. Gracias por escucharme."
-    ],
-    en:[
-      "Hi, I'm Ava, the voice of Synthex SAI. In a few minutes I'll walk you through this whole page: what Synthex is, how it connects to your systems, and what it costs. Tap the orb any time to pause.",
-      "Synthex SAI is intelligence that synthesizes data, and systems that execute at scale. It joins the logic of your operations with the AI of the world's best providers, under one MCP brain with more than one hundred specialized agents. It plugs into the systems you already use, replacing nothing. On the right you can calculate your own case: move the sliders for how many people do repetitive work, how many hours, and what each hour costs, and you will see how many hours are freed every month and what they are worth against the subscription. The share that gets automated is an assumption you set.",
-      "This is the brain at work. The MCP brain sits at the center, surrounded by the core agents: business analysis, research, outreach, architecture, inbox triage, minutes, voice, findings, AI services and AI readiness. The open MCP protocol carries context between them and coordinates the work in real time.",
-      "Synthex is an advanced AI service, like Anthropic's or OpenAI's, with one difference: it arrives integrated and ready to work inside your company, like a USB. It has four pieces: a central brain, more than one hundred agents, standard MCP connectors, and many providers. Your team keeps working the same way, and your data stays yours.",
-      "It connects to what you already use. In Venezuela, the usual admin systems: Saint, Profit Plus, Galac, a2, Valery and Data Pro. In retail: SAP, Oracle, Dynamics, Shopify, VTEX and Odoo. In transport: Oracle Transportation Management, SAP TM, Blue Yonder, Manhattan, McLeod and Samsara. In finance: SAP Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, Dynamics, CONTPAQi and Aspel. If your system has an API, the connection is direct. If it is a local system with no public API, a light agent is installed on your server.",
-      "Here is how it works. A request goes from your company to the brain, the brain splits it among the agents, and each agent uses the best service available. The result comes back the same way, into your system.",
-      "Behind the brain are the market leaders: Anthropic, OpenAI, Google, Amazon Web Services, Microsoft Azure, GitHub and Render. You don't sign up for, configure or pay for any of them separately. And if a provider fails or raises prices, it is swapped without you noticing.",
-      "The workforce covers business, research, engineering, data, finance, legal, sales, industry and design. The brain activates only the agents each task needs, and new agents arrive every quarter without you doing anything.",
-      "It is for daily work, not just a chat, and it is not only for large corporations. We don't sell abstract AI: we fix unnecessary purchases, empty trips, inventories that don't reconcile and invoices with errors. And if your team can send a WhatsApp voice note, they already know how to use it. Round-the-clock service in Spanish and English. Reading invoices, contracts and forms. Answers from your company's manuals, citing the source. Automation across systems. Sales and marketing. And custom software.",
-      "Security rules live in the system. There is end-to-end encryption and an isolated environment per client, and your information is never used to train public models. Your data and reports export to Excel, CSV or a database whenever you want. Hypercare support resolves incidents right away, with specialists behind it. Nothing is sent, paid or published without authorization. Every action by every agent is logged. And if a value does not exist, the system says so instead of guessing.",
-      "Compared with a single provider, the difference is clear. A provider delivers the raw material, and you build the connection, the agents, the voice and the audit. Synthex delivers all of it integrated, with the best models from several providers, and you start in weeks, not months.",
-      "It is contracted as a service. The initial setup is six hundred eighty-five dollars: you start with a two hundred forty-five dollar deposit, and pay the rest at the end of the four-week proof of concept, once you see the solution working with your own data. The subscription is three hundred eighty-eight dollars a month, with standard token usage included, and it starts when you are ready to generate data. You can pay with Stripe or PayPal. The assessment, the connection and the standard solutions are included. Custom development and automations specific to your business are quoted separately, and before starting you see the hours and the cost of each component.",
-      "You start small and safe, with a four-week proof of concept: an assessment, a first low-risk, high-value process, and the connection to your systems. A clear savings metric is set, like hours recovered, fuel saved or losses avoided. If the savings do not beat the cost of the subscription, it does not continue.",
-      "To get started, fill in the form and we will book a demo with your real systems.",
-      "Below are the ten questions we hear most: what happens to your information, what if the system doesn't work, how to pay, who answers if something fails, and whether you can take your data with you. If you have another question, type it or say it in the Ask Ava box, and I will answer. I'm Ava, from Synthex SAI. Thank you for listening."
-    ]
+  // Lina es una asistente que CONVERSA (persona "synthex" en src/config/voice-agents.js):
+  // el orbe grande abre su conversación y refleja su estado. El cerebro, la voz y las
+  // citas viven en /embed/voice-orb.js + /api/voice-agent/chat + /api/synthex-lina.
+  var wrap = document.getElementById('nivaOrb');
+  var capA = document.getElementById('nivaCapActive'), capI = document.getElementById('nivaCapIdle');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function root(){ return document.querySelector('.d2orb-root'); }
+  function tap(){
+    var o = window.D2AIVoiceOrb, r = root(); if (!o || !r) return;
+    if (r.classList.contains('is-open')) o.close(); else o.open();
+  }
+  wrap.addEventListener('click', tap);
+  wrap.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
+  var TXT = {
+    es: { idle:'Toca para hablar con Lina', listening:'Lina te escucha', thinking:'Lina está pensando', speaking:'Lina está hablando' },
+    en: { idle:'Tap to talk to Ava', listening:'Ava is listening', thinking:'Ava is thinking', speaking:'Ava is speaking' }
   };
-  var UI={
-    en:{role:'AI narration of this page',play:'Play walkthrough',accent:'Voice',hd:'Neural HD',
-        idle:"Press play and I'll walk you through the whole page.",
-        prep:'Preparing neural voice…',one:'Playing section…',
-        done:'Walkthrough complete. Press play to repeat.',pause:'Paused.',
-        speak:function(a,b){return 'Speaking… ('+a+' of '+b+')';},hdOn:'HD',hdOff:'browser'},
-    es:{role:'Narración con IA de esta página',play:'Reproducir recorrido',accent:'Voz',hd:'Voz neural HD',
-        idle:'Pulsa reproducir y te explico toda la página.',
-        prep:'Preparando voz neural…',one:'Reproduciendo sección…',
-        done:'Recorrido terminado. Pulsa para repetir.',pause:'En pausa.',
-        speak:function(a,b){return 'Hablando… ('+a+' de '+b+')';},hdOn:'HD',hdOff:'navegador'}
-  };
-  var ACCENTS={ en:[['ava','Ava']], es:[['lina','Lina']] };
-  var DEF={en:'ava',es:'lina'}, FBLANG={en:'en-US',es:'es-MX'};
-
-  // ---- DOM ----
-  var niva=document.getElementById('niva');
-  var orbWrap=document.getElementById('nivaOrb');
-  var capIdle=document.getElementById('nivaCapIdle');
-  var capActive=document.getElementById('nivaCapActive');
-  var closeBtn=document.getElementById('nivaClose');
-  var miniOrb=document.getElementById('nivaMini');
-  var roleEl=document.getElementById('nivaRole');
-  var enBtn=document.getElementById('nivaEn'), esBtn=document.getElementById('nivaEs');
-  var playBtn=document.getElementById('nivaPlay'), playTxt=document.getElementById('nivaPlayTxt');
-  var pauseBtn=document.getElementById('nivaPause'), stopBtn=document.getElementById('nivaStop');
-  var accentSel=document.getElementById('nivaAccent'), accentLbl=document.getElementById('nivaAccentLbl');
-  var neuralToggle=document.getElementById('nivaNeural'), hdLbl=document.getElementById('nivaHdLbl');
-  var modeEl=document.getElementById('nivaMode'), statusEl=document.getElementById('nivaStatus');
-  var slides=['top','cerebro','producto','sistemas','como','proveedores','agentes','usos','seguridad','diferencia','precio','empezar','demo','faq'].map(function(id){ return document.getElementById(id); });
-  function setState(s){ orbWrap.dataset.state=s; }
-  function say(txt){ statusEl.textContent=txt; }
-  function personaName(){ return voiceName ? voiceName.charAt(0).toUpperCase()+voiceName.slice(1) : (lang==='es'?'La voz':'The voice'); }
-
-  // ---- State ----
-  var synth=window.speechSynthesis;
-  var lang='en', segments=SEG.en, voiceName=DEF.en;
-  var NEURAL_URL='/api/tts/edge';
-  var queue=[], qi=0, mode=null, runToken=0, paused=false, playing=false;
-  var playbackMode=null, currentAudio=null, neuralOK=true, audioCache={};
-  var browserVoice=null;
-
-  function t(){ return UI[lang]; }
-  function pickBrowserVoice(){
-    if(!synth) return;
-    var vs=synth.getVoices();
-    var pref=vs.filter(function(v){return v.lang && v.lang.toLowerCase().indexOf(lang)===0;});
-    browserVoice=pref[0]||vs[0]||null;
+  function sync(){
+    var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball'), st = 'idle';
+    if (r && ball && r.classList.contains('is-open') && r.classList.contains('is-live')) {
+      st = ball.classList.contains('is-speaking') ? 'speaking' : ball.classList.contains('is-thinking') ? 'thinking' : 'listening';
+    }
+    wrap.setAttribute('data-state', st);
+    var t = TXT[L()]; capI.textContent = t.idle; capA.textContent = t[st] || t.listening;
   }
-  if(synth){ pickBrowserVoice(); synth.onvoiceschanged=pickBrowserVoice; }
-
-  function useNeural(){ return neuralToggle.checked && neuralOK; }
-  function setMode(){ modeEl.textContent=useNeural()?('● '+t().hdOn):('○ '+t().hdOff); }
-  function clearCache(){ Object.keys(audioCache).forEach(function(k){ try{URL.revokeObjectURL(audioCache[k]);}catch(e){} }); audioCache={}; }
-
-  function buildAccents(){
-    accentSel.innerHTML='';
-    ACCENTS[lang].forEach(function(a){
-      var o=document.createElement('option'); o.value=a[0]; o.textContent=a[1];
-      if(a[0]===voiceName) o.selected=true;
-      accentSel.appendChild(o);
-    });
-  }
-  function applyLangUI(){
-    roleEl.textContent=t().role; playTxt.textContent=t().play;
-    accentLbl.textContent=t().accent; hdLbl.textContent=t().hd;
-    enBtn.classList.toggle('on',lang==='en'); esBtn.classList.toggle('on',lang==='es');
-    capIdle.textContent = lang==='en' ? 'Tap to hear Ava' : 'Toca para escuchar a Lina';
-    capActive.textContent = lang==='en' ? 'Open controls' : 'Abrir controles';
-    if(!currentAudio && !(synth&&synth.speaking)) say(t().idle);
-    setMode();
-    syncStageUI();
-  }
-  function setLang(l){
-    if(l===lang) return;
-    finish(); // stop any playback cleanly
-    lang=l; segments=SEG[l]; voiceName=DEF[l];
-    clearCache(); pickBrowserVoice(); buildAccents(); applyLangUI();
-  }
-
-  function setActive(i){
-    var s=slides[i-1]; // i:1..11 -> slide; i=0 intro -> no move
-    if(i>0 && s) s.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-  function statusSpeaking(){ say(personaName()+' · '+(qi+1)+' / '+queue.length); syncStageUI(); }
-  // The ONLY on-screen control is the orb + its small caption underneath — no chip
-  // overlapping the slide. The top EN/ES toggle handles language.
-  function syncStageUI(){
-    if(paused){ capActive.textContent = lang==='es'?'En pausa · toca para reanudar':'Paused · tap to resume'; }
-    else if(playing){ capActive.textContent = personaName()+' · '+(qi+1)+'/'+queue.length+' · '+(lang==='es'?'toca para pausar':'tap to pause'); }
-    else { capActive.textContent = lang==='es'?'Toca para reproducir':'Tap to play'; }
-  }
-  function togglePause(){
-    if(!playing) return;
-    if(!paused){ paused=true; pauseBtn.textContent='▶'; speaking(false); say(t().pause);
-      if(playbackMode==='neural'&&currentAudio) currentAudio.pause(); else if(synth) synth.pause(); }
-    else { paused=false; pauseBtn.textContent='❙❙'; speaking(true); statusSpeaking();
-      if(playbackMode==='neural'&&currentAudio) currentAudio.play(); else if(synth) synth.resume(); }
-    syncStageUI();
-  }
-  function playAll(){ start(segments.map(function(_,i){return i;}),'all'); }
-  function stopAll(){ finish(); }
-  function orbTap(){
-    if(!playing) playAll();   // first tap starts narration; the deck follows the voice
-    else togglePause();       // tapping again pauses / resumes
-  }
-
-  function fetchNeural(idx){
-    var key=voiceName+'|'+lang+'|'+idx;
-    if(audioCache[key]) return Promise.resolve(audioCache[key]);
-    return fetch(NEURAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:segments[idx],voice:voiceName})})
-      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.blob(); })
-      .then(function(b){ if(!b||b.size<200) throw new Error('empty'); var u=URL.createObjectURL(b); audioCache[key]=u; return u; });
-  }
-  function speaking(on){ setState(on?'speaking':'idle'); }
-
-  function runQueue(token){
-    if(token!==runToken) return;
-    if(qi>=queue.length){ finish(); return; }
-    var idx=queue[qi];
-    if(mode==='all' || idx>0) setActive(idx);
-    function advance(){ if(token!==runToken) return; qi++; runQueue(token); }
-    if(useNeural()){
-      say(t().prep); setState('thinking');
-      if(qi+1<queue.length) fetchNeural(queue[qi+1]).catch(function(){});
-      fetchNeural(idx).then(function(url){
-        if(token!==runToken) return;
-        playbackMode='neural'; currentAudio=new Audio(url);
-        currentAudio.onended=advance;
-        currentAudio.onerror=function(){ neuralOK=false; setMode(); advance(); };
-        speaking(true); statusSpeaking();
-        currentAudio.play().catch(function(){ neuralOK=false; setMode(); browserSpeak(idx,advance); });
-      }).catch(function(){ if(token!==runToken) return; neuralOK=false; setMode(); browserSpeak(idx,advance); });
-    } else { browserSpeak(idx,advance); }
-  }
-  function browserSpeak(idx,onEnd){
-    if(!synth){ onEnd(); return; }
-    playbackMode='browser';
-    var u=new SpeechSynthesisUtterance(segments[idx]);
-    if(browserVoice) u.voice=browserVoice;
-    u.lang=browserVoice?browserVoice.lang:FBLANG[lang];
-    u.rate=1.0; u.pitch=1.03;
-    u.onstart=function(){ speaking(true); statusSpeaking(); };
-    u.onend=onEnd; u.onerror=onEnd;
-    synth.speak(u);
-  }
-  function start(q,m){
-    if(synth) synth.cancel();
-    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
-    queue=q; qi=0; mode=m; paused=false; playing=true; runToken++;
-    niva.classList.add('session');   // keep the status caption (not the idle hint) visible while active
-    pauseBtn.disabled=false; stopBtn.disabled=false; playBtn.disabled=true; pauseBtn.textContent='❙❙';
-    if(m==='all' && slides[0]) slides[0].scrollIntoView({behavior:'smooth',block:'start'});
-    syncStageUI();
-    runQueue(runToken);
-  }
-  function finish(){
-    runToken++; speaking(false);
-    if(currentAudio){ try{currentAudio.pause();}catch(e){} currentAudio=null; }
-    if(synth) synth.cancel();
-    pauseBtn.disabled=true; stopBtn.disabled=true; playBtn.disabled=false; paused=false; playing=false;
-    niva.classList.remove('session');
-    say(t().done);
-    syncStageUI();
-  }
-
-  // ---- Events ----
-  orbWrap.addEventListener('click',orbTap);
-  orbWrap.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); orbTap(); } });
-  // language: switching mid-playback restarts narration in the new language (voice only)
-  function switchLang(l){ var was=playing; setLang(l); if(was) playAll(); }
-  // expose the voice-language setter so the top page toggle drives the voice too
-  window.__setVoiceLang=switchLang;
-  window.__nivaStop=function(){ if(playing) finish(); };
-  // the chip's EN/ES buttons flip the WHOLE page (text + voice) via the shared page toggle
-  enBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('en'); });
-  esBtn.addEventListener('click',function(){ (window.applyLanguage||switchLang)('es'); });
-  playBtn.addEventListener('click',playAll);
-  accentSel.addEventListener('change',function(){ voiceName=this.value; clearCache(); });
-  neuralToggle.addEventListener('change',setMode);
-  pauseBtn.addEventListener('click',togglePause);
-  stopBtn.addEventListener('click',stopAll);
-  closeBtn.addEventListener('click',stopAll);
-  window.addEventListener('keydown',function(e){ if(e.key==='Escape'&&playing) stopAll(); });
-  window.addEventListener('beforeunload',function(){ if(synth) synth.cancel(); if(currentAudio){ try{currentAudio.pause();}catch(e){} } });
-
-  // ---- Init ----
-  buildAccents(); applyLangUI();
+  (function hook(){
+    var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball');
+    if (!ball) return setTimeout(hook, 300);
+    var mo = new MutationObserver(sync);
+    mo.observe(ball, { attributes:true, attributeFilter:['class'] });
+    mo.observe(r, { attributes:true, attributeFilter:['class'] });
+    sync();
+  })();
+  // El selector de idioma de arriba cambia también el idioma de Lina.
+  window.__setVoiceLang = function(l){ if (window.D2AIVoiceOrb) window.D2AIVoiceOrb.setLang(l); sync(); };
 })();
 </script>
 
@@ -1197,65 +970,29 @@ section,header.hero{scroll-margin-top:64px}
 </script>
 <script>
 (function(){
-  // Pregúntale a Lina: su memoria son las diez preguntas de la página. Busca la que más
-  // se parece y la lee en voz alta; si ninguna se parece, lo dice. Nada se inventa.
-  var items=[].slice.call(document.querySelectorAll('#faq .qa'));
-  var inp=document.getElementById('askIn'), go=document.getElementById('askGo'), mic=document.getElementById('askMic'), out=document.getElementById('askOut');
-  var audio=null, synth=window.speechSynthesis;
-  function L(){ return document.documentElement.lang==='en'?'en':'es'; }
-  function norm(t){ return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' '); }
-  var STOP=' de la el los las y o a en que con por para un una es mi me se lo al del su sus como cual cuanto donde the a an of to is my i do and or in on for it you your what how '.split(' ');
-  function words(t){ return norm(t).split(/\s+/).filter(function(w){ return w.length>2 && STOP.indexOf(w)<0; }); }
-  function txt(el){ var s=el.querySelector('.'+L()); return s?s.textContent.trim():''; }
-  function best(q){
-    var qw=words(q), top=null, ts=0;
-    items.forEach(function(it){
-      var keys=words(it.getAttribute('data-k')+' '+txt(it.querySelector('summary .qt')));
-      var sc=0; qw.forEach(function(w){ if(keys.some(function(k){ return k===w || (w.length>4 && k.length>4 && (k.indexOf(w.slice(0,5))===0 || w.indexOf(k.slice(0,5))===0)); })) sc++; });
-      if(sc>ts){ ts=sc; top=it; }
-    });
-    return ts>0?top:null;
-  }
-  function stop(){ if(audio){ try{audio.pause();}catch(e){} audio=null; } if(synth) synth.cancel(); }
-  function speak(text){
-    stop(); if(window.__nivaStop) window.__nivaStop();
-    var voice=L()==='en'?'ava':'lina';
-    fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text.slice(0,1900),voice:voice})})
-      .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
-      .then(function(b){ audio=new Audio(URL.createObjectURL(b)); return audio.play(); })
-      .catch(function(){ if(!synth) return; var u=new SpeechSynthesisUtterance(text); u.lang=L()==='en'?'en-US':'es-MX'; synth.speak(u); });
-  }
-  function answer(it){
-    var q=txt(it.querySelector('summary .qt')), a=txt(it.querySelector('.qb p'));
-    out.hidden=false; out.innerHTML=''; var b=document.createElement('b'); b.textContent=q; out.appendChild(b); out.appendChild(document.createTextNode(a));
-    items.forEach(function(x){ x.open=(x===it); });
-    speak(a);
-  }
+  // Pregúntale a Lina: la pregunta escrita o dictada va a la MISMA Lina del orbe,
+  // que sabe todo lo de Synthex SAI y puede agendar la reunión.
+  var inp = document.getElementById('askIn'), go = document.getElementById('askGo'), mic = document.getElementById('askMic');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
   function ask(){
-    var q=inp.value.trim(); if(!q) return;
-    var it=best(q);
-    if(it) return answer(it);
-    var m=L()==='en'?"I don't have that one in my memory yet. Leave it in the form above and the team will answer you."
-                    :'Esa pregunta todavía no está en mi memoria. Déjala en el formulario de arriba y el equipo te responde.';
-    out.hidden=false; out.textContent=m; speak(m);
+    var q = inp.value.trim(); if (!q || !window.D2AIVoiceOrb) return;
+    inp.value = '';
+    window.D2AIVoiceOrb.send(q);
   }
-  go.addEventListener('click',ask);
-  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); ask(); } });
-  items.forEach(function(it){ it.querySelector('.qsay').addEventListener('click',function(){ speak(txt(it.querySelector('.qb p'))); }); });
-  // dictado en el navegador (Web Speech); si no existe, el botón se oculta
-  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ mic.style.display='none'; }
-  else mic.addEventListener('click',function(){
-    var r=new SR(); r.lang=L()==='en'?'en-US':'es-MX'; r.interimResults=false; r.maxAlternatives=1;
+  go.addEventListener('click', ask);
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); ask(); } });
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { mic.style.display = 'none'; }
+  else mic.addEventListener('click', function(){
+    var r = new SR(); r.lang = L() === 'en' ? 'en-US' : 'es-419'; r.interimResults = false; r.maxAlternatives = 1;
     mic.classList.add('on');
-    r.onresult=function(e){ inp.value=e.results[0][0].transcript; ask(); };
-    r.onend=function(){ mic.classList.remove('on'); };
-    r.onerror=function(){ mic.classList.remove('on'); };
-    try{ r.start(); }catch(e){ mic.classList.remove('on'); }
+    r.onresult = function(e){ inp.value = e.results[0][0].transcript; ask(); };
+    r.onend = function(){ mic.classList.remove('on'); };
+    r.onerror = function(){ mic.classList.remove('on'); };
+    try { r.start(); } catch (e) { mic.classList.remove('on'); }
   });
-  // el texto de ejemplo sigue el idioma
-  function ph(){ inp.placeholder=L()==='en'?'How do I pay from Venezuela?':'¿Cómo les pago desde Venezuela?'; }
-  new MutationObserver(ph).observe(document.documentElement,{attributes:true,attributeFilter:['lang']}); ph();
+  function ph(){ inp.placeholder = L() === 'en' ? 'How do I pay from Venezuela?' : '¿Cómo les pago desde Venezuela?'; }
+  new MutationObserver(ph).observe(document.documentElement, { attributes:true, attributeFilter:['lang'] }); ph();
 })();
 </script>
 </body>

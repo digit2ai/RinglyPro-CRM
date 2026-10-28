@@ -147,14 +147,24 @@ function hoyParaElModelo(lang) {
     timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit'
   }).format(new Date());
   return lang === 'es'
-    ? `\nHOY es ${f} (${iso}). Toda fecha que calcules parte de hoy y va en el FUTURO. Si el ciudadano dice un día sin año, es el próximo que caiga. Nunca uses un año distinto al de hoy salvo que la fecha ya haya pasado este año.`
+    ? `\nHOY es ${f} (${iso}). Toda fecha que calcules parte de hoy y va en el FUTURO. Si la persona dice un día sin año, es el próximo que caiga. Nunca uses un año distinto al de hoy salvo que la fecha ya haya pasado este año.`
     : `\nTODAY is ${f} (${iso}). Every date you compute starts from today and lies in the FUTURE.`;
 }
 
-function buildSystem(agent, lang, context) {
+function buildSystem(agent, lang, context, knowledge) {
   const persona = pick(agent.persona, lang, agent.defaultLang);
   const cta = pick(agent.cta, lang, agent.defaultLang);
-  const rules = RULES[lang] || RULES.en;
+  let rules = RULES[lang] || RULES.en;
+  // A pack with its own knowledge (agent.knowledge) answers from that AND the page.
+  // Everything else keeps the page as its only source, unchanged.
+  if (knowledge) {
+    rules = rules
+      .replace('Tu ÚNICA fuente es el CONTENIDO DE LA PÁGINA que aparece abajo.', 'Tus ÚNICAS fuentes son el CONOCIMIENTO y el CONTENIDO DE LA PÁGINA que aparecen abajo.')
+      .replace('Your ONLY source is the PAGE CONTENT below.', 'Your ONLY sources are the KNOWLEDGE and the PAGE CONTENT below.')
+      .replace('("eso no lo dice esta página")', '("eso no lo tengo a la mano")')
+      .replace('("this page doesn\'t cover that")', '("I don\'t have that to hand")');
+  }
+  const kb = knowledge ? `\n\n${lang === 'es' ? 'CONOCIMIENTO' : 'KNOWLEDGE'}\n${knowledge}` : '';
   const header = lang === 'es' ? 'CONTENIDO DE LA PÁGINA' : 'PAGE CONTENT';
   const empty = lang === 'es'
     ? '(La página no envió contenido. Dilo con honestidad y pide que reformulen.)'
@@ -165,7 +175,7 @@ function buildSystem(agent, lang, context) {
 
   return `${persona}
 
-${rules}${cta ? '\n- ' + cta : ''}${fecha}
+${rules}${cta ? '\n- ' + cta : ''}${fecha}${kb}
 
 ${header}
 ${context || empty}`;
@@ -232,9 +242,10 @@ router.post('/chat', async (req, res) => {
     : agent.defaultLang;
   const context = cleanContext(body.context);
 
+  const maxTurns = Math.min(Number(agent.maxTurns) || MAX_TURNS, 40);
   const messages = (Array.isArray(body.messages) ? body.messages : [])
     .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && String(m.content || '').trim())
-    .slice(-MAX_TURNS)
+    .slice(-maxTurns)
     .map((m) => ({ role: m.role, content: String(m.content).slice(0, MAX_MSG) }));
 
   while (messages.length && messages[0].role !== 'user') messages.shift();
@@ -255,6 +266,9 @@ router.post('/chat', async (req, res) => {
   if (!isConfigured() || modelOff.has(agent.id) || verticalOff) {
     // Sin modelo no hay consulta posible: un agente con herramientas que
     // responde de memoria es peor que uno que admite que no puede mirar.
+    if (agent.tools && agent.tools.offline) {
+      return res.json({ reply: pick(agent.tools.offline, lang, agent.defaultLang), source: 'heuristic', degraded: true });
+    }
     if (agent.tools) {
       return res.json({
         reply: lang === 'es'
@@ -283,6 +297,11 @@ router.post('/chat', async (req, res) => {
     // El historial crece dentro del bucle: cada resultado de herramienta vuelve
     // como un turno, que es como el modelo lo lee.
     const hilo = messages.slice();
+    let knowledge = '';
+    if (typeof agent.knowledge === 'function') {
+      try { knowledge = String(await agent.knowledge(lang) || '').slice(0, 30000); }
+      catch (e) { console.error('[voice-agent] knowledge:', e.message); }
+    }
     const usadas = [];
     let response = null;
 
@@ -290,7 +309,7 @@ router.post('/chat', async (req, res) => {
       response = await client.messages.create({
         model: MODEL,
         max_tokens: 400,
-        system: buildSystem(agent, lang, context),
+        system: buildSystem(agent, lang, context, knowledge),
         messages: hilo,
         ...(tools ? { tools } : {})
       });
@@ -342,7 +361,7 @@ router.post('/chat', async (req, res) => {
       if (usadas.length) {
         return res.json({
           reply: lang === 'es'
-            ? 'No logré completar la consulta en este momento. Puede intentarlo de nuevo o llamar a la línea de atención.'
+            ? 'No logré completar eso en este momento. ¿Lo intentamos de nuevo?'
             : "I couldn't complete that lookup right now. Please try again or call the service line.",
           source: 'model', tools_used: usadas, incomplete: true, ...(acciones.length ? { actions: acciones } : {})
         });
