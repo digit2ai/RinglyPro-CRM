@@ -718,6 +718,17 @@ router.post('/email-read', requireClient15, async (req, res) => {
   }
 });
 
+// Mark every unread inbox email read, on every connected account.
+router.post('/email-read-all', requireClient15, async (req, res) => {
+  try {
+    const out = await emailReconcile.markAllRead(D2AI_CLIENT_ID);
+    res.json({ success: true, ...out });
+  } catch (error) {
+    console.error('[ProjectsBridge] email-read-all error:', error.message);
+    res.json({ success: false, error: error.message });
+  }
+});
+
 // AI: draft a reply to an email.
 router.post('/email-draft', requireClient15, async (req, res) => {
   try {

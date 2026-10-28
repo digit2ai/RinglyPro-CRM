@@ -703,8 +703,67 @@ async function markEmailRead(clientId, accountId, messageId) {
   return { ok: true };
 }
 
+// Mark EVERY unread email in the inbox read, on every connected account (one click).
+// Per-account: Gmail removes the UNREAD label in batches of 1000; IMAP sets \Seen on
+// all unseen UIDs in one command. One account failing never stops the others, and the
+// failure is reported as itself (an old read-only Gmail grant needs reconnecting).
+const MARK_ALL_GMAIL_MAX = parseInt(process.env.EMAIL_MARK_ALL_MAX || '5000', 10);
+async function markAllRead(clientId) {
+  await ensureTable();
+  const accounts = await sequelize.query(
+    `SELECT * FROM email_accounts WHERE client_id = $1 AND is_active = true ORDER BY id ASC`,
+    { bind: [clientId], type: QueryTypes.SELECT }
+  );
+  const results = await Promise.all(accounts.map(async (acc) => {
+    const out = { id: acc.id, label: acc.label || acc.email_address, marked: 0, remaining: 0, error: null };
+    try {
+      if (acc.provider === 'gmail') {
+        const gmail = google.gmail({ version: 'v1', auth: gmailClientFor(acc) });
+        const ids = [];
+        let pageToken;
+        do {
+          const r = await gmail.users.messages.list({ userId: 'me', q: 'is:unread in:inbox', maxResults: 500, pageToken });
+          (r.data.messages || []).forEach(m => ids.push(m.id));
+          pageToken = r.data.nextPageToken;
+        } while (pageToken && ids.length < MARK_ALL_GMAIL_MAX);
+        for (let i = 0; i < ids.length; i += 1000) {
+          await gmail.users.messages.batchModify({ userId: 'me', requestBody: { ids: ids.slice(i, i + 1000), removeLabelIds: ['UNREAD'] } });
+          out.marked += Math.min(1000, ids.length - i);
+        }
+        if (pageToken) out.remaining = 1; // more than the cap: press again
+      } else {
+        const ic = new ImapFlow(imapConfig(acc));
+        await ic.connect();
+        try {
+          const lock = await ic.getMailboxLock('INBOX');
+          try {
+            const uids = await ic.search({ seen: false }, { uid: true });
+            if (uids && uids.length) {
+              await ic.messageFlagsAdd(uids, ['\\Seen'], { uid: true });
+              out.marked = uids.length;
+            }
+          } finally { lock.release(); }
+        } finally { await ic.logout().catch(() => {}); }
+      }
+      if (!out.remaining) persistStatus(acc.id, 0, null);
+    } catch (e) {
+      const msg = (e && e.message) || '';
+      out.error = /insufficient|scope|permission/i.test(msg)
+        ? 'This Gmail account was connected read-only. Remove it and connect it again to allow marking as read.'
+        : friendlyImapError(e);
+    }
+    return out;
+  }));
+  _cache.delete(clientId);
+  return {
+    marked: results.reduce((n, r) => n + r.marked, 0),
+    more: results.some(r => r.remaining),
+    accounts: results
+  };
+}
+
 module.exports = {
   listAccounts, addImapAccount, deleteAccount, testImap, getSummary, encrypt, decrypt,
   getGmailAuthUrl, exchangeGmailCode, saveGmailAccount, getMessageBody, draftReply, sendReply,
-  triageInbox, markEmailRead, flagEmail, unflagEmail, listEmailFollowups, countEmailFollowups
+  triageInbox, markEmailRead, markAllRead, flagEmail, unflagEmail, listEmailFollowups, countEmailFollowups
 };
