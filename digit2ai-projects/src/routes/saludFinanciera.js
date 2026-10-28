@@ -16,6 +16,7 @@ const store = require('../services/saludFinanciera/store');
 const lina = require('../services/saludFinanciera/lina');
 const cerebro = require('../services/saludFinanciera/cerebro');
 const { toCents, fmt } = require('../services/saludFinanciera/money');
+const alarmas = require('../services/saludFinanciera/alarmas');
 
 const router = express.Router();
 
@@ -131,15 +132,51 @@ function cierre(a, ym) {
   return { mes: ym, nombre: engine.MESES[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4), hasta: r.hasta, saldo: fmt(r.saldo_fin), saldo_plan: fmt(plan), sobre_plan: r.saldo_fin >= plan };
 }
 
+// STALL warning (owner 2026-10-28): bank anomalies + plan risks, fixed rules in alarmas.js. A failure here never breaks /salud.
+async function revisarAlarmas(req, a, resumen) {
+  try {
+    const q = (sql, r) => deps.sequelize.query(sql, { replacements: { u: req.sf.userId, t: req.sf.tenantId, ...(r || {}) } }).then(x => x[0]);
+    const [txns, alertas, items, cuentas, cfg, rec] = await Promise.all([
+      q(`SELECT x.id, x.fecha, x.nombre, x.comercio, x.monto_cents, x.pending, x.enlace FROM sf_plaid_txn x
+           JOIN sf_plaid_accounts c ON c.account_id = x.account_id AND c.user_id = x.user_id AND c.tenant_id = x.tenant_id AND c.incluir
+          WHERE x.user_id = :u AND x.tenant_id = :t AND x.fecha >= :d`, { d: engine.addDays(a.today, -400) }).catch(() => []),
+      q('SELECT id, tipo, texto, leida FROM sf_alertas WHERE user_id = :u AND tenant_id = :t AND NOT leida ORDER BY id DESC LIMIT 50').catch(() => []),
+      q("SELECT id, institution_name, estado FROM sf_plaid_items WHERE user_id = :u AND tenant_id = :t AND estado <> 'desconectado'").catch(() => []),
+      q('SELECT mask, incluir, saldo_actual::text AS saldo_actual, saldo_disponible::text AS saldo_disponible FROM sf_plaid_accounts WHERE user_id = :u AND tenant_id = :t').catch(() => []),
+      q('SELECT alarmas_vistas FROM sf_config WHERE user_id = :u AND tenant_id = :t').catch(() => []),
+      q('SELECT direccion, descripcion, comercio, frecuencia, activo, monto_ultimo::text AS monto_ultimo, monto_promedio::text AS monto_promedio, proxima_fecha::text AS proxima_fecha, categoria FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t').catch(() => [])
+    ]);
+    const vistas = cfg[0] && Array.isArray(cfg[0].alarmas_vistas) ? cfg[0].alarmas_vistas : [];
+    return alarmas.revisar({ hoy: a.today, txns, alertas, items, cuentas, vistas, recurrentes: alarmas.distintos(rec),
+      dias_negativos: resumen.dias_negativos || [], obligaciones_descubiertas: resumen.obligaciones_descubiertas || [] });
+  } catch (e) { return [{ nivel: 'caution', clave: 'error', titulo: 'No pude revisar el banco', detalle: e.message }]; }
+}
+
+router.post('/alarmas/visto', async (req, res) => {
+  try {
+    const clave = String((req.body && req.body.clave) || '').slice(0, 120);
+    if (!clave) return res.status(400).json({ success: false, error: 'clave requerida' });
+    const r = { u: req.sf.userId, t: req.sf.tenantId };
+    const [[row]] = await deps.sequelize.query('SELECT alarmas_vistas FROM sf_config WHERE user_id = :u AND tenant_id = :t', { replacements: r });
+    const vistas = (row && Array.isArray(row.alarmas_vistas) ? row.alarmas_vistas : []).filter(x => x !== clave).concat([clave]).slice(-300);
+    await deps.sequelize.query('UPDATE sf_config SET alarmas_vistas = CAST(:v AS JSONB) WHERE user_id = :u AND tenant_id = :t', { replacements: { ...r, v: JSON.stringify(vistas) } });
+    const m = clave.match(/^alerta:(\d+)$/);
+    if (m) await deps.sequelize.query('UPDATE sf_alertas SET leida = TRUE WHERE id = :id AND user_id = :u AND tenant_id = :t', { replacements: { ...r, id: Number(m[1]) } });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 router.get('/acceso', (req, res) => res.json({ success: true, ok: true }));
 
 router.get('/salud', async (req, res) => {
   try {
     const { rows, opts } = await context(req);
     const a = engine.analyze(rows, opts);
+    const resumen = engine.publicSummary(a);
     res.set('Cache-Control', 'no-store').json({
       success: true,
-      ...engine.publicSummary(a),
+      ...resumen,
+      alarmas: await revisarAlarmas(req, a, resumen),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
       gasto_personal_mes: gastoPersonalMes(rows, opts, a),
       pfd: instrumentos(a, rows),

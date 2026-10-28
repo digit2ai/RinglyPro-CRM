@@ -240,3 +240,6 @@ ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS saldo_disponible NUMERIC(
 ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS saldo_at TIMESTAMPTZ;
 ALTER TABLE sf_plaid_accounts ADD COLUMN IF NOT EXISTS rol TEXT;
 ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS colchon_corte NUMERIC(12,2) DEFAULT 200;
+
+-- STALL warning: alarm keys the owner acknowledged (2026-10-28)
+ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS alarmas_vistas JSONB NOT NULL DEFAULT '[]'::jsonb;

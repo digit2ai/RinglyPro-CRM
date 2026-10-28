@@ -830,8 +830,52 @@ async function plaidTests({ call, A, B, sequelize }) {
   if (saved.env === undefined) delete process.env.PLAID_ENV; else process.env.PLAID_ENV = saved.env;
 }
 
+function alarmasTests() {
+  console.log('\n-- STALL warning + distinct recurring charges (alarmas.js)');
+  const A = require('./src/services/saludFinanciera/alarmas');
+  const hoy = '2026-10-28';
+  const tx = (id, fecha, nombre, cents, extra) => ({ id, fecha, nombre, comercio: null, monto_cents: cents, pending: false, enlace: null, ...(extra || {}) });
+  const base = { hoy, alertas: [], items: [], cuentas: [], vistas: [], recurrentes: [] };
+  const r1 = A.revisar({ ...base, txns: [tx(1, '2026-10-27', 'NETFLIX.COM', 1599), tx(2, '2026-10-27', 'NETFLIX.COM', 1599)] });
+  ok(r1.length === 1 && /cargo doble/i.test(r1[0].titulo) && r1[0].nivel === 'caution', 'same merchant + amount within 2 days = possible double charge', r1);
+  const r1b = A.revisar({ ...base, txns: [tx(1, '2026-10-20', 'NETFLIX.COM', 1599), tx(2, '2026-10-27', 'NETFLIX.COM', 1599)] });
+  ok(!r1b.some(a => /doble/i.test(a.titulo)), 'a week apart is NOT a double charge');
+  const r2 = A.revisar({ ...base, txns: [tx(3, '2026-10-26', 'OVERDRAFT ITEM FEE', 3500)] });
+  ok(r2.length === 1 && r2[0].nivel === 'stall' && /comisi/i.test(r2[0].titulo), 'an overdraft fee is a STALL', r2);
+  const r3 = A.revisar({ ...base, txns: [tx(4, '2026-10-26', 'BEST BUY 123', 89999)] });
+  ok(r3.length === 1 && r3[0].nivel === 'stall' && /nuevo/i.test(r3[0].titulo), 'a $899 charge from a merchant never seen is a STALL', r3);
+  const r3b = A.revisar({ ...base, recurrentes: [{ clave: 'best' }], txns: [tx(4, '2026-10-26', 'BEST BUY 123', 89999)] });
+  ok(!r3b.length, 'a known recurring merchant is not "new"');
+  const r4 = A.revisar({ ...base, txns: [tx(5, '2026-06-10', 'SHELL OIL', 4000), tx(6, '2026-10-26', 'SHELL OIL', 30000)] });
+  ok(r4.length === 1 && /alto/i.test(r4[0].titulo), 'a charge 2x above that merchant\'s highest is flagged', r4);
+  const r5 = A.revisar({ ...base, txns: [tx(7, '2026-10-26', 'BEST BUY 123', 89999, { enlace: 'plan' }), tx(8, '2026-10-26', 'TFS DES:TFS PAY', 430799), tx(9, '2026-10-26', 'Online Banking transfer to CHK 5122', 100000)] });
+  ok(!r5.length, 'a planned payment, the Corte and own transfers raise nothing', r5);
+  const r6 = A.revisar({ ...base, vistas: ['fee:3'], txns: [tx(3, '2026-10-26', 'OVERDRAFT ITEM FEE', 3500)] });
+  ok(!r6.length, '"Entendido" silences that alarm');
+  const r7 = A.revisar({ ...base, txns: [], dias_negativos: [{ fecha: '2026-12-07', saldo: '-$271.52' }], items: [{ id: 1, institution_name: 'BoA', estado: 'login_requerido' }], cuentas: [{ mask: '5122', incluir: true, saldo_disponible: '-12.00' }] });
+  ok(r7.length === 3 && r7.every(a => a.nivel === 'stall'), 'negative day, broken bank link and overdrawn account are STALLs', r7.map(a => a.titulo));
+  const rec = [
+    { direccion: 'salida', activo: true, descripcion: 'Highlevel Agency', comercio: 'Highlevel Agency', frecuencia: 'MONTHLY', monto_ultimo: '97.00' },
+    { direccion: 'salida', activo: true, descripcion: 'Highlevel Agency', comercio: 'Highlevel Agency', frecuencia: 'MONTHLY', monto_ultimo: '97.00' },
+    { direccion: 'salida', activo: true, descripcion: 'Amazon', comercio: 'Amazon', frecuencia: 'MONTHLY', monto_ultimo: '9.46' },
+    { direccion: 'salida', activo: true, descripcion: 'Amazon', comercio: 'Amazon', frecuencia: 'MONTHLY', monto_ultimo: '7.68' },
+    { direccion: 'salida', activo: false, descripcion: 'Gaia', comercio: 'Gaia', frecuencia: 'MONTHLY', monto_ultimo: '15.89' },
+    { direccion: 'salida', activo: true, descripcion: 'TFS DES:TFS PAY ID: 20123026 INDN:Manuel Stagg CO ID:XXXXX65079 PPD', comercio: null, frecuencia: 'MONTHLY', monto_ultimo: '4307.99', categoria: 'corte' },
+    { direccion: 'salida', activo: true, descripcion: 'Zelle Transfer CONF# L03A3MGNQ; LINA STAGG', comercio: null, frecuencia: 'MONTHLY', monto_ultimo: '1500.00' },
+    { direccion: 'entrada', activo: true, descripcion: 'CITI PAYROLL', comercio: null, frecuencia: 'BIWEEKLY', monto_ultimo: '2665.24' }
+  ];
+  const d = A.distintos(rec);
+  const by = Object.fromEntries(d.map(x => [x.nombre, x]));
+  ok(d.length === 4, 'one row per merchant: duplicates, inactive streams and income dropped', d.map(x => x.nombre));
+  ok(by['Highlevel Agency'] && by['Highlevel Agency'].montos.length === 1, 'the same charge reported twice counts once');
+  ok(by.Amazon && by.Amazon.montos.length === 2 && by.Amazon.mensual === '$17.14', 'distinct amounts of one merchant are listed together', by.Amazon);
+  ok(by['TFS (Corte)'] && by['TFS (Corte)'].claves.includes('corte'), 'bank codes become a readable name; the Corte also matches its plan row');
+  ok(by['Zelle a Lina Stagg'] && by['Zelle a Lina Stagg'].clave === 'lina', 'a Zelle reads as the person and searches by first name', by['Zelle a Lina Stagg']);
+}
+
 (async () => {
   await engineTests();
+  alarmasTests();
   await linaTests();
   structuralTests();
   try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.stack); }

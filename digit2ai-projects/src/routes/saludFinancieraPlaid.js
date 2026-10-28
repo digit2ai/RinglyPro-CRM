@@ -57,7 +57,7 @@ function ownerRouter(deps) {
       const recurrentes = await sync.recurrentesDe(deps.sequelize, req.sf);
       let reserva = null;
       try { reserva = await reservaCorte(deps, req.sf, items, recurrentes); } catch (e) { reserva = { estado: 'error', error: e.message }; }
-      res.json({ success: true, data: { configurado: plaid.configured(), falta: plaid.missing(), entorno: plaid.env(), items, alertas, recurrentes, reserva } });
+      res.json({ success: true, data: { configurado: plaid.configured(), falta: plaid.missing(), entorno: plaid.env(), items, alertas, recurrentes, recurrentes_distintos: require('../services/saludFinanciera/alarmas').distintos(recurrentes), reserva } });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
   });
 

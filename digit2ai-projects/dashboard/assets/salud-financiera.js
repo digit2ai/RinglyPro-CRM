@@ -17,7 +17,7 @@
   ];
   var CHIPS = ['¿Cómo estoy hoy?', '¿Cuánto tendré el 1 de diciembre?', '¿Por qué tengo este saldo hoy?', '¿Cómo se calcula la proyección?', '¿Qué hago para mantenerla?', 'Agrega un gasto de 45 en comida'];
   var MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  var state = { f: { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null }, fmin: null, salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
+  var state = { f: { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null, nombres: null, etiqueta: '' }, fmin: null, salud: null, movs: [], meses: [], mes: '', historial: [], audio: null, paused: false, rec: null };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]; }); }
   function tok() { try { return localStorage.getItem('d2ai_token') || localStorage.getItem('token') || ''; } catch (e) { return ''; } }
@@ -186,14 +186,23 @@
         '<button class="btn btn-sm btn-ghost" data-bank-off="' + it.id + '" style="color:var(--danger)">Desconectar</button></div></div>';
     });
     if (d.configurado && d.items.length) h += '<div style="margin-top:8px"><button class="btn btn-sm btn-ghost" id="sf-bank-connect">+ Conectar otra cuenta (otro usuario del banco)</button></div>';
+    // owner 2026-10-28: recurring charges as ONE row per merchant (Plaid repeats them per account and per old login)
+    var subs = d.recurrentes_distintos || [];
+    var todas = subs.reduce(function (a, r) { return a.concat(r.claves || [r.clave]); }, []);
+    var totalMes = subs.reduce(function (x, r) { return x + (r.mensual_cents || 0); }, 0);
+    var verTodos = '<a href="#" data-rec-todos="1" style="color:var(--info);text-decoration:underline;white-space:nowrap">Ver todos en la tabla</a>';
     if ((d.alertas || []).length) {
       h += '<div style="margin-top:10px">' + d.alertas.map(function (a) {
-        return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:7px 0;font-size:14px"><span>' + esc(a.texto) + '</span>' +
+        var txt = esc(a.texto);
+        if (a.tipo === 'resumen_recurrentes' && subs.length) {
+          txt = 'Tienes <b>' + subs.length + ' cobros recurrentes distintos</b> (≈ ' + esc(money(totalMes / 100)) + ' al mes): ' +
+            subs.map(function (r) { return esc(r.nombre) + ' ' + esc(r.montos.length > 1 ? r.montos.length + ' cargos' : r.montos[0] || ''); }).join(', ') + '. ' + verTodos;
+        }
+        return '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding:7px 0;font-size:14px"><span>' + txt + '</span>' +
           '<button class="btn btn-sm btn-ghost" data-alerta-ok="' + a.id + '">Entendido</button></div>';
       }).join('') + '</div>';
     }
-    var subs = (d.recurrentes || []).filter(function (r) { return r.direccion === 'salida' && r.activo; });
-    if (subs.length) h += '<div style="margin-top:8px"><button class="btn btn-sm btn-ghost" id="sf-bank-subs">Cobros recurrentes (' + subs.length + ')</button></div>';
+    if (subs.length) h += '<div style="margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button class="btn btn-sm btn-ghost" id="sf-bank-subs">Cobros recurrentes (' + subs.length + ' distintos · ≈ ' + esc(money(totalMes / 100)) + '/mes)</button>' + verTodos + '</div>';
     h += '</div>';
     el.innerHTML = h;
     var c = document.getElementById('sf-bank-connect'); if (c) c.onclick = function () { bankLink(null); };
@@ -206,11 +215,25 @@
       sf('/plaid/item/' + b.getAttribute('data-bank-off'), { method: 'DELETE' }).then(function () { refresh(); });
     }; });
     el.querySelectorAll('[data-alerta-ok]').forEach(function (b) { b.onclick = function () { sf('/plaid/alertas/' + b.getAttribute('data-alerta-ok'), { method: 'PATCH', body: { leida: true } }).then(loadBank); }; });
+    var irTodos = function (e) { if (e) e.preventDefault(); closeModalSafe(); if (window.sfFilterNombres) window.sfFilterNombres(todas, 'Cobros recurrentes (' + subs.length + ')'); };
+    el.querySelectorAll('[data-rec-todos]').forEach(function (a) { a.onclick = irTodos; });
     var sb = document.getElementById('sf-bank-subs'); if (sb) sb.onclick = function () {
-      openModal('Cobros recurrentes', '<table class="data-table" style="width:100%"><thead><tr><th>Concepto</th><th>Frecuencia</th><th style="text-align:right">Último</th><th>Próximo</th></tr></thead><tbody>' +
-        subs.map(function (r) { return '<tr><td>' + esc(r.descripcion) + (r.fuente === 'detector' ? ' <span style="font-size:11px;color:var(--text-muted)">(detectado por la app)</span>' : '') + '</td><td>' + esc({ WEEKLY: 'semanal', BIWEEKLY: 'quincenal', SEMI_MONTHLY: '2 al mes', MONTHLY: 'mensual', ANNUALLY: 'anual' }[r.frecuencia] || r.frecuencia || '') + '</td><td style="text-align:right">' + (r.monto_ultimo ? '$' + esc(r.monto_ultimo) : '') + '</td><td>' + esc(r.proxima_fecha || '') + '</td></tr>'; }).join('') + '</tbody></table>', function () { closeModal(); });
+      openModal('Cobros recurrentes', '<p style="margin:0 0 8px;font-size:13px;color:var(--text-muted)">Uno por comercio. Si cobra varios montos, salen todos. ' + verTodos + '</p>' +
+        '<table class="data-table" style="width:100%;table-layout:fixed"><thead><tr><th style="width:38%">Comercio</th><th style="width:30%;text-align:right">Monto</th><th style="width:20%">Próximo</th><th style="width:12%"></th></tr></thead><tbody>' +
+        subs.map(function (r, i) {
+          return '<tr><td style="white-space:normal;word-break:break-word">' + esc(r.nombre) + '<div style="font-size:11px;color:var(--text-muted)">' + esc(r.frecuencia) + '</div></td>' +
+            '<td style="text-align:right;white-space:normal">' + esc(r.montos.join(' · ')) + (r.montos.length > 1 ? '<div style="font-size:11px;color:var(--text-muted)">≈ ' + esc(r.mensual) + '/mes</div>' : '') + '</td>' +
+            '<td>' + esc(r.proxima_fecha ? fechaCorta(r.proxima_fecha) : '') + '</td>' +
+            '<td><a href="#" data-rec-uno="' + i + '" style="color:var(--info)">Ver</a></td></tr>';
+        }).join('') + '</tbody></table>', function () { closeModal(); });
+      document.querySelectorAll('[data-rec-todos]').forEach(function (a) { a.onclick = irTodos; });
+      document.querySelectorAll('[data-rec-uno]').forEach(function (a) { a.onclick = function (e) {
+        e.preventDefault(); var r = subs[Number(a.getAttribute('data-rec-uno'))]; closeModalSafe();
+        if (window.sfFilterNombres) window.sfFilterNombres(r.claves || [r.clave], r.nombre);
+      }; });
     };
   }
+  function closeModalSafe() { try { closeModal(); } catch (e) {} }
   function loadPlaidScript() {
     if (window.Plaid) return Promise.resolve();
     if (state.plaidLoading) return state.plaidLoading;
@@ -298,6 +321,10 @@
     var bank = f.bank ? f.bank.reduce(function (o, id) { o[id] = 1; return o; }, {}) : null;
     var out = state.movs.filter(function (r) {
       if (bank && !bank[r.id]) return false;
+      if (f.nombres) {
+        var h2 = fold([r.concepto, r.comercio, r.nota].join(' '));
+        if (!f.nombres.some(function (k) { return fold(k).split(/\s+/).every(function (w) { return h2.indexOf(w) >= 0; }); })) return false;
+      }
       if (f.desde && r.fecha < f.desde) return false;
       if (f.hasta && r.fecha > f.hasta) return false;
       var m = Math.abs(num(r.efectivo || r.monto) || 0);
@@ -320,7 +347,7 @@
     }
     return out;
   }
-  function anyFilter() { var f = state.f; return !!(f.q || f.desde || f.hasta || f.min || f.max || f.bank); }
+  function anyFilter() { var f = state.f; return !!(f.q || f.desde || f.hasta || f.min || f.max || f.bank || f.nombres); }
   // the boxes on screen are the truth: the browser can restore their values after a reload without firing any event
   function readInputs() {
     ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { var e = document.getElementById('sf-' + k); if (e) state.f[k] = e.value; });
@@ -331,15 +358,19 @@
     if (chip) {
       var parts = [];
       if (state.f.bank) parts.push('Gastos del banco fuera del plan');
+      if (state.f.nombres) parts.push(state.f.etiqueta || 'Cobros seleccionados');
       if (anyFilter()) {
         var tot = rows.reduce(function (x, r) { return x + (r.tipo === 'ingreso' ? 1 : -1) * Math.round(Math.abs(num(r.efectivo || r.monto) || 0) * 100); }, 0);
         parts.push(rows.length + (rows.length === 1 ? ' movimiento' : ' movimientos') + ' · total ' + money(tot / 100));
       }
       chip.innerHTML = parts.length ? '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-size:13px">' +
         '<span style="background:rgba(34,211,238,.12);color:var(--info);border:1px solid currentColor;border-radius:999px;padding:3px 10px">' + esc(parts.join(' · ')) + '</span>' +
-        (state.f.bank ? '<button class="btn btn-sm btn-ghost" id="sf-unbank">Quitar filtro del banco</button>' : '') + '</div>' : '';
+        (state.f.bank ? '<button class="btn btn-sm btn-ghost" id="sf-unbank">Quitar filtro del banco</button>' : '') +
+        (state.f.nombres ? '<button class="btn btn-sm btn-ghost" id="sf-unnombres">Quitar filtro de cobros</button>' : '') + '</div>' : '';
       var ub = document.getElementById('sf-unbank');
       if (ub) ub.onclick = function () { state.f.bank = null; redraw(); };
+      var un = document.getElementById('sf-unnombres');
+      if (un) un.onclick = function () { state.f.nombres = null; state.f.etiqueta = ''; redraw(); };
     }
     drawTable(rows, state.fmin);
   }
@@ -358,7 +389,7 @@
     });
     ['min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).oninput = function () { redraw(); }; });
     document.getElementById('sf-clear').onclick = function () {
-      state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null };
+      state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: '', dir: 1, bank: null, nombres: null, etiqueta: '' };
       ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { document.getElementById('sf-' + k).value = ''; });
       // owner 2026-10-27: Limpiar clears EVERYTHING, the month selector included, back to the table as it first loads
       var ms = document.getElementById('sf-mes'); if (ms) ms.value = '';
@@ -368,12 +399,25 @@
   // the Bank card in the instrument panel: this month's bank debits outside the plan, from the 1st to today
   window.sfFilterBank = function (ids, hoy) {
     var ym = String(hoy).slice(0, 7);
-    state.f = { q: '', desde: ym + '-01', hasta: hoy, min: '', max: '', sort: 'fecha', dir: 1, bank: ids.slice() };
+    state.f = { q: '', desde: ym + '-01', hasta: hoy, min: '', max: '', sort: 'fecha', dir: 1, bank: ids.slice(), nombres: null, etiqueta: '' };
     var set = function (k, v) { var e = document.getElementById('sf-' + k); if (e) e.value = v; };
     set('q', ''); set('desde', state.f.desde); set('hasta', state.f.hasta); set('min', ''); set('max', '');
     var card = document.getElementById('sf-mov-card');
     var done = function () { if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     if (state.mes !== ym) { state.mes = ym; loadMovs().then(done); } else { redraw(); done(); }
+  };
+
+  // recurring charges / an alarm: every movement whose concept carries one of these merchant keys, all months, newest first
+  window.sfFilterNombres = function (claves, etiqueta) {
+    state.f = { q: '', desde: '', hasta: '', min: '', max: '', sort: 'fecha', dir: -1, bank: null, nombres: claves.slice(), etiqueta: etiqueta || '' };
+    ['q', 'desde', 'hasta', 'min', 'max'].forEach(function (k) { var e = document.getElementById('sf-' + k); if (e) e.value = ''; });
+    var ms = document.getElementById('sf-mes'); if (ms) ms.value = '';
+    var card = document.getElementById('sf-mov-card');
+    var done = function () { if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    if (state.mes) { state.mes = ''; loadMovs().then(done); } else { redraw(); done(); }
+  };
+  window.sfAlarmaVisto = function (clave) {
+    return sf('/alarmas/visto', { method: 'POST', body: { clave: clave } }).then(function () { return Promise.all([loadSalud(), loadBank()]); });
   };
 
   function sortTh(k, label, st) {

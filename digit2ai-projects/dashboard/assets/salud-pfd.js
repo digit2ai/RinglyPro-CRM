@@ -87,6 +87,19 @@
     return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px">' + h.join('') + '</div>';
   }
 
+  // ------------------------------------------------------------ the STALL list: what is wrong, where to look, and "Entendido"
+  function alarmasHtml(s) {
+    var al = s.alarmas || [];
+    if (!al.length) return '<div style="color:' + C.green + ';margin-bottom:6px">Sin anomalías en el banco ni en el plan.</div>';
+    return '<div style="margin-bottom:10px">' + al.map(function (a) {
+      var col = a.nivel === 'stall' ? C.red : C.amber;
+      return '<div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border-left:4px solid ' + col + ';background:#0b0d12;padding:6px 10px;margin-bottom:6px;border-radius:4px">' +
+        '<div style="min-width:0"><div style="color:' + col + ';font-weight:700;letter-spacing:.04em">' + (a.nivel === 'stall' ? 'STALL · ' : 'CAUTION · ') + esc(a.titulo) + '</div>' +
+        '<div style="color:#e6edf5">' + esc(a.detalle) + (a.buscar ? ' <a href="#" data-alarma-ver="' + esc(a.buscar) + '" data-alarma-tit="' + esc(a.titulo) + '" style="color:' + C.cyan + ';text-decoration:underline">Ver en la tabla</a>' : '') + '</div></div>' +
+        (a.clave !== 'error' ? '<button data-alarma-ok="' + esc(a.clave) + '" style="flex:none;background:#1b2230;color:#fff;border:1px solid #3a4250;border-radius:6px;padding:6px 10px;cursor:pointer;min-height:36px">Entendido</button>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+
   // ------------------------------------------------------------ insights per softkey
   function insights(s, tecla) {
     var p = s.pfd, out = [], t = s.tendencia || { malas: [], buenas: [], sube: true };
@@ -136,6 +149,7 @@
   window.drawSfPfd = function (el, s) {
     if (!el || !s || !s.pfd) return;
     var p = s.pfd, W = 1000, H = 760, cx = 500, cy = 300;
+    var alarmas = s.alarmas || [], stalls = alarmas.filter(function (a) { return a.nivel === 'stall'; });
     var ppd = 7; // pixels per degree of pitch
     // owner 2026-10-25: only up or down, and the nose follows the curve in the map (no banking)
     var pitch = curvePitch(s, p);
@@ -371,18 +385,29 @@
       });
     })();
 
+    // ---------------- STALL warning (owner 2026-10-28): any bank anomaly or plan risk, impossible to miss ----------------
+    if (alarmas.length) {
+      var red = stalls.length > 0, col = red ? C.red : C.amber, bw2 = red ? 300 : 260, bx2 = cx - bw2 / 2, by2 = 72;
+      o.push('<g data-alarmas="1" style="cursor:pointer"><rect x="' + bx2 + '" y="' + by2 + '" width="' + bw2 + '" height="54" rx="4" fill="' + (red ? C.red : '#000') + '" stroke="' + col + '" stroke-width="3">' +
+        (red ? '<animate attributeName="opacity" values="1;0.45;1" dur="1s" repeatCount="indefinite"/>' : '') + '</rect>' +
+        '<text x="' + cx + '" y="' + (by2 + 37) + '" fill="' + (red ? '#fff' : C.amber) + '" font-size="32" font-weight="700" text-anchor="middle" letter-spacing="4">' + (red ? 'STALL' : 'CAUTION') + '</text>' +
+        '<text x="' + (bx2 + bw2 - 10) + '" y="' + (by2 + 20) + '" fill="' + (red ? '#fff' : C.amber) + '" font-size="15" font-weight="700" text-anchor="end">' + alarmas.length + '</text></g>');
+      o.push('<text x="' + cx + '" y="' + (by2 + 74) + '" fill="#fff" font-size="15" text-anchor="middle" stroke="#000" stroke-width="3" paint-order="stroke">' + esc(String(alarmas[0].titulo).toUpperCase()) + (alarmas.length > 1 ? ' +' + (alarmas.length - 1) : '') + '</text>');
+    }
+
     // ---------------- softkeys ----------------
     var keys = ['RESUMEN', 'HOY', 'MÍNIMO', 'TRIMESTRE', 'PAGOS', 'RITMO', 'ALERTAS'];
     o.push('<rect x="0" y="700" width="' + W + '" height="60" fill="#000"/>');
     keys.forEach(function (kk, i) {
       var kx = 38 + i * 132, on = state.tecla === kk;
       o.push('<g data-tecla="' + kk + '" style="cursor:pointer"><rect x="' + kx + '" y="704" width="128" height="52" fill="' + (on ? '#2b3a55' : '#000') + '"/>' +
-        '<line x1="' + kx + '" y1="708" x2="' + kx + '" y2="752" stroke="#666"/><text x="' + (kx + 64) + '" y="738" fill="' + (on ? C.cyan : '#fff') + '" font-size="20" text-anchor="middle">' + kk + '</text></g>');
+        '<line x1="' + kx + '" y1="708" x2="' + kx + '" y2="752" stroke="#666"/><text x="' + (kx + 64) + '" y="738" fill="' + (kk === 'ALERTAS' && alarmas.length ? (stalls.length ? C.red : C.amber) : on ? C.cyan : '#fff') + '" font-size="20" text-anchor="middle"' + (kk === 'ALERTAS' && alarmas.length ? ' font-weight="700"' : '') + '>' + kk + (kk === 'ALERTAS' && alarmas.length ? ' ' + alarmas.length : '') + '</text></g>');
     });
     o.push('</svg>');
 
     o.push('<div style="background:#000;border-radius:10px;margin-top:8px;padding:12px 14px;font-family:Arial Narrow,Helvetica Neue,Arial,sans-serif;font-size:15px;line-height:1.5">' +
       '<div style="color:#9aa4b2;font-size:12px;letter-spacing:.08em;margin-bottom:6px">' + esc(state.tecla) + '</div>' +
+      ((state.tecla === 'ALERTAS' || (state.tecla === 'RESUMEN' && stalls.length)) ? alarmasHtml(s) : '') +
       (state.tecla === 'RESUMEN' ? resumen(s) : insights(s, state.tecla).map(function (l) { return '<div style="color:' + l.c + '">' + esc(l.t) + '</div>'; }).join('')) + '</div>');
     el.innerHTML = o.join('');
     el.querySelectorAll('[data-pago-id]').forEach(function (a) {
@@ -398,6 +423,14 @@
       bk.addEventListener('click', goBank);
       bk.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goBank(); } });
     }
+    var ab = el.querySelector('[data-alarmas]');
+    if (ab) ab.addEventListener('click', function () { state.tecla = 'ALERTAS'; window.drawSfPfd(el, s); });
+    el.querySelectorAll('[data-alarma-ok]').forEach(function (b) {
+      b.addEventListener('click', function () { b.disabled = true; if (window.sfAlarmaVisto) window.sfAlarmaVisto(b.getAttribute('data-alarma-ok')); });
+    });
+    el.querySelectorAll('[data-alarma-ver]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); if (window.sfFilterNombres) window.sfFilterNombres([a.getAttribute('data-alarma-ver')], a.getAttribute('data-alarma-tit')); });
+    });
     var ms = el.querySelector('[data-minsel]');
     if (ms) ms.addEventListener('change', function () { state.minSel = this.value; window.drawSfPfd(el, s); });
     el.querySelectorAll('[data-tecla]').forEach(function (g) {

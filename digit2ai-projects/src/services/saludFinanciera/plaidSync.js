@@ -433,7 +433,7 @@ async function recurring(sequelize, item, ctx = {}) {
 }
 
 async function recurrentesDe(sequelize, user) {
-  const [rows] = await sequelize.query(`SELECT id, fuente, direccion, descripcion, frecuencia, status, activo, monto_promedio::text AS monto_promedio, monto_ultimo::text AS monto_ultimo, proxima_fecha::text AS proxima_fecha, categoria
+  const [rows] = await sequelize.query(`SELECT id, fuente, direccion, descripcion, comercio, frecuencia, status, activo, monto_promedio::text AS monto_promedio, monto_ultimo::text AS monto_ultimo, proxima_fecha::text AS proxima_fecha, categoria
     FROM sf_plaid_recurrentes WHERE user_id = :u AND tenant_id = :t ORDER BY activo DESC, direccion DESC, monto_ultimo DESC NULLS LAST`, { replacements: { u: user.userId, t: user.tenantId } });
   return rows;
 }
