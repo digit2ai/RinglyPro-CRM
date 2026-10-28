@@ -212,6 +212,25 @@ html[data-theme="light"] .split .q .tag{color:#4F46E5}
 .theme:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
 .theme .sun{display:none}
 html[data-theme="dark"] .theme .sun{display:block}html[data-theme="dark"] .theme .moon{display:none}
+
+/* calculadora de ahorro (la misma aritmética que /pymes) */
+.calc{background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:24px 24px 18px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 1px rgba(99,102,241,.12) inset}
+.calc::before{content:"";position:absolute;left:24px;right:24px;top:0;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));border-radius:2px}
+.calc .ct{font-size:clamp(20px,1.9vw,24px);margin-bottom:6px}
+.sl{margin-top:14px}
+.sl label{display:flex;justify-content:space-between;gap:14px;font-size:14.5px;color:var(--mut);line-height:1.35}
+.sl label b{color:var(--txt);font-family:var(--fh);font-size:17px;white-space:nowrap}
+.sl input{width:100%;margin-top:6px;accent-color:#00F2FE;height:28px;cursor:pointer}
+.res{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.res .lbl{font-family:var(--fm);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyt)}
+.res .big{font-family:var(--fh);font-weight:800;font-size:clamp(38px,4vw,50px);line-height:1.05;letter-spacing:-.02em;margin:4px 0 6px;
+  background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.res .row2{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:9px 0;font-size:15px;color:var(--mut)}
+.res .row2 b{color:var(--txt);font-family:var(--fh);font-variant-numeric:tabular-nums}
+.cnote{font-size:13px;color:var(--mut);margin-top:6px;line-height:1.5}
+html[data-theme="light"] .calc{box-shadow:0 1px 2px rgba(15,23,42,.05),0 24px 60px rgba(15,23,42,.10)}
+html[data-theme="light"] .sl input{accent-color:#0891B2}
 /* ── Orbe narrador: copiado de public/neural-intelligence.html (digit2ai.com) ── */
 .niva{--panel:#161F30;--bg2:#0E1320;--line2:rgba(255,255,255,.15);--mut:#94A3B8;--txt:#fff;--dim:#64748b;--accent:#00F2FE;--accent2:#6366F1;
   --font-display:var(--fh);--font-body:var(--fb)}
@@ -364,25 +383,22 @@ section,header.hero{scroll-margin-top:64px}
       <div class="badges"><span>REST API</span><span>MCP</span><span>Python</span><span>AWS</span><span>SAP</span><span>Oracle</span><span>Snowflake</span></div>
     </div>
 
-    <div class="win" aria-label="Simulación de la interfaz de Synthex">
-      <div class="tb"><i></i><i></i><i></i><span>synthex · pipeline</span></div>
-      <div class="wbody">
-        <div class="code" id="code" aria-hidden="true">
-          <div class="ln" style="animation-delay:.2s"><span class="c">$</span> synthex run <span class="k">--pipeline</span> ventas</div>
-          <div class="ln" style="animation-delay:.9s"><span class="c">&gt;</span> input: <span class="v">1.4M rows</span> · SAP + Shopify</div>
-          <div class="ln" style="animation-delay:1.6s"><span class="c">&gt;</span> <span class="k">Synthex Core</span> · 6 agents</div>
-          <div class="ln" style="animation-delay:2.3s"><span class="c">&gt;</span> sources cited · 0 guessed</div>
-          <div class="ln" style="animation-delay:3s"><span class="c">&gt;</span> approval: <span class="v">pending human</span></div>
-          <div class="ln" style="animation-delay:3.7s"><span class="c">&gt;</span> synthesized output: <span class="ok">verified</span></div>
-          <div class="ln" style="animation-delay:4.2s"><span class="cursor"></span></div>
-        </div>
-        <div class="metrics">
-          <div class="m"><small><span class="es">Latencia</span><span class="en">Latency</span></small><b id="mLat">14<em>ms</em></b></div>
-          <div class="m"><small><span class="es">Precisión de inferencia</span><span class="en">Inference accuracy</span></small><b>99.8<em>%</em></b></div>
-          <div class="m"><small><span class="es">Tokens / seg</span><span class="en">Tokens / sec</span></small><b id="mTok">420</b><div class="bar"><span></span></div></div>
-        </div>
+    <div class="calc" aria-label="Calculadora de ahorro">
+      <span class="kick" style="margin-bottom:6px"><span class="es">Calcula tu caso</span><span class="en">Calculate your case</span></span>
+      <h3 class="ct"><span class="es">¿Cuánto te cuesta hoy <span class="grad">el trabajo manual?</span></span><span class="en">What does manual work <span class="grad">cost you today?</span></span></h3>
+      <div class="sl"><label for="cP"><span><span class="es">Personas que copian datos o atienden lo mismo</span><span class="en">People copying data or handling the same requests</span></span><b id="cPv">3</b></label><input type="range" id="cP" min="1" max="30" value="3"></div>
+      <div class="sl"><label for="cH"><span><span class="es">Horas por semana, por persona, en tareas repetitivas</span><span class="en">Hours per week, per person, on repetitive tasks</span></span><b id="cHv">10</b></label><input type="range" id="cH" min="1" max="30" value="10"></div>
+      <div class="sl"><label for="cC"><span><span class="es">Costo por hora de esa persona (USD)</span><span class="en">Hourly cost of that person (USD)</span></span><b id="cCv">$8</b></label><input type="range" id="cC" min="3" max="60" value="8"></div>
+      <div class="sl"><label for="cA"><span><span class="es">Parte que se automatiza (supuesto que tú ajustas)</span><span class="en">Share that gets automated (an assumption you set)</span></span><b id="cAv">50%</b></label><input type="range" id="cA" min="10" max="80" step="5" value="50"></div>
+      <div class="res">
+        <span class="lbl"><span class="es">Horas que se liberan cada mes</span><span class="en">Hours freed every month</span></span>
+        <div class="big" id="cHrs">0 h</div>
+        <div class="row2"><span><span class="es">Trabajo manual hoy, por mes</span><span class="en">Manual work today, per month</span></span><b id="cMan">$0</b></div>
+        <div class="row2"><span><span class="es">Valor de las horas liberadas, por mes</span><span class="en">Value of the freed hours, per month</span></span><b id="cVal">$0</b></div>
+        <div class="row2"><span><span class="es">Suscripción mensual</span><span class="en">Monthly subscription</span></span><b>$397</b></div>
+        <div class="row2"><span><span class="es">Diferencia mensual</span><span class="en">Monthly difference</span></span><b id="cDif">$0</b></div>
       </div>
-      <div class="wnote"><span class="es">Simulación de interfaz · valores ilustrativos, no medidos</span><span class="en">Interface simulation · illustrative values, not measured</span></div>
+      <p class="cnote"><span class="es">Calculado con tus propios datos. El porcentaje es un supuesto; el diagnóstico lo mide con tu operación real.</span><span class="en">Calculated with your own figures. The percentage is an assumption; the assessment measures it on your real operation.</span></p>
     </div>
   </div>
 </header>
@@ -766,7 +782,7 @@ section,header.hero{scroll-margin-top:64px}
   var SEG={
     es:[
       "Hola, soy Lina, la voz de Synthex AI. En unos minutos te explico toda la página: qué es Synthex, cómo se conecta a tus sistemas y cuánto cuesta. Toca el orbe cuando quieras pausar.",
-      "Synthex AI es inteligencia que sintetiza datos y sistemas que ejecutan a escala. Une la lógica de tus operaciones con la inteligencia artificial de los mejores proveedores del mundo, bajo un solo cerebro MCP con más de cien agentes especializados. Se conecta a los sistemas que ya usas, sin reemplazar nada. La consola de la derecha es una simulación, y sus valores son ilustrativos.",
+      "Synthex AI es inteligencia que sintetiza datos y sistemas que ejecutan a escala. Une la lógica de tus operaciones con la inteligencia artificial de los mejores proveedores del mundo, bajo un solo cerebro MCP con más de cien agentes especializados. Se conecta a los sistemas que ya usas, sin reemplazar nada. A la derecha puedes calcular tu propio caso: mueve las barras con cuántas personas hacen trabajo repetitivo, cuántas horas y cuánto cuesta cada hora, y verás cuántas horas se liberan cada mes y cuánto valen frente a la suscripción. El porcentaje que se automatiza es un supuesto que tú ajustas.",
       "Este es el cerebro en acción. En el centro está el cerebro MCP, y alrededor, los agentes principales: análisis de negocio, investigación, alcance, arquitectura, clasificación de correos, actas, voz, hallazgos, servicios de inteligencia artificial y preparación para la inteligencia artificial. El protocolo abierto MCP lleva el contexto entre ellos y coordina el trabajo en tiempo real.",
       "Synthex es un servicio de inteligencia artificial avanzada, como el de Anthropic u OpenAI, con una diferencia: llega integrado y listo para trabajar dentro de tu empresa, como un USB. Tiene cuatro piezas: un cerebro central, más de cien agentes, conectores estándar MCP y varios proveedores. Tu equipo sigue trabajando igual, y tus datos siguen siendo tuyos.",
       "Se conecta con lo que ya usas. En retail, SAP, Oracle, Dynamics, Shopify, VTEX y Odoo. En transporte, Oracle Transportation Management, SAP TM, Blue Yonder, Manhattan, McLeod y Samsara. En finanzas, SAP Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, CONTPAQi, Aspel, SAINT y Profit. Si tu sistema tiene API, la conexión es directa. Si es un sistema local sin API pública, se instala un agente ligero en tu servidor.",
@@ -782,7 +798,7 @@ section,header.hero{scroll-margin-top:64px}
     ],
     en:[
       "Hi, I'm Ava, the voice of Synthex AI. In a few minutes I'll walk you through this whole page: what Synthex is, how it connects to your systems, and what it costs. Tap the orb any time to pause.",
-      "Synthex AI is intelligence that synthesizes data, and systems that execute at scale. It joins the logic of your operations with the AI of the world's best providers, under one MCP brain with more than one hundred specialized agents. It plugs into the systems you already use, replacing nothing. The console on the right is a simulation, and its values are illustrative.",
+      "Synthex AI is intelligence that synthesizes data, and systems that execute at scale. It joins the logic of your operations with the AI of the world's best providers, under one MCP brain with more than one hundred specialized agents. It plugs into the systems you already use, replacing nothing. On the right you can calculate your own case: move the sliders for how many people do repetitive work, how many hours, and what each hour costs, and you will see how many hours are freed every month and what they are worth against the subscription. The share that gets automated is an assumption you set.",
       "This is the brain at work. The MCP brain sits at the center, surrounded by the core agents: business analysis, research, outreach, architecture, inbox triage, minutes, voice, findings, AI services and AI readiness. The open MCP protocol carries context between them and coordinates the work in real time.",
       "Synthex is an advanced AI service, like Anthropic's or OpenAI's, with one difference: it arrives integrated and ready to work inside your company, like a USB. It has four pieces: a central brain, more than one hundred agents, standard MCP connectors, and many providers. Your team keeps working the same way, and your data stays yours.",
       "It connects to what you already use. In retail: SAP, Oracle, Dynamics, Shopify, VTEX and Odoo. In transport: Oracle Transportation Management, SAP TM, Blue Yonder, Manhattan, McLeod and Samsara. In finance: SAP Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, CONTPAQi, Aspel, SAINT and Profit. If your system has an API, the connection is direct. If it is a local system with no public API, a light agent is installed on your server.",
@@ -1013,12 +1029,26 @@ section,header.hero{scroll-margin-top:64px}
   var saved = null; try { saved = localStorage.getItem('synthex_lang'); } catch(e) {}
   set(saved === 'en' ? 'en' : 'es');
 
-  // La consola simulada respira: valores ilustrativos que varían un poco, rotulados como tales.
-  var lat = document.getElementById('mLat'), tok = document.getElementById('mTok');
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(function(){
-    lat.firstChild.nodeValue = String(12 + Math.round(Math.random() * 4));
-    tok.textContent = String(405 + Math.round(Math.random() * 30));
-  }, 1400);
+  // Calculadora: solo aritmética con los datos que mueve el visitante (igual que /pymes).
+  function money(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+  function calc(){
+    var p = +document.getElementById('cP').value, h = +document.getElementById('cH').value,
+        c = +document.getElementById('cC').value, a = +document.getElementById('cA').value / 100;
+    document.getElementById('cPv').textContent = p;
+    document.getElementById('cHv').textContent = h;
+    document.getElementById('cCv').textContent = '$' + c;
+    document.getElementById('cAv').textContent = Math.round(a * 100) + '%';
+    var hrsMes = p * h * 52 / 12, man = hrsMes * c, lib = hrsMes * a, val = lib * c, dif = val - 397;
+    document.getElementById('cHrs').textContent = Math.round(lib).toLocaleString('en-US') + ' h';
+    document.getElementById('cMan').textContent = money(man);
+    document.getElementById('cVal').textContent = money(val);
+    var d = document.getElementById('cDif');
+    d.textContent = (dif >= 0 ? '+' : '−') + money(Math.abs(dif));
+    d.style.color = dif >= 0 ? (document.documentElement.getAttribute('data-theme') === 'light' ? '#047857' : '#34d399') : (document.documentElement.getAttribute('data-theme') === 'light' ? '#B45309' : '#fbbf24');
+  }
+  ['cP','cH','cC','cA'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(b){ b.addEventListener('click', function(){ setTimeout(calc, 0); }); });
+  calc();
 
   // Solicitud de demostración: entra al mismo intake de proyectos, marcada como Synthex AI. Sin pago en línea.
   var form = document.getElementById('leadForm'), btn = document.getElementById('sendBtn'), msg = document.getElementById('msg');
