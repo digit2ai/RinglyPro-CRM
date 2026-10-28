@@ -447,6 +447,16 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai/index.html'));
   }
+  // The narrated business-automation deck (a Synthex copy of vision2ai.app/pymes).
+  if (path === '/pymes') return res.redirect(301, '/pymes/');
+  if (path === '/pymes/' || path === '/pymes/index.html') {
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/index.html'));
+  }
+  if (path === '/pymes/og.jpg') {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/og.jpg'));
+  }
   // Link-preview image and icons (WhatsApp, iMessage, LinkedIn read og:image).
   if (path === '/og.jpg' || path === '/icon-512.png' || path === '/apple-touch-icon.png') {
     res.setHeader('Cache-Control', 'public, max-age=86400');
