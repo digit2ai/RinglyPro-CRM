@@ -340,6 +340,101 @@ body.vert .dxc li{font-size:19px}
 .dsay{margin-top:18px;display:flex;gap:14px;align-items:center;border:1px solid var(--line2);border-radius:16px;padding:14px 18px;background:rgba(15,23,40,.85)}
 .dsay .orb{flex:0 0 46px;width:46px;height:46px}.dsay p{font-size:17px;line-height:1.45}body.vert .dsay p{font-size:21px}
 .three .card .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--cy),var(--vi));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;color:#0B0F17;font-size:20px}
+
+/* ── modo teléfono: la lámina se dibuja a tamaño real y se desplaza ──
+   En un teléfono el escenario de 720x1280 quedaba a la mitad y el texto
+   en 5-6 px. Aquí no hay escala: cada lámina ocupa la pantalla, el texto
+   va a su tamaño legible y lo que no cabe se desplaza hacia abajo.
+   El MP4 usa ?formato=vertical y no entra en este modo. */
+body.phone{--W:100vw;--H:calc(100dvh - 72px - env(safe-area-inset-bottom))}
+body.phone .vp{bottom:calc(72px + env(safe-area-inset-bottom));display:block}
+body.phone #stage{transform:none!important;width:100%;height:100%}
+body.phone .dock{height:calc(72px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+body.phone #prog{bottom:calc(72px + env(safe-area-inset-bottom))}
+body.phone .slide{border-radius:0;border:0;box-shadow:none;padding:22px 18px 28px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+body.phone .slide,body.phone .slide.cover{justify-content:flex-start!important}
+body.phone .slide > :first-child{margin-top:auto}
+body.phone .slide > :last-child{margin-bottom:auto}
+body.phone .slide::after{position:fixed}
+body.phone .brand{font-size:17px}
+body.phone .kick{font-size:12.5px;margin-top:6px}
+body.phone h1,body.phone .cover h1,body.phone #lastSlide h1{font-size:33px!important;max-width:none}
+body.phone h2{font-size:27px!important;line-height:1.15}
+body.phone .lead{font-size:16.5px;margin-top:10px}
+body.phone .row{gap:16px;flex:0 0 auto}
+body.phone .grid,body.phone .three,body.phone .three.four,body.phone .kgrid,body.phone .dx{gap:12px;margin-top:16px}
+body.phone .g2,body.phone .g3,body.phone .g4,body.phone .three,body.phone .three.four,body.phone .sysgrid,body.phone .incl{grid-template-columns:1fr!important}
+body.phone .kgrid{grid-template-columns:1fr 1fr}
+body.phone .card{padding:16px 16px 15px;border-radius:15px}
+body.phone .card h3{font-size:19px}
+body.phone .card p,body.phone .three.four .card p{font-size:15px}
+body.phone .n{font-size:12px}
+body.phone .chip{font-size:13.5px;padding:7px 12px}
+body.phone .foot{font-size:13px}
+body.phone .hlogo,body.phone .vlogo{width:min(100%,300px)}
+body.phone .sxw{font-size:34px!important}
+body.phone .sxw svg{width:48px!important;height:48px!important}
+body.phone .vlogo span{font-size:12px}
+body.phone .orbit{width:min(86vw,330px);height:min(86vw,330px);flex:0 0 auto}
+body.phone .orbit .core{width:110px;height:110px;margin:-55px 0 0 -55px;font-size:15px}
+body.phone .orbit .node span{font-size:12.5px;padding:6px 10px}
+body.phone .orbx{width:min(70vw,260px)!important;height:min(70vw,260px)!important;margin:6px auto 0}
+body.phone .flow .lbl{font-size:24px}body.phone .flow .sub{font-size:19px}
+body.phone table.cmp,body.phone table.cmp td,body.phone table.cmp th{font-size:13.5px!important}
+body.phone table.cmp td,body.phone table.cmp th{padding:9px 8px!important}
+body.phone .price{gap:12px;margin-top:16px}
+body.phone .price .card{padding:18px}
+body.phone .price .amt{font-size:46px!important}
+body.phone .price li{font-size:15px!important}
+body.phone .steps{gap:14px;margin-top:18px}
+body.phone .steps::before{left:22px}
+body.phone .step .dot{width:44px;height:44px;flex-basis:44px!important;font-size:18px}
+body.phone .step h3{font-size:19px!important}
+body.phone .step p{font-size:15px!important}
+body.phone .cta{font-size:17px;padding:13px 20px;min-height:48px}
+body.phone ul.sys{display:block!important}
+body.phone ul.sys li,body.phone .incl ul.sys li{font-size:16px!important;border-top:1px solid var(--line)!important}
+body.phone ul.sys li:first-child{border-top:0!important}
+body.phone ul.sys em,body.phone .foot em.ag,body.phone .simtag,body.phone .st,body.phone .kpi small,body.phone .kc small,body.phone table.led th,body.phone #capT{font-size:12px}
+body.phone .simtag{margin-left:0;margin-top:6px}
+body.phone .simbar{gap:8px;margin-top:12px}
+body.phone .sbtn{font-size:15px!important;padding:11px 15px!important;min-height:46px}
+body.phone .phone{height:440px;padding:14px 12px;border-radius:26px}
+body.phone .msg{font-size:15px!important}
+body.phone .msg.sys{font-size:12.5px!important}
+body.phone .phone .ph small{font-size:12px}
+body.phone .out{font-size:15px!important;padding:10px 12px}
+body.phone .acc{gap:14px;margin-top:14px}
+body.phone .inv{font-size:15px!important;padding:14px 16px}
+body.phone .inv h4{font-size:17px}
+body.phone .ledwrap,body.phone table.led{font-size:13px!important}
+body.phone table.led td,body.phone table.led th{padding:8px 6px}
+body.phone .kpis{gap:8px}
+body.phone .kpi{padding:9px 10px}
+body.phone .kpi b{font-size:21px!important}
+body.phone .board{grid-template-columns:1fr!important;gap:10px}
+body.phone .lane h5{font-size:13px!important}
+body.phone .tk{font-size:14px!important}body.phone .tk b{font-size:15px!important}
+body.phone .calc{gap:16px;margin-top:14px}
+body.phone .sl label{font-size:15px!important}
+body.phone .sl label b{font-size:17px}
+body.phone .sl input{height:44px;margin-top:2px}
+body.phone .res .big{font-size:36px!important}
+body.phone .res .row2{font-size:15px!important}
+body.phone .kc{padding:13px 14px}
+body.phone .kc b,body.phone .kgrid .kc b{font-size:24px!important}
+body.phone .kc i{font-size:13px}
+body.phone .dxc li{font-size:15px!important}
+body.phone .dsay{padding:12px 14px;gap:12px}
+body.phone .dsay p{font-size:15.5px!important}
+body.phone .slide [style*="font-size:40px"],body.phone .slide [style*="font-size:38px"]{font-size:27px!important}
+body.phone .slide [style*="font-size:22px"]:not(text){font-size:18px!important}
+body.phone .slide [style*="max-width:520px"]{max-width:none!important}
+body.phone .dock{gap:8px;padding-left:10px;padding-right:10px}
+body.phone #capX{font-size:14px}
+body.phone #cnt{min-width:44px}
+body.phone .slide small,body.phone .tk small{font-size:12.5px}
+body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
 </style>
 </head>
 <body>
@@ -791,9 +886,12 @@ body.vert .dxc li{font-size:19px}
 <script>
 (function(){
   var q = new URLSearchParams(location.search);
-  function wantVert(){ return q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
+  // Teléfono: el lado corto mide 520 px o menos y nadie forzó un formato.
+  function wantPhone(){ return !q.get('formato') && Math.min(window.innerWidth, window.innerHeight) <= 520; }
+  function wantVert(){ return wantPhone() || q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
   function applyMode(){
     var v = wantVert();
+    document.body.classList.toggle('phone', wantPhone());
     document.body.classList.toggle('vert', v);
     document.getElementById('flowL').style.display = v ? 'none' : '';
     document.getElementById('flowV').style.display = v ? '' : 'none';
@@ -971,6 +1069,7 @@ body.vert .dxc li{font-size:19px}
   function fit(){
     applyMode();
     var W = document.body.classList.contains('vert') ? 720 : 1280, H = document.body.classList.contains('vert') ? 1280 : 720;
+    if (document.body.classList.contains('phone')) { stage.style.transform = ''; return; }
     var s = Math.min(window.innerWidth / W, (window.innerHeight - 72) / H) * 0.97;
     stage.style.transform = 'scale(' + s + ')';
   }
@@ -1030,6 +1129,7 @@ body.vert .dxc li{font-size:19px}
     stopAll(); stopSims();
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    slides[i].scrollTop = 0;
     cnt.textContent = (i + 1) + ' / ' + slides.length;
     capT.textContent = (slides[i].getAttribute('data-sim') === 'kpi' ? 'Dalia · ' : 'Lina · ') + slides[i].getAttribute('data-t');
     if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
@@ -1086,11 +1186,13 @@ body.vert .dxc li{font-size:19px}
     else if (e.key === 'End') show(slides.length - 1);
   });
   var x0 = null;
-  document.addEventListener('touchstart', function(e){ x0 = (e.target.closest && e.target.closest('input')) ? null : e.touches[0].clientX; }, { passive:true });
+  var y0 = 0;
+  document.addEventListener('touchstart', function(e){ x0 = (e.target.closest && e.target.closest('input')) ? null : e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
   document.addEventListener('touchend', function(e){
     if (x0 === null || !gate.classList.contains('off')) return;
-    var dx = e.changedTouches[0].clientX - x0; x0 = null;
-    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    // Solo un deslizamiento horizontal cambia de lámina: desplazar la lámina hacia abajo no.
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(i + (dx < 0 ? 1 : -1));
   }, { passive:true });
   slides[0].classList.add('on');
   window.addEventListener('beforeunload', stopAll);
