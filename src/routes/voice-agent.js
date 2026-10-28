@@ -371,7 +371,13 @@ router.post('/chat', async (req, res) => {
     res.json({ reply, source: 'model', ...(usadas.length ? { tools_used: usadas } : {}), ...(acciones.length ? { actions: acciones } : {}) });
   } catch (err) {
     console.error('[voice-agent]', err.message);
-    res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic', degraded: true });
+    // The HTTP status only (401 bad key, 400 credit/model, 429 rate, 529 overloaded), never the
+    // message: it tells the owner what failed without putting provider text on a public page.
+    const status = Number(err && err.status) || undefined;
+    if (agent.tools && agent.tools.offline) {
+      return res.json({ reply: pick(agent.tools.offline, lang, agent.defaultLang), source: 'heuristic', degraded: true, error_status: status });
+    }
+    res.json({ reply: heuristicReply(askedText, context, lang), source: 'heuristic', degraded: true, error_status: status });
   }
 });
 
