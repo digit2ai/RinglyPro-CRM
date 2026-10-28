@@ -314,6 +314,19 @@ body.vert #lastSlide h1{font-size:64px}
 .vlogo img{width:100%;height:auto;display:block}
 .vlogo span{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.32em;color:var(--mut)}
 body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
+.three.four{grid-template-columns:repeat(4,1fr)}.three.four .card p{font-size:15px}body.vert .three.four{grid-template-columns:1fr 1fr}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}body.vert .kgrid{grid-template-columns:1fr 1fr}
+.kc{border:1px solid var(--line2);border-radius:16px;padding:16px 18px;background:rgba(15,23,40,.85);transition:all .4s}
+.kc small{color:var(--mut);font-size:12px;letter-spacing:.06em;text-transform:uppercase}.kc b{display:block;font-family:var(--fd);font-size:34px;margin-top:6px}.kc i{font-style:normal;font-size:14px;font-weight:700}
+.kc.up i{color:var(--ok)}.kc.dn i{color:var(--warn)}
+.kgrid{margin-top:16px}.kc.hot{border-color:var(--cy);box-shadow:0 0 0 2px rgba(34,211,238,.35),0 10px 40px rgba(34,211,238,.25);transform:translateY(-4px)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:46px;margin-top:10px}.bars span{flex:1;background:linear-gradient(180deg,var(--cy),var(--vi));border-radius:4px 4px 0 0;opacity:.75}
+.dx{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}body.vert .dx{grid-template-columns:1fr}
+.dxc ul{list-style:none;margin-top:8px}.dxc li{font-size:15px;line-height:1.4;padding:4px 0 4px 16px;position:relative;color:var(--txt)}.dxc li::before{content:"";position:absolute;left:0;top:11px;width:7px;height:7px;border-radius:50%;background:var(--cy)}
+body.vert .dxc li{font-size:19px}
+.kgrid .kc b{font-size:30px}
+.dsay{margin-top:18px;display:flex;gap:14px;align-items:center;border:1px solid var(--line2);border-radius:16px;padding:14px 18px;background:rgba(15,23,40,.85)}
+.dsay .orb{flex:0 0 46px;width:46px;height:46px}.dsay p{font-size:17px;line-height:1.45}body.vert .dsay p{font-size:21px}
 .three .card .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--cy),var(--vi));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;color:#04222a;font-size:20px}
 </style>
 </head>
@@ -352,7 +365,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
     <div class="grid g3" style="margin-top:28px">
       <div class="card stag d1"><span class="n">HOY</span><h3>Herramientas de todos los días</h3><p>Pedidos por WhatsApp, cuentas en Excel, clientes en un CRM, proyectos en MS Project. Funcionan, y nadie quiere cambiarlas.</p></div>
       <div class="card stag d2"><span class="n">EL COSTO OCULTO</span><h3>Horas copiando datos</h3><p>El mismo dato se escribe tres veces: en el chat, en la hoja de cálculo y en la factura. Cada copia es tiempo y un posible error.</p></div>
-      <div class="card stag d3"><span class="n">EL LÍMITE</span><h3>Crecer es contratar</h3><p>Más clientes significan más llamadas, más facturas y más seguimiento. Hasta hoy, eso solo se resolvía con más personas.</p></div>
+      <div class="card stag d3"><span class="n">EL LÍMITE</span><h3>Crecer es contratar</h3><p>Más clientes significan más mensajes, más facturas y más seguimiento. Hasta hoy, eso solo se resolvía con más personas.</p></div>
     </div>
     <div class="row" style="margin-top:20px;flex:0;gap:10px;flex-wrap:wrap;flex-direction:row">
       <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>WhatsApp</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Excel</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>MS Access</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>MS Project</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Google Sheets</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Outlook · Gmail</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>HubSpot</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Zoho</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>QuickBooks</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Odoo</span>
@@ -412,24 +425,25 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
   </section>
 
   <!-- 5 tres automatizaciones -->
-  <section class="slide" data-t="Tres áreas que se automatizan">
+  <section class="slide" data-t="Cuatro áreas que se automatizan">
     <div class="kick">Qué se automatiza</div>
-    <h2>Tres áreas que hoy cuestan horas. <span class="grad">Mañana trabajan solas.</span></h2>
-    <div class="three">
-      <div class="card stag d1"><div class="ic">01</div><h3 style="margin-top:14px">Servicio al cliente por voz</h3><p>Un asistente atiende llamadas y mensajes las veinticuatro horas, en español y en inglés: responde, agenda citas, toma pedidos y avisa a su equipo cuando hace falta una persona.</p></div>
+    <h2>Cuatro áreas que hoy cuestan horas. <span class="grad">Mañana trabajan solas.</span></h2>
+    <div class="three four">
+      <div class="card stag d1"><div class="ic">01</div><h3 style="margin-top:14px">Servicio al cliente por mensajería</h3><p>Un asistente responde por WhatsApp, chat y correo las veinticuatro horas, en español y en inglés: agenda citas, toma pedidos y avisa a su equipo cuando hace falta una persona.</p></div>
       <div class="card stag d2"><div class="ic">02</div><h3 style="margin-top:14px">Contabilidad automática</h3><p>Lee facturas y recibos, captura cada dato en su sistema contable, concilia los pagos del banco y le avisa de lo que vence. Usted revisa y aprueba.</p></div>
       <div class="card stag d3"><div class="ic">03</div><h3 style="margin-top:14px">Operación automatizada</h3><p>Un pedido que llega por WhatsApp se registra, se asigna, se le da seguimiento y se factura, sin que nadie vuelva a escribir el mismo dato.</p></div>
+      <div class="card stag d4"><div class="ic">04</div><h3 style="margin-top:14px">Gerente por voz</h3><p>Dalia, su gerente por voz, le explica los KPI de la semana, los puntos débiles, el diagnóstico y qué hacer para corregirlos.</p></div>
     </div>
-    <p class="foot">Las tres siguientes láminas son simuladores con datos de ejemplo. Puede tocar los botones.</p>
+    <p class="foot">Las cuatro siguientes láminas son simuladores con datos de ejemplo. Puede tocar los botones.</p>
   </section>
 
   <!-- 6 simulador voz -->
-  <section class="slide" data-t="Simulador: servicio al cliente por voz" data-sim="voz">
+  <section class="slide" data-t="Simulador: servicio al cliente por mensajería" data-sim="voz">
     <div class="kick">Simulador 1 <span class="simtag">datos de ejemplo</span></div>
-    <h2 style="font-size:40px">Servicio al cliente por voz, <span class="grad">las veinticuatro horas.</span></h2>
+    <h2 style="font-size:40px">Servicio al cliente por mensajería, <span class="grad">las veinticuatro horas.</span></h2>
     <div class="row" style="margin-top:14px;align-items:flex-start">
       <div class="phone">
-        <div class="ph"><span class="dotlive"></span><div><b>Asistente de su empresa</b><small id="vzWhen">Llamada entrante</small></div></div>
+        <div class="ph"><span class="dotlive"></span><div><b>WhatsApp de su empresa</b><small id="vzWhen">Mensaje entrante</small></div></div>
         <div class="chat" id="vzChat"></div>
       </div>
       <div class="col grow">
@@ -437,7 +451,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
         <div class="simbar" id="vzBtns">
           <button class="sbtn on" data-vz="0">Agendar una cita</button>
           <button class="sbtn" data-vz="1">Estado de un pedido</button>
-          <button class="sbtn" data-vz="2">Llamada a las 11 p. m.</button>
+          <button class="sbtn" data-vz="2">Mensaje a las 11 p. m.</button>
         </div>
         <div class="outs" id="vzOut"></div>
       </div>
@@ -485,6 +499,24 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
     <div class="simbar"><button class="sbtn on" id="opNew">Nuevo pedido</button><span class="foot" style="margin-top:0;align-self:center">Cada tarjeta avanza sola. Nadie vuelve a escribir el pedido.</span></div>
   </section>
 
+  <!-- gerente por voz -->
+  <section class="slide" data-t="Simulador: su gerente por voz" data-sim="kpi">
+    <div class="kick">Simulador 4 <span class="simtag">datos de ejemplo</span></div>
+    <h2 style="font-size:38px">Su gerente por voz: <span class="grad">Dalia le explica su semana.</span></h2>
+    <div class="kgrid">
+      <div class="kc up" data-k="1"><small>Ventas de la semana</small><b>$48,200</b><i>+12% vs. semana pasada</i></div>
+      <div class="kc dn" data-k="2"><small>Por cobrar</small><b>$9,750</b><i>3 facturas vencidas</i></div>
+      <div class="kc up" data-k="3"><small>Pedidos entregados</small><b>184</b><i>98% a tiempo</i></div>
+      <div class="kc dn" data-k="4"><small>Margen</small><b>18%</b><i>-4 puntos vs. mes pasado</i></div>
+    </div>
+    <div class="dx">
+      <div class="kc dxc" data-k="5"><small>Puntos débiles</small><ul><li>Cobranza: 3 clientes con más de 30 días</li><li>Margen: subió el costo de combustible</li></ul></div>
+      <div class="kc dxc" data-k="6"><small>Diagnóstico</small><ul><li>Las facturas salen 6 días después de la entrega</li><li>2 rutas hacen viajes de regreso vacíos</li></ul></div>
+      <div class="kc dxc" data-k="7"><small>Prescripción</small><ul><li>Facturar el mismo día de la entrega</li><li>Recordatorio automático a los 3 clientes</li><li>Combinar las 2 rutas los martes</li></ul></div>
+    </div>
+    <div class="dsay"><div class="orb" id="dOrb"></div><p id="dTxt">Buenos días. Este es el reporte de su semana.</p><button class="sbtn on" id="dPlay" style="margin-left:auto;white-space:nowrap">Escuchar a Dalia</button></div>
+  </section>
+
   <!-- 9 antes y después -->
   <section class="slide" data-t="Un caso real: antes y después">
     <div class="kick">Un caso real · empresa de transporte de materiales</div>
@@ -503,7 +535,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
 
   <!-- 10 calculadora -->
   <section class="slide" data-t="Calcule su caso" data-sim="calc">
-    <div class="kick">Simulador 4 · Calcule su caso</div>
+    <div class="kick">Simulador 5 · Calcule su caso</div>
     <h2 style="font-size:40px">¿Cuánto le cuesta hoy <span class="grad">el trabajo manual?</span></h2>
     <div class="calc">
       <div class="card">
@@ -536,7 +568,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
         <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
         <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">WhatsApp · Excel · CRM</text>
         <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">MCP</text>
-        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Voz</text>
+        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Mensajería</text>
         <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Contabilidad</text>
         <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Operación</text>
         <rect class="box" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Resultado</text><text class="sub" x="1047" y="183" text-anchor="middle">de vuelta en su sistema</text>
@@ -555,7 +587,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
         <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
         <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">WhatsApp · Excel · CRM</text>
         <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">MCP</text>
-        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Voz</text>
+        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Mensajería</text>
         <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Contabilidad</text>
         <rect class="box" x="430" y="450" width="160" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:19px">Operación</text>
         <rect class="box" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Resultado</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">de vuelta en su sistema</text>
@@ -605,7 +637,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
     <h2>Paso a paso: <span class="grad">máximo cuatro semanas.</span></h2>
     <div class="steps">
       <div class="step stag d1"><div class="dot">1</div><div><h3>Diagnóstico</h3><p>Vemos cómo trabaja hoy y dónde se pierden más horas.</p></div></div>
-      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer proceso</h3><p>Elegimos uno de bajo riesgo y alto valor: llamadas, facturas o pedidos.</p></div></div>
+      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer proceso</h3><p>Elegimos uno de bajo riesgo y alto valor: mensajes, facturas o pedidos.</p></div></div>
       <div class="step stag d3"><div class="dot">3</div><div><h3>Conexión</h3><p>Conectamos el cerebro a sus herramientas, como un USB.</p></div></div>
       <div class="step stag d4"><div class="dot">4</div><div><h3>Resultados medidos</h3><p>Medimos con datos reales antes de automatizar el siguiente proceso.</p></div></div>
     </div>
@@ -733,13 +765,13 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
-  <span id="cnt">1 / 16</span>
+  <span id="cnt">1 / 17</span>
 </div>
 
 <div class="gate" id="gate"><div class="box">
   <div class="orbbig"></div>
   <h1>Automatización de Negocios</h1>
-  <p>Lina le explica, en unos minutos, cómo su empresa puede automatizar llamadas, contabilidad y operación conectando las herramientas que ya usa.</p>
+  <p>Lina le explica, en unos minutos, cómo su empresa puede automatizar su atención al cliente, su contabilidad, su operación y sus reportes conectando las herramientas que ya usa.</p>
   <button id="start">Escuchar a Lina</button>
   <button id="silent">Ver sin audio</button>
 </div></div>
@@ -763,16 +795,17 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
     'Su negocio ya funciona. Los pedidos llegan por WhatsApp, las cuentas viven en Excel, los clientes en un CRM y los proyectos en Microsoft Project. El problema es que mucho se hace a mano: el mismo dato se escribe tres veces, en el chat, en la hoja de cálculo y en la factura. Y crecer, hasta hoy, significaba contratar a más personas.',
     'Digit2AI MCP se conecta como un USB. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su WhatsApp, su Excel, su CRM y su contabilidad a un equipo de inteligencia artificial. No se reemplaza nada, y su equipo sigue trabajando igual.',
     'Funciona con lo que ya usa, desde una hoja de Excel hasta un ERP completo. Herramientas del día a día, como WhatsApp Business, Excel, Google Sheets, Access, Microsoft Project, Outlook y Gmail. CRM, como HubSpot, Salesforce, Zoho, Pipedrive, GoHighLevel y Monday. Y contabilidad o ERP, como QuickBooks, Xero, Siigo, Alegra, Odoo, SAP Business One, Dynamics 365 Business Central, CONTPAQi y Aspel. Si el programa tiene API, se conecta directo. Si no, se instala un agente ligero en su equipo.',
-    'Hay tres áreas que hoy cuestan horas y que pueden trabajar solas. Primero, el servicio al cliente por voz: un asistente que atiende llamadas y mensajes las veinticuatro horas, en español y en inglés. Segundo, la contabilidad automática: lee facturas, las captura, concilia el banco y le avisa de lo que vence. Y tercero, la operación: un pedido que llega por WhatsApp se registra, se asigna y se factura, sin volver a escribirlo. Veamos cada una en un simulador.',
-    'Este es el simulador del asistente de voz. Un cliente llama para agendar una cita, para preguntar por su pedido, o a las once de la noche, cuando su oficina ya cerró. El asistente responde, agenda, consulta el pedido en su sistema y deja todo registrado. Cuando el caso necesita a una persona, avisa a su equipo. Puede tocar los botones para ver cada situación.',
+    'Hay cuatro áreas que hoy cuestan horas y que pueden trabajar solas. Primero, el servicio al cliente por mensajería: un asistente que responde por WhatsApp, chat y correo las veinticuatro horas, en español y en inglés. Segundo, la contabilidad automática: lee facturas, las captura, concilia el banco y le avisa de lo que vence. Y tercero, la operación: un pedido que llega por WhatsApp se registra, se asigna y se factura, sin volver a escribirlo. Y cuarto, un gerente por voz: Dalia le explica los indicadores de la semana, los puntos débiles, el diagnóstico y las soluciones. Veamos cada una en un simulador.',
+    'Este es el simulador de servicio al cliente por mensajería. Un cliente escribe por WhatsApp para agendar una cita, para preguntar por su pedido, o a las once de la noche, cuando su oficina ya cerró. El asistente responde, agenda, consulta el pedido en su sistema y deja todo registrado. Cuando el caso necesita a una persona, avisa a su equipo. Puede tocar los botones para ver cada situación.',
     'Este es el simulador de contabilidad automática. Llega una factura. El sistema la lee, señala cada dato, el proveedor, la fecha, el concepto y el total, y la registra en su libro contable con la cuenta correcta. Después busca el pago en el banco y la marca como conciliada. Nadie tuvo que capturarla a mano. Usted solo revisa y aprueba.',
     'Y este es el simulador de operación. Un cliente pide por WhatsApp. El pedido se registra solo, se asigna a la persona o al vehículo disponible, se marca como entregado y se factura. Cada tarjeta avanza sin que nadie vuelva a escribir el pedido. Pulse nuevo pedido para ver cómo fluye.',
+    'La voz también trabaja como su gerente. Buenos días, soy Dalia, y este es el reporte de su semana. Las ventas suman cuarenta y ocho mil doscientos dólares, doce por ciento más que la semana pasada. Tiene nueve mil setecientos cincuenta dólares por cobrar, con tres facturas vencidas. Se entregaron ciento ochenta y cuatro pedidos, casi todos a tiempo. Pero el margen bajó a dieciocho por ciento. Sus puntos débiles son la cobranza y el margen. El diagnóstico: las facturas salen seis días después de la entrega, y dos rutas regresan vacías. Mi prescripción: facturar el mismo día de la entrega, enviar un recordatorio automático a los tres clientes, y combinar las dos rutas los martes. Usted decide qué se aplica. Todos estos son datos de ejemplo.',
     'Este es un caso real, de una empresa de transporte de materiales que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Antes, cada viaje se capturaba tres o cuatro veces, y la estimación y la factura se armaban a mano. Con la plataforma, cada viaje es una foto y una confirmación, y la factura sale lista desde los viajes. La cobranza siempre está a la vista, los gastos se ven por camión y por obra, y la reunión semanal de pagos usa un solo tablero. Y lo más importante: los choferes siguen trabajando igual.',
     'Ahora calcule su propio caso. Mueva las barras: cuántas personas copian datos o atienden lo mismo, cuántas horas por semana y cuánto cuesta cada hora. El simulador le muestra cuánto le cuesta hoy el trabajo manual y cuántas horas se liberan cada mes. El porcentaje que se automatiza es un supuesto que usted ajusta. En el diagnóstico lo medimos con su operación real.',
-    'Así funciona por dentro. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agente la atiende: voz, contabilidad u operación. Y el resultado vuelve a su sistema. Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo, y usted no contrata ninguno por separado.',
+    'Así funciona por dentro. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agente la atiende: mensajería, contabilidad, operación o reportes. Y el resultado vuelve a su sistema. Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo, y usted no contrata ninguno por separado.',
     'La diferencia es clara. Hacerlo a mano, o contratar, significa horario de oficina, capacitar a cada persona y escribir el mismo dato varias veces. Con Digit2AI MCP, su empresa atiende las veinticuatro horas, el mismo sistema atiende más volumen cuando usted crece, cada dato se captura una sola vez, y el costo empieza en trescientos noventa y siete dólares al mes. Económico, pero muy eficiente.',
     'Y usted mantiene el control. Sus datos son suyos, y cada empresa ve solo su propia información. Pagar, enviar o publicar siempre espera la aprobación de una persona. Cada acción queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.',
-    'Se empieza paso a paso, en máximo cuatro semanas. Primero, un diagnóstico de dónde se pierden más horas. Segundo, elegimos un primer proceso de bajo riesgo y alto valor, como las llamadas, las facturas o los pedidos. Tercero, conectamos el cerebro a sus herramientas, como un USB. Y cuarto, medimos con datos reales antes de automatizar el siguiente proceso.',
+    'Se empieza paso a paso, en máximo cuatro semanas. Primero, un diagnóstico de dónde se pierden más horas. Segundo, elegimos un primer proceso de bajo riesgo y alto valor, como los mensajes, las facturas o los pedidos. Tercero, conectamos el cerebro a sus herramientas, como un USB. Y cuarto, medimos con datos reales antes de automatizar el siguiente proceso.',
     'Se contrata como un servicio. Un pago único de configuración de setecientos dólares, para crear la instancia de su empresa y conectar sus herramientas. Y una suscripción mensual de trescientos noventa y siete dólares, con las soluciones estándar y el consumo estándar de inteligencia artificial incluidos. Lo que se construya a la medida de su negocio se cotiza aparte, y antes de empezar usted ve las horas y el costo.',
     'Este es el futuro: negocios que se automatizan para crecer sin parar. Cualquier empresa puede hacerlo, y puede empezar a ahorrar horas desde la primera semana. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
   ];
@@ -786,8 +819,8 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
 
   // 1. voz
   var VOZ = [
-    { when:'Llamada entrante · 10:14 a. m.', lines:[
-      ['ai','Buenos días, gracias por llamar. ¿En qué le puedo ayudar?'],
+    { when:'Mensaje de WhatsApp · 10:14 a. m.', lines:[
+      ['ai','Buenos días, gracias por escribirnos. ¿En qué le puedo ayudar?'],
       ['cl','Quiero una cita para el jueves en la mañana.'],
       ['ai','Tengo el jueves a las 9:00 o a las 11:30. ¿Cuál le acomoda?'],
       ['cl','A las 11:30, por favor.'],
@@ -801,14 +834,14 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
       ['cl','Perfecto, gracias.'],
       ['sys','CONSULTA RESUELTA DESDE SU SISTEMA DE PEDIDOS']],
       out:[['Pedido','1048 · en camino'],['Fuente','Su sistema de pedidos'],['Persona necesaria','No']] },
-    { when:'Llamada entrante · 11:07 p. m.', lines:[
+    { when:'Mensaje de WhatsApp · 11:07 p. m.', lines:[
       ['ai','Buenas noches. Nuestra oficina ya cerró, pero yo le puedo ayudar.'],
       ['cl','Necesito una cotización urgente para mañana.'],
       ['ai','Con gusto. ¿Me dice qué necesita y para cuándo?'],
       ['cl','Veinte piezas, para el viernes.'],
       ['ai','Anotado. Un asesor le llama mañana a primera hora con la cotización.'],
       ['sys','AVISO ENVIADO A SU EQUIPO DE VENTAS']],
-      out:[['Prospecto','Registrado en su CRM'],['Seguimiento','Mañana, 8:00 a. m.'],['Llamada perdida','Ninguna']] }
+      out:[['Prospecto','Registrado en su CRM'],['Seguimiento','Mañana, 8:00 a. m.'],['Mensaje sin respuesta','Ninguno']] }
   ];
   function runVoz(k){
     stopSims();
@@ -899,7 +932,20 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
   ['cP','cH','cC','cA'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
   calc();
 
-  var SIMS = { voz: function(){ runVoz(0); }, conta: function(){ ctK = 0; ctN = 0; ctC = 0; document.getElementById('ctRows').innerHTML = ''; document.getElementById('ctN').textContent = 0; document.getElementById('ctC').textContent = 0; runConta(); }, ops: runOps, calc: calc };
+  // 4. reportes por voz: resalta cada indicador mientras Dalia habla.
+  var KPI_SAY = ['Buenos días. Este es el reporte de su semana.','Ventas: 48,200 dólares, 12% más que la semana pasada.','Por cobrar: 9,750 dólares, con 3 facturas vencidas.','Pedidos: 184 entregados, el 98% a tiempo.','Margen: 18%, cuatro puntos menos que el mes pasado.','Puntos débiles: la cobranza y el margen.','Diagnóstico: las facturas salen tarde y dos rutas regresan vacías.','Prescripción: facturar el mismo día, recordar a los 3 clientes y combinar las 2 rutas.']
+  function kpiAt(k){
+    [].slice.call(document.querySelectorAll('.kc')).forEach(function(c){ c.classList.toggle('hot', +c.getAttribute('data-k') === k); });
+    document.getElementById('dTxt').textContent = KPI_SAY[k];
+  }
+  function runKpi(){
+    stopSims(); var orbD = document.getElementById('dOrb'); orbD.classList.add('sp');
+    KPI_SAY.forEach(function(_, k){ later(function(){ kpiAt(k); }, 300 + k * 5200); });
+    later(function(){ orbD.classList.remove('sp'); }, 300 + KPI_SAY.length * 5200);
+  }
+  document.getElementById('dPlay').onclick = function(){ if (!voiceOn) { voiceOn = true; } show(i); };
+
+  var SIMS = { kpi: runKpi, voz: function(){ runVoz(0); }, conta: function(){ ctK = 0; ctN = 0; ctC = 0; document.getElementById('ctRows').innerHTML = ''; document.getElementById('ctN').textContent = 0; document.getElementById('ctC').textContent = 0; runConta(); }, ops: runOps, calc: calc };
 
   /* ── reproductor (igual que el mazo de MCP) ─────────────────────── */
   var slides = [].slice.call(document.querySelectorAll('.slide'));
@@ -973,7 +1019,7 @@ body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
     cnt.textContent = (i + 1) + ' / ' + slides.length;
-    capT.textContent = 'Lina · ' + slides[i].getAttribute('data-t');
+    capT.textContent = (slides[i].getAttribute('data-sim') === 'kpi' ? 'Dalia · ' : 'Lina · ') + slides[i].getAttribute('data-t');
     if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
     prog.style.width = (i / slides.length * 100) + '%';
     paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
