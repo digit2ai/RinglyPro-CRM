@@ -128,7 +128,7 @@ async function setState(sequelize, user, { pendiente, contexto }) {
 }
 
 async function recurrentes(sequelize, user, { soloActivos = true } = {}) {
-  const [rows] = await sequelize.query(`SELECT id, concepto, tipo, monto::text AS monto, categoria, dia, fin_de_mes, activo FROM sf_recurrentes
+  const [rows] = await sequelize.query(`SELECT id, concepto, tipo, monto::text AS monto, categoria, dia, fin_de_mes, activo, solo_aviso FROM sf_recurrentes
     WHERE user_id = :u AND tenant_id = :t ${soloActivos ? 'AND activo' : ''} ORDER BY id`, { replacements: { u: user.userId, t: user.tenantId } });
   return rows;
 }

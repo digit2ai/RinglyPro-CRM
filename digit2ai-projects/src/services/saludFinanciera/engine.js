@@ -333,7 +333,7 @@ function recurrentRows(rawRows, recurrentes, desde, hasta) {
   const out = [];
   if (!desde || !hasta || desde > hasta) return out;
   for (const rec of recurrentes || []) {
-    if (rec.activo === false) continue;
+    if (rec.activo === false || rec.solo_aviso) continue;   // a reminder-only bill: the bank debit is the record
     let ym = desde.slice(0, 7);
     while (ym <= hasta.slice(0, 7)) {
       const [y, m] = ym.split('-').map(Number);

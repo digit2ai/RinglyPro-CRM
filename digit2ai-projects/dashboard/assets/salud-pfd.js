@@ -61,6 +61,19 @@
         return '<a href="#" data-pago-id="' + r.id + '" style="display:block;color:' + (r.vencido ? C.red : C.cyan) + ';text-decoration:underline;padding:3px 0">' +
           esc(fc(r.fecha)) + ' · ' + esc(r.concepto) + ' · ' + esc(r.monto) + (r.vencido ? ' · vencido' : '') + '</a>';
       }).join('') : 'No tienes pagos pendientes para hoy.', ph.length ? C.red : C.green));
+    // bills the bank pays by itself: when, how much, and whether the paying account covers them all
+    var ap = s.autopagos;
+    if (ap && ap.items && ap.items.length) {
+      var okAll = ap.cubierto !== false;
+      h.push(tile('Cargos automáticos', ap.cubierto == null ? esc(ap.total) : okAll ? 'Cubiertos' : 'Faltan ' + esc(ap.falta),
+        (ap.cuenta ? 'Cuenta ••' + esc(ap.cuenta) + ' tiene ' + esc(ap.disponible) + '; próximos cargos ' + esc(ap.total) + '.' : 'Próximos cargos ' + esc(ap.total) + '.') +
+        ap.items.map(function (i) {
+          var col = i.cubierto === false ? C.red : i.dias <= 3 ? C.amber : '#c9d2de';
+          var cuando = i.dias === 0 ? 'hoy' : i.dias === 1 ? 'mañana' : 'en ' + i.dias + ' días';
+          return '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;color:' + col + '"><span>' + esc(fc(i.fecha)) + ' · ' + esc(i.concepto) + ' <span style="color:#9aa4b2">(' + cuando + ')</span></span>' +
+            '<span style="white-space:nowrap">' + esc(i.monto) + (i.estimado ? ' est.' : '') + ' · ' + (i.cubierto === false ? 'FALTA' : i.cubierto ? 'OK' : '') + '</span></div>';
+        }).join(''), okAll ? C.green : C.red));
+    }
     if (cm) h.push(tile('Cierre de ' + esc(cm.nombre.split(' ')[0]), esc(cm.saldo), cm.saldo === cm.saldo_plan ? 'Igual al plan' : 'Plan: ' + esc(cm.saldo_plan), cm.saldo.charAt(0) === '-' ? C.red : '#fff'));
     // minimum with its month/year selector
     var m = state.minSel ? (s.minimos_mes || []).filter(function (x) { return x.mes === state.minSel; })[0] : null;

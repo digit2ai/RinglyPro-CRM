@@ -17,6 +17,7 @@ const lina = require('../services/saludFinanciera/lina');
 const cerebro = require('../services/saludFinanciera/cerebro');
 const { toCents, fmt } = require('../services/saludFinanciera/money');
 const alarmas = require('../services/saludFinanciera/alarmas');
+const autopagosSvc = require('../services/saludFinanciera/autopagos');
 
 const router = express.Router();
 
@@ -163,6 +164,39 @@ async function revisarAlarmas(req, a, resumen) {
   } catch (e) { return [{ nivel: 'caution', clave: 'error', titulo: 'No pude revisar el banco', detalle: e.message }]; }
 }
 
+// Bills the bank pays by itself: next date, amount, and whether the paying account covers them.
+async function autopagos(req, a) {
+  try {
+    const q = (sql, r) => deps.sequelize.query(sql, { replacements: { u: req.sf.userId, t: req.sf.tenantId, ...(r || {}) } }).then(x => x[0]);
+    const recs = (await store.recurrentes(deps.sequelize, req.sf)).filter(r => r.solo_aviso);
+    if (!recs.length) return null;
+    const [txns, cuentas] = await Promise.all([
+      q(`SELECT x.fecha::text AS fecha, COALESCE(x.comercio,'') || ' ' || COALESCE(x.nombre,'') AS texto, x.monto_cents FROM sf_plaid_txn x
+           JOIN sf_plaid_accounts c ON c.account_id = x.account_id AND c.user_id = x.user_id AND c.tenant_id = x.tenant_id AND c.incluir
+          WHERE x.user_id = :u AND x.tenant_id = :t AND x.fecha >= :d`, { d: engine.addDays(a.today, -190) }).catch(() => []),
+      q('SELECT mask, rol, incluir, saldo_disponible::text AS d, saldo_actual::text AS c FROM sf_plaid_accounts WHERE user_id = :u AND tenant_id = :t AND incluir').catch(() => [])
+    ]);
+    // the bills are paid from the expenses account (rol gastos); with no roles, the first included account
+    const acc = cuentas.find(c => c.rol === 'gastos') || cuentas[0] || null;
+    const val = acc ? (acc.d != null ? acc.d : acc.c) : null;
+    const cuenta = acc && val != null ? { mask: acc.mask, disponible_cents: Math.round(Number(val) * 100) } : null;
+    const r = autopagosSvc.calcular({ hoy: a.today, recs, cuenta, cargos: txns.map(x => ({ fecha: String(x.fecha).slice(0, 10), texto: x.texto, monto_cents: Number(x.monto_cents) })) });
+    return { ...r, disponible: r.disponible_cents == null ? null : fmt(r.disponible_cents), total: fmt(r.total_cents), falta: r.falta_cents == null ? null : fmt(r.falta_cents),
+      items: r.items.map(i => ({ ...i, monto: fmt(i.monto_cents) })) };
+  } catch (e) { return { error: e.message, items: [] }; }
+}
+// reminders 3 days ahead (caution) and an uncovered charge within 7 days (STALL), dismissable like any alarm
+function alarmasAutopago(ap, vistas) {
+  const out = [];
+  for (const i of (ap && ap.items) || []) {
+    if (i.cubierto === false && i.dias <= 7) out.push({ nivel: 'stall', clave: 'autopago-falta:' + i.concepto + ':' + i.fecha, titulo: 'No alcanza para ' + i.concepto,
+      detalle: 'El ' + i.fecha.slice(8) + '/' + i.fecha.slice(5, 7) + ' el banco cobra ' + i.concepto + ' (' + fmt(i.monto_cents) + (i.estimado ? ', estimado' : '') + ') y la cuenta ••' + ap.cuenta + ' tiene ' + ap.disponible + ' para los cargos que vienen.' });
+    else if (i.dias <= 3) out.push({ nivel: 'caution', clave: 'autopago:' + i.concepto + ':' + i.fecha, titulo: 'Se cobra ' + i.concepto + (i.dias === 0 ? ' hoy' : i.dias === 1 ? ' mañana' : ' en ' + i.dias + ' días'),
+      detalle: fmt(i.monto_cents) + (i.estimado ? ' estimado' : '') + ' de la cuenta ••' + (ap.cuenta || '') + (i.cubierto ? '; está cubierto.' : '.') });
+  }
+  return out.filter(x => !(vistas || []).includes(x.clave));
+}
+
 router.post('/alarmas/visto', async (req, res) => {
   try {
     const clave = String((req.body && req.body.clave) || '').slice(0, 120);
@@ -187,7 +221,13 @@ router.get('/salud', async (req, res) => {
     res.set('Cache-Control', 'no-store').json({
       success: true,
       ...resumen,
-      alarmas: await revisarAlarmas(req, a, resumen),
+      ...(await (async () => {
+        const [al, ap, cfg] = await Promise.all([revisarAlarmas(req, a, resumen), autopagos(req, a),
+          deps.sequelize.query('SELECT alarmas_vistas FROM sf_config WHERE user_id = :u AND tenant_id = :t', { replacements: { u: req.sf.userId, t: req.sf.tenantId } }).then(x => x[0]).catch(() => [])]);
+        const vistas = cfg[0] && Array.isArray(cfg[0].alarmas_vistas) ? cfg[0].alarmas_vistas : [];
+        const extra = alarmasAutopago(ap, vistas);
+        return { alarmas: extra.filter(x => x.nivel === 'stall').concat(al, extra.filter(x => x.nivel !== 'stall')), autopagos: ap };
+      })()),
       cierre_mes_actual: cierre(a, a.today.slice(0, 7)),
       gasto_personal_mes: gastoPersonalMes(rows, opts, a),
       pfd: instrumentos(a, rows),

@@ -243,3 +243,7 @@ ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS colchon_corte NUMERIC(12,2) DEFAU
 
 -- STALL warning: alarm keys the owner acknowledged (2026-10-28)
 ALTER TABLE sf_config ADD COLUMN IF NOT EXISTS alarmas_vistas JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- 2026-10-29: bills the bank pays by itself (AT&T, Render, Anthropic, Spectrum) are a REMINDER only:
+-- never projected into the plan (the bank debit is the record), shown as "Cargos automáticos".
+ALTER TABLE sf_recurrentes ADD COLUMN IF NOT EXISTS solo_aviso BOOLEAN NOT NULL DEFAULT FALSE;

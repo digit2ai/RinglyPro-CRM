@@ -830,6 +830,38 @@ async function plaidTests({ call, A, B, sequelize }) {
   if (saved.env === undefined) delete process.env.PLAID_ENV; else process.env.PLAID_ENV = saved.env;
 }
 
+function autopagosTests() {
+  console.log('\n-- cargos automáticos (recordatorio, nunca en el plan)');
+  const ap = require('./src/services/saludFinanciera/autopagos');
+  const E = require('./src/services/saludFinanciera/engine');
+  const recs = [
+    { id: 1, concepto: 'AT&T', monto: '150.00', fin_de_mes: true, activo: true, solo_aviso: true },
+    { id: 2, concepto: 'Claude (Anthropic)', monto: '90.00', dia: 7, activo: true, solo_aviso: true },
+    { id: 3, concepto: 'Render', monto: '150.00', fin_de_mes: true, activo: true, solo_aviso: true },
+    { id: 9, concepto: 'Planea', tipo: 'ingreso', monto: '400.00', dia: 6, activo: true, solo_aviso: false }
+  ];
+  const cargos = [
+    { fecha: '2026-10-08', texto: 'Anthropic PURCHASE ANTHROPIC* CLAUDE', monto_cents: 10000 },
+    { fecha: '2026-10-26', texto: 'Anthropic PURCHASE ANTHROPIC', monto_cents: 2000 },
+    { fecha: '2026-09-09', texto: 'Anthropic CLAUDE.AI SUBSCRI', monto_cents: 10000 },
+    { fecha: '2026-10-02', texto: 'Render RENDER.COM', monto_cents: 19423 },
+    { fecha: '2026-10-20', texto: 'Amazon AMAZON DIGITAL SEATTLE WA', monto_cents: 5000 }
+  ];
+  const r = ap.calcular({ hoy: '2026-10-29', recs, cargos, cuenta: { mask: '5122', disponible_cents: 40000 } });
+  const by = Object.fromEntries(r.items.map(i => [i.concepto, i]));
+  ok(r.items.length === 3, 'only active reminder bills, never an income', r.items.map(i => i.concepto));
+  ok(by['Claude (Anthropic)'].fecha === '2026-11-08' && by['Claude (Anthropic)'].monto_cents === 10000 && !by['Claude (Anthropic)'].estimado,
+    'the bank history wins: $100 subscription on the 8th, the $20 top-up is not the bill', by['Claude (Anthropic)']);
+  ok(by.Render.fecha === '2026-11-02' && by.Render.monto_cents === 19423, 'Render from its last real charge', by.Render);
+  ok(by['AT&T'].estimado && by['AT&T'].fecha === '2026-10-31' && by['AT&T'].monto_cents === 15000, 'no bank charge: owner estimate, labelled', by['AT&T']);
+  ok(!ap.coincide('AMAZON DIGITAL SEATTLE WA', ap.claves('AT&T')), '"att" never matches inside SEATTLE');
+  ok(r.items[0].fecha <= r.items[1].fecha && r.items[1].fecha <= r.items[2].fecha, 'sorted by date');
+  ok(r.cubierto === false && r.falta_cents === 44423 - 40000, 'coverage is cumulative over the account balance', r);
+  ok(r.items.find(i => i.cubierto === false).concepto === 'Claude (Anthropic)', 'the first uncovered bill is named');
+  const rows = E.recurrentRows([], recs, '2026-11-01', '2026-12-31');
+  ok(rows.length === 2 && rows.every(x => x.concepto === 'Planea'), 'a reminder bill is NEVER projected into the plan', rows.map(x => x.concepto));
+}
+
 function alarmasTests() {
   console.log('\n-- STALL warning + distinct recurring charges (alarmas.js)');
   const A = require('./src/services/saludFinanciera/alarmas');
@@ -876,6 +908,7 @@ function alarmasTests() {
 (async () => {
   await engineTests();
   alarmasTests();
+  autopagosTests();
   await linaTests();
   structuralTests();
   try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.stack); }
