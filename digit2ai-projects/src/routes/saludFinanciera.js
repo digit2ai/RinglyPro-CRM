@@ -64,12 +64,23 @@ async function context(req) {
   return { rows, opts };
 }
 
+// A bank row's description is the bank's raw text ("PURCHASE 1025 AMAZON DIGITAL SEATTLE WA XXXX..."):
+// unreadable on a phone. The table shows the merchant; the full text stays in Editar.
+function corto(concepto, comercio) {
+  let n = alarmas.nombreLimpio(concepto, comercio);
+  if (!comercio) {
+    n = n.replace(/\bX{2,}\w*/gi, ' ').replace(/(^|\s)[^\w\s]+(?=\s|$)/g, ' ').replace(/\s+[A-Z]{2}\s*$/, '').replace(/\s+/g, ' ').trim() || n;
+  }
+  return /[a-z]/.test(n) ? n : n.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase()).replace(/\b(Wa|Fl|Ny|Ca|Tx|Llc|Inc|Usa)\b/g, (m) => m.toUpperCase());
+}
+
 function withSaldo(rows, a) {
   const byId = new Map(a.steps.map(s => [String(s.row.id), s]));
   const minDay = a.fecha_min;
   return rows.map(r => {
     const s = byId.get(String(r.id));
     return { ...r, efectivo: s ? fmt(s.amount) : null, saldo: s ? fmt(s.saldo) : null, saldo_cents: s ? s.saldo : null,
+      concepto_corto: r.fuente === 'plaid' ? corto(r.concepto, r.comercio) : null,
       es_minimo: r.fecha === minDay, estado_visual: r.origen === 'real' ? 'real' : (r.estado === 'cumplido' ? 'cumplido' : 'plan') };
   });
 }

@@ -420,16 +420,16 @@
     return sf('/alarmas/visto', { method: 'POST', body: { clave: clave } }).then(function () { return Promise.all([loadSalud(), loadBank()]); });
   };
 
-  function sortTh(k, label, st) {
+  function sortTh(k, label, st, cls) {
     var on = state.f.sort === k, arrow = on ? (state.f.dir === 1 ? ' ▲' : ' ▼') : '';
-    return '<th data-sort="' + k + '" title="Ordenar por ' + label.toLowerCase() + '" style="cursor:pointer;user-select:none;' + st + (on ? 'color:var(--info);' : '') + '">' + label + arrow + '</th>';
+    return '<th data-sort="' + k + '"' + (cls ? ' class="' + cls + '"' : '') + ' title="Ordenar por ' + label.toLowerCase() + '" style="cursor:pointer;user-select:none;' + st + (on ? 'color:var(--info);' : '') + '">' + label + arrow + '</th>';
   }
   function drawTable(rows, fmin) {
     var el = document.getElementById('sf-table');
     if (!rows.length) { el.innerHTML = '<p class="section-hint">' + (anyFilter() ? 'Ningún movimiento coincide con el filtro.' : 'No hay movimientos en este mes.') + '</p>'; return; }
     var color = { plan: 'var(--text-muted)', real: 'var(--info)', cumplido: 'var(--success)' };
     var label = { plan: 'Plan', real: 'Real', cumplido: 'Cumplido' };
-    el.innerHTML = '<style>@media (max-width:700px){#sf-mov-card{padding:12px 8px}#sf-table .sf-hide-m{display:none}#sf-table .sf-yr{display:none}#sf-table td,#sf-table th{padding:7px 4px;font-size:12px}#sf-table td.sf-concepto{word-break:break-word;white-space:normal}#sf-table tr[data-row]{cursor:pointer}}</style><table class="data-table" style="width:100%"><thead><tr>' + sortTh('fecha', 'Fecha', '') + sortTh('concepto', 'Concepto', '') + sortTh('monto', 'Monto', 'text-align:right') + '<th style="text-align:right">Saldo</th><th class="sf-hide-m">Estado</th><th class="sf-hide-m"></th></tr></thead><tbody>' +
+    el.innerHTML = '<style>@media (max-width:700px){#sf-mov-card{padding:12px 8px}#sf-table .sf-hide-m{display:none}#sf-table .sf-yr{display:none}#sf-table table.data-table{display:table!important;table-layout:fixed;overflow:visible}#sf-table th.sf-c-fecha{width:17%}#sf-table th.sf-c-monto{width:26%}#sf-table th.sf-c-saldo{width:27%}#sf-table td,#sf-table th{padding:8px 4px;font-size:13px}#sf-table th{font-size:11px;letter-spacing:0}#sf-table td.sf-concepto{white-space:normal;line-height:1.3}#sf-table .sf-ct{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}#sf-table .sf-bk{display:inline-block;margin-top:2px}#sf-table tr[data-row]{cursor:pointer}}</style><table class="data-table" style="width:100%"><thead><tr>' + sortTh('fecha', 'Fecha', '', 'sf-c-fecha') + sortTh('concepto', 'Concepto', '') + sortTh('monto', 'Monto', 'text-align:right', 'sf-c-monto') + '<th class="sf-c-saldo" style="text-align:right">Saldo</th><th class="sf-hide-m">Estado</th><th class="sf-hide-m"></th></tr></thead><tbody>' +
       rows.map(function (r) {
         var v = r.estado_visual; var neg = r.saldo && r.saldo.charAt(0) === '-';
         var bg = r.es_minimo ? 'background:rgba(245,158,11,.14);' : '';
@@ -441,7 +441,7 @@
         act = '<button class="btn btn-sm btn-ghost" data-edit="' + r.id + '">Editar</button> ' + act;
         return '<tr data-row="' + r.id + '" style="' + bg + 'border-left:3px solid ' + color[v] + '">' +
           '<td style="white-space:nowrap">' + esc(fechaCorta(r.fecha).replace(/ \d\d$/, '')) + '<span class="sf-yr"> ' + esc(r.fecha.slice(2, 4)) + '</span>' + (r.es_minimo ? '<div style="font-size:11px;color:var(--warning);font-weight:700">PUNTO MÁS BAJO</div>' : '') + '</td>' +
-          '<td class="sf-concepto">' + esc(r.concepto) + (r.fuente === 'plaid' ? ' <span style="font-size:10px;font-weight:700;color:var(--accent,#3b82f6);border:1px solid currentColor;border-radius:4px;padding:0 4px">BANCO</span>' : '') + (r.pendiente_banco ? ' <span style="font-size:10px;color:var(--warning)">pendiente</span>' : '') + '</td>' +
+          '<td class="sf-concepto" title="' + esc(r.concepto) + '"><span class="sf-ct">' + esc(r.concepto_corto || r.concepto) + '</span>' + (r.fuente === 'plaid' ? ' <span class="sf-bk" style="font-size:10px;font-weight:700;color:var(--accent,#3b82f6);border:1px solid currentColor;border-radius:4px;padding:0 4px">BANCO</span>' : '') + (r.pendiente_banco ? ' <span style="font-size:10px;color:var(--warning)">pendiente</span>' : '') + '</td>' +
           '<td style="text-align:right;white-space:nowrap;color:' + (r.tipo === 'ingreso' ? 'var(--success)' : 'var(--text-primary)') + '">' + esc(monto) + planned + '</td>' +
           '<td style="text-align:right;white-space:nowrap;font-weight:600;color:' + (neg ? 'var(--danger)' : 'var(--text-primary)') + '">' + esc(r.saldo) + '</td>' +
           '<td class="sf-hide-m"><span style="font-size:12px;color:' + color[v] + ';font-weight:600">' + label[v] + '</span></td><td class="sf-hide-m" style="white-space:nowrap">' + act + '</td></tr>';
