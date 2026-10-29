@@ -185,11 +185,13 @@ async function autopagos(req, a) {
       items: r.items.map(i => ({ ...i, monto: fmt(i.monto_cents) })) };
   } catch (e) { return { error: e.message, items: [] }; }
 }
-// reminders 3 days ahead (caution) and an uncovered charge within 7 days (STALL), dismissable like any alarm
+// reminders 3 days ahead (caution) and an uncovered charge within STALL_DIAS (STALL), dismissable like any alarm.
+// 25 days (owner 2026-10-29): a service is usually cut off after ~30 days late, so warn well before.
+const STALL_DIAS = Number(process.env.SALUD_FINANCIERA_AUTOPAGO_STALL_DIAS) || 25;
 function alarmasAutopago(ap, vistas) {
   const out = [];
   for (const i of (ap && ap.items) || []) {
-    if (i.cubierto === false && i.dias <= 7) out.push({ nivel: 'stall', clave: 'autopago-falta:' + i.concepto + ':' + i.fecha, titulo: 'No alcanza para ' + i.concepto,
+    if (i.cubierto === false && i.dias <= STALL_DIAS) out.push({ nivel: 'stall', clave: 'autopago-falta:' + i.concepto + ':' + i.fecha, titulo: 'No alcanza para ' + i.concepto,
       detalle: 'El ' + i.fecha.slice(8) + '/' + i.fecha.slice(5, 7) + ' el banco cobra ' + i.concepto + ' (' + fmt(i.monto_cents) + (i.estimado ? ', estimado' : '') + ') y la cuenta ••' + ap.cuenta + ' tiene ' + ap.disponible + ' para los cargos que vienen.' });
     else if (i.dias <= 3) out.push({ nivel: 'caution', clave: 'autopago:' + i.concepto + ':' + i.fecha, titulo: 'Se cobra ' + i.concepto + (i.dias === 0 ? ' hoy' : i.dias === 1 ? ' mañana' : ' en ' + i.dias + ' días'),
       detalle: fmt(i.monto_cents) + (i.estimado ? ' estimado' : '') + ' de la cuenta ••' + (ap.cuenta || '') + (i.cubierto ? '; está cubierto.' : '.') });
