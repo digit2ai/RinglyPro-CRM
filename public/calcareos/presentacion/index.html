@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b16">
+<title>Calcáreos × Digit2AI</title>
+<meta name="description" content="Presentación narrada por Lina para Calcáreos S.A.: quiénes somos, lo que entendimos de su operación y cómo Digit2AI automatiza sus flujos de trabajo a la medida.">
+<link rel="icon" href="/mcp/logo.png">
+<link rel="preload" as="image" href="/mcp/logo.png">
+<style>html,body{background:#070b16}</style>
+<style>
+/* Tokens y tipografía copiados de public/mcp/index.html (digit2ai.com/mcp). La
+   página no descarga fuentes: Space Grotesk e Inter solo se usan si están
+   instaladas, y si no, cae a la fuente del sistema. Aquí igual, a propósito:
+   así el mazo se ve exactamente como la página que lo vende. */
+:root{
+  --bg:#070b16; --bg2:#0b1222; --panel:#0f1728; --panel2:#131e33;
+  --line:rgba(120,150,200,.16); --line2:rgba(120,150,200,.28);
+  --txt:#eaf0fb; --mut:#9db0cc; --cy:#22d3ee; --vi:#8b5cf6; --on:#04222a;
+  --ok:#34d399; --warn:#fbbf24;
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --fb:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --W:1280px; --H:720px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--fb);color:var(--txt);background:radial-gradient(1100px 700px at 50% 35%,#0d1830,var(--bg));overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+/* ── escenario: 16:9 por defecto, 9:16 en modo vertical ─────────────── */
+body.vert{--W:720px;--H:1280px}
+.vp{position:fixed;inset:0 0 72px 0;display:flex;align-items:center;justify-content:center}
+#stage{width:var(--W);height:var(--H);position:relative;flex:0 0 auto;transform-origin:center center}
+.slide{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:
+  radial-gradient(700px 420px at 85% 0%,rgba(139,92,246,.20),transparent 70%),
+  radial-gradient(700px 500px at 0% 100%,rgba(34,211,238,.13),transparent 70%),
+  linear-gradient(180deg,var(--bg2),var(--bg));
+  border:1px solid var(--line);box-shadow:0 30px 90px rgba(0,0,0,.55);
+  padding:52px 64px 48px;display:none;flex-direction:column}
+.slide.on{display:flex;animation:in .6s ease both}
+.slide{justify-content:center}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+body.vert .slide{padding:64px 48px 56px}
+.slide::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 40%,#000 0%,transparent 75%);opacity:.35}
+.slide > *{position:relative;z-index:1}
+
+.brand{font-family:var(--fd);font-weight:700;font-size:19px;letter-spacing:.04em;color:var(--txt)}
+.brand b{color:var(--cy)}.brand span{color:var(--mut);font-weight:500}
+body.vert .brand{font-size:24px}
+.hlogo{display:block;width:340px;height:auto;border-radius:14px;border:1px solid var(--line)}
+body.vert .hlogo{width:440px}
+.kick{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--cy);margin-top:18px}
+h1{font-family:var(--fd);font-weight:700;font-size:62px;line-height:1.1;letter-spacing:-.01em;margin-top:12px}
+h2{font-family:var(--fd);font-weight:700;font-size:48px;line-height:1.12;letter-spacing:-.01em;margin-top:10px}
+body.vert h1{font-size:72px}body.vert h2{font-size:58px}
+.grad{background:linear-gradient(90deg,var(--cy),var(--vi));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:22px;line-height:1.5;color:var(--mut);margin-top:14px;max-width:900px}
+body.vert .lead{font-size:27px}
+.row{display:flex;gap:40px;align-items:center;flex:1;min-height:0}
+.col{display:flex;flex-direction:column;min-width:0}
+.grow{flex:1}
+body.vert .row{flex-direction:column;align-items:stretch;gap:26px}
+.grid{display:grid;gap:16px;margin-top:22px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+body.vert .g3,body.vert .g4{grid-template-columns:repeat(2,1fr)}
+.card{background:linear-gradient(180deg,rgba(19,30,51,.92),rgba(15,23,40,.92));border:1px solid var(--line2);border-radius:18px;padding:22px 22px 20px;position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.8}
+.card h3{font-family:var(--fd);font-weight:700;font-size:22px;margin-top:4px}
+.card p{font-size:16.5px;line-height:1.45;color:var(--mut);margin-top:8px}
+body.vert .card{padding:26px 24px}body.vert .card h3{font-size:28px}body.vert .card p{font-size:21px}body.vert .grid{gap:20px}body.vert .kick{font-size:17px}body.vert .n{font-size:16px}
+.n{font-family:var(--fd);font-weight:700;font-size:13px;color:var(--cy);letter-spacing:.1em}
+.stag{opacity:0;animation:up .6s ease forwards}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.d1{animation-delay:.25s}.d2{animation-delay:.5s}.d3{animation-delay:.75s}.d4{animation-delay:1s}.d5{animation-delay:1.25s}.d6{animation-delay:1.5s}.d7{animation-delay:1.75s}.d8{animation-delay:2s}.d9{animation-delay:2.25s}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);background:rgba(15,23,40,.85);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy)}
+.foot{margin-top:22px;font-size:14px;color:var(--mut)}
+
+/* ── USB: la idea en un solo dibujo ────────────────────────────────── */
+.usb{width:100%;height:auto;max-height:100%}
+.usb .sys rect{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.usb .sys text{fill:#9db0cc;font:600 15px var(--fb)}
+.usb .lit rect{animation:lit 1s ease forwards;animation-delay:var(--dl,2.2s)}
+.usb .lit text{animation:litt 1s ease forwards;animation-delay:var(--dl,2.2s)}
+@keyframes lit{to{fill:#0e2a35;stroke:#22d3ee}}
+@keyframes litt{to{fill:#eaf0fb}}
+.usb .plug{animation:plug 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateX(150px)}
+.usb .plugV{animation:plugV 1.6s cubic-bezier(.6,.05,.25,1) forwards;animation-delay:.5s;transform:translateY(190px)}
+@keyframes plugV{to{transform:translateY(0)}}
+@keyframes plug{to{transform:translateX(0)}}
+.usb .wire{stroke-dasharray:6 8;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.usb .glow{opacity:0;animation:glow 1s ease forwards;animation-delay:2s}
+@keyframes glow{to{opacity:1}}
+.usb .pulse{transform-origin:center;transform-box:fill-box;animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+/* ── órbita de agentes ─────────────────────────────────────────────── */
+.orbit{position:relative;width:540px;height:540px;flex:0 0 540px;margin:auto}
+body.vert .orbit{width:620px;height:620px;flex-basis:620px}
+.orbit .core{position:absolute;left:50%;top:50%;width:170px;height:170px;margin:-85px 0 0 -85px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 35%,#6d28d9 85%);box-shadow:0 0 60px rgba(34,211,238,.45),0 0 120px rgba(139,92,246,.35);
+  display:flex;align-items:center;justify-content:center;text-align:center;font-family:var(--fd);font-weight:700;color:#04222a;font-size:20px;line-height:1.1;animation:pulse 3s ease-in-out infinite}
+.orbit .ring{position:absolute;inset:0;border-radius:50%;border-color:transparent!important;border:1px dashed rgba(34,211,238,.35);animation:spin 60s linear infinite}
+.orbit .ring2{position:absolute;inset:10%;border-radius:50%;border:1px dashed rgba(34,211,238,.4)}
+.orbit .ring3{position:absolute;inset:28%;border-radius:50%;border:1px solid rgba(139,92,246,.35)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit .node{position:absolute;left:50%;top:50%;width:0;height:0}
+.orbit .node span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(15,23,40,.95);border:1px solid var(--line2);border-radius:999px;padding:7px 13px;font-weight:600;font-size:13.5px;color:var(--txt);animation:counter 60s linear infinite}
+@keyframes counter{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+body.vert .orbit .node span{font-size:18px}
+
+/* ── flujo de una solicitud ────────────────────────────────────────── */
+.flow svg{width:100%;height:auto}
+.flow text{font-family:var(--fb)}
+.flow .box{fill:#0f1728;stroke:rgba(120,150,200,.35)}
+.flow .hot{fill:#0e2a35;stroke:#22d3ee}
+.flow .lbl{fill:#eaf0fb;font-weight:700;font-size:17px}
+.flow .sub{fill:#9db0cc;font-size:13px}
+.flow .path{stroke:rgba(34,211,238,.4);stroke-width:2;fill:none;stroke-dasharray:5 7;animation:flow 1.4s linear infinite}
+
+/* tabla comparativa */
+table.cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:20px;font-size:15.5px;border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+table.cmp th{font-family:var(--fd);text-align:left;padding:11px 14px;background:#0f1728;color:var(--mut);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+table.cmp th.us{color:var(--on);background:linear-gradient(90deg,var(--cy),#67e8f9)}
+table.cmp td{padding:10px 14px;border-top:1px solid var(--line)}
+table.cmp td.us{color:var(--txt);font-weight:700;background:rgba(34,211,238,.07)}
+table.cmp td.them{color:var(--mut)}
+body.vert table.cmp{font-size:20px}body.vert table.cmp td{padding:14px 12px}body.vert table.cmp th{font-size:15px}
+
+/* precio */
+.price{display:flex;gap:18px;margin-top:24px}
+body.vert .price{flex-direction:column}
+.price .card{flex:1;padding:26px}
+.price .amt{font-family:var(--fd);font-weight:700;font-size:64px;line-height:1;margin-top:10px}
+.price .amt small{font-size:18px;color:var(--mut);font-weight:600;margin-left:6px}
+.price ul{list-style:none;margin-top:14px}
+.price li{font-size:16px;color:var(--mut);padding:5px 0 5px 24px;position:relative}
+.price li::before{content:"";position:absolute;left:2px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--cy)}
+
+/* pasos */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;position:relative}
+.steps::before{content:"";position:absolute;left:4%;right:4%;top:30px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));opacity:.6}
+body.vert .steps{grid-template-columns:1fr}
+body.vert .steps::before{left:30px;right:auto;top:20px;bottom:20px;width:2px;height:auto}
+.step .dot{width:60px;height:60px;border-radius:50%;background:var(--bg);border:2px solid var(--cy);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;font-size:22px;color:var(--cy);box-shadow:0 0 22px rgba(34,211,238,.35);position:relative}
+body.vert .step{display:flex;gap:18px;align-items:flex-start}
+body.vert .step .dot{flex:0 0 60px}
+.step h3{font-family:var(--fd);font-weight:700;font-size:19px;margin-top:12px}
+body.vert .step h3{margin-top:4px;font-size:28px}
+.step p{font-size:15px;color:var(--mut);margin-top:4px;line-height:1.45}
+body.vert .step p{font-size:21px}
+
+/* portada */
+.cover h1{font-size:56px;max-width:640px}
+body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}body.vert .cover .col.grow{max-width:none!important}body.vert .price .amt{font-size:76px}body.vert .price li{font-size:21px}
+.cta{display:inline-flex;align-items:center;gap:10px;margin-top:24px;background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);font-family:var(--fd);font-weight:700;font-size:19px;padding:14px 22px;border-radius:999px;align-self:flex-start;box-shadow:0 10px 40px rgba(34,211,238,.35)}
+
+
+
+/* sistemas por industria */
+ul.sys{list-style:none;margin-top:12px}
+ul.sys li{font-family:var(--fd);font-weight:600;font-size:18px;padding:8px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+ul.sys li:first-child{border-top:0}
+ul.sys em,.foot em.ag{font-style:normal;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:2px 8px}
+body.vert .sysgrid{grid-template-columns:1fr!important}
+body.vert ul.sys{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+body.vert ul.sys li{font-size:20px;border-top:1px solid var(--line)}
+body.vert ul.sys li:nth-child(2){border-top:0}
+
+
+.incl ul.sys li{font-size:17px;justify-content:flex-start}
+.incl .quote{border-color:rgba(139,92,246,.55)}
+.incl .quote .n{color:#a78bfa}
+body.vert .incl{grid-template-columns:1fr!important}
+body.vert .incl ul.sys{display:block}
+body.vert .incl ul.sys li{font-size:21px;border-top:1px solid var(--line)}
+body.vert .incl ul.sys li:first-child{border-top:0}
+
+/* ── el orbe animado de OrbUp (copiado de orbup.html), en la última lámina ── */
+.orbx{width:400px;height:400px;position:relative}
+body.vert .orbx{width:560px;height:560px;margin-top:10px}
+.orbx::before{content:"";position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.30),rgba(236,72,153,.16) 45%,transparent 70%);filter:blur(10px)}
+.orbx .orb-svg{width:100%;height:100%;display:block;filter:drop-shadow(0 8px 32px rgba(34,211,238,calc(.25 + var(--orb-amp)*.35))) drop-shadow(0 4px 18px rgba(139,92,246,calc(.20 + var(--orb-amp)*.25)));transition:filter 80ms linear}
+.orbx .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.orbx .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.orbx .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.orbx .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.orbx .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.orbx .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.orbx .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.orbx .orb-ring{opacity:0;transition:opacity 200ms ease;transform-box:fill-box;transform-origin:center}
+@keyframes orbRingPulse{0%{opacity:.9;stroke-width:1.5}100%{opacity:0;stroke-width:.5}}
+.orbx .orb-particles{opacity:0}
+.orbx .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+.orbx .orb-svg{position:relative;filter:drop-shadow(0 8px 42px rgba(34,211,238,.5)) drop-shadow(0 4px 22px rgba(236,72,153,.32)) brightness(1.08)}
+.slide > .d2stars{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ── reproductor ───────────────────────────────────────────────────── */
+.dock{position:fixed;left:0;right:0;bottom:0;height:72px;background:rgba(7,11,22,.92);border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:20;backdrop-filter:blur(8px)}
+.orb{width:40px;height:40px;border-radius:50%;flex:0 0 40px;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 0 0 rgba(34,211,238,.6)}
+.orb.sp{animation:pul 1.2s ease-in-out infinite}
+@keyframes pul{70%{box-shadow:0 0 0 14px rgba(34,211,238,0)}}
+.cap{flex:1;min-width:0}
+#capT{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cy)}
+#capX{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock button{background:#131e33;color:var(--txt);border:1px solid var(--line2);border-radius:12px;min-width:44px;height:44px;font-weight:700;font-size:16px}
+#cnt{font-size:13px;font-weight:600;min-width:54px;text-align:center;color:var(--mut)}
+#prog{position:fixed;left:0;bottom:72px;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));width:0;z-index:21;transition:width .3s}
+.gate{position:fixed;inset:0;z-index:40;background:rgba(4,7,15,.88);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.gate.off{display:none}
+.gate .box{background:var(--panel);border:1px solid var(--line2);border-radius:22px;padding:30px;max-width:440px;width:100%;text-align:center}
+.gate .orbbig{width:84px;height:84px;margin:0 auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#67e8f9,#22d3ee 45%,#6d28d9);box-shadow:0 0 50px rgba(34,211,238,.5);animation:pulse 2.6s ease-in-out infinite}
+.gate h1{font-size:30px;margin-top:16px}
+.gate p{font-size:15px;color:var(--mut);margin:10px 0 18px;line-height:1.5}
+.gate button{display:block;width:100%;border:0;border-radius:999px;padding:14px;font-weight:700;font-size:16px;margin-top:10px;min-height:48px}
+#start{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on)}
+#silent{background:transparent;color:var(--txt);border:1px solid var(--line2)!important}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+
+/* ── propio de la presentación de Calcáreos ───────────────────────── */
+.stat .big{font-family:var(--fd);font-weight:700;font-size:44px;line-height:1;margin-top:8px}
+.stat .big small{font-size:18px;color:var(--mut);font-weight:600;margin-left:4px}
+body.vert .stat .big{font-size:52px}
+.pain{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.pain .chip i{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+body.vert .pain .chip{font-size:18px}
+.tag{display:inline-block;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:3px 9px;margin-left:6px;vertical-align:middle}
+.tag.ok{color:var(--ok);border:1px solid rgba(52,211,153,.5)}
+.tag.new{color:#a78bfa;border:1px solid rgba(139,92,246,.55)}
+.list{list-style:none;margin-top:16px}
+.list li{font-size:19px;line-height:1.45;color:var(--mut);padding:10px 0 10px 34px;position:relative;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list li b{color:var(--txt)}
+.list li::before{content:attr(data-n);position:absolute;left:0;top:10px;font-family:var(--fd);font-weight:700;color:var(--cy);font-size:17px}
+body.vert .list li{font-size:24px;padding-left:40px}
+.slab{width:100%;height:auto;max-height:430px}
+.slab .pc{opacity:0;animation:pop .5s ease forwards}
+@keyframes pop{to{opacity:1}}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;font-size:14px;color:var(--mut)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+body.vert .legend{font-size:19px}
+a.cta{text-decoration:none}
+body.vert .flows .card p{font-size:18.5px}body.vert .flows .card{padding:20px 20px}
+.links{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.cta.ghost{background:transparent;color:var(--txt);border:1px solid var(--line2);box-shadow:none;font-size:16px;padding:12px 18px}
+</style>
+</head>
+<body>
+<div class="vp"><div id="stage">
+
+  <!-- 1 portada (lámina 1 del mazo MCP, a la medida de Calcáreos) -->
+  <section class="slide cover" data-t="Calcáreos × Digit2AI">
+    <div class="row">
+      <div class="col grow">
+        <img class="hlogo stag d1" src="/mcp/logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
+        <div class="kick stag d1">Preparado para Calcáreos S.A. · Barranquilla</div>
+        <h1 class="stag d2">Su operación de piedra, <span class="grad">a la medida, con inteligencia artificial.</span></h1>
+        <p class="lead stag d3">Desde el plano de la constructora hasta el corte, el inventario y el despacho. Sin cambiar la forma en que su equipo trabaja hoy.</p>
+      </div>
+      <div class="col grow" style="max-width:520px;width:100%">
+        <svg class="usb" viewBox="0 0 520 300" aria-hidden="true">
+          <defs><linearGradient id="gU" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+          <rect x="10" y="90" width="210" height="120" rx="18" fill="#0f1728" stroke="rgba(120,150,200,.35)"/>
+          <text x="115" y="142" text-anchor="middle" fill="#eaf0fb" style="font:700 18px var(--fd)">Calcáreos</text>
+          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">Excel · WhatsApp · Corte</text>
+          <rect x="220" y="132" width="26" height="36" rx="4" fill="#131e33" stroke="#22d3ee"/>
+          <g class="plug"><rect x="246" y="138" width="40" height="24" rx="3" fill="#c7d2e3"/><rect x="286" y="126" width="70" height="48" rx="8" fill="url(#gU)"/></g>
+          <g class="glow"><circle class="pulse" cx="440" cy="150" r="70" fill="url(#gU)" opacity=".95"/></g>
+          <text class="glow" x="440" y="146" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">Cerebro</text>
+          <text class="glow" x="440" y="168" text-anchor="middle" style="font:700 17px var(--fd)" fill="#04222a">MCP</text>
+          <g class="glow"><path class="wire" d="M356 150 H370" stroke="#22d3ee" stroke-width="3"/></g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 quiénes somos -->
+  <section class="slide" data-t="Quiénes somos">
+    <div class="kick">Quiénes somos</div>
+    <h2>Digit2AI: tecnología a la medida, <span class="grad">no software de caja.</span></h2>
+    <div class="grid g4" style="margin-top:26px">
+      <div class="card stag d1"><span class="n">01</span><h3>Desarrollo a la medida</h3><p>Diseñamos cada pantalla y cada regla con su equipo, sobre su forma de trabajar. No al revés.</p></div>
+      <div class="card stag d2"><span class="n">02</span><h3>IA ya integrada</h3><p>Un cerebro central (MCP) conecta los modelos de los líderes del mercado con sus procesos reales.</p></div>
+      <div class="card stag d3"><span class="n">03</span><h3>Plataformas en producción</h3><p>Más de 20 plataformas en salud, logística, agro, construcción y finanzas. Clientes en Colombia, México y EE. UU.</p></div>
+      <div class="card stag d4"><span class="n">04</span><h3>Una persona aprueba</h3><p>El sistema propone; enviar, pagar, publicar o cortar siempre espera la aprobación de una persona.</p></div>
+    </div>
+    <p class="foot">DIGIT2AI LLC · digit2ai.com · info@digit2ai.com</p>
+  </section>
+
+  <!-- 3 lo que entendimos -->
+  <section class="slide" data-t="Lo que entendimos de Calcáreos">
+    <div class="kick">Lo que entendimos de Calcáreos</div>
+    <h2>Una operación grande, <span class="grad">que hoy depende de Excel y de memoria.</span></h2>
+    <div class="grid g4" style="margin-top:22px">
+      <div class="card stat stag d1"><span class="n">DESDE</span><div class="big">1971</div><p>Empresa familiar en Barranquilla.</p></div>
+      <div class="card stat stag d2"><span class="n">REFERENCIAS</span><div class="big">150+</div><p>Piedras importadas de más de 10 países.</p></div>
+      <div class="card stat stag d3"><span class="n">CORTE AL MES</span><div class="big">≈5.000<small>m²</small></div><p>En 5 máquinas programadas.</p></div>
+      <div class="card stat stag d4"><span class="n">OBRAS A LA VEZ</span><div class="big">18–20</div><p>Algunas con hasta 30 tipos de cocina.</p></div>
+    </div>
+    <div class="pain">
+      <span class="chip stag d5"><i></i>Órdenes de corte armadas en Excel</span>
+      <span class="chip stag d5"><i></i>Firma después de medir en obra</span>
+      <span class="chip stag d6"><i></i>Planos despiezados a mano</span>
+      <span class="chip stag d6"><i></i>Retales donados o perdidos</span>
+      <span class="chip stag d7"><i></i>Hasta 15 % de desperdicio aceptado</span>
+    </div>
+    <p class="foot">Cifras aproximadas de la reunión del 29 de octubre de 2026 y de calcareos.com. Se confirman con su equipo.</p>
+  </section>
+
+  <!-- 4 USB (lámina 3 del mazo MCP) -->
+  <section class="slide" data-t="Un USB para la inteligencia de negocio">
+    <div class="kick">La idea</div>
+    <h2>Un USB para la <span class="grad">inteligencia de Calcáreos.</span></h2>
+    <p class="lead">Se conecta a lo que ya usan. Si un sistema tiene conexión (API), se conecta directo; si no, se trabaja con los archivos que ya exportan. No se reemplaza nada.</p>
+    <div class="row" style="margin-top:8px">
+      <svg class="usb" id="usbL" viewBox="0 0 900 330" aria-hidden="true" style="max-height:340px">
+        <defs><linearGradient id="gU2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">Excel de cortes</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">WhatsApp</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">Máquinas de corte</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">Contabilidad</text></g>
+        <path d="M210 47 H290 M210 117 H290 M210 187 H290 M210 257 H290 M290 47 V257" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="290" y="128" width="40" height="44" rx="5" fill="#131e33" stroke="#22d3ee"/>
+        <text x="310" y="200" text-anchor="middle" style="font:600 13px var(--fb)" fill="#9db0cc">API</text>
+        <g class="plug" style="transform:translateX(230px)"><rect x="330" y="136" width="56" height="28" rx="3" fill="#c7d2e3"/><rect x="386" y="120" width="96" height="60" rx="10" fill="url(#gU2)"/><text x="434" y="156" text-anchor="middle" style="font:700 16px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M482 150 H640" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="720" cy="150" r="82" fill="url(#gU2)"/></g>
+        <text class="glow" x="720" y="146" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Ecosistema</text>
+        <text class="glow" x="720" y="170" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+      <svg class="usb" id="usbV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gU3" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">Excel de cortes</text></g>
+        <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">WhatsApp</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:22px">Máquinas de corte</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:22px">Contabilidad</text></g>
+        <path d="M160 170 V205 H460 V170 M310 205 V240" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
+        <rect x="284" y="240" width="52" height="44" rx="6" fill="#131e33" stroke="#22d3ee"/>
+        <text x="360" y="268" style="font:600 18px var(--fb)" fill="#9db0cc">API</text>
+        <g class="plugV"><rect x="292" y="284" width="36" height="56" rx="3" fill="#c7d2e3"/><rect x="250" y="340" width="120" height="110" rx="14" fill="url(#gU3)"/><text x="310" y="404" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">MCP</text></g>
+        <g class="glow"><path class="wire" d="M310 450 V540" stroke="#22d3ee" stroke-width="3" fill="none"/></g>
+        <g class="glow"><circle class="pulse" cx="310" cy="640" r="105" fill="url(#gU3)"/></g>
+        <text class="glow" x="310" y="634" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">Ecosistema</text>
+        <text class="glow" x="310" y="666" text-anchor="middle" style="font:700 26px var(--fd)" fill="#04222a">de IA</text>
+      </svg>
+    </div>
+    <p class="foot">Los sistemas exactos de Calcáreos (incluido el contable) se confirman en el diagnóstico con su equipo.</p>
+  </section>
+
+  <!-- 5 cómo funciona (lámina 6 del mazo MCP) -->
+  <section class="slide" data-t="Cómo funciona">
+    <div class="kick">Cómo funciona, con un caso de Calcáreos</div>
+    <h2>Un plano entra, <span class="grad">una orden de corte sale.</span></h2>
+    <div class="row flow" style="margin-top:6px">
+      <svg id="flowL" viewBox="0 0 1150 330" aria-hidden="true">
+        <defs><linearGradient id="gF" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="p1" class="path" d="M200 165 H360"/>
+        <path id="p2a" class="path" d="M540 165 C600 165 600 70 680 70"/><path id="p2b" class="path" d="M540 165 H680"/><path id="p2c" class="path" d="M540 165 C600 165 600 260 680 260"/>
+        <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
+        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Plano · foto</text><text class="sub" x="110" y="183" text-anchor="middle">constructora · obra · WhatsApp</text>
+        <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Despiece</text>
+        <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Acomodo en losa</text>
+        <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Inventario</text>
+        <rect class="hot" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Orden de corte</text><text class="sub" x="1047" y="183" text-anchor="middle">lista para firmar</text>
+        <circle r="7" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2a"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2b"/></animateMotion></circle>
+        <circle r="6" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2c"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3a"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3b"/></animateMotion></circle>
+        <circle r="6" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#p3c"/></animateMotion></circle>
+      </svg>
+      <svg id="flowV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
+        <defs><linearGradient id="gF2" x1="0" x2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
+        <path id="v1" class="path" d="M310 120 V230"/>
+        <path id="v2a" class="path" d="M310 350 C310 400 110 400 110 450"/><path id="v2b" class="path" d="M310 350 V450"/><path id="v2c" class="path" d="M310 350 C310 400 510 400 510 450"/>
+        <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
+        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Plano · foto</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">constructora · obra · WhatsApp</text>
+        <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#04222a">MCP</text>
+        <rect class="box" x="20" y="450" width="180" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:18px">Despiece</text>
+        <rect class="box" x="220" y="450" width="180" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:18px">Acomodo</text>
+        <rect class="box" x="420" y="450" width="180" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:18px">Inventario</text>
+        <rect class="hot" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Orden de corte</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">lista para firmar</text>
+        <circle r="8" fill="#22d3ee"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#v1"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2a"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2b"/></animateMotion></circle>
+        <circle r="7" fill="#67e8f9"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2c"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3a"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3b"/></animateMotion></circle>
+        <circle r="7" fill="#a78bfa"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3c"/></animateMotion></circle>
+      </svg>
+    </div>
+    <p class="lead" style="margin-top:4px">Una persona responsable revisa y firma antes de que la orden llegue a la máquina. Su equipo sigue trabajando igual, ahora con IA.</p>
+  </section>
+
+  <!-- 6 proveedores (lámina 7 del mazo MCP) -->
+  <section class="slide" data-t="Lo mejor de cada proveedor">
+    <div class="kick">Lo mejor de cada proveedor</div>
+    <h2>Los líderes del mercado, <span class="grad">bajo un solo cerebro.</span></h2>
+    <div class="grid g4" style="margin-top:24px">
+      <div class="card stag d1"><h3>Anthropic</h3><p>Razonamiento y redacción: órdenes, reportes y respuestas.</p></div>
+      <div class="card stag d2"><h3>OpenAI</h3><p>Modelos de lenguaje y generación de contenido.</p></div>
+      <div class="card stag d3"><h3>Google</h3><p>Lectura de imágenes y documentos: planos, fotos, recibos.</p></div>
+      <div class="card stag d4"><h3>Amazon Web Services</h3><p>Almacenamiento seguro de planos, fotos y archivos.</p></div>
+      <div class="card stag d5"><h3>Microsoft Azure</h3><p>Voces neuronales en español e inglés.</p></div>
+      <div class="card stag d6"><h3>Matemática propia</h3><p>Áreas, cortes y desperdicio los calcula nuestro servidor, exacto y sin consumir IA.</p></div>
+      <div class="card stag d7"><h3>GitHub · Render</h3><p>Código, pruebas, servidores y bases de datos.</p></div>
+      <div class="card stag d8"><h3>Otros</h3><p>Mensajería, pagos y correo, cuando el flujo lo pida.</p></div>
+    </div>
+    <p class="foot">Calcáreos no contrata, configura ni paga cada servicio por separado. Las marcas pertenecen a sus dueños.</p>
+  </section>
+
+  <!-- 7 el problema (del simulador) -->
+  <section class="slide" data-t="El primer caso: el desperdicio">
+    <div class="kick">El primer caso · ya tiene simulador</div>
+    <h2>La losa entra completa. <span class="grad">Sale convertida en tres cosas.</span></h2>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card stag d1"><span class="n" style="color:var(--ok)">1 · SE REGISTRA</span><h3>Piezas vendibles</h3><p>Mesones, salpicaderos y zócalos que salen para la obra. Es lo único que hoy queda anotado.</p></div>
+      <div class="card stag d2"><span class="n" style="color:#5aa9ff">2 · SE PIERDE DE VISTA</span><h3>Retales aprovechables</h3><p>Franjas que todavía sirven en otra obra y terminan donadas o en el patio.</p></div>
+      <div class="card stag d3"><span class="n" style="color:#ff6b6b">3 · NO SE CUENTA</span><h3>Desperdicio</h3><p>La pérdida real del corte. Como nadie la mide, el inventario de libro y el físico no coinciden.</p></div>
+    </div>
+    <p class="lead stag d4">Si el desperdicio no se registra en el momento del corte, nadie sabe qué piedra ni qué medidas están costando más.</p>
+  </section>
+
+  <!-- 8 el ciclo -->
+  <section class="slide" data-t="El ciclo del simulador">
+    <div class="kick">Lo que hace el simulador</div>
+    <h2>Lote, corte, desperdicio, tablero: <span class="grad">en el mismo instante.</span></h2>
+    <div class="row" style="margin-top:10px">
+      <div class="col grow">
+        <ul class="list">
+          <li data-n="1"><b>Entra el lote</b> de importación: una fila por losa, con medidas en centímetros.</li>
+          <li data-n="2"><b>Se registra el corte</b> contra una losa: largo, ancho, piezas y sierra.</li>
+          <li data-n="3"><b>Se clasifica lo que sobra</b>: si supera el ancho mínimo que ustedes definan, es retal; si no, es desperdicio.</li>
+          <li data-n="4"><b>El tablero responde</b> al instante. Área en números enteros: el inventario no se descuadra con los meses.</li>
+        </ul>
+      </div>
+      <div class="col grow" style="max-width:540px;width:100%">
+        <svg class="slab" viewBox="0 0 520 300" aria-hidden="true">
+          <rect x="10" y="10" width="500" height="258" rx="6" fill="#233149" stroke="rgba(120,150,200,.35)"/>
+          <rect class="pc" style="animation-delay:.6s" x="10" y="10" width="387" height="105" fill="#3ecf8e"/>
+          <rect class="pc" style="animation-delay:1.1s" x="10" y="119" width="387" height="80" fill="#3ecf8e"/>
+          <rect class="pc" style="animation-delay:1.6s" x="10" y="203" width="387" height="44" fill="#5aa9ff"/>
+          <rect class="pc" style="animation-delay:2.1s" x="10" y="251" width="387" height="17" fill="#ff6b6b"/>
+          <text class="pc" style="animation-delay:.6s;font:700 16px var(--fd)" x="203" y="68" text-anchor="middle" fill="#04222a">Mesón 240 × 65</text>
+          <text class="pc" style="animation-delay:1.1s;font:700 16px var(--fd)" x="203" y="164" text-anchor="middle" fill="#04222a">Mesón 240 × 50</text>
+          <text class="pc" style="animation-delay:1.6s;font:700 14px var(--fd)" x="203" y="230" text-anchor="middle" fill="#04222a">Retal 28 cm</text>
+          <text x="455" y="144" text-anchor="middle" style="font:600 14px var(--fb)" fill="#9db0cc">Libre</text>
+          <text x="260" y="292" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">Losa 310 × 160 cm · ejemplo del simulador</text>
+        </svg>
+        <div class="legend"><span><i style="background:#3ecf8e"></i>Vendible</span><span><i style="background:#5aa9ff"></i>Retal</span><span><i style="background:#ff6b6b"></i>Desperdicio</span><span><i style="background:#233149"></i>Libre</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 tablero -->
+  <section class="slide" data-t="El tablero del gerente">
+    <div class="kick">El tablero del gerente</div>
+    <h2>Como los instrumentos de un avión: <span class="grad">todo a la vista.</span></h2>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card stag d1"><span class="n">STOCK REAL</span><h3>Por referencia, en m²</h3><p>Lo que de verdad hay en el patio, no lo que dice el libro. Con el número de losas activas.</p></div>
+      <div class="card stag d2"><span class="n">DESPERDICIO</span><h3>Por material</h3><p>Qué piedra y qué medidas de corte están costando más, mes a mes.</p></div>
+      <div class="card stag d3"><span class="n">ALERTAS</span><h3>Antes de que falte</h3><p>Cada referencia tiene un mínimo que ustedes definen. Si baja, se enciende antes de que falte en una obra.</p></div>
+    </div>
+    <p class="lead stag d4">Además, un libro de movimientos con cada lote y cada corte: quién, cuándo y cuánto.</p>
+  </section>
+
+  <!-- 10 en números -->
+  <section class="slide" data-t="Lo que vale un punto de desperdicio">
+    <div class="kick">Con sus propias cifras</div>
+    <h2>Cada punto de desperdicio <span class="grad">tiene un valor.</span></h2>
+    <div class="grid g4" style="margin-top:22px">
+      <div class="card stat stag d1"><span class="n">CORTE AL MES</span><div class="big">≈5.000<small>m²</small></div><p>Según la reunión.</p></div>
+      <div class="card stat stag d2"><span class="n">1 PUNTO = </span><div class="big">50<small>m²/mes</small></div><p>El 1 % de lo que se corta.</p></div>
+      <div class="card stat stag d3"><span class="n">VALOR DE 1 PUNTO</span><div class="big">5–7,5<small>mil USD/mes</small></div><p>A 100–150 USD por m² de material.</p></div>
+      <div class="card stat stag d4"><span class="n">META DE LA PRUEBA</span><div class="big">15→5<small>%</small></div><p>Rango objetivo: 2,5 % a 5 %.</p></div>
+    </div>
+    <p class="lead stag d5">Y los retales de una obra se asignan solos a otra obra donde caben, en lugar de donarse.</p>
+    <p class="foot">Estimación con las cifras aproximadas de la reunión, no una garantía. La cifra real se mide con sus datos durante la prueba.</p>
+  </section>
+
+  <!-- 11 más allá del corte -->
+  <section class="slide" data-t="Más allá del corte">
+    <div class="kick">Esto es solo el principio</div>
+    <h2>Automatizamos los flujos <span class="grad">que hoy le cuestan horas.</span></h2>
+    <div class="grid g3 flows" style="margin-top:20px">
+      <div class="card stag d1"><span class="n">01 <span class="tag new">a la medida</span></span><h3>Del plano al despiece</h3><p>La constructora envía el plano; la IA lo despieza en mesones, salpicaderos y zócalos. El arquitecto revisa en lugar de digitar.</p></div>
+      <div class="card stag d2"><span class="n">02 <span class="tag new">a la medida</span></span><h3>Orden de corte sin Excel</h3><p>Medición en obra desde el teléfono, orden generada, firma digital y envío a la máquina.</p></div>
+      <div class="card stag d3"><span class="n">03 <span class="tag ok">simulador listo</span></span><h3>Inventario y retales</h3><p>Stock real, desperdicio por material y retales asignados entre obras.</p></div>
+      <div class="card stag d4"><span class="n">04 <span class="tag new">a la medida</span></span><h3>Recibos por WhatsApp</h3><p>El conductor toma la foto del recibo en el puerto; el sistema lo registra y lo pasa a contabilidad.</p></div>
+      <div class="card stag d5"><span class="n">05 <span class="tag new">a la medida</span></span><h3>Licitaciones</h3><p>Las convocatorias de las constructoras, en su sistema apenas se publican, si la plataforma permite conectarse.</p></div>
+      <div class="card stag d6"><span class="n">06 <span class="tag new">a la medida</span></span><h3>Despachos y logística</h3><p>Entregas, rutas y conductores a la vista, para cumplir los 3 días hábiles.</p></div>
+    </div>
+    <p class="foot">Cada flujo se diseña con la persona que hoy lo hace. Contabilidad, conciliaciones y atención al cliente siguen en la misma línea.</p>
+  </section>
+
+  <!-- 12 sin parar la empresa -->
+  <section class="slide" data-t="Sin parar la empresa">
+    <div class="kick">Cómo se implementa</div>
+    <h2>Su empresa no para. <span class="grad">Trabajamos en paralelo.</span></h2>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card stag d1"><span class="n">SU EQUIPO</span><h3>Sigue igual</h3><p>Excel y WhatsApp siguen funcionando mientras el sistema aprende y se valida. Nadie cambia su forma de trabajar el primer día.</p></div>
+      <div class="card stag d2"><span class="n">CAPACITACIÓN</span><h3>Incluida</h3><p>Entrenamos al gerente y a su equipo para leer el tablero y aprobar lo que el sistema propone.</p></div>
+      <div class="card stag d3"><span class="n">ALERTAS</span><h3>Antes del problema</h3><p>El sistema avisa cuando algo se sale de lo normal, antes de que se convierta en pérdida.</p></div>
+    </div>
+    <p class="foot">Solo datos operativos, no personales, conforme a la Ley 1581 de 2012 (Habeas Data). Los datos de Calcáreos son de Calcáreos.</p>
+  </section>
+
+  <!-- 13 inversión -->
+  <section class="slide" data-t="La inversión la paga el ahorro">
+    <div class="kick">Sobre la inversión</div>
+    <h2>No compra un software. <span class="grad">Lo paga el ahorro.</span></h2>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card stag d1"><span class="n">PRIMERO</span><h3>Medimos</h3><p>El desperdicio y el tiempo reales, con sus datos, durante la prueba.</p></div>
+      <div class="card stag d2"><span class="n">DESPUÉS</span><h3>El costo sale del ahorro</h3><p>La inversión se define a partir del ahorro medido: una porción pequeña de lo que se recupera.</p></div>
+      <div class="card stag d3"><span class="n">SIEMPRE</span><h3>Usted aprueba</h3><p>Cada etapa se aprueba antes de empezar. Nada se cobra sin su aprobación.</p></div>
+    </div>
+    <p class="lead stag d4">El precio no debería ser una preocupación: se conversa con el ahorro ya medido sobre la mesa.</p>
+  </section>
+
+  <!-- 14 cuatro semanas -->
+  <section class="slide" data-t="Cómo empezamos">
+    <div class="kick">Cómo empezamos</div>
+    <h2>Una prueba de concepto de <span class="grad">cuatro semanas.</span></h2>
+    <div class="steps">
+      <div class="step stag d1"><div class="dot">1</div><div><h3>Requisitos</h3><p>Con su equipo de operación, finanzas y logística.</p></div></div>
+      <div class="step stag d2"><div class="dot">2</div><div><h3>Validación</h3><p>El simulador con sus datos reales, para que lo aprueben.</p></div></div>
+      <div class="step stag d3"><div class="dot">3</div><div><h3>Desarrollo</h3><p>Conexión con sus archivos, su WhatsApp y sus máquinas.</p></div></div>
+      <div class="step stag d4"><div class="dot">4</div><div><h3>Aprobación</h3><p>Desperdicio medido con datos reales antes de crecer.</p></div></div>
+    </div>
+    <p class="lead stag d5">El reloj empieza el día de la reunión con su equipo.</p>
+  </section>
+
+  <!-- 15 siguiente paso -->
+  <section class="slide cover" data-t="Siguiente paso" id="lastSlide">
+    <canvas class="d2stars" id="d2stars" aria-hidden="true"></canvas>
+    <div class="row">
+      <div class="col grow">
+        <img class="hlogo stag d1" src="/mcp/logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
+        <h1 class="stag d2">Siguiente paso: <span class="grad">una reunión con su equipo.</span></h1>
+        <p class="lead stag d3">Definimos juntos la fecha de la prueba. Mientras tanto, pruebe el simulador y comparta esta presentación dentro de Calcáreos.</p>
+        <div class="links stag d4">
+          <a class="cta" href="/calcareos-inventario-simulador.html" target="_blank" rel="noopener">Abrir el simulador</a>
+          <a class="cta ghost" href="mailto:info@digit2ai.com?subject=Calc%C3%A1reos%20%C3%97%20Digit2AI">info@digit2ai.com</a>
+        </div>
+      </div>
+      <div class="col" style="align-items:center"><div class="orbx" aria-hidden="true">
+        <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#a5f3fc" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#22d3ee" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#8b5cf6" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#8b5cf6" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#ec4899" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#a5f3fc" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#22d3ee"/>
+              <stop offset="0.4" stop-color="#3b82f6"/>
+              <stop offset="0.75" stop-color="#8b5cf6"/>
+              <stop offset="1" stop-color="#ec4899"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#22d3ee" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#a5f3fc" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#22d3ee" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#3b82f6" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#ec4899" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#8b5cf6" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#a5f3fc">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#22d3ee"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#8b5cf6" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#ec4899" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#3b82f6" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#a5f3fc" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+      </div></div>
+    </div>
+  </section>
+
+</div></div>
+
+<div id="prog"></div>
+<div class="dock">
+  <div class="orb" id="orb" aria-hidden="true"></div>
+  <div class="cap"><div id="capT">Lina</div><div id="capX">Pulse reproducir para escuchar a Lina.</div></div>
+  <button id="prev" aria-label="Lámina anterior">‹</button>
+  <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
+  <button id="next" aria-label="Lámina siguiente">›</button>
+  <span id="cnt">1 / 15</span>
+</div>
+
+<div class="gate" id="gate"><div class="box">
+  <div class="orbbig"></div>
+  <h1>Calcáreos × Digit2AI</h1>
+  <p>Lina le explica, en unos doce minutos, quiénes somos, lo que entendimos de su operación y cómo automatizar sus flujos de trabajo a la medida.</p>
+  <button id="start">Escuchar a Lina</button>
+  <button id="silent">Ver sin audio</button>
+</div></div>
+
+<script>
+(function(){
+  // Vertical: teléfono, pantalla más alta que ancha, o ?formato=vertical.
+  var q = new URLSearchParams(location.search);
+  function wantVert(){ return q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
+  function applyMode(){
+    var v = wantVert();
+    document.body.classList.toggle('vert', v);
+    document.getElementById('flowL').style.display = v ? 'none' : '';
+    document.getElementById('flowV').style.display = v ? '' : 'none';
+    document.getElementById('usbL').style.display = v ? 'none' : '';
+    document.getElementById('usbV').style.display = v ? '' : 'none';
+  }
+
+  // Un texto por lámina. Cifras en palabras para que la voz las lea bien.
+  var NARR = [
+    'Hola, soy Lina, de Digit2AI. Esta presentación la preparamos para Calcáreos Sociedad Anónima, después de la reunión del veintinueve de octubre. En unos minutos le voy a mostrar quiénes somos, lo que entendimos de su operación, y cómo la inteligencia artificial puede trabajar a la medida de Calcáreos, sin cambiar la forma en que su equipo trabaja hoy.',
+    'Digit2AI es una empresa de tecnología que construye sistemas a la medida, con inteligencia artificial integrada. No vendemos software de caja: diseñamos cada pantalla y cada regla con su equipo, sobre su forma de trabajar. Tenemos más de veinte plataformas en producción, en industrias como salud, logística, agro, construcción y finanzas, con clientes en Colombia, México y Estados Unidos. Y una regla que no se negocia: el sistema propone, pero enviar, pagar, publicar o cortar siempre espera la aprobación de una persona.',
+    'Esto es lo que entendimos de Calcáreos. Una empresa familiar fundada en mil novecientos setenta y uno en Barranquilla, con más de ciento cincuenta referencias de piedra importadas de más de diez países. Según lo que conversamos, cortan alrededor de cinco mil metros cuadrados al mes en cinco máquinas programadas, atienden entre dieciocho y veinte obras al mismo tiempo, algunas con hasta treinta tipos de cocina, y hoy aceptan hasta un quince por ciento de desperdicio. Las órdenes de corte se arman en Excel y se firman después de medir en obra, y los planos de las constructoras se despiezan a mano. Ahí está el tiempo que se puede recuperar.',
+    'Digit2AI funciona como una memoria USB para la inteligencia de negocio. Se conecta a lo que Calcáreos ya usa: las hojas de Excel de las órdenes de corte, el WhatsApp de la obra y de los conductores, las máquinas de corte y el sistema contable. No se reemplaza nada. Si un sistema tiene una conexión abierta, se conecta directo; si no, se trabaja con los archivos que ya exportan. Los sistemas exactos se confirman en el diagnóstico con su equipo.',
+    'Así funciona, con un caso de Calcáreos. Llega un plano de la constructora, una foto de la medición en obra o un mensaje de WhatsApp. El cerebro recibe la solicitud y la reparte: un agente despieza el plano en mesones, salpicaderos y zócalos; otro acomoda las piezas en las losas para perder lo menos posible; y otro descuenta el inventario. El resultado vuelve como una orden de corte lista para que la persona responsable la revise y la firme, antes de que llegue a la máquina.',
+    'Detrás del cerebro están los líderes del mercado. Anthropic para razonar y redactar, OpenAI para lenguaje, Google para leer imágenes, planos y documentos, Amazon Web Services para guardar archivos de forma segura, y Microsoft Azure para la voz. Calcáreos no contrata ni configura ninguno por separado. Y el trabajo pesado, como los cálculos de área, de corte y de desperdicio, lo hace nuestro propio servidor con matemática exacta. La inteligencia artificial solo se consulta cuando hace falta, y por eso el consumo es bajo.',
+    'Ahora, el primer caso, que ya tiene simulador. Hoy el inventario contable y el inventario físico de piedra no coinciden, y la razón es concreta: el desperdicio no se registra en el momento del corte. La losa entra completa, pero sale convertida en tres cosas: piezas vendibles, retales que todavía sirven, y pérdida. Solo la primera queda registrada. Y los retales que servirían en otra obra terminan donados o perdidos en el patio.',
+    'El simulador cierra ese ciclo. Entra el lote, con una fila por losa. Se registra el corte. El sistema descuenta el área usada, cobra la pérdida de la sierra, y clasifica lo que sobra: si la franja supera el ancho mínimo que ustedes definan, es retal aprovechable y sigue en el inventario; si no, es desperdicio. Toda el área se guarda como número entero en centímetros cuadrados, y así el inventario no se descuadra con los meses.',
+    'El gerente lo ve en un tablero, como los instrumentos de un avión. El stock real por referencia, en metros cuadrados. El porcentaje de desperdicio por material, para saber qué piedra y qué medidas están costando más. Y las alertas de mínimos: cuando una referencia baja del umbral, se enciende antes de que falte en una obra. Usted puede probar el simulador; el enlace está al final de esta presentación.',
+    'Ahora, lo que significa en números, con las cifras aproximadas de la reunión. Si se cortan cinco mil metros cuadrados al mes, cada punto de desperdicio son cincuenta metros cuadrados. A un precio de entre cien y ciento cincuenta dólares por metro, cada punto recuperado vale entre cinco mil y siete mil quinientos dólares al mes en material. La meta de la prueba es bajar del quince por ciento a un rango entre dos punto cinco y cinco por ciento, y que los retales de una obra se asignen solos a otra. Es una estimación, no una garantía: la cifra real se mide con sus propios datos durante la prueba.',
+    'Y esto es solo el principio. El corte es el primer flujo; Digit2AI puede automatizar los demás que hoy consumen horas de su equipo. Del plano de la constructora al despiece, sin pasarlo a mano a Excel. De la medición en obra a la orden de corte firmada, desde el teléfono. Los retales asignados entre obras. Los recibos que llegan por WhatsApp, directo a contabilidad. Las licitaciones de las constructoras, si la plataforma permite conectarse. Y los despachos, con rutas y entregas a la vista. Cada uno se diseña con la persona que hoy lo hace.',
+    'Todo esto se hace sin parar la empresa. Trabajamos en paralelo: su equipo sigue usando Excel y WhatsApp mientras el sistema aprende y se valida. Nadie tiene que cambiar su forma de trabajar el primer día. Nosotros capacitamos al gerente y a su equipo, y el sistema avisa cuando algo se sale de lo normal, antes de que se convierta en pérdida. Y solo se manejan datos operativos, no personales, conforme a la Ley mil quinientos ochenta y uno de dos mil doce.',
+    'Sobre la inversión, una idea simple: Calcáreos no compra un software. Primero medimos el desperdicio y el tiempo reales, con sus datos. Después, la inversión se define a partir del ahorro medido, como una porción pequeña de lo que se recupera. Y cada etapa la aprueba usted antes de empezar. Por eso el precio no debería ser una preocupación: se conversa con el ahorro ya medido sobre la mesa.',
+    'Se empieza con una prueba de concepto de cuatro semanas. Semana uno: los requisitos, con su equipo. Semana dos: el simulador con sus datos reales, para que lo validen. Semana tres: el desarrollo y la conexión con sus archivos, su WhatsApp y sus máquinas. Semana cuatro: la aprobación, midiendo el desperdicio con datos reales. El reloj empieza el día de la reunión con su equipo.',
+    'El siguiente paso es una reunión con su equipo de operación, de finanzas y de logística, para definir la fecha de la prueba. Mientras tanto, abra el simulador con el botón que aparece en pantalla, y comparta esta presentación con quien quiera dentro de Calcáreos. Soy Lina, de Digit2AI. Gracias por su tiempo.'
+  ];
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '▶︎';
+
+  function fit(){
+    applyMode();
+    var W = document.body.classList.contains('vert') ? 720 : 1280, H = document.body.classList.contains('vert') ? 1280 : 720;
+    var s = Math.min(window.innerWidth / W, (window.innerHeight - 72) / H) * 0.97;
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t !== token || !audio || !audio.duration) return;
+        capAt(audio.currentTime / audio.duration);
+        prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Lina · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    if (slides[i].id === 'lastSlide') stars();
+    narrate();
+  }
+
+  // Constelación de puntos detrás del orbe (la misma de orbup.html), solo en la última lámina.
+  var starsOn = false;
+  function stars(){
+    var c = document.getElementById('d2stars'); if (!c || !c.getContext || starsOn) return;
+    starsOn = true;
+    var ctx = c.getContext('2d'), pts = [];
+    var COLORS = ['rgba(140,165,255,','rgba(230,73,128,','rgba(255,146,43,','rgba(190,205,255,'];
+    var W = c.width = (document.body.classList.contains('vert') ? 720 : 1280) * 2;
+    var H = c.height = (document.body.classList.contains('vert') ? 1280 : 720) * 2;
+    for (var k = 0; k < 90; k++) pts.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.5, vy: (Math.random()-.5)*.5, r: Math.random()*3.2+1.2, c: COLORS[k % 4] });
+    (function frame(){
+      if (!slides[i] || slides[i].id !== 'lastSlide') { starsOn = false; return; }
+      ctx.clearRect(0, 0, W, H);
+      for (var a = 0; a < pts.length; a++){
+        var p = pts[a]; p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1;
+        for (var b = a + 1; b < pts.length; b++){
+          var q = pts[b], dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 260){ ctx.strokeStyle = 'rgba(150,170,255,' + ((1 - d/260) * .18) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+        }
+      }
+      for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + '0.8)'; ctx.fill(); }
+      requestAnimationFrame(frame);
+    })();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  // Deslizar en el teléfono
+  var x0 = null;
+  document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive:true });
+  document.addEventListener('touchend', function(e){
+    if (x0 === null || !gate.classList.contains('off')) return;
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+  }, { passive:true });
+  slides[0].classList.add('on');
+  window.addEventListener('beforeunload', stopAll);
+  window.CALCDECK = { show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
+})();
+</script>
+</body>
+</html>
