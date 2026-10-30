@@ -18,6 +18,7 @@ const events = [];
 const now = Date.now();
 const slotA = new Date(Math.ceil((now + 3 * 86400000) / 3600000) * 3600000);
 const slotB = new Date(slotA.getTime() + 3600000);
+const slotC = new Date(slotA.getTime() + 2 * 3600000);
 const fakeDb = {
   transaction: async () => ({ commit: async () => {}, rollback: async () => {} }),
   query: async (sql, o = {}) => {
@@ -25,7 +26,7 @@ const fakeDb = {
     if (/pg_advisory_xact_lock/.test(sql)) return [];
     if (/CREATE TABLE/.test(sql)) return [];
     if (/SELECT start_time FROM d2_calendar_events/.test(sql)) return events.filter((e) => e.description.includes(r.m.replace(/%/g, '')));
-    if (/COUNT\(\*\)/.test(sql)) return [{ n: events.length }];
+    if (/COUNT\(\*\)/.test(sql)) return [{ n: events.filter((e) => e.description.includes(String(r.tag || '').replace(/%/g, ''))).length }];
     if (/INSERT INTO d2_calendar_events/.test(sql)) { events.push({ title: r.title, description: r.description, start_time: r.s }); return []; }
     if (/FROM synthex_lina_kb/.test(sql)) return [{ titulo: 'Facturación electrónica', contenido: 'Sí, se conecta con el SENIAT por medio del sistema administrativo del cliente.' }];
     return [];
@@ -34,7 +35,7 @@ const fakeDb = {
 const mcpPath = require.resolve(path.join(__dirname, '../src/routes/mcp-checkout'));
 require.cache[mcpPath] = { id: mcpPath, filename: mcpPath, loaded: true, exports: { _booking: {
   db: () => fakeDb, BOOK_MIN: 60, BOOK_TZ: 'America/New_York',
-  freeSlots: async () => [slotA, slotB].filter((s) => !events.some((e) => new Date(e.start_time).getTime() === s.getTime())),
+  freeSlots: async () => [slotA, slotB, slotC].filter((s) => !events.some((e) => new Date(e.start_time).getTime() === s.getTime())),
   threeByThree: (slots) => [{ day: 'x', slots: slots.map((s) => s.toISOString()) }]
 } } };
 
@@ -183,6 +184,26 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const appSrc = require('fs').readFileSync(path.join(__dirname, '../src/app.js'), 'utf8');
   ok(/'\/api\/synthex-lina\/public\/book'/.test(appSrc) && /'\/api\/voice-agent\/chat'/.test(appSrc) && /'\/embed\/voice-orb\.js'/.test(appSrc), 'synthexsai.com passes Lina through');
   ok(!/'\/api\/synthex-lina\/(book|slots|calc|entrenar)/.test(appSrc.split('SYNTHEX_PASS_THROUGH')[1].split(']);')[0]), 'tools not exposed on the domain');
+
+  // digit2ai.com/presentacion: same booking route, Digit2AI brand on calendar + email
+  sent.length = 0;
+  pb = await post('/api/synthex-lina/public/book', { brand: 'digit2ai', nombre: 'Laura Méndez', email: 'laura@ejemplo.com', telefono: '+1 813 555 0101', empresa: 'Méndez Corp', start: slotC.toISOString(), lang: 'es', tz: 'America/New_York' });
+  pj = await pb.json();
+  ok(pb.status === 200 && pj.booked && pj.email_sent, 'deck booking works');
+  const dEv = events.find((e) => /laura@ejemplo.com/.test(e.description));
+  ok(dEv && /^Digit2AI: Laura/.test(dEv.title) && /d2ai_deck:/.test(dEv.description) && !/synthex_lina:/.test(dEv.description) && /presentación narrada/.test(dEv.description), 'deck meeting in calendar with Digit2AI wording');
+  const dm = sent.find((m) => m.to === 'laura@ejemplo.com');
+  ok(dm && dm.from.name === 'Digit2AI' && /Digit2AI/.test(dm.subject) && !/Synthex/.test(dm.html + dm.text + dm.subject), 'deck email is Digit2AI, no Synthex');
+  ok(dm && /#22d3ee/.test(dm.html) && /mcp\/logo\.png/.test(dm.html) && /Su reunión está confirmada/.test(dm.html), 'deck email uses the Digit2AI look');
+  ok(dm && /digit2ai\.ics/.test(dm.attachments[0].filename) && /Digit2AI: reunión/.test(Buffer.from(dm.attachments[0].content, 'base64').toString()), 'deck calendar invite');
+  ok(sent.some((m) => /Nueva reunión Digit2AI/.test(m.subject) && /presentación narrada/.test(m.text)), 'owner alerted for the deck');
+  pb = await post('/api/synthex-lina/public/book', { brand: 'evil', nombre: 'Otro Nombre', email: 'otro@ejemplo.com', telefono: '4145550000', start: slotC.toISOString() });
+  ok(pb.status === 409, 'unknown brand falls back and a taken time is still refused');
+  const deck = require('fs').readFileSync(path.join(__dirname, '../public/mcp/presentacion/index.html'), 'utf8');
+  const last = deck.split('id="lastSlide"')[1].split('</section>')[0];
+  ok(/data-book-demo/.test(last) && /brand: 'digit2ai'/.test(deck) && /\/api\/synthex-lina\/public\/slots/.test(deck), 'last slide carries the booking button');
+  ok(/window\.D2BOOK_OPEN\) return;/.test(deck) && /D2BOOK_OPEN\) \{ x0 = null/.test(deck), 'arrows and swipes do not flip slides while booking');
+  ok(/Agendar una reunión/.test(deck.split('var NARR')[1].split('];')[0].split("',").pop()), 'Lina mentions the button on the last slide');
 
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);

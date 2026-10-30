@@ -228,6 +228,41 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
 #start{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on)}
 #silent{background:transparent;color:var(--txt);border:1px solid var(--line2)!important}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
+
+/* ── Agendar una reunión (última lámina): elegir horario, datos, listo. Mismo flujo que synthexsai.com ── */
+button.cta{border:0;cursor:pointer}
+.ctarow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:24px}
+.ctarow .cta{margin-top:0}
+.ctalink{font-family:var(--fd);font-weight:600;font-size:17px;color:var(--mut)}
+body.vert .cta{font-size:24px;padding:18px 26px}body.vert .ctalink{font-size:21px}
+.bk-ov{position:fixed;inset:0;z-index:60;background:rgba(4,7,15,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+.bk-ov[hidden]{display:none}
+.bk{width:min(720px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--panel2);border:1px solid var(--line2);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.6);position:relative;padding:26px 24px 22px;font-family:var(--fb);color:var(--txt)}
+.bk::before{content:"";position:absolute;left:24px;right:24px;top:0;height:3px;background:linear-gradient(90deg,var(--cy),var(--vi));border-radius:3px}
+.bk-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font-size:22px}
+.bk h3{font-family:var(--fd);font-size:24px;margin:0 44px 4px 0}
+.bk .sub{color:var(--mut);font-size:15px;line-height:1.5;margin:0 0 16px}
+.bk .fine{color:var(--mut);font-size:13px;line-height:1.5;margin-top:12px}
+.bk-steps{display:flex;flex-wrap:wrap;gap:12px;margin:0 48px 16px 0;font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.bk-steps span{color:var(--mut)}.bk-steps span.on{color:var(--cy)}
+.bk-days{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+.bk-day{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bk-day b{font-size:15px}
+.bk-t{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font:600 15px var(--fb)}
+.bk-t:hover,.bk-t:focus-visible{border-color:var(--cy)}
+.bk-pick{margin:4px 0 14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(34,211,238,.35);background:rgba(34,211,238,.07);font-weight:600}
+.bk-f{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.bk-f label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.bk-f input{min-height:48px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);color:var(--txt);padding:0 14px;font:16px var(--fb)}
+.bk-f input.bad{border-color:#f87171}
+.bk-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.bk-b{min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--txt);font:700 15px var(--fd)}
+.bk-b.pri{background:linear-gradient(90deg,var(--cy),#67e8f9);color:var(--on);border:0}
+.bk-b:disabled{opacity:.55;cursor:default}
+.bk-err{color:#fca5a5;font-size:14px;margin-top:10px;min-height:1px}
+.bk-ok{text-align:center;padding:10px 4px}
+.bk-ok .ic{width:64px;height:64px;border-radius:50%;margin:4px auto 14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--cy),var(--vi));color:var(--on);font-size:30px;font-weight:700}
+@media(max-width:640px){.bk-days{grid-template-columns:1fr}.bk-f{grid-template-columns:1fr}.bk{padding:22px 16px 18px}.bk h3{font-size:21px}}
 </style>
 </head>
 <body>
@@ -516,7 +551,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
         <img class="hlogo stag d1" src="../logo.png" alt="digit2Ai · MCP Neural Intelligence" style="margin-top:0">
         <h1 class="stag d2">Convierta su empresa en una <span class="grad">empresa inteligente.</span></h1>
         <p class="lead stag d3">Conecte Digit2AI MCP Neural y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</p>
-        <span class="cta stag d4">digit2ai.com/mcp</span>
+        <div class="ctarow stag d4"><button type="button" class="cta" data-book-demo>Agendar una reunión &rarr;</button><span class="ctalink">digit2ai.com/mcp</span></div>
       </div>
       <div class="col" style="align-items:center"><div class="orbx" aria-hidden="true">
         <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -676,7 +711,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
     'Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.',
     'Se contrata como un servicio. Un pago único de configuración de setecientos dólares, para crear la instancia de su empresa y conectar el cerebro. Y una suscripción mensual de trescientos noventa y siete dólares, con el consumo estándar de tokens incluido, acceso a la fuerza de trabajo de agentes, y nuevos agentes cada trimestre.',
     'Para que quede claro qué está incluido. La suscripción incluye el diagnóstico con MCP Discovery, la conexión del cerebro a sus sistemas, las soluciones estándar, como la atención las veinticuatro horas, la lectura de documentos y el conocimiento interno, y toda la fuerza de trabajo de agentes. El desarrollo a la medida de su negocio, las automatizaciones propias de sus procesos y la optimización de su operación se cotizan aparte, con total transparencia: antes de empezar, usted ve las horas y el costo de cada componente, y nada se cobra sin su aprobación.',
-    'Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
+    'Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Para dar el siguiente paso, pulse Agendar una reunión y elija el día y la hora que mejor le queden. Encuentre todo en digit2ai punto com, barra, M C P. Soy Lina, de Digit2AI. Gracias por su tiempo.'
   ];
 
   var slides = [].slice.call(document.querySelectorAll('.slide'));
@@ -793,7 +828,7 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
   document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
   document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
   document.addEventListener('keydown', function(e){
-    if (!gate.classList.contains('off')) return;
+    if (!gate.classList.contains('off') || window.D2BOOK_OPEN) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
     else if (e.key === ' ') { e.preventDefault(); toggle(); }
@@ -804,13 +839,139 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
   var x0 = null;
   document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive:true });
   document.addEventListener('touchend', function(e){
-    if (x0 === null || !gate.classList.contains('off')) return;
+    if (x0 === null || !gate.classList.contains('off') || window.D2BOOK_OPEN) { x0 = null; return; }
     var dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
   }, { passive:true });
   slides[0].classList.add('on');
   window.addEventListener('beforeunload', stopAll);
-  window.MCPDECK = { show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
+  window.MCPDECK = { pause: function(){ if (voiceOn && !paused) toggle(); }, show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
+})();
+</script>
+<div class="bk-ov" id="bkOv" hidden>
+  <div class="bk" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+    <button type="button" class="bk-x" id="bkX" aria-label="Cerrar">&times;</button>
+    <div id="bkBody"></div>
+  </div>
+</div>
+<script>
+(function(){
+  // «Agendar una reunión»: 1) tres días con horarios libres del calendario de Digit2AI Projects,
+  // 2) nombre, correo, teléfono y empresa, 3) se agenda, SendGrid envía la confirmación de Digit2AI.
+  // Mismo endpoint público que synthexsai.com, con brand:'digit2ai' (correo y calendario con la marca Digit2AI).
+  var ov = document.getElementById('bkOv'), body = document.getElementById('bkBody'), last = null;
+  var st = { days: null, start: null, minutes: 60 };
+  var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  function cap(x){ return x.charAt(0).toUpperCase() + x.slice(1); }
+  function fDay(iso){ return cap(new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso))); }
+  function fTime(iso){ return new Intl.DateTimeFormat('es', { hour:'numeric', minute:'2-digit' }).format(new Date(iso)); }
+  function when(iso){ return new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)) + ', ' + fTime(iso); }
+  function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function steps(n){
+    var s = el('div', 'bk-steps');
+    ['1 · Horario', '2 · Sus datos', '3 · Listo'].forEach(function(t, k){ s.appendChild(el('span', k + 1 === n ? 'on' : '', t)); });
+    return s;
+  }
+  function head(n, title, sub){
+    body.innerHTML = ''; body.appendChild(steps(n));
+    var h = el('h3', null, title); h.id = 'bkTitle'; body.appendChild(h);
+    if (sub) body.appendChild(el('p', 'sub', sub));
+  }
+  function stepTime(){
+    head(1, 'Agende su reunión', 'Elija el día y la hora que mejor le queden. Horas en su zona horaria' + (tz ? ' (' + tz + ')' : '') + ' · ' + st.minutes + ' min.');
+    if (!st.days) { body.appendChild(el('p', 'fine', 'Cargando horarios disponibles…')); return; }
+    if (!st.days.length) { body.appendChild(el('p', 'fine', 'No hay horarios libres en este momento. Escríbanos desde digit2ai.com/mcp y le contactamos.')); return; }
+    var g = el('div', 'bk-days');
+    st.days.forEach(function(d){
+      var c = el('div', 'bk-day'); c.appendChild(el('b', null, fDay(d.slots[0])));
+      d.slots.forEach(function(iso){
+        var b = el('button', 'bk-t', fTime(iso)); b.type = 'button';
+        b.addEventListener('click', function(){ st.start = iso; stepDetails(); });
+        c.appendChild(b);
+      });
+      g.appendChild(c);
+    });
+    body.appendChild(g);
+  }
+  var saved = { nombre:'', email:'', telefono:'', empresa:'' };
+  function field(name, label, type, ac){
+    var l = el('label'); l.appendChild(document.createTextNode(label));
+    var i = document.createElement('input'); i.name = name; i.type = type || 'text'; i.autocomplete = ac || 'off'; i.maxLength = 160; i.value = saved[name] || '';
+    i.addEventListener('input', function(){ saved[name] = i.value; i.classList.remove('bad'); });
+    l.appendChild(i); return l;
+  }
+  function stepDetails(){
+    head(2, 'Sus datos', 'Le enviaremos la confirmación por correo.');
+    body.appendChild(el('div', 'bk-pick', cap(when(st.start))));
+    var f = el('div', 'bk-f');
+    f.appendChild(field('nombre', 'Nombre y apellido *', 'text', 'name'));
+    f.appendChild(field('email', 'Correo *', 'email', 'email'));
+    f.appendChild(field('telefono', 'Teléfono / WhatsApp *', 'tel', 'tel'));
+    f.appendChild(field('empresa', 'Empresa', 'text', 'organization'));
+    body.appendChild(f);
+    var err = el('div', 'bk-err'); err.setAttribute('role', 'status'); body.appendChild(err);
+    var row = el('div', 'bk-row');
+    var back = el('button', 'bk-b', 'Cambiar horario'); back.type = 'button'; back.addEventListener('click', stepTime);
+    var go = el('button', 'bk-b pri', 'Confirmar reunión'); go.type = 'button';
+    row.appendChild(back); row.appendChild(go); body.appendChild(row);
+    body.appendChild(el('p', 'fine', 'Al confirmar, acepta que el equipo de Digit2AI le contacte por correo o teléfono sobre su reunión.'));
+    setTimeout(function(){ var i = body.querySelector('input[name=nombre]'); if (i) i.focus(); }, 30);
+    go.addEventListener('click', function(){
+      var bad = [];
+      if (saved.nombre.trim().length < 2) bad.push('nombre');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(saved.email.trim())) bad.push('email');
+      if (saved.telefono.replace(/\D/g, '').length < 7) bad.push('telefono');
+      body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', bad.indexOf(i.name) !== -1); });
+      if (bad.length) { err.textContent = 'Revise los campos marcados.'; return; }
+      go.disabled = true; back.disabled = true; err.textContent = 'Agendando…';
+      fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+        brand: 'digit2ai', nombre: saved.nombre.trim(), email: saved.email.trim(), telefono: saved.telefono.trim(), empresa: saved.empresa.trim(),
+        tema: 'Reunión agendada al final de la presentación de MCP Neural', start: st.start, lang: 'es', tz: tz }) })
+        .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
+        .then(function(x){
+          if (x.j.booked) return stepDone(x.j);
+          go.disabled = false; back.disabled = false;
+          if (x.j.error === 'slot_taken') { err.textContent = 'Ese horario se acaba de ocupar. Elija otro.'; st.days = null; st.start = null; load(); return; }
+          if (x.s === 429) { err.textContent = 'Demasiados intentos. Espere unos minutos.'; return; }
+          if (x.j.fields) body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', x.j.fields.indexOf(i.name) !== -1); });
+          err.textContent = 'No se pudo agendar. Revise sus datos e intente de nuevo.';
+        })
+        .catch(function(){ go.disabled = false; back.disabled = false; err.textContent = 'No se pudo agendar. Intente de nuevo.'; });
+    });
+  }
+  function stepDone(j){
+    body.innerHTML = ''; body.appendChild(steps(3));
+    var ok = el('div', 'bk-ok');
+    ok.appendChild(el('div', 'ic', '✓'));
+    var first = saved.nombre.trim().split(' ')[0];
+    var h = el('h3', null, '¡Muchas gracias, ' + first + '!'); h.id = 'bkTitle'; h.style.margin = '0 0 8px'; ok.appendChild(h);
+    ok.appendChild(el('p', 'sub', (j.already ? 'Ya tenía una reunión agendada para el ' : 'Su reunión quedó agendada para el ') + when(j.start) + '.'));
+    ok.appendChild(el('p', 'sub', j.email_sent
+      ? 'Va a recibir un correo de confirmación en ' + saved.email.trim() + ' con la invitación para su calendario. Si no lo ve, revise su carpeta de correo no deseado.'
+      : 'El equipo de Digit2AI le contactará para confirmar.'));
+    var c = el('button', 'bk-b pri', 'Cerrar'); c.type = 'button'; c.addEventListener('click', close); ok.appendChild(c);
+    body.appendChild(ok);
+  }
+  function load(){
+    stepTime();
+    fetch('/api/synthex-lina/public/slots').then(function(r){ return r.json(); }).then(function(j){
+      st.days = (j && j.ok && j.days) ? j.days : []; st.minutes = (j && j.minutes) || 60; stepTime();
+    }).catch(function(){ st.days = []; stepTime(); });
+  }
+  function open(e){
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (window.MCPDECK && window.MCPDECK.pause) window.MCPDECK.pause();
+    last = document.activeElement; ov.hidden = false; window.D2BOOK_OPEN = true;
+    st.days = null; st.start = null; load();
+    setTimeout(function(){ document.getElementById('bkX').focus(); }, 30);
+  }
+  function close(){ ov.hidden = true; window.D2BOOK_OPEN = false; if (last && last.focus) last.focus(); }
+  document.querySelectorAll('[data-book-demo]').forEach(function(b){ b.addEventListener('click', open); });
+  document.getElementById('bkX').addEventListener('click', close);
+  ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !ov.hidden) close(); });
+  ['touchstart','touchend'].forEach(function(n){ ov.addEventListener(n, function(e){ e.stopPropagation(); }, { passive:true }); });
+  window.D2BookMeeting = open;
 })();
 </script>
 </body>

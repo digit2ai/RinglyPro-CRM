@@ -190,10 +190,15 @@ function validate(b) {
 
 // One booking path for Lina and for the demo form. Returns the tool-shaped result
 // the model reads; the page reads the same object.
-async function bookMeeting(v, startRaw, lang, origen, tz) {
+// brand: 'synthex' (synthexsai.com + Lina) or 'digit2ai' (the digit2ai.com/presentacion deck).
+// Same calendar, same free-slot rule; only the calendar wording, the marker and the email change.
+const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:' };
+async function bookMeeting(v, startRaw, lang, origen, tz, brand) {
+  brand = brand === 'digit2ai' ? 'digit2ai' : 'synthex';
+  const tag = BRAND_TAG[brand];
   const start = new Date(String(startRaw || ''));
   if (isNaN(start.getTime())) return { booked: false, error: 'horario inválido: consulta horarios_disponibles y usa un start exacto' };
-  const marker = 'synthex_lina:' + crypto.createHash('sha256').update(v.email).digest('hex').slice(0, 16);
+  const marker = tag + crypto.createHash('sha256').update(v.email).digest('hex').slice(0, 16);
   const t = await db().transaction();
   try {
     await db().query('SELECT pg_advisory_xact_lock(:k)', { replacements: { k: 7240611 }, transaction: t, logging: false });
@@ -211,8 +216,8 @@ async function bookMeeting(v, startRaw, lang, origen, tz) {
 
     const today = await db().query(
       `SELECT COUNT(*)::int AS n FROM d2_calendar_events
-        WHERE workspace_id = 1 AND description LIKE '%synthex_lina:%' AND created_at > NOW() - INTERVAL '1 day'`,
-      { type: QueryTypes.SELECT, transaction: t, logging: false });
+        WHERE workspace_id = 1 AND description LIKE :tag AND created_at > NOW() - INTERVAL '1 day'`,
+      { replacements: { tag: `%${tag}%` }, type: QueryTypes.SELECT, transaction: t, logging: false });
     if ((today[0] && today[0].n) >= PER_DAY) {
       await t.rollback();
       return { booked: false, error: 'límite diario de reuniones alcanzado', nota: 'Ofrece que el equipo lo contacte por correo.' };
@@ -226,7 +231,9 @@ async function bookMeeting(v, startRaw, lang, origen, tz) {
 
     const end = new Date(start.getTime() + booking().BOOK_MIN * 60000);
     const description = [
-      origen === 'lina'
+      brand === 'digit2ai'
+        ? 'Reunión con Digit2AI, agendada desde la presentación narrada (digit2ai.com/presentacion).'
+        : origen === 'lina'
         ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
         : 'Reunión con los agentes especializados de Synthex SAI, agendada desde el formulario «Agendar demostración» de synthexsai.com.',
       `Nombre: ${v.nombre}`,
@@ -240,14 +247,14 @@ async function bookMeeting(v, startRaw, lang, origen, tz) {
       `INSERT INTO d2_calendar_events
          (workspace_id, project_id, title, description, event_type, start_time, end_time, all_day, language, created_at, updated_at)
        VALUES (1, NULL, :title, :description, 'meeting', :s, :e, false, :lang, NOW(), NOW())`,
-      { replacements: { title: `Synthex SAI: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
+      { replacements: { title: `${brand === 'digit2ai' ? 'Digit2AI' : 'Synthex SAI'}: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
           description, s: start.toISOString(), e: end.toISOString(), lang },
         transaction: t, logging: false });
     await t.commit();
     const iso = start.toISOString();
     // The confirmation goes out after the commit: a mail hiccup never undoes a booking.
     const mail = await require('../services/synthexNotify').bookingConfirmed({
-      ...v, start: iso, lang, tz, origen, minutes: booking().BOOK_MIN
+      ...v, start: iso, lang, tz, origen, brand, minutes: booking().BOOK_MIN
     }).catch((e) => ({ sent: false, reason: e.message }));
     return { booked: true, start: iso, texto: label(iso, lang), zona_horaria: LABEL_TZ, correo_enviado: !!mail.sent };
   } catch (e) {
@@ -304,7 +311,7 @@ router.post('/public/book', express.json({ limit: '4kb' }), async (req, res) => 
   const v = validate({ ...b, confirmado: true });
   if (v.errores.length) return res.status(400).json({ booked: false, error: 'invalid', fields: v.errores });
   const tz = /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(String(b.tz || '')) ? String(b.tz).slice(0, 64) : null;
-  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz);
+  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz, b.brand === 'digit2ai' ? 'digit2ai' : 'synthex');
   res.status(r.booked ? 200 : (/libre/.test(r.error || '') ? 409 : 400)).json({ booked: r.booked, already: !!r.already, start: r.start, email_sent: !!r.correo_enviado, error: r.booked ? undefined : (/libre/.test(r.error || '') ? 'slot_taken' : 'not_booked') });
 });
 
