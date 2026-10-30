@@ -193,7 +193,7 @@ function validate(b) {
 // brand: 'synthex' (synthexsai.com + Lina) or 'digit2ai' (the digit2ai.com/presentacion deck).
 // Same calendar, same free-slot rule; only the calendar wording, the marker and the email change.
 const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:' };
-async function bookMeeting(v, startRaw, lang, origen, tz, brand) {
+async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
   brand = brand === 'digit2ai' ? 'digit2ai' : 'synthex';
   const tag = BRAND_TAG[brand];
   const start = new Date(String(startRaw || ''));
@@ -232,7 +232,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand) {
     const end = new Date(start.getTime() + booking().BOOK_MIN * 60000);
     const description = [
       brand === 'digit2ai'
-        ? 'Reunión con Digit2AI, agendada desde la presentación narrada (digit2ai.com/presentacion).'
+        ? `Reunión con Digit2AI, agendada desde ${source || 'la presentación narrada (digit2ai.com/presentacion)'}.`
         : origen === 'lina'
         ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
         : 'Reunión con los agentes especializados de Synthex SAI, agendada desde el formulario «Agendar demostración» de synthexsai.com.',
@@ -254,7 +254,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand) {
     const iso = start.toISOString();
     // The confirmation goes out after the commit: a mail hiccup never undoes a booking.
     const mail = await require('../services/synthexNotify').bookingConfirmed({
-      ...v, start: iso, lang, tz, origen, brand, minutes: booking().BOOK_MIN
+      ...v, start: iso, lang, tz, origen, brand, source, minutes: booking().BOOK_MIN
     }).catch((e) => ({ sent: false, reason: e.message }));
     return { booked: true, start: iso, texto: label(iso, lang), zona_horaria: LABEL_TZ, correo_enviado: !!mail.sent };
   } catch (e) {
@@ -311,7 +311,9 @@ router.post('/public/book', express.json({ limit: '4kb' }), async (req, res) => 
   const v = validate({ ...b, confirmado: true });
   if (v.errores.length) return res.status(400).json({ booked: false, error: 'invalid', fields: v.errores });
   const tz = /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(String(b.tz || '')) ? String(b.tz).slice(0, 64) : null;
-  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz, b.brand === 'digit2ai' ? 'digit2ai' : 'synthex');
+  // Where the button was (book-meeting.js sends host + path). Only URL-ish characters survive.
+  const source = String(b.source || '').replace(/[^A-Za-z0-9.\/_-]/g, '').slice(0, 120) || null;
+  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz, b.brand === 'digit2ai' ? 'digit2ai' : 'synthex', source);
   res.status(r.booked ? 200 : (/libre/.test(r.error || '') ? 409 : 400)).json({ booked: r.booked, already: !!r.already, start: r.start, email_sent: !!r.correo_enviado, error: r.booked ? undefined : (/libre/.test(r.error || '') ? 'slot_taken' : 'not_booked') });
 });
 

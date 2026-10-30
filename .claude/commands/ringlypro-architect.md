@@ -700,6 +700,49 @@ SHAKEN assignment takes effect within minutes on Twilio. Carriers may take **24-
 
 ---
 
+## INTEGRATE BOOKING RUNBOOK — `integrate booking`
+
+When the user says **"integrate booking"**, **"add booking to <page>"**, **"agendar en <página>"**, or runs `/integrate-booking`, put a **"Book a meeting / Agendar una reunión"** button on the named page, in the named section (default: the FIRST section / hero). It opens a 3-step window (time, details, done) with free times from the **Digit2AI Projects calendar**, books into `d2_calendar_events` (workspace 1), and SendGrid sends a Digit2AI-branded confirmation + .ics to the visitor and an alert to info@digit2ai.com. Same free-slot rule as /mcp, Lina and synthexsai.com, so nothing double-books.
+
+**Never rebuild the booking. It is one drop-in, already live:**
+```html
+<div data-d2-book data-brand="digit2ai" data-source="<host/path label>"></div>
+<script src="https://aiagent.ringlypro.com/embed/book-meeting.js" defer></script>
+```
+- `data-lang` es|en|auto (default auto = follows `<html lang>` live, so a page with an EN/ES toggle flips the button and the window; else the browser language). Set it explicitly only if the user named a language.
+- An EMPTY element gets the default cyan pill. To reuse a site's own button style, put `data-d2-book` on that existing `<a>`/`<button>` instead (it keeps its look, gains the click).
+- `data-brand` `digit2ai` (default) or `synthex` (only for synthexsai.com wording). Nothing else is accepted by the server.
+- `data-source` is what the calendar entry and the owner alert say it was booked from. Keep it to `host/path`.
+- Script `src`: use the ABSOLUTE `https://aiagent.ringlypro.com/...` URL on any domain that is not aiagent.ringlypro.com — the embed calls the API on its own script's origin, and a brand-domain host handler may not pass `/api/synthex-lina/` through. CORS is open (`app.use(cors())`).
+- Backend: `src/routes/synthex-lina.js` `/public/slots|book` (per-IP limits, daily cap per brand, one upcoming meeting per email) + `src/services/synthexNotify.js` (BRANDS map). A new brand = one entry in BRANDS + the allow-list in `/public/book`.
+
+### Step 1 — find what actually serves the URL
+```bash
+curl -sL "<url>" -o /tmp/page.html
+grep -oE "aiagent\.ringlypro\.com[^\"'\\ ]*" /tmp/page.html | sort -u   # GHL pages frame our app (/-escaped)
+```
+- **digit2ai.com, ringlypro.com and other GoHighLevel sites** usually wrap one of OUR pages in an iframe (`digit2ai.com/` -> `/neural-intelligence?brain=left`, `digit2ai.com/presentacion` -> `/mcp/presentacion/`). Edit the framed page, not GHL.
+- **Our own custom domains** (synthexsai.com, buyersline.app, jobup.dev, jobmd.io, orbup.app, lawncopilot.com, marapet.app, levelupmediamarketing.com, autodev.digit2ai.com…): find the host handler in `src/app.js` and the file it serves.
+- Map the path to a file: `public/<path>`, `public/<path>/index.html`, a vertical's `public/`, or a route in `src/app.js`. Confirm with a distinctive string from the live HTML: `grep -rl "<string>" public verticals client-builds --include=*.html`.
+- **A GHL page that frames nothing of ours** cannot be edited from this repo. Give the owner the 2-line paste block above for a GHL "Custom Code" element (absolute script src) and say that is the one manual step. Do not pretend it was integrated.
+- A different GitHub repo (e.g. digit2ai/maramed): clone it in the scratchpad, edit there, push that repo.
+
+### Step 2 — insert
+- Section = the user's words ("first section", "hero", "pricing", "the end"). First section = the first `<section>`/hero block; place the button after the headline + lead copy, before small print.
+- Add one small spacing class if needed (`margin-top` only) and hide it in `@media print` if the page has a print stylesheet.
+- One `<script src=".../embed/book-meeting.js" defer>` per page, before `</body>`.
+- If the page has its own keyboard/swipe navigation (a deck), it is already safe: the window stops key/touch events and sets `window.D2BOOK_OPEN`, and fires `d2book:open` / `d2book:close` on window to pause narration.
+- If the page is a narrated deck/landing with a cached service worker, bump its cache version.
+
+### Step 3 — test, deploy, verify
+1. Puppeteer (`NODE_PATH=$PWD/node_modules`) with the page served from `public/` and a stubbed `/api/synthex-lina/public/slots`: the button is visible in the section at 1440 and 390, clicking opens 3 days of times, no horizontal overflow, and the button label/window language matches the page (toggle the page language if it has one). Look at the screenshots.
+2. `node scripts/test-synthex-lina.js` must stay green.
+3. Commit + push. Wait until the live page contains `data-d2-book`, then `curl https://aiagent.ringlypro.com/api/synthex-lina/public/slots` returns `ok:true`.
+4. Do NOT make a real booking on production unless the user asks (it creates a calendar event and sends a real email).
+5. Reply in 2-5 lines: page, section, live, and any manual step.
+
+---
+
 ## VOICE AI ORB RUNBOOK — `voice`
 
 When the user says **"voice"**, **"ringlypro-architect voice"**, **"add a voice orb"**, **"add Lina"**, or **"replicate the Lina voice"** — execute this runbook to stamp out the **exact** zero-key neural voice AI used on `/ai-jump-coach-teaser.html` into a target page. This is the canonical "Lina" pattern: a $0, no-API-key, server-proxied **Microsoft Edge "Read Aloud" neural TTS** orb with automatic browser-speech fallback.

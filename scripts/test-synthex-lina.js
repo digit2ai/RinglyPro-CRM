@@ -19,6 +19,7 @@ const now = Date.now();
 const slotA = new Date(Math.ceil((now + 3 * 86400000) / 3600000) * 3600000);
 const slotB = new Date(slotA.getTime() + 3600000);
 const slotC = new Date(slotA.getTime() + 2 * 3600000);
+const slotD = new Date(slotA.getTime() + 3 * 3600000);
 const fakeDb = {
   transaction: async () => ({ commit: async () => {}, rollback: async () => {} }),
   query: async (sql, o = {}) => {
@@ -35,7 +36,7 @@ const fakeDb = {
 const mcpPath = require.resolve(path.join(__dirname, '../src/routes/mcp-checkout'));
 require.cache[mcpPath] = { id: mcpPath, filename: mcpPath, loaded: true, exports: { _booking: {
   db: () => fakeDb, BOOK_MIN: 60, BOOK_TZ: 'America/New_York',
-  freeSlots: async () => [slotA, slotB, slotC].filter((s) => !events.some((e) => new Date(e.start_time).getTime() === s.getTime())),
+  freeSlots: async () => [slotA, slotB, slotC, slotD].filter((s) => !events.some((e) => new Date(e.start_time).getTime() === s.getTime())),
   threeByThree: (slots) => [{ day: 'x', slots: slots.map((s) => s.toISOString()) }]
 } } };
 
@@ -204,6 +205,20 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(/data-book-demo/.test(last) && /brand: 'digit2ai'/.test(deck) && /\/api\/synthex-lina\/public\/slots/.test(deck), 'last slide carries the booking button');
   ok(/window\.D2BOOK_OPEN\) return;/.test(deck) && /D2BOOK_OPEN\) \{ x0 = null/.test(deck), 'arrows and swipes do not flip slides while booking');
   ok(/Agendar una reunión/.test(deck.split('var NARR')[1].split('];')[0].split("',").pop()), 'Lina mentions the button on the last slide');
+
+  // embed: one drop-in for any page (integrate booking)
+  const emb = require('fs').readFileSync(path.join(__dirname, '../public/embed/book-meeting.js'), 'utf8');
+  ok(/\/api\/synthex-lina\/public\/slots/.test(emb) && /\/api\/synthex-lina\/public\/book/.test(emb) && /\[data-d2-book\]/.test(emb), 'embed calls the public booking route');
+  ok(/getAttribute\('lang'\)/.test(emb) && /attributeFilter: \['lang'\]/.test(emb) && /Agendar una reunión/.test(emb) && /Book a meeting/.test(emb), 'embed follows the page language live');
+  ok(!/innerHTML\s*=\s*[^'"]/.test(emb.replace(/body\.innerHTML = ''/g, '')), 'embed never writes visitor text as HTML');
+  sent.length = 0;
+  pb = await post('/api/synthex-lina/public/book', { brand: 'digit2ai', source: 'digit2ai.com/<script>x', nombre: 'Rosa Díaz', email: 'rosa@ejemplo.com', telefono: '4145550001', start: slotD.toISOString() }, { 'cf-connecting-ip': '203.0.113.9' });
+  ok(pb.status === 200, 'embed booking works');
+  const rEv = events.find((e) => /rosa@ejemplo.com/.test(e.description));
+  ok(rEv && /agendada desde digit2ai\.com\/scriptx\./.test(rEv.description) && !/</.test(rEv.description), 'source label is stripped to URL characters');
+  ok(sent.some((m) => /Nueva reunión Digit2AI/.test(m.subject) && /digit2ai\.com\/scriptx/.test(m.text)), 'owner alert names the page');
+  const home = require('fs').readFileSync(path.join(__dirname, '../public/neural-intelligence.html'), 'utf8');
+  ok(/data-d2-book/.test(home.split('id="s1"')[1].split('</section>')[0]) && /book-meeting\.js/.test(home), 'digit2ai.com first section carries the button');
 
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);

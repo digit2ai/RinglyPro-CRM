@@ -160,6 +160,8 @@ ul.pts li b,ul.pts li strong{color:#fff;font-weight:700}
 .hero-sub{font-family:var(--font-display);font-style:italic;font-weight:400;font-size:clamp(19px,2.4vw,30px);color:var(--mut);margin-bottom:clamp(26px,4vh,42px)}
 .hero-claim{font-size:clamp(19px,1.5vw + 10px,30px);line-height:1.35;color:#fff;font-weight:600;max-width:24ch}
 .hero-claim .hl{color:var(--accent)}
+.hero-book{margin-top:clamp(22px,3.4vh,34px)}
+@media print{.hero-book{display:none!important}}
 .hero-org{margin-top:clamp(34px,6vh,64px);font-family:var(--font-display);letter-spacing:.16em;font-size:clamp(12px,1vw,14px);color:var(--dim);text-transform:uppercase}
 /* ---------- Big hero line (slides 5,10) ---------- */
 .megaline{
@@ -615,6 +617,8 @@ html.lang-es .i18.es{display:inline}
       <h1 class="reveal"><span class="i18 en">DIGIT<span class="b">2</span>AI<br>Neural Intelligence</span><span class="i18 es">DIGIT<span class="b">2</span>AI<br>Inteligencia Neural</span></h1>
       <p class="hero-sub reveal"><span class="i18 en">The AI-Native Operating Model</span><span class="i18 es">El modelo operativo nativo de IA</span></p>
       <p class="hero-claim reveal"><span class="i18 en"><span class="hl" data-count="150">150</span> specialized AI agents. One backbone. <span class="hl">30&ndash;50%</span> lower operating costs &mdash; in weeks, not years.</span><span class="i18 es"><span class="hl" data-count="150">150</span> agentes de IA especializados. Una sola columna vertebral. <span class="hl">30&ndash;50%</span> menos de costos operativos &mdash; en semanas, no en a&ntilde;os.</span></p>
+      <!-- integrate booking: free times from the Digit2AI Projects calendar (public/embed/book-meeting.js) -->
+      <div class="hero-book reveal" data-d2-book data-brand="digit2ai" data-source="digit2ai.com/"></div>
       <p class="hero-org reveal">DIGIT2AI LLC&nbsp;&nbsp;|&nbsp;&nbsp;2026</p>
     </div>
     <div class="scrollhint" aria-hidden="true"><span class="i18 en">Scroll</span><span class="i18 es">Desliza</span><span class="arw"></span></div>
@@ -1591,5 +1595,6 @@ html.lang-es .i18.es{display:inline}
   });
 })();
 </script>
+<script src="/embed/book-meeting.js" defer></script>
 </body>
 </html>
