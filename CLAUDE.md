@@ -292,7 +292,7 @@ A test-number AI phone agent that talks to callers and books appointments by unb
 
 **The command:** `/integrate-booking <url> [section] [es|en]` runs the INTEGRATE BOOKING RUNBOOK in `.claude/commands/ringlypro-architect.md`: find what serves the URL (GHL pages frame our files: `digit2ai.com/` -> `public/neural-intelligence.html`, `digit2ai.com/presentacion` -> `public/mcp/presentacion/`), insert in the section (default: first), browser check at 1440/390, deploy, verify live. A GHL page that frames nothing of ours cannot be edited from here: the owner gets the 2-line paste block. Never make a real production booking unless asked.
 
-**Live:** digit2ai.com first section (2026-10-30), digit2ai.com/presentacion last slide (its own copy of the window, same route), synthexsai.com hero. Test: `node scripts/test-synthex-lina.js` -> **71/71**.
+**Live:** digit2ai.com first section (2026-10-30), synthexsai.com/pymes last slide (brand synthex, 2026-10-30), digit2ai.com/presentacion last slide (its own copy of the window, same route), synthexsai.com hero. Test: `node scripts/test-synthex-lina.js` -> **73/73**.
 
 ## AI Agent Prompt Builder — one box, then paste into VS Code
 

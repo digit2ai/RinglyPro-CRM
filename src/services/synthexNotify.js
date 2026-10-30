@@ -167,7 +167,7 @@ async function bookingConfirmed(m) {
     console.error('[synthex-notify] client email failed:', out.reason);
   }
   const fromWhere = brand === 'digit2ai' ? (m.source || 'la presentación narrada (digit2ai.com/presentacion)')
-    : (m.origen === 'lina' ? 'Lina (asistente) de synthexsai.com' : 'el formulario de synthexsai.com');
+    : (m.origen === 'lina' ? 'Lina (asistente) de synthexsai.com' : (m.source || 'el formulario de synthexsai.com'));
   try {
     await mailer().send({
       to: OWNER(), from,

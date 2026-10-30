@@ -235,6 +235,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
         ? `Reunión con Digit2AI, agendada desde ${source || 'la presentación narrada (digit2ai.com/presentacion)'}.`
         : origen === 'lina'
         ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
+        : source ? `Reunión con los agentes especializados de Synthex SAI, agendada desde ${source}.`
         : 'Reunión con los agentes especializados de Synthex SAI, agendada desde el formulario «Agendar demostración» de synthexsai.com.',
       `Nombre: ${v.nombre}`,
       v.empresa ? `Empresa: ${v.empresa}` : null,

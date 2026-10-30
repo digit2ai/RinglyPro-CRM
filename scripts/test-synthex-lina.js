@@ -220,6 +220,11 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const home = require('fs').readFileSync(path.join(__dirname, '../public/neural-intelligence.html'), 'utf8');
   ok(/data-d2-book/.test(home.split('id="s1"')[1].split('</section>')[0]) && /book-meeting\.js/.test(home), 'digit2ai.com first section carries the button');
 
+  const pym = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/index.html'), 'utf8');
+  const pLast = pym.split('id="lastSlide"')[1].split('</section>')[0];
+  ok(/data-d2-book data-brand="synthex"/.test(pLast) && /https:\/\/aiagent\.ringlypro\.com\/embed\/book-meeting\.js/.test(pym), 'pymes last slide carries the Synthex booking button (absolute embed src)');
+  ok(/D2BOOK_OPEN\) return;/.test(pym) && /d2book:open/.test(pym), 'pymes deck pauses and stops paging while booking');
+
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
