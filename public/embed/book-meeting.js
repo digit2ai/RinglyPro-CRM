@@ -105,7 +105,7 @@
   function loc() { return cur.lang === 'en' ? 'en-US' : 'es'; }
   function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
   function fDay(iso) { return cap(new Intl.DateTimeFormat(loc(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso))); }
-  function fTime(iso) { return new Intl.DateTimeFormat(loc(), { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso)); }
+  function fTime(iso) { return new Intl.DateTimeFormat(loc(), { hour: 'numeric', minute: '2-digit', hourCycle: 'h12' }).format(new Date(iso)); }
   function when(iso) { return new Intl.DateTimeFormat(loc(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso)) + ', ' + fTime(iso); }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 

@@ -239,8 +239,12 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   // regular 12-hour time everywhere a booking time is shown (owner rule 2026-10-31)
   const fs2 = require('fs');
   const timeFiles = ['public/embed/book-meeting.js', 'public/mcp/presentacion/index.html', 'public/synthexai/index.html', 'src/services/synthexNotify.js', 'src/routes/synthex-lina.js'];
-  ok(timeFiles.every((f) => { const src = fs2.readFileSync(path.join(__dirname, '..', f), 'utf8'); const m = src.match(/hour: ?'numeric', minute: ?'2-digit'[^}]*/g) || []; return m.length && m.every((x) => /hour12: true/.test(x)); }), 'every booking time is 12-hour (a. m. / p. m.)');
+  ok(timeFiles.every((f) => { const src = fs2.readFileSync(path.join(__dirname, '..', f), 'utf8'); const m = src.match(/hour: ?'numeric', minute: ?'2-digit'[^}]*/g) || []; return m.length && m.every((x) => /hourCycle: 'h12'/.test(x)) && !/hour12/.test(src); }), "every booking time is 12-hour via hourCycle h12 (Chrome's es + hour12 shows noon as 0:00)");
   ok(/p\. m\./.test(require('../src/services/synthexNotify')._test.html({ nombre: 'Ana', start: '2026-11-02T20:00:00Z', lang: 'es', tz: 'America/New_York', minutes: 60, brand: 'digit2ai' })), 'email shows p. m.');
+
+  const htr = require('fs').readFileSync(path.join(__dirname, '../public/HTR-Digital/NeoHaul-presentacion-Dalia.html'), 'utf8');
+  const htrS = htr.split('<section').slice(1);
+  ok(/data-d2-book/.test(htrS[0]) && /data-d2-book/.test(htrS[htrS.length - 1]) && /book-meeting\.js/.test(htr) && /D2BOOK_OPEN\) return;/.test(htr) && /d2book:open/.test(htr), 'NeoHaul deck: booking on first + last slide, paging paused');
 
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
