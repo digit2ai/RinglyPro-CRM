@@ -225,6 +225,9 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(/data-d2-book data-brand="synthex"/.test(pLast) && /https:\/\/aiagent\.ringlypro\.com\/embed\/book-meeting\.js/.test(pym), 'pymes last slide carries the Synthex booking button (absolute embed src)');
   ok(/D2BOOK_OPEN\) return;/.test(pym) && /d2book:open/.test(pym), 'pymes deck pauses and stops paging while booking');
 
+  const calc = require('fs').readFileSync(path.join(__dirname, '../public/calcareos/presentacion/index.html'), 'utf8');
+  ok((calc.match(/data-d2-book data-brand="digit2ai"/g) || []).length === 2 && /book-meeting\.js/.test(calc) && /D2BOOK_OPEN\) return;/.test(calc) && /d2book:open/.test(calc), 'calcareos deck: booking on cover + last slide, paging paused');
+
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
   process.exit(fail ? 1 : 0);

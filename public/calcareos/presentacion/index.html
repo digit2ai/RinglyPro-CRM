@@ -252,6 +252,7 @@ body.vert .list li{font-size:24px;padding-left:40px}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 body.vert .legend{font-size:19px}
 a.cta{text-decoration:none}
+button.cta{border:0;cursor:pointer}
 body.vert .flows .card p{font-size:18.5px}body.vert .flows .card{padding:20px 20px}
 .links{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
 body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sys{display:block;margin-top:6px}body.vert .fom ul.sys li{font-size:21px;padding:6px 0;border-top:1px solid var(--line)}body.vert .fom ul.sys li:first-child{border-top:0}body.vert .fom .card{padding:18px 22px}
@@ -269,6 +270,8 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
         <div class="kick stag d1">Preparado para Calcáreos S.A. · Barranquilla</div>
         <h1 class="stag d2">Su operación de piedra, <span class="grad">a la medida, con inteligencia artificial.</span></h1>
         <p class="lead stag d3">Desde el plano de la constructora hasta el corte, el inventario y el despacho, conectado a su Fomplus ERP Cloud. Sin cambiar la forma en que su equipo trabaja hoy.</p>
+        <!-- integrate booking: free times from the Digit2AI Projects calendar (public/embed/book-meeting.js) -->
+        <div class="links stag d4" style="margin-top:20px"><button type="button" class="cta" data-d2-book data-brand="digit2ai" data-lang="es" data-source="digit2ai.com/calcareos">Agendar una reunión &rarr;</button></div>
       </div>
       <div class="col grow" style="max-width:520px;width:100%">
         <svg class="usb" viewBox="0 0 520 300" aria-hidden="true">
@@ -571,7 +574,8 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
         <h1 class="stag d2">Siguiente paso: <span class="grad">una reunión con su equipo.</span></h1>
         <p class="lead stag d3">Definimos juntos la fecha de la prueba. Mientras tanto, pruebe el simulador y comparta esta presentación dentro de Calcáreos.</p>
         <div class="links stag d4">
-          <a class="cta" href="/calcareos-inventario-simulador.html" target="_blank" rel="noopener">Abrir el simulador</a>
+          <button type="button" class="cta" data-d2-book data-brand="digit2ai" data-lang="es" data-source="digit2ai.com/calcareos">Agendar una reunión &rarr;</button>
+          <a class="cta ghost" href="/calcareos-inventario-simulador.html" target="_blank" rel="noopener">Abrir el simulador</a>
           <a class="cta ghost" href="mailto:info@digit2ai.com?subject=Calc%C3%A1reos%20%C3%97%20Digit2AI">info@digit2ai.com</a>
         </div>
       </div>
@@ -717,7 +721,7 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
     'Todo esto se hace sin parar la empresa. Trabajamos en paralelo: su equipo sigue usando Fomplus, Excel y WhatsApp mientras el sistema aprende y se valida. Nadie tiene que cambiar su forma de trabajar el primer día. Nosotros capacitamos al gerente y a su equipo, y el sistema avisa cuando algo se sale de lo normal, antes de que se convierta en pérdida. Y solo se manejan datos operativos, no personales, conforme a la Ley mil quinientos ochenta y uno de dos mil doce.',
     'Sobre la inversión, una idea simple: Calcáreos no compra un software. Primero medimos el desperdicio y el tiempo reales, con sus datos. Después, la inversión se define a partir del ahorro medido, como una porción pequeña de lo que se recupera. Y cada etapa la aprueba usted antes de empezar. Por eso el precio no debería ser una preocupación: se conversa con el ahorro ya medido sobre la mesa.',
     'Se empieza con una prueba de concepto de cuatro semanas. Semana uno: los requisitos, con su equipo. Semana dos: el simulador con sus datos reales, para que lo validen. Semana tres: el desarrollo y la conexión con Fomplus, su WhatsApp y sus máquinas. Semana cuatro: la aprobación, midiendo el desperdicio con datos reales. El reloj empieza el día de la reunión con su equipo.',
-    'El siguiente paso es una reunión con su equipo de operación, de finanzas y de logística, para definir la fecha de la prueba. Mientras tanto, abra el simulador con el botón que aparece en pantalla, y comparta esta presentación con quien quiera dentro de Calcáreos. Soy Lina, de Digit2AI. Gracias por su tiempo.'
+    'El siguiente paso es una reunión con su equipo de operación, de finanzas y de logística, para definir la fecha de la prueba. Puede elegir el día y la hora ahora mismo con el botón Agendar una reunión. Mientras tanto, abra el simulador, y comparta esta presentación con quien quiera dentro de Calcáreos. Soy Lina, de Digit2AI. Gracias por su tiempo.'
   ];
   var slides = [].slice.call(document.querySelectorAll('.slide'));
   var stage = document.getElementById('stage'), orb = document.getElementById('orb');
@@ -831,7 +835,7 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
   document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
   document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
   document.addEventListener('keydown', function(e){
-    if (!gate.classList.contains('off')) return;
+    if (!gate.classList.contains('off') || window.D2BOOK_OPEN) return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
     else if (e.key === ' ') { e.preventDefault(); toggle(); }
@@ -842,14 +846,17 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
   var x0 = null;
   document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive:true });
   document.addEventListener('touchend', function(e){
-    if (x0 === null || !gate.classList.contains('off')) return;
+    if (x0 === null || !gate.classList.contains('off') || window.D2BOOK_OPEN) { x0 = null; return; }
     var dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
   }, { passive:true });
   slides[0].classList.add('on');
   window.addEventListener('beforeunload', stopAll);
+  // La ventana de agendar pausa a Lina.
+  window.addEventListener('d2book:open', function(){ if (voiceOn && !paused) toggle(); });
   window.CALCDECK = { show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
 })();
 </script>
+<script src="/embed/book-meeting.js" defer></script>
 </body>
 </html>
