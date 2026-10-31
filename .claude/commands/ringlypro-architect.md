@@ -702,7 +702,7 @@ SHAKEN assignment takes effect within minutes on Twilio. Carriers may take **24-
 
 ## INTEGRATE BOOKING RUNBOOK — `integrate booking`
 
-When the user says **"integrate booking"**, **"add booking to <page>"**, **"agendar en <página>"**, or runs `/integrate-booking`, put a **"Book a meeting / Agendar una reunión"** button on the named page, in the named section (default: the FIRST section / hero). It opens a 3-step window (time, details, done) with free times from the **Digit2AI Projects calendar**, books into `d2_calendar_events` (workspace 1), and SendGrid sends a Digit2AI-branded confirmation + .ics to the visitor and an alert to info@digit2ai.com. Same free-slot rule as /mcp, Lina and synthexsai.com, so nothing double-books.
+When the user says **"integrate booking"**, **"add booking to <page>"**, **"agendar en <página>"**, or runs `/integrate-booking`, put a **"Book a meeting / Agendar una reunión"** button on the named page, in the named section (default: the FIRST section / hero). It opens a 3-step window (time, details, done) with free times from the **Digit2AI Projects calendar**, books into `d2_calendar_events` (workspace 1), and SendGrid sends a Digit2AI-branded confirmation + .ics to the visitor and an alert to info@digit2ai.com. Same free-slot rule as /mcp, Lina and synthexsai.com, so nothing double-books. **AFTERNOONS ONLY (owner rule 2026-10-31): times start 12:00 to 16:00 New York, never mornings.** That rule lives ONCE in `src/routes/mcp-checkout.js` (`BOOK_HOURS`, `MCP_BOOK_START_HOUR` can raise it to 13 or 14, never lower than 12) and every booking surface uses it; never add a per-page hour list.
 
 **Never rebuild the booking. It is one drop-in, already live:**
 ```html

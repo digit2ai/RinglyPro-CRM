@@ -149,8 +149,8 @@ router.get('/status', async (req, res) => {
 // nothing in the browser is trusted. One meeting per paid session (the session id is
 // written into the event and checked under an advisory lock, so two tabs cannot book
 // twice). The event lands in the Projects calendar (d2_calendar_events, workspace 1),
-// linked to the lead's project id from the session metadata. Slots: weekdays, 9:00 to
-// 17:00 New York time, 60 minutes, at least MCP_BOOK_MIN_HOURS ahead, within
+// linked to the lead's project id from the session metadata. Slots: weekdays, AFTERNOONS ONLY
+// (MCP_BOOK_START_HOUR, default 12:00, to 17:00 New York time: the owner's mornings are always busy), 60 minutes, at least MCP_BOOK_MIN_HOURS ahead, within
 // MCP_BOOK_DAYS days, never over an existing event. Nothing is emailed from here.
 // =====================================================================================
 
@@ -158,7 +158,11 @@ const BOOK_TZ = 'America/New_York';
 const BOOK_MIN = Number(process.env.MCP_MEETING_MINUTES || 60);
 const BOOK_DAYS = Number(process.env.MCP_BOOK_DAYS || 14);
 const BOOK_MIN_HOURS = Number(process.env.MCP_BOOK_MIN_HOURS || 24);
-const BOOK_HOURS = [9, 10, 11, 12, 13, 14, 15, 16];
+// Afternoons only (owner rule 2026-10-31: mornings are always busy). Every booking surface uses
+// this list (/mcp checkout, Lina, synthexsai.com, book-meeting.js embeds), and a booking is only
+// accepted for a time in it, so a morning time sent straight to the API is refused too.
+const BOOK_START_HOUR = Math.min(14, Math.max(12, Number(process.env.MCP_BOOK_START_HOUR) || 12));
+const BOOK_HOURS = [12, 13, 14, 15, 16].filter(h => h >= BOOK_START_HOUR);
 
 let d2db = null;
 function db() {
@@ -352,4 +356,4 @@ module.exports = router;
 module.exports._test = { candidateSlots, nyOffset, setStripe: c => { stripeClient = c; } };
 // Shared with the Synthex SAI voice assistant (src/routes/synthex-lina.js): the same free-slot
 // rule, so a meeting Lina books can never land on top of one booked here.
-module.exports._booking = { freeSlots, threeByThree, db, BOOK_MIN, BOOK_TZ };
+module.exports._booking = { freeSlots, threeByThree, db, BOOK_MIN, BOOK_TZ, candidateSlots, BOOK_HOURS };

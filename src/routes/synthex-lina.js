@@ -16,7 +16,7 @@
  * which is rate-limited per visitor IP by the voice route.
  *
  * THE FREE-SLOT RULE IS NOT COPIED. It comes from routes/mcp-checkout.js
- * (weekdays, 9 to 17 New York time, 60 minutes, never over an existing event,
+ * (weekdays, afternoons only: 12 to 17 New York time, 60 minutes, never over an existing event,
  * the owner's Google Calendar included), so a meeting Lina books can never
  * land on one booked from the /mcp checkout, and vice versa.
  *

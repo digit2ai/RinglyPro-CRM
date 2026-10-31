@@ -228,6 +228,14 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const calc = require('fs').readFileSync(path.join(__dirname, '../public/calcareos/presentacion/index.html'), 'utf8');
   ok((calc.match(/data-d2-book data-brand="digit2ai"/g) || []).length === 2 && /book-meeting\.js/.test(calc) && /D2BOOK_OPEN\) return;/.test(calc) && /d2book:open/.test(calc), 'calcareos deck: booking on cover + last slide, paging paused');
 
+  // afternoons only: the REAL shared rule (not the stub above) never offers a morning
+  const stubMcp = require.cache[mcpPath]; delete require.cache[mcpPath];
+  const realB = require(mcpPath)._booking; require.cache[mcpPath] = stubMcp;
+  const nyHour = (d) => Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hour12: false }).format(d));
+  const cands = realB.candidateSlots(new Date());
+  ok(cands.length > 20 && cands.every((d) => nyHour(d) >= 12 && nyHour(d) <= 16), 'only afternoon times (12:00-16:00 NY starts) are offered');
+  ok(realB.threeByThree(cands, 'x').length === 3 && realB.threeByThree(cands, 'x').every((d) => d.slots.every((iso) => nyHour(new Date(iso)) >= 12)), 'three afternoon choices per day still fill three days');
+
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
   process.exit(fail ? 1 : 0);
