@@ -236,6 +236,12 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   ok(cands.length > 20 && cands.every((d) => nyHour(d) >= 12 && nyHour(d) <= 16), 'only afternoon times (12:00-16:00 NY starts) are offered');
   ok(realB.threeByThree(cands, 'x').length === 3 && realB.threeByThree(cands, 'x').every((d) => d.slots.every((iso) => nyHour(new Date(iso)) >= 12)), 'three afternoon choices per day still fill three days');
 
+  // regular 12-hour time everywhere a booking time is shown (owner rule 2026-10-31)
+  const fs2 = require('fs');
+  const timeFiles = ['public/embed/book-meeting.js', 'public/mcp/presentacion/index.html', 'public/synthexai/index.html', 'src/services/synthexNotify.js', 'src/routes/synthex-lina.js'];
+  ok(timeFiles.every((f) => { const src = fs2.readFileSync(path.join(__dirname, '..', f), 'utf8'); const m = src.match(/hour: ?'numeric', minute: ?'2-digit'[^}]*/g) || []; return m.length && m.every((x) => /hour12: true/.test(x)); }), 'every booking time is 12-hour (a. m. / p. m.)');
+  ok(/p\. m\./.test(require('../src/services/synthexNotify')._test.html({ nombre: 'Ana', start: '2026-11-02T20:00:00Z', lang: 'es', tz: 'America/New_York', minutes: 60, brand: 'digit2ai' })), 'email shows p. m.');
+
   srv.close();
   console.log(`${pass}/${pass + fail} passed`);
   process.exit(fail ? 1 : 0);

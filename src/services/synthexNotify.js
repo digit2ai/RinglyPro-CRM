@@ -72,7 +72,7 @@ function validTz(tz) {
 function when(iso, lang, tz) {
   const zone = validTz(tz);
   const s = new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'es-VE', {
-    timeZone: zone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+    timeZone: zone, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short'
   }).format(new Date(iso));
   return s.charAt(0).toUpperCase() + s.slice(1);
 }

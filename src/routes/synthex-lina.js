@@ -105,7 +105,7 @@ function label(iso, lang) {
   const d = new Date(iso);
   const loc = lang === 'en' ? 'en-US' : 'es-VE';
   const s = new Intl.DateTimeFormat(loc, {
-    timeZone: LABEL_TZ, weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit'
+    timeZone: LABEL_TZ, weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true
   }).format(d);
   return s;
 }

@@ -864,7 +864,7 @@ body.vert .cta{font-size:24px;padding:18px 26px}body.vert .ctalink{font-size:21p
   var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
   function cap(x){ return x.charAt(0).toUpperCase() + x.slice(1); }
   function fDay(iso){ return cap(new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso))); }
-  function fTime(iso){ return new Intl.DateTimeFormat('es', { hour:'numeric', minute:'2-digit' }).format(new Date(iso)); }
+  function fTime(iso){ return new Intl.DateTimeFormat('es', { hour:'numeric', minute:'2-digit', hour12: true }).format(new Date(iso)); }
   function when(iso){ return new Intl.DateTimeFormat('es', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)) + ', ' + fTime(iso); }
   function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   function steps(n){
