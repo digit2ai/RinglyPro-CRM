@@ -23,7 +23,27 @@
       <div class="err" id="err" role="alert"></div>
       <button class="btn primary" style="width:100%;margin-top:6px" id="go">Sign in</button>
     </form>
+    <p class="small muted" id="forgotLine"><a href="#" id="forgotLink">Forgot password?</a></p>
     <p class="small muted" id="switch"></p>
+  </div>
+  <div class="card" id="resetCard" hidden>
+    <h2 style="margin-top:0">Reset your password</h2>
+    <form id="rf1">
+      <p class="small muted">Enter your email. We will send you a 6-digit code.</p>
+      <label for="remail">Email</label><input id="remail" type="email" autocomplete="email" required>
+      <div class="err" id="rerr1" role="alert"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px" id="rgo1">Send code</button>
+    </form>
+    <form id="rf2" hidden>
+      <p class="small muted" id="rsent"></p>
+      <label for="rcode">6-digit code</label><input id="rcode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+      <label for="rpass">New password</label><input id="rpass" type="password" autocomplete="new-password" required minlength="10">
+      <label for="rpass2">Repeat new password</label><input id="rpass2" type="password" autocomplete="new-password" required minlength="10">
+      <div class="err" id="rerr2" role="alert"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px" id="rgo2">Set new password</button>
+      <p class="small muted"><a href="#" id="resend">Send a new code</a></p>
+    </form>
+    <p class="small muted"><a href="#" id="backLogin">Back to sign in</a></p>
   </div>
 </div>
 <script>
@@ -31,9 +51,25 @@
   var BASE='{{BASE}}'; var signup=/mode=signup/.test(location.search);
   function mode(s){signup=s;document.getElementById('signupOnly').hidden=!s;document.getElementById('title').textContent=s?'Create your company':'Sign in';
     document.getElementById('go').textContent=s?'Create company':'Sign in';document.getElementById('password').autocomplete=s?'new-password':'current-password';
-    document.getElementById('switch').innerHTML=s?'Already have an account? <a href="#" id="sw">Sign in</a>':'New supplier? <a href="#" id="sw">Create your company</a>';
+    document.getElementById('forgotLine').hidden=s;document.getElementById('switch').innerHTML=s?'Already have an account? <a href="#" id="sw">Sign in</a>':'New supplier? <a href="#" id="sw">Create your company</a>';
     document.getElementById('sw').onclick=function(e){e.preventDefault();mode(!signup)};}
   mode(signup);
+  function $(i){return document.getElementById(i)}
+  function post(p,b){return fetch(BASE+'/api/v1/auth/'+p,{method:'POST',headers:{'Content-Type':'application/json','X-Supply':'1'},body:JSON.stringify(b)}).then(function(r){return r.json().catch(function(){return {}}).then(function(d){if(!r.ok)throw new Error(d.error||'Failed');return d;})})}
+  function showReset(on){$('resetCard').hidden=!on;document.querySelector('.card').hidden=on;if(on){$('remail').value=$('email').value;$('rf1').hidden=false;$('rf2').hidden=true;}}
+  var rEmail='';
+  function sendCode(){$('rerr1').textContent='';$('rgo1').disabled=true;rEmail=$('remail').value.trim();
+    return post('forgot',{email:rEmail}).then(function(d){$('rf1').hidden=true;$('rf2').hidden=false;$('rsent').textContent=d.message+' Check '+rEmail+' (and spam). The code expires in 15 minutes.';$('rcode').focus();})
+      .catch(function(x){$('rerr1').textContent=x.message;$('rerr2').textContent=x.message;}).then(function(){$('rgo1').disabled=false;});}
+  $('forgotLink').onclick=function(e){e.preventDefault();showReset(true)};
+  $('backLogin').onclick=function(e){e.preventDefault();showReset(false)};
+  $('rf1').onsubmit=function(e){e.preventDefault();sendCode()};
+  $('resend').onclick=function(e){e.preventDefault();$('rf2').hidden=true;$('rf1').hidden=false;};
+  $('rf2').onsubmit=function(e){e.preventDefault();$('rerr2').textContent='';
+    if($('rpass').value!==$('rpass2').value){$('rerr2').textContent='The two passwords do not match.';return;}
+    $('rgo2').disabled=true;
+    post('reset',{email:rEmail,code:$('rcode').value,password:$('rpass').value}).then(function(){location.href=BASE+'/app'})
+      .catch(function(x){$('rerr2').textContent=x.message;$('rgo2').disabled=false;});};
   document.getElementById('f').onsubmit=function(e){e.preventDefault();var err=document.getElementById('err');err.textContent='';
     var body={email:document.getElementById('email').value,password:document.getElementById('password').value};
     if(signup){body.company=document.getElementById('company').value;body.name=document.getElementById('name').value;body.timezone=Intl.DateTimeFormat().resolvedOptions().timeZone;}

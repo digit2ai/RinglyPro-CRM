@@ -28,7 +28,9 @@ const COOKIE = 'sup_token';
 const PUBLISHED = ['Palindrome@7', 'lawncopilot@2026', 'coachtrack@2026', 'exec@2026', 'defensoresdelapatria@7', 'Digit2Ai@7', 'TunjoRacing2024!', 'Palindrome@7!'];
 const ROLES = ['owner', 'admin', 'rep', 'viewer'];
 
-function sign(u) { return jwt.sign({ id: u.id }, SECRET(), { expiresIn: '12h', audience: AUD }); }
+// pc = when the password last changed; a reset ends every older session.
+const pcOf = (u) => (u && u.password_changed_at ? new Date(u.password_changed_at).getTime() : 0);
+function sign(u) { return jwt.sign({ id: u.id, pc: pcOf(u) }, SECRET(), { expiresIn: '12h', audience: AUD }); }
 function verify(t) { try { return jwt.verify(t, SECRET(), { audience: AUD }); } catch (e) { return null; } }
 function cookiePath(req) { return req.baseUrl || '/'; }
 function setCookie(req, res, u) { res.cookie(COOKIE, sign(u), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 12 * 3600e3, path: cookiePath(req) }); }
@@ -55,8 +57,10 @@ async function userFromRequest(req) {
   const tok = readCookie(req);
   const claims = tok ? verify(tok) : null;
   if (!claims) return null;
-  const u = await db.one('SELECT id, tenant_id, email, name, role, is_super_admin, active FROM sup_users WHERE id = :id', { id: claims.id });
-  return u && u.active ? u : null;
+  const u = await db.one('SELECT id, tenant_id, email, name, role, is_super_admin, active, password_changed_at FROM sup_users WHERE id = :id', { id: claims.id });
+  if (!u || !u.active || (claims.pc || 0) !== pcOf(u)) return null;
+  delete u.password_changed_at;
+  return u;
 }
 
 async function createUser({ tenantId, email, password, name, role }) {
@@ -95,4 +99,52 @@ async function seedOwner() {
   return { seeded: true, created: true };
 }
 
-module.exports = { sign, verify, setCookie, clearCookie, readCookie, limited, userFromRequest, createUser, login, seedOwner, checkPassword, ROLES, COOKIE };
+// ── Forgot password: 6-digit code by email ──
+const RESET_MIN = () => Math.max(5, Number(process.env.SUPPLY_RESET_MINUTES) || 15);
+const RESET_TRIES = 5;
+const RESEND_SEC = 60;
+function codeHash(userId, code) { return crypto.createHash('sha256').update(SECRET() + ':reset:' + userId + ':' + code).digest('hex'); }
+function sameHex(a, b) { const x = Buffer.from(String(a || ''), 'utf8'); const y = Buffer.from(String(b || ''), 'utf8'); return x.length === y.length && crypto.timingSafeEqual(x, y); }
+
+// Same answer whether or not the email exists, so nobody can probe for accounts.
+async function requestReset(email, mail) {
+  email = String(email || '').toLowerCase().trim();
+  if (!EMAIL.test(email)) throw err(400, 'Enter a valid email');
+  const u = await db.one('SELECT id, email, reset_sent_at FROM sup_users WHERE lower(email) = :e AND active = true', { e: email });
+  if (!u) return { ok: true };
+  if (u.reset_sent_at && Date.now() - new Date(u.reset_sent_at).getTime() < RESEND_SEC * 1000) return { ok: true };
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+  const min = RESET_MIN();
+  await db.run(`UPDATE sup_users SET reset_code_hash = :h, reset_expires = now() + (:m || ' minutes')::interval, reset_attempts = 0, reset_sent_at = now() WHERE id = :id`,
+    { h: codeHash(u.id, code), m: String(min), id: u.id });
+  let out;
+  try { out = await mail.resetCode({ to: u.email, code, minutes: min }); } catch (e) { out = { sent: false, reason: e.message }; }
+  if (!out || !out.sent) {
+    // Nothing reached the inbox: drop the code so the resend wait does not block a retry.
+    await db.run('UPDATE sup_users SET reset_code_hash = NULL, reset_expires = NULL, reset_sent_at = NULL WHERE id = :id', { id: u.id });
+    console.error('[supply] reset email not sent:', out && out.reason);
+    throw err(503, 'Email could not be sent right now. Try again later.');
+  }
+  return { ok: true };
+}
+
+async function resetPassword({ email, code, password }) {
+  email = String(email || '').toLowerCase().trim();
+  code = String(code || '').replace(/\s+/g, '');
+  const bad = checkPassword(password); if (bad) throw err(400, bad);
+  const generic = err(400, 'That code is wrong or has expired. Ask for a new one.');
+  if (!/^\d{6}$/.test(code)) throw generic;
+  const u = await db.one('SELECT id, reset_code_hash, reset_expires, reset_attempts FROM sup_users WHERE lower(email) = :e AND active = true', { e: email });
+  if (!u || !u.reset_code_hash || !u.reset_expires || new Date(u.reset_expires).getTime() < Date.now() || u.reset_attempts >= RESET_TRIES) throw generic;
+  if (!sameHex(u.reset_code_hash, codeHash(u.id, code))) {
+    await db.run('UPDATE sup_users SET reset_attempts = reset_attempts + 1 WHERE id = :id', { id: u.id });
+    throw generic;
+  }
+  // Single use: the code is cleared in the same statement that checks it is still there.
+  const [done] = await db.run(`UPDATE sup_users SET password_hash = :h, password_changed_at = now(), reset_code_hash = NULL, reset_expires = NULL, reset_attempts = 0
+    WHERE id = :id AND reset_code_hash = :old RETURNING *`, { h: await bcrypt.hash(password, 12), id: u.id, old: u.reset_code_hash });
+  if (!done) throw generic;
+  return done;
+}
+
+module.exports = { requestReset, resetPassword, sign, verify, setCookie, clearCookie, readCookie, limited, userFromRequest, createUser, login, seedOwner, checkPassword, ROLES, COOKIE };

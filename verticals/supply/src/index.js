@@ -148,6 +148,21 @@ router.post('/api/v1/auth/login', sameSite, h(async (req, res) => {
   auth.setCookie(req, res, u);
   res.json({ ok: true });
 }));
+// Forgot password: email a 6-digit code (src/mail.js), then set a new password with it.
+router.post('/api/v1/auth/forgot', sameSite, h(async (req, res) => {
+  const ip = String(req.headers['cf-connecting-ip'] || req.ip || '');
+  const email = String((req.body || {}).email || '').toLowerCase().trim();
+  if (auth.limited('fi:' + ip, 10, 3600e3) || auth.limited('fe:' + email, 5, 3600e3)) return res.status(429).json({ error: 'Too many requests. Try again later.' });
+  await auth.requestReset(email, require('./mail'));
+  res.json({ ok: true, message: 'If that email has an account, a 6-digit code is on its way.' });
+}));
+router.post('/api/v1/auth/reset', sameSite, h(async (req, res) => {
+  const ip = String(req.headers['cf-connecting-ip'] || req.ip || '');
+  if (auth.limited('ri:' + ip, 20, 900e3)) return res.status(429).json({ error: 'Too many attempts. Wait 15 minutes.' });
+  const u = await auth.resetPassword(req.body || {});
+  auth.setCookie(req, res, u);
+  res.json({ ok: true });
+}));
 router.post('/api/v1/auth/logout', sameSite, (req, res) => { auth.clearCookie(req, res); res.json({ ok: true }); });
 router.get('/api/v1/auth/me', needUser, h(async (req, res) => {
   const t = req.user.tenant_id ? tenants.view(await tenants.get(req.user.tenant_id)) : null;
