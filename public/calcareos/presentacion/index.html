@@ -522,10 +522,25 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
       <div class="card stag d2"><span class="n">02 <span class="tag new">a la medida</span></span><h3>Orden de corte sin Excel</h3><p>Medición en obra desde el teléfono, orden generada, firma digital y envío a la máquina.</p></div>
       <div class="card stag d3"><span class="n">03 <span class="tag ok">simulador listo</span></span><h3>Inventario y retales</h3><p>Stock real, desperdicio por material y retales asignados entre obras, sincronizados con Fomplus.</p></div>
       <div class="card stag d4"><span class="n">04 <span class="tag new">a la medida</span></span><h3>Recibos por WhatsApp</h3><p>El conductor toma la foto del recibo en el puerto; el sistema lo registra y lo deja listo en Fomplus.</p></div>
-      <div class="card stag d5"><span class="n">05 <span class="tag new">a la medida</span></span><h3>Licitaciones</h3><p>Las convocatorias de las constructoras, en su sistema apenas se publican, si la plataforma permite conectarse.</p></div>
+      <div class="card stag d5"><span class="n">05 <span class="tag new">a la medida</span></span><h3>Licitaciones en Licify</h3><p>La invitación de la constructora llega a Licify; el sistema lee los planos y deja la cotización lista para aprobar.</p></div>
       <div class="card stag d6"><span class="n">06 <span class="tag new">a la medida</span></span><h3>Despachos y logística</h3><p>Desde los pedidos de Fomplus: entregas, rutas y conductores a la vista, para cumplir los 3 días hábiles.</p></div>
     </div>
     <p class="foot">Cada flujo se diseña con la persona que hoy lo hace. Contabilidad, conciliaciones y atención al cliente siguen en la misma línea.</p>
+  </section>
+
+  <!-- 11b licitaciones Licify -->
+  <section class="slide" data-t="De la licitación a la cotización">
+    <div class="kick">Licitaciones en Licify · <span class="tag new" style="margin-left:0">a la medida</span></div>
+    <h2>De la invitación en Licify <span class="grad">a la cotización, en horas.</span></h2>
+    <div class="grid g3 flows" style="margin-top:20px">
+      <div class="card stag d1"><span class="n">1 · LLEGA</span><h3>La invitación</h3><p>Licify avisa por correo; ese correo se reenvía a un buzón del sistema, o se suben los pliegos y planos.</p></div>
+      <div class="card stag d2"><span class="n">2 · SE LEE</span><h3>Los planos</h3><p>La IA despieza mesones, salpicaderos y zócalos, y suma los m² por cada piedra.</p></div>
+      <div class="card stag d3"><span class="n">3 · SE CRUZA</span><h3>Con Fomplus</h3><p>Existencias y costo por m² de cada referencia, y el mejor acomodo en la losa.</p></div>
+      <div class="card stag d4" style="border-color:rgba(34,211,238,.55)"><span class="n">4 · SE COTIZA</span><h3>Con el desperdicio real</h3><p>Material, desperdicio esperado y retales que se aprovechan, con precio y margen sugeridos.</p></div>
+      <div class="card stag d5"><span class="n">5 · SE APRUEBA</span><h3>Una persona decide</h3><p>Su equipo revisa y envía la oferta en Licify. El sistema nunca envía una oferta solo.</p></div>
+      <div class="card stag d6"><span class="n">6 · SE APRENDE</span><h3>Ganada o perdida</h3><p>Se registra el resultado y el precio, para que la siguiente cotización sea mejor.</p></div>
+    </div>
+    <p class="foot">Licify no publica una API. Se confirma con Licify si ofrece API o exportes; mientras tanto, se trabaja con los correos de invitación y los documentos descargados. No se ingresa a Licify con su contraseña ni se copian sus páginas.</p>
   </section>
 
   <!-- 12 sin parar la empresa -->
@@ -679,7 +694,7 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
-  <span id="cnt">1 / 16</span>
+  <span id="cnt">1 / 17</span>
 </div>
 
 <div class="gate" id="gate"><div class="box">
@@ -717,7 +732,8 @@ body.vert .fom{grid-template-columns:1fr!important;gap:14px}body.vert .fom ul.sy
     'El gerente lo ve en un tablero, como los instrumentos de un avión. El stock real por referencia, en metros cuadrados. El porcentaje de desperdicio por material, para saber qué piedra y qué medidas están costando más. Y las alertas de mínimos: cuando una referencia baja del umbral, se enciende antes de que falte en una obra. Usted puede probar el simulador; el enlace está al final de esta presentación.',
     'Y todo esto vive dentro de su Fomplus ERP Cloud. De Fomplus llega lo que ya existe: las referencias, las existencias, el costo por metro cuadrado de cada piedra y los pedidos de cada obra. Digit2AI calcula lo que hoy falta: el despiece, el acomodo en la losa, el desperdicio de cada corte y los retales que todavía sirven. Y a Fomplus vuelve el inventario real: el consumo de cada losa, el retal como una existencia nueva, y el desperdicio como un costo en pesos. Así, el inventario de Fomplus por fin coincide con el patio, y el costo de cada obra incluye lo que de verdad se perdió. Fomplus sigue siendo el sistema oficial, y nada se escribe en él sin la aprobación de una persona.',
     'Ahora, lo que significa en números, con las cifras aproximadas de la reunión. Si se cortan cinco mil metros cuadrados al mes, cada punto de desperdicio son cincuenta metros cuadrados. A un precio de entre cien y ciento cincuenta dólares por metro, cada punto recuperado vale entre cinco mil y siete mil quinientos dólares al mes en material. La meta de la prueba es bajar del quince por ciento a un rango entre dos punto cinco y cinco por ciento, y que los retales de una obra se asignen solos a otra. Es una estimación, no una garantía: la cifra real se mide con sus propios datos durante la prueba.',
-    'Y esto es solo el principio. El corte es el primer flujo; Digit2AI puede automatizar los demás que hoy consumen horas de su equipo. Del plano de la constructora al despiece, sin pasarlo a mano a Excel. De la medición en obra a la orden de corte firmada, desde el teléfono. Los retales asignados entre obras. Los recibos que llegan por WhatsApp, directo a Fomplus. Las licitaciones de las constructoras, si la plataforma permite conectarse. Y los despachos, con rutas y entregas a la vista. Cada uno se diseña con la persona que hoy lo hace.',
+    'Y esto es solo el principio. El corte es el primer flujo; Digit2AI puede automatizar los demás que hoy consumen horas de su equipo. Del plano de la constructora al despiece, sin pasarlo a mano a Excel. De la medición en obra a la orden de corte firmada, desde el teléfono. Los retales asignados entre obras. Los recibos que llegan por WhatsApp, directo a Fomplus. Las licitaciones que llegan por Licify. Y los despachos, con rutas y entregas a la vista. Cada uno se diseña con la persona que hoy lo hace.',
+    'Veamos las licitaciones. Las constructoras invitan a Calcáreos a cotizar por Licify. Hoy, armar esa cotización toma días. Con Digit2AI, el correo de invitación de Licify se reenvía al sistema, o se suben los pliegos y los planos. La inteligencia artificial despieza los planos y suma los metros cuadrados por piedra. Luego cruza con Fomplus las existencias y el costo de cada referencia, calcula el mejor acomodo en la losa, y arma la cotización con el desperdicio real y los retales que se aprovechan. Una persona de su equipo la revisa y la envía en Licify: el sistema nunca envía una oferta solo. Y cuando Licify informa el resultado, se registra si se ganó o se perdió, para que la siguiente cotización sea mejor. Licify no publica una conexión abierta, así que se confirma con ellos; mientras tanto, se trabaja con los correos y los documentos.',
     'Todo esto se hace sin parar la empresa. Trabajamos en paralelo: su equipo sigue usando Fomplus, Excel y WhatsApp mientras el sistema aprende y se valida. Nadie tiene que cambiar su forma de trabajar el primer día. Nosotros capacitamos al gerente y a su equipo, y el sistema avisa cuando algo se sale de lo normal, antes de que se convierta en pérdida. Y solo se manejan datos operativos, no personales, conforme a la Ley mil quinientos ochenta y uno de dos mil doce.',
     'Sobre la inversión, una idea simple: Calcáreos no compra un software. Primero medimos el desperdicio y el tiempo reales, con sus datos. Después, la inversión se define a partir del ahorro medido, como una porción pequeña de lo que se recupera. Y cada etapa la aprueba usted antes de empezar. Por eso el precio no debería ser una preocupación: se conversa con el ahorro ya medido sobre la mesa.',
     'Se empieza con una prueba de concepto de cuatro semanas. Semana uno: los requisitos, con su equipo. Semana dos: el simulador con sus datos reales, para que lo validen. Semana tres: el desarrollo y la conexión con Fomplus, su WhatsApp y sus máquinas. Semana cuatro: la aprobación, midiendo el desperdicio con datos reales. El reloj empieza el día de la reunión con su equipo.',
