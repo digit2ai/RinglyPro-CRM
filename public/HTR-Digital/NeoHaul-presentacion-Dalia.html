@@ -128,6 +128,9 @@ td.r,th.r{text-align:right}
 .wf .c.ai b{color:#5b4d12}
 .wf .c.off{background:repeating-linear-gradient(90deg,transparent,transparent 6px,rgba(0,0,0,.035) 6px,rgba(0,0,0,.035) 7px)}
 .wf .lane-ai{background:#f3ead0;border-radius:9px;color:#5b4d12}
+.wf .c.bad{background:#f7e4e1;border:1px solid #e5bdb6;color:#5a2620}
+.wf .lane-bad{background:#f7e4e1;border-radius:9px;color:#7a2a20}
+.wfb.bad div b{color:#f4b3a8}
 .wfb{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
 .wfb div{background:var(--ink);color:#f1f4fb;border-radius:11px;padding:8px 12px;font-size:13.5px;line-height:1.35}
 .wfb b{color:#e2cf8c;display:block;font-size:14px}
@@ -185,19 +188,13 @@ td.r,th.r{text-align:right}
 <section class="slide" data-t="El proceso de hoy">
   <div class="brand"><b>DIGIT2AI</b> · GRUPO NEOHAUL</div>
   <p class="eyebrow">1 · El proceso de hoy</p>
-  <h2>WhatsApp, papel y varios Excel a mano</h2>
-  <div class="grid g4" style="margin-top:14px">
-    <div class="ts"><div class="n">1</div><div><b>Pedido</b>El ingeniero de HTR pide camiones.<br><span class="tag wa">WhatsApp</span></div></div>
-    <div class="ts"><div class="n">2</div><div><b>Asignación</b>Andrés asigna de memoria; busca TTS, SEMAQSA o externos.<br><span class="tag wa">WhatsApp</span></div></div>
-    <div class="ts"><div class="n">3</div><div><b>Viaje</b>Ticket con el peso y vale.<br><span class="tag pp">Papel</span></div></div>
-    <div class="ts"><div class="n">4</div><div><b>Registro</b>Tickets a un Excel por planta; importe a mano.<br><span class="tag xl">Excel</span></div></div>
-    <div class="ts"><div class="n">5</div><div><b>Lunes</b>Vales y Excel de estimación a los ingenieros.<br><span class="tag xl">Excel</span><span class="tag wa">WhatsApp</span></div></div>
-    <div class="ts"><div class="n">6</div><div><b>Factura</b>Requisición, CFDI y Excel de recepción.<br><span class="tag xl">Excel</span></div></div>
-    <div class="ts"><div class="n">7</div><div><b>Cobro</b>HTR paga cada semana.<br><span class="tag pp">Transferencia</span></div></div>
-    <div class="ts"><div class="n">8</div><div><b>Gastos</b>Todo en «GENERAL»; diésel en una factura.<br><span class="tag xl">Excel</span><span class="tag wa">WhatsApp</span></div></div>
-    <div class="ts"><div class="n">9</div><div><b>Jueves</b>Osbaldo revisa pagos y flujo con el contador.<br><span class="tag xl">Excel</span></div></div>
-    <div class="ts"><div class="n">10</div><div><b>Nómina</b>Asistencias y comisiones del 8 al 10 %.<br><span class="tag xl">Excel</span></div></div>
-    <div class="ts"><div class="n">11</div><div><b>Taller</b>Servicios sin horas, refacciones ni costo.<br><span class="tag xl">Excel</span></div></div>
+  <h2 style="font-size:30px;margin-bottom:6px">Hoy, las personas lo hacen todo <span style="color:var(--bad)">a mano.</span></h2>
+  <div class="wfx"><div class="wf"><div></div><div class="hd"><i>PASOS 1 Y 2</i>Pedido</div><div class="hd"><i>PASO 3</i>Viaje</div><div class="hd"><i>PASO 4</i>Registro</div><div class="hd"><i>PASO 5</i>Estimación</div><div class="hd"><i>PASOS 6 Y 7</i>Factura y cobro</div><div class="hd"><i>PASO 8</i>Gastos y diésel</div><div class="hd"><i>PASO 9</i>Jueves</div><div class="hd last"><i>PASOS 10 Y 11</i>Nómina y taller</div><div class="ln"><span>Chofer<small>ticket y vale</small></span></div><div class="c off"></div><div class="c on">Recibe ticket con el peso y llena el vale</div><div class="c on">Entrega ticket y vale, o manda foto</div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="ln"><span>Andrés<small>todo a mano</small></span></div><div class="c on">Asigna de memoria; busca TTS, SEMAQSA o externos llamada por llamada</div><div class="c off"></div><div class="c on">Pasa cada ticket a un Excel por planta y calcula el importe</div><div class="c on">Arma la estimación y junta los vales</div><div class="c on">Llena la requisición; la auxiliar emite el CFDI</div><div class="c on">Registra gastos; el diésel llega en una factura</div><div class="c on">Prepara los Excel para el jueves</div><div class="c on">Asistencias y comisiones a mano; taller sin horas ni costo</div><div class="ln lane-bad"><span>Excel y papel<small>varias copias</small></span></div><div class="c bad">WhatsApp</div><div class="c bad">Papel</div><div class="c bad">Excel por planta</div><div class="c bad">Excel de estimación</div><div class="c bad">Excel de recepción</div><div class="c bad">Todo a «GENERAL»</div><div class="c bad">Varios Excel</div><div class="c bad">Excel de nómina y de taller</div><div class="ln"><span>Osbaldo<small>con el contador</small></span></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c off"></div><div class="c on">Revisa pagos y flujo con el contador, Excel por Excel</div><div class="c off"></div><div class="ln"><span>HTR<small>cliente</small></span></div><div class="c on">El ingeniero pide por WhatsApp</div><div class="c off"></div><div class="c off"></div><div class="c on">Recibe la estimación los lunes</div><div class="c on">Paga cada semana</div><div class="c off"></div><div class="c off"></div><div class="c off"></div></div></div>
+  <div class="wfb bad">
+    <div><b>Se captura 3 o 4 veces</b>Ticket, vale, Excel de planta, estimación y factura.</div>
+    <div><b>Todo pasa por Andrés</b>Copia, calcula y arma cada documento a mano.</div>
+    <div><b>Varios Excel el jueves</b>Osbaldo decide los pagos juntando archivos.</div>
+    <div><b>Sin costo por camión</b>Gastos en «GENERAL» y el diésel en una sola factura.</div>
   </div>
 </section>
 
@@ -406,7 +403,7 @@ td.r,th.r{text-align:right}
     <p style="flex:1">¿Algo no es así? Aquí está todo lo que dice esta presentación, lámina por lámina. Osbaldo puede corregir el flujo actual o el futuro y enviárnoslo.</p>
     <button class="gbtn" id="txOpen" style="font-size:15px;padding:12px 20px;white-space:nowrap">Ver transcripción</button>
   </div>
-  <p style="margin-top:16px"><button type="button" class="gbtn" data-d2-book data-brand="digit2ai" data-lang="es" data-source="HTR-Digital/NeoHaul-presentacion">Agendar una reunión &rarr;</button></p>
+  <p style="margin-top:16px"><a class="gbtn ghost" href="NeoHaul-proceso-actual-y-futuro.pdf" download="NeoHaul-proceso-actual-y-futuro.pdf" style="text-decoration:none;margin-right:10px">Descargar PDF: proceso actual y futuro</a><button type="button" class="gbtn" data-d2-book data-brand="digit2ai" data-lang="es" data-source="HTR-Digital/NeoHaul-presentacion">Agendar una reunión &rarr;</button></p>
   <p style="margin-top:14px;font-size:15px;color:var(--mut)">Manuel Stagg · Digit2AI · mstagg@digit2ai.com · <button class="gbtn ghost" id="again" style="font-size:14px;padding:8px 16px">Ver de nuevo</button></p>
 </section>
 
