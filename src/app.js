@@ -3260,6 +3260,29 @@ app.get('/debug/airadar-error', (req, res) => {
 });
 
 // =====================================================
+// MANUEL'S STYLE STUDIO — private AI wardrobe + outfit matcher (/style-studio/)
+// Owner-only (CRM password), 100-outfit matrix, rules stylist, illustration
+// preview, optional FASHN try-on behind explicit consent, PNG/PDF exports.
+// =====================================================
+let styleStudioError = null;
+try {
+  const styleStudioApp = require('../verticals/stylestudio/src/index');
+  app.get('/style-studio', (req, res, next) => {
+    if (!req.originalUrl.split('?')[0].endsWith('/')) return res.redirect(301, '/style-studio/');
+    next();
+  });
+  app.get(['/wardrobe', '/wardrobe/'], (req, res) => res.redirect(301, '/style-studio/'));
+  app.use('/style-studio', styleStudioApp);
+  console.log('Style Studio mounted at /style-studio');
+} catch (error) {
+  styleStudioError = error;
+  console.log('⚠️ Style Studio not available:', error.message);
+}
+app.get('/debug/stylestudio-error', (req, res) => {
+  res.json({ service: 'Style Studio', available: !styleStudioError, error: styleStudioError ? { message: styleStudioError.message } : null });
+});
+
+// =====================================================
 // CITI OPPORTUNITY TRACKER — private job hunter for Citi requisitions (/citi-tracker/)
 // Watches Citi's Workday feed daily, scores each requisition against the owner's
 // own résumé, tailors a résumé + PDF per requisition, and tracks the board from

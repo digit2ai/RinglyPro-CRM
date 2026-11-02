@@ -82,6 +82,11 @@ const REGISTRY = {
   salud_financiera: { status: 'enabled', names: ['Salud Financiera'], disabled_on: null,
     sites: ['digit2ai-projects/src/routes/saludFinanciera.js modelClient() (POST /projects/api/salud-financiera/lina)'],
     off_behaviour: "deterministic intent reader, composed_by:'heuristic'" },
+  // ENABLED on creation 2026-11-01: owner-only wardrobe. The only model call
+  // re-words one outfit's stylist note on request (Haiku); scores are rules.
+  stylestudio:      { status: 'enabled', names: ["Manuel's Style Studio"], disabled_on: null,
+    sites: ['verticals/stylestudio/src/llm.js (POST /style-studio/api/v1/outfits/:id/advice)'],
+    off_behaviour: "rules text, composed_by:'rules', is_simulated:true" },
   speakup:          { status: 'enabled', names: ['SpeakUp'], disabled_on: D,
     sites: ['src/factory/llm.js (API client)', 'src/factory/claude-subscription.js available() (subscription CLI: chat, research, planner)', 'src/services/ai-editor.js', 'src/claudecode/runner.js (Claude Code tab)'],
     off_behaviour: 'labelled heuristic/offline replies; Claude Code runs fail with the reason',
