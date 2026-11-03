@@ -87,6 +87,7 @@ async function init() {
 
   initState.seeded = await seedAll();
   initState.ready = true;
+  try { if (require('./services/agent').start()) console.log('[citijobs] daily agent scheduled'); } catch (e) { console.warn('[citijobs] scheduler not started', e.message); }
 }
 
 init().catch((e) => {

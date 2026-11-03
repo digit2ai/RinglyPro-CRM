@@ -3,7 +3,8 @@
 /**
  * The daily hunter.
  *
- * Off by default behind CITIJOBS_GO=1; state is visible at /citi-tracker/health
+ * Runs once a day in production (owner request 2026-11-03); CITIJOBS_GO=0 stops
+ * it, CITIJOBS_GO=1 forces it outside production. State is visible at /citi-tracker/health
  * and /api/v1/agent/status, never hidden in env.
  *
  * SAFETY, in the order each could go wrong:
@@ -29,7 +30,40 @@ const DETAIL_CAP = Number(process.env.CITIJOBS_DETAIL_CAP || 60);
 const COST_CAP_CENTS = Number(process.env.CITIJOBS_COST_CAP_USD || 0.5) * 100;
 
 function today() { return new Date().toISOString().slice(0, 10); }
-function enabled() { return String(process.env.CITIJOBS_GO || '') === '1'; }
+function enabled() {
+  const v = String(process.env.CITIJOBS_GO || '').toLowerCase();
+  if (v === '0' || v === 'off') return false;
+  return v === '1' || v === 'on' || process.env.NODE_ENV === 'production';
+}
+
+/**
+ * THE SCHEDULE. Before 2026-11-03 CITIJOBS_GO gated a scheduler that did not
+ * exist: the agent only ever ran when someone pressed Run. Checks every
+ * 30 minutes; from 7:00 New York it runs once per tenant per day. The daily
+ * claim (unique on tenant_id+run_date for trigger='schedule') is what keeps two
+ * Render instances from both running it.
+ */
+let timer = null;
+function start() {
+  if (timer || !enabled()) return false;
+  const tick = async () => {
+    const hour = Number(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+    if (hour < Number(process.env.CITIJOBS_RUN_HOUR || 7)) return;
+    try {
+      const rows = await Profile.findAll({ where: { active: true }, attributes: ['tenant_id'] });
+      for (const t of [...new Set(rows.map((r) => r.tenant_id))]) {
+        try {
+          const out = await runDaily(t, { trigger: 'schedule' });
+          if (!out.skipped) console.log('[citijobs] scheduled run', t, JSON.stringify({ new: out.reqs_new, scored: out.scored, boarded: out.boarded }));
+        } catch (e) { console.warn('[citijobs] scheduled run failed', t, e.message); }
+      }
+    } catch (e) { console.warn('[citijobs] schedule tick failed', e.message); }
+  };
+  timer = setInterval(tick, 30 * 60 * 1000);
+  if (timer.unref) timer.unref();
+  setTimeout(tick, 60 * 1000).unref?.();
+  return true;
+}
 
 /** Claim the day. Returns the Run row, or null when another instance holds it. */
 async function claim(tenant_id, trigger) {
@@ -212,6 +246,19 @@ async function closeSweep(tenant_id, budget, run) {
   return closed;
 }
 
+/**
+ * Write a score, replacing an earlier one. Vetoes are re-evaluated every run
+ * (see scoreProfile), so a row for the same profile+employer+req can already
+ * exist; a plain INSERT hit cj_matches_prof_emp_req_uq and killed every run
+ * from 2026-08-14 to 2026-10-03 with a bare 'Validation error'.
+ */
+async function saveMatch(fields) {
+  const where = { tenant_id: fields.tenant_id, profile_id: fields.profile_id, employer: fields.employer, req_id: fields.req_id };
+  const row = await Match.findOne({ where });
+  if (row) { Object.assign(row, fields); return row.save(); }
+  return Match.create(fields);
+}
+
 /** Score and board one profile's fresh candidates. */
 async function scoreProfile(tenant_id, profile, run, budgetCents) {
   const tracked = await Tracked.findAll({ where: { tenant_id, profile_id: profile.id }, attributes: ['req_id', 'employer'] });
@@ -245,7 +292,7 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
     if (!prefilter.shouldScore(pre, profile)) {
       // Still record the deterministic verdict so the pool is explainable and
       // the same requisition is not re-evaluated tomorrow for free.
-      await Match.create({
+      await saveMatch({
         tenant_id, profile_id: profile.id, employer: req.employer, req_id: req.req_id,
         score: pre.score, rationale: pre.reasons.slice(0, 2).join('; ') || 'below pre-filter floor',
         scored_by: 'heuristic', is_simulated: true, cost_cents: 0
@@ -263,7 +310,7 @@ async function scoreProfile(tenant_id, profile, run, budgetCents) {
   let boarded = 0;
   for (const r of results) {
     const scoredReq = candidates.find((c) => c.req_id === r.req_id);
-    await Match.create({
+    await saveMatch({
       tenant_id, profile_id: profile.id, employer: (scoredReq && scoredReq.employer) || 'citi', req_id: r.req_id,
       score: r.score, rationale: r.rationale,
       scored_by: r.scored_by, is_simulated: r.is_simulated, model: r.model,
@@ -429,4 +476,4 @@ async function importReq(tenant_id, input, { source = 'manual', employer = null 
   return row;
 }
 
-module.exports = { runDaily, claim, upsertReq, fillDetails, closeSweep, scoreProfile, importReq, enabled, today };
+module.exports = { start, runDaily, claim, upsertReq, fillDetails, closeSweep, scoreProfile, importReq, enabled, today };

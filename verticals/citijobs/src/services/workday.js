@@ -81,7 +81,7 @@ async function listAll({ searchText, maxPages = 5, pageSize = 20, cfg, budget } 
   let total = 0;
   for (let page = 0; page < maxPages; page++) {
     const r = await listJobs({ searchText, limit: pageSize, offset: page * pageSize, cfg, budget });
-    total = r.total;
+    if (page === 0) total = r.total;   // later pages report 0
     out.push(...r.postings);
     if (r.postings.length < pageSize) break;
   }

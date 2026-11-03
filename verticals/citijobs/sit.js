@@ -829,6 +829,26 @@ async function cleanup() {
     await new Promise((r) => server.close(r));
   }
 
+  // ── Agent run regressions (2026-11-03) ─────────────────────────────────────
+  {
+    const src = require('fs').readFileSync(require('path').join(__dirname, 'src/services/agent.js'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    ok('a re-evaluated veto updates its match row instead of a plain INSERT',
+      !/Match\.create\(\{\s*tenant_id, profile_id: profile\.id/.test(src) && /async function saveMatch/.test(src));
+    ok('the daily agent has a real scheduler, started from init',
+      /function start\(\)/.test(src) && /trigger: 'schedule'/.test(src)
+      && /services\/agent'\)\.start\(\)/.test(require('fs').readFileSync(require('path').join(__dirname, 'src/index.js'), 'utf8')));
+    const prevGo = process.env.CITIJOBS_GO, prevEnv = process.env.NODE_ENV;
+    const ag = require('./src/services/agent');
+    process.env.CITIJOBS_GO = ''; process.env.NODE_ENV = 'production';
+    ok('the agent is on by default in production', ag.enabled() === true);
+    process.env.CITIJOBS_GO = '0';
+    ok('CITIJOBS_GO=0 switches it off', ag.enabled() === false);
+    process.env.CITIJOBS_GO = prevGo || ''; process.env.NODE_ENV = prevEnv || '';
+    const wd = require('fs').readFileSync(require('path').join(__dirname, 'src/services/workday.js'), 'utf8');
+    ok('a query total is read from page one only (later pages report 0)', /if \(page === 0\) total = r\.total/.test(wd));
+  }
+
   // ── Done ──────────────────────────────────────────────────────────────────
   await cleanup();
   console.log(`\n${'-'.repeat(58)}`);
