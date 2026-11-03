@@ -31,7 +31,7 @@ const REGISTRY = {
     adapter: 'workday',
     // tenant:datacenter:site. wd1/wd3/wd103 return 422; wd5 is the live one.
     cfg: parseTriple(process.env.CITIJOBS_WORKDAY || 'citi:wd5:2', ['tenant', 'dc', 'site']),
-    id_pattern: /^\d{8}$/,                    // 26974948
+    id_pattern: /^(?:\d{8}|26\d{7})$/,                  // 26974948
     careers_url: 'https://jobs.citi.com/job/tampa',
     // Workday caps a search's reported total at 2000, so discovery must be many
     // narrow queries deduped by req id rather than one firehose.
@@ -69,7 +69,7 @@ const REGISTRY = {
     name: 'JPMorgan Chase',
     adapter: 'oracle',
     cfg: parseTriple(process.env.CITIJOBS_ORACLE_JPMC || 'jpmc:CX_1001', ['tenant', 'site']),
-    id_pattern: /^2\d{8}$/,                   // 210712563
+    id_pattern: /^2(?!6)\d{8}$/,                   // 210712563
     careers_url: 'https://www.jpmorganchase.com/careers',
     // Oracle reports the true count, so a query here can genuinely be paged.
     total_is_capped: false

@@ -847,6 +847,10 @@ async function cleanup() {
     process.env.CITIJOBS_GO = prevGo || ''; process.env.NODE_ENV = prevEnv || '';
     const wd = require('fs').readFileSync(require('path').join(__dirname, 'src/services/workday.js'), 'utf8');
     ok('a query total is read from page one only (later pages report 0)', /if \(page === 0\) total = r\.total/.test(wd));
+    const emps = require('./src/services/employers');
+    ok('a 9-digit Citi id (26xxxxxxx) is Citi, not JPMorgan', (emps.detect('261003246') || {}).key === 'citi'
+      && emps.reqIdFrom('citi', 'Job Req Id: 261003246') === '261003246');
+    ok('a 9-digit JPMorgan id (21xxxxxxx) stays JPMorgan', (emps.detect('210712563') || {}).key === 'jpmorgan');
   }
 
   // ── Done ──────────────────────────────────────────────────────────────────

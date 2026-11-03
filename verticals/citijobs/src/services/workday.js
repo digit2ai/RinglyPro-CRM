@@ -156,7 +156,9 @@ function reqIdOf(posting, cfg) {
  * Workday-shaped path forms below stay permissive: their shape already proves
  * which feed they came from.
  */
-const CITI_BARE = /^\d{8}$/;
+// Since late 2026 Citi also issues 9-digit ids (261003246), always starting 26;
+// JPMorgan's 9-digit ids start 21 (see employers.js), so the two stay apart.
+const CITI_BARE = /^(?:\d{8}|26\d{7})$/;
 
 function reqIdFromInput(input) {
   const s = String(input || '').trim();
@@ -173,9 +175,9 @@ function reqIdFromInput(input) {
   if (m) return m[1];
   // jobs.citi.com deep links carry a Phenom id, not the req id — but people
   // often paste text with the req id labelled.
-  m = s.match(/(?:req|requisition|job)[-_ ]?(?:id)?[-_ =:]*(\d{8})\b/i);
+  m = s.match(/(?:req|requisition|job)[-_ ]?(?:id)?[-_ =:]*(26\d{7}|\d{8})\b/i);
   if (m) return m[1];
-  const nums = s.match(/\b\d{8}\b/g);
+  const nums = s.match(/\b(?:26\d{7}|\d{8})\b/g);
   return nums && nums.length === 1 ? nums[0] : null;
 }
 

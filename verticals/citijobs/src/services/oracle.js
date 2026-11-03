@@ -95,12 +95,12 @@ function reqIdOf(posting) {
 function reqIdFromInput(input) {
   const s = String(input || '').trim();
   if (!s) return null;
-  if (/^2\d{8}$/.test(s)) return s;                       // bare id, e.g. 210712563
+  if (/^2(?!6)\d{8}$/.test(s)) return s;                       // bare id, e.g. 210712563
   const m = s.match(/\/job\/(\d{6,})/);                   // …/sites/CX_1001/job/210712563
   if (m) return m[1];
   const q = s.match(/[?&](?:Id|jobId|requisitionId)=(\d{6,})/i);
   if (q) return q[1];
-  const nums = s.match(/\b2\d{8}\b/g);
+  const nums = s.match(/\b2(?!6)\d{8}\b/g);
   return nums && nums.length === 1 ? nums[0] : null;
 }
 
