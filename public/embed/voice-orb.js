@@ -266,8 +266,18 @@
       speakToken++;
       if (curSource) { try { curSource.onended = null; curSource.stop(); } catch (e) {} curSource = null; }
     }
+    // Written replies carry contact data in standard form (name@mail.com,
+    // +58 414-361-0309, 31-10-2026); only the SPOKEN copy turns an email into
+    // words, so the voice reads it naturally and the chat stays clean.
+    function speakEmails(t) {
+      var es = (typeof lang === 'undefined' ? 'en' : lang) === 'es';
+      return String(t).replace(/([A-Za-z0-9._%+-]+)@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/g, function (m, u, d) {
+        var dot = es ? ' punto ' : ' dot ';
+        return u.replace(/\./g, dot) + (es ? ' arroba ' : ' at ') + d.replace(/\./g, dot);
+      });
+    }
     function cleanForTTS(t) {
-      return String(t)
+      return speakEmails(t)
         .replace(/\*\*|\*|__|_|#+|>/g, ' ')
         .replace(/^\s*[-•]\s+/gm, ' ')
         .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')

@@ -648,8 +648,8 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     <div class="calc">
       <div class="card">
         <div class="sl"><label>Personas que copian datos o atienden lo mismo <b id="cPv">3</b></label><input type="range" id="cP" min="1" max="30" value="3"></div>
-        <div class="sl"><label>Horas por semana, por persona, en tareas repetitivas <b id="cHv">10</b></label><input type="range" id="cH" min="1" max="30" value="10"></div>
-        <div class="sl"><label>Costo por hora de esa persona (USD) <b id="cCv">$8</b></label><input type="range" id="cC" min="3" max="60" value="8"></div>
+        <div class="sl"><label>Horas diarias por persona en tareas repetitivas <b id="cHv">2</b></label><input type="range" id="cH" min="1" max="8" value="2"></div>
+        <div class="sl"><label>Costo por semana de cada persona (USD) <b id="cCv">$320</b></label><input type="range" id="cC" min="40" max="2400" step="10" value="320"></div>
         <div class="sl"><label>Parte que se automatiza (supuesto que usted ajusta) <b id="cAv">50%</b></label><input type="range" id="cA" min="10" max="80" step="5" value="50"></div>
       </div>
       <div class="card res">
@@ -659,7 +659,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
         <div class="row2"><span>Valor de las horas liberadas, por mes</span><b id="cVal">$0</b></div>
         <div class="row2"><span>Suscripción mensual</span><b>$388</b></div>
         <div class="row2"><span>Diferencia mensual</span><b id="cDif">$0</b></div>
-        <p class="foot" style="margin-top:8px">Calculado con sus propios datos. El porcentaje es un supuesto; el diagnóstico lo mide con su operación real.</p>
+        <p class="foot" style="margin-top:8px">Calculado con sus propios datos. Supuestos: 5 días y 40 horas de trabajo por semana; el porcentaje también es un supuesto; el diagnóstico lo mide con su operación real.</p>
       </div>
     </div>
   </section>
@@ -929,7 +929,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     'Y este es el simulador de operación. Un cliente pide por WhatsApp. El pedido se registra solo, se asigna a la persona o al vehículo disponible, se marca como entregado y se factura. Cada tarjeta avanza sin que nadie vuelva a escribir el pedido.',
     'La voz también trabaja como su gerente. Buenos días, soy Dalia, y este es el reporte de su semana. Las ventas suman cuarenta y ocho mil doscientos dólares, doce por ciento más que la semana pasada. Tiene nueve mil setecientos cincuenta dólares por cobrar, con tres facturas vencidas. Se entregaron ciento ochenta y cuatro pedidos, casi todos a tiempo. Pero el margen bajó a dieciocho por ciento. Sus puntos débiles son la cobranza y el margen. El diagnóstico: las facturas salen seis días después de la entrega, y dos rutas regresan vacías. Mi prescripción: facturar el mismo día de la entrega, enviar un recordatorio automático a los tres clientes, y combinar las dos rutas los martes. Usted decide qué se aplica. Todos estos son datos de ejemplo.',
     'Este es un caso real, de una empresa de transporte de materiales que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Antes, cada viaje se capturaba tres o cuatro veces, y la estimación y la factura se armaban a mano. Con la plataforma, cada viaje es una foto y una confirmación, y la factura sale lista desde los viajes. La cobranza siempre está a la vista, los gastos se ven por camión y por obra, y la reunión semanal de pagos usa un solo tablero. Y lo más importante: los choferes siguen trabajando igual.',
-    'Ahora calcule su propio caso. Con las barras usted indica cuántas personas copian datos o atienden lo mismo, cuántas horas por semana y cuánto cuesta cada hora. El simulador le muestra cuánto le cuesta hoy el trabajo manual y cuántas horas se liberan cada mes. El porcentaje que se automatiza es un supuesto que usted ajusta. En el diagnóstico lo medimos con su operación real.',
+    'Ahora calcule su propio caso. Con las barras usted indica cuántas personas copian datos o atienden lo mismo, cuántas horas al día dedica cada una a tareas repetitivas y cuánto cuesta cada persona por semana. El simulador le muestra cuánto le cuesta hoy el trabajo manual y cuántas horas se liberan cada mes. El porcentaje que se automatiza es un supuesto que usted ajusta. En el diagnóstico lo medimos con su operación real.',
     'Así funciona por dentro. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agente la atiende: mensajería, contabilidad, operación o reportes. Y el resultado vuelve a su sistema. Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo, y usted no contrata ninguno por separado.',
     'La diferencia es clara. Hacerlo a mano, o contratar, significa horario de oficina, capacitar a cada persona y escribir el mismo dato varias veces. Con Synthex SAI, su empresa atiende las veinticuatro horas, el mismo sistema atiende más volumen cuando usted crece, cada dato se captura una sola vez, y el costo empieza en trescientos ochenta y ocho dólares al mes. Económico, pero muy eficiente.',
     'Y usted mantiene el control. Su información viaja con cifrado punto a punto, en un entorno aislado para su empresa, y nunca se usa para entrenar modelos públicos. Pagar, enviar o publicar siempre espera la aprobación de una persona. Cada acción queda registrada. Si un dato no existe, el sistema lo dice. No lo adivina. Toda su data y sus reportes se exportan en Excel, CSV o base de datos cuando quiera. Y el soporte Hypercare resuelve las incidencias de inmediato, con especialistas detrás.',
@@ -1052,7 +1052,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     document.getElementById('cHv').textContent = h;
     document.getElementById('cCv').textContent = '$' + c;
     document.getElementById('cAv').textContent = Math.round(a * 100) + '%';
-    var hrsMes = p * h * 52 / 12, man = hrsMes * c, lib = hrsMes * a, val = lib * c, dif = val - 388;
+    var hrsMes = p * h * 5 * 52 / 12, hora = c / 40, man = hrsMes * hora, lib = hrsMes * a, val = lib * hora, dif = val - 388;
     document.getElementById('cHrs').textContent = Math.round(lib).toLocaleString('es-MX') + ' h';
     document.getElementById('cMan').textContent = money(man);
     document.getElementById('cVal').textContent = money(val);

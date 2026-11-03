@@ -88,16 +88,20 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
 
   // savings estimate = the landing calculator's formula (10 people, 20 h, $3, 50% -> 433 h, $2,600, $1,300, +$912)
   const { estimate } = require('../src/routes/synthex-lina')._test;
-  let e = estimate({ personas: 10, horas_semana: 20, costo_hora: 3, porcentaje_automatizado: 50 });
+  let e = estimate({ personas: 10, horas_dia: 4, costo_semana: 120, porcentaje_automatizado: 50 });
   ok(e.ok && e.horas_liberadas_mes === 433 && e.costo_manual_mes_usd === 2600 && e.valor_horas_liberadas_mes_usd === 1300 && e.diferencia_mes_usd === 912, 'same numbers as the page calculator');
-  e = estimate({ personas: 5, horas_semana: 20, costo_hora: 3 });
+  e = estimate({ personas: 5, horas_dia: 4, costo_semana: 120 });
   ok(e.ok && e.datos.porcentaje_es_supuesto && e.datos.porcentaje_automatizado === 50, 'missing percentage = 50% assumption, flagged');
-  ok(estimate({ personas: 5, horas_semana: 20, costo_hora: 3, porcentaje_automatizado: 0.4 }).datos.porcentaje_automatizado === 40, '0.4 read as 40%');
-  ok(!estimate({ personas: 0, horas_semana: 20, costo_hora: 3 }).ok, 'bad input refused');
-  const dc = await post('/api/synthex-lina/calc', { personas: 1, horas_semana: 1, costo_hora: 1 }, { 'X-Forwarded-For': '8.8.8.8' });
+  ok(estimate({ personas: 5, horas_dia: 4, costo_semana: 120, porcentaje_automatizado: 0.4 }).datos.porcentaje_automatizado === 40, '0.4 read as 40%');
+  ok(!estimate({ personas: 0, horas_dia: 4, costo_semana: 120 }).ok, 'bad input refused');
+  const dc = await post('/api/synthex-lina/calc', { personas: 1, horas_dia: 1, costo_semana: 40 }, { 'X-Forwarded-For': '8.8.8.8' });
   ok(dc.status === 404, 'calc refused from outside');
   const pageSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/index.html'), 'utf8');
-  ok(/hrsMes = p \* h \* 52 \/ 12/.test(pageSrc) && /dif = val - 388/.test(pageSrc), 'page calculator still uses the formula Lina copies');
+  ok(/hrsMes = p \* h \* 5 \* 52 \/ 12, hora = c \/ 40/.test(pageSrc) && /dif = val - 388/.test(pageSrc), 'page calculator still uses the formula Lina copies');
+  const deckSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/index.html'), 'utf8');
+  ok(/hrsMes = p \* h \* 5 \* 52 \/ 12, hora = c \/ 40/.test(deckSrc) && /Horas diarias por persona/.test(deckSrc) && /Costo por semana de cada persona/.test(deckSrc), 'deck calculator uses the same daily-hours / weekly-cost formula');
+  const lsrc = require('fs').readFileSync(path.join(__dirname, '../src/routes/synthex-lina.js'), 'utf8');
+  ok(/personas \* horas \* 5 \* 52 \/ 12, costo = semana \/ 40/.test(lsrc), 'Lina estimate uses the same formula');
 
   // the tools are closed to the internet
   let d = await post('/api/synthex-lina/book', { nombre: 'X', email: 'a@b.co', telefono: '5551234567', start: slotA.toISOString(), confirmado: true }, { 'X-Forwarded-For': '8.8.8.8' });

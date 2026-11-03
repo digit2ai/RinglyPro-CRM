@@ -133,29 +133,30 @@ router.get('/slots', onlyBrain, async (req, res) => {
 });
 
 // ── savings estimate: the SAME arithmetic as the calculator on synthexsai.com ──
-// hours/month = people x hours/week x 52 / 12; value = freed hours x hourly cost;
+// hours/month = people x hours/DAY x 5 x 52 / 12; hourly cost = WEEKLY cost / 40;
+// value = freed hours x hourly cost (Gustavo's v2.4 order: daily hours, weekly cost);
 // difference = value - the USD 388 subscription. Lina never does this math herself:
 // a model that multiplies in its head is a model that quotes a wrong saving.
 const SUBSCRIPTION = 388;
 function estimate(b) {
   const n = (v) => Number(String(v == null ? '' : v).replace(/[^0-9.,-]/g, '').replace(',', '.'));
-  const personas = n(b.personas), horas = n(b.horas_semana), costo = n(b.costo_hora);
+  const personas = n(b.personas), horas = n(b.horas_dia), semana = n(b.costo_semana);
   let pct = n(b.porcentaje_automatizado);
   const supuesto = !isFinite(pct) || pct <= 0;
   if (supuesto) pct = 50;
   if (pct > 0 && pct <= 1) pct *= 100;
   const bad = [];
   if (!(personas >= 1 && personas <= 1000)) bad.push('personas');
-  if (!(horas >= 1 && horas <= 80)) bad.push('horas_semana');
-  if (!(costo > 0 && costo <= 1000)) bad.push('costo_hora');
+  if (!(horas >= 0.5 && horas <= 12)) bad.push('horas_dia');
+  if (!(semana > 0 && semana <= 20000)) bad.push('costo_semana');
   if (!(pct >= 5 && pct <= 90)) bad.push('porcentaje_automatizado');
   if (bad.length) return { ok: false, error: 'faltan o no son válidos: ' + bad.join(', '), nota: 'Pide solo esos datos.' };
-  const hrsMes = personas * horas * 52 / 12;
+  const hrsMes = personas * horas * 5 * 52 / 12, costo = semana / 40;
   const manual = hrsMes * costo, libres = hrsMes * pct / 100, valor = libres * costo, dif = valor - SUBSCRIPTION;
   const r = (x) => Math.round(x);
   return {
     ok: true,
-    datos: { personas, horas_semana: horas, costo_hora: costo, porcentaje_automatizado: pct, porcentaje_es_supuesto: supuesto },
+    datos: { personas, horas_dia: horas, costo_semana: semana, supuesto_jornada: '5 días y 40 horas por semana', porcentaje_automatizado: pct, porcentaje_es_supuesto: supuesto },
     horas_manuales_mes: r(hrsMes),
     costo_manual_mes_usd: r(manual),
     horas_liberadas_mes: r(libres),
