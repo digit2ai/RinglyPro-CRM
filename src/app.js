@@ -1327,6 +1327,22 @@ app.use((req, res, next) => {
   next();
 });
 
+// CV domains own ONLY their CV paths. Anything else used to fall through to
+// the CRM, so manuelstagg.com/admin showed the CamaraVirtual admin login,
+// /login the RinglyPro login and /mcp a Digit2AI page. An unowned extensionless
+// path now ends in a plain 404 on these hosts (files with an extension, /api,
+// the agent feeds, the console and the Citi tracker still pass).
+const CV_OWN_HOSTS = new Set(['manuelstagg.com', 'anastagg.com', 'andreastagg.com', 'julianagramowski.com', 'samuelpacelli.com']);
+const CV_OWN_PATH = /^\/(?:|en|es|cv|resume|roles(?:\/[^/]+)?|cv-admin|cv-opportunity|manuelstagg(?:-es)?)\/?$/i;
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().replace(/^www\./, '');
+  if (!CV_OWN_HOSTS.has(host)) return next();
+  const p = req.path;
+  if (CV_OWN_PATH.test(p) || p.startsWith('/api/') || p.startsWith('/.well-known/')
+      || p === '/citi-tracker' || p.startsWith('/citi-tracker/') || /\.[a-z0-9]{2,5}$/i.test(p)) return next();
+  res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Not found</title><body style="font-family:system-ui,sans-serif;background:#0b1220;color:#e6edf7;display:grid;place-items:center;min-height:100vh;margin:0"><div style="text-align:center;padding:16px"><h1 style="font-size:22px">Page not found</h1><p><a style="color:#22d3ee" href="/">Back to the CV</a></p></div>');
+});
+
 // Clean URL: /manuelstagg -> the CV page. BEFORE express.static so the
 // extensionless path resolves to the resume without a .html suffix.
 app.get(['/manuelstagg', '/manuelstagg/'], (req, res) => {
