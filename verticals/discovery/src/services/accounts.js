@@ -24,14 +24,29 @@ function clean(a) {
   return o;
 }
 
-async function signup({ email, password, name, company_name, industry, country, headcount, revenue_band, lang }) {
+const BRANDS = ['orbup', 'synthex'];
+const brandOf = (b) => (BRANDS.includes(b) ? b : 'orbup');
+
+const MSG = {
+  en: { email: 'A valid email is required', pass: 'Password must be at least 8 characters',
+        company: 'Company name is required', exists: 'An account already exists for that email' },
+  es: { email: 'Escribe un correo válido', pass: 'La contraseña debe tener al menos 8 caracteres',
+        company: 'El nombre de la empresa es obligatorio', exists: 'Ya existe una cuenta con ese correo' }
+};
+
+async function signup({ email, password, name, company_name, industry, country, headcount, revenue_band, lang, brand }) {
+  const b = brandOf(brand);
+  // Synthex SAI Discovery is Spanish-only; its accounts are always 'es', so
+  // every engine (findings, scorecard, roadmap) answers in Spanish.
+  const L = b === 'synthex' ? 'es' : (lang === 'es' ? 'es' : 'en');
+  const m = MSG[L];
   const mail = String(email || '').trim().toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw new Error('A valid email is required');
-  if (!password || String(password).length < 8) throw new Error('Password must be at least 8 characters');
-  if (!company_name || !String(company_name).trim()) throw new Error('Company name is required');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw new Error(m.email);
+  if (!password || String(password).length < 8) throw new Error(m.pass);
+  if (!company_name || !String(company_name).trim()) throw new Error(m.company);
 
   const existing = await Account.findOne({ where: { email: mail } });
-  if (existing) throw new Error('An account already exists for that email');
+  if (existing) throw new Error(m.exists);
 
   const row = await Account.create({
     email: mail,
@@ -42,7 +57,8 @@ async function signup({ email, password, name, company_name, industry, country, 
     country: country ? String(country).slice(0, 80) : null,
     headcount: Number(headcount) > 0 ? Math.round(Number(headcount)) : null,
     revenue_band: revenue_band || null,
-    lang: lang === 'es' ? 'es' : 'en',
+    lang: L,
+    brand: b,
     role: 'owner'
   });
   row.tenant_id = row.id;
@@ -56,10 +72,13 @@ async function signup({ email, password, name, company_name, industry, country, 
   return row;
 }
 
-async function login({ email, password }) {
+async function login({ email, password, brand }) {
   const mail = String(email || '').trim().toLowerCase();
   const row = await Account.findOne({ where: { email: mail } });
   if (!row) return null;
+  // An account signs in only on its own product. Same answer as a wrong
+  // password, so the other brand's account list cannot be probed from here.
+  if (brandOf(row.brand) !== brandOf(brand)) return null;
   const ok = await bcrypt.compare(String(password || ''), row.password_hash || '');
   if (!ok) return null;
   row.last_login_at = new Date();
@@ -74,7 +93,8 @@ function sign(account) {
     email: account.email,
     role: account.role || 'owner',
     company_name: account.company_name,
-    lang: account.lang || 'en'
+    lang: account.lang || 'en',
+    brand: brandOf(account.brand)
   }, SECRET, { expiresIn: TTL });
 }
 
@@ -82,4 +102,4 @@ function verify(token) {
   try { return jwt.verify(token, SECRET); } catch (e) { return null; }
 }
 
-module.exports = { signup, login, sign, verify, clean, SECRET };
+module.exports = { signup, login, sign, verify, clean, brandOf, BRANDS, SECRET };

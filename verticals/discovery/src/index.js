@@ -38,9 +38,22 @@ const mcp = require('./services/mcp');
 
 const publicDir = path.join(__dirname, '..', 'public');
 const extensionDir = path.join(__dirname, '..', 'extension');
+// SYNTHEX SAI DISCOVERY: the same module served on synthexsai.com/discovery,
+// in Spanish with the Synthex SAI look. Same backend, same routes, same rules;
+// only the pages (public/sx/) and the extension copy (extension-sx/) differ.
+// The brand comes from the HOST, never from the request body.
+const sxDir = path.join(publicDir, 'sx');
+const extensionSxDir = path.join(__dirname, '..', 'extension-sx');
+const SYNTHEX_HOSTS = new Set(['synthexsai.com', 'www.synthexsai.com']);
+function brandOf(req) {
+  const host = String(req.get('host') || '').toLowerCase().split(':')[0];
+  return SYNTHEX_HOSTS.has(host) ? 'synthex' : 'orbup';
+}
+const isSx = (req) => req.brand === 'synthex';
 
 router.use(express.json({ limit: '4mb' }));
 router.use(express.urlencoded({ extended: true }));
+router.use((req, res, next) => { req.brand = brandOf(req); next(); });
 
 /* ── boot ────────────────────────────────────────────────────────────────── */
 let ready = false;
@@ -56,7 +69,8 @@ let bootError = null;
       ['dsc_processes', 'median_run_minutes', 'DOUBLE PRECISION'],
       ['dsc_captures', 'redaction_report', 'JSONB DEFAULT \'{}\'::jsonb'],
       ['dsc_evaluations', 'coverage', 'JSONB DEFAULT \'{}\'::jsonb'],
-      ['dsc_evaluations', 'diagram', 'JSONB DEFAULT \'{}\'::jsonb']
+      ['dsc_evaluations', 'diagram', 'JSONB DEFAULT \'{}\'::jsonb'],
+      ['dsc_accounts', 'brand', 'VARCHAR(20) DEFAULT \'orbup\'']
     ];
     for (const [t, c, type] of adds) {
       await sequelize.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS ${c} ${type}`).catch(() => {});
@@ -105,7 +119,9 @@ router.use(async (req, res, next) => {
   const token = getCookie(req, 'discovery_token');
   if (token) {
     const claims = accounts.verify(token);
-    if (claims) req.user = claims;
+    // A session belongs to one product. An OrbUp cookie on synthexsai.com (or
+    // the reverse) is treated as no session at all.
+    if (claims && accounts.brandOf(claims.brand) === req.brand) req.user = claims;
   }
 
   if (PUBLIC_EXACT.has(p) || PUBLIC_ASSET.test(p)) return next();
@@ -161,7 +177,13 @@ router.get('/health', async (req, res) => {
 });
 
 /* ── pages ───────────────────────────────────────────────────────────────── */
-const page = (name) => (req, res) => res.sendFile(path.join(publicDir, name));
+const page = (name) => (req, res) => {
+  if (isSx(req)) {
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.sendFile(path.join(sxDir, name));
+  }
+  res.sendFile(path.join(publicDir, name));
+};
 
 router.get('/', (req, res, next) => (req.user ? page('app.html')(req, res, next) : page('landing.html')(req, res, next)));
 router.get('/login', page('login.html'));
@@ -174,12 +196,14 @@ router.get('/guide', page('guide.html'));
 router.get('/r/:token', page('shared.html'));
 
 router.use(express.static(publicDir, { index: false }));
-router.use('/extension', express.static(extensionDir));
+const extStatic = express.static(extensionDir);
+const extSxStatic = express.static(extensionSxDir);
+router.use('/extension', (req, res, next) => (isSx(req) ? extSxStatic : extStatic)(req, res, next));
 
 /* ── auth ────────────────────────────────────────────────────────────────── */
 router.post('/api/v1/auth/signup', async (req, res) => {
   try {
-    const row = await accounts.signup(req.body || {});
+    const row = await accounts.signup({ ...(req.body || {}), brand: req.brand });
     setSession(res, accounts.sign(row));
     res.status(201).json({ success: true, account: accounts.clean(row) });
   } catch (e) {
@@ -188,8 +212,8 @@ router.post('/api/v1/auth/signup', async (req, res) => {
 });
 
 router.post('/api/v1/auth/login', async (req, res) => {
-  const row = await accounts.login(req.body || {});
-  if (!row) return res.status(401).json({ error: 'Email or password is incorrect' });
+  const row = await accounts.login({ ...(req.body || {}), brand: req.brand });
+  if (!row) return res.status(401).json({ error: isSx(req) ? 'El correo o la contraseña no son correctos' : 'Email or password is incorrect' });
   setSession(res, accounts.sign(row));
   res.json({ success: true, account: accounts.clean(row) });
 });
@@ -199,7 +223,7 @@ router.post('/api/v1/auth/logout', (req, res) => { clearSession(res); res.json({
 router.get('/api/v1/auth/me', async (req, res) => {
   const token = getCookie(req, 'discovery_token');
   const claims = token ? accounts.verify(token) : null;
-  if (!claims) return res.status(401).json({ error: 'Unauthorized' });
+  if (!claims || accounts.brandOf(claims.brand) !== req.brand) return res.status(401).json({ error: 'Unauthorized' });
   const row = await Account.findOne({ where: { id: claims.id } });
   if (!row) return res.status(401).json({ error: 'Unauthorized' });
   res.json({ success: true, account: accounts.clean(row) });
@@ -208,7 +232,8 @@ router.get('/api/v1/auth/me', async (req, res) => {
 router.patch('/api/v1/account', async (req, res) => {
   const row = await Account.findOne({ where: { id: req.user.id } });
   if (!row) return res.status(404).json({ error: 'Not found' });
-  ['name', 'company_name', 'industry', 'country', 'revenue_band', 'lang'].forEach(k => {
+  // lang is not editable on Synthex: that product is Spanish-only.
+  ['name', 'company_name', 'industry', 'country', 'revenue_band'].concat(isSx(req) ? [] : ['lang']).forEach(k => {
     if (req.body[k] !== undefined) row[k] = req.body[k];
   });
   if (req.body.headcount !== undefined) row.headcount = Number(req.body.headcount) || null;
@@ -227,13 +252,16 @@ router.post('/api/v1/keys', async (req, res) => {
     tenant_id: tenantOf(req),
     account_id: req.user.id,
     name: req.body.name,
-    scopes: req.body.scopes
+    scopes: req.body.scopes,
+    brand: req.brand
   });
   res.status(201).json({
     success: true,
     key: { id: key.id, name: key.name, prefix: key.prefix, scopes: key.scopes },
     plaintext,
-    warning: 'This is the only time this key is shown. It is stored as a hash and cannot be recovered — if you lose it, revoke it and mint another.'
+    warning: isSx(req)
+      ? 'Esta es la única vez que se muestra esta clave. Se guarda como hash y no se puede recuperar: si la pierdes, revócala y crea otra.'
+      : 'This is the only time this key is shown. It is stored as a hash and cannot be recovered — if you lose it, revoke it and mint another.'
   });
 });
 
@@ -331,7 +359,8 @@ router.get('/api/v1/captures', async (req, res) => {
 });
 
 router.post('/api/v1/processes/derive', async (req, res) => {
-  const r = await captureStore.rederive(tenantOf(req));
+  const acct = await Account.findOne({ where: { id: tenantOf(req) }, attributes: ['lang'] });
+  const r = await captureStore.rederive(tenantOf(req), { lang: acct && acct.lang });
   const rows = await Process.findAll({ where: { tenant_id: tenantOf(req) }, order: [['hours_per_week', 'DESC']] });
   res.json({ success: true, ...r, processes: rows });
 });
@@ -357,9 +386,11 @@ router.post('/api/v1/processes', async (req, res) => {
     involves_regulated_data: req.body.involves_regulated_data != null ? !!req.body.involves_regulated_data : null,
     error_tolerance: req.body.error_tolerance || null,
     confirmed_by: req.user.id, confirmed_at: new Date(),
-    evidence: { confidence: 'stated', caveats: ['Entered by hand rather than observed. The hours are an estimate, not a measurement.'] }
+    evidence: { confidence: 'stated', caveats: [isSx(req)
+      ? 'Ingresado a mano, no observado. Las horas son una estimación, no una medición.'
+      : 'Entered by hand rather than observed. The hours are an estimate, not a measurement.'] }
   });
-  if (!row.name) { await row.destroy(); return res.status(400).json({ error: 'A process name is required' }); }
+  if (!row.name) { await row.destroy(); return res.status(400).json({ error: isSx(req) ? 'El proceso necesita un nombre' : 'A process name is required' }); }
   res.status(201).json({ success: true, process: row });
 });
 
@@ -492,6 +523,8 @@ router.get('/api/v1/public/roadmap/:token', async (req, res) => {
   const row = await Evaluation.findOne({ where: { share_token: String(req.params.token) } });
   if (!row) return res.status(404).json({ error: 'Not found' });
   const account = await Account.findOne({ where: { id: row.tenant_id } });
+  // A roadmap is shown only under the product that produced it.
+  if (!account || accounts.brandOf(account.brand) !== req.brand) return res.status(404).json({ error: 'Not found' });
   res.json({
     success: true,
     company: account ? account.company_name : null,
@@ -509,7 +542,7 @@ router.get('/api/v1/findings', async (req, res) => {
   res.json({
     success: true,
     findings: findingsService.build({
-      processes: ctx.processes, captures: ctx.captureStats, answers: ctx.answers
+      processes: ctx.processes, captures: ctx.captureStats, answers: ctx.answers, lang: ctx.account.lang
     })
   });
 });
@@ -533,7 +566,7 @@ router.get('/api/v1/overview', async (req, res) => {
     answers,
     missing_answers: missing,
     keys,
-    findings: findingsService.build({ processes: ctx.processes, captures: ctx.captureStats, answers }),
+    findings: findingsService.build({ processes: ctx.processes, captures: ctx.captureStats, answers, lang: ctx.account.lang }),
     latest_evaluation: last ? {
       id: last.id, version: last.version, created_at: last.created_at,
       share_token: last.share_token, scorecard: last.scorecard,
@@ -565,7 +598,9 @@ router.post('/api/v1/quote-request', async (req, res) => {
   }).catch(() => {});
   res.json({
     success: true,
-    message: 'Request recorded. Your roadmap stays yours either way — the assessment is free whether or not anything is ever built.'
+    message: isSx(req)
+      ? 'Solicitud registrada. Tu hoja de ruta sigue siendo tuya: la evaluación es gratis, se construya algo o no.'
+      : 'Request recorded. Your roadmap stays yours either way — the assessment is free whether or not anything is ever built.'
   });
 });
 

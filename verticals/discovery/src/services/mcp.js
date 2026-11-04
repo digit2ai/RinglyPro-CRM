@@ -299,8 +299,11 @@ async function rpc(body = {}, key) {
       return reply({
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
-        serverInfo: SERVER_INFO,
-        instructions: 'OrbUp AI Discovery. Push observed work in; read a readiness roadmap out. Every figure here traces to measured time or a stated rate — check discovery.get_coverage before quoting one. Proposed processes are machine guesses and are never in the roadmap.'
+        // A Synthex SAI key (synthex_dk_) is answered under the Synthex name.
+        serverInfo: String(key.prefix || '').startsWith('synthex_dk_') ? { ...SERVER_INFO, name: 'synthex-discovery' } : SERVER_INFO,
+        instructions: String(key.prefix || '').startsWith('synthex_dk_')
+          ? 'Synthex SAI Discovery. Envía trabajo observado; lee una hoja de ruta de preparación para IA. Cada cifra sale de tiempo medido o de una tarifa declarada; consulta discovery.get_coverage antes de citar una. Los procesos propuestos son suposiciones de la máquina y nunca entran en la hoja de ruta.'
+          : 'OrbUp AI Discovery. Push observed work in; read a readiness roadmap out. Every figure here traces to measured time or a stated rate — check discovery.get_coverage before quoting one. Proposed processes are machine guesses and are never in the roadmap.'
       });
     case 'tools/list':
       return reply({ tools: listTools(scopes) });

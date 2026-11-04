@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Recorrido guiado — Synthex SAI Discovery</title>
+<meta name="description" content="Un recorrido narrado por Synthex SAI Discovery: qué ve el grabador, qué se niega a guardar y cómo obtiene sus cifras una hoja de ruta.">
+<link rel="canonical" href="https://synthexsai.com/discovery">
+<link rel="icon" type="image/svg+xml" href="/discovery/sx/favicon.svg">
+<link rel="stylesheet" href="/discovery/discovery.css">
+<link rel="stylesheet" href="/discovery/sx/synthex.css">
+<link rel="stylesheet" href="/discovery/guide.css">
+</head><body>
+
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>Synthex SAI <small>Discovery</small></a>
+  <nav>
+    <a class="on" href="/discovery/guide">Recorrido guiado</a>
+    <a href="/discovery/how-it-works">Los detalles</a>
+    <a href="/discovery/login">Iniciar sesión</a>
+    <a class="btn primary sm" href="/discovery/signup">Empezar gratis</a>
+  </nav>
+</div></div>
+
+<div class="wrap">
+
+  <!-- ── LINA ───────────────────────────────────────────────────────────── -->
+  <div class="ava">
+    <div class="ava-orb" id="orb"></div>
+    <div class="ava-meta">
+      <div class="ava-name">Lina · la voz de Synthex SAI</div>
+      <div class="ava-role">Ella lee toda la página en voz alta. Seis minutos, sin tecnicismos.</div>
+      <div class="controls">
+        <button class="btn primary" id="playAll">Reproducir todo el recorrido</button>
+        <button class="btn ghost" id="pause" disabled>Pausar</button>
+        <button class="btn ghost" id="stop" disabled>Detener</button>
+      </div>
+      <div class="ava-status" id="status">Pulsa reproducir, o usa el botón Escuchar en cualquier sección.</div>
+      <div class="ava-pick">
+        <label><input type="checkbox" id="hd" checked> Voz neuronal</label>
+        <span class="sep">·</span>
+        <label for="voiceSel">Voz</label>
+        <select id="voiceSel">
+          <option value="dalia" selected>Español (Dalia)</option>
+        </select>
+        <span id="mode"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 0 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="0">
+    <div class="sec-head"><h1>Cómo funciona, en palabras simples</h1>
+      <button class="btn ghost sm listen" data-play="0">Escuchar</button></div>
+    <p class="lede">Haces tu trabajo durante una semana. Algo anota discretamente <em>qué programas usaste y cuánto tardó cada cosa</em>, nunca lo que escribiste. Al final recibes un documento que dice cuánto cuesta tu trabajo y qué automatizar primero.</p>
+    <div class="threeup">
+      <div><span class="big">1</span><b>Observa</b><span>Una semana de trabajo normal</span></div>
+      <div><span class="big">2</span><b>Tú confirmas</b><span>Seis preguntas y unas cuantas cifras</span></div>
+      <div><span class="big">3</span><b>Recibes un plan</b><span>Con costos, por fases y tuyo para siempre</span></div>
+    </div>
+  </section>
+
+  <!-- ── 1 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="1">
+    <div class="sec-head"><h2>¿Por qué no simplemente preguntar?</h2>
+      <button class="btn ghost sm listen" data-play="1">Escuchar</button></div>
+    <p class="lede">Porque la respuesta siempre es una suposición, y todo lo que viene después hereda esa suposición.</p>
+    <div class="vs">
+      <div class="vs-side bad">
+        <span class="pill red">Preguntar</span>
+        <p class="quote">“¿La facturación? Unas cuatro horas por semana.”</p>
+        <ul>
+          <li>Redondeado a una historia, no a un cronómetro</li>
+          <li>Deja fuera la hoja de cálculo que nadie menciona</li>
+          <li>Nunca menciona copiar cifras entre dos pantallas, porque se recuerda como parte del trabajo y no como un trabajo</li>
+        </ul>
+      </div>
+      <div class="vs-side good">
+        <span class="pill green">Observar</span>
+        <p class="quote">“Diez coma seis horas por semana cada uno, entre dos personas, en dieciocho ejecuciones observadas.”</p>
+        <ul>
+          <li>Una medición que puedes poner en un caso de negocio</li>
+          <li>Encuentra cada programa que el trabajo toca de verdad</li>
+          <li>Detecta el copiar y pegar entre sistemas, que suele ser el hábito más caro de la empresa</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 2 · the redaction demo ─────────────────────────────────────────── -->
+  <section class="sec" data-i="2">
+    <div class="sec-head"><h2>Qué ve y qué descarta</h2>
+      <button class="btn ghost sm listen" data-play="2">Escuchar</button></div>
+    <p class="lede">Esta es la parte que preocupa a la gente, así que mírala suceder. A la izquierda está lo que alguien hizo de verdad. A la derecha está absolutamente todo lo que llegó a nuestro servidor.</p>
+    <div class="demo">
+      <div class="demo-col">
+        <div class="demo-hd"><span class="dot red"></span> Lo que hiciste</div>
+        <div id="didList" class="demo-body"></div>
+      </div>
+      <div class="demo-col">
+        <div class="demo-hd"><span class="dot green"></span> Lo que guardamos</div>
+        <div id="gotList" class="demo-body"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary sm" id="demoPlay">Míralo suceder</button>
+      <button class="btn ghost sm" id="demoReset">Reiniciar</button>
+      <span class="faint" id="demoCount"></span>
+    </div>
+    <div class="note">Fíjate en lo que nunca cruza: el nombre del cliente, el importe, la dirección que escribiste, el número de factura en la dirección web. La página en la que estabas se convierte solo en <span class="mono">Salesforce · /orders/:id/edit</span>. No hay ningún lugar en nuestra base de datos donde guardar lo demás: esas columnas no existen.</div>
+  </section>
+
+  <!-- ── 3 · the simulator ──────────────────────────────────────────────── -->
+  <section class="sec" data-i="3">
+    <div class="sec-head"><h2>Todo el producto, pantalla por pantalla</h2>
+      <button class="btn ghost sm listen" data-play="3">Escuchar</button></div>
+    <p class="lede">Seis pantallas. Recórrelas con clic, o pulsa reproducir y deja que avance solo.</p>
+    <div class="simsteps" id="simSteps"></div>
+    <div class="sim">
+      <div class="sim-chrome">
+        <span class="tl"></span><span class="tl"></span><span class="tl"></span>
+        <div class="sim-url" id="simUrl">synthexsai.com/discovery</div>
+      </div>
+      <div class="sim-screen" id="simScreen"></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn ghost sm" id="simPrev">Atrás</button>
+      <button class="btn primary sm" id="simNext">Siguiente pantalla</button>
+      <button class="btn ghost sm" id="simAuto">Reproducir las seis</button>
+      <span class="faint" id="simCaption"></span>
+    </div>
+  </section>
+
+  <!-- ── 4 · the math ───────────────────────────────────────────────────── -->
+  <section class="sec" data-i="4">
+    <div class="sec-head"><h2>De dónde salen las cifras de dinero</h2>
+      <button class="btn ghost sm listen" data-play="4">Escuchar</button></div>
+    <p class="lede">Seis pasos, todos aritmética que puedes comprobar. Nada de esto es la opinión de un modelo ni un promedio del sector. Pulsa el botón para construirlo paso a paso.</p>
+    <div class="calc" id="calc"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn primary sm" id="calcNext">Siguiente paso</button>
+      <button class="btn ghost sm" id="calcReset">Empezar de nuevo</button>
+      <span class="faint" id="calcCaption"></span>
+    </div>
+  </section>
+
+  <!-- ── 5 ──────────────────────────────────────────────────────────────── -->
+  <section class="sec" data-i="5">
+    <div class="sec-head"><h2>Las dos reglas que lo mantienen honesto</h2>
+      <button class="btn ghost sm listen" data-play="5">Escuchar</button></div>
+    <div class="grid g2">
+      <div class="card rule">
+        <span class="pill blue">Regla uno</span>
+        <h3>El tiempo se mide. El dinero lo escribe una persona.</h3>
+        <p class="mut">Un navegador puede medir el tiempo de tu trabajo. No puede saber cuánto gana nadie. Así que si nadie escribe una tarifa por hora, ese trabajo muestra sus horas y aporta <b>cero dólares</b>, y el informe lo dice por su nombre, en vez de usar discretamente un promedio del sector y presentarlo como tu cifra.</p>
+      </div>
+      <div class="card rule">
+        <span class="pill blue">Regla dos</span>
+        <h3>Una semana corta se reporta, nunca se estira.</h3>
+        <p class="mut">Si solo observamos dos días, no multiplicamos por tres y medio para fabricar una semana. Eso convertiría una suposición en algo que parece exactamente una medición. Dos días se reportan como dos días, con confianza baja.</p>
+      </div>
+    </div>
+    <div class="warnbox"><b>Y se niega a terminar si te saltas algo.</b> Si falta una de las seis preguntas, no produce una hoja de ruta alrededor del hueco. Se detiene y te dice qué respuesta falta. Un documento seguro de sí mismo construido sobre cosas que nadie preguntó es justo lo que a la mayoría de los directivos ya le vendieron una vez.</div>
+  </section>
+
+  <!-- ── 6 · the user guide ─────────────────────────────────────────────── -->
+  <section class="sec" data-i="6">
+    <div class="sec-head"><h2>Te toca: los pasos reales</h2>
+      <button class="btn ghost sm listen" data-play="6">Escuchar</button></div>
+    <div class="guide" id="guideSteps"></div>
+    <div class="row" style="margin-top:22px">
+      <a class="btn primary" href="/discovery/signup">Crea tu cuenta gratis</a>
+      <a class="btn ghost" href="/discovery/r/CpZrYJFnvUQcve-M_sfC4ncY">Ver un informe terminado</a>
+    </div>
+    <p class="faint" style="margin-top:14px">La evaluación y la hoja de ruta son gratis y siguen siendo tuyas. Construir cualquier cosa se cotiza aparte, según su alcance.</p>
+  </section>
+
+</div>
+
+<footer><div class="wrap row" style="justify-content:space-between">
+  <span>Synthex SAI Discovery · Synthex SAI</span>
+  <span><a href="/discovery/">Panel</a> · <a href="/discovery/how-it-works">El detalle técnico</a> · <a href="https://synthexsai.com/">Synthex SAI</a></span>
+</div></footer>
+
+<script src="/discovery/sx/guide.js"></script>
+</body></html>

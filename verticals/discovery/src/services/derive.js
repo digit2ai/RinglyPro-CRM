@@ -42,6 +42,13 @@ const ACTION_VERB = {
   submit: 'Approvals', search: 'Lookups', navigate: 'Review',
   click: 'Processing', switch_app: 'Reconciliation'
 };
+// Spanish names for Synthex SAI Discovery accounts (same keys, same choice).
+const ACTION_VERB_ES = {
+  type: 'Captura de datos', paste: 'Recaptura', copy: 'Recaptura',
+  upload: 'Manejo de documentos', download: 'Manejo de documentos',
+  submit: 'Aprobaciones', search: 'Consultas', navigate: 'Revisión',
+  click: 'Procesamiento', switch_app: 'Conciliación'
+};
 
 function median(arr) {
   if (!arr.length) return 0;
@@ -109,7 +116,8 @@ function cluster(captures = [], { threshold = 0.6 } = {}) {
 }
 
 /** Human-readable name for a cluster. Prefers what an operator actually typed. */
-function proposeName(members) {
+function proposeName(members, lang) {
+  const es = lang === 'es';
   const labels = members.map(m => (m.label || '').trim()).filter(Boolean);
   if (labels.length) {
     // The most common operator label wins. A person naming their own work beats
@@ -129,6 +137,12 @@ function proposeName(members) {
   });
   const apps = Object.entries(appCount).sort((a, b) => b[1] - a[1]).map(x => x[0]);
   const act = Object.entries(actCount).sort((a, b) => b[1] - a[1])[0];
+  if (es) {
+    const v = (act && ACTION_VERB_ES[act[0]]) || 'Trabajo recurrente';
+    if (apps.length >= 2) return `${v} entre ${apps[0]} y ${apps[1]}`;
+    if (apps.length === 1) return `${v} en ${apps[0]}`;
+    return 'Proceso recurrente sin nombre';
+  }
   const verb = (act && ACTION_VERB[act[0]]) || 'Recurring work';
   if (apps.length >= 2) return `${verb} between ${apps[0]} and ${apps[1]}`;
   if (apps.length === 1) return `${verb} in ${apps[0]}`;
@@ -171,15 +185,16 @@ function summarize(cluster, opts = {}) {
       : (days >= FULL_WINDOW_DAYS && runs >= MIN_RUNS_FOR_MEDIUM) ? 'medium'
         : 'low';
 
+  const es = opts.lang === 'es';
   const caveats = [];
   if (days < FULL_WINDOW_DAYS) {
-    caveats.push(`Observed over ${days} day${days === 1 ? '' : 's'}, not a full week. The rate is what was measured in that window and has not been scaled up to a week — a short window is reported, never multiplied.`);
+    caveats.push(es ? `Observado en ${days} ${days === 1 ? 'día' : 'días'}, no una semana completa. La tasa es lo que se midió en esa ventana y no se escaló a una semana: una ventana corta se reporta, nunca se multiplica.` : `Observed over ${days} day${days === 1 ? '' : 's'}, not a full week. The rate is what was measured in that window and has not been scaled up to a week — a short window is reported, never multiplied.`);
   }
   if (runs < MIN_RUNS_FOR_MEDIUM) {
-    caveats.push(`Only ${runs} run${runs === 1 ? '' : 's'} observed. Enough to see the shape of the work, not enough to be confident about how often it happens.`);
+    caveats.push(es ? `Solo ${runs} ${runs === 1 ? 'ejecución observada' : 'ejecuciones observadas'}. Alcanza para ver la forma del trabajo, no para estar seguros de con qué frecuencia ocurre.` : `Only ${runs} run${runs === 1 ? '' : 's'} observed. Enough to see the shape of the work, not enough to be confident about how often it happens.`);
   }
   if (people === 1) {
-    caveats.push('One person performed every observed run. If others do this work too, the hours here are that one person\'s only.');
+    caveats.push(es ? 'Una sola persona hizo todas las ejecuciones observadas. Si otras personas también hacen este trabajo, las horas aquí son solo de esa persona.' : 'One person performed every observed run. If others do this work too, the hours here are that one person\'s only.');
   }
 
   const appAgg = {};
@@ -195,7 +210,7 @@ function summarize(cluster, opts = {}) {
   const rekeying = steps.filter(s => s.action === 'copy' || s.action === 'paste').length;
 
   return {
-    name: proposeName(members),
+    name: proposeName(members, opts.lang),
     status: 'proposed',
     origin: 'derived',
     people,

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conectar una fuente — Synthex SAI Discovery</title>
+<link rel="canonical" href="https://synthexsai.com/discovery">
+<link rel="icon" type="image/svg+xml" href="/discovery/sx/favicon.svg">
+<link rel="stylesheet" href="/discovery/discovery.css">
+<link rel="stylesheet" href="/discovery/sx/synthex.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>Synthex SAI <small>Discovery</small></a>
+  <nav><a href="/discovery/">Panel</a><a class="on" href="/discovery/connect">Conectar</a>
+  <a href="/discovery/how-it-works">Cómo funciona</a><a href="#" id="out">Cerrar sesión</a></nav>
+</div></div>
+
+<div class="wrap" style="padding-top:34px;padding-bottom:60px">
+  <h1 style="font-size:30px">Conecta una fuente de captura</h1>
+  <p class="lede" style="font-size:16px">Una clave, dos direcciones. Envía el trabajo observado con <b>ingest</b>; deja que tu propia IA lea la hoja de ruta con <b>read</b>.</p>
+
+  <section>
+    <h2>1 · Crea una clave</h2>
+    <div class="card">
+      <div class="grid g2" style="margin-top:0">
+        <div><label for="kname">Ponle un nombre</label><input id="kname" placeholder="p. ej. Laptops del equipo de operaciones"></div>
+        <div><label>Permisos</label>
+          <div class="checks">
+            <label class="chk on" id="c-ingest"><input type="checkbox" id="s-ingest" checked>
+              <span><b>ingest</b><br><span class="faint">Envía capturas. Puedes instalarla en muchas laptops sin riesgo: no puede leer nada de vuelta.</span></span></label>
+            <label class="chk" id="c-read"><input type="checkbox" id="s-read">
+              <span><b>read</b><br><span class="faint">Consulta la hoja de ruta por MCP. Lee el presupuesto y los temores que declaraste: guárdala bien.</span></span></label>
+          </div>
+        </div>
+      </div>
+      <button class="btn primary" id="mint" style="margin-top:16px">Crear clave</button>
+      <div id="minted" class="hide">
+        <div class="warnbox" style="margin-top:16px"><b>Esta es la única vez que se muestra esta clave.</b> Se guarda como hash y no se puede recuperar. Si la pierdes, revócala y crea otra: ese es el resultado correcto, no un problema.</div>
+        <div class="keybox" id="plaintext"></div>
+        <button class="btn ghost sm" id="copy">Copiar</button>
+      </div>
+      <div id="keys" style="margin-top:20px"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · Instala el grabador</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Extensión del navegador</h3>
+        <p class="mut" style="font-size:14px">Chrome, Edge o cualquier navegador basado en Chromium. Registra la forma del trabajo en el navegador: qué sistema, qué tipo de acción y cuánto tiempo. Mientras está activa, un aviso permanece visible en cada página: una herramienta de captura que nadie puede ver es software espía, sin importar lo que recopile.</p>
+        <ol class="mut" style="font-size:13.5px;padding-left:19px">
+          <li>Descarga y descomprime la carpeta</li>
+          <li>Abre <span class="mono">chrome://extensions</span> y activa el Modo de desarrollador</li>
+          <li>Cargar descomprimida → elige la carpeta</li>
+          <li>Haz clic en el ícono, pega tu clave <b>ingest</b> y presiona Conectar</li>
+        </ol>
+        <div class="row" style="margin-top:12px">
+          <a class="btn primary sm" href="/discovery/extension/manifest.json" download>Archivos de la extensión</a>
+          <a class="btn ghost sm" href="/discovery/how-it-works#recorder">Qué registra</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Integraciones y tus propios sistemas</h3>
+        <p class="mut" style="font-size:14px">Cualquier cosa que pueda hacer una petición HTTP puede enviar una ejecución. Útil cuando el trabajo ocurre en una aplicación de escritorio que el navegador no ve, o cuando ya tienes un registro de eventos.</p>
+        <div class="keybox" style="font-size:11.5px">POST /discovery/api/v1/ingest/capture
+Authorization: Bearer synthex_dk_…
+
+{ "label": "facturación de cierre de mes",
+  "actor": "ops-2",
+  "external_ref": "run-4471",
+  "duration_ms": 1860000,
+  "steps": [
+    {"action":"navigate","url":"https://acme.my.salesforce.com/orders/8837",
+     "dwell_ms":42000},
+    {"action":"copy","host":"acme.my.salesforce.com","dwell_ms":3000},
+    {"action":"paste","native_app":"excel.exe","dwell_ms":9000}
+  ] }</div>
+        <p class="faint">Volver a enviar el mismo <span class="mono">external_ref</span> no hace nada, así que un reintento después de un tiempo de espera agotado no puede contar horas dos veces en tu modelo de costos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · Conecta tu IA a la hoja de ruta</h2>
+    <div class="card">
+      <p class="mut">Cualquier cliente MCP (Claude, un copiloto o tu propio agente) puede consultar la evaluación con una clave con permiso <b>read</b>.</p>
+      <div class="keybox" style="font-size:11.5px">{
+  "mcpServers": {
+    "synthex-discovery": {
+      "url": "https://synthexsai.com/discovery/mcp",
+      "headers": { "Authorization": "Bearer synthex_dk_…" }
+    }
+  }
+}</div>
+      <div id="tools" class="faint"></div>
+      <div class="note">La lectura no puede confirmar un proceso, fijar una tarifa por hora ni responder una pregunta de postura. Esos son los juicios humanos en los que se basa cada cifra: un agente que pudiera darlos podría fabricar una hoja de ruta de principio a fin sin nadie de por medio.</div>
+    </div>
+  </section>
+
+  <div class="row"><a class="btn primary" href="/discovery/">Ir al panel</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+document.querySelectorAll('.chk').forEach(l=>l.addEventListener('click',()=>setTimeout(()=>{
+  l.classList.toggle('on', l.querySelector('input').checked);},0)));
+$('out').addEventListener('click',async e=>{e.preventDefault();await fetch('/discovery/api/v1/auth/logout',{method:'POST'});location.href='/discovery/login';});
+
+async function loadKeys(){
+  const r=await fetch('/discovery/api/v1/keys'); const j=await r.json();
+  if(!j.keys||!j.keys.length){$('keys').innerHTML='<p class="faint">Todavía no hay claves.</p>';return;}
+  $('keys').innerHTML='<div class="scroll"><table><thead><tr><th>Nombre</th><th>Prefijo</th><th>Permisos</th><th>Usos</th><th></th></tr></thead><tbody>'+
+    j.keys.map(k=>`<tr><td>${esc(k.name)}</td><td class="mono">${esc(k.prefix)}…</td>
+      <td>${(k.scopes||[]).map(s=>`<span class="pill blue">${esc(s)}</span>`).join(' ')}</td>
+      <td class="faint">${k.use_count||0}${k.last_used_at?' · '+new Date(k.last_used_at).toLocaleDateString('es'):''}</td>
+      <td>${k.active?`<button class="btn ghost sm" data-rev="${k.id}">Revocar</button>`:'<span class="faint">revocada</span>'}</td></tr>`).join('')+
+    '</tbody></table></div>';
+  $('keys').querySelectorAll('[data-rev]').forEach(b=>b.addEventListener('click',async()=>{
+    await fetch('/discovery/api/v1/keys/'+b.dataset.rev,{method:'DELETE'}); loadKeys();}));
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+$('mint').addEventListener('click',async()=>{
+  const scopes=[]; if($('s-ingest').checked)scopes.push('ingest'); if($('s-read').checked)scopes.push('read');
+  if(!scopes.length)return;
+  const r=await fetch('/discovery/api/v1/keys',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:$('kname').value.trim()||'Clave sin nombre',scopes})});
+  const j=await r.json();
+  if(j.plaintext){$('minted').classList.remove('hide');$('plaintext').textContent=j.plaintext;}
+  loadKeys();
+});
+$('copy').addEventListener('click',()=>{navigator.clipboard.writeText($('plaintext').textContent);$('copy').textContent='Copiada';});
+loadKeys();
+</script>
+</body></html>

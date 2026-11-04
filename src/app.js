@@ -448,6 +448,10 @@ app.use((req, res, next) => {
   const cut = req.url.indexOf('?');
   const path = cut === -1 ? req.url : req.url.slice(0, cut);
   if (SYNTHEX_PASS_THROUGH.has(path)) return next();
+  // Synthex SAI Discovery: the Discovery module, in Spanish under the Synthex
+  // brand (verticals/discovery picks the brand from this host). It owns every
+  // path beneath /discovery, including its own /api, /mcp and /extension.
+  if (path === '/discovery' || path.startsWith('/discovery/')) return next();
   if (path === '/' || path === '/index.html') {
     res.setHeader('Cache-Control', 'no-cache');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai/index.html'));

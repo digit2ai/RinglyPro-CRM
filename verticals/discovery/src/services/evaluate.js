@@ -342,6 +342,7 @@ function buildDiagram({ scorecard, roadmap, cost, risk, data, processes, lang })
  * not need to be told the document is honest; they need to be able to check.
  */
 function buildCoverage({ inputs, processes, data, captureStats, lang }) {
+  const es = lang === 'es';
   const confirmed = processes.filter(p => p.status === 'confirmed');
   const costed = confirmed.filter(p => Number(p.loaded_hourly_cost) > 0);
   const answeredFlags = confirmed.filter(p => p.customer_facing !== null && p.involves_regulated_data !== null);
@@ -354,22 +355,22 @@ function buildCoverage({ inputs, processes, data, captureStats, lang }) {
     },
     hours: {
       source: 'measured',
-      note: 'Hours per week came from observed runs, not from an estimate.',
+      note: es ? 'Las horas por semana salen de ejecuciones observadas, no de una estimación.' : 'Hours per week came from observed runs, not from an estimate.',
       window_days: captureStats.window_days || null,
       runs: captureStats.count || 0,
       low_confidence: confirmed.filter(p => (p.evidence && p.evidence.confidence) === 'low').map(p => p.name)
     },
     rates: {
       source: 'stated',
-      note: 'Hourly rates can only be entered by a person. A browser cannot observe what anyone is paid.',
+      note: es ? 'La tarifa por hora solo la puede ingresar una persona. Un navegador no puede observar cuánto gana alguien.' : 'Hourly rates can only be entered by a person. A browser cannot observe what anyone is paid.',
       costed: costed.length,
       uncosted: confirmed.length - costed.length,
       uncosted_names: confirmed.filter(p => !(Number(p.loaded_hourly_cost) > 0)).map(p => p.name),
-      uncosted_effect: 'Uncosted processes contribute zero dollars to every figure in this roadmap and are listed rather than averaged.'
+      uncosted_effect: es ? 'Los procesos sin tarifa aportan cero dólares a cada cifra de esta hoja de ruta y se listan en vez de promediarse.' : 'Uncosted processes contribute zero dollars to every figure in this roadmap and are listed rather than averaged.'
     },
     systems: {
       source: 'derived',
-      note: 'Systems were read from the applications the capture actually saw.',
+      note: es ? 'Los sistemas se tomaron de las aplicaciones que la captura realmente vio.' : 'Systems were read from the applications the capture actually saw.',
       derived: inputs.derivedSystems,
       also_stated: inputs.statedSystems
     },
@@ -377,21 +378,21 @@ function buildCoverage({ inputs, processes, data, captureStats, lang }) {
       source: 'stated',
       answered: answeredFlags.length,
       unanswered: confirmed.length - answeredFlags.length,
-      note: 'Whether a customer sees the output, and whether the data is regulated, are judgements. An unanswered flag is treated as unknown, never as no.'
+      note: es ? 'Si un cliente ve el resultado y si los datos están regulados son juicios. Una casilla sin responder cuenta como desconocida, nunca como no.' : 'Whether a customer sees the output, and whether the data is regulated, are judgements. An unanswered flag is treated as unknown, never as no.'
     },
     data_posture: { source: 'stated', score: data.score, rating: data.rating },
-    absent: buildAbsent({ confirmed, captureStats })
+    absent: buildAbsent({ confirmed, captureStats, es })
   };
 }
 
-function buildAbsent({ confirmed, captureStats }) {
+function buildAbsent({ confirmed, captureStats, es }) {
   const out = [];
   if (!(captureStats.window_days >= 7)) {
-    out.push('A full week of capture. Rates were measured over a shorter window and are reported unscaled.');
+    out.push(es ? 'Una semana completa de captura. Las tasas se midieron en una ventana más corta y se reportan sin escalar.' : 'A full week of capture. Rates were measured over a shorter window and are reported unscaled.');
   }
   const uncosted = confirmed.filter(p => !(Number(p.loaded_hourly_cost) > 0));
-  if (uncosted.length) out.push(`An hourly rate for: ${uncosted.map(p => p.name).join(', ')}.`);
-  if (confirmed.some(p => p.error_tolerance == null)) out.push('An error-tolerance judgement on at least one process.');
+  if (uncosted.length) out.push(es ? `Una tarifa por hora para: ${uncosted.map(p => p.name).join(', ')}.` : `An hourly rate for: ${uncosted.map(p => p.name).join(', ')}.`);
+  if (confirmed.some(p => p.error_tolerance == null)) out.push(es ? 'Un juicio de tolerancia al error en al menos un proceso.' : 'An error-tolerance judgement on at least one process.');
   return out;
 }
 

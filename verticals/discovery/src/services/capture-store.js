@@ -98,9 +98,9 @@ async function loadForDerive(tenant_id, { limit = 500 } = {}) {
  * have corrected. Nor does it resurrect a rejected proposal: a person who said
  * "that is not a process" should not have to say it again every week.
  */
-async function rederive(tenant_id) {
+async function rederive(tenant_id, { lang } = {}) {
   const caps = await loadForDerive(tenant_id);
-  const { processes, stats } = derive.derive(caps);
+  const { processes, stats } = derive.derive(caps, { lang });
 
   const existing = await Process.findAll({ where: { tenant_id } });
   const byFp = new Map();

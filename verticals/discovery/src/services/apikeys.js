@@ -22,7 +22,10 @@
 const crypto = require('crypto');
 const { ApiKey, Event } = require('../models');
 
-const PREFIX = 'orbup_dk_';           // discovery key
+const PREFIX = 'orbup_dk_';           // discovery key (OrbUp)
+// Synthex SAI Discovery keys carry their own prefix so a client never sees
+// another product's name in a credential. Both resolve the same way.
+const PREFIXES = { orbup: PREFIX, synthex: 'synthex_dk_' };
 const SCOPES = ['ingest', 'read'];
 
 function hash(plain) {
@@ -30,19 +33,20 @@ function hash(plain) {
 }
 
 /** Mint a key. Returns the plaintext ONCE; it is never recoverable after this. */
-async function mint({ tenant_id, account_id, name, scopes }) {
+async function mint({ tenant_id, account_id, name, scopes, brand }) {
+  const pre = PREFIXES[brand] || PREFIX;
   const wanted = (Array.isArray(scopes) ? scopes : ['ingest'])
     .map(s => String(s).toLowerCase())
     .filter(s => SCOPES.includes(s));
   const use = wanted.length ? Array.from(new Set(wanted)) : ['ingest'];
 
   const secret = crypto.randomBytes(24).toString('base64url');
-  const plain = PREFIX + secret;
+  const plain = pre + secret;
 
   const row = await ApiKey.create({
     tenant_id, account_id,
-    name: String(name || 'Untitled key').slice(0, 80),
-    prefix: plain.slice(0, PREFIX.length + 6),
+    name: String(name || (brand === 'synthex' ? 'Clave sin nombre' : 'Untitled key')).slice(0, 80),
+    prefix: plain.slice(0, pre.length + 6),
     key_hash: hash(plain),
     scopes: use
   });
@@ -62,7 +66,7 @@ async function mint({ tenant_id, account_id, name, scopes }) {
 async function resolve(presented, requiredScope) {
   if (!presented || typeof presented !== 'string') return null;
   const clean = presented.trim().replace(/^Bearer\s+/i, '');
-  if (!clean.startsWith(PREFIX)) return null;
+  if (!Object.values(PREFIXES).some(p => clean.startsWith(p))) return null;
 
   const row = await ApiKey.findOne({ where: { key_hash: hash(clean) } });
   if (!row || row.revoked_at) return null;
@@ -107,4 +111,4 @@ async function revoke(tenant_id, id) {
   return row;
 }
 
-module.exports = { mint, resolve, list, revoke, hash, PREFIX, SCOPES };
+module.exports = { mint, resolve, list, revoke, hash, PREFIX, PREFIXES, SCOPES };

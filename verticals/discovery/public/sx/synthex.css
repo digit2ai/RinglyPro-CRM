@@ -1,0 +1,17 @@
+/* Synthex SAI Discovery: the Synthex SAI token set laid over discovery.css.
+   Values copied from public/synthexai/index.html so the tool matches the site. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@media screen{:root{
+  --bg:#0B0F17; --bg2:#0E1320; --card:#161F30; --card2:#1B2539;
+  --ink:#FFFFFF; --mut:#94A3B8; --faint:#8593A8;
+  --blue:#00B8D9; --violet:#6366F1; --pill:#00F2FE; --pill-ink:#0B0F17;
+  --grad:linear-gradient(120deg,#00F2FE 0%,#6366F1 100%);
+  --grad-soft:linear-gradient(135deg,rgba(0,242,254,.12),rgba(99,102,241,.16));
+  --sans:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}}
+h1,h2,h3,.brand{font-family:'Geist','Inter',system-ui,sans-serif}
+.nav{background:rgba(11,15,23,.86)}
+.brand .orb{width:24px;height:24px;border-radius:7px;box-shadow:0 0 16px rgba(0,242,254,.35);
+  background:#0B0F17 url("/discovery/sx/favicon.svg") center/cover no-repeat}
+.ava-orb{background:radial-gradient(circle at 34% 30%,#9ef7ff,#00B8D9 46%,#1e2160 100%)}

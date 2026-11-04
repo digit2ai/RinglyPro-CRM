@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Panel — Synthex SAI Discovery</title>
+<link rel="canonical" href="https://synthexsai.com/discovery">
+<link rel="icon" type="image/svg+xml" href="/discovery/sx/favicon.svg">
+<link rel="stylesheet" href="/discovery/discovery.css">
+<link rel="stylesheet" href="/discovery/sx/synthex.css">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>Synthex SAI <small>Discovery</small></a>
+  <nav><a class="on" href="/discovery/">Panel</a><a href="/discovery/connect">Conectar</a>
+  <a href="/discovery/how-it-works">Cómo funciona</a><a href="#" id="out">Cerrar sesión</a></nav>
+</div></div>
+
+<div class="wrap" style="padding-top:26px;padding-bottom:70px">
+  <div id="boot" class="faint"><span class="spin"></span> Cargando…</div>
+  <div id="main" class="hide">
+
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><h1 style="font-size:26px;margin:0" id="co"></h1>
+        <p class="faint" style="margin:2px 0 0" id="sub"></p></div>
+      <a class="btn ghost sm" href="/discovery/connect">Fuentes y claves</a>
+    </div>
+
+    <div class="stepper" id="stepper" style="margin-top:20px"></div>
+
+    <!-- ROADMAP -->
+    <section id="roadmapSec" class="hide" style="border-top:0;padding-top:8px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Tu hoja de ruta de IA</h2>
+        <div class="row" id="rmActions"><button class="btn ghost sm" id="pdf">Guardar como PDF</button></div>
+      </div>
+      <div class="print-only" style="margin-bottom:10px"><b>Synthex SAI Discovery</b> — Hoja de ruta de preparación para IA</div>
+      <div id="verdict" class="banner" style="margin-top:14px"></div>
+      <div class="grid g3" id="lanes"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="diagram" id="diagram"></div>
+        <div class="diagram-print" id="diagramPrint"></div>
+        <div class="legend">
+          <span><b style="background:var(--good)"></b>Verde — sin obstáculos</span>
+          <span><b style="background:var(--warn)"></b>Amarillo — hay pendientes, ninguno obliga a esperar</span>
+          <span><b style="background:var(--bad)"></b>Rojo — algo tiene que cambiar primero</span>
+          <span><b style="background:var(--violet)"></b>Compuerta — la fase no recibe fondos si no se cumplen estas condiciones</span>
+        </div>
+      </div>
+      <div id="phases" style="margin-top:16px"></div>
+      <div id="nextstep"></div>
+      <div id="coverage"></div>
+    </section>
+
+    <!-- CAPTURE -->
+    <section>
+      <h2>Lo que se ha observado</h2>
+      <div class="grid g3" id="capstats"></div>
+      <div id="redaction"></div>
+    </section>
+
+    <!-- PROCESSES -->
+    <section id="processes">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2 style="margin:0">Procesos</h2>
+        <div class="row">
+          <button class="btn ghost sm" id="rederive">Volver a leer las capturas</button>
+          <button class="btn ghost sm" id="addManual">Agregar a mano</button>
+        </div>
+      </div>
+      <p class="mut" style="font-size:14px;max-width:74ch">La captura propone; tú confirmas. Solo los procesos confirmados entran en la hoja de ruta: que una máquina agrupe clics es una buena suposición sobre dónde termina un trabajo y empieza el siguiente, no una autorización para poner un nombre en un documento para la junta directiva.</p>
+      <div id="proclist"></div>
+    </section>
+
+    <!-- ANSWERS -->
+    <section id="answers">
+      <h2>Lo que solo tú puedes responder</h2>
+      <p class="mut" style="font-size:14px;max-width:74ch">Seis preguntas. Todo lo demás (qué procesos existen, cuánto tardan, qué sistemas cruzan) se midió, así que no se pregunta.</p>
+      <div id="missingBox"></div>
+      <div class="card" id="qform"></div>
+    </section>
+
+    <!-- FINDINGS -->
+    <section>
+      <h2>Hallazgos</h2>
+      <div class="card" id="findings"></div>
+    </section>
+
+    <section style="text-align:center">
+      <button class="btn primary" id="runEval" style="padding:14px 26px;font-size:15px">Ejecutar la evaluación</button>
+      <p class="faint" id="evalNote" style="margin-top:10px"></p>
+      <div class="msg" id="evalMsg"></div>
+    </section>
+  </div>
+</div>
+
+<script src="/discovery/sx/diagram.js"></script>
+<script src="/discovery/sx/app.js"></script>
+</body></html>

@@ -38,6 +38,9 @@ const Account = sequelize.define('DiscoveryAccount', {
   password_hash: { type: DataTypes.STRING, allowNull: false },
   role: { type: DataTypes.STRING, defaultValue: 'owner' },   // owner|member
   lang: { type: DataTypes.STRING, defaultValue: 'en' },
+  // Which product the account belongs to: 'orbup' (orbup.app/discovery) or
+  // 'synthex' (synthexsai.com/discovery). An account only exists on its own brand.
+  brand: { type: DataTypes.STRING, defaultValue: 'orbup' },
 
   // Company context. Feeds the interview's `context` section verbatim.
   company_name: { type: DataTypes.STRING, allowNull: false },

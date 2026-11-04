@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cómo funciona — Synthex SAI Discovery</title>
+<link rel="icon" type="image/svg+xml" href="/discovery/sx/favicon.svg">
+<link rel="stylesheet" href="/discovery/discovery.css">
+<link rel="stylesheet" href="/discovery/sx/synthex.css">
+<link rel="canonical" href="https://synthexsai.com/discovery">
+</head><body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="/discovery/"><span class="orb"></span>Synthex SAI <small>Discovery</small></a>
+  <nav><a href="/discovery/">Panel</a><a href="/discovery/guide">Recorrido guiado</a><a class="on" href="/discovery/how-it-works">Cómo funciona</a>
+  <a class="btn primary sm" href="/discovery/signup">Empezar gratis</a></nav>
+</div></div>
+<div class="wrap" style="padding-bottom:60px">
+
+<section>
+  <h1 style="font-size:32px">Cómo funciona</h1>
+  <p class="lede">Seis pasos. Todo lo que una máquina puede observar se observa; todo lo que no puede, se pregunta una sola vez y con claridad.</p>
+  <p class="mut">¿Prefieres que te lo lean en voz alta, con un simulador? <a href="/discovery/guide">Haz el recorrido guiado narrado</a>: el mismo contenido, seis minutos, sin tecnicismos.</p>
+</section>
+
+<section id="recorder">
+  <h2>1 · Lo que el grabador graba de verdad</h2>
+  <p class="mut">Es la página más importante de este sitio, así que se explica completa en vez de resumirse.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Señal</th><th>Se guarda</th><th>Por qué</th></tr></thead><tbody>
+      <tr><td>Aplicación</td><td>El nombre: Salesforce, QuickBooks, una hoja de cálculo</td><td class="mut">Los sistemas que cruza un proceso son lo que lo hace automatizable o no.</td></tr>
+      <tr><td>Acción</td><td>Una de: navigate, click, type, submit, copy, paste, upload, download, search, wait, switch_app, scroll</td><td class="mut">Una lista fija. Un verbo desconocido se convierte en <span class="mono">other</span>: "como lo haya llamado el cliente" es un campo de texto con otro nombre.</td></tr>
+      <tr><td>Elemento</td><td>Su <b>rol</b>: botón, campo, enlace, tabla</td><td class="mut">Nunca su etiqueta. "Aprobar factura 4471" revelaría tanto un proceso como un registro.</td></tr>
+      <tr><td>Dirección</td><td>Nombre del sitio, más una ruta con los identificadores ocultos: <span class="mono">/orders/:id/edit</span></td><td class="mut">Los parámetros de consulta se eliminan completos, nunca se recortan: ahí viven los términos de búsqueda y los tokens.</td></tr>
+      <tr><td>Duración</td><td>Milisegundos en cada paso</td><td class="mut">La medición con la que se construye todo el modelo de costos.</td></tr>
+      <tr><td>Quién</td><td>Un hash de la referencia que tú proporciones, con sal distinta por empresa</td><td class="mut">El módulo cuenta cuántas personas hacen un trabajo. Nunca sabe quiénes son, y dos empresas que cifran a la misma persona obtienen seudónimos distintos.</td></tr>
+    </tbody></table></div>
+  <div class="warnbox"><b>Nunca se graba, en ningún momento:</b> nada de lo que escribes (ni el valor, ni un carácter), el contenido de las páginas, las etiquetas de los elementos, el texto de los documentos, lo que hay en el portapapeles al copiar o pegar, ni capturas de pantalla de ningún tipo.</div>
+  <div class="note"><b>Por qué el servidor también limpia los datos.</b> Una extensión la puede modificar quien la instala, así que "nuestro grabador quita esto antes de enviarlo" es una promesa sobre software en la computadora de otra persona. El servidor vuelve a limpiar al recibir, cuenta lo que quitó y te muestra los conteos. No hay ninguna columna en la base de datos que pueda guardar un valor que escribiste: el esquema y el limpiador son las dos mitades de una misma garantía, y un oficial de cumplimiento puede verificar la segunda.</div>
+</section>
+
+<section>
+  <h2>2 · Las ejecuciones se convierten en procesos propuestos</h2>
+  <p class="mut">Las ejecuciones con la misma forma se agrupan. De cada grupo medimos: cuántas ejecuciones, en cuántos días, por cuántas personas distintas y la duración mediana. De ahí salen las horas por semana, por persona.</p>
+  <div class="note"><b>Una ventana de observación corta se reporta, nunca se multiplica.</b> Convertir dos días observados en "horas por semana" significa multiplicar por tres y medio, y eso produce un invento que se ve exactamente como una medición. Con menos de siete días, la tasa es la tasa medida, marcada con baja confianza y con la ventana indicada al lado, y esa advertencia viaja hasta la hoja de ruta.</div>
+  <p class="mut">El agrupamiento es una suposición de la máquina sobre dónde termina un trabajo y empieza el siguiente. Se queda como <b>propuesto</b> hasta que una persona lo confirma, y solo los procesos confirmados entran en la hoja de ruta.</p>
+</section>
+
+<section>
+  <h2>3 · El tiempo se mide. El dinero se declara.</h2>
+  <p class="lede">Un navegador puede ver cuánto tarda el trabajo. No puede saber cuánto le pagan a quien lo hace.</p>
+  <p class="mut">Por eso no hay ningún promedio de la industria en este producto. Un proceso sin tarifa por hora aporta <b>cero dólares</b> a cada cifra de tu hoja de ruta y aparece como sin costear. Escribe una tarifa y esas horas se convierten en dólares. Es el único camino por el que puede aparecer una cifra en dólares aquí.</p>
+</section>
+
+<section>
+  <h2>4 · Seis preguntas</h2>
+  <p class="mut">Cuál preocupación es el verdadero obstáculo · cuánto podrías gastar una vez sin perder el sueño · qué riesgos te quitan el sueño · si confiarías en un reporte sacado hoy · qué tan difícil es sacar los datos · si el trabajo toca datos personales, de salud o de pagos.</p>
+  <p class="mut">La entrevista completa de preparación pregunta unas cuarenta cosas. Más de treinta ahora se miden, y para eso existe este módulo. <b>La evaluación se niega a ejecutarse mientras falte una de las seis</b>, y dice cuál: un documento seguro de sí mismo construido sobre datos ausentes es justo lo que a la mayoría de los directivos ya les vendieron una vez.</p>
+</section>
+
+<section>
+  <h2>5 · Cinco agentes, en un orden fijo</h2>
+  <p class="mut">El mismo Departamento de Preparación para IA que atiende proyectos con consultores, llamado con el mismo código: Preparación de Datos, luego Confianza en Costos, luego Confianza en Riesgos, luego el Constructor de la Hoja de Ruta, coordinados por el Director de Preparación.</p>
+  <p class="mut">El orden importa. Datos va primero porque su conteo de brechas que bloquean se convierte en horas de corrección en el modelo de costos; costos va segundo porque su alcance de la Fase 1 es alrededor de lo que riesgos escribe sus protecciones. Si se ejecutan al mismo tiempo, los tres carriles terminan en desacuerdo, sin avisar, sobre qué procesos entran en el piloto.</p>
+  <div class="note">La Fase 1 excluye datos regulados, resultados que ve el cliente y trabajo que no tolera errores <b>por regla</b>, no por preferencia. La Fase 3 nunca tiene precio. El veredicto no es un promedio: un solo dato bloqueante pesa más que dos carriles en verde. Y siempre hay un siguiente paso seguro: un tablero en rojo produce uno más pequeño, nunca un "vuelve después".</div>
+</section>
+
+<section>
+  <h2>6 · Una clave, dos direcciones</h2>
+  <p class="mut"><b>ingesta</b> envía el trabajo observado: es la clave que vive en muchas computadoras, y no puede leer nada de vuelta. <b>lectura</b> permite que tu propia IA consulte la hoja de ruta por MCP en <span class="mono">/discovery/mcp</span>.</p>
+  <p class="mut">El acceso de lectura no confirma procesos, no fija tarifas ni responde preguntas de postura. Esas son las decisiones humanas en las que se apoya cada cifra, y un agente que pudiera dar esas respuestas podría fabricar una hoja de ruta de principio a fin sin ninguna persona involucrada.</p>
+</section>
+
+<section style="text-align:center;padding:50px 0">
+  <a class="btn primary" href="/discovery/signup">Empezar gratis</a>
+  <p class="faint" style="margin-top:12px">La evaluación y la hoja de ruta son gratis y son tuyas. Una construcción se cotiza según su alcance.</p>
+</section>
+
+<footer><div class="row" style="justify-content:space-between">
+  <span>Synthex SAI Discovery · Synthex SAI</span><span><a href="/discovery/">Panel</a> · <a href="https://synthexsai.com/">Synthex SAI</a></span>
+</div></footer>
+</div>
+</body></html>
