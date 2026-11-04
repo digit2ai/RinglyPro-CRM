@@ -15,3 +15,29 @@ h1,h2,h3,.brand{font-family:'Geist','Inter',system-ui,sans-serif}
 .brand .orb{width:24px;height:24px;border-radius:7px;box-shadow:0 0 16px rgba(0,242,254,.35);
   background:#0B0F17 url("/discovery/sx/favicon.svg") center/cover no-repeat}
 .ava-orb{background:radial-gradient(circle at 34% 30%,#9ef7ff,#00B8D9 46%,#1e2160 100%)}
+
+/* ── Hamburger menu, every width (menu.js) ───────────────────────────────── */
+.nav.has-menu .wrap{height:auto;min-height:60px;flex-wrap:nowrap;padding-top:0;padding-bottom:0;position:relative}
+.nav.has-menu .brand{white-space:nowrap}
+.sx-burger{margin-left:auto;width:46px;height:46px;flex:0 0 46px;border-radius:12px;border:1px solid var(--line2);
+  background:var(--card);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0}
+.sx-burger:hover{border-color:rgba(0,242,254,.5)}
+.sx-burger:focus-visible{outline:2px solid #00F2FE;outline-offset:2px}
+.sx-burger span{display:block;width:20px;height:2px;border-radius:2px;background:#fff;transition:transform .2s,opacity .2s}
+.sx-menu-open .sx-burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.sx-menu-open .sx-burger span:nth-child(2){opacity:0}
+.sx-menu-open .sx-burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.nav.has-menu nav{display:none;position:absolute;top:calc(100% + 8px);right:22px;width:300px;margin:0;
+  flex-direction:column;align-items:stretch;gap:4px;padding:10px;border-radius:16px;
+  background:#111827;border:1px solid var(--line2);box-shadow:0 18px 50px rgba(0,0,0,.55);z-index:60}
+.sx-menu-open .nav.has-menu nav{display:flex}
+.nav.has-menu nav a{display:flex;align-items:center;min-height:48px;padding:0 14px;border-radius:10px;font-size:16px;color:var(--ink)}
+.nav.has-menu nav a.on{background:rgba(0,242,254,.12);color:#00F2FE}
+.nav.has-menu nav a.btn.primary{justify-content:center;margin-top:6px;color:var(--pill-ink);background:var(--pill)}
+.nav.has-menu nav a.sx-home{margin-top:6px;border-top:1px solid var(--line);border-radius:0 0 10px 10px;color:var(--mut);font-size:14px}
+@media (max-width:720px){
+  .nav.has-menu nav{position:fixed;top:60px;left:0;right:0;width:auto;border-radius:0 0 18px 18px;
+    padding:12px 16px calc(16px + env(safe-area-inset-bottom));max-height:calc(100dvh - 60px);overflow:auto}
+  .nav.has-menu nav a{min-height:52px;font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){.sx-burger span{transition:none}}

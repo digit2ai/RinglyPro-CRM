@@ -158,7 +158,11 @@ async function main() {
     const sxBlock = appSrc.slice(appSrc.indexOf('const SYNTHEX_HOSTS'), appSrc.indexOf("Página no encontrada"));
     ok('the synthexsai.com handler passes /discovery through', /path === '\/discovery' \|\| path\.startsWith\('\/discovery\/'\)\) return next\(\)/.test(sxBlock));
     const land = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'synthexai', 'index.html'), 'utf8');
-    ok('the Synthex top menu links Discovery', /<div class="links">[\s\S]*?href="https:\/\/synthexsai\.com\/discovery\/">Discovery<\/a>[\s\S]*?<\/div>/.test(land));
+    ok('the Synthex homepage menu is a hamburger', /id="sxBurger"[^>]*aria-controls="sxLinks"/.test(land) && /\.menu-open \.links\{display:flex\}/.test(land));
+    for (const f of fs.readdirSync(SXD).filter(x => x.endsWith('.html'))) {
+      ok(`sx/${f} loads the hamburger menu`, fs.readFileSync(path.join(SXD, f), 'utf8').includes('/discovery/sx/menu.js'));
+    }
+    ok('the Synthex top menu links Discovery', /<div class="links"[^>]*>[\s\S]*?href="https:\/\/synthexsai\.com\/discovery\/">Discovery<\/a>[\s\S]*?<\/div>/.test(land));
 
     section('Cleanup');
     const [rows] = await sequelize.query(`SELECT id FROM dsc_accounts WHERE email LIKE 'sit_sx_${RUN}_%'`);

@@ -10,7 +10,7 @@
 </head><body>
 <div class="nav"><div class="wrap">
   <a class="brand" href="/discovery/"><span class="orb"></span>Synthex SAI <small>Discovery</small></a>
-  <nav><button class="btn ghost sm" id="pdf">Guardar como PDF</button><span class="pill">solo lectura</span></nav>
+  <nav data-no-menu><button class="btn ghost sm" id="pdf">Guardar como PDF</button><span class="pill">solo lectura</span></nav>
 </div></div>
 <div class="wrap" style="padding-top:28px;padding-bottom:70px">
   <div id="boot" class="faint"><span class="spin"></span> Cargando…</div>
@@ -71,4 +71,5 @@ document.getElementById('pdf').addEventListener('click',()=>window.print());
     ${(cov.absent||[]).length?`<div class="warnbox"><b>No está presente y, por lo tanto, no se usó:</b><br>${cov.absent.map(esc).join('<br>')}</div>`:''}</div>`;
 })();
 </script>
+<script src="/discovery/sx/menu.js" defer></script>
 </body></html>

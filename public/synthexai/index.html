@@ -86,8 +86,27 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;min-heig
 .btn.pri:hover{box-shadow:0 8px 30px rgba(0,242,254,.28);transform:translateY(-1px)}
 .btn:focus-visible,.lang button:focus-visible,.links a:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
 nav .btn{min-height:40px;padding:0 16px;font-size:14px;border-radius:10px}
-@media(max-width:900px){.links{display:none}}
-@media(max-width:520px){nav .btn{display:none}}
+/* Menú hamburguesa en todas las pantallas: .links es el panel desplegable. */
+.links{display:none;position:absolute;top:calc(100% + 8px);right:20px;width:300px;flex-direction:column;gap:4px;padding:10px;
+  border-radius:16px;background:var(--card);border:1px solid var(--line2);box-shadow:0 18px 50px rgba(0,0,0,.45);z-index:40}
+.menu-open .links{display:flex}
+.links a{display:flex;align-items:center;min-height:48px;padding:0 14px;border-radius:10px;color:var(--txt);font-size:16px}
+.links a:hover{background:var(--pillbg)}
+.links a.mcta{justify-content:center;gap:6px;margin-top:6px;background:var(--cy);color:var(--on);font-weight:700}
+nav .wrap{position:relative}
+.burger{width:44px;height:44px;flex:0 0 44px;border-radius:12px;border:1px solid var(--line2);background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;color:var(--txt)}
+.burger span{display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .2s,opacity .2s}
+.menu-open .burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.menu-open .burger span:nth-child(2){opacity:0}
+.menu-open .burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.burger:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+@media(min-width:521px){.links a.mcta{display:none}}
+@media(max-width:520px){nav .btn{display:none}.navr{gap:8px}.lang button{min-width:38px}
+  .links{position:fixed;top:64px;left:0;right:0;width:auto;border-radius:0 0 18px 18px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+    max-height:calc(100dvh - 64px);overflow:auto}
+  .links a{min-height:52px;font-size:17px}}
+@media(prefers-reduced-motion:reduce){.burger span{transition:none}}
 
 section{padding:88px 0;border-bottom:1px solid var(--line)}
 section.alt{background:var(--bg2)}
@@ -450,13 +469,14 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       </svg>
       <span>Synthex <small>SAI</small></span>
     </a>
-    <div class="links">
+    <div class="links" id="sxLinks">
       <a href="#producto"><span class="es">Producto</span><span class="en">Product</span></a>
       <a href="#como"><span class="es">Cómo funciona</span><span class="en">How it works</span></a>
       <a href="#sistemas"><span class="es">Integraciones</span><span class="en">Integrations</span></a>
       <a href="#precio"><span class="es">Precios</span><span class="en">Pricing</span></a>
       <a href="#faq"><span class="es">Preguntas</span><span class="en">FAQ</span></a>
       <a href="https://synthexsai.com/discovery/">Discovery</a>
+      <a class="mcta" href="#demo"><span class="es">Comenzar ahora</span><span class="en">Get started</span> &rarr;</a>
     </div>
     <div class="navr">
       <button type="button" class="theme" data-theme-toggle aria-label="Cambiar tema / Switch theme">
@@ -468,6 +488,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
         <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
       </div>
       <a class="btn pri" href="#demo"><span class="es">Comenzar ahora</span><span class="en">Get started</span> &rarr;</a>
+      <button type="button" class="burger" id="sxBurger" aria-controls="sxLinks" aria-expanded="false" aria-label="Menú / Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
 </nav>
@@ -1254,6 +1275,18 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !ov.hidden) close(); });
   window.SynthexBookDemo = open;
+})();
+</script>
+<script>
+/* Menú hamburguesa: abre/cierra, se cierra al elegir, al tocar fuera y con Escape. */
+(function(){
+  var b=document.getElementById('sxBurger'), m=document.getElementById('sxLinks'); if(!b||!m) return;
+  function set(o){ document.documentElement.classList.toggle('menu-open',o); b.setAttribute('aria-expanded',o?'true':'false'); }
+  function open(){ return b.getAttribute('aria-expanded')==='true'; }
+  b.addEventListener('click',function(e){ e.stopPropagation(); set(!open()); });
+  m.addEventListener('click',function(e){ if(e.target.closest('a')) set(false); });
+  document.addEventListener('click',function(e){ if(open()&&!m.contains(e.target)) set(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&open()){ set(false); b.focus(); } });
 })();
 </script>
 </body>
