@@ -21,6 +21,8 @@
  *   data-label    launcher caption
  *   data-api      API origin, when the page is served from another host
  *   data-icon     image drawn inside the orb ball (opt-in; unset keeps the plain orb)
+ *   data-mode     "text" = chat only: the agent never speaks and the microphone is never
+ *                 requested; the visitor types (opt-in; unset keeps voice)
  *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
  *                 keeps the right caption when it calls setLang()
  *
@@ -57,7 +59,8 @@
       hangup: 'Terminar',
       typeHint: 'Escribe abajo para continuar.',
       bye: 'Me quedo por aquí. Toca el botón cuando quieras seguir.',
-      trouble: 'Tuve un problema de conexión. ¿Me repites la pregunta?'
+      trouble: 'Tuve un problema de conexión. ¿Me repites la pregunta?',
+      textidle: 'Escribe tu pregunta abajo'
     },
     en: {
       idle: 'Tap to talk',
@@ -73,7 +76,8 @@
       hangup: 'End',
       typeHint: 'Type below to continue.',
       bye: "I'll stop here. Tap the button whenever you want to keep going.",
-      trouble: 'I hit a connection problem. Could you repeat that?'
+      trouble: 'I hit a connection problem. Could you repeat that?',
+      textidle: 'Type your question below'
     }
   };
 
@@ -178,6 +182,8 @@
     var accent2 = d.accent2 || '', glow = d.glow || '', ring = d.ring || '', hi = d.hi || '';
     var pos = d.position === 'bottom-left' ? 'bottom-left' : 'bottom-right';
     var icon = d.icon || '';
+    // Text-only: no TTS call, no getUserMedia, ever. Everything else is the same agent.
+    var TEXT_ONLY = d.mode === 'text';
 
     var lang = (d.lang || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
     if (lang !== 'es') lang = 'en';
@@ -237,10 +243,12 @@
     var pageContext = '';
 
     function setState(s) {
+      if (TEXT_ONLY && s !== 'thinking' && s !== 'error') s = 'textidle';
       ball.classList.remove('is-listening', 'is-speaking', 'is-thinking');
       statusEl.textContent = T[s] || T.idle;
       if (s === 'listening' || s === 'speaking' || s === 'thinking') ball.classList.add('is-' + s);
-      root.classList.toggle('is-live', s !== 'idle' && s !== 'denied' && s !== 'error');
+      // Text-only is never a live call, so the End button never shows.
+      root.classList.toggle('is-live', !TEXT_ONLY && s !== 'idle' && s !== 'denied' && s !== 'error');
     }
     function setCap(text, isUser) {
       capEl.innerHTML = '';
@@ -311,6 +319,7 @@
         .catch(function () { return null; });
     }
     function speak(text, onEnd) {
+      if (TEXT_ONLY) { if (onEnd) onEnd(); return; }
       stopAudio();
       var myToken = speakToken;
       var c = ensureCtx();
@@ -451,6 +460,17 @@
     }
     function startCall() {
       if (live) return;
+      if (TEXT_ONLY) {
+        if (!history.length) {
+          pageContext = extractPageText();
+          var g = withSaludo(cfg.greeting);
+          history.push({ role: 'assistant', content: g });
+          setCap(g, false);
+        }
+        setState('idle');
+        input.focus();
+        return;
+      }
       live = true; silences = 0; history = [];
       pageContext = extractPageText();
       unlockAudio();
@@ -524,9 +544,9 @@
     $('launch').addEventListener('click', open);
     $('close').addEventListener('click', close);
     endBtn.addEventListener('click', endCall);
-    ball.addEventListener('click', function () { if (live) endCall(); else startCall(); });
+    ball.addEventListener('click', function () { if (TEXT_ONLY) { input.focus(); return; } if (live) endCall(); else startCall(); });
     ball.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (live) endCall(); else startCall(); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (TEXT_ONLY) { input.focus(); return; } if (live) endCall(); else startCall(); }
     });
     sendBtn.addEventListener('click', sendTyped);
     input.addEventListener('keydown', function (e) {

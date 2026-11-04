@@ -855,7 +855,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
 
 <div class="niva" id="niva">
   <div class="orb-wrap" id="nivaOrb" role="button" tabindex="0" data-state="idle"
-       aria-label="Hablar con Lina, la asistente virtual de Synthex SAI / Talk to the Synthex SAI virtual assistant"
+       aria-label="Escribirle a Lina, la asistente virtual de Synthex SAI / Chat with the Synthex SAI virtual assistant"
        aria-describedby="niva-cap">
     <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
     <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -945,14 +945,14 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
           </g>
         </svg>
     <div class="orb-caption" id="niva-cap">
-      <span class="orb-cap-idle" id="nivaCapIdle">Toca para hablar con Lina</span>
+      <span class="orb-cap-idle" id="nivaCapIdle">Escríbele a Lina</span>
       <span class="orb-cap-active" id="nivaCapActive">Lina te escucha</span>
     </div>
   </div>
 </div>
 
-<div data-voice-orb data-agent="synthex" data-position="bottom-right" data-accent="#00F2FE" data-accent2="#6366F1"></div>
-<script src="/embed/voice-orb.js?v=3" defer></script>
+<div data-voice-orb data-mode="text" data-agent="synthex" data-position="bottom-right" data-accent="#00F2FE" data-accent2="#6366F1"></div>
+<script src="/embed/voice-orb.js?v=4" defer></script>
 <script>
 (function(){
   // Lina es una asistente que CONVERSA (persona "synthex" en src/config/voice-agents.js):
@@ -969,8 +969,9 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   wrap.addEventListener('click', tap);
   wrap.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
   var TXT = {
-    es: { idle:'Toca para hablar con Lina', listening:'Lina te escucha', thinking:'Lina está pensando', speaking:'Lina está hablando' },
-    en: { idle:'Tap to talk to Ava', listening:'Ava is listening', thinking:'Ava is thinking', speaking:'Ava is speaking' }
+    // Por ahora Lina solo escribe (data-mode="text"): sin voz y sin micrófono.
+    es: { idle:'Escríbele a Lina', listening:'Escríbele a Lina', thinking:'Lina está pensando', speaking:'Lina está respondiendo' },
+    en: { idle:'Chat with Lina', listening:'Chat with Lina', thinking:'Lina is thinking', speaking:'Lina is replying' }
   };
   function sync(){
     var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball'), st = 'idle';
@@ -1136,7 +1137,8 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   }
   go.addEventListener('click', ask);
   inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); ask(); } });
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Dictado apagado mientras Lina está en modo solo texto.
+  var SR = null;
   if (!SR) { mic.style.display = 'none'; }
   else mic.addEventListener('click', function(){
     var r = new SR(); r.lang = L() === 'en' ? 'en-US' : 'es-419'; r.interimResults = false; r.maxAlternatives = 1;
