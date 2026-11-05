@@ -382,6 +382,22 @@ router.post('/auth/login', async (req, res) => {
 // The token is a self-contained JWT bound to the current password hash, so it
 // auto-invalidates the moment the password changes (single use) -- no DB column
 // or migration required.
+const FORGOT_WINDOW_MS = 15 * 60 * 1000;
+const forgotHits = new Map();
+function forgotAllowed(req, email) {
+  const now = Date.now();
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim();
+  const keys = [['e:' + req.chamber_id + ':' + email, 3], ['i:' + ip, 15]];
+  if (forgotHits.size > 5000) for (const [k, v] of forgotHits) if (now - v.t > FORGOT_WINDOW_MS) forgotHits.delete(k);
+  let ok = true;
+  for (const [k, max] of keys) {
+    const v = forgotHits.get(k);
+    if (!v || now - v.t > FORGOT_WINDOW_MS) { forgotHits.set(k, { t: now, n: 1 }); continue; }
+    v.n++; if (v.n > max) ok = false;
+  }
+  return ok;
+}
+
 router.post('/auth/forgot-password', async (req, res) => {
   // THE LINK TRAVELS ONLY BY EMAIL (SendGrid). It used to be returned in this
   // response too, which let anyone who knew a member's email reset that
@@ -394,6 +410,12 @@ router.post('/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, error: es ? 'El correo es obligatorio' : 'Email is required' });
+    // Ceiling per address and per caller (in memory, per instance): without it
+    // anyone could flood a member's inbox. Past it the answer is the same
+    // generic message, so the limit reveals nothing about the account.
+    if (!forgotAllowed(req, String(email).toLowerCase().trim())) {
+      return res.json({ success: true, message: generic });
+    }
     const sgKey = process.env.SENDGRID_API_KEY;
     // Same verified sender the other verticals fall back to (Planea, BuyersLine).
     const fromEmail = process.env.CHAMBER_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || 'info@digit2ai.com';
