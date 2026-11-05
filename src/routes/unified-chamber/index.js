@@ -18,6 +18,9 @@ const router = express.Router();
 // cv-105 y devuelve 404 para cualquier otro slug, asi que montarlo aqui no
 // expone nada a las demas camaras. Va ARRIBA para que core.js no se lo trague.
 router.use('/directorio', require('./hispanotec'));
+// Documentacion: biblioteca de documentos para todos los miembros. Se
+// auto-limita a CHAMBER_DOCS_SLUGS (por defecto cv-105); 404 para las demas.
+router.use('/documentos', require('./documentos'));
 // Ajustes de la integracion con WordPress. Disponible para cualquier camara:
 // aqui no hay nada especifico de un tenant, solo su propia configuracion.
 router.use('/integrations', require('./integrations'));

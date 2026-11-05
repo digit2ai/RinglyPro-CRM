@@ -244,6 +244,16 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
 
 /* Search bar */
 .search-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+/* Documentacion: en el telefono la tabla se vuelve tarjetas apiladas. */
+#docsList .doc-actions { white-space:nowrap; }
+@media (max-width:700px) {
+  #docsList table, #docsList tbody, #docsList tr, #docsList td { display:block; width:100%; }
+  #docsList thead { display:none; }
+  #docsList tr { border:1px solid #e5e7eb; border-radius:10px; padding:10px 12px; margin-bottom:10px; }
+  #docsList td { border:none !important; padding:3px 0 !important; }
+  #docsList .doc-actions { white-space:normal; display:flex !important; flex-wrap:wrap; gap:6px; padding-top:8px !important; }
+  #docsList .doc-actions .btn { min-height:40px; }
+}
 .search-bar input, .search-bar select {
   padding:9px 12px;
   border:1px solid var(--gray-300);
@@ -478,6 +488,12 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Pagos
       </div>
+      <!-- Documentacion: biblioteca de documentos de la camara. Nace oculta y
+           solo se muestra donde el servidor la habilita (cv-105). -->
+      <div class="sidebar-nav-item" data-page="docs" id="docsNavItem" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+        Documentaci&oacute;n
+      </div>
       <!-- Motor de Directorio Inteligente. Este archivo lo comparten TODAS las
            camaras, asi que el enlace nace oculto y solo se muestra en cv-105
            (HISPANOTEC). Ver el bloque que lo activa mas abajo. -->
@@ -550,6 +566,15 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
   (function(){
     var d = document.getElementById('hispDirLink');
     if (d && slugMatch === 'cv-105') d.href = '/cv-105/directorio';
+  })();
+
+  // Documentacion — visible para TODOS los miembros de las camaras donde el
+  // servidor la habilita. Esta lista solo decide si se dibuja el enlace; el
+  // permiso real lo aplica /api/documentos (404 en cualquier otra camara).
+  var DOCS_SLUGS = ['cv-105'];
+  (function(){
+    var n = document.getElementById('docsNavItem');
+    if (n && slugMatch && DOCS_SLUGS.indexOf(slugMatch) !== -1) n.style.display = 'flex';
   })();
 
   // -- State --
@@ -978,16 +1003,164 @@ td { padding:10px 12px; border-bottom:1px solid var(--gray-200); }
     var titles = {
       dashboard:'Panel', profile:'Mi Perfil', directory:'Directorio',
       matching:'Match con IA', searches:'Mis Busquedas', projects:'Proyectos', invitations:'Invitaciones',
-      inbox:'Bandeja', exchange:'Intercambio', payments:'Pagos', admin:'Administracion'
+      inbox:'Bandeja', exchange:'Intercambio', payments:'Pagos', docs:'Documentaci\u00f3n', admin:'Administracion'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     document.getElementById('pageContent').innerHTML = '<div class="loading">Cargando...</div>';
     var renderers = {
       dashboard:renderDashboard, profile:renderProfile, directory:renderDirectory,
       matching:renderMatching, searches:renderSearches, projects:renderProjects, invitations:renderInvitations,
-      inbox:renderInbox, exchange:renderExchange, payments:renderPayments, admin:renderAdmin
+      inbox:renderInbox, exchange:renderExchange, payments:renderPayments, docs:renderDocs, admin:renderAdmin
     };
     if (renderers[page]) renderers[page]();
+  }
+
+  // -- Documentacion --
+  // Todos los miembros ven y abren los documentos. Solo un administrador sube
+  // (arrastrar y soltar o elegir archivos), edita el titulo o retira uno. El
+  // servidor vuelve a comprobar el rol en cada envio: can_manage solo decide
+  // que se dibuja.
+  var docsState = { q: '' };
+  function fmtSize(b) { b = Number(b) || 0; if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
+  function fmtDate(d) { try { return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
+
+  async function renderDocs() {
+    var el = document.getElementById('pageContent');
+    el.innerHTML = '<div class="panel"><div class="flex-between mb-12" style="gap:12px;flex-wrap:wrap">'
+      + '<div><h2 style="margin:0">Documentaci&oacute;n</h2><p class="text-muted text-sm" style="margin:4px 0 0">Documentos de la asociaci&oacute;n disponibles para todos los miembros.</p></div>'
+      + '<div class="search-bar" style="margin:0;flex:0 1 300px"><input id="docsSearch" type="search" placeholder="Buscar documento..." value="' + esc(docsState.q) + '"></div></div>'
+      + '<div id="docsUpload"></div><div id="docsList"><div class="loading">Cargando...</div></div></div>';
+    var t = null;
+    document.getElementById('docsSearch').addEventListener('input', function () {
+      docsState.q = this.value; clearTimeout(t); t = setTimeout(loadDocs, 300);
+    });
+    loadDocs(true);
+  }
+
+  async function loadDocs(first) {
+    var list = document.getElementById('docsList');
+    if (!list) return;
+    var res;
+    try { res = await apiFetch('/documentos?q=' + encodeURIComponent(docsState.q || '')); }
+    catch (e) { list.innerHTML = '<div class="error-msg">No se pudo cargar la documentaci&oacute;n.</div>'; return; }
+    if (!res.success) { list.innerHTML = '<div class="error-msg">' + esc(res.error || 'No disponible') + '</div>'; return; }
+    if (first && res.can_manage) renderDocsUpload(res.max_mb, res.max_files);
+    var rows = res.data || [];
+    if (!rows.length) {
+      list.innerHTML = '<p class="text-muted" style="padding:24px 0;text-align:center">'
+        + (docsState.q ? 'Ning&uacute;n documento coincide con la b&uacute;squeda.' : 'Todav&iacute;a no hay documentos.') + '</p>';
+      return;
+    }
+    var h = '<div class="table-wrap"><table><thead><tr><th>Documento</th><th>Tipo</th><th>Tama&ntilde;o</th><th>Subido</th><th></th></tr></thead><tbody>';
+    rows.forEach(function (d) {
+      h += '<tr><td><strong>' + esc(d.title) + '</strong>'
+        + (d.description ? '<div class="text-muted text-sm">' + esc(d.description) + '</div>' : '')
+        + '<div class="text-muted text-sm">' + esc(d.filename) + '</div></td>'
+        + '<td><span class="badge badge-blue">' + esc(d.kind_label) + '</span></td>'
+        + '<td class="text-sm">' + fmtSize(d.size_bytes) + '</td>'
+        + '<td class="text-sm">' + fmtDate(d.created_at) + (d.uploaded_by_name ? '<div class="text-muted">' + esc(d.uploaded_by_name) + '</div>' : '') + '</td>'
+        + '<td class="doc-actions">'
+        + '<button class="btn btn-sm btn-primary" data-doc-open="' + d.id + '" data-kind="' + esc(d.kind) + '">Ver</button> '
+        + '<button class="btn btn-sm btn-outline" data-doc-dl="' + d.id + '" data-name="' + esc(d.filename) + '">Descargar</button>'
+        + (res.can_manage ? ' <button class="btn btn-sm btn-outline" data-doc-edit="' + d.id + '">Editar</button> <button class="btn btn-sm btn-danger" data-doc-del="' + d.id + '">Retirar</button>' : '')
+        + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+    list.innerHTML = h;
+    var byId = {}; rows.forEach(function (d) { byId[d.id] = d; });
+    list.querySelectorAll('[data-doc-open]').forEach(function (b) { b.addEventListener('click', function () { openDoc(this.dataset.docOpen, this.dataset.kind, false); }); });
+    list.querySelectorAll('[data-doc-dl]').forEach(function (b) { b.addEventListener('click', function () { openDoc(this.dataset.docDl, null, true, this.dataset.name); }); });
+    list.querySelectorAll('[data-doc-edit]').forEach(function (b) { b.addEventListener('click', function () { editDoc(byId[this.dataset.docEdit]); }); });
+    list.querySelectorAll('[data-doc-del]').forEach(function (b) { b.addEventListener('click', function () { deleteDoc(byId[this.dataset.docDel]); }); });
+  }
+
+  // El archivo se pide con el token y se abre como blob: el token vive en
+  // localStorage, no en una cookie, asi que un enlace directo no llevaria sesion.
+  async function openDoc(id, kind, download, name) {
+    var win = null;
+    var viewable = !download && (kind === 'pdf' || kind === 'txt' || kind === 'md' || kind === 'csv');
+    if (viewable) { win = window.open('', '_blank'); }
+    try {
+      var r = await fetch(API + '/documentos/' + encodeURIComponent(id) + '/file' + (viewable ? '' : '?download=1'),
+        { headers: { 'Authorization': 'Bearer ' + getToken() } });
+      if (r.status === 401) { if (win) win.close(); logout(); return; }
+      if (!r.ok) throw new Error('http ' + r.status);
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      if (viewable && win) { win.location.href = url; }
+      else {
+        var a = document.createElement('a'); a.href = url; a.download = name || ''; document.body.appendChild(a); a.click(); a.remove();
+      }
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    } catch (e) {
+      if (win) win.close();
+      alert('No se pudo abrir el documento.');
+    }
+  }
+
+  function renderDocsUpload(maxMb, maxFiles) {
+    var box = document.getElementById('docsUpload');
+    if (!box) return;
+    box.innerHTML = '<div id="docsDrop" tabindex="0" role="button" aria-label="Subir documentos" style="border:2px dashed var(--primary);border-radius:12px;padding:26px 16px;text-align:center;background:var(--primary-light);cursor:pointer;margin-bottom:16px;transition:background .15s">'
+      + '<div style="font-weight:700;color:var(--primary-dark)">Arrastra aqu&iacute; los documentos o haz clic para elegirlos</div>'
+      + '<div class="text-muted text-sm" style="margin-top:6px">PDF, Word (.docx, .doc), RTF o texto &middot; hasta ' + maxMb + ' MB cada uno &middot; hasta ' + maxFiles + ' a la vez</div>'
+      + '<input id="docsFile" type="file" multiple accept=".pdf,.doc,.docx,.rtf,.txt,.md,.csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" style="display:none">'
+      + '</div><div id="docsUploadMsg" class="mb-12"></div>';
+    var drop = document.getElementById('docsDrop'), input = document.getElementById('docsFile');
+    drop.addEventListener('click', function () { input.click(); });
+    drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+    input.addEventListener('change', function () { if (this.files.length) uploadDocs(this.files, maxMb, maxFiles); this.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); drop.style.background = 'var(--accent-light)'; }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); drop.style.background = 'var(--primary-light)'; }); });
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files; if (f && f.length) uploadDocs(f, maxMb, maxFiles); });
+  }
+
+  async function uploadDocs(fileList, maxMb, maxFiles) {
+    var msg = document.getElementById('docsUploadMsg');
+    var files = Array.prototype.slice.call(fileList);
+    var okExt = /\.(pdf|docx?|rtf|txt|md|csv)$/i;
+    var bad = files.filter(function (f) { return !okExt.test(f.name) || f.size > maxMb * 1048576; });
+    files = files.filter(function (f) { return okExt.test(f.name) && f.size <= maxMb * 1048576; });
+    var notes = bad.map(function (f) { return esc(f.name) + ': ' + (okExt.test(f.name) ? 'pesa más de ' + maxMb + ' MB' : 'tipo no admitido'); });
+    if (!files.length) { msg.innerHTML = '<div class="error-msg">' + notes.join('<br>') + '</div>'; return; }
+    var sent = 0, saved = 0;
+    msg.innerHTML = '<div class="loading">Subiendo ' + files.length + ' documento(s)...</div>';
+    for (var i = 0; i < files.length; i += maxFiles) {
+      var fd = new FormData();
+      files.slice(i, i + maxFiles).forEach(function (f) { fd.append('files', f, f.name); });
+      try {
+        var r = await fetch(API + '/documentos', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() }, body: fd });
+        if (r.status === 401) { logout(); return; }
+        var data = await r.json();
+        sent += files.slice(i, i + maxFiles).length;
+        saved += data.saved || 0;
+        (data.results || []).forEach(function (x) { if (!x.ok) notes.push(esc(x.filename) + ': ' + esc(x.error)); });
+        if (!data.results && data.error) notes.push(esc(data.error));
+      } catch (e) { notes.push('Error de conexión al subir.'); }
+    }
+    msg.innerHTML = (saved ? '<div class="success-msg">' + saved + ' documento(s) guardado(s).</div>' : '')
+      + (notes.length ? '<div class="error-msg">' + notes.join('<br>') + '</div>' : '');
+    loadDocs();
+  }
+
+  function editDoc(d) {
+    if (!d) return;
+    var h = '<h2>Editar documento</h2><div class="form-group"><label>T&iacute;tulo</label><input id="docEditTitle" maxlength="200" value="' + esc(d.title) + '"></div>'
+      + '<div class="form-group"><label>Descripci&oacute;n (opcional)</label><textarea id="docEditDesc" rows="3" maxlength="2000">' + esc(d.description || '') + '</textarea></div>'
+      + '<div id="docEditMsg"></div><button class="btn btn-primary" id="docEditSave">Guardar</button>';
+    openModal(h);
+    document.getElementById('docEditSave').addEventListener('click', async function () {
+      var res = await apiFetch('/documentos/' + d.id, 'PATCH', { title: document.getElementById('docEditTitle').value, description: document.getElementById('docEditDesc').value });
+      if (!res.success) { document.getElementById('docEditMsg').innerHTML = '<div class="error-msg">' + esc(res.error || 'Error') + '</div>'; return; }
+      closeModal(); loadDocs();
+    });
+  }
+
+  async function deleteDoc(d) {
+    if (!d || !confirm('Retirar "' + d.title + '"? Los miembros dejarán de verlo.')) return;
+    var res = await apiFetch('/documentos/' + d.id, 'DELETE');
+    if (!res.success) { alert(res.error || 'No se pudo retirar.'); return; }
+    loadDocs();
   }
 
   // -- Hamburger --
