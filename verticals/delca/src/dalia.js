@@ -344,7 +344,7 @@ async function modelTurn(state, text, catalog, ctx) {
     return state.awaiting && ASK[state.awaiting] ? cartText(state, catalog) + '\n' + ASK[state.awaiting]
       : (state.awaiting === 'confirm' ? confirmText(state, catalog) : cartText(state, catalog) + '\n¿Algo más?');
   }
-  if (ctx.shown && !reply.includes('Total')) reply = ctx.shown + (reply ? '\n' + reply : '');
+  if (ctx.shown) return ctx.shown; // the summary the customer confirms is always the code's, never a rewrite
   return reply;
 }
 
