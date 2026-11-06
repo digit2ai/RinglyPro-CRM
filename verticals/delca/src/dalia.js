@@ -336,8 +336,11 @@ async function modelTurn(state, text, catalog, ctx) {
   }
   if (ctx.placed) return ctx.placed.reply; // the confirmation text is the code's, never the model's
   const extra = [state.customer.phone, state.order && state.order.number];
-  if (!reply || verifyReply(reply, state, catalog, extra).length) {
+  const bad = reply ? verifyReply(reply, state, catalog, extra) : [];
+  if (!reply || bad.length) {
     ctx.discarded = !!reply;
+    ctx.discarded_text = reply.slice(0, 300);
+    if (bad.length) console.log('[delca] model reply discarded, figures not on the menu/cart:', bad.join(' | '), '::', reply.slice(0, 200));
     return state.awaiting && ASK[state.awaiting] ? cartText(state, catalog) + '\n' + ASK[state.awaiting]
       : (state.awaiting === 'confirm' ? confirmText(state, catalog) : cartText(state, catalog) + '\n¿Algo más?');
   }
@@ -365,7 +368,7 @@ async function turn(state, text, catalog, ctx) {
   if (reply == null) reply = await heuristicTurn(state, clean, catalog, ctx);
   state.history.push({ role: 'user', text: clean }, { role: 'assistant', text: reply });
   state.history = state.history.slice(-16);
-  return { reply, composed_by, is_simulated: composed_by === 'heuristic', model_error: ctx.model_error || null };
+  return { reply, composed_by, is_simulated: composed_by === 'heuristic', model_error: ctx.model_error || null, discarded_text: ctx.discarded_text || null };
 }
 
 function orderText(order, items, customer) {

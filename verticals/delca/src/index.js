@@ -147,7 +147,7 @@ router.post('/api/v1/chat', ready, wrap(async (req, res) => {
   return turnFor(req, res, async (state, catalog, sid) => {
     const ctx = { placeOrder: (s) => placeOrder(s, sid, catalog) };
     const r = await dalia.turn(state, text, catalog, ctx);
-    return { reply: r.reply, composed_by: r.composed_by, is_simulated: r.is_simulated };
+    return { reply: r.reply, composed_by: r.composed_by, is_simulated: r.is_simulated, discarded: r.discarded_text || undefined };
   });
 }));
 
