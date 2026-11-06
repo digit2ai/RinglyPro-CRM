@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0B0F17">
-<title>Automatización de Negocios</title>
-<meta name="description" content="Presentación narrada por Lina: cómo cualquier empresa conecta sus sistemas de siempre a la inteligencia artificial, como un USB, para reducir costos y crecer sin parar.">
+<title>Synthex SAI · Automatización con IA</title>
+<meta name="description" content="Presentación narrada por Lina: cómo Synthex SAI conecta su empresa, de 10 a 500 empleados, a la inteligencia artificial de los mejores proveedores, sin cambiar sus sistemas.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22a%22%20x1%3D%220%22%20x2%3D%221%22%3E%3Cstop%20offset%3D%220%22%20stop-color%3D%22%2300F2FE%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%236366F1%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%23111827%22/%3E%3Cpath%20d%3D%22M12%2018C26%2018%2028%2032%2037%2032M12%2032H37M12%2046C26%2046%2028%2032%2037%2032%22%20fill%3D%22none%22%20stroke%3D%22url%28%23a%29%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22/%3E%3Cpath%20d%3D%22M37%2032H50%22%20stroke%3D%22%2300F2FE%22%20stroke-width%3D%225%22%20stroke-linecap%3D%22round%22/%3E%3Ccircle%20cx%3D%2237%22%20cy%3D%2232%22%20r%3D%226.5%22%20fill%3D%22%230B0F17%22%20stroke%3D%22%2300F2FE%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2252.5%22%20cy%3D%2232%22%20r%3D%223.6%22%20fill%3D%22%2300F2FE%22/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Synthex SAI">
-<meta property="og:title" content="Automatización de Negocios">
+<meta property="og:title" content="Synthex SAI · Automatización con IA">
 <meta property="og:description" content="Cómo cualquier empresa conecta sus sistemas de siempre a la inteligencia artificial, como un USB, para reducir costos y crecer sin parar.">
 <meta property="og:url" content="https://synthexsai.com/pymes/">
 <meta property="og:image" content="https://synthexsai.com/pymes/og.jpg?v=2">
@@ -23,7 +23,7 @@
 
 <style>html,body{background:#0B0F17}</style>
 <style>
-/* Copia exacta de public/pymes (vision2ai.app/pymes) con la marca de Synthex SAI:
+/* Copia exacta de digit2ai.com/presentacion (public/mcp/presentacion) con la marca de Synthex SAI:
    logo, colores (Obsidian, cian eléctrico, índigo) y textos. Las fuentes son las
    del original (las del sistema) a propósito, para que cada lámina corte y se
    acomode exactamente igual. */
@@ -37,6 +37,7 @@
   --W:1280px; --H:720px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+button{font-family:inherit;cursor:pointer}
 html,body{height:100%}
 body{font-family:var(--fb);color:var(--txt);background:radial-gradient(1100px 700px at 50% 35%,#121a2c,var(--bg));overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;cursor:pointer}
@@ -242,200 +243,16 @@ body.vert .orbx{width:560px;height:560px;margin-top:10px}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;animation-iteration-count:1!important}}
 </style>
 <style>
-/* ── simuladores ──────────────────────────────────────────────────── */
-.simtag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:3px 10px;margin-left:10px;vertical-align:middle}
-.simbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.sbtn{background:#131e33;color:var(--txt);border:1px solid var(--line2);border-radius:999px;padding:10px 16px;font-weight:600;font-size:14px;min-height:44px}
-.sbtn.on{background:linear-gradient(90deg,var(--cy),#7DF9FF);color:var(--on);border-color:transparent}
-body.vert .sbtn{font-size:19px;padding:12px 18px}
-
-/* voz */
-.phone{width:380px;flex:0 0 380px;height:470px;border-radius:34px;border:2px solid var(--line2);background:#0a1020;padding:18px 16px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-body.vert .phone{width:100%;flex-basis:auto;height:620px}
-.phone .ph{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-.phone .ph .dotlive{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 1.4s infinite}
-.phone .ph b{font-family:var(--fd);font-size:16px}.phone .ph small{color:var(--mut);font-size:12px;display:block}
-.chat{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:9px;padding-top:12px;justify-content:flex-end}
-.msg{max-width:86%;padding:9px 13px;border-radius:16px;font-size:14.5px;line-height:1.4;animation:up .35s ease both}
-.msg.ai{background:linear-gradient(90deg,rgba(0,242,254,.18),rgba(99,102,241,.18));border:1px solid rgba(0,242,254,.35);align-self:flex-start;border-bottom-left-radius:4px}
-.msg.cl{background:#1a2640;align-self:flex-end;border-bottom-right-radius:4px}
-.msg.sys{align-self:center;background:transparent;color:var(--ok);font-size:12.5px;font-weight:700;letter-spacing:.04em;border:1px dashed rgba(52,211,153,.5)}
-body.vert .msg{font-size:19px}
-.outs{display:grid;gap:10px;margin-top:14px}
-.out{display:flex;justify-content:space-between;gap:10px;border:1px solid var(--line2);border-radius:12px;padding:10px 14px;font-size:15px;color:var(--mut);background:rgba(15,23,40,.85)}
-.out b{color:var(--txt);font-family:var(--fd)}
-.out.ok b{color:var(--ok)}
-body.vert .out{font-size:20px}
-
-/* contabilidad */
-.acc{display:grid;grid-template-columns:330px 1fr;gap:24px;margin-top:20px;align-items:start}
-body.vert .acc{grid-template-columns:1fr}
-.inv{background:#f4f6fb;color:#1b2333;border-radius:14px;padding:18px 20px;font-size:14px;box-shadow:0 14px 40px rgba(0,0,0,.4);position:relative}
-.inv h4{font-family:var(--fd);font-size:18px;color:#0f1728}
-.inv .r{display:flex;justify-content:space-between;padding:6px 6px;border-radius:6px;margin-top:4px;transition:background .3s}
-.inv .r.hi{background:rgba(0,242,254,.35)}
-.inv .scan{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#00F2FE,transparent);top:0;opacity:0}
-.inv.scanning .scan{animation:scanY 1.6s ease-in-out;opacity:1}
-@keyframes scanY{from{top:0}to{top:100%}}
-body.vert .inv{font-size:19px}
-table.led{width:100%;border-collapse:collapse;font-size:14.5px;border:1px solid var(--line2);border-radius:12px;overflow:hidden}
-table.led th{background:#0f1728;color:var(--mut);text-align:left;padding:9px 10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
-table.led td{padding:9px 10px;border-top:1px solid var(--line)}
-table.led tr.new td{animation:rowin .8s ease both;background:rgba(0,242,254,.10)}
-@keyframes rowin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
-.st{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;letter-spacing:.04em}
-.st.ok{color:var(--ok);border:1px solid rgba(52,211,153,.5)}.st.wait{color:var(--warn);border:1px solid rgba(251,191,36,.5)}
-body.vert table.led{font-size:18px}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
-.kpi{border:1px solid var(--line2);border-radius:12px;padding:10px 14px;background:rgba(15,23,40,.85)}
-.kpi small{color:var(--mut);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
-.kpi b{display:block;font-family:var(--fd);font-size:26px;margin-top:2px}
-body.vert .kpi b{font-size:32px}
-
-/* operaciones */
-.board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px;min-height:330px}
-body.vert .board{grid-template-columns:1fr 1fr;min-height:0}
-.lane{background:rgba(15,23,40,.75);border:1px solid var(--line2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
-.lane h5{font-family:var(--fd);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--cy);display:flex;justify-content:space-between}
-.tk{background:#131e33;border:1px solid var(--line2);border-left:3px solid var(--cy);border-radius:10px;padding:8px 10px;font-size:13px;animation:up .4s ease both}
-.tk b{display:block;font-family:var(--fd);font-size:14px}.tk small{color:var(--mut)}
-body.vert .tk{font-size:17px}body.vert .tk b{font-size:19px}body.vert .lane h5{font-size:16px}
-
-/* calculadora */
-.calc{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:20px}
-body.vert .calc{grid-template-columns:1fr}
-.sl{margin-top:14px}
-.sl label{display:flex;justify-content:space-between;font-size:15px;color:var(--mut)}
-.sl label b{color:var(--txt);font-family:var(--fd);font-size:17px}
-.sl input{width:100%;margin-top:8px;accent-color:#00F2FE;height:28px}
-body.vert .sl label{font-size:20px}
-.res .big{font-family:var(--fd);font-weight:700;font-size:44px;line-height:1.05;margin-top:4px}
-.res .row2{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:10px 0;font-size:16px;color:var(--mut)}
-.res .row2 b{color:var(--txt);font-family:var(--fd)}
-body.vert .res .row2{font-size:20px}
-
-/* antes y después */
-table.ba td.bef{color:var(--mut)}
-table.ba td.aft{color:var(--txt);font-weight:700;background:rgba(52,211,153,.07)}
-table.ba th.aft{color:#0B0F17;background:linear-gradient(90deg,var(--ok),#6ee7b7)}
-.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
-body.vert .three{grid-template-columns:1fr}
-body.vert .orbx{width:380px;height:380px}
-body.vert #lastSlide h1{font-size:64px}
 .vlogo{display:flex;flex-direction:column;align-items:center;gap:10px;width:340px;padding:18px 20px 14px;border-radius:14px;border:1px solid var(--line);background:#111827}
 .sxw{display:flex;align-items:center;gap:14px;font-family:'Geist',var(--fd);font-weight:700;font-size:40px;letter-spacing:-.02em;color:#fff}.sxw i{font-style:normal;color:#00F2FE}body.vert .sxw{font-size:50px}body.vert .sxw svg{width:72px;height:72px}
 .vlogo span{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.32em;color:var(--mut)}
 body.vert .vlogo{width:440px}body.vert .vlogo span{font-size:15px}
-.three.four{grid-template-columns:repeat(4,1fr)}.three.four .card p{font-size:15px}body.vert .three.four{grid-template-columns:1fr 1fr}
-.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px}body.vert .kgrid{grid-template-columns:1fr 1fr}
-.kc{border:1px solid var(--line2);border-radius:16px;padding:16px 18px;background:rgba(15,23,40,.85);transition:all .4s}
-.kc small{color:var(--mut);font-size:12px;letter-spacing:.06em;text-transform:uppercase}.kc b{display:block;font-family:var(--fd);font-size:34px;margin-top:6px}.kc i{font-style:normal;font-size:14px;font-weight:700}
-.kc.up i{color:var(--ok)}.kc.dn i{color:var(--warn)}
-.kgrid{margin-top:16px}.kc.hot{border-color:var(--cy);box-shadow:0 0 0 2px rgba(0,242,254,.35),0 10px 40px rgba(0,242,254,.25);transform:translateY(-4px)}
-.bars{display:flex;align-items:flex-end;gap:6px;height:46px;margin-top:10px}.bars span{flex:1;background:linear-gradient(180deg,var(--cy),var(--vi));border-radius:4px 4px 0 0;opacity:.75}
-.dx{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}body.vert .dx{grid-template-columns:1fr}
-.dxc ul{list-style:none;margin-top:8px}.dxc li{font-size:15px;line-height:1.4;padding:4px 0 4px 16px;position:relative;color:var(--txt)}.dxc li::before{content:"";position:absolute;left:0;top:11px;width:7px;height:7px;border-radius:50%;background:var(--cy)}
-body.vert .dxc li{font-size:19px}
-.kgrid .kc b{font-size:30px}
-.dsay{margin-top:18px;display:flex;gap:14px;align-items:center;border:1px solid var(--line2);border-radius:16px;padding:14px 18px;background:rgba(15,23,40,.85)}
-.dsay .orb{flex:0 0 46px;width:46px;height:46px}.dsay p{font-size:17px;line-height:1.45}body.vert .dsay p{font-size:21px}
-.three .card .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--cy),var(--vi));display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-weight:700;color:#0B0F17;font-size:20px}
-
-/* ── modo teléfono: la lámina se dibuja a tamaño real y se desplaza ──
-   En un teléfono el escenario de 720x1280 quedaba a la mitad y el texto
-   en 5-6 px. Aquí no hay escala: cada lámina ocupa la pantalla, el texto
-   va a su tamaño legible y lo que no cabe se desplaza hacia abajo.
-   El MP4 usa ?formato=vertical y no entra en este modo. */
-body.phone{--W:100vw;--H:calc(100dvh - 72px - env(safe-area-inset-bottom))}
-body.phone .vp{bottom:calc(72px + env(safe-area-inset-bottom));display:block}
-body.phone #stage{transform:none!important;width:100%;height:100%}
-body.phone .dock{height:calc(72px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
-body.phone #prog{bottom:calc(72px + env(safe-area-inset-bottom))}
-body.phone .slide{border-radius:0;border:0;box-shadow:none;padding:22px 18px 28px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-body.phone .slide,body.phone .slide.cover{justify-content:flex-start!important}
-body.phone .slide > :first-child{margin-top:auto}
-body.phone .slide > :last-child{margin-bottom:auto}
-body.phone .slide::after{position:fixed}
-body.phone .brand{font-size:17px}
-body.phone .kick{font-size:12.5px;margin-top:6px}
-body.phone h1,body.phone .cover h1,body.phone #lastSlide h1{font-size:33px!important;max-width:none}
-body.phone h2{font-size:27px!important;line-height:1.15}
-body.phone .lead{font-size:16.5px;margin-top:10px}
-body.phone .row{gap:16px;flex:0 0 auto}
-body.phone .grid,body.phone .three,body.phone .three.four,body.phone .kgrid,body.phone .dx{gap:12px;margin-top:16px}
-body.phone .g2,body.phone .g3,body.phone .g4,body.phone .three,body.phone .three.four,body.phone .sysgrid,body.phone .incl{grid-template-columns:1fr!important}
-body.phone .kgrid{grid-template-columns:1fr 1fr}
-body.phone .card{padding:16px 16px 15px;border-radius:15px}
-body.phone .card h3{font-size:19px}
-body.phone .card p,body.phone .three.four .card p{font-size:15px}
-body.phone .n{font-size:12px}
-body.phone .chip{font-size:13.5px;padding:7px 12px}
-body.phone .foot{font-size:13px}
-body.phone .hlogo,body.phone .vlogo{width:min(100%,300px)}
-body.phone .sxw{font-size:34px!important}
-body.phone .sxw svg{width:48px!important;height:48px!important}
-body.phone .vlogo span{font-size:12px}
-body.phone .orbit{width:min(86vw,330px);height:min(86vw,330px);flex:0 0 auto}
-body.phone .orbit .core{width:110px;height:110px;margin:-55px 0 0 -55px;font-size:15px}
-body.phone .orbit .node span{font-size:12.5px;padding:6px 10px}
-body.phone .orbx{width:min(70vw,260px)!important;height:min(70vw,260px)!important;margin:6px auto 0}
-body.phone .flow .lbl{font-size:24px}body.phone .flow .sub{font-size:19px}
-body.phone table.cmp,body.phone table.cmp td,body.phone table.cmp th{font-size:13.5px!important}
-body.phone table.cmp td,body.phone table.cmp th{padding:9px 8px!important}
-body.phone .price{gap:12px;margin-top:16px}
-body.phone .price .card{padding:18px}
-body.phone .price .amt{font-size:46px!important}
-body.phone .price li{font-size:15px!important}
-body.phone .steps{gap:14px;margin-top:18px}
-body.phone .steps::before{left:22px}
-body.phone .step .dot{width:44px;height:44px;flex-basis:44px!important;font-size:18px}
-body.phone .step h3{font-size:19px!important}
-body.phone .step p{font-size:15px!important}
-body.phone .cta{font-size:17px;padding:13px 20px;min-height:48px}
-button.cta{border:0;cursor:pointer}.ctarow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:24px}.ctarow .cta{margin-top:0}.ctalink{font-family:var(--fd);font-weight:600;font-size:17px;color:var(--mut)}
-body.phone ul.sys{display:block!important}
-body.phone ul.sys li,body.phone .incl ul.sys li{font-size:16px!important;border-top:1px solid var(--line)!important}
-body.phone ul.sys li:first-child{border-top:0!important}
-body.phone ul.sys em,body.phone .foot em.ag,body.phone .simtag,body.phone .st,body.phone .kpi small,body.phone .kc small,body.phone table.led th,body.phone #capT{font-size:12px}
-body.phone .simtag{margin-left:0;margin-top:6px}
-body.phone .simbar{gap:8px;margin-top:12px}
-body.phone .sbtn{font-size:15px!important;padding:11px 15px!important;min-height:46px}
-body.phone .phone{height:440px;padding:14px 12px;border-radius:26px}
-body.phone .msg{font-size:15px!important}
-body.phone .msg.sys{font-size:12.5px!important}
-body.phone .phone .ph small{font-size:12px}
-body.phone .out{font-size:15px!important;padding:10px 12px}
-body.phone .acc{gap:14px;margin-top:14px}
-body.phone .inv{font-size:15px!important;padding:14px 16px}
-body.phone .inv h4{font-size:17px}
-body.phone .ledwrap,body.phone table.led{font-size:13px!important}
-body.phone table.led td,body.phone table.led th{padding:8px 6px}
-body.phone .kpis{gap:8px}
-body.phone .kpi{padding:9px 10px}
-body.phone .kpi b{font-size:21px!important}
-body.phone .board{grid-template-columns:1fr!important;gap:10px}
-body.phone .lane h5{font-size:13px!important}
-body.phone .tk{font-size:14px!important}body.phone .tk b{font-size:15px!important}
-body.phone .calc{gap:16px;margin-top:14px}
-body.phone .sl label{font-size:15px!important}
-body.phone .sl label b{font-size:17px}
-body.phone .sl input{height:44px;margin-top:2px}
-body.phone .res .big{font-size:36px!important}
-body.phone .res .row2{font-size:15px!important}
-body.phone .kc{padding:13px 14px}
-body.phone .kc b,body.phone .kgrid .kc b{font-size:24px!important}
-body.phone .kc i{font-size:13px}
-body.phone .dxc li{font-size:15px!important}
-body.phone .dsay{padding:12px 14px;gap:12px}
-body.phone .dsay p{font-size:15.5px!important}
-body.phone .slide [style*="font-size:40px"],body.phone .slide [style*="font-size:38px"]{font-size:27px!important}
-body.phone .slide [style*="font-size:22px"]:not(text){font-size:18px!important}
-body.phone .slide [style*="max-width:520px"]{max-width:none!important}
-body.phone .dock{gap:8px;padding-left:10px;padding-right:10px}
-body.phone #capX{font-size:14px}
-body.phone #cnt{min-width:44px}
-body.phone .slide small,body.phone .tk small{font-size:12.5px}
-body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
+/* calculadora: la página propia /pymes/calculadora/ dentro de la lámina */
+.calcwrap{flex:1;min-height:0;margin-top:14px;border-radius:16px;overflow:hidden;border:1px solid var(--line)}
+.calcwrap iframe{width:100%;height:100%;border:0;display:block;background:transparent}
+.calcfoot{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-top:8px}
+.calcfoot a{color:var(--cy);font-size:14px;text-decoration:none;font-weight:600}
+body.vert .calcwrap{margin-top:18px}
 </style>
 </head>
 <body>
@@ -446,15 +263,15 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     <div class="row">
       <div class="col grow">
         <div class="vlogo stag d1"><div class="sxw"><svg width="58" height="58" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="sxla" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="#0B0F17"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.5" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M12 18C26 18 28 32 37 32M12 32H37M12 46C26 46 28 32 37 32" fill="none" stroke="url(#sxla)" stroke-width="4.6" stroke-linecap="round"/><path d="M37 32H50" stroke="#00F2FE" stroke-width="4.6" stroke-linecap="round"/><circle cx="37" cy="32" r="6.5" fill="#0B0F17" stroke="#00F2FE" stroke-width="3.2"/><circle cx="52.5" cy="32" r="3.4" fill="#00F2FE"/></svg><b>Synthex <i>SAI</i></b></div><span>MCP · SYNTHEX ENGINE</span></div>
-        <h1 class="stag d2">Automatice su negocio. <span class="grad">Crezca sin parar.</span></h1>
-        <p class="lead stag d3">Se conecta como un USB a los sistemas que su empresa ya usa: WhatsApp, Excel, su CRM o su ERP. Cuesta menos que una contratación y trabaja las veinticuatro horas.</p>
+        <h1 class="stag d2">La IA de los mejores proveedores, <span class="grad">ya integrada</span> para su empresa.</h1>
+        <p class="lead stag d3">Como una memoria USB: se conecta por la API de sus sistemas y su empresa gana una capacidad nueva. Pensado para empresas de 10 a 500 empleados, sin cambiar nada de lo que ya funciona.</p>
       </div>
       <div class="col grow" style="max-width:520px;width:100%">
         <svg class="usb" viewBox="0 0 520 300" aria-hidden="true">
           <defs><linearGradient id="gU" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs>
           <rect x="10" y="90" width="210" height="120" rx="18" fill="#0f1728" stroke="rgba(120,150,200,.35)"/>
-          <text x="115" y="142" text-anchor="middle" style="font:700 18px var(--fd)" fill="#eaf0fb">Su empresa</text>
-          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">WhatsApp · Excel · CRM</text>
+          <text x="115" y="142" text-anchor="middle" fill="#eaf0fb" font="700 18px Space Grotesk" style="font:700 18px var(--fd)">Su empresa</text>
+          <text x="115" y="168" text-anchor="middle" style="font:500 13px var(--fb)" fill="#9db0cc">Saint · Profit Plus · Excel</text>
           <rect x="220" y="132" width="26" height="36" rx="4" fill="#131e33" stroke="#00F2FE"/>
           <g class="plug"><rect x="246" y="138" width="40" height="24" rx="3" fill="#c7d2e3"/><rect x="286" y="126" width="70" height="48" rx="8" fill="url(#gU)"/></g>
           <g class="glow"><circle class="pulse" cx="440" cy="150" r="70" fill="url(#gU)" opacity=".95"/></g>
@@ -466,205 +283,87 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     </div>
   </section>
 
-  <!-- 2 punto de partida -->
+  <!-- 2 el problema -->
   <section class="slide" data-t="El punto de partida">
     <div class="kick">El punto de partida</div>
-    <h2>Su negocio ya funciona.<br><span class="grad">Pero mucho se hace a mano.</span></h2>
+    <h2>Su empresa ya tiene sistemas.<br><span class="grad">Lo que les falta es inteligencia.</span></h2>
     <div class="grid g3" style="margin-top:28px">
-      <div class="card stag d1"><span class="n">HOY</span><h3>Herramientas de todos los días</h3><p>Pedidos por WhatsApp, cuentas en Excel, clientes en un CRM, proyectos en MS Project. Funcionan, y nadie quiere cambiarlas.</p></div>
-      <div class="card stag d2"><span class="n">EL COSTO OCULTO</span><h3>Horas copiando datos</h3><p>El mismo dato se escribe tres veces: en el chat, en la hoja de cálculo y en la factura. Cada copia es tiempo y un posible error.</p></div>
-      <div class="card stag d3"><span class="n">EL LÍMITE</span><h3>Crecer es contratar</h3><p>Más clientes significan más mensajes, más facturas y más seguimiento. Hasta hoy, eso solo se resolvía con más personas.</p></div>
+      <div class="card stag d1"><span class="n">HOY</span><h3>Sistemas que funcionan</h3><p>Saint, Profit Plus, Galac, SAP, Oracle, Excel: años de datos y procesos. Nadie quiere cambiarlos.</p></div>
+      <div class="card stag d2"><span class="n">EL OBSTÁCULO</span><h3>Integrar la IA es lento</h3><p>Hacerlo por cuenta propia suele significar meses de desarrollo y un equipo especializado.</p></div>
+      <div class="card stag d3"><span class="n">Y ADEMÁS</span><h3>Un contrato por proveedor</h3><p>Cada servicio de IA se contrata, se configura y se paga por separado.</p></div>
     </div>
     <div class="row" style="margin-top:20px;flex:0;gap:10px;flex-wrap:wrap;flex-direction:row">
-      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>WhatsApp</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Excel</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>MS Access</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>MS Project</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Google Sheets</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Outlook · Gmail</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>HubSpot</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Zoho</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>QuickBooks</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Odoo</span>
+      <span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Saint</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Profit Plus</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>Galac</span><span class="chip stag d4"><i style="background:#64748b;box-shadow:none"></i>a2 · Valery</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Premium Soft</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>SAP</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Oracle</span><span class="chip stag d5"><i style="background:#64748b;box-shadow:none"></i>Odoo</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Dynamics 365</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>QuickBooks</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>HubSpot</span><span class="chip stag d6"><i style="background:#64748b;box-shadow:none"></i>Zoho</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Excel</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>WhatsApp</span><span class="chip stag d7"><i style="background:#64748b;box-shadow:none"></i>Otros con API</span>
     </div>
   </section>
 
   <!-- 3 USB -->
-  <section class="slide" data-t="Se conecta como un USB">
+  <section class="slide" data-t="Un USB para la inteligencia de negocio">
     <div class="kick">La idea</div>
-    <h2>Se conecta como un USB. <span class="grad">Su empresa gana inteligencia.</span></h2>
-    <p class="lead">Igual que un USB le da a su computadora una capacidad nueva en segundos, Synthex SAI conecta sus herramientas de siempre a un equipo de inteligencia artificial. No tiene que botar su sistema ni aprender de cero: Synthex SAI se conecta a él, no lo reemplaza.</p>
+    <h2>Un USB para la <span class="grad">inteligencia de negocio.</span></h2>
+    <p class="lead">Igual que un USB le da a su computadora una capacidad nueva en segundos, Synthex SAI conecta su empresa a un ecosistema inteligente. Se conecta por la API de sus sistemas. No se reemplaza nada.</p>
     <div class="row" style="margin-top:8px">
       <svg class="usb" id="usbL" viewBox="0 0 900 330" aria-hidden="true" style="max-height:340px">
         <defs><linearGradient id="gU2" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs>
         <g class="sys lit" style="--dl:2.1s"><rect x="10" y="20" width="200" height="54" rx="12"/><text x="110" y="53" text-anchor="middle">Saint · Profit Plus</text></g>
         <g class="sys lit" style="--dl:2.3s"><rect x="10" y="90" width="200" height="54" rx="12"/><text x="110" y="123" text-anchor="middle">Galac · a2 · Valery</text></g>
-        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">SAP · Odoo</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="10" y="160" width="200" height="54" rx="12"/><text x="110" y="193" text-anchor="middle">SAP · Oracle · Odoo</text></g>
         <g class="sys lit" style="--dl:2.7s"><rect x="10" y="230" width="200" height="54" rx="12"/><text x="110" y="263" text-anchor="middle">WhatsApp · Excel</text></g>
         <path d="M210 47 H290 M210 117 H290 M210 187 H290 M210 257 H290 M290 47 V257" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
         <rect x="290" y="128" width="40" height="44" rx="5" fill="#131e33" stroke="#00F2FE"/>
+        <text x="310" y="200" text-anchor="middle" style="font:600 13px var(--fb)" fill="#9db0cc">API</text>
         <g class="plug" style="transform:translateX(230px)"><rect x="330" y="136" width="56" height="28" rx="3" fill="#c7d2e3"/><rect x="386" y="120" width="96" height="60" rx="10" fill="url(#gU2)"/><text x="434" y="156" text-anchor="middle" style="font:700 16px var(--fd)" fill="#0B0F17">MCP</text></g>
         <g class="glow"><path class="wire" d="M482 150 H640" stroke="#00F2FE" stroke-width="3" fill="none"/></g>
         <g class="glow"><circle class="pulse" cx="720" cy="150" r="82" fill="url(#gU2)"/></g>
-        <text class="glow" x="720" y="146" text-anchor="middle" style="font:700 19px var(--fd)" fill="#0B0F17">Equipo</text>
+        <text class="glow" x="720" y="146" text-anchor="middle" style="font:700 19px var(--fd)" fill="#0B0F17">Ecosistema</text>
         <text class="glow" x="720" y="170" text-anchor="middle" style="font:700 19px var(--fd)" fill="#0B0F17">de IA</text>
       </svg>
       <svg class="usb" id="usbV" viewBox="0 0 620 760" aria-hidden="true" style="display:none">
         <defs><linearGradient id="gU3" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs>
         <g class="sys lit" style="--dl:2.1s"><rect x="20" y="10" width="280" height="70" rx="14"/><text x="160" y="52" text-anchor="middle" style="font-size:22px">Saint · Profit Plus</text></g>
         <g class="sys lit" style="--dl:2.3s"><rect x="320" y="10" width="280" height="70" rx="14"/><text x="460" y="52" text-anchor="middle" style="font-size:22px">Galac · a2 · Valery</text></g>
-        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:22px">SAP · Odoo</text></g>
-        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:20px">WhatsApp · Excel</text></g>
+        <g class="sys lit" style="--dl:2.5s"><rect x="20" y="100" width="280" height="70" rx="14"/><text x="160" y="142" text-anchor="middle" style="font-size:20px">SAP · Oracle · Odoo</text></g>
+        <g class="sys lit" style="--dl:2.7s"><rect x="320" y="100" width="280" height="70" rx="14"/><text x="460" y="142" text-anchor="middle" style="font-size:22px">WhatsApp · Excel</text></g>
         <path d="M160 170 V205 H460 V170 M310 205 V240" stroke="rgba(120,150,200,.35)" stroke-width="2" fill="none"/>
         <rect x="284" y="240" width="52" height="44" rx="6" fill="#131e33" stroke="#00F2FE"/>
+        <text x="360" y="268" style="font:600 18px var(--fb)" fill="#9db0cc">API</text>
         <g class="plugV"><rect x="292" y="284" width="36" height="56" rx="3" fill="#c7d2e3"/><rect x="250" y="340" width="120" height="110" rx="14" fill="url(#gU3)"/><text x="310" y="404" text-anchor="middle" style="font:700 26px var(--fd)" fill="#0B0F17">MCP</text></g>
         <g class="glow"><path class="wire" d="M310 450 V540" stroke="#00F2FE" stroke-width="3" fill="none"/></g>
         <g class="glow"><circle class="pulse" cx="310" cy="640" r="105" fill="url(#gU3)"/></g>
-        <text class="glow" x="310" y="634" text-anchor="middle" style="font:700 26px var(--fd)" fill="#0B0F17">Equipo</text>
+        <text class="glow" x="310" y="634" text-anchor="middle" style="font:700 26px var(--fd)" fill="#0B0F17">Ecosistema</text>
         <text class="glow" x="310" y="666" text-anchor="middle" style="font:700 26px var(--fd)" fill="#0B0F17">de IA</text>
       </svg>
     </div>
   </section>
 
-  <!-- 4 sistemas -->
-  <section class="slide" data-t="Funciona con lo que ya usa">
-    <div class="kick">Funciona con lo que ya usa</div>
-    <h2>Desde una hoja de Excel <span class="grad">hasta un ERP completo.</span></h2>
+  <!-- 4 sistemas: Venezuela + los grandes -->
+  <section class="slide" data-t="Se conecta con lo que ya usa">
+    <div class="kick">Se conecta con lo que ya usa</div>
+    <h2>Desde una hoja de Excel hasta un ERP: <span class="grad">sus sistemas de siempre.</span></h2>
     <div class="grid g3 sysgrid" style="margin-top:22px">
-      <div class="card stag d1"><span class="n">HERRAMIENTAS DEL DÍA A DÍA</span>
-        <ul class="sys"><li>WhatsApp Business</li><li>Excel · Google Sheets</li><li>MS Access <em>agente</em></li><li>MS Project</li><li>Outlook · Gmail</li><li>Google Calendar</li></ul></div>
-      <div class="card stag d2"><span class="n">CLIENTES Y VENTAS (CRM)</span>
-        <ul class="sys"><li>HubSpot</li><li>Salesforce</li><li>Zoho CRM</li><li>Pipedrive</li><li>GoHighLevel</li><li>Monday.com</li></ul></div>
-      <div class="card stag d3"><span class="n">CONTABILIDAD Y ERP · VENEZUELA</span>
-        <ul class="sys"><li>Saint <em>agente</em></li><li>Profit Plus <em>agente</em></li><li>Galac <em>agente</em></li><li>a2 · Valery <em>agente</em></li><li>SAP Business One</li><li>Odoo</li></ul></div>
+      <div class="card stag d1"><span class="n">CONTABILIDAD Y ERP · VENEZUELA</span>
+        <ul class="sys"><li>Saint <em>agente</em></li><li>Profit Plus <em>agente</em></li><li>Galac <em>agente</em></li><li>a2 · Valery <em>agente</em></li><li>Premium Soft <em>agente</em></li><li>SAP · Oracle NetSuite · Odoo</li></ul></div>
+      <div class="card stag d2"><span class="n">CLIENTES, VENTAS Y COMERCIO</span>
+        <ul class="sys"><li>HubSpot</li><li>Salesforce</li><li>Zoho CRM</li><li>Dynamics 365</li><li>Shopify · VTEX</li><li>QuickBooks</li></ul></div>
+      <div class="card stag d3"><span class="n">HERRAMIENTAS DEL DÍA A DÍA</span>
+        <ul class="sys"><li>WhatsApp Business</li><li>Excel · Google Sheets</li><li>MS Access <em>agente</em></li><li>MS Project</li><li>Outlook · Gmail</li><li>Otro sistema de su empresa</li></ul></div>
     </div>
-    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = programa local sin API pública: se instala un agente ligero en su equipo. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
+    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = sistema local sin API pública: se instala un agente ligero en su servidor. ¿Usa otro sistema? Si tiene API o base de datos, también se conecta. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
   </section>
 
-  <!-- 5 tres automatizaciones -->
-  <section class="slide" data-t="Cuatro áreas que se automatizan">
-    <div class="kick">Qué se automatiza</div>
-    <h2>Cuatro áreas que hoy cuestan horas. <span class="grad">Mañana trabajan solas.</span></h2>
-    <div class="three four">
-      <div class="card stag d1"><div class="ic">01</div><h3 style="margin-top:14px">Servicio al cliente por mensajería</h3><p>Un asistente responde por WhatsApp, chat y correo las veinticuatro horas, en español y en inglés: agenda citas, toma pedidos y avisa a su equipo cuando hace falta una persona.</p></div>
-      <div class="card stag d2"><div class="ic">02</div><h3 style="margin-top:14px">Contabilidad automática</h3><p>Lee facturas y recibos, captura cada dato en su sistema contable, concilia los pagos del banco y le avisa de lo que vence. Usted revisa y aprueba.</p></div>
-      <div class="card stag d3"><div class="ic">03</div><h3 style="margin-top:14px">Operación automatizada</h3><p>Un pedido que llega por WhatsApp se registra, se asigna, se le da seguimiento y se factura, sin que nadie vuelva a escribir el mismo dato.</p></div>
-      <div class="card stag d4"><div class="ic">04</div><h3 style="margin-top:14px">Gerente por voz</h3><p>Dalia, su gerente por voz, le explica los KPI de la semana, los puntos débiles, el diagnóstico y qué hacer para corregirlos.</p></div>
-    </div>
-    <p class="foot">Si su empleado sabe enviar una nota de voz o escribir por WhatsApp, ya sabe usar Synthex SAI. Las cuatro siguientes láminas son simuladores con datos de ejemplo.</p>
-  </section>
-
-  <!-- 6 simulador voz -->
-  <section class="slide" data-t="Simulador: servicio al cliente por mensajería" data-sim="voz">
-    <div class="kick">Simulador 1 <span class="simtag">datos de ejemplo</span></div>
-    <h2 style="font-size:40px">Servicio al cliente por mensajería, <span class="grad">las veinticuatro horas.</span></h2>
-    <div class="row" style="margin-top:14px;align-items:flex-start">
-      <div class="phone">
-        <div class="ph"><span class="dotlive"></span><div><b>WhatsApp de su empresa</b><small id="vzWhen">Mensaje entrante</small></div></div>
-        <div class="chat" id="vzChat"></div>
-      </div>
-      <div class="col grow">
-        <p class="lead" style="margin-top:0;font-size:19px">Elija una situación y vea cómo responde el asistente:</p>
-        <div class="simbar" id="vzBtns">
-          <button class="sbtn on" data-vz="0">Agendar una cita</button>
-          <button class="sbtn" data-vz="1">Estado de un pedido</button>
-          <button class="sbtn" data-vz="2">Mensaje a las 11 p. m.</button>
-        </div>
-        <div class="outs" id="vzOut"></div>
-      </div>
+  <!-- 4 qué es -->
+  <section class="slide" data-t="Qué hay dentro">
+    <div class="kick">Qué es</div>
+    <h2>IA avanzada que llega <span class="grad">ya integrada.</span></h2>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card stag d1"><span class="n">01</span><h3>Un cerebro central</h3><p>Recibe cada solicitud, decide qué agentes la atienden, reparte el trabajo y entrega un solo resultado.</p></div>
+      <div class="card stag d2"><span class="n">02</span><h3>Más de 100 agentes</h3><p>Cada agente tiene un rol, reglas y entregables: análisis, ingeniería, finanzas, cumplimiento, ventas, voz y datos.</p></div>
+      <div class="card stag d3"><span class="n">03</span><h3>Conectores estándar MCP</h3><p>Un protocolo abierto para conectar la IA con sistemas reales: CRM, correo, calendario, ERP y bases de datos.</p></div>
+      <div class="card stag d4"><span class="n">04</span><h3>Varios proveedores</h3><p>Para cada tarea se usa el servicio que mejor la resuelve. Si uno falla o sube de precio, se cambia.</p></div>
     </div>
   </section>
 
-  <!-- 7 simulador contabilidad -->
-  <section class="slide" data-t="Simulador: contabilidad automática" data-sim="conta">
-    <div class="kick">Simulador 2 <span class="simtag">datos de ejemplo</span></div>
-    <h2 style="font-size:40px">Contabilidad automática: <span class="grad">de la factura al libro.</span></h2>
-    <div class="acc">
-      <div>
-        <div class="inv" id="ctInv"><div class="scan"></div>
-          <h4 id="ctProv">Factura</h4>
-          <div class="r" data-f="fecha"><span>Fecha</span><b id="ctFecha"></b></div>
-          <div class="r" data-f="concepto"><span>Concepto</span><b id="ctConc"></b></div>
-          <div class="r" data-f="sub"><span>Subtotal</span><b id="ctSub"></b></div>
-          <div class="r" data-f="iva"><span>Impuesto</span><b id="ctIva"></b></div>
-          <div class="r" data-f="total"><span>Total</span><b id="ctTot"></b></div>
-        </div>
-        <div class="simbar"><button class="sbtn on" id="ctNext">Procesar otra factura</button></div>
-      </div>
-      <div>
-        <table class="led"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Cuenta</th><th>Total</th><th>Banco</th></tr></thead><tbody id="ctRows"></tbody></table>
-        <div class="kpis">
-          <div class="kpi"><small>Facturas leídas</small><b id="ctN">0</b></div>
-          <div class="kpi"><small>Conciliadas</small><b id="ctC">0</b></div>
-          <div class="kpi"><small>Captura manual</small><b>0</b></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 8 simulador operaciones -->
-  <section class="slide" data-t="Simulador: operación automatizada" data-sim="ops">
-    <div class="kick">Simulador 3 <span class="simtag">datos de ejemplo</span></div>
-    <h2 style="font-size:40px">Un pedido por WhatsApp, <span class="grad">hasta la factura, solo.</span></h2>
-    <div class="board" id="opBoard">
-      <div class="lane"><h5>Llega por WhatsApp <span data-c="0">0</span></h5></div>
-      <div class="lane"><h5>Registrado <span data-c="1">0</span></h5></div>
-      <div class="lane"><h5>Asignado <span data-c="2">0</span></h5></div>
-      <div class="lane"><h5>Entregado <span data-c="3">0</span></h5></div>
-      <div class="lane"><h5>Facturado <span data-c="4">0</span></h5></div>
-    </div>
-    <div class="simbar"><button class="sbtn on" id="opNew">Nuevo pedido</button><span class="foot" style="margin-top:0;align-self:center">Cada tarjeta avanza sola. Nadie vuelve a escribir el pedido.</span></div>
-  </section>
-
-  <!-- gerente por voz -->
-  <section class="slide" data-t="Simulador: su gerente por voz" data-sim="kpi">
-    <div class="kick">Simulador 4 <span class="simtag">datos de ejemplo</span></div>
-    <h2 style="font-size:38px">Su gerente por voz: <span class="grad">Dalia le explica su semana.</span></h2>
-    <div class="kgrid">
-      <div class="kc up" data-k="1"><small>Ventas de la semana</small><b>$48,200</b><i>+12% vs. semana pasada</i></div>
-      <div class="kc dn" data-k="2"><small>Por cobrar</small><b>$9,750</b><i>3 facturas vencidas</i></div>
-      <div class="kc up" data-k="3"><small>Pedidos entregados</small><b>184</b><i>98% a tiempo</i></div>
-      <div class="kc dn" data-k="4"><small>Margen</small><b>18%</b><i>-4 puntos vs. mes pasado</i></div>
-    </div>
-    <div class="dx">
-      <div class="kc dxc" data-k="5"><small>Puntos débiles</small><ul><li>Cobranza: 3 clientes con más de 30 días</li><li>Margen: subió el costo de combustible</li></ul></div>
-      <div class="kc dxc" data-k="6"><small>Diagnóstico</small><ul><li>Las facturas salen 6 días después de la entrega</li><li>2 rutas hacen viajes de regreso vacíos</li></ul></div>
-      <div class="kc dxc" data-k="7"><small>Prescripción</small><ul><li>Facturar el mismo día de la entrega</li><li>Recordatorio automático a los 3 clientes</li><li>Combinar las 2 rutas los martes</li></ul></div>
-    </div>
-    <div class="dsay"><div class="orb" id="dOrb"></div><p id="dTxt">Buenos días. Este es el reporte de su semana.</p><button class="sbtn on" id="dPlay" style="margin-left:auto;white-space:nowrap">Escuchar a Dalia</button></div>
-  </section>
-
-  <!-- 9 antes y después -->
-  <section class="slide" data-t="Un caso real: antes y después">
-    <div class="kick">Un caso real · empresa de transporte de materiales</div>
-    <h2 style="font-size:40px">Lo que cambia y <span class="grad">lo que no.</span></h2>
-    <p class="lead" style="font-size:18px;margin-top:8px">Una empresa que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Estas son las diferencias en su forma de trabajar.</p>
-    <table class="cmp ba">
-      <tr><th>Tema</th><th>Antes</th><th class="aft">Después, con la plataforma</th></tr>
-      <tr><td>Cada viaje</td><td class="bef">Se capturaba tres o cuatro veces</td><td class="aft">Una foto y una confirmación</td></tr>
-      <tr><td>Estimación y factura</td><td class="bef">Se armaban a mano en Excel</td><td class="aft">Salen listas desde los viajes</td></tr>
-      <tr><td>Cobranza</td><td class="bef">Se revisaba por separado</td><td class="aft">Siempre a la vista</td></tr>
-      <tr><td>Gastos y combustible</td><td class="bef">Todo en una sola cuenta «general»</td><td class="aft">Por camión y por obra</td></tr>
-      <tr><td>Reunión semanal de pagos</td><td class="bef">Varios Excel con el contador</td><td class="aft">Un solo tablero</td></tr>
-      <tr><td>Choferes y WhatsApp</td><td class="bef">Ticket, vale y WhatsApp personal</td><td class="aft">Igual que antes: nadie cambia su forma de trabajar</td></tr>
-    </table>
-  </section>
-
-  <!-- 10 calculadora -->
-  <section class="slide" data-t="Calcule su caso" data-sim="calc">
-    <div class="kick">Simulador 5 · Calcule su caso</div>
-    <h2 style="font-size:40px">¿Cuánto le cuesta hoy <span class="grad">el trabajo manual?</span></h2>
-    <div class="calc">
-      <div class="card">
-        <div class="sl"><label>Personas que copian datos o atienden lo mismo <b id="cPv">3</b></label><input type="range" id="cP" min="1" max="30" value="3"></div>
-        <div class="sl"><label>Horas diarias por persona en tareas repetitivas <b id="cHv">2</b></label><input type="range" id="cH" min="1" max="8" value="2"></div>
-        <div class="sl"><label>Costo por semana de cada persona (USD) <b id="cCv">$320</b></label><input type="range" id="cC" min="40" max="2400" step="10" value="320"></div>
-        <div class="sl"><label>Parte que se automatiza (supuesto que usted ajusta) <b id="cAv">50%</b></label><input type="range" id="cA" min="10" max="80" step="5" value="50"></div>
-      </div>
-      <div class="card res">
-        <span class="n">HORAS QUE SE LIBERAN CADA MES</span>
-        <div class="big grad" id="cHrs">0</div>
-        <div class="row2"><span>Trabajo manual hoy, por mes</span><b id="cMan">$0</b></div>
-        <div class="row2"><span>Valor de las horas liberadas, por mes</span><b id="cVal">$0</b></div>
-        <div class="row2"><span>Suscripción mensual</span><b>$388</b></div>
-        <div class="row2"><span>Diferencia mensual</span><b id="cDif">$0</b></div>
-        <p class="foot" style="margin-top:8px">Calculado con sus propios datos. Supuestos: 5 días y 40 horas de trabajo por semana; el porcentaje también es un supuesto; el diagnóstico lo mide con su operación real.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 11 cómo funciona -->
+  <!-- 5 cómo funciona -->
   <section class="slide" data-t="Cómo funciona">
     <div class="kick">Cómo funciona</div>
     <h2>Una solicitud, <span class="grad">un solo resultado.</span></h2>
@@ -674,12 +373,12 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
         <path id="p1" class="path" d="M200 165 H360"/>
         <path id="p2a" class="path" d="M540 165 C600 165 600 70 680 70"/><path id="p2b" class="path" d="M540 165 H680"/><path id="p2c" class="path" d="M540 165 C600 165 600 260 680 260"/>
         <path id="p3a" class="path" d="M840 70 C900 70 900 165 960 165"/><path id="p3b" class="path" d="M840 165 H960"/><path id="p3c" class="path" d="M840 260 C900 260 900 165 960 165"/>
-        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">WhatsApp · Excel · CRM</text>
+        <rect class="box" x="20" y="115" width="180" height="100" rx="16"/><text class="lbl" x="110" y="160" text-anchor="middle">Su empresa</text><text class="sub" x="110" y="183" text-anchor="middle">Saint · Profit Plus · Excel</text>
         <rect x="360" y="105" width="180" height="120" rx="60" fill="url(#gF)"/><text x="450" y="160" text-anchor="middle" style="font:700 19px var(--fd)" fill="#0B0F17">Cerebro</text><text x="450" y="184" text-anchor="middle" style="font:700 19px var(--fd)" fill="#0B0F17">MCP</text>
-        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Mensajería</text>
-        <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Contabilidad</text>
-        <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Operación</text>
-        <rect class="box" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Resultado</text><text class="sub" x="1047" y="183" text-anchor="middle">de vuelta en su sistema</text>
+        <rect class="box" x="680" y="40" width="160" height="60" rx="14"/><text class="lbl" x="760" y="76" text-anchor="middle">Agente</text>
+        <rect class="box" x="680" y="135" width="160" height="60" rx="14"/><text class="lbl" x="760" y="171" text-anchor="middle">Agente</text>
+        <rect class="box" x="680" y="230" width="160" height="60" rx="14"/><text class="lbl" x="760" y="266" text-anchor="middle">Agente</text>
+        <rect class="box" x="960" y="115" width="175" height="100" rx="16"/><text class="lbl" x="1047" y="160" text-anchor="middle">Mejor servicio</text><text class="sub" x="1047" y="183" text-anchor="middle">para cada tarea</text>
         <circle r="7" fill="#00F2FE"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#p1"/></animateMotion></circle>
         <circle r="6" fill="#7DF9FF"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2a"/></animateMotion></circle>
         <circle r="6" fill="#7DF9FF"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#p2b"/></animateMotion></circle>
@@ -693,12 +392,12 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
         <path id="v1" class="path" d="M310 120 V230"/>
         <path id="v2a" class="path" d="M310 350 C310 400 110 400 110 450"/><path id="v2b" class="path" d="M310 350 V450"/><path id="v2c" class="path" d="M310 350 C310 400 510 400 510 450"/>
         <path id="v3a" class="path" d="M110 510 C110 560 310 560 310 620"/><path id="v3b" class="path" d="M310 510 V620"/><path id="v3c" class="path" d="M510 510 C510 560 310 560 310 620"/>
-        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">WhatsApp · Excel · CRM</text>
+        <rect class="box" x="160" y="20" width="300" height="100" rx="16"/><text class="lbl" x="310" y="64" text-anchor="middle" style="font-size:22px">Su empresa</text><text class="sub" x="310" y="92" text-anchor="middle" style="font-size:16px">Saint · Profit Plus · Excel</text>
         <rect x="190" y="230" width="240" height="120" rx="60" fill="url(#gF2)"/><text x="310" y="285" text-anchor="middle" style="font:700 22px var(--fd)" fill="#0B0F17">Cerebro</text><text x="310" y="312" text-anchor="middle" style="font:700 22px var(--fd)" fill="#0B0F17">MCP</text>
-        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Mensajería</text>
-        <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Contabilidad</text>
-        <rect class="box" x="430" y="450" width="160" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:19px">Operación</text>
-        <rect class="box" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Resultado</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">de vuelta en su sistema</text>
+        <rect class="box" x="30" y="450" width="160" height="60" rx="14"/><text class="lbl" x="110" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="230" y="450" width="160" height="60" rx="14"/><text class="lbl" x="310" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="430" y="450" width="160" height="60" rx="14"/><text class="lbl" x="510" y="487" text-anchor="middle" style="font-size:19px">Agente</text>
+        <rect class="box" x="150" y="620" width="320" height="100" rx="16"/><text class="lbl" x="310" y="664" text-anchor="middle" style="font-size:22px">Mejor servicio</text><text class="sub" x="310" y="692" text-anchor="middle" style="font-size:16px">para cada tarea</text>
         <circle r="8" fill="#00F2FE"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;1;1" keyTimes="0;.3;1" calcMode="linear"><mpath href="#v1"/></animateMotion></circle>
         <circle r="7" fill="#7DF9FF"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2a"/></animateMotion></circle>
         <circle r="7" fill="#7DF9FF"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.3;.55;1" calcMode="linear"><mpath href="#v2b"/></animateMotion></circle>
@@ -708,52 +407,102 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
         <circle r="7" fill="#a5b4fc"><animateMotion dur="3.6s" repeatCount="indefinite" keyPoints="0;0;1;1" keyTimes="0;.6;.85;1" calcMode="linear"><mpath href="#v3c"/></animateMotion></circle>
       </svg>
     </div>
-    <p class="lead" style="margin-top:4px">Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo. Usted no contrata ninguno por separado.</p>
+    <p class="lead" style="margin-top:4px">El resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con IA.</p>
   </section>
 
-  <!-- 12 comparación -->
-  <section class="slide" data-t="Frente a hacerlo a mano">
-    <div class="kick">La diferencia</div>
-    <h2>Económico, <span class="grad">pero muy eficiente.</span></h2>
+  <!-- 6 proveedores -->
+  <section class="slide" data-t="Lo mejor de cada proveedor">
+    <div class="kick">Lo mejor de cada proveedor</div>
+    <h2>Los líderes del mercado, <span class="grad">bajo un solo cerebro.</span></h2>
+    <div class="grid g4" style="margin-top:24px">
+      <div class="card stag d1"><h3>Anthropic</h3><p>Razonamiento, redacción, agentes y programación asistida.</p></div>
+      <div class="card stag d2"><h3>OpenAI</h3><p>Modelos de lenguaje y generación de contenido.</p></div>
+      <div class="card stag d3"><h3>Google</h3><p>Modelos multimodales, mapas, calendario y correo.</p></div>
+      <div class="card stag d4"><h3>Amazon Web Services</h3><p>Almacenamiento seguro de archivos y voz telefónica.</p></div>
+      <div class="card stag d5"><h3>Microsoft Azure</h3><p>Voces neuronales en español e inglés.</p></div>
+      <div class="card stag d6"><h3>GitHub</h3><p>Código, versiones y automatización de pruebas.</p></div>
+      <div class="card stag d7"><h3>Render</h3><p>Servidores, bases de datos y despliegue continuo.</p></div>
+      <div class="card stag d8"><h3>Otros</h3><p>Telefonía, mensajería, pagos y correo.</p></div>
+    </div>
+    <p class="foot">Usted no contrata, configura ni paga cada servicio por separado. Las marcas pertenecen a sus dueños.</p>
+  </section>
+
+  <!-- 7 calculadora: horas liberadas (página propia en /pymes/calculadora/) -->
+  <section class="slide" data-t="Calcule su caso" data-hold="1">
+    <div class="kick">Calcule su caso</div>
+    <h2 style="font-size:40px">¿Cuántas horas libera <span class="grad">la automatización?</span></h2>
+    <div class="calcwrap"><iframe id="calcFrame" title="Calculadora de horas liberadas por automatización" loading="lazy" data-src="calculadora/?embed=1&amp;tema=oscuro"></iframe></div>
+    <div class="calcfoot"><span class="foot" style="margin-top:0">Calculado con sus propios datos. El porcentaje automatizable es un supuesto que el diagnóstico mide con su operación real.</span><a href="calculadora/" target="_blank" rel="noopener">Abrir la calculadora &rarr;</a></div>
+  </section>
+
+  <!-- 8 para qué sirve -->
+  <section class="slide" data-t="Para qué sirve">
+    <div class="kick">Para qué sirve</div>
+    <h2>IA en el trabajo diario, <span class="grad">no solo en un chat.</span></h2>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card stag d1"><h3>Atención 24/7</h3><p>Asistentes de voz y texto en español e inglés que responden, agendan y toman mensajes.</p></div>
+      <div class="card stag d2"><h3>Documentos</h3><p>Lectura de facturas, contratos y formularios, con la fuente de cada dato señalada.</p></div>
+      <div class="card stag d3"><h3>Conocimiento interno</h3><p>Respuestas con los manuales y políticas de la empresa, citando de dónde salen.</p></div>
+      <div class="card stag d4"><h3>Automatización</h3><p>Tareas repetitivas entre sistemas: copiar datos, dar seguimiento, recordar vencimientos.</p></div>
+      <div class="card stag d5"><h3>Ventas y mercadeo</h3><p>Calificación de prospectos y borradores de campañas, aprobados por una persona.</p></div>
+      <div class="card stag d6"><h3>Software a la medida</h3><p>Aplicaciones nuevas construidas, probadas y publicadas en semanas.</p></div>
+    </div>
+  </section>
+
+  <!-- 9 qué no es -->
+  <section class="slide" data-t="Qué no es">
+    <div class="kick">Qué no es</div>
+    <h2>No compite con sus sistemas. <span class="grad">Los hace más inteligentes.</span></h2>
+    <div class="grid g4" style="margin-top:28px">
+      <div class="card stag d1"><h3>No reemplaza</h3><p>Su Saint, Profit Plus, SAP, Oracle o su Excel siguen igual. Se conecta a ellos.</p></div>
+      <div class="card stag d2"><h3>No es dueño de nada suyo</h3><p>Su propiedad intelectual, productos y datos siguen siendo suyos.</p></div>
+      <div class="card stag d3"><h3>No es un modelo propio</h3><p>Usa los modelos de los líderes del mercado y los combina.</p></div>
+      <div class="card stag d4"><h3>No decide por usted</h3><p>Enviar, pagar o publicar siempre espera la aprobación de una persona.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 seguridad -->
+  <section class="slide" data-t="Seguridad y control">
+    <div class="kick">Seguridad y control</div>
+    <h2>Las reglas están escritas <span class="grad">en el sistema.</span></h2>
+    <p class="lead">No solo en las instrucciones a la IA.</p>
+    <div class="grid g4" style="margin-top:22px">
+      <div class="card stag d1"><span class="n">DATOS</span><h3>Separados</h3><p>Cada empresa ve solo su propia información.</p></div>
+      <div class="card stag d2"><span class="n">APROBACIÓN</span><h3>Humana</h3><p>Nada se envía, se paga ni se publica sin autorización.</p></div>
+      <div class="card stag d3"><span class="n">REGISTRO</span><h3>Completo</h3><p>Cada acción de cada agente queda registrada.</p></div>
+      <div class="card stag d4"><span class="n">CIFRAS</span><h3>Nunca inventadas</h3><p>Si un dato no existe, el sistema lo dice. No lo adivina.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 comparación -->
+  <section class="slide" data-t="Frente a un solo proveedor">
+    <div class="kick">Frente a un solo proveedor de IA</div>
+    <h2>Un proveedor entrega la materia prima. <span class="grad">Synthex SAI la entrega integrada.</span></h2>
     <table class="cmp">
-      <tr><th>Aspecto</th><th>Hacerlo a mano o contratar</th><th class="us">Synthex SAI</th></tr>
-      <tr><td>Horario</td><td class="them">Horario de oficina</td><td class="us">Veinticuatro horas, todos los días</td></tr>
-      <tr><td>Cuando crece el volumen</td><td class="them">Hay que contratar y capacitar</td><td class="us">El mismo sistema atiende más</td></tr>
-      <tr><td>Captura de datos</td><td class="them">El mismo dato, varias veces</td><td class="us">Una sola vez</td></tr>
-      <tr><td>Errores de copia</td><td class="them">Frecuentes</td><td class="us">Cada dato con su fuente</td></tr>
-      <tr><td>Sus sistemas actuales</td><td class="them">Se quedan igual</td><td class="us">Se quedan igual, ahora conectados</td></tr>
-      <tr><td>Costo</td><td class="them">Un salario por persona</td><td class="us">Desde $388 USD al mes</td></tr>
-      <tr><td>Tiempo para empezar</td><td class="them">Semanas de reclutamiento</td><td class="us">Prueba en máximo cuatro semanas</td></tr>
+      <tr><th>Aspecto</th><th>Un solo proveedor</th><th class="us">Synthex SAI</th></tr>
+      <tr><td>Modelos</td><td class="them">Solo los suyos</td><td class="us">Los mejores de varios</td></tr>
+      <tr><td>Conexión con sus sistemas</td><td class="them">La construye usted</td><td class="us">Ya integrada por MCP</td></tr>
+      <tr><td>Agentes por función</td><td class="them">Los arma usted</td><td class="us">Más de cien, listos</td></tr>
+      <tr><td>Voz, telefonía y mensajería</td><td class="them">Aparte</td><td class="us">Incluidas</td></tr>
+      <tr><td>Aprobación y auditoría</td><td class="them">La diseña usted</td><td class="us">Incorporadas</td></tr>
+      <tr><td>Si un proveedor falla o sube precios</td><td class="them">Queda atado</td><td class="us">Se cambia de proveedor</td></tr>
+      <tr><td>Tiempo para empezar</td><td class="them">Meses</td><td class="us">Semanas</td></tr>
     </table>
   </section>
 
-  <!-- 13 control -->
-  <section class="slide" data-t="Usted mantiene el control">
-    <div class="kick">Seguridad y control</div>
-    <h2>Automatiza el trabajo. <span class="grad">Usted sigue decidiendo.</span></h2>
-    <div class="grid g3" style="margin-top:24px">
-      <div class="card stag d1"><span class="n">CONFIDENCIALIDAD</span><h3>Cifrado y aislado</h3><p>Cifrado punto a punto y un entorno aislado por cliente. Nada se usa para entrenar modelos públicos.</p></div>
-      <div class="card stag d2"><span class="n">APROBACIÓN</span><h3>Humana</h3><p>Pagar, enviar o publicar siempre espera la aprobación de una persona.</p></div>
-      <div class="card stag d3"><span class="n">REGISTRO</span><h3>Completo</h3><p>Cada acción queda registrada: qué se hizo, cuándo y por qué.</p></div>
-      <div class="card stag d4"><span class="n">CIFRAS</span><h3>Nunca inventadas</h3><p>Si un dato no existe, el sistema lo dice. No lo adivina.</p></div>
-      <div class="card stag d5"><span class="n">SUS DATOS</span><h3>Exportables</h3><p>Toda la data y los reportes son suyos: Excel, CSV o base de datos, cuando quiera.</p></div>
-      <div class="card stag d6"><span class="n">SOPORTE</span><h3>Hypercare</h3><p>Resolución inmediata de incidencias, con especialistas técnicos detrás.</p></div>
-    </div>
-  </section>
-
-  <!-- 14 cómo empezar -->
+  <!-- 12 cómo empezar -->
   <section class="slide" data-t="Cómo empezar">
     <div class="kick">Cómo empezar</div>
-    <h2>Prueba de concepto: <span class="grad">cuatro semanas.</span></h2>
+    <h2>Pequeño y seguro: <span class="grad">máximo cuatro semanas.</span></h2>
     <div class="steps">
-      <div class="step stag d1"><div class="dot">1</div><div><h3>Diagnóstico</h3><p>Vemos cómo trabaja hoy y dónde se pierden más horas.</p></div></div>
-      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer proceso</h3><p>Elegimos uno de bajo riesgo y alto valor: mensajes, facturas o pedidos.</p></div></div>
-      <div class="step stag d3"><div class="dot">3</div><div><h3>Conexión</h3><p>Conectamos el cerebro a sus herramientas, como un USB.</p></div></div>
-      <div class="step stag d4"><div class="dot">4</div><div><h3>Ahorro medido</h3><p>Fijamos una métrica de ahorro. Si no supera la suscripción, no se continúa.</p></div></div>
+      <div class="step stag d1"><div class="dot">1</div><div><h3>Diagnóstico</h3><p>Medimos costo, riesgo y calidad de datos, y entregamos una hoja de ruta.</p></div></div>
+      <div class="step stag d2"><div class="dot">2</div><div><h3>Primer paso seguro</h3><p>Elegimos un proceso de bajo riesgo y alto valor.</p></div></div>
+      <div class="step stag d3"><div class="dot">3</div><div><h3>Conexión</h3><p>El cerebro MCP se conecta a los sistemas que ese proceso usa.</p></div></div>
+      <div class="step stag d4"><div class="dot">4</div><div><h3>Resultados medidos</h3><p>Medimos con datos reales antes de crecer a la siguiente fase.</p></div></div>
     </div>
   </section>
 
-  <!-- 15 inversión -->
+  <!-- 13 inversión -->
   <section class="slide" data-t="Inversión">
     <div class="kick">Inversión</div>
     <h2>Se contrata <span class="grad">como un servicio.</span></h2>
@@ -761,32 +510,31 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
       <div class="card stag d1"><span class="n">CONFIGURACIÓN INICIAL</span><div class="amt">$685<small>USD · pago único</small></div><ul><li>Anticipo de entrada: $245</li><li>El saldo, al final de las 4 semanas, cuando valide la solución con sus propios datos</li></ul></div>
       <div class="card stag d2"><span class="n">SUSCRIPCIÓN MENSUAL</span><div class="amt">$388<small>USD / mes</small></div><ul><li>Empieza a correr cuando usted esté listo para generar datos</li><li>Consumo estándar de inteligencia artificial incluido</li><li>Soporte Hypercare y nuevos agentes cada trimestre</li></ul></div>
     </div>
-    <p class="foot">Pague desde Venezuela con Stripe o PayPal. Los desarrollos a la medida se cotizan aparte: antes de empezar usted ve las horas y el costo, y nada se cobra sin su aprobación.</p>
+    <p class="foot">Pague desde Venezuela con Stripe o PayPal. Un consumo por encima del estándar se cotiza aparte.</p>
   </section>
 
-  <!-- 16 dudas -->
-  <section class="slide" data-t="Sus dudas, resueltas">
-    <div class="kick">Lo que más nos preguntan</div>
-    <h2>Sus dudas, <span class="grad">resueltas.</span></h2>
-    <div class="grid g3" style="margin-top:24px">
-      <div class="card stag d1"><span class="n">¿Y SI NO FUNCIONA?</span><h3>Paga al validar</h3><p>Entra con $245. El saldo, cuando vea la solución funcionando con sus datos.</p></div>
-      <div class="card stag d2"><span class="n">¿CAMBIO MI SISTEMA?</span><h3>No</h3><p>Se conecta a su sistema o a su Excel. No lo reemplaza.</p></div>
-      <div class="card stag d3"><span class="n">¿CÓMO PAGO?</span><h3>Stripe o PayPal</h3><p>Esquemas flexibles para pagar desde Venezuela.</p></div>
-      <div class="card stag d4"><span class="n">¿MI EQUIPO LO USARÁ?</span><h3>Como WhatsApp</h3><p>Si sabe enviar una nota de voz, ya sabe usarlo.</p></div>
-      <div class="card stag d5"><span class="n">¿Y SI SE CAE?</span><h3>Hypercare</h3><p>Resolución inmediata, con especialistas y presencia comercial directa.</p></div>
-      <div class="card stag d6"><span class="n">¿Y SI CANCELO?</span><h3>Se lleva sus datos</h3><p>Excel, CSV o base de datos. Todo es suyo.</p></div>
+  <!-- incluido vs cotizado aparte -->
+  <section class="slide" data-t="Qué incluye y qué se cotiza aparte">
+    <div class="kick">Total transparencia</div>
+    <h2>Lo estándar va incluido. <span class="grad">Lo hecho a su medida se cotiza aparte.</span></h2>
+    <div class="grid g2 incl" style="margin-top:24px">
+      <div class="card stag d1"><span class="n">INCLUIDO EN LA SUSCRIPCIÓN</span>
+        <ul class="sys"><li>Diagnóstico con Synthex SAI Discovery</li><li>Conexión del cerebro a sus sistemas</li><li>Soluciones estándar: atención 24/7, documentos, conocimiento interno</li><li>La fuerza de trabajo de agentes</li><li>Nuevos agentes cada trimestre</li></ul></div>
+      <div class="card stag d2 quote"><span class="n">SE COTIZA APARTE</span>
+        <ul class="sys"><li>Desarrollo a la medida de su negocio</li><li>Automatizaciones propias de sus procesos</li><li>Optimización de su operación</li><li>Integraciones especiales</li></ul>
+        <p style="margin-top:14px">Antes de empezar usted ve las horas y el costo de cada componente. Nada se cobra sin su aprobación.</p></div>
     </div>
   </section>
 
-  <!-- 17 cierre -->
-  <section class="slide cover" data-t="El futuro" id="lastSlide">
+  <!-- 14 cierre -->
+  <section class="slide cover" data-t="Siguiente paso" id="lastSlide">
     <canvas class="d2stars" id="d2stars" aria-hidden="true"></canvas>
     <div class="row">
       <div class="col grow">
         <div class="vlogo stag d1"><div class="sxw"><svg width="58" height="58" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="sxlb" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="#0B0F17"/><rect x=".75" y=".75" width="62.5" height="62.5" rx="14.5" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5"/><path d="M12 18C26 18 28 32 37 32M12 32H37M12 46C26 46 28 32 37 32" fill="none" stroke="url(#sxlb)" stroke-width="4.6" stroke-linecap="round"/><path d="M37 32H50" stroke="#00F2FE" stroke-width="4.6" stroke-linecap="round"/><circle cx="37" cy="32" r="6.5" fill="#0B0F17" stroke="#00F2FE" stroke-width="3.2"/><circle cx="52.5" cy="32" r="3.4" fill="#00F2FE"/></svg><b>Synthex <i>SAI</i></b></div><span>MCP · SYNTHEX ENGINE</span></div>
-        <h1 class="stag d2">Este es el futuro: <span class="grad">negocios que se automatizan para crecer.</span></h1>
-        <p class="lead stag d3">Conecte su empresa y empiece a ahorrar horas desde la primera semana. Cualquier empresa puede hacerlo.</p>
-        <!-- integrate booking: free times from the Digit2AI Projects calendar (public/embed/book-meeting.js) -->
+        <h1 class="stag d2">Convierta su empresa en una <span class="grad">empresa inteligente.</span></h1>
+        <p class="lead stag d3">Conecte Synthex SAI y ponga a trabajar la IA de los mejores proveedores desde la primera semana.</p>
+        <!-- integrate booking: free times from the Digit2AI Projects calendar (public/embed/book-meeting.js), brand synthex -->
         <div class="ctarow stag d4"><button type="button" class="cta" data-d2-book data-brand="synthex" data-lang="es" data-source="synthexsai.com/pymes">Agendar demostración &rarr;</button><span class="ctalink">synthexsai.com</span></div>
       </div>
       <div class="col" style="align-items:center"><div class="orbx" aria-hidden="true">
@@ -876,8 +624,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
             <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
           </g>
         </svg>
-      </div>
-</div>
+      </div></div>
     </div>
   </section>
 
@@ -890,26 +637,24 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
   <button id="prev" aria-label="Lámina anterior">‹</button>
   <button id="play" aria-label="Reproducir o pausar">▶&#xFE0E;</button>
   <button id="next" aria-label="Lámina siguiente">›</button>
-  <span id="cnt">1 / 18</span>
+  <span id="cnt">1 / 16</span>
 </div>
 
 <div class="gate" id="gate"><div class="box">
   <div class="orbbig"></div>
-  <h1>Automatización de Negocios</h1>
-  <p>Lina le explica, en unos minutos, cómo su empresa puede automatizar su atención al cliente, su contabilidad, su operación y sus reportes conectando las herramientas que ya usa.</p>
+  <h1>Synthex SAI</h1>
+  <p>Lina le explica, en unos minutos, cómo conectar su empresa de 10 a 500 empleados a la inteligencia artificial de los mejores proveedores.</p>
   <button id="start">Escuchar a Lina</button>
   <button id="silent">Ver sin audio</button>
 </div></div>
 
 <script>
 (function(){
+  // Vertical: teléfono, pantalla más alta que ancha, o ?formato=vertical (para grabar el MP4).
   var q = new URLSearchParams(location.search);
-  // Teléfono: el lado corto mide 520 px o menos y nadie forzó un formato.
-  function wantPhone(){ return !q.get('formato') && Math.min(window.innerWidth, window.innerHeight) <= 520; }
-  function wantVert(){ return wantPhone() || q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
+  function wantVert(){ return q.get('formato') === 'vertical' || (q.get('formato') !== 'horizontal' && window.innerHeight > window.innerWidth * 1.15); }
   function applyMode(){
     var v = wantVert();
-    document.body.classList.toggle('phone', wantPhone());
     document.body.classList.toggle('vert', v);
     document.getElementById('flowL').style.display = v ? 'none' : '';
     document.getElementById('flowV').style.display = v ? '' : 'none';
@@ -917,166 +662,29 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     document.getElementById('usbV').style.display = v ? '' : 'none';
   }
 
+  // La calculadora se carga solo cuando su lámina aparece.
+  function loadCalc(){ var f = document.getElementById('calcFrame'); if (f && !f.getAttribute('src')) f.setAttribute('src', f.getAttribute('data-src')); }
+
   // Un texto por lámina. Cifras en palabras para que la voz las lea bien.
   var NARR = [
-    'Hola, soy Lina, de Synthex SAI. En unos minutos le voy a mostrar cómo cualquier empresa puede automatizar su atención al cliente, su contabilidad y su operación, sin cambiar las herramientas que ya usa. Imagínelo como una memoria USB: se conecta, y su negocio gana una capacidad nueva. Es económico, y trabaja las veinticuatro horas.',
-    'Su negocio ya funciona. Los pedidos llegan por WhatsApp, las cuentas viven en Excel, los clientes en un CRM y los proyectos en Microsoft Project. El problema es que mucho se hace a mano: el mismo dato se escribe tres veces, en el chat, en la hoja de cálculo y en la factura. Y crecer, hasta hoy, significaba contratar a más personas.',
-    'Synthex SAI se conecta como un USB. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su Saint, su Profit Plus, su Galac, su SAP, su WhatsApp y su Excel a un equipo de inteligencia artificial. No tiene que botar su sistema ni aprender de cero: Synthex SAI se conecta a él, no lo reemplaza. Y su equipo sigue trabajando igual.',
-    'Funciona con lo que ya usa, desde una hoja de Excel hasta un ERP completo. Herramientas del día a día, como WhatsApp Business, Excel, Google Sheets, Access, Microsoft Project, Outlook y Gmail. CRM, como HubSpot, Salesforce, Zoho, Pipedrive, GoHighLevel y Monday. Y en contabilidad, los sistemas que usan las empresas en Venezuela: Saint, Profit Plus, Galac, a2 y Valery, además de SAP Business One y Odoo. Si el programa tiene API, se conecta directo. Si no, se instala un agente ligero en su equipo.',
-    'La inteligencia artificial no es solo para empresas grandes. No le vendemos inteligencia artificial abstracta, sino soluciones a problemas reales de su operación. Hay cuatro áreas que hoy cuestan horas y que pueden trabajar solas. Primero, el servicio al cliente por mensajería: un asistente que responde por WhatsApp, chat y correo las veinticuatro horas, en español y en inglés. Segundo, la contabilidad automática: lee facturas, las captura, concilia el banco y le avisa de lo que vence. Y tercero, la operación: un pedido que llega por WhatsApp se registra, se asigna y se factura, sin volver a escribirlo. Y cuarto, un gerente por voz: Dalia le explica los indicadores de la semana, los puntos débiles, el diagnóstico y las soluciones. Y si su empleado sabe enviar una nota de voz por WhatsApp, ya sabe usarlo. Veamos cada una en un simulador.',
-    'Este es el simulador de servicio al cliente por mensajería. Un cliente escribe por WhatsApp para agendar una cita, para preguntar por su pedido, o a las once de la noche, cuando su oficina ya cerró. El asistente responde, agenda, consulta el pedido en su sistema y deja todo registrado. Cuando el caso necesita a una persona, avisa a su equipo.',
-    'Este es el simulador de contabilidad automática. Llega una factura. El sistema la lee, señala cada dato, el proveedor, la fecha, el concepto y el total, y la registra en su libro contable con la cuenta correcta. Después busca el pago en el banco y la marca como conciliada. Nadie tuvo que capturarla a mano. Usted solo revisa y aprueba.',
-    'Y este es el simulador de operación. Un cliente pide por WhatsApp. El pedido se registra solo, se asigna a la persona o al vehículo disponible, se marca como entregado y se factura. Cada tarjeta avanza sin que nadie vuelva a escribir el pedido.',
-    'La voz también trabaja como su gerente. Buenos días, soy Dalia, y este es el reporte de su semana. Las ventas suman cuarenta y ocho mil doscientos dólares, doce por ciento más que la semana pasada. Tiene nueve mil setecientos cincuenta dólares por cobrar, con tres facturas vencidas. Se entregaron ciento ochenta y cuatro pedidos, casi todos a tiempo. Pero el margen bajó a dieciocho por ciento. Sus puntos débiles son la cobranza y el margen. El diagnóstico: las facturas salen seis días después de la entrega, y dos rutas regresan vacías. Mi prescripción: facturar el mismo día de la entrega, enviar un recordatorio automático a los tres clientes, y combinar las dos rutas los martes. Usted decide qué se aplica. Todos estos son datos de ejemplo.',
-    'Este es un caso real, de una empresa de transporte de materiales que coordinaba sus viajes por WhatsApp y llevaba todo en Excel. Antes, cada viaje se capturaba tres o cuatro veces, y la estimación y la factura se armaban a mano. Con la plataforma, cada viaje es una foto y una confirmación, y la factura sale lista desde los viajes. La cobranza siempre está a la vista, los gastos se ven por camión y por obra, y la reunión semanal de pagos usa un solo tablero. Y lo más importante: los choferes siguen trabajando igual.',
-    'Ahora calcule su propio caso. Con las barras usted indica cuántas personas copian datos o atienden lo mismo, cuántas horas al día dedica cada una a tareas repetitivas y cuánto cuesta cada persona por semana. El simulador le muestra cuánto le cuesta hoy el trabajo manual y cuántas horas se liberan cada mes. El porcentaje que se automatiza es un supuesto que usted ajusta. En el diagnóstico lo medimos con su operación real.',
-    'Así funciona por dentro. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agente la atiende: mensajería, contabilidad, operación o reportes. Y el resultado vuelve a su sistema. Detrás del cerebro trabajan más de cien agentes especializados y la inteligencia artificial de los mejores proveedores del mundo, y usted no contrata ninguno por separado.',
-    'La diferencia es clara. Hacerlo a mano, o contratar, significa horario de oficina, capacitar a cada persona y escribir el mismo dato varias veces. Con Synthex SAI, su empresa atiende las veinticuatro horas, el mismo sistema atiende más volumen cuando usted crece, cada dato se captura una sola vez, y el costo empieza en trescientos ochenta y ocho dólares al mes. Económico, pero muy eficiente.',
-    'Y usted mantiene el control. Su información viaja con cifrado punto a punto, en un entorno aislado para su empresa, y nunca se usa para entrenar modelos públicos. Pagar, enviar o publicar siempre espera la aprobación de una persona. Cada acción queda registrada. Si un dato no existe, el sistema lo dice. No lo adivina. Toda su data y sus reportes se exportan en Excel, CSV o base de datos cuando quiera. Y el soporte Hypercare resuelve las incidencias de inmediato, con especialistas detrás.',
-    'Se empieza con una prueba de concepto de cuatro semanas. Primero, un diagnóstico de dónde se pierden más horas. Segundo, elegimos un primer proceso de bajo riesgo y alto valor, como los mensajes, las facturas o los pedidos. Tercero, conectamos el cerebro a sus herramientas, como un USB. Y cuarto, fijamos una métrica clara de ahorro, como horas recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro no supera el costo de la suscripción, no se continúa.',
-    'Se contrata como un servicio. La configuración inicial es de seiscientos ochenta y cinco dólares. Usted entra con un anticipo de doscientos cuarenta y cinco, y paga el saldo al final de las cuatro semanas, cuando vea la solución funcionando con sus propios datos. La suscripción mensual es de trescientos ochenta y ocho dólares, con el consumo estándar de inteligencia artificial incluido, y empieza a correr cuando usted esté listo para generar datos. Puede pagar desde Venezuela con Stripe o PayPal. Lo que se construya a la medida se cotiza aparte, y antes de empezar usted ve las horas y el costo.',
-    'Estas son las dudas que más nos hacen. ¿Y si pago y no funciona? Usted entra con doscientos cuarenta y cinco dólares, y el saldo lo paga cuando vea la solución funcionando. ¿Tengo que cambiar mi sistema? No: Synthex SAI se conecta a él. ¿Cómo pago desde Venezuela? Con Stripe o PayPal. ¿Mi equipo lo va a usar? Si sabe enviar una nota de voz, ya sabe usarlo. ¿Y si algo falla? El soporte Hypercare responde de inmediato. ¿Y si cancelo? Sus datos son suyos, y se los lleva en Excel o CSV.',
-    'Este es el futuro: negocios que se automatizan para crecer sin parar. Cualquier empresa puede hacerlo, y puede empezar a ahorrar horas desde la primera semana. Para ver su caso, pulse Agendar demostración y elija el día y la hora que mejor le queden. Encuentre todo en synthexsai punto com. Soy Lina, de Synthex SAI. Gracias por su tiempo.'
+    "Hola, soy Lina, de Synthex SAI. En unos minutos le voy a mostrar cómo su empresa, sea de diez o de quinientas personas, puede usar la inteligencia artificial más avanzada del mundo, sin cambiar los sistemas que ya tiene. Imagínelo como una memoria USB: se conecta, y su empresa gana una capacidad nueva.",
+    "Su empresa ya tiene sistemas que funcionan: Saint, Profit Plus, Galac, a2, Valery o Premium Soft, y también SAP, Oracle, Odoo, Dynamics, QuickBooks, HubSpot, Zoho, Excel y WhatsApp. Años de datos y de procesos que nadie quiere cambiar. Lo que les falta es inteligencia. Y llevar la inteligencia artificial hasta ellos por cuenta propia suele significar meses de desarrollo, un equipo especializado, y un contrato distinto con cada proveedor.",
+    "Synthex SAI funciona como un USB para la inteligencia de negocio. Igual que un USB le da a su computadora una capacidad nueva en segundos, Synthex SAI conecta su Saint, su Profit Plus, su Galac, su SAP o su Excel a la inteligencia artificial de los mejores proveedores del mundo. Se conecta por la API de sus sistemas, como un USB a un puerto. No se reemplaza nada.",
+    "Funciona con los sistemas que ya usa. En contabilidad y ERP: Saint, Profit Plus, Galac, a2, Valery y Premium Soft, además de SAP, Oracle NetSuite y Odoo. En clientes, ventas y comercio: HubSpot, Salesforce, Zoho, Dynamics, Shopify, Vtex y QuickBooks. Y en el día a día: WhatsApp, Excel, Access, Project, Outlook y Gmail. Si su sistema tiene API, se conecta directo. Si es un sistema local sin API pública, se instala un agente ligero en su servidor. Y si usa otro sistema con API o base de datos, también se conecta. La conexión exacta se confirma en el diagnóstico.",
+    "Dentro hay cuatro piezas. Un cerebro central, que recibe cada solicitud y reparte el trabajo. Más de cien agentes especializados, cada uno con un rol, reglas y entregables. Conectores estándar MCP, un protocolo abierto para conectar la inteligencia artificial con sistemas reales. Y varios proveedores: para cada tarea se usa el servicio que mejor la resuelve.",
+    "Así funciona. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agentes la atienden. Cada agente usa el mejor servicio disponible para su tarea. Y el resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con inteligencia artificial.",
+    "Detrás del cerebro están los líderes del mercado. Anthropic para razonar y redactar. OpenAI para lenguaje y contenido. Google para modelos multimodales, mapas, calendario y correo. Amazon Web Services para almacenamiento y voz telefónica. Microsoft Azure para voces neuronales. GitHub para el código, y Render para los servidores. Usted no contrata ni configura ninguno por separado. Y si un proveedor falla o sube de precio, se cambia sin que usted lo note.",
+    "Ahora, calcule su propio caso. Mueva los controles: cuántas personas tiene, cuántas horas al día dedica cada una a tareas repetitivas, qué parte se puede automatizar y cuánto le cuesta cada persona al mes. La calculadora le muestra al instante las horas que se liberan, cuánto valen en dinero y a cuántas personas de tiempo completo equivalen. Por ejemplo, una empresa de veinticinco personas que dedica dos horas diarias a tareas repetitivas y automatiza el setenta por ciento, libera casi treinta y una horas al mes por persona: el equivalente a más de cuatro personas de tiempo completo. Cuando termine, avance a la siguiente lámina.",
+    "Sirve para que su empresa use la inteligencia artificial en el trabajo diario, no solo en un chat. Atención al cliente las veinticuatro horas, en español y en inglés. Lectura de facturas, contratos y formularios. Respuestas con los manuales de la empresa, citando la fuente. Tareas repetitivas entre sistemas. Ventas y mercadeo. Y software a la medida, publicado en semanas.",
+    "También importa lo que no es. No reemplaza su Saint, su Profit Plus, su SAP ni su Excel: se conecta a ellos. No es dueño de nada suyo: sus datos y su propiedad intelectual siguen siendo suyos. No es un modelo propio: combina los modelos de los líderes. Y no decide por usted: enviar, pagar o publicar siempre espera la aprobación de una persona.",
+    "La seguridad está escrita en el sistema, no solo en las instrucciones a la inteligencia artificial. Cada empresa ve solo su propia información. Nada se envía, se paga ni se publica sin autorización. Cada acción de cada agente queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.",
+    "Frente a un solo proveedor de inteligencia artificial, la diferencia es clara. Un proveedor entrega la materia prima: sus propios modelos. La conexión, los agentes, la voz y la auditoría los construye usted. Synthex SAI entrega todo eso ya integrado, con los mejores modelos de varios proveedores. Y en lugar de meses, se empieza en semanas.",
+    "Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.",
+    "Se contrata como un servicio. Un pago único de configuración de seiscientos ochenta y cinco dólares: entra con un anticipo de doscientos cuarenta y cinco, y paga el saldo al final de las cuatro semanas, cuando valide la solución con sus propios datos. Y una suscripción mensual de trescientos ochenta y ocho dólares, que empieza a correr cuando usted esté listo, con el consumo estándar de inteligencia artificial incluido, soporte Hypercare y nuevos agentes cada trimestre. Puede pagar desde Venezuela con Stripe o PayPal.",
+    "Para que quede claro qué está incluido. La suscripción incluye el diagnóstico con Synthex SAI Discovery, la conexión del cerebro a sus sistemas, las soluciones estándar, como la atención las veinticuatro horas, la lectura de documentos y el conocimiento interno, y toda la fuerza de trabajo de agentes. El desarrollo a la medida de su negocio, las automatizaciones propias de sus procesos y la optimización de su operación se cotizan aparte, con total transparencia: antes de empezar, usted ve las horas y el costo de cada componente, y nada se cobra sin su aprobación.",
+    "Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Para dar el siguiente paso, pulse Agendar demostración y elija el día y la hora que mejor le queden. Encuentre todo en synthexsai punto com. Soy Lina, de Synthex SAI. Gracias por su tiempo."
   ];
 
-  /* ── simuladores ─────────────────────────────────────────────────── */
-  var simTimers = [];
-  function later(fn, ms){ simTimers.push(setTimeout(fn, ms)); }
-  function stopSims(){ simTimers.forEach(clearTimeout); simTimers = []; }
-  function el(tag, cls, html){ var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
-  function money(n){ return '$' + Math.round(n).toLocaleString('es-MX'); }
-
-  // 1. voz
-  var VOZ = [
-    { when:'Mensaje de WhatsApp · 10:14 a. m.', lines:[
-      ['ai','Buenos días, gracias por escribirnos. ¿En qué le puedo ayudar?'],
-      ['cl','Quiero una cita para el jueves en la mañana.'],
-      ['ai','Tengo el jueves a las 9:00 o a las 11:30. ¿Cuál le acomoda?'],
-      ['cl','A las 11:30, por favor.'],
-      ['ai','Listo: jueves a las 11:30. Le envío la confirmación por WhatsApp.'],
-      ['sys','CITA REGISTRADA EN SU CALENDARIO']],
-      out:[['Cita','Jueves 11:30'],['Calendario','Actualizado'],['Confirmación','Enviada por WhatsApp']] },
-    { when:'Mensaje de WhatsApp · 4:52 p. m.', lines:[
-      ['cl','Hola, ¿ya salió mi pedido 1048?'],
-      ['ai','Déjeme revisar. Su pedido 1048 salió hoy a las 3:10 p. m.'],
-      ['ai','La entrega está programada para mañana antes de las 2:00 p. m.'],
-      ['cl','Perfecto, gracias.'],
-      ['sys','CONSULTA RESUELTA DESDE SU SISTEMA DE PEDIDOS']],
-      out:[['Pedido','1048 · en camino'],['Fuente','Su sistema de pedidos'],['Persona necesaria','No']] },
-    { when:'Mensaje de WhatsApp · 11:07 p. m.', lines:[
-      ['ai','Buenas noches. Nuestra oficina ya cerró, pero yo le puedo ayudar.'],
-      ['cl','Necesito una cotización urgente para mañana.'],
-      ['ai','Con gusto. ¿Me dice qué necesita y para cuándo?'],
-      ['cl','Veinte piezas, para el viernes.'],
-      ['ai','Anotado. Un asesor le llama mañana a primera hora con la cotización.'],
-      ['sys','AVISO ENVIADO A SU EQUIPO DE VENTAS']],
-      out:[['Prospecto','Registrado en su CRM'],['Seguimiento','Mañana, 8:00 a. m.'],['Mensaje sin respuesta','Ninguno']] }
-  ];
-  function runVoz(k){
-    stopSims();
-    var s = VOZ[k], chat = document.getElementById('vzChat'), out = document.getElementById('vzOut');
-    [].slice.call(document.querySelectorAll('#vzBtns .sbtn')).forEach(function(b){ b.classList.toggle('on', +b.getAttribute('data-vz') === k); });
-    chat.innerHTML = ''; out.innerHTML = '';
-    document.getElementById('vzWhen').textContent = s.when;
-    s.lines.forEach(function(l, j){ later(function(){ chat.appendChild(el('div', 'msg ' + l[0], l[1])); while (chat.children.length > 7) chat.removeChild(chat.firstChild); }, 500 + j * 1500); });
-    s.out.forEach(function(o, j){ later(function(){ var d = el('div', 'out' + (j === s.out.length - 1 ? ' ok' : '')); d.appendChild(el('span', null, o[0])); d.appendChild(el('b', null, o[1])); out.appendChild(d); }, 500 + s.lines.length * 1500 + j * 400); });
-    later(function(){ runVoz((k + 1) % VOZ.length); }, 500 + s.lines.length * 1500 + 4500);
-  }
-  document.getElementById('vzBtns').addEventListener('click', function(e){ var b = e.target.closest('[data-vz]'); if (b) runVoz(+b.getAttribute('data-vz')); });
-
-  // 2. contabilidad
-  var INV = [
-    { p:'Papelería del Centro', f:'03/11', c:'Material de oficina', s:1250, cta:'Gastos de oficina' },
-    { p:'Gasolinera Norte', f:'04/11', c:'Combustible', s:3480, cta:'Combustible' },
-    { p:'Servicios de Internet', f:'05/11', c:'Internet mensual', s:899, cta:'Servicios' },
-    { p:'Refacciones Express', f:'06/11', c:'Llantas y refacciones', s:6720, cta:'Mantenimiento' }
-  ];
-  var ctK = 0, ctN = 0, ctC = 0;
-  function runConta(){
-    stopSims();
-    var v = INV[ctK % INV.length]; ctK++;
-    var iva = v.s * 0.16, tot = v.s + iva, inv = document.getElementById('ctInv');
-    document.getElementById('ctProv').textContent = v.p;
-    document.getElementById('ctFecha').textContent = v.f;
-    document.getElementById('ctConc').textContent = v.c;
-    document.getElementById('ctSub').textContent = money(v.s);
-    document.getElementById('ctIva').textContent = money(iva);
-    document.getElementById('ctTot').textContent = money(tot);
-    inv.classList.remove('scanning'); void inv.offsetWidth; inv.classList.add('scanning');
-    var rows = [].slice.call(inv.querySelectorAll('.r'));
-    rows.forEach(function(r){ r.classList.remove('hi'); });
-    rows.forEach(function(r, j){ later(function(){ r.classList.add('hi'); }, 400 + j * 350); });
-    var tb = document.getElementById('ctRows'), tr;
-    later(function(){
-      tr = el('tr', 'new', '<td>' + v.f + '</td><td>' + v.p + '</td><td>' + v.cta + '</td><td>' + money(tot) + '</td><td><span class="st wait">Buscando</span></td>');
-      tb.insertBefore(tr, tb.firstChild); while (tb.children.length > 5) tb.removeChild(tb.lastChild);
-      document.getElementById('ctN').textContent = ++ctN;
-    }, 2400);
-    later(function(){ if (tr) tr.lastChild.innerHTML = '<span class="st ok">Conciliada</span>'; document.getElementById('ctC').textContent = ++ctC; }, 3800);
-    later(runConta, 6200);
-  }
-  document.getElementById('ctNext').onclick = runConta;
-
-  // 3. operaciones
-  var CLI = ['Constructora Ríos','Ferretería López','Restaurante El Patio','Clínica San José','Taller Martínez','Hotel Plaza','Distribuidora Sol'];
-  var ITEM = ['20 sacos de cemento','3 viajes de arena','Pedido semanal','Insumos de limpieza','Refacciones','Mantenimiento','10 cajas de producto'];
-  var ASIG = ['Unidad 04','Unidad 07','Ana · ruta norte','Luis · ruta sur','Unidad 02'];
-  var opN = 0, opCards = [];
-  function laneEls(){ return [].slice.call(document.querySelectorAll('#opBoard .lane')); }
-  function opCount(){ var L = laneEls(); L.forEach(function(l, j){ l.querySelector('[data-c]').textContent = l.querySelectorAll('.tk').length; }); }
-  function opPlace(c){
-    var L = laneEls(); if (c.el && c.el.parentNode) c.el.parentNode.removeChild(c.el);
-    var sub = ['Por WhatsApp','Pedido #' + (1040 + c.id),c.asig,'Confirmado con foto','Factura emitida'][c.st];
-    c.el = el('div', 'tk', '<b>' + c.cli + '</b><small>' + c.item + ' · ' + sub + '</small>');
-    if (c.st === 4) c.el.style.borderLeftColor = '#34d399';
-    var lane = L[c.st], tks = lane.querySelectorAll('.tk'); if (tks.length >= 3) lane.removeChild(tks[0]);
-    lane.appendChild(c.el); opCount();
-  }
-  function opNew(){
-    var c = { id: opN, cli: CLI[opN % CLI.length], item: ITEM[opN % ITEM.length], asig: ASIG[opN % ASIG.length], st: 0 }; opN++;
-    opPlace(c);
-    for (var s = 1; s <= 4; s++) (function(s){ later(function(){ if (!c.el || !document.body.contains(c.el)) return; c.st = s; opPlace(c); }, s * 1500); })(s);
-  }
-  function runOps(){
-    stopSims();
-    laneEls().forEach(function(l){ [].slice.call(l.querySelectorAll('.tk')).forEach(function(t){ t.remove(); }); }); opCount();
-    (function loop(){ opNew(); later(loop, 2600); })();
-  }
-  document.getElementById('opNew').onclick = opNew;
-
-  // 4. calculadora: solo aritmética con los datos que el usuario mueve.
-  function calc(){
-    var p = +document.getElementById('cP').value, h = +document.getElementById('cH').value,
-        c = +document.getElementById('cC').value, a = +document.getElementById('cA').value / 100;
-    document.getElementById('cPv').textContent = p;
-    document.getElementById('cHv').textContent = h;
-    document.getElementById('cCv').textContent = '$' + c;
-    document.getElementById('cAv').textContent = Math.round(a * 100) + '%';
-    var hrsMes = p * h * 5 * 52 / 12, hora = c / 40, man = hrsMes * hora, lib = hrsMes * a, val = lib * hora, dif = val - 388;
-    document.getElementById('cHrs').textContent = Math.round(lib).toLocaleString('es-MX') + ' h';
-    document.getElementById('cMan').textContent = money(man);
-    document.getElementById('cVal').textContent = money(val);
-    var d = document.getElementById('cDif'); d.textContent = (dif >= 0 ? '+' : '−') + money(Math.abs(dif)); d.style.color = dif >= 0 ? 'var(--ok)' : 'var(--warn)';
-  }
-  ['cP','cH','cC','cA'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
-  calc();
-
-  // 4. reportes por voz: resalta cada indicador mientras Dalia habla.
-  var KPI_SAY = ['Buenos días. Este es el reporte de su semana.','Ventas: 48,200 dólares, 12% más que la semana pasada.','Por cobrar: 9,750 dólares, con 3 facturas vencidas.','Pedidos: 184 entregados, el 98% a tiempo.','Margen: 18%, cuatro puntos menos que el mes pasado.','Puntos débiles: la cobranza y el margen.','Diagnóstico: las facturas salen tarde y dos rutas regresan vacías.','Prescripción: facturar el mismo día, recordar a los 3 clientes y combinar las 2 rutas.']
-  function kpiAt(k){
-    [].slice.call(document.querySelectorAll('.kc')).forEach(function(c){ c.classList.toggle('hot', +c.getAttribute('data-k') === k); });
-    document.getElementById('dTxt').textContent = KPI_SAY[k];
-  }
-  function runKpi(){
-    stopSims(); var orbD = document.getElementById('dOrb'); orbD.classList.add('sp');
-    KPI_SAY.forEach(function(_, k){ later(function(){ kpiAt(k); }, 300 + k * 5200); });
-    later(function(){ orbD.classList.remove('sp'); }, 300 + KPI_SAY.length * 5200);
-  }
-  document.getElementById('dPlay').onclick = function(){ if (!voiceOn) { voiceOn = true; } show(i); };
-
-  var SIMS = { kpi: runKpi, voz: function(){ runVoz(0); }, conta: function(){ ctK = 0; ctN = 0; ctC = 0; document.getElementById('ctRows').innerHTML = ''; document.getElementById('ctN').textContent = 0; document.getElementById('ctC').textContent = 0; runConta(); }, ops: runOps, calc: calc };
-
-  /* ── reproductor (igual que el mazo de MCP) ─────────────────────── */
   var slides = [].slice.call(document.querySelectorAll('.slide'));
   var stage = document.getElementById('stage'), orb = document.getElementById('orb');
   var capT = document.getElementById('capT'), capX = document.getElementById('capX');
@@ -1088,7 +696,6 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
   function fit(){
     applyMode();
     var W = document.body.classList.contains('vert') ? 720 : 1280, H = document.body.classList.contains('vert') ? 1280 : 720;
-    if (document.body.classList.contains('phone')) { stage.style.transform = ''; return; }
     var s = Math.min(window.innerWidth / W, (window.innerHeight - 72) / H) * 0.97;
     stage.style.transform = 'scale(' + s + ')';
   }
@@ -1116,13 +723,8 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     cache[n].catch(function(){ delete cache[n]; });
     return cache[n];
   }
-  function advance(t){
-    if (t !== token) return;
-    // Avanza en cuanto termina la voz, también en los simuladores: los botones
-    // siguen funcionando, pero la presentación nunca se queda esperando un toque.
-    var extra = 400;
-    timer = setTimeout(function(){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }, extra);
-  }
+  // Una lámina con data-hold (la calculadora) espera a la persona: no avanza sola al terminar la voz.
+  function advance(t){ if (t !== token) return; if (slides[i].hasAttribute('data-hold')) { orb.classList.remove('sp'); return; } if (i < slides.length - 1) show(i + 1); else orb.classList.remove('sp'); }
   function readingPause(t){
     orb.classList.remove('sp');
     timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
@@ -1134,7 +736,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     fetchAudio(i).then(function(url){
       if (t !== token) return;
       audio = new Audio(url);
-      audio.onended = function(){ orb.classList.remove('sp'); advance(t); };
+      audio.onended = function(){ advance(t); };
       audio.onerror = function(){ if (t === token) readingPause(t); };
       audio.ontimeupdate = function(){
         if (t !== token || !audio || !audio.duration) return;
@@ -1146,20 +748,20 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     }).catch(function(){ if (t === token) readingPause(t); });
   }
   function show(n){
-    stopAll(); stopSims();
+    stopAll();
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
-    slides[i].scrollTop = 0;
     cnt.textContent = (i + 1) + ' / ' + slides.length;
-    capT.textContent = (slides[i].getAttribute('data-sim') === 'kpi' ? 'Dalia · ' : 'Lina · ') + slides[i].getAttribute('data-t');
+    capT.textContent = 'Lina · ' + slides[i].getAttribute('data-t');
     if (voiceOn) capAt(0); else capX.textContent = 'Sin audio. Avance con las flechas o pulse reproducir para escuchar a Lina.';
     prog.style.width = (i / slides.length * 100) + '%';
     paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
-    var sim = slides[i].getAttribute('data-sim'); if (sim && SIMS[sim]) SIMS[sim]();
+    if (slides[i].querySelector('#calcFrame')) loadCalc();
     if (slides[i].id === 'lastSlide') stars();
     narrate();
   }
 
+  // Constelación de puntos detrás del orbe (la misma de orbup.html), solo en la última lámina.
   var starsOn = false;
   function stars(){
     var c = document.getElementById('d2stars'); if (!c || !c.getContext || starsOn) return;
@@ -1176,8 +778,8 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
         var p = pts[a]; p.x += p.vx; p.y += p.vy;
         if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1;
         for (var b = a + 1; b < pts.length; b++){
-          var qq = pts[b], dx = p.x - qq.x, dy = p.y - qq.y, d = Math.sqrt(dx*dx + dy*dy);
-          if (d < 260){ ctx.strokeStyle = 'rgba(150,170,255,' + ((1 - d/260) * .18) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(qq.x, qq.y); ctx.stroke(); }
+          var q = pts[b], dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 260){ ctx.strokeStyle = 'rgba(150,170,255,' + ((1 - d/260) * .18) + ')'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
         }
       }
       for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + '0.8)'; ctx.fill(); }
@@ -1189,7 +791,7 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
     if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
       if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
     else { paused = false; playB.textContent = 'II';
-      if (audio && !audio.ended) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
   }
   document.getElementById('next').onclick = function(){ show(i + 1); };
   document.getElementById('prev').onclick = function(){ show(i - 1); };
@@ -1198,28 +800,28 @@ body.phone ul.sys em,body.phone .foot em.ag{font-size:12px!important}
   document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
   document.addEventListener('keydown', function(e){
     if (!gate.classList.contains('off') || window.D2BOOK_OPEN) return;
-    if (e.target && e.target.tagName === 'INPUT') return;
     if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
     else if (e.key === ' ') { e.preventDefault(); toggle(); }
     else if (e.key === 'Home') show(0);
     else if (e.key === 'End') show(slides.length - 1);
   });
+  // Deslizar en el teléfono
   var x0 = null;
-  var y0 = 0;
-  document.addEventListener('touchstart', function(e){ x0 = (e.target.closest && e.target.closest('input')) ? null : e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive:true });
+  document.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, { passive:true });
   document.addEventListener('touchend', function(e){
     if (x0 === null || !gate.classList.contains('off') || window.D2BOOK_OPEN) { x0 = null; return; }
-    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    // Solo un deslizamiento horizontal cambia de lámina: desplazar la lámina hacia abajo no.
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) show(i + (dx < 0 ? 1 : -1));
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
   }, { passive:true });
   slides[0].classList.add('on');
   window.addEventListener('beforeunload', stopAll);
-  // La ventana de agendar pausa a Lina.
-  window.addEventListener('d2book:open', function(){ if (voiceOn && !paused) toggle(); });
-  window.PYMESDECK = { show: show, count: slides.length, narr: NARR };
+  window.MCPDECK = { pause: function(){ if (voiceOn && !paused) toggle(); }, show: show, count: slides.length, narr: NARR, titles: slides.map(function(s){ return s.getAttribute('data-t'); }) };
 })();
+</script>
+<script>
+  // El botón de agendar (embed compartido) pausa a Lina mientras su ventana está abierta.
+  window.addEventListener('d2book:open', function(){ if (window.MCPDECK && window.MCPDECK.pause) window.MCPDECK.pause(); });
 </script>
 <script src="https://aiagent.ringlypro.com/embed/book-meeting.js" defer></script>
 </body>

@@ -99,7 +99,14 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const pageSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/index.html'), 'utf8');
   ok(/hrsMes = p \* h \* 5 \* 52 \/ 12, hora = c \/ 40/.test(pageSrc) && /dif = val - 388/.test(pageSrc), 'page calculator still uses the formula Lina copies');
   const deckSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/index.html'), 'utf8');
-  ok(/hrsMes = p \* h \* 5 \* 52 \/ 12, hora = c \/ 40/.test(deckSrc) && /Horas diarias por persona/.test(deckSrc) && /Costo por semana de cada persona/.test(deckSrc), 'deck calculator uses the same daily-hours / weekly-cost formula');
+  // Since 2026-11-06 the /pymes/ deck frames its own "Horas liberadas" calculator (owner spec: monthly cost,
+  // working days, % automatable), so it no longer shares the landing page's weekly-cost formula.
+  ok(/data-src="calculadora\/\?embed=1/.test(deckSrc), 'deck frames the /pymes/calculadora/ page');
+  const calcSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/calculadora/index.html'), 'utf8');
+  ok(/var horasMes = st\.dias \* st\.jor;/.test(calcSrc) && /var libDia = st\.hrs \* \(st\.pct \/ 100\);/.test(calcSrc) && /var fte = libMesEq \/ horasMes;/.test(calcSrc), 'calculator uses the spec formulas');
+  { // acceptance: 25 people, 2 h/day, 70%, 22 days, 8 h -> 30.8 h/month per person, 4.4 full-time people
+    const horasMes = 22 * 8, libMesP = 2 * 0.70 * 22, fte = libMesP * 25 / horasMes;
+    ok(Math.round(libMesP * 10) / 10 === 30.8 && Math.round(fte * 10) / 10 === 4.4, 'acceptance figures 30,8 h and 4,4 people'); }
   const lsrc = require('fs').readFileSync(path.join(__dirname, '../src/routes/synthex-lina.js'), 'utf8');
   ok(/personas \* horas \* 5 \* 52 \/ 12, costo = semana \/ 40/.test(lsrc), 'Lina estimate uses the same formula');
 

@@ -462,6 +462,12 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/index.html'));
   }
+  // "Horas liberadas por automatización": its own page, also framed inside the /pymes/ deck.
+  if (path === '/pymes/calculadora') return res.redirect(301, '/pymes/calculadora/');
+  if (path === '/pymes/calculadora/' || path === '/pymes/calculadora/index.html') {
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/calculadora/index.html'));
+  }
   if (path === '/pymes/og.jpg') {
     res.setHeader('Cache-Control', 'public, max-age=86400');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/og.jpg'));
