@@ -518,9 +518,9 @@ body.vert .sv3 .sv{font-size:46px}
   <!-- 14 calculadora: horas liberadas (página propia en /pymes/calculadora/) -->
   <section class="slide" data-t="Calcule su caso" data-hold="1">
     <div class="kick">Calcule su caso</div>
-    <h2 style="font-size:40px">¿Cuántas horas libera <span class="grad">la automatización?</span></h2>
-    <div class="calcwrap"><iframe id="calcFrame" title="Calculadora de horas liberadas por automatización" loading="lazy" data-src="calculadora/?embed=1&amp;tema=oscuro"></iframe></div>
-    <div class="calcfoot"><span class="foot" style="margin-top:0">Calculado con sus propios datos. El porcentaje automatizable es un supuesto que el diagnóstico mide con su operación real.</span><a href="calculadora/" target="_blank" rel="noopener">Abrir la calculadora &rarr;</a></div>
+    <h2 style="font-size:40px">¿Cuánto le cuesta el trabajo repetitivo <span class="grad">cada mes?</span></h2>
+    <div class="calcwrap"><iframe id="calcFrame" title="Calculadora de ahorro mensual por automatización" loading="lazy" data-src="calculadora/?embed=1&amp;tema=oscuro"></iframe></div>
+    <div class="calcfoot"><span class="foot" style="margin-top:0">Calculado con sus propios datos. El diagnóstico confirma las cifras con su operación real.</span><a href="calculadora/" target="_blank" rel="noopener">Abrir la calculadora &rarr;</a></div>
   </section>
 
   <!-- 15 hecho a la medida: se paga con el ahorro que calculó la lámina anterior -->
@@ -528,8 +528,8 @@ body.vert .sv3 .sv{font-size:46px}
     <div class="kick">Hecho a su medida</div>
     <h2 style="font-size:42px">No es un gasto más. <span class="grad">Se paga con su propio ahorro.</span></h2>
     <div class="sv3">
-      <div class="card stag d1"><span class="n">HOY SE VA EN TRABAJO REPETITIVO</span><div class="sv grad" id="svAno">&mdash;</div><p>al año, en horas que se pueden automatizar</p></div>
-      <div class="card stag d2"><span class="n">HORAS QUE SU EQUIPO RECUPERA</span><div class="sv grad" id="svHoras">&mdash;</div><p>horas al año, de vuelta para su negocio</p></div>
+      <div class="card stag d1"><span class="n">HOY PAGA EN TRABAJO REPETITIVO</span><div class="sv grad" id="svAno">&mdash;</div><p>cada mes, en tareas que se pueden automatizar</p></div>
+      <div class="card stag d2"><span class="n">HORAS QUE SU EQUIPO RECUPERA</span><div class="sv grad" id="svHoras">&mdash;</div><p>horas cada mes, de vuelta para su negocio</p></div>
       <div class="card stag d3"><span class="n">CAPACIDAD QUE GANA</span><div class="sv grad" id="svFte">&mdash;</div><p>personas de tiempo completo, sin contratar a nadie</p></div>
     </div>
     <div class="grid g4" style="margin-top:16px">
@@ -538,7 +538,7 @@ body.vert .sv3 .sv{font-size:46px}
       <div class="card stag d6"><h3>Sin sorpresas</h3><p>Antes de empezar ve las horas y el costo de cada componente. Nada se cobra sin su aprobación.</p></div>
       <div class="card stag d7"><h3>Probado con sus datos</h3><p>En máximo cuatro semanas medimos el ahorro real, antes de crecer.</p></div>
     </div>
-    <p class="foot">Cifras calculadas con los datos de la lámina anterior (<span id="svBase">25 personas · 2 h diarias · 70%</span>). El diagnóstico las confirma con su operación real.</p>
+    <p class="foot">Cifras calculadas con los datos de la lámina anterior (<span id="svBase">25 personas · 2 h diarias</span>). El diagnóstico las confirma con su operación real.</p>
   </section>
 
   <!-- 14 cierre -->
@@ -724,15 +724,15 @@ body.vert .sv3 .sv{font-size:46px}
   function fillAhorro(){
     var X = calcData(); if (!X) return;
     var c = X.calc(), s = X.state, cur = X.cur(), F = X.fmt;
-    document.getElementById('svAno').textContent = F.money(c.valAno);
-    document.getElementById('svHoras').textContent = F.f1(c.libAnoEq).replace(/,0$/, '');
+    document.getElementById('svAno').textContent = F.money(c.costoRepMes);
+    document.getElementById('svHoras').textContent = F.f1(c.libMesEq).replace(/,0$/, '');
     document.getElementById('svFte').textContent = F.f1(c.fte);
     document.getElementById('svMes').textContent = F.money(c.valEq);
-    document.getElementById('svBase').textContent = F.f1(s.emp).replace(/,0$/, '') + ' personas · ' + F.f1(s.hrs).replace(/,0$/, '') + ' h diarias · ' + F.f1(s.pct).replace(/,0$/, '') + '% automatizable';
+    document.getElementById('svBase').textContent = F.f1(s.emp).replace(/,0$/, '') + ' personas · ' + F.f1(s.hrs).replace(/,0$/, '') + ' h diarias';
     var k = NARR.length - 2;
     if (NARR_AHORRO_FIJA === null) NARR_AHORRO_FIJA = NARR[k];
-    var txt = 'Ahora, lo que más preocupa: cuánto cuesta. Con los números que usted acaba de poner, su empresa paga hoy cerca de ' + moneyWords(c.valAno, cur) +
-      ' al año en trabajo repetitivo que se puede automatizar. Son ' + nw(c.libAnoEq) + ' horas al año: el tiempo de ' + nw1(c.fte) +
+    var txt = 'Ahora, lo que más preocupa: cuánto cuesta. Con los números que usted acaba de poner, su empresa paga hoy cerca de ' + moneyWords(c.costoRepMes, cur) +
+      ' cada mes en trabajo repetitivo que se puede automatizar. Al automatizarlo, su equipo recupera ' + nw(c.libMesEq).replace(/ientos/g, 'ientas').replace(/(^| )(veinti)?(un|uno)( |$)/g, '$1$2una$4') + ' horas al mes: el tiempo de ' + nw1(c.fte) +
       ' personas de tiempo completo. Por eso Synthex SAI no se vende como una suscripción ni como un gasto más. Se diseña a la medida de sus procesos, y se paga con ese mismo ahorro: cada mes su empresa recupera cerca de ' +
       moneyWords(c.valEq, cur) + ', y de ahí sale la inversión. Antes de empezar, usted ve las horas y el costo de cada componente, y nada se cobra sin su aprobación. Y en máximo cuatro semanas lo comprobamos con sus propios datos.';
     if (NARR[k] !== txt) { NARR[k] = txt; sents[k] = txt.match(/[^.?!]+[.?!]+(\s|$)/g) || [txt]; delete cache[k]; }
@@ -762,7 +762,7 @@ body.vert .sv3 .sv{font-size:46px}
     "La seguridad está escrita en el sistema, no solo en las instrucciones a la inteligencia artificial. Cada empresa ve solo su propia información. Nada se envía, se paga ni se publica sin autorización. Cada acción de cada agente queda registrada. Y si un dato no existe, el sistema lo dice. No lo adivina.",
     "Frente a un solo proveedor de inteligencia artificial, la diferencia es clara. Un proveedor entrega la materia prima: sus propios modelos. La conexión, los agentes, la voz y la auditoría los construye usted. Synthex SAI entrega todo eso ya integrado, con los mejores modelos de varios proveedores. Y en lugar de meses, se empieza en semanas.",
     "Se empieza pequeño y seguro, con una prueba de concepto de máximo cuatro semanas. Primero, un diagnóstico de costo, riesgo y calidad de datos. Segundo, elegimos un proceso de bajo riesgo y alto valor. Tercero, conectamos el cerebro a los sistemas de ese proceso. Y cuarto, medimos con datos reales antes de crecer.",
-    "Ahora, calcule su propio caso. Mueva los controles: cuántas personas tiene, cuántas horas al día dedica cada una a tareas repetitivas, qué parte se puede automatizar y cuánto le cuesta cada persona al mes. La calculadora le muestra al instante las horas que se liberan, cuánto valen en dinero y a cuántas personas de tiempo completo equivalen. Por ejemplo, una empresa de veinticinco personas que dedica dos horas diarias a tareas repetitivas y automatiza el setenta por ciento, libera casi treinta y una horas al mes por persona: el equivalente a más de cuatro personas de tiempo completo. Cuando termine, avance: en la siguiente lámina le muestro lo que esas cifras significan para su inversión.",
+    "Ahora, calcule su propio caso, con solo tres datos: cuántas personas trabajan con sus sistemas, cuántas horas al día dedica cada una a tareas repetitivas, y cuánto le cuesta cada persona al mes, con salario y cargas laborales. La calculadora le muestra al instante cuánto paga hoy cada mes en ese trabajo repetitivo, y cuánto recupera al automatizarlo. Por ejemplo, una empresa de veinticinco personas que dedica dos horas diarias a tareas repetitivas recupera cada mes setecientas setenta horas de trabajo: el equivalente a más de cuatro personas de tiempo completo. Cuando termine, avance: en la siguiente lámina le muestro lo que esas cifras significan para su inversión.",
     "Ahora, lo que más preocupa: cuánto cuesta. Synthex SAI no se vende como una suscripción ni como un gasto más. Se diseña a la medida de sus procesos, y se paga con el ahorro que acaba de calcular: las horas de trabajo repetitivo que hoy paga su empresa. Antes de empezar, usted ve las horas y el costo de cada componente, y nada se cobra sin su aprobación. Y en máximo cuatro semanas lo comprobamos con sus propios datos.",
     "Conecte su empresa, y ponga a trabajar la inteligencia artificial de los mejores proveedores desde la primera semana. Para dar el siguiente paso, pulse Agendar demostración y elija el día y la hora que mejor le queden. Encuentre todo en synthexsai punto com. Soy Lina, de Synthex SAI. Gracias por su tiempo."
   ];
