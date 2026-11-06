@@ -299,7 +299,8 @@ html.embed table.t td{padding:6px 0}
   setCostRange();
   Object.keys(LIM).forEach(function(k){ sync(k); });
   render();
-  window.SXCALC = { calc: calc, state: st, setCur: function(c){ var b = document.querySelector('[data-cur="' + c + '"]'); if (b) b.click(); } };
+  // Read by the /pymes/ deck (slide 15) so its figures are these, formatted the same way.
+  window.SXCALC = { calc: calc, state: st, cur: function(){ return cur; }, fmt: { money: money, f1: f1, hrs: hrs }, setCur: function(c){ var b = document.querySelector('[data-cur="' + c + '"]'); if (b) b.click(); } };
 })();
 </script>
 </body>
