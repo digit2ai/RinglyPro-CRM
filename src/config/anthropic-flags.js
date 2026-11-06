@@ -72,6 +72,12 @@ const REGISTRY = {
     sites: ['verticals/marapet/src/llm.js (Mara daily report prose)'],
     off_behaviour: "deterministic report, composed_by:'heuristic', is_simulated:true",
     note: 'ISTC x Digit2AI. The figures are computed either way; only the wording moves.' },
+  // ENABLED on creation 2026-11-06 (owner request): Dalia, the ordering assistant
+  // of del Calor al Sabor (Delca, Maracaibo). Prices and totals come from code.
+  delca:            { status: 'enabled', names: ['Delca', 'del Calor al Sabor'], disabled_on: null,
+    sites: ['verticals/delca/src/llm.js (Dalia: menu chat + order taking with tools)'],
+    off_behaviour: "rule-based order parser, composed_by:'heuristic'",
+    note: 'Every price and total is computed from dlc_products; a reply with a figure that is not on the menu or in the cart is discarded.' },
   vallemilagro:     { status: 'enabled', names: ['Valle Milagro'], disabled_on: null,
     sites: ['verticals/vallemilagro/src/llm.js (agente Valle y agente Scout con búsqueda web)'],
     off_behaviour: 'Valle responde por la ruta sin modelo, marcada; el Scout no corre y lo dice',

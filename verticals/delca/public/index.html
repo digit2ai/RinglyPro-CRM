@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>del Calor al Sabor | Menú y pedidos con Dalia</title>
+<meta name="description" content="del Calor al Sabor (Delca), Maracaibo. Hamburguesas Extra Whoppers, pepitos, arepas cabimeras, patacones, tumbarranchos y promos. Pide hablando o escribiendo con Dalia.">
+<meta name="theme-color" content="#0b0459">
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lobster&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b0459;--navy2:#140a74;--red:#be1e2d;--red2:#a5151f;--yellow:#fdd31d;--orange:#f9a83a;--white:#fff;--ink:#14123a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--navy);color:var(--white);font-family:Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:820px;margin:0 auto}
+/* ---------- cover (page 1) ---------- */
+.cover{position:relative;min-height:min(100vh,1000px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px 0;
+  background:radial-gradient(circle at 50% 45%,#140a7a 0,#0b0459 60%);overflow:hidden}
+.cover::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 2px,transparent 2.5px);background-size:16px 16px;
+  -webkit-mask:radial-gradient(circle at 50% 45%,transparent 28%,#000 75%);mask:radial-gradient(circle at 50% 45%,transparent 28%,#000 75%)}
+.logo{position:relative;font-family:Lobster,cursive;line-height:.82;text-align:center;transform:rotate(-8deg);user-select:none}
+.logo .rays{display:block;color:var(--orange);font-size:40px;letter-spacing:6px;margin:0 0 -6px -40px;font-family:Montserrat;font-weight:900}
+.logo .l1,.logo .l2{display:block;white-space:nowrap}
+.logo .sm{color:#fff;font-size:clamp(46px,11vw,88px)}
+.logo .bg{color:var(--orange);font-size:clamp(70px,17vw,136px)}
+.logo span.sm,.logo span.bg{-webkit-text-stroke:0;text-shadow:0 0 0 var(--red),3px 3px 0 var(--red),-3px -3px 0 var(--red),3px -3px 0 var(--red),-3px 3px 0 var(--red),5px 6px 0 var(--red),0 6px 0 var(--red),6px 0 0 var(--red),-5px 0 0 var(--red),0 -5px 0 var(--red)}
+.logo .l2{margin-left:12%}
+.tab{position:relative;margin-top:auto;background:var(--red);width:min(360px,80%);padding:34px 18px 26px;text-align:center;
+  -webkit-mask:radial-gradient(14px at 50% 0,transparent 98%,#000) 50% 0/36px 100% repeat-x;mask:radial-gradient(14px at 50% 0,transparent 98%,#000) 50% 0/36px 100% repeat-x;margin-top:70px}
+.tab h1{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(56px,13vw,92px);letter-spacing:4px;margin:0;line-height:1}
+.hash{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;text-transform:uppercase;line-height:1.05;font-size:18px;text-align:left;margin-top:8px}
+.hash b{font-size:44px;font-weight:900}
+.hash i{font-family:Lobster,cursive;font-style:normal;text-transform:none;color:var(--yellow);font-weight:400}
+.handle{position:absolute;right:18px;bottom:18px;font-weight:700;font-size:13px;opacity:.85}
+.cta-row{position:relative;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:34px 0 0}
+.btn{border:0;border-radius:999px;padding:14px 22px;font-weight:800;font-size:16px;min-height:48px}
+.btn.y{background:var(--yellow);color:var(--navy)}
+.btn.w{background:#fff;color:var(--red)}
+.btn.o{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.6)}
+/* ---------- menu pages ---------- */
+.pg{padding:46px 20px 34px;position:relative}
+.pg.red{background:var(--red);color:#fff}
+.pg.yellow{background:var(--yellow);color:var(--navy)}
+.pg h2{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(46px,10vw,72px);margin:0;line-height:.95;letter-spacing:1px}
+.pg.red h2{color:var(--yellow)}
+.pg h2 small{display:block;font-family:Lobster,cursive;text-transform:none;color:#fff;font-size:.68em;letter-spacing:0}
+.pghead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.tag{background:var(--navy);color:#fff;border-radius:16px;padding:10px 18px;font-weight:900;font-size:clamp(16px,3.6vw,24px);text-transform:uppercase;white-space:nowrap}
+.tag i{font-family:Lobster,cursive;font-style:normal;text-transform:none;color:var(--red);font-weight:400}
+.pg.red .tag{background:transparent;padding:0;font-size:clamp(18px,4vw,28px)}
+.pg.red .tag i{color:var(--yellow)}
+.cat{margin:0 0 26px}
+.cat>h3{font-weight:900;text-transform:uppercase;font-size:22px;margin:0 0 4px}
+.pg.yellow .cat>h3{color:var(--navy)}
+.cat>.note{font-size:14px;margin:0 0 12px;opacity:.95}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 26px}
+.it{position:relative;padding-right:52px}
+.it .pre{font-family:Lobster,cursive;font-size:15px;display:block;margin-bottom:-2px}
+.pg.red .it .pre{color:var(--yellow)}
+.pg.yellow .it .pre{color:var(--red)}
+.it h4{margin:0;font-weight:900;text-transform:uppercase;font-size:19px;line-height:1.15}
+.pg.yellow .it h4{color:var(--red)}
+.it .pr{font-weight:800;font-size:16px;white-space:nowrap;margin-left:6px}
+.pg.red .it .pr{color:var(--yellow)}
+.pg.yellow .it .pr{color:var(--navy)}
+.it p{margin:2px 0 0;font-size:14.5px;line-height:1.35}
+.it.off{opacity:.45}
+.add{position:absolute;right:0;top:4px;width:44px;height:44px;border-radius:50%;border:0;font-size:26px;font-weight:900;line-height:1}
+.pg.red .add{background:var(--yellow);color:var(--navy)}
+.pg.yellow .add{background:var(--navy);color:var(--yellow)}
+.box{background:var(--navy);color:#fff;border-radius:18px;padding:20px 20px 16px;margin:0 0 26px}
+.box>h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(34px,8vw,52px);color:var(--yellow);margin:0 0 6px;line-height:1}
+.box .it h4,.box .it .pre{color:var(--yellow)!important}
+.box .it .pr{color:#fff!important}
+.box .add{background:var(--yellow)!important;color:var(--navy)!important}
+.box.redbox{background:var(--red2)}
+.wave{height:18px;margin:6px 0 24px;background:radial-gradient(circle at 10px -4px,transparent 11px,currentColor 12px 14px,transparent 15px) 0 0/40px 18px repeat-x,
+  radial-gradient(circle at 30px 22px,transparent 11px,currentColor 12px 14px,transparent 15px) 0 0/40px 18px repeat-x;opacity:.9}
+.pg.red .wave{color:#fff}.pg.yellow .wave{color:var(--navy)}
+.slogan{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;font-weight:900;text-transform:uppercase;font-size:clamp(22px,5vw,34px);line-height:1;margin:10px 0 24px;color:var(--navy);text-align:right}
+.slogan .d{font-family:Anton,Impact,sans-serif;font-weight:400;color:var(--red);font-size:1.7em}
+.slogan i{font-family:Lobster,cursive;font-style:normal;text-transform:none;color:var(--navy)}
+.lover{background:var(--navy);border-radius:20px;padding:22px;display:flex;align-items:center;justify-content:center;gap:16px;font-weight:900;text-transform:uppercase}
+.lover .yo{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:clamp(54px,12vw,92px);color:var(--orange);line-height:1}
+.lover .su{color:#fff;font-size:clamp(26px,6vw,46px);line-height:.9}
+.lover .bar{width:3px;align-self:stretch;background:#fff;opacity:.8}
+.lover .dl{color:#fff;font-size:clamp(28px,6.5vw,52px);line-height:.9}
+.lover .dl b{display:block;color:var(--red)}
+.foothandle{font-weight:800;font-size:13px;margin-top:22px}
+footer{padding:28px 20px 120px;text-align:center;font-size:13px;opacity:.8}
+/* ---------- cart bar + Dalia ---------- */
+.cartbar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:40;display:flex;gap:10px;width:min(780px,calc(100% - 32px))}
+.cartbar button{flex:1}
+.dalia{position:fixed;z-index:50;right:16px;bottom:16px;width:min(420px,calc(100% - 32px));height:min(680px,calc(100vh - 32px));background:#fff;color:var(--ink);
+  border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.45);display:none;flex-direction:column;overflow:hidden}
+.dalia.open{display:flex}
+.dhead{background:var(--navy);color:#fff;padding:14px 14px 12px;display:flex;align-items:center;gap:12px}
+.orb{width:46px;height:46px;flex:0 0 46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe27a,var(--orange) 45%,var(--red) 100%)}
+.orb.speaking{animation:pulse 1.1s ease-in-out infinite}.orb.listening{animation:pulse .7s ease-in-out infinite;background:radial-gradient(circle at 35% 30%,#fff,#7fd3ff 45%,#2a52c9 100%)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(249,168,58,.6)}70%{box-shadow:0 0 0 16px rgba(249,168,58,0)}100%{box-shadow:0 0 0 0 rgba(249,168,58,0)}}
+.dhead .t{flex:1;min-width:0}.dhead .t b{display:block;font-size:17px}.dhead .t span{font-size:12px;opacity:.8}
+.ico{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:12px;min-width:44px;height:44px;font-weight:800;font-size:13px;padding:0 10px}
+.ico[aria-pressed="true"]{background:var(--yellow);color:var(--navy)}
+.msgs{flex:1;overflow-y:auto;padding:14px;background:#f5f4fb;display:flex;flex-direction:column;gap:10px}
+.m{max-width:86%;padding:10px 13px;border-radius:16px;font-size:15px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word}
+.m.a{background:#fff;border:1px solid #e3e1f1;align-self:flex-start;border-bottom-left-radius:4px}
+.m.u{background:var(--navy);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.m.sys{align-self:center;background:#fff7d6;color:#5a4300;font-size:13px}
+.m a{color:var(--red);font-weight:700}
+.minicart{border-top:1px solid #e3e1f1;padding:8px 14px;font-size:13px;max-height:120px;overflow:auto;background:#fff}
+.minicart .row{display:flex;justify-content:space-between;gap:8px}
+.minicart .tot{font-weight:900;color:var(--red)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;background:#fff}
+.chips button{flex:0 0 auto;border:1px solid #d8d5ec;background:#fff;border-radius:999px;padding:8px 12px;font-size:13px;color:var(--navy);min-height:36px}
+.inrow{display:flex;gap:8px;padding:10px 12px 12px;background:#fff}
+.inrow input{flex:1;min-width:0;border:1px solid #cfcbe6;border-radius:14px;padding:12px;font-size:16px;font-family:inherit}
+.mic,.send{width:48px;height:48px;border-radius:14px;border:0;font-weight:900}
+.mic{background:#eceaf8;color:var(--navy);font-size:20px}.mic.on{background:var(--red);color:#fff}
+.send{background:var(--red);color:#fff;font-size:20px}
+.label{font-size:11px;color:#6a6690;padding:0 14px 6px;background:#fff}
+@media(max-width:620px){
+  .grid{grid-template-columns:1fr}
+  .dalia{right:0;bottom:0;width:100%;height:100%;border-radius:0}
+  .pg{padding:36px 16px 28px}
+  .lover{gap:10px;padding:16px}
+}
+@media(prefers-reduced-motion:reduce){.orb{animation:none!important}}
+</style>
+</head>
+<body>
+<header class="cover" id="top">
+  <div class="logo" aria-label="del Calor al Sabor">
+    <span class="rays" aria-hidden="true">' ' ' '</span>
+    <span class="l1"><span class="sm">del </span><span class="bg">Calor</span></span>
+    <span class="l2"><span class="sm">al </span><span class="bg">Sabor</span></span>
+  </div>
+  <div class="cta-row">
+    <button class="btn y" data-open-dalia>Pide con Dalia</button>
+    <a class="btn o" href="#menu" style="text-decoration:none;display:inline-flex;align-items:center">Ver el menú</a>
+  </div>
+  <div class="tab">
+    <h1>MENU</h1>
+    <div class="hash"><b>#</b><span>EL <i>verdadero sabor</i><br>DE LA CIUDAD</span></div>
+  </div>
+  <div class="handle">@delcaloralsabor</div>
+</header>
+
+<main id="menu" class="wrap"><p style="padding:30px 20px">Cargando el menú…</p></main>
+
+<footer>
+  del Calor al Sabor · Maracaibo · <a href="https://instagram.com/delcaloralsabor" rel="noopener" target="_blank">@delcaloralsabor</a><br>
+  Precios en euros, tal como el menú impreso. Dalia es un asistente con inteligencia artificial; tu pedido se confirma con su número.
+</footer>
+
+<div class="cartbar">
+  <button class="btn w" id="cartBtn" data-open-dalia>Mi pedido · €0,00</button>
+  <button class="btn y" data-open-dalia>Hablar con Dalia</button>
+</div>
+
+<section class="dalia" id="dalia" aria-label="Dalia, asistente de pedidos">
+  <div class="dhead">
+    <div class="orb" id="orb"></div>
+    <div class="t"><b>Dalia</b><span id="dstat">Asistente de pedidos de Delca</span></div>
+    <button class="ico" id="voiceBtn" aria-pressed="true" title="Voz de Dalia">Voz</button>
+    <button class="ico" id="closeBtn" aria-label="Cerrar">X</button>
+  </div>
+  <div class="msgs" id="msgs" aria-live="polite"></div>
+  <div class="minicart" id="minicart" hidden></div>
+  <div class="chips" id="chips">
+    <button>¿Qué promos tienen?</button><button>Una hamburguesa de carne especial</button><button>Mi pedido</button><button>Eso es todo</button>
+  </div>
+  <div class="inrow">
+    <button class="mic" id="micBtn" aria-label="Hablar">&#127908;</button>
+    <input id="inp" type="text" autocomplete="off" maxlength="600" placeholder="Escribe o toca el micrófono…" aria-label="Mensaje para Dalia">
+    <button class="send" id="sendBtn" aria-label="Enviar">&#10148;</button>
+  </div>
+  <div class="label" id="brainLbl"></div>
+</section>
+
+<script>
+(function(){
+  var BASE='{{BASE}}', API=BASE+'/api/v1';
+  var $=function(s){return document.querySelector(s)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var sid=null; try{sid=localStorage.getItem('delca_sid')}catch(e){}
+  var catalog=[], cats=[], busy=false;
+
+  /* ---------- menu, mirroring the PDF pages ---------- */
+  var PAGES=[
+    {page:2,tone:'red',title:'Hamburguesas<small>Extra whoppers</small>'},
+    {page:3,tone:'yellow'},
+    {page:4,tone:'red',title:'Promos<br>Delca',tag:'#JUNIOR<i>sin</i>VERDURAS'},
+    {page:5,tone:'yellow',title:'Arepas',tag:'#LUCHO<i>full</i>PLOMO'},
+    {page:6,tone:'red',title:'Pinchos',tag:'#EDGAR<i>full</i>PAPAS'},
+    {page:7,tone:'yellow',title:'Patacones',tag:'#LUISITO<i>con</i>TODO'}];
+  var BOX={'promo-perrito':'redbox','arepas-cabimeras':1,'promo-resuelve':1,'parrilla':1,'granjero':1,'promo-patacon':'redbox','postres':1,'otras-delicias':1};
+  var NOHEAD={'hamburguesas':1,'arepas-fritas':0,'pinchos':1,'patacones':1};
+  function short(p,cat){
+    var n=p.name;
+    var cut={'hamburguesas':/^Hamburguesa de /,'panes':/^Pan con /,'pepitos':/^Pepito de /,'arepas-cabimeras':/^Arepa Cabimera de /,'arepas-fritas':/^Arepa Frita con /,
+      'arepas-asadas':/^Arepa Asada con /,'pinchos':/^Pincho /,'tumbarranchos':/^Tumbarrancho de /,'parrilla':/^Parrilla Delca /,'wraps':/^Wrap de /,'patacones':/^Patacón con /,
+      'asaditas':/^Asaditas /,'promo-perrito':/^Promo Perrito /,'promo-resuelve':/^Promo Resuelve /,'adicionales':/^Adicional /}[cat];
+    return cut?n.replace(cut,''):n}
+  function itemHtml(p,cat){
+    var pre=({'panes':'con','arepas-fritas':'con','arepas-asadas':'con','patacones':'con'})[cat]||(({'hamburguesas':'de','pepitos':'de','arepas-cabimeras':'de','tumbarranchos':'de','wraps':'de','parrilla':'de','pinchos':'de'})[cat]||'');
+    var nm=short(p,cat); if(cat==='pinchos'&&/Mixto/.test(nm))pre=''; if(cat==='parrilla'&&/Mixta/.test(nm))pre='';
+    return '<div class="it'+(p.available?'':' off')+'">'+(pre?'<span class="pre">'+pre+'</span>':'')+
+      '<h4>'+esc(nm)+' <span class="pr">'+esc(p.price)+'</span></h4>'+(p.description?'<p>'+esc(p.description)+'</p>':'')+
+      (p.available?'<button class="add" data-add="'+esc(p.code)+'" aria-label="Agregar '+esc(p.name)+'">+</button>':'<p><em>No disponible hoy</em></p>')+'</div>'}
+  function catHtml(c){
+    var items=catalog.filter(function(p){return p.category===c.id});
+    if(!items.length)return'';
+    var inner=(c.note?'<p class="note">'+esc(c.note)+'</p>':'')+'<div class="grid">'+items.map(function(p){return itemHtml(p,c.id)}).join('')+'</div>';
+    if(BOX[c.id])return '<div class="box'+(BOX[c.id]==='redbox'?' redbox':'')+'"><h3>'+esc(c.name)+'</h3>'+inner+'</div>';
+    return '<div class="cat">'+(NOHEAD[c.id]?'':'<h3>'+esc(c.name)+'</h3>')+inner+'</div>'}
+  function render(){
+    var out='';
+    PAGES.forEach(function(pg,i){
+      var cs=cats.filter(function(c){return c.page===pg.page});
+      out+='<section class="pg '+pg.tone+'" id="p'+pg.page+'">';
+      if(pg.title)out+='<div class="pghead"><h2>'+pg.title+'</h2>'+(pg.tag?'<div class="tag">'+pg.tag+'</div>':'')+'</div>';
+      if(pg.page===3){out+='<div class="pghead"><h2>Panes &amp; Pepitos</h2></div>'}
+      out+=cs.map(catHtml).join('');
+      if(pg.page===2)out+='<div class="wave"></div>';
+      if(pg.page===5)out+='<div class="slogan"><span>Si la noche<br>no termina en</span><span class="d">DELCA</span><i>no estuvo buena…</i></div><div class="lover"><span class="yo">YO</span><span class="su">SOY<br>UN</span><span class="bar"></span><span class="dl">#DELCA<b>LOVER</b></span></div>';
+      out+='<div class="foothandle">@delcaloralsabor</div></section>'});
+    $('#menu').innerHTML=out}
+  fetch(API+'/menu').then(function(r){return r.json()}).then(function(j){catalog=j.products||[];cats=j.categories||[];render()})
+    .catch(function(){$('#menu').innerHTML='<p style="padding:30px 20px">No pudimos cargar el menú. Recarga la página.</p>'});
+
+  /* ---------- session ---------- */
+  function ensureSid(){
+    if(sid&&/^[a-f0-9]{32}$/.test(sid))return Promise.resolve(sid);
+    return fetch(API+'/session',{method:'POST'}).then(function(r){return r.json()}).then(function(j){sid=j.sid;try{localStorage.setItem('delca_sid',sid)}catch(e){}return sid})}
+  function post(path,body){return ensureSid().then(function(s){body.sid=s;return fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})})
+    .then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j.error||'error');return j})})}
+
+  /* ---------- chat ---------- */
+  var msgs=$('#msgs');
+  function add(role,text,html){var d=document.createElement('div');d.className='m '+role;if(html)d.innerHTML=html;else d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
+  function paint(j){
+    var c=j.cart||{lines:[]};
+    $('#cartBtn').textContent='Mi pedido · '+(c.total||'€0,00');
+    var mc=$('#minicart');
+    if(c.lines&&c.lines.length){mc.hidden=false;mc.innerHTML=c.lines.map(function(l){return'<div class="row"><span>'+l.qty+' x '+esc(l.name)+(l.note?' ('+esc(l.note)+')':'')+'</span><span>'+esc(l.line)+'</span></div>'}).join('')+'<div class="row tot"><span>Total</span><span>'+esc(c.total)+'</span></div>'}
+    else mc.hidden=true;
+    if(j.order&&j.order.wa_link&&!paint.shown){paint.shown=j.order.number;add('sys','','Pedido <b>'+esc(j.order.number)+'</b>. <a href="'+esc(j.order.wa_link)+'" target="_blank" rel="noopener">Enviar también al WhatsApp del local</a>')}
+    if(j.composed_by)$('#brainLbl').textContent=j.composed_by==='heuristic'?'Modo sin IA generativa: Dalia entiende pedidos con reglas.':'Dalia (IA). Precios y totales calculados por el sistema.'}
+  function send(text){
+    text=String(text||'').trim(); if(!text||busy)return;
+    busy=true; add('u',text); $('#inp').value='';
+    var wait=add('a','…');
+    post('/chat',{text:text}).then(function(j){wait.remove();add('a',j.reply);paint(j);speak(j.reply)})
+      .catch(function(e){wait.remove();add('sys',e.message||'No pude conectar. Intenta de nuevo.')})
+      .then(function(){busy=false})}
+  $('#sendBtn').onclick=function(){send($('#inp').value)};
+  $('#inp').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send($('#inp').value)}});
+  $('#chips').addEventListener('click',function(e){if(e.target.tagName==='BUTTON')send(e.target.textContent)});
+  var greeted=false;
+  function openDalia(){$('#dalia').classList.add('open');
+    if(!greeted){greeted=true;post('/state',{}).then(paint).catch(function(){});
+      var g='¡Hola! Soy Dalia, de del Calor al Sabor. Pídeme lo que quieras del menú, por voz o escribiendo. Por ejemplo: dos hamburguesas de carne especiales y una lata.';
+      add('a',g);speak(g)}
+    setTimeout(function(){$('#inp').focus()},50)}
+  document.addEventListener('click',function(e){
+    var o=e.target.closest('[data-open-dalia]'); if(o){openDalia();return}
+    var a=e.target.closest('[data-add]');
+    if(a){var code=a.getAttribute('data-add');post('/cart',{code:code,qty:1}).then(function(j){paint(j);if(!$('#dalia').classList.contains('open')){a.textContent='✓';setTimeout(function(){a.textContent='+'},900)}else add('a',j.reply)}).catch(function(err){alert(err.message)})}});
+  $('#closeBtn').onclick=function(){$('#dalia').classList.remove('open');stopAudio()};
+
+  /* ---------- voice: Web Speech in, Dalia (Edge neural) out ---------- */
+  var voiceOn=true; try{voiceOn=localStorage.getItem('delca_voice')!=='off'}catch(e){}
+  var vb=$('#voiceBtn'); vb.setAttribute('aria-pressed',voiceOn?'true':'false');
+  vb.onclick=function(){voiceOn=!voiceOn;vb.setAttribute('aria-pressed',voiceOn?'true':'false');try{localStorage.setItem('delca_voice',voiceOn?'on':'off')}catch(e){};if(!voiceOn)stopAudio()};
+  var audio=null, orb=$('#orb');
+  function forSpeech(t){
+    return String(t).replace(/€\s*(\d+),(\d{2})/g,function(m,a,b){return a+(b==='00'?' euros':' euros con '+(+b))})
+      .replace(/(\d+) x /g,'$1 ').replace(/DLC-0*(\d+)/g,'D L C $1').replace(/\+58\s?(\d{3})(\d{3})(\d{4})/g,'0$1 $2 $3').replace(/\n/g,'. ')}
+  function stopAudio(){if(audio){try{audio.pause()}catch(e){}audio=null}orb.classList.remove('speaking');if(window.speechSynthesis)speechSynthesis.cancel()}
+  function speak(t){
+    if(!voiceOn)return; stopAudio(); var txt=forSpeech(t).slice(0,1900);
+    fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:txt,voice:'dalia'})})
+      .then(function(r){if(!r.ok)throw 0;return r.blob()}).then(function(b){if(!b||b.size<200)throw 0;
+        audio=new Audio(URL.createObjectURL(b));orb.classList.add('speaking');audio.onended=function(){orb.classList.remove('speaking')};return audio.play()})
+      .catch(function(){if(!window.speechSynthesis)return;var u=new SpeechSynthesisUtterance(txt);u.lang='es-ES';
+        var v=speechSynthesis.getVoices().filter(function(x){return /^es/i.test(x.lang)})[0];if(v)u.voice=v;
+        u.onstart=function(){orb.classList.add('speaking')};u.onend=function(){orb.classList.remove('speaking')};speechSynthesis.speak(u)})}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition, rec=null, mic=$('#micBtn');
+  if(!SR){mic.title='Tu navegador no permite dictado; escribe tu pedido.';mic.disabled=true;mic.style.opacity=.4}
+  mic.onclick=function(){
+    if(!SR)return;
+    if(rec){rec.stop();return}
+    stopAudio();
+    rec=new SR(); rec.lang='es-VE'; rec.interimResults=true; rec.continuous=false;
+    var finalText='';
+    rec.onresult=function(e){var s='';for(var i=0;i<e.results.length;i++){s+=e.results[i][0].transcript}$('#inp').value=s;if(e.results[e.results.length-1].isFinal)finalText=s};
+    rec.onstart=function(){mic.classList.add('on');orb.classList.add('listening');$('#dstat').textContent='Te escucho…'};
+    rec.onend=function(){mic.classList.remove('on');orb.classList.remove('listening');$('#dstat').textContent='Asistente de pedidos de Delca';rec=null;var t=finalText||$('#inp').value;if(t)send(t)};
+    rec.onerror=function(){};
+    try{rec.start()}catch(e){rec=null}};
+})();
+</script>
+</body>
+</html>

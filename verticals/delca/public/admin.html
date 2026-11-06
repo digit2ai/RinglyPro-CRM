@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Delca · Pedidos y productos</title>
+<link rel="icon" href="{{BASE}}/favicon.svg" type="image/svg+xml">
+<style>
+:root{--navy:#0b0459;--red:#be1e2d;--yellow:#fdd31d;--line:#dcd9ee}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f4fb;color:#14123a}
+header{background:var(--navy);color:#fff;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+button,select,input{font:inherit}
+.tabs button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:10px 14px;min-height:44px}
+.tabs button.on{background:var(--yellow);color:var(--navy);border-color:var(--yellow)}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.login{max-width:420px;margin:40px auto;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px}
+.login input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:16px;margin:8px 0}
+.btn{background:var(--red);color:#fff;border:0;border-radius:10px;padding:10px 16px;min-height:44px;font-weight:700}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.card .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.card .num{font-weight:800;color:var(--red)}
+.card ul{margin:8px 0;padding-left:18px}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;background:#eee}
+.pill.sent{background:#d9f5e3;color:#0b6b2d}.pill.failed{background:#fde2e2;color:#8c1010}.pill.not_configured{background:#fff3c4;color:#6b5200}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:middle}
+th{background:#eceaf8}
+td input[type=text]{width:90px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:16px}
+td input[type=checkbox]{width:22px;height:22px}
+.muted{color:#5f5b80;font-size:13px}
+@media(max-width:700px){table,thead,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid var(--line);padding:6px 0}td{border:0;padding:4px 10px}}
+</style>
+</head>
+<body>
+<header><h1>Delca · Pedidos y productos</h1><div class="tabs" id="tabs" hidden><button data-t="orders" class="on">Pedidos</button> <button data-t="products">Productos</button> <button id="out">Salir</button></div></header>
+<main id="main">
+  <div class="login" id="login">
+    <b>Clave de administración</b>
+    <p class="muted">La clave es la variable DELCA_ADMIN_KEY del servidor.</p>
+    <input id="key" type="password" autocomplete="current-password">
+    <button class="btn" id="go">Entrar</button>
+    <p class="muted" id="err"></p>
+  </div>
+  <div id="view" hidden></div>
+</main>
+<script>
+(function(){
+  var API='{{BASE}}/api/v1/admin', key='', tab='orders', timer=null;
+  try{key=sessionStorage.getItem('delca_admin')||''}catch(e){}
+  var $=function(s){return document.querySelector(s)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var eur=function(c){return '€'+(c/100).toFixed(2).replace('.',',')};
+  function call(path,opt){opt=opt||{};opt.headers=Object.assign({'x-delca-admin-key':key,'Content-Type':'application/json'},opt.headers||{});
+    return fetch(API+path,opt).then(function(r){return r.json().then(function(j){if(!r.ok)throw Object.assign(new Error(j.error||('HTTP '+r.status)),{status:r.status});return j})})}
+  function start(){call('/orders?limit=1').then(function(){try{sessionStorage.setItem('delca_admin',key)}catch(e){}$('#login').hidden=true;$('#view').hidden=false;$('#tabs').hidden=false;show()})
+    .catch(function(e){$('#err').textContent=e.status===503?'La administración está cerrada: falta DELCA_ADMIN_KEY en el servidor.':'Clave incorrecta.'})}
+  $('#go').onclick=function(){key=$('#key').value;start()};
+  $('#key').addEventListener('keydown',function(e){if(e.key==='Enter'){key=$('#key').value;start()}});
+  $('#out').onclick=function(){try{sessionStorage.removeItem('delca_admin')}catch(e){}location.reload()};
+  $('#tabs').addEventListener('click',function(e){var t=e.target.getAttribute('data-t');if(!t)return;tab=t;[].forEach.call(document.querySelectorAll('#tabs [data-t]'),function(b){b.classList.toggle('on',b.getAttribute('data-t')===t)});show()});
+  var ST=['nuevo','preparando','en_camino','listo','entregado','cancelado'];
+  function show(){clearInterval(timer);if(tab==='orders'){orders();timer=setInterval(orders,20000)}else products()}
+  function orders(){call('/orders').then(function(j){
+    var v=$('#view'); if(!j.orders.length){v.innerHTML='<p class="muted">Todavía no hay pedidos.</p>';return}
+    v.innerHTML=j.orders.map(function(o){return '<div class="card"><div class="top"><span><span class="num">'+esc(o.number)+'</span> · '+esc(new Date(o.created_at).toLocaleString('es-VE'))+'</span>'+
+      '<select data-o="'+o.id+'">'+ST.map(function(s){return'<option'+(s===o.status?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div>'+
+      '<div><b>'+esc(o.customer_name)+'</b> · '+esc(o.customer_phone)+' · '+(o.mode==='delivery'?'Delivery: '+esc(o.address):'Retiro en el local')+'</div>'+
+      '<ul>'+(o.items||[]).map(function(i){return'<li>'+i.qty+' x '+esc(i.name)+(i.note?' ('+esc(i.note)+')':'')+' · '+eur(i.line_cents)+'</li>'}).join('')+'</ul>'+
+      '<div><b>Total '+eur(o.total_cents)+'</b> · WhatsApp: <span class="pill '+esc(o.whatsapp_status)+'">'+esc(o.whatsapp_status)+'</span>'+(o.whatsapp_status==='failed'?' <span class="muted">'+esc(o.whatsapp_detail)+'</span>':'')+'</div></div>'}).join('')})
+    .catch(function(e){$('#view').innerHTML='<p>'+esc(e.message)+'</p>'})}
+  $('#view').addEventListener('change',function(e){var s=e.target.getAttribute('data-o');if(s)call('/orders/'+s,{method:'PATCH',body:JSON.stringify({status:e.target.value})}).catch(function(err){alert(err.message)})});
+  function products(){clearInterval(timer);call('/products').then(function(j){
+    $('#view').innerHTML='<p class="muted">Productos y servicios (adicionales). El precio y la disponibilidad que guardes aquí son los que usa Dalia.</p><table><thead><tr><th>Categoría</th><th>Producto</th><th>Tipo</th><th>Precio €</th><th>Disponible</th><th></th></tr></thead><tbody>'+
+      j.products.map(function(p){return '<tr><td>'+esc(p.category)+'</td><td>'+esc(p.name)+'<div class="muted">'+esc(p.description||'')+'</div></td><td>'+(p.kind==='service'?'Adicional':'Producto')+'</td>'+
+        '<td><input type="text" inputmode="decimal" value="'+(p.price_cents/100).toFixed(2).replace('.',',')+'" data-p="'+esc(p.code)+'"></td><td><input type="checkbox" '+(p.available!==false?'checked':'')+' data-a="'+esc(p.code)+'"></td>'+
+        '<td><button class="btn" data-s="'+esc(p.code)+'">Guardar</button></td></tr>'}).join('')+'</tbody></table>'})}
+  $('#view').addEventListener('click',function(e){var c=e.target.getAttribute('data-s');if(!c)return;
+    var price=document.querySelector('[data-p="'+c+'"]').value, av=document.querySelector('[data-a="'+c+'"]').checked;
+    call('/products/'+encodeURIComponent(c),{method:'PATCH',body:JSON.stringify({price:price,available:av})}).then(function(){e.target.textContent='Guardado';setTimeout(function(){e.target.textContent='Guardar'},1200)}).catch(function(err){alert(err.message)})});
+  if(key)start();
+})();
+</script>
+</body>
+</html>

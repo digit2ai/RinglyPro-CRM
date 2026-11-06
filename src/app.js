@@ -3210,6 +3210,22 @@ app.get('/debug/supply-error', (req, res) => {
 });
 
 // =====================================================
+// DELCA — del Calor al Sabor (Maracaibo): menu landing, Dalia (chat + voice
+// ordering), products table, orders admin. Served at /delca.
+// =====================================================
+let delcaError = null;
+try {
+  app.use(['/delca', '/Delca', '/DELCA'], require('../verticals/delca/src/index'));
+  console.log('[delca] mounted at /delca');
+} catch (error) {
+  delcaError = error;
+  console.log('⚠️ Delca not available:', error.message);
+}
+app.get('/debug/delca-error', (req, res) => {
+  res.json({ service: 'Delca', available: !delcaError, error: delcaError ? { message: delcaError.message } : null });
+});
+
+// =====================================================
 // VALLE MILAGRO — Portal de Miembros, Módulo de Backend y dos agentes (Valle y Scout),
 // servido en /vallemilagro (también /ValleMilagro; el router redirige a minúsculas
 // porque la ruta de la cookie de sesión distingue mayúsculas).
