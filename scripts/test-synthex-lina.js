@@ -101,7 +101,7 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const deckSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/index.html'), 'utf8');
   // Since 2026-11-06 the /pymes/ deck frames its own "Horas liberadas" calculator (owner spec: monthly cost,
   // working days, % automatable), so it no longer shares the landing page's weekly-cost formula.
-  ok(/data-src="calculadora\/\?embed=1/.test(deckSrc), 'deck frames the /pymes/calculadora/ page');
+  ok(!/data-src="calculadora\/|id="ahorroSlide"/.test(deckSrc), 'deck no longer carries the calculator or savings slides (removed 2026-11-06)');
   const calcSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/calculadora/index.html'), 'utf8');
   ok(/var horasMes = st\.dias \* st\.jor;/.test(calcSrc) && /var libDia = st\.hrs \* \(st\.pct \/ 100\);/.test(calcSrc) && /var fte = libMesEq \/ horasMes;/.test(calcSrc), 'calculator uses the spec formulas');
   { // acceptance: 25 people, 2 h/day, 70%, 22 days, 8 h -> 30.8 h/month per person, 4.4 full-time people
