@@ -143,31 +143,28 @@
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
     o.push('</g>');
 
-    // ---------------- left: this month as a round steam gauge (Cessna style) ----------------
+    // ---------------- left tape: this month, income pointer on the left (green), debits pointer on the right (red) ----------------
     (function () {
-      var gx = 172, gy = 300, R = 112, inc = r.mes.entro.v, out = r.mes.salio.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0;
-      var step = nice(Math.max(inc, out, 1000)), top = Math.ceil(Math.max(inc, out, 1000) / step) * step;
-      var a0 = 225, sweep = 270; // degrees, clockwise from 225 (lower left) to -45 (lower right)
-      var ang = function (val) { return (a0 - clamp(val / top, 0, 1) * sweep) * Math.PI / 180; };
-      var P = function (val, rr) { var a = ang(val); return [gx + rr * Math.cos(a), gy - rr * Math.sin(a)]; };
-      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="' + (R + 8) + '" fill="#2a2a2a" stroke="#6b6b6b" stroke-width="3"/>');
-      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="' + R + '" fill="#0a0a0a" stroke="#000" stroke-width="2"/>');
+      var x = 112, w = 96, y0 = 112, h = 380, inc = r.mes.entro.v, out = r.mes.salio.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0;
+      var step = nice(Math.max(inc, out, 1000)), top = Math.ceil(Math.max(inc, out, 1000) * 1.1 / step) * step;
+      var Y = function (val) { return y0 + h - (pe > 0 ? 44 : 16) - clamp(val / top, 0, 1) * (h - (pe > 0 ? 62 : 34)); };
+      o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
+      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + w / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15" text-anchor="middle">MES <tspan font-size="18" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</tspan></text>');
       for (var t = 0; t <= top + 1e-6; t += step / 4) {
-        var big = Math.abs(t / step - Math.round(t / step)) < 1e-6, p1 = P(t, R - 2), p2 = P(t, R - (big ? 16 : 9));
-        o.push('<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) + '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '" stroke="#fff" stroke-width="' + (big ? 3 : 1.5) + '"/>');
-        if (big) { var pl = P(t, R - 32); o.push('<text x="' + pl[0].toFixed(1) + '" y="' + (pl[1] + 6).toFixed(1) + '" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">' + esc(k(t)) + '</text>'); }
+        var yy = Y(t), big = Math.abs(t / step - Math.round(t / step)) < 1e-6, tl = big ? 14 : 7;
+        o.push('<line x1="' + x + '" y1="' + yy + '" x2="' + (x + tl) + '" y2="' + yy + '" stroke="#fff" stroke-width="2"/><line x1="' + (x + w - tl) + '" y1="' + yy + '" x2="' + (x + w) + '" y2="' + yy + '" stroke="#fff" stroke-width="2"/>');
+        if (big) o.push('<text x="' + (x + w / 2) + '" y="' + (yy + 7) + '" fill="#fff" font-size="19" text-anchor="middle">' + esc(k(t)) + '</text>');
       }
-      o.push('<text x="' + gx + '" y="' + (gy - 38) + '" fill="#fff" font-size="13" text-anchor="middle">MES</text><text x="' + gx + '" y="' + (gy - 20) + '" fill="#fff" font-size="17" font-weight="700" text-anchor="middle">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</text>');
-      [[out, C.red, 5], [inc, C.green, 5]].forEach(function (n) {
-        var tip = P(n[0], R - 12), tail = P(n[0], -18);
-        o.push('<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="' + n[1] + '" stroke-width="' + n[2] + '" stroke-linecap="round"/>');
-      });
-      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="9" fill="#444" stroke="#999"/>');
-      o.push('<text x="' + (gx - 30) + '" y="' + (gy + 42) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">ENTRÓ</text><text x="' + (gx - 30) + '" y="' + (gy + 60) + '" fill="' + C.green + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(inc)) + '</text>');
-      o.push('<text x="' + (gx + 30) + '" y="' + (gy + 42) + '" fill="' + C.red + '" font-size="11" text-anchor="middle">SALIÓ</text><text x="' + (gx + 30) + '" y="' + (gy + 60) + '" fill="' + C.red + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(out)) + '</text>');
+      // green pointer on the left: what came in
+      var yi = Y(inc), yo = Y(out);
+      o.push('<path d="M ' + (x + 4) + ' ' + yi + ' l -14 -22 h -84 v 44 h 84 z" fill="#000" stroke="' + C.green + '" stroke-width="2.5"/>');
+      o.push('<text x="' + (x - 56) + '" y="' + (yi - 4) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">ENTRÓ</text><text x="' + (x - 56) + '" y="' + (yi + 15) + '" fill="' + C.green + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(inc)) + '</text>');
+      // red pointer on the right: what went out
+      o.push('<path d="M ' + (x + w - 4) + ' ' + yo + ' l 14 -22 h 84 v 44 h -84 z" fill="#000" stroke="' + C.red + '" stroke-width="2.5"/>');
+      o.push('<text x="' + (x + w + 56) + '" y="' + (yo - 4) + '" fill="' + C.red + '" font-size="11" text-anchor="middle">SALIÓ</text><text x="' + (x + w + 56) + '" y="' + (yo + 15) + '" fill="' + C.red + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(out)) + '</text>');
       var n = r.mes.neto.v;
-      o.push('<rect x="' + (gx - 62) + '" y="' + (gy + R + 18) + '" width="124" height="32" rx="3" fill="#000" stroke="#555"/><text x="' + gx + '" y="' + (gy + R + 40) + '" fill="#fff" font-size="14" text-anchor="middle">NETO <tspan font-size="18" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
-      if (pe > 0) o.push('<text x="' + gx + '" y="' + (gy + R + 66) + '" fill="' + C.green + '" font-size="12" text-anchor="middle" stroke="#000" stroke-width="3" paint-order="stroke">+' + esc(k(pe)) + ' POR ENTRAR</text>');
+      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + w / 2) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="13" text-anchor="middle">NETO <tspan font-size="18" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
+      if (pe > 0) o.push('<text x="' + (x + w / 2) + '" y="' + (y0 + h - 10) + '" fill="' + C.green + '" font-size="12" font-weight="700" text-anchor="middle">+' + esc(k(pe)) + ' POR ENTRAR</text>');
     })();
 
     // ---------------- right tape: SALDO (altimeter) ----------------
