@@ -141,35 +141,38 @@
     o.push('</g>');
     o.push('<path d="M ' + (cx - 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy - 4) + ' L ' + (cx + 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy + 12) + ' Z" fill="#ffd400" stroke="#6b5a00" stroke-width="1.5"/>');
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
-    (function () {
-      var col = antesPago >= 0 ? C.green : C.red, pr = r.proximo_pago;
-      o.push('<rect x="' + (cx - 170) + '" y="' + (cy + 86) + '" width="340" height="54" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
-      o.push('<text x="' + cx + '" y="' + (cy + 108) + '" fill="#fff" font-size="15" text-anchor="middle">' + (pr ? 'ANTES DEL PAGO ' + esc(fc(pr)) : 'AL ' + esc(fc(r.hasta))) + ' <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(usd(antesPago)) + '</tspan></text>');
-      var q1 = qs[1];
-      if (q1) o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">SIGUIENTE ' + esc(fc(q1.hasta)) + ' <tspan fill="' + (q1.queda.v >= 0 ? C.green : C.red) + '" font-size="19" font-weight="700">' + esc(usd(q1.queda.v)) + '</tspan></text>');
-    })();
     o.push('</g>');
 
-    // ---------------- left tape: this month, what came in and what went out ----------------
+    // ---------------- left: this month as a round steam gauge (Cessna style) ----------------
     (function () {
-      var x = 120, w = 104, y0 = 112, h = 380, inc = r.mes.entro.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0, out = r.mes.salio.v, top = Math.max(inc, out, 100);
-      o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
-      o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15">MES <tspan font-size="18" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</tspan></text>');
-      var bh = h - 120, bw = 34;
-      [[x + 14, inc, C.green, 'ENTRÓ'], [x + 56, out, C.red, 'SALIÓ']].forEach(function (b) {
-        var hh = Math.max(2, b[1] / top * bh);
-        o.push('<rect x="' + b[0] + '" y="' + (y0 + 20 + bh - hh) + '" width="' + bw + '" height="' + hh + '" fill="' + b[2] + '"/>');
-        o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 40 + bh) + '" fill="' + b[2] + '" font-size="11" text-anchor="middle">' + b[3] + '</text>');
-        o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 58 + bh) + '" fill="' + b[2] + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(k(b[1])) + '</text>');
+      var gx = 172, gy = 300, R = 112, inc = r.mes.entro.v, out = r.mes.salio.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0;
+      var step = nice(Math.max(inc, out, 1000)), top = Math.ceil(Math.max(inc, out, 1000) / step) * step;
+      var a0 = 225, sweep = 270; // degrees, clockwise from 225 (lower left) to -45 (lower right)
+      var ang = function (val) { return (a0 - clamp(val / top, 0, 1) * sweep) * Math.PI / 180; };
+      var P = function (val, rr) { var a = ang(val); return [gx + rr * Math.cos(a), gy - rr * Math.sin(a)]; };
+      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="' + (R + 8) + '" fill="#2a2a2a" stroke="#6b6b6b" stroke-width="3"/>');
+      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="' + R + '" fill="#0a0a0a" stroke="#000" stroke-width="2"/>');
+      for (var t = 0; t <= top + 1e-6; t += step / 4) {
+        var big = Math.abs(t / step - Math.round(t / step)) < 1e-6, p1 = P(t, R - 2), p2 = P(t, R - (big ? 16 : 9));
+        o.push('<line x1="' + p1[0].toFixed(1) + '" y1="' + p1[1].toFixed(1) + '" x2="' + p2[0].toFixed(1) + '" y2="' + p2[1].toFixed(1) + '" stroke="#fff" stroke-width="' + (big ? 3 : 1.5) + '"/>');
+        if (big) { var pl = P(t, R - 32); o.push('<text x="' + pl[0].toFixed(1) + '" y="' + (pl[1] + 6).toFixed(1) + '" fill="#fff" font-size="15" font-weight="700" text-anchor="middle">' + esc(k(t)) + '</text>'); }
+      }
+      o.push('<text x="' + gx + '" y="' + (gy - 38) + '" fill="#fff" font-size="13" text-anchor="middle">MES</text><text x="' + gx + '" y="' + (gy - 20) + '" fill="#fff" font-size="17" font-weight="700" text-anchor="middle">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</text>');
+      [[out, C.red, 5], [inc, C.green, 5]].forEach(function (n) {
+        var tip = P(n[0], R - 12), tail = P(n[0], -18);
+        o.push('<line x1="' + tail[0].toFixed(1) + '" y1="' + tail[1].toFixed(1) + '" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="' + n[1] + '" stroke-width="' + n[2] + '" stroke-linecap="round"/>');
       });
+      o.push('<circle cx="' + gx + '" cy="' + gy + '" r="9" fill="#444" stroke="#999"/>');
+      o.push('<text x="' + (gx - 30) + '" y="' + (gy + 42) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">ENTRÓ</text><text x="' + (gx - 30) + '" y="' + (gy + 60) + '" fill="' + C.green + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(inc)) + '</text>');
+      o.push('<text x="' + (gx + 30) + '" y="' + (gy + 42) + '" fill="' + C.red + '" font-size="11" text-anchor="middle">SALIÓ</text><text x="' + (gx + 30) + '" y="' + (gy + 60) + '" fill="' + C.red + '" font-size="16" font-weight="700" text-anchor="middle">' + esc(k(out)) + '</text>');
       var n = r.mes.neto.v;
-      if (pe > 0) o.push('<text x="' + (x + w / 2) + '" y="' + (y0 + h - 12) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">+' + esc(k(pe)) + ' POR ENTRAR</text>');
-      o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="14">NETO <tspan font-size="19" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
+      o.push('<rect x="' + (gx - 62) + '" y="' + (gy + R + 18) + '" width="124" height="32" rx="3" fill="#000" stroke="#555"/><text x="' + gx + '" y="' + (gy + R + 40) + '" fill="#fff" font-size="14" text-anchor="middle">NETO <tspan font-size="18" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
+      if (pe > 0) o.push('<text x="' + gx + '" y="' + (gy + R + 66) + '" fill="' + C.green + '" font-size="12" text-anchor="middle" stroke="#000" stroke-width="3" paint-order="stroke">+' + esc(k(pe)) + ' POR ENTRAR</text>');
     })();
 
-    // ---------------- right tape: SALDO (altimeter) + 7-day change (VSI) ----------------
+    // ---------------- right tape: SALDO (altimeter) ----------------
     (function () {
-      var x = 760, w = 112, y0 = 112, h = 380, mid = y0 + h / 2;
+      var x = 870, w = 112, y0 = 112, h = 380, mid = y0 + h / 2;
       var step = nice(Math.max(Math.abs(v), 1000) / 2.2), pps = 52;
       o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
       o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="16">SALDO <tspan font-size="13">REAL</tspan></text>');
@@ -184,35 +187,37 @@
       o.push('</svg>');
       o.push('<path d="M ' + (x - 14) + ' ' + mid + ' l 14 -26 h 104 v 52 h -104 z" fill="#000" stroke="#fff" stroke-width="2"/>');
       o.push('<text x="' + (x + 100) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="32" font-weight="700" text-anchor="end">' + esc(k(v)) + '</text>');
-      // VSI: change from today to the day before the next pay day
-      var vx = x + w + 6, vw = 116, c7 = cambioPago, col = c7 >= 0 ? C.green : C.red;
-      o.push('<rect x="' + vx + '" y="' + y0 + '" width="' + vw + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
-      o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">AL PAGO</text>');
-      o.push('<line x1="' + vx + '" y1="' + mid + '" x2="' + (vx + vw) + '" y2="' + mid + '" stroke="#fff" stroke-width="2"/>');
-      var len = clamp(Math.abs(c7) / Math.max(Math.abs(v), 1000) * 300, 8, h / 2 - 30), dir = c7 >= 0 ? -1 : 1;
-      o.push('<line x1="' + (vx + vw / 2) + '" y1="' + mid + '" x2="' + (vx + vw / 2) + '" y2="' + (mid + dir * len) + '" stroke="' + col + '" stroke-width="8"/>');
-      o.push('<path d="M ' + (vx + vw / 2 - 16) + ' ' + (mid + dir * len) + ' l 16 ' + (dir * 20) + ' l 16 ' + (-dir * 20) + ' z" fill="' + col + '"/>');
-      o.push('<rect x="' + vx + '" y="' + (y0 + h) + '" width="' + vw + '" height="34" fill="#000"/><text x="' + (vx + vw / 2) + '" y="' + (y0 + h + 24) + '" fill="' + col + '" font-size="19" font-weight="700" text-anchor="middle">' + (c7 >= 0 ? '+' : '') + esc(k(c7)) + '</text>');
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="' + (r.cuadra ? C.green : C.amber) + '" font-size="15" font-weight="700">' + (r.fuente === 'banco' ? 'BANCO' : 'REGISTRO') + '</text>');
     })();
 
-    // ---------------- inset map: what is left at the close of each pay period ----------------
+    // ---------------- inset map: real balance (solid) then what is left before each pay day (dashed) ----------------
     (function () {
-      var mx = 18, my = 540, mw = 262, mh = 154;
+      var mx = 18, my = 540, mw = 262, mh = 154, pts = r.hist || [];
       o.push('<rect x="' + mx + '" y="' + my + '" width="' + mw + '" height="' + mh + '" fill="#0b2a18" stroke="#fff" stroke-width="1.5"/>');
-      o.push('<text x="' + (mx + 8) + '" y="' + (my + 15) + '" fill="#cfd8e3" font-size="11">QUEDAS ANTES DE CADA PAGO</text>');
-      if (!qs.length) return;
-      var vals = qs.map(function (q) { return q.queda.v; }).concat([0, v]);
+      o.push('<text x="' + (mx + 8) + '" y="' + (my + 15) + '" fill="#cfd8e3" font-size="11">SALDO REAL · DÍAS DE PAGO</text>');
+      var fut = qs.map(function (q) { return { fecha: q.hasta, saldo: q.queda.v }; });
+      var past = pts.length ? pts : [{ fecha: s.hoy, saldo: v }];
+      var all = past.concat(fut);
+      if (all.length < 2) return;
+      var t0 = Date.parse(all[0].fecha), t1 = Date.parse(all[all.length - 1].fecha);
+      var vals = all.map(function (d) { return d.saldo; }).concat([0, v]);
       var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-      var Y = function (val) { return my + 30 + (hi - val) / ((hi - lo) || 1) * (mh - 62); };
-      var n = qs.length + 1, slot = (mw - 16) / n, bwid = Math.min(34, slot - 8);
-      o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#fff" stroke-opacity=".5"/>');
-      [{ lab: 'HOY', val: v }].concat(qs.map(function (q) { return { lab: fc(q.hasta), val: q.queda.v }; })).forEach(function (b, i) {
-        var bx = mx + 8 + i * slot + (slot - bwid) / 2, y1 = Y(Math.max(b.val, 0)), y2 = Y(Math.min(b.val, 0)), c = i === 0 ? C.cyan : b.val >= 0 ? C.green : C.red;
-        o.push('<rect x="' + bx + '" y="' + y1 + '" width="' + bwid + '" height="' + Math.max(2, y2 - y1) + '" fill="' + c + '"/>');
-        o.push('<text x="' + (bx + bwid / 2) + '" y="' + (my + mh - 18) + '" fill="' + c + '" font-size="10" font-weight="700" text-anchor="middle">' + esc(k(b.val)) + '</text>');
-        o.push('<text x="' + (bx + bwid / 2) + '" y="' + (my + mh - 5) + '" fill="#cfd8e3" font-size="9" text-anchor="middle">' + esc(b.lab) + '</text>');
-      });
+      var X = function (f) { return mx + 10 + (Date.parse(f) - t0) / ((t1 - t0) || 1) * (mw - 20); };
+      var Y = function (val) { return my + 24 + (hi - val) / ((hi - lo) || 1) * (mh - 42); };
+      if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
+      var dd = '';
+      past.forEach(function (p, i) { dd += (i ? ' L ' : 'M ') + X(p.fecha).toFixed(1) + ',' + Y(i === past.length - 1 ? v : p.saldo).toFixed(1); });
+      o.push('<path d="' + dd + '" fill="none" stroke="' + C.mag + '" stroke-width="2.5" stroke-linejoin="round"/>');
+      if (fut.length) {
+        var df = 'M ' + X(s.hoy).toFixed(1) + ',' + Y(v).toFixed(1);
+        fut.forEach(function (p) { df += ' L ' + X(p.fecha).toFixed(1) + ',' + Y(p.saldo).toFixed(1); });
+        o.push('<path d="' + df + '" fill="none" stroke="' + C.mag + '" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>');
+        fut.forEach(function (p) { o.push('<circle cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.saldo).toFixed(1) + '" r="3.5" fill="' + (p.saldo >= 0 ? C.green : C.red) + '"/>'); });
+      }
+      o.push('<text x="' + (mx + 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10">' + esc(fc(all[0].fecha)) + '</text>');
+      if (X(s.hoy) - mx > 60 && mx + mw - X(s.hoy) > 50) o.push('<text x="' + X(s.hoy).toFixed(1) + '" y="' + (my + mh - 6) + '" fill="#fff" font-size="10" text-anchor="middle">HOY</text>');
+      o.push('<text x="' + (mx + mw - 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10" text-anchor="end">' + esc(fc(all[all.length - 1].fecha)) + '</text>');
+      o.push('<circle cx="' + X(s.hoy).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="5" fill="#fff"/>');
     })();
 
     // ---------------- bottom center: next pay day ----------------
