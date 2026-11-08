@@ -40,10 +40,10 @@
   // ------------------------------------------------------------ details (what to read below the instrument)
   function porPagarHtml(r) {
     var pp = r.por_pagar || [];
-    if (!pp.length) return 'Nada por pagar en los próximos 30 días.';
+    if (!pp.length) return 'Nada por pagar hasta el ' + esc(fl(r.hasta)) + '.';
     return pp.map(function (p, i) {
-      var col = !p.cubierto ? C.red : p.vencido || p.dias <= 3 ? C.amber : '#c9d2de';
-      var name = esc(fc(p.fecha)) + ' · ' + esc(p.concepto) + ' <span style="color:#9aa4b2">(' + cuando(p) + (p.tipo === 'automatico' ? ', lo cobra el banco' : '') + ')</span>';
+      var col = p.entrada ? C.green : !p.cubierto ? C.red : p.vencido || p.dias <= 3 ? C.amber : '#c9d2de';
+      var name = esc(fc(p.fecha)) + ' · ' + esc(p.concepto) + ' <span style="color:#9aa4b2">(' + cuando(p) + (p.tipo === 'automatico' ? ', lo cobra el banco' : p.entrada ? ', esperado' : '') + ')</span>';
       var left = p.id ? '<a href="#" data-pp="' + i + '" style="color:' + col + ';text-decoration:underline">' + name + '</a>' : '<span>' + name + '</span>';
       return '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;color:' + col + '">' + left +
         '<span style="white-space:nowrap">' + esc(p.monto) + (p.estimado ? ' est.' : '') + ' · queda ' + esc(p.queda.t) + '</span></div>';
@@ -55,9 +55,9 @@
     h.push(tile('Saldo hoy · ' + (r.fuente === 'banco' ? 'banco' : 'movimientos'), esc(r.saldo.t),
       (r.cuentas || []).map(function (c) { return 'Cuenta ••' + esc(c.mask) + ': ' + esc(c.disponible.t) + ' disponible' + (c.actual && c.actual.v !== c.disponible.v ? ' (' + esc(c.actual.t) + ' sin lo pendiente)' : ''); }).join('<br>') +
       '<br>Banco actualizado ' + esc(hace(r.ultimo_sync)) + '.', r.saldo.v < 0 ? C.red : '#fff'));
-    h.push(tile('Por pagar · 30 días', esc(r.total_por_pagar.t),
-      'Con el dinero de hoy ' + (r.sin_cubrir ? '<span style="color:' + C.red + '">alcanza hasta antes de ' + esc(r.sin_cubrir.concepto) + ' (' + esc(fl(r.sin_cubrir.fecha)) + ')</span>' : 'alcanza para todo') +
-      '. No cuenta ingresos que aún no llegan.<div style="margin-top:4px">' + porPagarHtml(r) + '</div>', r.sin_cubrir ? C.amber : C.green));
+    h.push(tile('Hasta el ' + esc(fl(r.hasta)) + ' · quedarías en', '<span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>',
+      'Pagos ' + esc(r.total_por_pagar.t) + ' · ingresos esperados +' + esc(r.total_entradas.t) + '. ' + (r.sin_cubrir ? '<span style="color:' + C.red + '">No alcanza para ' + esc(r.sin_cubrir.concepto) + ' (' + esc(fl(r.sin_cubrir.fecha)) + ')</span>' : 'Alcanza para todo') +
+      (r.punto_bajo ? '. Punto más bajo: ' + esc(r.punto_bajo.queda.t) + ' el ' + esc(fl(r.punto_bajo.fecha)) : '') + '.<div style="margin-top:4px">' + porPagarHtml(r) + '</div>', r.sin_cubrir ? C.amber : C.green));
     h.push(tile('Este mes · ' + esc(mes), '<span style="color:' + C.green + '">+' + esc(r.mes.entro.t) + '</span> <span style="color:' + C.red + '">-' + esc(r.mes.salio.t) + '</span>',
       'Neto ' + esc(r.mes.neto.t) + ', del 1 al ' + Number(s.hoy.slice(8, 10)) + '. Sin contar pasar dinero entre tus cuentas.', '#fff'));
     h.push(tile('Cambio reciente', '<span style="color:' + (r.cambio_7d.v >= 0 ? C.green : C.red) + '">' + (r.cambio_7d.v >= 0 ? '▲ ' : '▼ ') + esc(r.cambio_7d.t) + '</span>',
@@ -85,7 +85,7 @@
   function detalle(s) {
     var r = s.real, t = state.tecla;
     if (t === 'RESUMEN') return resumen(s);
-    if (t === 'POR PAGAR') return '<div style="color:#fff;margin-bottom:6px">Total 30 días ' + esc(r.total_por_pagar.t) + ' · con el dinero de hoy quedarías en <span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span> (sin contar ingresos).</div>' + porPagarHtml(r);
+    if (t === 'POR PAGAR') return '<div style="color:#fff;margin-bottom:6px">Hasta el ' + esc(fl(r.hasta)) + ': pagos ' + esc(r.total_por_pagar.t) + ', ingresos esperados +' + esc(r.total_entradas.t) + ' · quedarías en <span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>.</div>' + porPagarHtml(r);
     if (t === 'BANCO') return (r.cuentas || []).map(function (c) { return '<div style="color:#fff">Cuenta ••' + esc(c.mask) + (c.rol ? ' (' + esc(c.rol) + ')' : '') + ': <b style="color:' + C.cyan + '">' + esc(c.disponible.t) + '</b> disponible' + (c.actual ? ' · ' + esc(c.actual.t) + ' sin lo pendiente' : '') + '</div>'; }).join('') +
       '<div style="color:#c9d2de">Actualizado ' + esc(hace(r.ultimo_sync)) + '. Movimientos registrados: ' + esc(r.libro.t) + (r.cuadra ? ' (cuadra).' : ' (no cuadra; diferencia ' + esc(r.diferencia.t) + ').') + '</div>';
     if (t === 'MES') return '<div style="color:' + C.green + '">Entró ' + esc(r.mes.entro.t) + '</div><div style="color:' + C.red + '">Salió ' + esc(r.mes.salio.t) + '</div><div style="color:#fff">Neto ' + esc(r.mes.neto.t) + ' · últimos 7 días ' + esc(r.cambio_7d.t) + ' · últimos ' + (r.cambio_30d.dias || 30) + ' días ' + esc(r.cambio_30d.t) + '</div>';
@@ -189,10 +189,10 @@
 
     // ---------------- bottom center: next thing to pay ----------------
     (function () {
-      var p = (r.por_pagar || [])[0], bx = 330, by = 560, bw = 340, bh = 110;
+      var p = (r.por_pagar || []).filter(function (x) { return !x.entrada; })[0], bx = 330, by = 560, bw = 340, bh = 110;
       o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="4" fill="#000" stroke="' + (p && !p.cubierto ? C.red : C.mag) + '" stroke-width="2"/>');
       o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 22) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO PAGO</text>');
-      if (!p) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="' + C.green + '" font-size="20" text-anchor="middle">Nada en 30 días</text>'); return; }
+      if (!p) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="' + C.green + '" font-size="20" text-anchor="middle">Nada por pagar</text>'); return; }
       o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 52) + '" fill="#fff" font-size="21" font-weight="700" text-anchor="middle">' + esc(String(p.concepto).toUpperCase().slice(0, 24)) + '</text>');
       o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 78) + '" fill="' + (p.vencido ? C.amber : '#fff') + '" font-size="18" text-anchor="middle">' + esc(p.monto) + ' · ' + esc(cuando(p).toUpperCase()) + '</text>');
       o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 100) + '" fill="' + (p.cubierto ? C.green : C.red) + '" font-size="15" text-anchor="middle">' + (p.cubierto ? 'CUBIERTO · QUEDA ' : 'NO ALCANZA · FALTAN ') + esc(p.cubierto ? p.queda.t : p.queda.t.replace('-', '')) + '</text>');
@@ -200,9 +200,9 @@
 
     // ---------------- bottom right: POR PAGAR (next 30 days) ----------------
     (function () {
-      var rows = r.por_pagar || [], bx = 700, by = 540, bw = 282, bh = 154, shown = rows.slice(0, 4);
+      var rows = (r.por_pagar || []).filter(function (x) { return !x.entrada; }), bx = 700, by = 540, bw = 282, bh = 154, shown = rows.slice(0, 4);
       o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="#000" stroke="' + (r.sin_cubrir ? C.amber : '#fff') + '" stroke-width="1.5"/>');
-      o.push('<text x="' + (bx + 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="13" font-weight="700">POR PAGAR 30D <tspan fill="' + C.cyan + '">' + esc(r.total_por_pagar.t) + '</tspan></text>');
+      o.push('<text x="' + (bx + 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="13" font-weight="700">POR PAGAR → ' + esc(fc(r.hasta)) + ' <tspan fill="' + C.cyan + '">' + esc(r.total_por_pagar.t) + '</tspan></text>');
       if (rows.length > shown.length) o.push('<text x="' + (bx + bw - 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="12" text-anchor="end">+' + (rows.length - shown.length) + ' más</text>');
       if (!rows.length) o.push('<text x="' + (bx + 8) + '" y="' + (by + 50) + '" fill="' + C.green + '" font-size="14">Nada por pagar</text>');
       shown.forEach(function (p, i) {
@@ -211,7 +211,7 @@
         o.push('<text x="' + (bx + 62) + '" y="' + y + '" fill="' + col + '" font-size="13">' + esc(String(p.concepto).slice(0, 15)) + '</text>');
         o.push('<text x="' + (bx + bw - 8) + '" y="' + y + '" fill="' + col + '" font-size="13" font-weight="700" text-anchor="end">' + esc(String(p.monto).replace(/\.00$/, '')) + '</text>');
       });
-      o.push('<text x="' + (bx + 8) + '" y="' + (by + bh - 8) + '" fill="#9aa4b2" font-size="11">Con el dinero de hoy; sin ingresos futuros</text>');
+      o.push('<text x="' + (bx + 8) + '" y="' + (by + bh - 8) + '" fill="#9aa4b2" font-size="11">Al ' + esc(fc(r.hasta)) + ' quedarías en ' + esc(r.alcanza.t) + '</text>');
     })();
 
     // ---------------- top bar ----------------

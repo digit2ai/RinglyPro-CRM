@@ -10,9 +10,9 @@
  *    With no bank, the ledger of real movements up to today.
  *  - The ledger (real rows + plan rows the bank confirmed, up to today) is a cross-check: a gap of
  *    more than $1 is reported as itself, never hidden.
- *  - POR PAGAR = plan payments still pending (only as a reminder of an obligation, by date) and the bills
- *    the bank debits by itself, next 30 days, each with what would be left of TODAY's money after it.
- *    No income is assumed: money counts when it arrives.
+ *  - POR PAGAR = plan payments still pending and the bills the bank debits by itself, up to the first Corte
+ *    after the end of next month, plus the plan's expected incomes (salary, Planea) from their own date,
+ *    each with the running balance after it (owner 2026-11-08).
  *
  * Pure: no database, no clock. Every figure in integer cents.
  */
@@ -66,23 +66,44 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
   const pend = pasado.filter(r => r.fuente === 'plaid' && r.pendiente_banco && !PROPIA.test(r.concepto || ''));
   const pendNeto = pend.reduce((x, r) => x + (r.tipo === 'egreso' ? monto(r) : -monto(r)), 0);
 
+  // HORIZON (owner 2026-11-08): through the first Corte after the end of NEXT month (on Nov 8: the Jan 6 Corte),
+  // so the reading reaches past the year end instead of stopping at 30 days.
+  const [hy, hm] = hoy.split('-').map(Number);
+  const finSig = new Date(Date.UTC(hy, hm + 1, 0)).toISOString().slice(0, 10);
+  const corteSig = rows.filter(r => r.origen === 'plan' && r.tipo === 'egreso' && r.categoria === 'corte' && r.fecha > finSig)
+    .reduce((m, r) => (!m || r.fecha < m ? r.fecha : m), null);
+  const hasta = corteSig || (finSig > at(30) ? finSig : at(30));
+  const fila = (r) => ({ id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real });
   // what still has to be paid: pending plan outflows (from 15 days back, an overdue one is still owed) + bank autopays
-  const hasta = at(30);
   const lista = rows.filter(r => r.origen === 'plan' && r.estado !== 'cumplido' && r.tipo === 'egreso' && r.fecha >= at(-15) && r.fecha <= hasta)
-    .map(r => ({ id: r.id, fecha: r.fecha, concepto: r.concepto, cents: toCents(r.monto), tipo: 'pago', vencido: r.fecha < hoy,
-      row: { id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real } }));
-  for (const i of (autopagos && autopagos.items) || []) {
-    if (i.fecha > hasta) continue;
-    lista.push({ id: null, fecha: i.fecha, concepto: i.concepto, cents: i.monto_cents, tipo: 'automatico', estimado: !!i.estimado, vencido: false });
+    .map(r => ({ id: r.id, fecha: r.fecha, concepto: r.concepto, cents: toCents(r.monto), tipo: 'pago', vencido: r.fecha < hoy, row: fila(r) }));
+  // what is expected in (owner 2026-11-08: salary and Planea): pending plan incomes from today on. Never an overdue one,
+  // never a hand-typed one; each is labelled "esperado" and counts only from its own date.
+  for (const r of rows) {
+    if (r.origen === 'plan' && r.estado !== 'cumplido' && r.tipo === 'ingreso' && r.fecha >= hoy && r.fecha <= hasta) {
+      lista.push({ id: r.id, fecha: r.fecha, concepto: r.concepto, cents: toCents(r.monto), tipo: 'ingreso', vencido: false, row: fila(r) });
+    }
   }
-  lista.sort((x, y) => (x.fecha < y.fecha ? -1 : x.fecha > y.fecha ? 1 : y.cents - x.cents));
-  let acum = 0;
+  // bank autopays repeat every month until the horizon
+  for (const i of (autopagos && autopagos.items) || []) {
+    const dia = Number(i.fecha.slice(8));
+    for (let f = i.fecha, n = 0; f <= hasta && n < 12; n++) {
+      lista.push({ id: null, fecha: f, concepto: i.concepto, cents: i.monto_cents, tipo: 'automatico', estimado: !!i.estimado, vencido: false });
+      let [y, m] = f.split('-').map(Number); m += 1; if (m > 12) { m = 1; y += 1; }
+      f = y + '-' + String(m).padStart(2, '0') + '-' + String(Math.min(dia, new Date(Date.UTC(y, m, 0)).getUTCDate())).padStart(2, '0');
+    }
+  }
+  // by date; on one day the money that comes in is counted before what goes out
+  lista.sort((x, y) => (x.fecha < y.fecha ? -1 : x.fecha > y.fecha ? 1 : (x.tipo === 'ingreso') !== (y.tipo === 'ingreso') ? (x.tipo === 'ingreso' ? -1 : 1) : y.cents - x.cents));
+  let acum = 0, salidas = 0, entradas = 0;
   const porPagar = lista.map(p => {
-    acum += p.cents;
-    return { id: p.id, fecha: p.fecha, concepto: p.concepto, monto: fmt(p.cents), monto_v: p.cents / 100, tipo: p.tipo, estimado: !!p.estimado, vencido: p.vencido,
-      dias: Math.round((Date.parse(p.fecha) - Date.parse(hoy)) / 864e5), queda: d(saldo - acum), cubierto: saldo - acum >= 0, row: p.row || null };
+    const ent = p.tipo === 'ingreso';
+    if (ent) { acum -= p.cents; entradas += p.cents; } else { acum += p.cents; salidas += p.cents; }
+    return { id: p.id, fecha: p.fecha, concepto: p.concepto, monto: (ent ? '+' : '') + fmt(p.cents), monto_v: p.cents / 100, tipo: p.tipo, entrada: ent, estimado: !!p.estimado, vencido: p.vencido,
+      dias: Math.round((Date.parse(p.fecha) - Date.parse(hoy)) / 864e5), queda: d(saldo - acum), cubierto: ent || saldo - acum >= 0, row: p.row || null };
   });
   const sinCubrir = porPagar.find(p => !p.cubierto) || null;
+  const bajo = porPagar.reduce((m, p) => (!m || p.queda.v < m.queda.v ? p : m), null);
 
   // incomes he typed by hand for a future date: not counted, only listed
   const porCobrar = reales.filter(r => r.fecha > hoy && r.tipo === 'ingreso').sort((x, y) => (x.fecha < y.fecha ? -1 : 1))
@@ -98,7 +119,8 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
     mes: { ym, entro: d(entro), salio: d(salio), neto: d(entro - salio) },
     gasto_banco_mes: d(bancoMes.reduce((x, r) => x + monto(r), 0)), gasto_banco_ids: bancoMes.map(r => r.id), gasto_banco_n: bancoMes.length,
     pendientes: { n: pend.length, neto: d(pendNeto) },
-    por_pagar: porPagar, total_por_pagar: d(acum), alcanza: d(saldo - acum), sin_cubrir: sinCubrir,
+    por_pagar: porPagar, total_por_pagar: d(salidas), total_entradas: d(entradas), alcanza: d(saldo - acum), hasta, sin_cubrir: sinCubrir,
+    punto_bajo: bajo ? { fecha: bajo.fecha, concepto: bajo.concepto, queda: bajo.queda } : null,
     por_cobrar: porCobrar
   };
 }
@@ -109,7 +131,7 @@ function alarmas(r, vistas) {
   if (r.saldo.v < 0) out.push({ nivel: 'stall', clave: 'real-negativo:' + r.saldo.t, titulo: 'Saldo en negativo', detalle: 'Hoy tienes ' + r.saldo.t + ' en el banco.' });
   const p = r.sin_cubrir;
   if (p && p.dias <= 7) out.push({ nivel: 'stall', clave: 'real-nocubre:' + p.concepto + ':' + p.fecha, titulo: 'No alcanza para ' + p.concepto,
-    detalle: (p.vencido ? 'Vencido (' : 'El ' + p.fecha.slice(8) + '/' + p.fecha.slice(5, 7) + ' (') + p.monto + '). Con el dinero de hoy quedarías en ' + p.queda.t + '.' });
+    detalle: (p.vencido ? 'Vencido (' : 'El ' + p.fecha.slice(8) + '/' + p.fecha.slice(5, 7) + ' (') + p.monto + '). Contando los ingresos esperados quedarías en ' + p.queda.t + '.' });
   if (!r.cuadra) out.push({ nivel: 'caution', clave: 'real-cuadre:' + r.diferencia.t, titulo: 'El registro no cuadra con el banco',
     detalle: 'Los movimientos suman ' + r.libro.t + ' y el banco tiene ' + r.saldo.t + ' (diferencia ' + r.diferencia.t + '). El panel usa el saldo del banco.' });
   if (r.ultimo_sync && Date.now() - Date.parse(r.ultimo_sync) > 36 * 3600e3) out.push({ nivel: 'caution', clave: 'real-sync:' + r.ultimo_sync.slice(0, 10), titulo: 'El banco no se ha actualizado',

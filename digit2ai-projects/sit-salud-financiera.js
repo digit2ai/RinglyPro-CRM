@@ -942,9 +942,13 @@ function realTests() {
   ok(r.mes.entro.v === 4000 && r.mes.salio.v === 120, 'this month excludes moves between his own accounts', r.mes);
   ok(r.pendientes.n === 1 && r.pendientes.neto.v === 20, 'pending bank charges are reported');
   const nombres = r.por_pagar.map(p => p.concepto);
-  ok(nombres.join('|') === 'Corte|Render|Pago Lina', 'por pagar = pending plan outflows + bank autopays, 30 days, by date; no incomes, nothing past 30 days', nombres);
-  ok(r.por_pagar[0].vencido && r.por_pagar[0].queda.v === 380 && r.por_pagar[0].cubierto, 'an overdue payment stays owed; "queda" runs on TODAY money');
-  ok(r.por_pagar[2].queda.v === -1320 && !r.por_pagar[2].cubierto && r.sin_cubrir.concepto === 'Pago Lina', 'no future salary is assumed: the first uncovered payment is named');
+  // horizon on Nov 8 = through Dec 31; no Jan corte in this fixture -> Dec 31. Render repeats monthly; Lejos (Jan 20) is out.
+  ok(r.hasta === '2026-12-31' && nombres.join('|') === 'Corte|Render|Salario|Pago Lina|Render|Lejano', 'por pagar runs to the horizon: plan outflows, monthly autopays, and expected plan income', nombres);
+  ok(r.por_pagar[0].vencido && r.por_pagar[0].queda.v === 380 && r.por_pagar[0].cubierto, 'an overdue payment stays owed; "queda" starts from TODAY money');
+  ok(r.por_pagar[2].entrada && r.por_pagar[2].queda.v === 3180 && r.por_pagar[3].queda.v === 1680 && !r.sin_cubrir, 'an expected salary counts from its own date, before that day\'s payments', r.por_pagar.map(p => p.queda.v));
+  ok(!r.por_pagar.some(p => p.id === 11), 'a hand-typed future income is not counted in the projection');
+  const rJ = R.construir({ hoy, rows: rows.concat([{ id: 13, fecha: '2027-01-06', tipo: 'egreso', categoria: 'corte', concepto: 'Corte enero', monto: '100.00', origen: 'plan', estado: 'pendiente' }]), cuentas, item: null, autopagos: null });
+  ok(rJ.hasta === '2027-01-06' && rJ.por_pagar[rJ.por_pagar.length - 1].concepto === 'Corte enero', 'the horizon reaches the first Corte after the end of next month', rJ.hasta);
   ok(r.por_pagar[0].row && r.por_pagar[0].row.id === 7 && r.por_pagar[1].row === null, 'a plan payment carries its row for the edit dialog; an autopay does not');
   ok(r.hist[0].fecha === '2026-11-01' && r.cambio_30d.dias === 7 && r.cambio_30d.desde === '2026-11-01' && r.cambio_30d.v === 2880, 'no record before the first real movement: the opening balance is not counted as growth', r.cambio_30d);
   const rA = R.construir({ hoy, rows: rows.concat([{ id: 12, fecha: '2026-11-04', tipo: 'ingreso', categoria: 'otro', concepto: 'Ajuste de conciliación (saldo real BOA)', monto: '50.00', origen: 'real', estado: null, fuente: 'manual' }]), cuentas, item: null, autopagos: null });
