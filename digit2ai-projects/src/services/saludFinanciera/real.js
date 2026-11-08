@@ -75,7 +75,12 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
   const finSig = new Date(Date.UTC(hy, hm + 1, 0)).toISOString().slice(0, 10);
   const corteSig = rows.filter(r => r.origen === 'plan' && r.tipo === 'egreso' && r.categoria === 'corte' && r.fecha > finSig)
     .reduce((m, r) => (!m || r.fecha < m ? r.fecha : m), null);
-  const hasta = corteSig || (finSig > at(30) ? finSig : at(30));
+  let hasta = corteSig || (finSig > at(30) ? finSig : at(30));
+  // PAY DAYS (owner 2026-11-08: "I just want to monitor every pay day"): the salary dates of the plan.
+  // The horizon is stretched to the day before the first pay day after it, so the last pay period is whole.
+  const esSalario = (r) => r.origen === 'plan' && r.tipo === 'ingreso' && r.categoria === 'salario' && r.estado !== 'cumplido';
+  const pagoTras = rows.filter(r => esSalario(r) && r.fecha > hasta).reduce((m, r) => (!m || r.fecha < m ? r.fecha : m), null);
+  if (pagoTras) hasta = engine.addDays(pagoTras, -1);
   const fila = (r) => ({ id: r.id, fecha: r.fecha, tipo: r.tipo, categoria: r.categoria, concepto: r.concepto, monto: r.monto, origen: r.origen, estado: r.estado, monto_real: r.monto_real });
   // what still has to be paid: pending plan outflows (from 15 days back, an overdue one is still owed) + bank autopays
   const lista = rows.filter(r => r.origen === 'plan' && r.estado !== 'cumplido' && r.tipo === 'egreso' && r.fecha >= at(-15) && r.fecha <= hasta)
@@ -106,6 +111,24 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
       dias: Math.round((Date.parse(p.fecha) - Date.parse(hoy)) / 864e5), queda: d(saldo - acum), cubierto: ent || saldo - acum >= 0, row: p.row || null };
   });
   const sinCubrir = porPagar.find(p => !p.cubierto) || null;
+  // one block per pay period: from today (or a pay day) to the day before the next pay day
+  const diasPago = [...new Set(rows.filter(r => esSalario(r) && r.fecha > hoy && r.fecha <= hasta).map(r => r.fecha))].sort();
+  const cortes = [hoy].concat(diasPago);
+  const quincenas = cortes.map((ini, i) => {
+    const fin = i + 1 < cortes.length ? engine.addDays(cortes[i + 1], -1) : hasta;
+    const its = porPagar.filter(p => (i === 0 ? p.fecha <= fin : p.fecha >= ini && p.fecha <= fin));
+    const antes = i === 0 ? saldo : null;
+    let ent = 0, sal = 0, min = null, ultimo = null;
+    for (const p of its) { if (p.entrada) ent += Math.round(p.monto_v * 100); else sal += Math.round(p.monto_v * 100); if (min === null || p.queda.v < min) min = p.queda.v; ultimo = p.queda.v; }
+    return { desde: ini, hasta: fin, dia_pago: i > 0, entra: d(ent), sale: d(sal),
+      pagos: its.filter(p => !p.entrada).map(p => ({ fecha: p.fecha, concepto: p.concepto, monto: p.monto, vencido: p.vencido, cubierto: p.cubierto })),
+      ingresos: its.filter(p => p.entrada).map(p => ({ fecha: p.fecha, concepto: p.concepto, monto: p.monto })),
+      queda: d(Math.round((ultimo == null ? null : ultimo) * 100) || 0), minimo: min == null ? null : d(Math.round(min * 100)), vacio: !its.length,
+      cubierto: min == null || min >= 0 };
+  });
+  // a period with no movement keeps the running balance of the previous one
+  let corrido = saldo;
+  for (const q of quincenas) { if (q.vacio) q.queda = d(corrido); corrido = Math.round(q.queda.v * 100); }
   const bajo = porPagar.reduce((m, p) => (!m || p.queda.v < m.queda.v ? p : m), null);
 
   // incomes he typed by hand for a future date: not counted, only listed
@@ -124,6 +147,7 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
     gasto_banco_mes: d(bancoMes.reduce((x, r) => x + monto(r), 0)), gasto_banco_ids: bancoMes.map(r => r.id), gasto_banco_n: bancoMes.length,
     pendientes: { n: pend.length, neto: d(pendNeto) },
     por_pagar: porPagar, total_por_pagar: d(salidas), total_entradas: d(entradas), alcanza: d(saldo - acum), hasta, sin_cubrir: sinCubrir,
+    quincenas, proximo_pago: diasPago[0] || null,
     punto_bajo: bajo ? { fecha: bajo.fecha, concepto: bajo.concepto, queda: bajo.queda } : null,
     por_cobrar: porCobrar
   };
@@ -134,7 +158,8 @@ function alarmas(r, vistas) {
   const out = [];
   if (r.saldo.v < 0) out.push({ nivel: 'stall', clave: 'real-negativo:' + r.saldo.t, titulo: 'Saldo en negativo', detalle: 'Hoy tienes ' + r.saldo.t + ' en el banco.' });
   const p = r.sin_cubrir;
-  if (p && p.dias <= 7) out.push({ nivel: 'stall', clave: 'real-nocubre:' + p.concepto + ':' + p.fecha, titulo: 'No alcanza para ' + p.concepto,
+  // a STALL when the gap falls before the next pay day (or within 7 days when no pay day is known)
+  if (p && (r.proximo_pago ? p.fecha < r.proximo_pago || p.vencido : p.dias <= 7)) out.push({ nivel: 'stall', clave: 'real-nocubre:' + p.concepto + ':' + p.fecha, titulo: 'No alcanza para ' + p.concepto,
     detalle: (p.vencido ? 'Vencido (' : 'El ' + p.fecha.slice(8) + '/' + p.fecha.slice(5, 7) + ' (') + p.monto + '). Contando los ingresos esperados quedarías en ' + p.queda.t + '.' });
   if (!r.cuadra) out.push({ nivel: 'caution', clave: 'real-cuadre:' + r.diferencia.t, titulo: 'El registro no cuadra con el banco',
     detalle: 'Los movimientos suman ' + r.libro.t + ' y el banco tiene ' + r.saldo.t + ' (diferencia ' + r.diferencia.t + '). El panel usa el saldo del banco.' });

@@ -5,11 +5,12 @@
    No projection, no plan comparison. Every figure comes from /salud -> s.real.
 
      Altímetro (derecha) ...... SALDO del banco ahora (disponible, ya descuenta lo pendiente)
-     Variómetro ............... cambio real de los últimos 7 días
+     Variómetro ............... cuánto baja (o sube) tu saldo de hoy al día antes del próximo día de pago
      Cinta izquierda .......... este mes: lo que entró y lo que salió (sin pasar plata entre tus cuentas)
-     Horizonte ................ nariz arriba/abajo = cómo cambió tu saldo en los últimos 30 días
-     Mapa (abajo izq) ......... tu saldo real de los últimos 60 días
-     Caja (abajo der) ......... POR PAGAR: próximos pagos y cuánto te queda del dinero de hoy
+     Horizonte ................ nariz arriba/abajo = con cuánto llegas al próximo día de pago
+     Mapa (abajo izq) ......... con cuánto quedas al cierre de cada período de pago
+     Caja (abajo der) ......... DÍAS DE PAGO: qué entra, qué sale y con cuánto quedas, quincena a quincena
+   Owner 2026-11-08: "I just want to monitor every pay day" - no 7- or 30-day windows.
    ===================================================== */
 (function () {
   'use strict';
@@ -49,6 +50,26 @@
         '<span style="white-space:nowrap">' + esc(p.monto) + (p.estimado ? ' est.' : '') + ' · queda ' + esc(p.queda.t) + '</span></div>';
     }).join('');
   }
+  function quincenasHtml(r) {
+    var qs = r.quincenas || [], pp = r.por_pagar || [];
+    if (!qs.length) return porPagarHtml(r);
+    return qs.map(function (q, n) {
+      var col = q.cubierto ? C.green : C.red;
+      var head = (q.dia_pago ? 'Día de pago ' + esc(fl(q.desde)) : 'Hoy') + ' → ' + esc(fl(q.hasta));
+      var rowsH = pp.map(function (p, i) {
+        var dentro = n === 0 ? p.fecha <= q.hasta : p.fecha >= q.desde && p.fecha <= q.hasta;
+        if (!dentro) return '';
+        var c = p.entrada ? C.green : !p.cubierto ? C.red : p.vencido ? C.amber : '#c9d2de';
+        var name = esc(fc(p.fecha)) + ' · ' + esc(p.concepto) + (p.vencido ? ' <span style="color:#9aa4b2">(vencido)</span>' : p.tipo === 'automatico' ? ' <span style="color:#9aa4b2">(lo cobra el banco)</span>' : '');
+        var left = p.id ? '<a href="#" data-pp="' + i + '" style="color:' + c + ';text-decoration:underline">' + name + '</a>' : '<span>' + name + '</span>';
+        return '<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0 2px 10px;color:' + c + '">' + left + '<span style="white-space:nowrap">' + esc(p.monto) + (p.estimado ? ' est.' : '') + '</span></div>';
+      }).join('');
+      return '<div style="border-top:1px solid #2a3240;padding:6px 0">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;color:#fff;font-weight:700"><span>' + head + '</span><span style="color:' + col + ';white-space:nowrap">quedas ' + esc(q.queda.t) + '</span></div>' +
+        '<div style="color:#9aa4b2;font-size:13px">Entra <span style="color:' + C.green + '">+' + esc(q.entra.t) + '</span> · sale <span style="color:' + C.red + '">-' + esc(q.sale.t) + '</span>' +
+        (q.minimo && q.minimo.v < 0 ? ' · <span style="color:' + C.red + '">llegas a ' + esc(q.minimo.t) + '</span>' : '') + '</div>' + (rowsH || '<div style="color:#9aa4b2;padding-left:10px">Sin movimientos.</div>') + '</div>';
+    }).join('');
+  }
   function porEntrarHtml(r) {
     var it = (r.mes && r.mes.por_entrar_items) || [];
     return it.length ? ' Por entrar: ' + it.map(function (c) { return esc(c.monto) + ' ' + esc(c.concepto) + ' (' + esc(fl(c.fecha)) + ')'; }).join(', ') + '.' : '';
@@ -59,13 +80,12 @@
     h.push(tile('Saldo hoy · ' + (r.fuente === 'banco' ? 'banco' : 'movimientos'), esc(r.saldo.t),
       (r.cuentas || []).map(function (c) { return 'Cuenta ••' + esc(c.mask) + ': ' + esc(c.disponible.t) + ' disponible' + (c.actual && c.actual.v !== c.disponible.v ? ' (' + esc(c.actual.t) + ' sin lo pendiente)' : ''); }).join('<br>') +
       '<br>Banco actualizado ' + esc(hace(r.ultimo_sync)) + '.', r.saldo.v < 0 ? C.red : '#fff'));
-    h.push(tile('Hasta el ' + esc(fl(r.hasta)) + ' · quedarías en', '<span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>',
-      'Pagos ' + esc(r.total_por_pagar.t) + ' · ingresos esperados +' + esc(r.total_entradas.t) + '. ' + (r.sin_cubrir ? '<span style="color:' + C.red + '">No alcanza para ' + esc(r.sin_cubrir.concepto) + ' (' + esc(fl(r.sin_cubrir.fecha)) + ')</span>' : 'Alcanza para todo') +
-      (r.punto_bajo ? '. Punto más bajo: ' + esc(r.punto_bajo.queda.t) + ' el ' + esc(fl(r.punto_bajo.fecha)) : '') + '.<div style="margin-top:4px">' + porPagarHtml(r) + '</div>', r.sin_cubrir ? C.amber : C.green));
+    var q0 = (r.quincenas || [])[0];
+    h.push('<div style="grid-column:1/-1">' + tile('Días de pago · hasta el ' + esc(fl(r.hasta)), q0 && r.proximo_pago ? 'Antes del ' + esc(fl(r.proximo_pago)) + ': <span style="color:' + (q0.cubierto ? C.green : C.red) + '">' + esc(q0.queda.t) + '</span>' : esc(r.alcanza.t),
+      'Cuenta tu salario y Planea en su fecha. ' + (r.sin_cubrir ? '<span style="color:' + C.red + '">No alcanza para ' + esc(r.sin_cubrir.concepto) + ' (' + esc(fl(r.sin_cubrir.fecha)) + ')</span>.' : 'Alcanza para todo.') +
+      '<div style="margin-top:4px">' + quincenasHtml(r) + '</div>', r.sin_cubrir ? C.amber : C.green) + '</div>');
     h.push(tile('Este mes · ' + esc(mes), '<span style="color:' + C.green + '">+' + esc(r.mes.entro.t) + '</span> <span style="color:' + C.red + '">-' + esc(r.mes.salio.t) + '</span>',
       'Neto ' + esc(r.mes.neto.t) + ', del 1 al ' + Number(s.hoy.slice(8, 10)) + '.' + porEntrarHtml(r) + ' Sin contar pasar dinero entre tus cuentas de BOA.', '#fff'));
-    h.push(tile('Cambio reciente', '<span style="color:' + (r.cambio_7d.v >= 0 ? C.green : C.red) + '">' + (r.cambio_7d.v >= 0 ? '▲ ' : '▼ ') + esc(r.cambio_7d.t) + '</span>',
-      'Últimos 7 días. Últimos ' + (r.cambio_30d.dias || 30) + ' días: ' + esc(r.cambio_30d.t) + (r.cambio_30d.desde ? ' (tus registros empiezan el ' + esc(fl(r.cambio_30d.desde)) + ')' : '') + '.', '#fff'));
     if (r.pendientes && r.pendientes.n) h.push(tile('Pendientes del banco', esc(r.pendientes.neto.t), r.pendientes.n + ' cargos aún pendientes; el saldo disponible ya los descuenta.', C.amber));
     var bn = r.gasto_banco_n || 0;
     h.push('<div data-bank role="button" tabindex="0" style="cursor:pointer">' + tile('Gastos del banco · ' + esc(mes), esc(r.gasto_banco_mes.t),
@@ -89,10 +109,10 @@
   function detalle(s) {
     var r = s.real, t = state.tecla;
     if (t === 'RESUMEN') return resumen(s);
-    if (t === 'POR PAGAR') return '<div style="color:#fff;margin-bottom:6px">Hasta el ' + esc(fl(r.hasta)) + ': pagos ' + esc(r.total_por_pagar.t) + ', ingresos esperados +' + esc(r.total_entradas.t) + ' · quedarías en <span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>.</div>' + porPagarHtml(r);
+    if (t === 'DÍAS DE PAGO') return '<div style="color:#fff;margin-bottom:6px">Hasta el ' + esc(fl(r.hasta)) + ': entra +' + esc(r.total_entradas.t) + ', sale ' + esc(r.total_por_pagar.t) + ' · quedarías en <span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>.</div>' + quincenasHtml(r);
     if (t === 'BANCO') return (r.cuentas || []).map(function (c) { return '<div style="color:#fff">Cuenta ••' + esc(c.mask) + (c.rol ? ' (' + esc(c.rol) + ')' : '') + ': <b style="color:' + C.cyan + '">' + esc(c.disponible.t) + '</b> disponible' + (c.actual ? ' · ' + esc(c.actual.t) + ' sin lo pendiente' : '') + '</div>'; }).join('') +
       '<div style="color:#c9d2de">Actualizado ' + esc(hace(r.ultimo_sync)) + '. Movimientos registrados: ' + esc(r.libro.t) + (r.cuadra ? ' (cuadra).' : ' (no cuadra; diferencia ' + esc(r.diferencia.t) + ').') + '</div>';
-    if (t === 'MES') return '<div style="color:' + C.green + '">Entró ' + esc(r.mes.entro.t) + porEntrarHtml(r) + '</div><div style="color:' + C.red + '">Salió ' + esc(r.mes.salio.t) + '</div><div style="color:#fff">Neto ' + esc(r.mes.neto.t) + ' · últimos 7 días ' + esc(r.cambio_7d.t) + ' · últimos ' + (r.cambio_30d.dias || 30) + ' días ' + esc(r.cambio_30d.t) + '</div>';
+    if (t === 'MES') return '<div style="color:' + C.green + '">Entró ' + esc(r.mes.entro.t) + porEntrarHtml(r) + '</div><div style="color:' + C.red + '">Salió ' + esc(r.mes.salio.t) + '</div><div style="color:#fff">Neto ' + esc(r.mes.neto.t) + '</div>';
     return '';
   }
 
@@ -101,9 +121,10 @@
     if (!el || !s || !s.real) return;
     var r = s.real, W = 1000, H = 760, cx = 500, cy = 300, v = r.saldo.v;
     var alarmas = s.alarmas || [], stalls = alarmas.filter(function (a) { return a.nivel === 'stall'; });
-    var ppd = 7;
-    // nose up/down = how the balance moved over the last 30 days, relative to the balance itself
-    var pitch = clamp(r.cambio_30d.v / Math.max(Math.abs(v), 1000) * 20, -20, 20);
+    var ppd = 7, qs = r.quincenas || [], q0 = qs[0] || null;
+    var antesPago = q0 ? q0.queda.v : v, cambioPago = antesPago - v;
+    // nose up/down = what happens to today's balance by the day before the next pay day
+    var pitch = clamp(cambioPago / Math.max(Math.abs(v), 1000) * 20, -20, 20);
     var o = [];
     o.push('<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;border-radius:10px;font-family:Arial Narrow,Helvetica Neue,Arial,sans-serif" role="img" aria-label="Panel de instrumentos: saldo real ' + esc(r.saldo.t) + '">');
     o.push('<defs><clipPath id="pfrClip"><rect x="0" y="64" width="' + W + '" height="636"/></clipPath>' +
@@ -121,10 +142,11 @@
     o.push('<path d="M ' + (cx - 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy - 4) + ' L ' + (cx + 95) + ' ' + (cy + 28) + ' L ' + cx + ' ' + (cy + 12) + ' Z" fill="#ffd400" stroke="#6b5a00" stroke-width="1.5"/>');
     o.push('<rect x="' + (cx - 220) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/><rect x="' + (cx + 164) + '" y="' + (cy - 5) + '" width="56" height="10" fill="#ffd400" stroke="#6b5a00"/>');
     (function () {
-      var c30 = r.cambio_30d.v, c7 = r.cambio_7d.v, col = c30 >= 0 ? C.green : C.red;
-      o.push('<rect x="' + (cx - 160) + '" y="' + (cy + 86) + '" width="320" height="54" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
-      o.push('<text x="' + cx + '" y="' + (cy + 108) + '" fill="#fff" font-size="15" text-anchor="middle">ÚLT. ' + (r.cambio_30d.dias || 30) + ' DÍAS <tspan fill="' + col + '" font-size="19" font-weight="700">' + (c30 >= 0 ? '+' : '') + esc(usd(c30)) + '</tspan></text>');
-      o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">ÚLT. 7 DÍAS <tspan fill="' + (c7 >= 0 ? C.green : C.red) + '" font-size="19" font-weight="700">' + (c7 >= 0 ? '+' : '') + esc(usd(c7)) + '</tspan></text>');
+      var col = antesPago >= 0 ? C.green : C.red, pr = r.proximo_pago;
+      o.push('<rect x="' + (cx - 170) + '" y="' + (cy + 86) + '" width="340" height="54" rx="3" fill="#000" stroke="' + col + '" stroke-width="1.5"/>');
+      o.push('<text x="' + cx + '" y="' + (cy + 108) + '" fill="#fff" font-size="15" text-anchor="middle">' + (pr ? 'ANTES DEL PAGO ' + esc(fc(pr)) : 'AL ' + esc(fc(r.hasta))) + ' <tspan fill="' + col + '" font-size="19" font-weight="700">' + esc(usd(antesPago)) + '</tspan></text>');
+      var q1 = qs[1];
+      if (q1) o.push('<text x="' + cx + '" y="' + (cy + 130) + '" fill="#fff" font-size="15" text-anchor="middle">SIGUIENTE ' + esc(fc(q1.hasta)) + ' <tspan fill="' + (q1.queda.v >= 0 ? C.green : C.red) + '" font-size="19" font-weight="700">' + esc(usd(q1.queda.v)) + '</tspan></text>');
     })();
     o.push('</g>');
 
@@ -162,10 +184,10 @@
       o.push('</svg>');
       o.push('<path d="M ' + (x - 14) + ' ' + mid + ' l 14 -26 h 104 v 52 h -104 z" fill="#000" stroke="#fff" stroke-width="2"/>');
       o.push('<text x="' + (x + 100) + '" y="' + (mid + 12) + '" fill="' + (v >= 0 ? '#fff' : C.red) + '" font-size="32" font-weight="700" text-anchor="end">' + esc(k(v)) + '</text>');
-      // VSI: 7-day change
-      var vx = x + w + 6, vw = 116, c7 = r.cambio_7d.v, col = c7 >= 0 ? C.green : C.red;
+      // VSI: change from today to the day before the next pay day
+      var vx = x + w + 6, vw = 116, c7 = cambioPago, col = c7 >= 0 ? C.green : C.red;
       o.push('<rect x="' + vx + '" y="' + y0 + '" width="' + vw + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
-      o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">7 DÍAS</text>');
+      o.push('<text x="' + (vx + vw / 2) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">AL PAGO</text>');
       o.push('<line x1="' + vx + '" y1="' + mid + '" x2="' + (vx + vw) + '" y2="' + mid + '" stroke="#fff" stroke-width="2"/>');
       var len = clamp(Math.abs(c7) / Math.max(Math.abs(v), 1000) * 300, 8, h / 2 - 30), dir = c7 >= 0 ? -1 : 1;
       o.push('<line x1="' + (vx + vw / 2) + '" y1="' + mid + '" x2="' + (vx + vw / 2) + '" y2="' + (mid + dir * len) + '" stroke="' + col + '" stroke-width="8"/>');
@@ -174,49 +196,51 @@
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="' + (r.cuadra ? C.green : C.amber) + '" font-size="15" font-weight="700">' + (r.fuente === 'banco' ? 'BANCO' : 'REGISTRO') + '</text>');
     })();
 
-    // ---------------- inset map: real balance, last 60 days ----------------
+    // ---------------- inset map: what is left at the close of each pay period ----------------
     (function () {
-      var mx = 18, my = 540, mw = 262, mh = 154, pts = r.hist || [];
+      var mx = 18, my = 540, mw = 262, mh = 154;
       o.push('<rect x="' + mx + '" y="' + my + '" width="' + mw + '" height="' + mh + '" fill="#0b2a18" stroke="#fff" stroke-width="1.5"/>');
-      o.push('<text x="' + (mx + 8) + '" y="' + (my + 15) + '" fill="#cfd8e3" font-size="11">SALDO REAL · ' + (pts.length > 1 ? pts.length - 1 : 0) + ' DÍAS</text>');
-      if (pts.length < 2) return;
-      var vals = pts.map(function (d) { return d.saldo; }).concat([0, v]);
+      o.push('<text x="' + (mx + 8) + '" y="' + (my + 15) + '" fill="#cfd8e3" font-size="11">QUEDAS ANTES DE CADA PAGO</text>');
+      if (!qs.length) return;
+      var vals = qs.map(function (q) { return q.queda.v; }).concat([0, v]);
       var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-      var X = function (i) { return mx + 10 + i / (pts.length - 1) * (mw - 20); };
-      var Y = function (val) { return my + 26 + (hi - val) / ((hi - lo) || 1) * (mh - 40); };
-      if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
-      var dd = '';
-      pts.forEach(function (p, i) { dd += (i ? ' L ' : 'M ') + X(i).toFixed(1) + ',' + Y(i === pts.length - 1 ? v : p.saldo).toFixed(1); });
-      o.push('<path d="' + dd + '" fill="none" stroke="' + C.mag + '" stroke-width="2.5" stroke-linejoin="round"/>');
-      o.push('<text x="' + (mx + 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10">' + esc(fc(pts[0].fecha)) + '</text><text x="' + (mx + mw - 10) + '" y="' + (my + mh - 6) + '" fill="#fff" font-size="10" text-anchor="end">HOY</text>');
-      o.push('<circle cx="' + X(pts.length - 1) + '" cy="' + Y(v) + '" r="5" fill="#fff"/>');
-    })();
-
-    // ---------------- bottom center: next thing to pay ----------------
-    (function () {
-      var p = (r.por_pagar || []).filter(function (x) { return !x.entrada; })[0], bx = 330, by = 560, bw = 340, bh = 110;
-      o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="4" fill="#000" stroke="' + (p && !p.cubierto ? C.red : C.mag) + '" stroke-width="2"/>');
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 22) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO PAGO</text>');
-      if (!p) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="' + C.green + '" font-size="20" text-anchor="middle">Nada por pagar</text>'); return; }
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 52) + '" fill="#fff" font-size="21" font-weight="700" text-anchor="middle">' + esc(String(p.concepto).toUpperCase().slice(0, 24)) + '</text>');
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 78) + '" fill="' + (p.vencido ? C.amber : '#fff') + '" font-size="18" text-anchor="middle">' + esc(p.monto) + ' · ' + esc(cuando(p).toUpperCase()) + '</text>');
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 100) + '" fill="' + (p.cubierto ? C.green : C.red) + '" font-size="15" text-anchor="middle">' + (p.cubierto ? 'CUBIERTO · QUEDA ' : 'NO ALCANZA · FALTAN ') + esc(p.cubierto ? p.queda.t : p.queda.t.replace('-', '')) + '</text>');
-    })();
-
-    // ---------------- bottom right: POR PAGAR (next 30 days) ----------------
-    (function () {
-      var rows = (r.por_pagar || []).filter(function (x) { return !x.entrada; }), bx = 700, by = 540, bw = 282, bh = 154, shown = rows.slice(0, 4);
-      o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="#000" stroke="' + (r.sin_cubrir ? C.amber : '#fff') + '" stroke-width="1.5"/>');
-      o.push('<text x="' + (bx + 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="13" font-weight="700">POR PAGAR → ' + esc(fc(r.hasta)) + ' <tspan fill="' + C.cyan + '">' + esc(r.total_por_pagar.t) + '</tspan></text>');
-      if (rows.length > shown.length) o.push('<text x="' + (bx + bw - 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="12" text-anchor="end">+' + (rows.length - shown.length) + ' más</text>');
-      if (!rows.length) o.push('<text x="' + (bx + 8) + '" y="' + (by + 50) + '" fill="' + C.green + '" font-size="14">Nada por pagar</text>');
-      shown.forEach(function (p, i) {
-        var y = by + 42 + i * 28, col = p.cubierto ? '#fff' : C.red;
-        o.push('<text x="' + (bx + 8) + '" y="' + y + '" fill="' + (p.vencido ? C.amber : col) + '" font-size="13">' + esc(fc(p.fecha)) + '</text>');
-        o.push('<text x="' + (bx + 62) + '" y="' + y + '" fill="' + col + '" font-size="13">' + esc(String(p.concepto).slice(0, 15)) + '</text>');
-        o.push('<text x="' + (bx + bw - 8) + '" y="' + y + '" fill="' + col + '" font-size="13" font-weight="700" text-anchor="end">' + esc(String(p.monto).replace(/\.00$/, '')) + '</text>');
+      var Y = function (val) { return my + 30 + (hi - val) / ((hi - lo) || 1) * (mh - 62); };
+      var n = qs.length + 1, slot = (mw - 16) / n, bwid = Math.min(34, slot - 8);
+      o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#fff" stroke-opacity=".5"/>');
+      [{ lab: 'HOY', val: v }].concat(qs.map(function (q) { return { lab: fc(q.hasta), val: q.queda.v }; })).forEach(function (b, i) {
+        var bx = mx + 8 + i * slot + (slot - bwid) / 2, y1 = Y(Math.max(b.val, 0)), y2 = Y(Math.min(b.val, 0)), c = i === 0 ? C.cyan : b.val >= 0 ? C.green : C.red;
+        o.push('<rect x="' + bx + '" y="' + y1 + '" width="' + bwid + '" height="' + Math.max(2, y2 - y1) + '" fill="' + c + '"/>');
+        o.push('<text x="' + (bx + bwid / 2) + '" y="' + (my + mh - 18) + '" fill="' + c + '" font-size="10" font-weight="700" text-anchor="middle">' + esc(k(b.val)) + '</text>');
+        o.push('<text x="' + (bx + bwid / 2) + '" y="' + (my + mh - 5) + '" fill="#cfd8e3" font-size="9" text-anchor="middle">' + esc(b.lab) + '</text>');
       });
-      o.push('<text x="' + (bx + 8) + '" y="' + (by + bh - 8) + '" fill="#9aa4b2" font-size="11">Al ' + esc(fc(r.hasta)) + ' quedarías en ' + esc(r.alcanza.t) + '</text>');
+    })();
+
+    // ---------------- bottom center: next pay day ----------------
+    (function () {
+      var bx = 330, by = 560, bw = 340, bh = 110, pr = r.proximo_pago, ok = !q0 || q0.cubierto;
+      o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="4" fill="#000" stroke="' + (ok ? C.mag : C.red) + '" stroke-width="2"/>');
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 22) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO DÍA DE PAGO</text>');
+      if (!pr) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="#fff" font-size="18" text-anchor="middle">Sin día de pago en el plan</text>'); return; }
+      var dias = Math.round((Date.parse(pr) - Date.parse(s.hoy)) / 864e5), q1 = qs[1];
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 52) + '" fill="#fff" font-size="22" font-weight="700" text-anchor="middle">' + esc(fc(pr)) + ' · ' + (dias === 0 ? 'HOY' : dias === 1 ? 'MAÑANA' : 'EN ' + dias + ' DÍAS') + '</text>');
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 78) + '" fill="' + (ok ? C.green : C.red) + '" font-size="16" text-anchor="middle">' + (ok ? 'LLEGAS CON ' : 'NO ALCANZA · LLEGAS EN ') + esc(usd(antesPago)) + '</text>');
+      if (q1) o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 100) + '" fill="#c9d2de" font-size="14" text-anchor="middle">ENTRA +' + esc(usd(q1.entra.v)) + ' · SALE -' + esc(usd(q1.sale.v)) + '</text>');
+    })();
+
+    // ---------------- bottom right: DÍAS DE PAGO ----------------
+    (function () {
+      var bx = 700, by = 540, bw = 282, bh = 154, shown = qs.slice(0, 5);
+      o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" fill="#000" stroke="' + (r.sin_cubrir ? C.amber : '#fff') + '" stroke-width="1.5"/>');
+      o.push('<text x="' + (bx + 8) + '" y="' + (by + 17) + '" fill="#fff" font-size="13" font-weight="700">DÍAS DE PAGO</text>');
+      o.push('<text x="' + (bx + 128) + '" y="' + (by + 17) + '" fill="#9aa4b2" font-size="11" text-anchor="middle">ENTRA</text><text x="' + (bx + 196) + '" y="' + (by + 17) + '" fill="#9aa4b2" font-size="11" text-anchor="middle">SALE</text><text x="' + (bx + bw - 8) + '" y="' + (by + 17) + '" fill="#9aa4b2" font-size="11" text-anchor="end">QUEDAS</text>');
+      shown.forEach(function (q, i) {
+        var y = by + 40 + i * 24, col = q.queda.v >= 0 ? C.green : C.red;
+        o.push('<text x="' + (bx + 8) + '" y="' + y + '" fill="#fff" font-size="13">' + (q.dia_pago ? esc(fc(q.desde)) : 'HOY') + '</text>');
+        o.push('<text x="' + (bx + 128) + '" y="' + y + '" fill="' + C.green + '" font-size="13" text-anchor="middle">' + (q.entra.v ? '+' + esc(k(q.entra.v)) : '—') + '</text>');
+        o.push('<text x="' + (bx + 196) + '" y="' + y + '" fill="' + C.red + '" font-size="13" text-anchor="middle">' + (q.sale.v ? '-' + esc(k(q.sale.v)) : '—') + '</text>');
+        o.push('<text x="' + (bx + bw - 8) + '" y="' + y + '" fill="' + col + '" font-size="14" font-weight="700" text-anchor="end">' + esc(k(q.queda.v)) + '</text>');
+      });
+      if (!qs.length) o.push('<text x="' + (bx + 8) + '" y="' + (by + 50) + '" fill="#fff" font-size="14">Sin días de pago en el plan</text>');
     })();
 
     // ---------------- top bar ----------------
@@ -227,8 +251,8 @@
       o.push('<line x1="250" y1="6" x2="250" y2="58" stroke="#555"/><line x1="720" y1="6" x2="720" y2="58" stroke="#555"/>');
       var sync = r.ultimo_sync && Date.now() - Date.parse(r.ultimo_sync) <= 36 * 3600e3;
       var a1 = v < 0 ? ['SALDO NEGATIVO', C.red] : ['SALDO OK', C.green];
-      var p7 = (r.por_pagar || []).filter(function (p) { return p.dias <= 7 && !p.cubierto; })[0];
-      var a2 = p7 ? ['NO ALCANZA ' + String(p7.concepto).toUpperCase().slice(0, 12), C.red] : ['PAGOS 7D OK', C.green];
+      var p7 = q0 && !q0.cubierto ? (q0.pagos || []).filter(function (p) { return !p.cubierto; })[0] : null;
+      var a2 = p7 ? ['NO ALCANZA ' + String(p7.concepto).toUpperCase().slice(0, 12), C.red] : ['HASTA EL PAGO OK', C.green];
       var a3 = sync ? ['BANCO AL DÍA', C.green] : ['BANCO SIN ACTUALIZAR', C.amber];
       var a4 = r.cuadra ? ['CUADRA', C.green] : ['NO CUADRA', C.amber];
       o.push('<text x="270" y="27" fill="' + a1[1] + '" font-size="19" font-weight="700">' + esc(a1[0]) + '</text>');
@@ -251,7 +275,7 @@
     }
 
     // ---------------- softkeys ----------------
-    var keys = ['RESUMEN', 'POR PAGAR', 'BANCO', 'MES', 'ALERTAS'];
+    var keys = ['RESUMEN', 'DÍAS DE PAGO', 'BANCO', 'MES', 'ALERTAS'];
     o.push('<rect x="0" y="700" width="' + W + '" height="60" fill="#000"/>');
     keys.forEach(function (kk, i) {
       var kx = 20 + i * 192, on = state.tecla === kk;

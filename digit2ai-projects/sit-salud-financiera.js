@@ -947,6 +947,7 @@ function realTests() {
   ok(r.por_pagar[0].vencido && r.por_pagar[0].queda.v === 380 && r.por_pagar[0].cubierto, 'an overdue payment stays owed; "queda" starts from TODAY money');
   ok(r.por_pagar[2].entrada && r.por_pagar[2].queda.v === 3180 && r.por_pagar[3].queda.v === 1680 && !r.sin_cubrir, 'an expected salary counts from its own date, before that day\'s payments', r.por_pagar.map(p => p.queda.v));
   ok(!r.por_pagar.some(p => p.id === 11), 'a hand-typed future income is not counted in the projection');
+  ok(r.proximo_pago === '2026-11-20' && r.quincenas.length === 2 && r.quincenas[0].queda.v === 180 && r.quincenas[1].dia_pago && r.quincenas[1].entra.v === 3000, 'one block per pay period: today to the day before the next pay day, then pay day to pay day', r.quincenas.map(q => [q.desde, q.hasta, q.queda.v]));
   const rJ = R.construir({ hoy, rows: rows.concat([{ id: 13, fecha: '2027-01-06', tipo: 'egreso', categoria: 'corte', concepto: 'Corte enero', monto: '100.00', origen: 'plan', estado: 'pendiente' }]), cuentas, item: null, autopagos: null });
   ok(rJ.hasta === '2027-01-06' && rJ.por_pagar[rJ.por_pagar.length - 1].concepto === 'Corte enero', 'the horizon reaches the first Corte after the end of next month', rJ.hasta);
   ok(r.por_pagar[0].row && r.por_pagar[0].row.id === 7 && r.por_pagar[1].row === null, 'a plan payment carries its row for the edit dialog; an autopay does not');
