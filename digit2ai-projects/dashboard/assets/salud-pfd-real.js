@@ -49,6 +49,10 @@
         '<span style="white-space:nowrap">' + esc(p.monto) + (p.estimado ? ' est.' : '') + ' · queda ' + esc(p.queda.t) + '</span></div>';
     }).join('');
   }
+  function porEntrarHtml(r) {
+    var it = (r.mes && r.mes.por_entrar_items) || [];
+    return it.length ? ' Por entrar: ' + it.map(function (c) { return esc(c.monto) + ' ' + esc(c.concepto) + ' (' + esc(fl(c.fecha)) + ')'; }).join(', ') + '.' : '';
+  }
   function resumen(s) {
     var r = s.real, h = [];
     var mes = MESES_L[Number(s.hoy.slice(5, 7)) - 1];
@@ -59,7 +63,7 @@
       'Pagos ' + esc(r.total_por_pagar.t) + ' · ingresos esperados +' + esc(r.total_entradas.t) + '. ' + (r.sin_cubrir ? '<span style="color:' + C.red + '">No alcanza para ' + esc(r.sin_cubrir.concepto) + ' (' + esc(fl(r.sin_cubrir.fecha)) + ')</span>' : 'Alcanza para todo') +
       (r.punto_bajo ? '. Punto más bajo: ' + esc(r.punto_bajo.queda.t) + ' el ' + esc(fl(r.punto_bajo.fecha)) : '') + '.<div style="margin-top:4px">' + porPagarHtml(r) + '</div>', r.sin_cubrir ? C.amber : C.green));
     h.push(tile('Este mes · ' + esc(mes), '<span style="color:' + C.green + '">+' + esc(r.mes.entro.t) + '</span> <span style="color:' + C.red + '">-' + esc(r.mes.salio.t) + '</span>',
-      'Neto ' + esc(r.mes.neto.t) + ', del 1 al ' + Number(s.hoy.slice(8, 10)) + '. Sin contar pasar dinero entre tus cuentas.', '#fff'));
+      'Neto ' + esc(r.mes.neto.t) + ', del 1 al ' + Number(s.hoy.slice(8, 10)) + '.' + porEntrarHtml(r) + ' Sin contar pasar dinero entre tus cuentas de BOA.', '#fff'));
     h.push(tile('Cambio reciente', '<span style="color:' + (r.cambio_7d.v >= 0 ? C.green : C.red) + '">' + (r.cambio_7d.v >= 0 ? '▲ ' : '▼ ') + esc(r.cambio_7d.t) + '</span>',
       'Últimos 7 días. Últimos ' + (r.cambio_30d.dias || 30) + ' días: ' + esc(r.cambio_30d.t) + (r.cambio_30d.desde ? ' (tus registros empiezan el ' + esc(fl(r.cambio_30d.desde)) + ')' : '') + '.', '#fff'));
     if (r.pendientes && r.pendientes.n) h.push(tile('Pendientes del banco', esc(r.pendientes.neto.t), r.pendientes.n + ' cargos aún pendientes; el saldo disponible ya los descuenta.', C.amber));
@@ -88,7 +92,7 @@
     if (t === 'POR PAGAR') return '<div style="color:#fff;margin-bottom:6px">Hasta el ' + esc(fl(r.hasta)) + ': pagos ' + esc(r.total_por_pagar.t) + ', ingresos esperados +' + esc(r.total_entradas.t) + ' · quedarías en <span style="color:' + (r.alcanza.v < 0 ? C.red : C.green) + '">' + esc(r.alcanza.t) + '</span>.</div>' + porPagarHtml(r);
     if (t === 'BANCO') return (r.cuentas || []).map(function (c) { return '<div style="color:#fff">Cuenta ••' + esc(c.mask) + (c.rol ? ' (' + esc(c.rol) + ')' : '') + ': <b style="color:' + C.cyan + '">' + esc(c.disponible.t) + '</b> disponible' + (c.actual ? ' · ' + esc(c.actual.t) + ' sin lo pendiente' : '') + '</div>'; }).join('') +
       '<div style="color:#c9d2de">Actualizado ' + esc(hace(r.ultimo_sync)) + '. Movimientos registrados: ' + esc(r.libro.t) + (r.cuadra ? ' (cuadra).' : ' (no cuadra; diferencia ' + esc(r.diferencia.t) + ').') + '</div>';
-    if (t === 'MES') return '<div style="color:' + C.green + '">Entró ' + esc(r.mes.entro.t) + '</div><div style="color:' + C.red + '">Salió ' + esc(r.mes.salio.t) + '</div><div style="color:#fff">Neto ' + esc(r.mes.neto.t) + ' · últimos 7 días ' + esc(r.cambio_7d.t) + ' · últimos ' + (r.cambio_30d.dias || 30) + ' días ' + esc(r.cambio_30d.t) + '</div>';
+    if (t === 'MES') return '<div style="color:' + C.green + '">Entró ' + esc(r.mes.entro.t) + porEntrarHtml(r) + '</div><div style="color:' + C.red + '">Salió ' + esc(r.mes.salio.t) + '</div><div style="color:#fff">Neto ' + esc(r.mes.neto.t) + ' · últimos 7 días ' + esc(r.cambio_7d.t) + ' · últimos ' + (r.cambio_30d.dias || 30) + ' días ' + esc(r.cambio_30d.t) + '</div>';
     return '';
   }
 
@@ -126,7 +130,7 @@
 
     // ---------------- left tape: this month, what came in and what went out ----------------
     (function () {
-      var x = 120, w = 104, y0 = 112, h = 380, inc = r.mes.entro.v, out = r.mes.salio.v, top = Math.max(inc, out, 100);
+      var x = 120, w = 104, y0 = 112, h = 380, inc = r.mes.entro.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0, out = r.mes.salio.v, top = Math.max(inc + pe, out, 100);
       o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
       o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15">MES <tspan font-size="18" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</tspan></text>');
       var bh = h - 120, bw = 34;
@@ -136,7 +140,13 @@
         o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 40 + bh) + '" fill="' + b[2] + '" font-size="11" text-anchor="middle">' + b[3] + '</text>');
         o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 58 + bh) + '" fill="' + b[2] + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(k(b[1])) + '</text>');
       });
+      if (pe > 0) { // still to come in this month: outlined on top of what came in
+        var hi = Math.max(2, inc / top * bh), hp = Math.max(2, pe / top * bh), xx = x + 14;
+        o.push('<rect x="' + (xx + 1) + '" y="' + (y0 + 21 + bh - hi - hp) + '" width="' + (bw - 2) + '" height="' + (hp - 2) + '" fill="rgba(110,231,122,.18)" stroke="' + C.green + '" stroke-width="2" stroke-dasharray="5 3"/>');
+        o.push('<text x="' + (xx + bw / 2) + '" y="' + (y0 + 14 + bh - hi - hp) + '" fill="' + C.green + '" font-size="12" font-weight="700" text-anchor="middle">+' + esc(k(pe)) + '</text>');
+      }
       var n = r.mes.neto.v;
+      if (pe > 0) o.push('<text x="' + (x + w / 2) + '" y="' + (y0 + h - 12) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">+' + esc(k(pe)) + ' POR ENTRAR</text>');
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="14">NETO <tspan font-size="19" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
     })();
 

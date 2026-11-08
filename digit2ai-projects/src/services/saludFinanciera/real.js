@@ -20,8 +20,9 @@ const engine = require('./engine');
 const { toCents, fmt } = require('./money');
 
 const d = (c) => ({ v: Math.round(c) / 100, t: fmt(c) });
-// moves between his own accounts are not spending and not income
-const PROPIA = /online banking transfer|zelle payment (to|from) manuel stagg|zelle payment from digit2ai/i;
+// moves between the two BOA accounts in the app are not spending and not income. A Zelle from his Chase or
+// business account IS new money in (owner model 2026-10-26: those accounts are outside the app).
+const PROPIA = /online banking transfer/i;
 // opening balances and reconciliations: bookkeeping, not money coming in
 const AJUSTE = /ajuste de conciliaci|efectivo guardado|saldo inicial/i;
 
@@ -61,6 +62,8 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
   const monto = (r) => toCents(r.estado === 'cumplido' && r.monto_real != null ? r.monto_real : r.monto);
   const entro = delMes.filter(r => r.tipo === 'ingreso').reduce((x, r) => x + monto(r), 0);
   const salio = delMes.filter(r => r.tipo === 'egreso').reduce((x, r) => x + monto(r), 0);
+  // expected later this month (plan incomes from today to month end): shown apart, never mixed with what came in
+  const porEntrar = rows.filter(r => r.origen === 'plan' && r.estado !== 'cumplido' && r.tipo === 'ingreso' && r.fecha >= hoy && r.fecha.slice(0, 7) === ym);
   const bancoMes = delMes.filter(r => r.fuente === 'plaid' && r.tipo === 'egreso');
 
   const pend = pasado.filter(r => r.fuente === 'plaid' && r.pendiente_banco && !PROPIA.test(r.concepto || ''));
@@ -116,7 +119,8 @@ function construir({ hoy, rows, cuentas, item, autopagos }) {
     libro: d(libro), diferencia: d(diferencia), cuadra: Math.abs(diferencia) <= 100,
     ultimo_sync: syncAt, banco_estado: item ? item.estado : null,
     cambio_7d: cambio(7), cambio_30d: cambio(30), hist, desde: primera,
-    mes: { ym, entro: d(entro), salio: d(salio), neto: d(entro - salio) },
+    mes: { ym, entro: d(entro), salio: d(salio), neto: d(entro - salio), por_entrar: d(porEntrar.reduce((x, r) => x + toCents(r.monto), 0)),
+      por_entrar_items: porEntrar.map(r => ({ fecha: r.fecha, concepto: r.concepto, monto: fmt(toCents(r.monto)) })) },
     gasto_banco_mes: d(bancoMes.reduce((x, r) => x + monto(r), 0)), gasto_banco_ids: bancoMes.map(r => r.id), gasto_banco_n: bancoMes.length,
     pendientes: { n: pend.length, neto: d(pendNeto) },
     por_pagar: porPagar, total_por_pagar: d(salidas), total_entradas: d(entradas), alcanza: d(saldo - acum), hasta, sin_cubrir: sinCubrir,
