@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI Marketing Simulator · Digit2AI</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#070b16">
+<style>
+html,body{background:#070b16}
+:root{--bg:#070b16;--card:#0f1728;--card2:#131d33;--txt:#eaf0fb;--mut:#9db0cc;--acc:#22d3ee;--acc2:#a78bfa;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--line:rgba(120,150,200,.16);--line2:rgba(120,150,200,.3)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--txt);font:15px/1.55 'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Space Grotesk','Inter',system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.sample{background:linear-gradient(90deg,#3b2a05,#2a1f05);color:#fde68a;text-align:center;font-size:13px;padding:8px 16px;border-bottom:1px solid #5b4310}
+header.top{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700}
+.logo .mk{width:32px;height:32px;border-radius:9px;background:conic-gradient(from 200deg,#22d3ee,#a78bfa,#22d3ee);display:grid;place-items:center;color:#070b16;font-size:13px;font-weight:800}
+.logo small{display:block;font-weight:500;color:var(--mut);font-size:12px}
+.sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;padding:3px;background:var(--card)}
+.seg button{border:0;background:none;padding:8px 14px;border-radius:999px;min-height:38px;color:var(--mut);font-weight:600;font-size:13px}
+.seg button.on{background:var(--acc);color:#04202a}
+.wrap{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 110px)}
+nav.steps{border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+nav.steps button{display:flex;align-items:center;gap:10px;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;color:var(--mut);min-height:44px;font-weight:600}
+nav.steps button .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;font-size:12px;flex:0 0 24px}
+nav.steps button.on{background:var(--card2);color:var(--txt)}
+nav.steps button.on .n{background:var(--acc);color:#04202a;border-color:var(--acc)}
+nav.steps button.done .n{background:rgba(52,211,153,.15);color:var(--ok);border-color:rgba(52,211,153,.4)}
+main{padding:26px clamp(16px,3vw,40px) 60px;max-width:1100px;width:100%;min-width:0}
+.eyebrow{color:var(--acc);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.lead{color:var(--mut);margin:0 0 22px;max-width:720px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.btn{border:1px solid var(--line2);background:var(--card2);padding:10px 16px;border-radius:10px;min-height:44px;font-weight:600}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#04202a}
+.btn.ghost{background:none}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input.url{flex:1;min-width:220px;background:var(--card2);border:1px solid var(--line2);border-radius:10px;padding:10px 14px;min-height:44px;font-size:16px}
+.check{display:flex;gap:10px;align-items:center;padding:8px 0;color:var(--mut);border-bottom:1px dashed var(--line)}
+.check:last-child{border-bottom:0}
+.check .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line2);flex:0 0 18px}
+.check.run .dot{border-color:var(--acc);border-top-color:transparent;animation:spin .8s linear infinite}
+.check.ok{color:var(--txt)}.check.ok .dot{background:var(--ok);border-color:var(--ok)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.k{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px}
+ul.clean{margin:0;padding-left:18px}ul.clean li{margin:4px 0}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;letter-spacing:.04em;text-transform:uppercase}
+.t-auto{background:rgba(34,211,238,.14);color:var(--acc)}
+.t-you{background:rgba(251,191,36,.14);color:var(--warn)}
+.t-draft{background:rgba(167,139,250,.16);color:var(--acc2)}
+.t-ok{background:rgba(52,211,153,.15);color:var(--ok)}
+.t-skip{background:rgba(248,113,113,.14);color:var(--bad)}
+.week h3{font-size:16px;margin-bottom:4px}
+.week .goal{color:var(--mut);font-size:13px;margin-bottom:10px}
+.q{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:start;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:10px}
+.q .ch{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--card2);border:1px solid var(--line2)}
+.q h4{margin:0 0 4px;font-size:15px}
+.q .draft{margin-top:8px;background:#0a1222;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#cfdaee;white-space:pre-wrap}
+.q .acts{display:flex;flex-direction:column;gap:6px;min-width:120px}
+.q.st-approved{border-color:rgba(52,211,153,.45)}
+.q.st-skipped{opacity:.55}
+.why{font-size:12.5px;color:var(--mut);margin-top:6px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+.stat b{display:block;font-size:20px;font-family:'Space Grotesk',system-ui}
+.stat span{font-size:12px;color:var(--mut)}
+.studio{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+.phone{width:280px;aspect-ratio:9/16;border-radius:30px;border:8px solid #1d2840;background:#000;position:relative;overflow:hidden;margin:0 auto;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:22px 18px 46px;opacity:0;transition:opacity .5s}
+.slide.on{opacity:1}
+.slide .big{font-family:'Space Grotesk',system-ui;font-size:24px;font-weight:700;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.slide .sub{font-size:13px;color:#e2e8f0;margin-top:8px}
+.prog{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:4px}
+.prog i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.25);overflow:hidden}
+.prog i b{display:block;height:100%;width:0;background:#fff}
+.handle{position:absolute;bottom:14px;left:18px;font-size:12px;color:#cbd5e1}
+.funnel .bar{height:34px;border-radius:8px;background:linear-gradient(90deg,var(--acc),var(--acc2));display:flex;align-items:center;padding:0 12px;color:#04202a;font-weight:700;font-size:13px;margin-bottom:8px;min-width:120px;transition:width .8s}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.t th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+table.t td.num{text-align:right;font-variant-numeric:tabular-nums}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:460px;overflow:auto;padding:4px}
+.msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14.5px;white-space:pre-wrap}
+.msg.me{align-self:flex-end;background:var(--acc);color:#04202a;border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--card2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chips button{border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:8px 14px;min-height:40px;font-size:13.5px}
+.honest{border-left:3px solid var(--warn)}
+.foot{display:flex;justify-content:space-between;gap:10px;margin-top:26px}
+.hide{display:none!important}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line2);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+@media(max-width:900px){
+ .wrap{grid-template-columns:1fr}
+ nav.steps{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:10px 12px;scrollbar-width:none}
+ nav.steps button{flex:0 0 auto}
+ .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .studio{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ .g2,.g3,.g4{grid-template-columns:1fr}
+ .q{grid-template-columns:1fr}
+ .q .ch{display:none}
+ .q .acts{flex-direction:row;flex-wrap:wrap}
+ .q .acts .btn{flex:1}
+ header.top{padding:12px 16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sample" data-t="banner"></div>
+<header class="top">
+  <div class="logo"><div class="mk">D2</div><div><span data-t="title"></span><small data-t="subtitle"></small></div></div>
+  <div class="sp"></div>
+  <div class="seg" id="prodSeg"><button data-p="jobup">JobUp.dev</button><button data-p="ringlypro">RinglyPro</button></div>
+  <div class="seg" id="langSeg"><button data-l="en">EN</button><button data-l="es">ES</button></div>
+</header>
+<div class="wrap">
+  <nav class="steps" id="steps"></nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+var lang = 'en', prod = 'jobup', step = 0, visited = {0:true};
+var state = {};   // per product: analyzed, queue statuses
+function S(p){ return state[p] || (state[p] = {analyzed:false, q:{}}); }
+function L(x){ return (x && typeof x === 'object' && !Array.isArray(x)) ? (x[lang] != null ? x[lang] : x.en) : x; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+var T = {
+ banner:{en:'SIMULATOR · Sample data only. Nothing here is posted, sent or measured. It shows how the product would work.',
+         es:'SIMULADOR · Solo datos de ejemplo. Aquí nada se publica, envía ni mide. Muestra cómo funcionaría el producto.'},
+ title:{en:'AI Marketing Co-Pilot',es:'Copiloto de Marketing IA'},
+ subtitle:{en:'aiagent.ringlypro.com/marketing · simulator',es:'aiagent.ringlypro.com/marketing · simulador'},
+ steps:[{en:'Connect product',es:'Conectar producto'},{en:'Product brief',es:'Ficha del producto'},{en:'30-day plan',es:'Plan de 30 días'},
+        {en:"Today's queue",es:'Cola de hoy'},{en:'Video studio',es:'Estudio de video'},{en:'Results',es:'Resultados'},{en:'AI CMO chat',es:'Chat con el CMO IA'}],
+ next:{en:'Next',es:'Siguiente'}, back:{en:'Back',es:'Atrás'},
+ approve:{en:'Approve',es:'Aprobar'}, skip:{en:'Skip',es:'Omitir'}, copy:{en:'Copy text',es:'Copiar texto'}, undo:{en:'Undo',es:'Deshacer'},
+ approved:{en:'Approved',es:'Aprobado'}, skipped:{en:'Skipped',es:'Omitido'},
+ auto:{en:'Posts itself after approval',es:'Se publica sola tras aprobar'}, you:{en:'You post it',es:'Lo publicas tú'}, draft:{en:'Draft only',es:'Solo borrador'},
+ copied:{en:'Copied',es:'Copiado'}
+};
+
+/* ---------- Product data (sample) ---------- */
+var P = {
+ jobup:{
+  name:'JobUp', url:'https://jobup.dev', price:{en:'$59 per year',es:'59 USD al año'}, handle:'@jobup.dev', voice:{en:'ava',es:'dalia'},
+  oneLiner:{en:'AI career platform: finds and scores real jobs against your résumé, builds a CV site recruiters (and their AI) can read, and drafts outreach you approve.',
+            es:'Plataforma de carrera con IA: encuentra y califica empleos reales contra tu hoja de vida, crea un sitio de CV que los reclutadores (y su IA) pueden leer, y redacta mensajes que tú apruebas.'},
+  icp:[{en:'Mid-career professionals (30-55) changing jobs after a layoff',es:'Profesionales de mitad de carrera (30-55) que cambian de empleo tras un despido'},
+       {en:'Bilingual Hispanic job seekers in the US',es:'Buscadores de empleo hispanos bilingües en EE. UU.'},
+       {en:'People applying to 20+ roles a month and getting no replies',es:'Personas que aplican a más de 20 vacantes al mes sin recibir respuesta'}],
+  pains:[{en:'"I apply everywhere and hear nothing back."',es:'"Aplico a todo y nadie me responde."'},
+         {en:'"I do not know which jobs actually fit me."',es:'"No sé qué empleos realmente me encajan."'},
+         {en:'"Monthly job tools add up fast."',es:'"Las herramientas mensuales salen caras."'}],
+  competitors:[{n:'Teal',a:{en:'Strong résumé builder; monthly plan',es:'Buen editor de CV; plan mensual'}},
+               {n:'Jobscan',a:{en:'ATS keyword matching; monthly plan',es:'Coincidencia de palabras ATS; plan mensual'}},
+               {n:'LinkedIn Premium',a:{en:'Huge reach; generic advice',es:'Gran alcance; consejos genéricos'}}],
+  angle:{en:'One yearly price, real scored jobs, and a CV site AI can read — instead of another monthly résumé tool.',
+         es:'Un solo precio al año, empleos reales calificados y un sitio de CV que la IA puede leer — en vez de otra herramienta mensual de CV.'},
+  fixes:[{en:'Hero headline says the tool, not the outcome. Suggest: "Real jobs that fit you, scored daily."',es:'El titular habla de la herramienta, no del resultado. Sugerencia: "Empleos reales que te encajan, calificados a diario."'},
+         {en:'Price is below the fold on phones. Move "$59/year" next to the main button.',es:'El precio queda abajo en el teléfono. Pon "59 USD/año" junto al botón principal.'},
+         {en:'No proof near signup. Add one sample scored match with its "why it fits".',es:'No hay prueba cerca del registro. Agrega un ejemplo de empleo calificado con su "por qué encaja".'}],
+  queue:[
+   {ch:'TT',mode:'auto',title:{en:'TikTok video: "3 résumé lines recruiters\' AI skips"',es:'Video TikTok: "3 líneas del CV que la IA del reclutador ignora"'},
+    draft:{en:'Slideshow, 4 slides, 22 sec, voiceover by Ava. Ends with: "Get your jobs scored at jobup.dev".',es:'Presentación de 4 diapositivas, 22 s, voz de Dalia. Termina con: "Califica tus empleos en jobup.dev".'},
+    why:{en:'Short "mistake" videos are the plan\'s top format for job seekers this week.',es:'Los videos cortos de "errores" son el formato principal del plan esta semana.'}},
+   {ch:'R',mode:'you',title:{en:'Reply on r/jobs: "200 applications, 0 interviews"',es:'Respuesta en r/jobs: "200 aplicaciones, 0 entrevistas"'},
+    draft:{en:'That ratio usually means the résumé is not matching the job text, not that you are unqualified. Pick 10 roles, compare the top 5 skills in each posting to your first half page, and rewrite only that. Happy to share the checklist I use.',
+           es:'Esa proporción casi siempre significa que el CV no coincide con el texto de la vacante, no que no estés calificado. Elige 10 vacantes, compara las 5 habilidades principales de cada una con tu primera media página y reescribe solo eso. Con gusto comparto la lista que uso.'},
+    why:{en:'90% help, 10% product: no link in the first reply (Reddit removes them).',es:'90 % ayuda, 10 % producto: sin enlace en la primera respuesta (Reddit los elimina).'}},
+   {ch:'B',mode:'auto',title:{en:'Blog article: "How ATS scoring really works"',es:'Artículo: "Cómo funciona de verdad la calificación ATS"'},
+    draft:{en:'1,200 words, 5 sections, FAQ for AI search engines. Publishes to jobup.dev/blog after approval.',es:'1.200 palabras, 5 secciones, preguntas frecuentes para buscadores con IA. Se publica en jobup.dev/blog tras aprobar.'},
+    why:{en:'Search phrase with buyer intent; no strong page answers it yet.',es:'Búsqueda con intención de compra; aún no hay una buena página que la responda.'}},
+   {ch:'IN',mode:'you',title:{en:'LinkedIn post: "What I learned scoring 500 job posts"',es:'Publicación LinkedIn: "Lo que aprendí calificando 500 vacantes"'},
+    draft:{en:'Founder story post, 140 words, one question at the end. LinkedIn posting is not automated.',es:'Historia del fundador, 140 palabras, una pregunta al final. LinkedIn no se publica de forma automática.'},
+    why:{en:'Your own profile reaches people who hire.',es:'Tu propio perfil llega a quienes contratan.'}},
+   {ch:'W',mode:'you',title:{en:'Landing fix: price next to the main button',es:'Ajuste del landing: precio junto al botón'},
+    draft:{en:'Copy as one prompt for the AutoDev factory: "On jobup.dev, show $59/year beside the hero button on phones."',es:'Copia como una instrucción para la fábrica AutoDev: "En jobup.dev, muestra 59 USD/año junto al botón principal en teléfonos."'},
+    why:{en:'Found in the site audit (fix 2 of 3).',es:'Detectado en la auditoría del sitio (ajuste 2 de 3).'}},
+   {ch:'@',mode:'draft',title:{en:'Onboarding email, day 2: "Your first 5 scored jobs"',es:'Correo de bienvenida, día 2: "Tus primeros 5 empleos calificados"'},
+    draft:{en:'Subject: Your 5 best-fit jobs this week\nBody pulls the subscriber\'s own top matches. You review before any send.',es:'Asunto: Tus 5 empleos con mejor ajuste esta semana\nEl cuerpo usa los mejores empleos del propio suscriptor. Lo revisas antes de enviar.'},
+    why:{en:'Signups who see matches on day 2 are the ones who pay (to be measured).',es:'Quien ve empleos el día 2 es quien paga (por medir).'}}
+  ],
+  slides:[
+   {bg:'linear-gradient(160deg,#0e7490,#1e1b4b)',big:{en:'You applied to 200 jobs.',es:'Aplicaste a 200 empleos.'},sub:{en:'Zero interviews. Here is why.',es:'Cero entrevistas. Esta es la razón.'}},
+   {bg:'linear-gradient(160deg,#7c3aed,#0f172a)',big:{en:'1. Your top line lists duties, not results.',es:'1. Tu primera línea lista tareas, no resultados.'},sub:{en:'Recruiter AI reads the first half page.',es:'La IA del reclutador lee la primera media página.'}},
+   {bg:'linear-gradient(160deg,#be185d,#111827)',big:{en:'2. Skills that are not in the posting.',es:'2. Habilidades que no están en la vacante.'},sub:{en:'Match the words they used.',es:'Usa las palabras que ellos usaron.'}},
+   {bg:'linear-gradient(160deg,#047857,#0b1220)',big:{en:'Get real jobs scored for you.',es:'Recibe empleos reales calificados para ti.'},sub:{en:'jobup.dev',es:'jobup.dev'}}],
+  vo:{en:'You applied to two hundred jobs and got zero interviews. Here is why. One: your top line lists duties, not results. Recruiter AI reads the first half page. Two: you list skills that are not in the posting. Use the words they used. Get real jobs scored for you at job up dot dev.',
+      es:'Aplicaste a doscientos empleos y tuviste cero entrevistas. Esta es la razón. Uno: tu primera línea lista tareas, no resultados. La inteligencia artificial del reclutador lee la primera media página. Dos: pones habilidades que no están en la vacante. Usa las palabras que ellos usaron. Recibe empleos reales calificados para ti en job up punto dev.'},
+  funnel:[1840,212,31], channels:[['TikTok',620,58,7],['Blog / SEO',540,71,12],['Reddit',310,44,6],['LinkedIn',240,26,4],['Direct',130,13,2]]
+ },
+ ringlypro:{
+  name:'RinglyPro', url:'https://ringlypro.com', price:{en:'$26 per month',es:'26 USD al mes'}, handle:'@ringlypro', voice:{en:'ava',es:'dalia'},
+  oneLiner:{en:'AI receptionist for small businesses: answers the calls you miss, books appointments into your calendar and texts you every message.',
+            es:'Recepcionista con IA para pequeños negocios: contesta las llamadas que no atiendes, agenda citas en tu calendario y te envía cada mensaje.'},
+  icp:[{en:'Owner-operated service businesses: salons, contractors, clinics',es:'Negocios de servicios atendidos por el dueño: salones, contratistas, clínicas'},
+       {en:'Spanish-speaking business owners in Florida',es:'Dueños de negocio hispanohablantes en Florida'},
+       {en:'Businesses that miss calls while working on a job',es:'Negocios que pierden llamadas mientras trabajan'}],
+  pains:[{en:'"I cannot pick up while I am with a customer."',es:'"No puedo contestar mientras atiendo a un cliente."'},
+         {en:'"Answering services are too expensive."',es:'"Los servicios de contestador son muy caros."'},
+         {en:'"Voicemail means they call the next company."',es:'"Si cae al buzón, llaman a la siguiente empresa."'}],
+  competitors:[{n:'Smith.ai',a:{en:'Human + AI receptionists; higher price',es:'Recepcionistas humanos + IA; precio más alto'}},
+               {n:'Ruby',a:{en:'Premium human service',es:'Servicio humano premium'}},
+               {n:'Goodcall',a:{en:'AI agent; English-first',es:'Agente IA; primero en inglés'}}],
+  angle:{en:'Bilingual AI receptionist with your own number and calendar, at a small-business price.',
+         es:'Recepcionista IA bilingüe con tu propio número y calendario, a precio de pequeño negocio.'},
+  fixes:[{en:'The demo number is not above the fold. Put "Call our AI now" first.',es:'El número de demostración no está arriba. Pon primero "Llama a nuestra IA ahora".'},
+         {en:'No Spanish version of the page is linked from the top bar.',es:'La versión en español no aparece en la barra superior.'},
+         {en:'Pricing does not say what one month includes. Add minutes and features.',es:'El precio no dice qué incluye un mes. Agrega minutos y funciones.'}],
+  queue:[
+   {ch:'IG',mode:'auto',title:{en:'Instagram reel: "What happens to the call you miss at 7 pm"',es:'Reel de Instagram: "Qué pasa con la llamada que pierdes a las 7 p. m."'},
+    draft:{en:'Slideshow, 4 slides, 20 sec, voiceover by Ava. Ends with the demo number.',es:'Presentación de 4 diapositivas, 20 s, voz de Dalia. Termina con el número de demostración.'},
+    why:{en:'Local service owners respond to "missed call" stories.',es:'Los dueños de servicios responden a historias de "llamada perdida".'}},
+   {ch:'FB',mode:'you',title:{en:'Facebook group post: Tampa small business owners',es:'Publicación en grupo de Facebook: dueños de negocio en Tampa'},
+    draft:{en:'Question post: "How do you handle calls while you are on a job?" No link. Reply to comments with the demo line if asked.',es:'Pregunta: "¿Cómo manejan las llamadas cuando están en un trabajo?" Sin enlace. Responde con la línea de demostración si alguien pregunta.'},
+    why:{en:'Groups do not allow automated posting; your account posts it.',es:'Los grupos no permiten publicación automática; la publica tu cuenta.'}},
+   {ch:'B',mode:'auto',title:{en:'Blog article: "AI receptionist vs answering service"',es:'Artículo: "Recepcionista IA vs servicio de contestador"'},
+    draft:{en:'1,000 words, comparison table, FAQ for AI search engines. Publishes to the RinglyPro blog after approval.',es:'1.000 palabras, tabla comparativa, preguntas frecuentes para buscadores con IA. Se publica en el blog de RinglyPro tras aprobar.'},
+    why:{en:'Comparison searches come from people ready to buy.',es:'Las búsquedas comparativas vienen de gente lista para comprar.'}},
+   {ch:'R',mode:'you',title:{en:'Reply on r/smallbusiness: "Losing leads from missed calls"',es:'Respuesta en r/smallbusiness: "Pierdo clientes por llamadas perdidas"'},
+    draft:{en:'Three things that helped other owners: a callback text within 5 minutes, a voicemail that asks for the job type, and an AI answering after 3 rings. Happy to explain the setup.',
+           es:'Tres cosas que ayudaron a otros dueños: un mensaje de devolución en 5 minutos, un buzón que pregunte el tipo de trabajo, y una IA que conteste tras 3 timbres. Con gusto explico cómo se configura.'},
+    why:{en:'Helpful first, product only if asked.',es:'Primero ayudar; el producto solo si preguntan.'}},
+   {ch:'W',mode:'you',title:{en:'Landing fix: demo number at the top',es:'Ajuste del landing: número de demostración arriba'},
+    draft:{en:'Copy as one prompt for the AutoDev factory: "On ringlypro.com, move Call our AI now to the first screen."',es:'Copia como una instrucción para la fábrica AutoDev: "En ringlypro.com, sube Llama a nuestra IA a la primera pantalla."'},
+    why:{en:'Found in the site audit (fix 1 of 3).',es:'Detectado en la auditoría del sitio (ajuste 1 de 3).'}},
+   {ch:'@',mode:'draft',title:{en:'Partner email to a chamber of commerce',es:'Correo a una cámara de comercio aliada'},
+    draft:{en:'Offer a free 20-minute talk on "never missing a customer call" for members. You send it from your own mailbox.',es:'Ofrece una charla gratis de 20 minutos sobre "no perder nunca una llamada" para sus miembros. Lo envías desde tu propio correo.'},
+    why:{en:'Chambers reach many owners at once.',es:'Las cámaras llegan a muchos dueños a la vez.'}}
+  ],
+  slides:[
+   {bg:'linear-gradient(160deg,#0f766e,#0b1220)',big:{en:'7 pm. You are finishing a job.',es:'7 p. m. Estás terminando un trabajo.'},sub:{en:'Your phone rings.',es:'Suena tu teléfono.'}},
+   {bg:'linear-gradient(160deg,#b45309,#111827)',big:{en:'You miss it.',es:'No contestas.'},sub:{en:'They call the next company.',es:'Llaman a la siguiente empresa.'}},
+   {bg:'linear-gradient(160deg,#6d28d9,#0f172a)',big:{en:'Or an AI picks up, in English or Spanish.',es:'O contesta una IA, en inglés o español.'},sub:{en:'It books the visit into your calendar.',es:'Agenda la visita en tu calendario.'}},
+   {bg:'linear-gradient(160deg,#0369a1,#0b1220)',big:{en:'Call our AI and hear it.',es:'Llama a nuestra IA y escúchala.'},sub:{en:'ringlypro.com',es:'ringlypro.com'}}],
+  vo:{en:'Seven p m. You are finishing a job and your phone rings. You miss it, and they call the next company. Or an AI picks up, in English or Spanish, and books the visit into your calendar. Call our AI and hear it at ringly pro dot com.',
+      es:'Siete de la noche. Estás terminando un trabajo y suena tu teléfono. No contestas, y llaman a la siguiente empresa. O contesta una inteligencia artificial, en inglés o en español, y agenda la visita en tu calendario. Llama a nuestra IA y escúchala en ringly pro punto com.'},
+  funnel:[960,74,18], channels:[['Instagram',280,19,4],['Blog / SEO',310,24,7],['Facebook groups',190,17,4],['Reddit',110,8,2],['Chambers',70,6,1]]
+ }
+};
+
+var PLAN = [
+ {w:{en:'Week 1 · Foundations',es:'Semana 1 · Bases'},goal:{en:'Measure before posting',es:'Medir antes de publicar'},
+  items:[{en:'Apply the 3 landing fixes',es:'Aplicar los 3 ajustes del landing'},{en:'Install tracking links per channel',es:'Instalar enlaces de seguimiento por canal'},{en:'Publish 2 search articles',es:'Publicar 2 artículos para buscadores'},{en:'Connect social accounts',es:'Conectar cuentas sociales'}]},
+ {w:{en:'Week 2 · Content engine',es:'Semana 2 · Motor de contenido'},goal:{en:'Show up every day',es:'Aparecer todos los días'},
+  items:[{en:'1 short video a day',es:'1 video corto al día'},{en:'3 helpful Reddit / group replies a day',es:'3 respuestas útiles al día en Reddit / grupos'},{en:'1 article a day',es:'1 artículo al día'},{en:'Founder post 2x a week',es:'Publicación del fundador 2 veces por semana'}]},
+ {w:{en:'Week 3 · Conversion',es:'Semana 3 · Conversión'},goal:{en:'Turn visitors into payers',es:'Convertir visitas en clientes'},
+  items:[{en:'Test a new pricing headline',es:'Probar un nuevo titular de precio'},{en:'Onboarding emails, days 1-7',es:'Correos de bienvenida, días 1-7'},{en:'Partner outreach (5 partners)',es:'Contacto con aliados (5)'},{en:'Fix the biggest drop in the funnel',es:'Corregir la mayor caída del embudo'}]},
+ {w:{en:'Week 4 · Double down',es:'Semana 4 · Duplicar lo que funciona'},goal:{en:'Keep what pays, drop the rest',es:'Mantener lo que paga, soltar lo demás'},
+  items:[{en:'Drop channels with no paid signups',es:'Soltar canales sin suscripciones pagas'},{en:'Double the best format',es:'Duplicar el mejor formato'},{en:'Write next month\'s plan from results',es:'Escribir el plan del próximo mes con los resultados'},{en:'Review with the AI CMO',es:'Revisar con el CMO IA'}]}
+];
+
+/* ---------- Rendering ---------- */
+var main = document.getElementById('main');
+function setT(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(function(el){ el.textContent = L(T[el.getAttribute('data-t')]); });
+  var nav = document.getElementById('steps');
+  nav.innerHTML = T.steps.map(function(s,i){
+    return '<button data-s="'+i+'" class="'+(i===step?'on':'')+(visited[i]&&i!==step?' done':'')+'"><span class="n">'+(i+1)+'</span>'+esc(L(s))+'</button>';
+  }).join('');
+  nav.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ go(+b.dataset.s); }; });
+  document.querySelectorAll('#prodSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.p===prod); });
+  document.querySelectorAll('#langSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.l===lang); });
+}
+function head(i, lead){
+  return '<div class="eyebrow">'+(lang==='es'?'Paso ':'Step ')+(i+1)+' / 7 · '+esc(P[prod].name)+'</div><h2>'+esc(L(T.steps[i]))+'</h2><p class="lead">'+lead+'</p>';
+}
+function foot(){
+  return '<div class="foot">'+(step>0?'<button class="btn ghost" data-go="'+(step-1)+'">'+L(T.back)+'</button>':'<span></span>')+
+    (step<6?'<button class="btn pri" data-go="'+(step+1)+'">'+L(T.next)+' &rarr;</button>':'')+'</div>';
+}
+function go(i){ stopVideo(); step = i; visited[i] = true; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function bindFoot(){ main.querySelectorAll('[data-go]').forEach(function(b){ b.onclick = function(){ go(+b.dataset.go); }; }); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('on'); setTimeout(function(){t.classList.remove('on');},1600); }
+
+var R = [];
+R[0] = function(){
+  var p = P[prod], s = S(prod);
+  var checks = lang==='es'
+    ? ['Leyendo el sitio y el precio','Revisando 40 páginas (SEO y buscadores con IA)','Definiendo el cliente ideal','Analizando 3 competidores','Buscando conversaciones donde está tu cliente','Escribiendo el plan de 30 días']
+    : ['Reading the site and the price','Crawling 40 pages (SEO and AI search)','Defining the ideal customer','Analyzing 3 competitors','Finding where your customers talk','Writing the 30-day plan'];
+  main.innerHTML = head(0, lang==='es'?'Pega el enlace de tu producto. El copiloto lo estudia y arma todo lo demás a partir de eso.':'Paste your product link. The co-pilot studies it and builds everything else from it.')+
+   '<div class="card"><div class="row"><input class="url" value="'+esc(p.url)+'" aria-label="URL"><button class="btn pri" id="go">'+(s.analyzed?(lang==='es'?'Analizar de nuevo':'Analyze again'):(lang==='es'?'Analizar':'Analyze'))+'</button></div>'+
+   '<div id="checks" style="margin-top:14px">'+checks.map(function(c){return '<div class="check'+(s.analyzed?' ok':'')+'"><span class="dot"></span>'+esc(c)+'</div>';}).join('')+'</div></div>'+
+   '<div class="grid g3" style="margin-top:14px">'+
+   '<div class="card honest"><div class="k">'+(lang==='es'?'Corre sola':'Runs by itself')+'</div>'+(lang==='es'?'Investigación, plan diario, borradores, videos, artículos y lectura de resultados.':'Research, the daily plan, drafts, videos, articles and reading the results.')+'</div>'+
+   '<div class="card honest"><div class="k">'+(lang==='es'?'Tú apruebas':'You approve')+'</div>'+(lang==='es'?'Todo lo que sale con tu nombre. Instagram, TikTok, YouTube, Facebook y el blog se publican solos solo después de aprobar.':'Everything that goes out under your name. Instagram, TikTok, YouTube, Facebook and the blog post themselves only after you approve.')+'</div>'+
+   '<div class="card honest"><div class="k">'+(lang==='es'?'Tú publicas':'You post')+'</div>'+(lang==='es'?'Reddit, X, LinkedIn y grupos de Facebook: el copiloto redacta, tú copias y publicas. Así no se bloquean tus cuentas.':'Reddit, X, LinkedIn and Facebook groups: the co-pilot drafts, you copy and post. That keeps your accounts from being banned.')+'</div></div>'+foot();
+  bindFoot();
+  document.getElementById('go').onclick = function(){
+    var b = this; b.disabled = true;
+    var els = main.querySelectorAll('.check'); els.forEach(function(e){ e.className='check'; });
+    var i = 0;
+    (function tick(){
+      if (i>0) els[i-1].className = 'check ok';
+      if (i>=els.length){ s.analyzed = true; b.disabled=false; b.textContent = lang==='es'?'Ver la ficha →':'See the brief →'; b.onclick=function(){go(1);}; visited[1]=true; setT(); return; }
+      els[i].className = 'check run'; i++; setTimeout(tick, 650);
+    })();
+  };
+};
+R[1] = function(){
+  var p = P[prod];
+  main.innerHTML = head(1, lang==='es'?'Todo el plan sale de esta ficha. Puedes corregirla; el copiloto vuelve a planear.':'The whole plan is built on this brief. You can correct it and the co-pilot re-plans.')+
+   '<div class="grid g2">'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Qué es':'What it is')+'</div>'+esc(L(p.oneLiner))+'<div style="margin-top:10px"><span class="tag t-auto">'+esc(L(p.price))+'</span></div></div>'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Ángulo para ganar':'Winning angle')+'</div>'+esc(L(p.angle))+'</div>'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Cliente ideal':'Ideal customer')+'</div><ul class="clean">'+p.icp.map(function(x){return '<li>'+esc(L(x))+'</li>';}).join('')+'</ul></div>'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Lo que dicen (dolores)':'What they say (pains)')+'</div><ul class="clean">'+p.pains.map(function(x){return '<li>'+esc(L(x))+'</li>';}).join('')+'</ul></div>'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Competidores':'Competitors')+'</div><table class="t"><tbody>'+p.competitors.map(function(c){return '<tr><td><b>'+esc(c.n)+'</b></td><td>'+esc(L(c.a))+'</td></tr>';}).join('')+'</tbody></table></div>'+
+   '<div class="card"><div class="k">'+(lang==='es'?'Ajustes del sitio (3)':'Site fixes (3)')+'</div><ol class="clean" style="padding-left:18px">'+p.fixes.map(function(x){return '<li>'+esc(L(x))+'</li>';}).join('')+'</ol></div>'+
+   '</div>'+foot();
+  bindFoot();
+};
+R[2] = function(){
+  main.innerHTML = head(2, lang==='es'?'Cuatro semanas, una meta cada una. El plan se reescribe cada semana con los resultados reales.':'Four weeks, one goal each. The plan is rewritten every week from real results.')+
+   '<div class="grid g4">'+PLAN.map(function(w,i){
+     return '<div class="card week"><h3>'+esc(L(w.w))+'</h3><div class="goal">'+esc(L(w.goal))+'</div><ul class="clean">'+w.items.map(function(x){return '<li>'+esc(L(x))+'</li>';}).join('')+'</ul>'+(i===0?'<div style="margin-top:10px"><span class="tag t-ok">'+(lang==='es'?'En curso':'In progress')+'</span></div>':'')+'</div>';
+   }).join('')+'</div>'+
+   '<div class="card" style="margin-top:14px"><div class="k">'+(lang==='es'?'Regla que no cambia':'Rule that never changes')+'</div>'+(lang==='es'?'Un canal se queda solo si trae suscripciones pagas, no solo visitas o me gusta.':'A channel stays only if it brings paid subscribers, not just views or likes.')+'</div>'+foot();
+  bindFoot();
+};
+R[3] = function(){
+  var p = P[prod], s = S(prod);
+  var n = {a:0,s:0,p:0}; p.queue.forEach(function(q,i){ var st=s.q[i]; if(st==='approved')n.a++; else if(st==='skipped')n.s++; else n.p++; });
+  main.innerHTML = head(3, lang==='es'?'Cada mañana llega una lista nueva, ordenada por prioridad. Apruebas, omites o copias.':'Every morning a fresh list arrives, ranked by priority. You approve, skip or copy.')+
+   '<div class="stats"><div class="stat"><b>'+n.p+'</b><span>'+(lang==='es'?'Pendientes':'Waiting')+'</span></div><div class="stat"><b>'+n.a+'</b><span>'+(lang==='es'?'Aprobados':'Approved')+'</span></div><div class="stat"><b>'+n.s+'</b><span>'+(lang==='es'?'Omitidos':'Skipped')+'</span></div></div>'+
+   p.queue.map(function(q,i){
+     var st = s.q[i] || 'pending';
+     var tag = q.mode==='auto'?'<span class="tag t-auto">'+L(T.auto)+'</span>':q.mode==='you'?'<span class="tag t-you">'+L(T.you)+'</span>':'<span class="tag t-draft">'+L(T.draft)+'</span>';
+     var stTag = st==='approved'?' <span class="tag t-ok">'+L(T.approved)+'</span>':st==='skipped'?' <span class="tag t-skip">'+L(T.skipped)+'</span>':'';
+     var acts = st==='pending'
+       ? '<button class="btn pri" data-a="approved" data-i="'+i+'">'+L(T.approve)+'</button>'+(q.mode!=='auto'?'<button class="btn" data-copy="'+i+'">'+L(T.copy)+'</button>':'')+'<button class="btn ghost" data-a="skipped" data-i="'+i+'">'+L(T.skip)+'</button>'
+       : '<button class="btn ghost" data-a="pending" data-i="'+i+'">'+L(T.undo)+'</button>';
+     return '<div class="q st-'+st+'"><div class="ch">'+q.ch+'</div><div><h4>'+esc(L(q.title))+'</h4>'+tag+stTag+'<div class="draft">'+esc(L(q.draft))+'</div><div class="why">'+(lang==='es'?'Por qué: ':'Why: ')+esc(L(q.why))+'</div></div><div class="acts">'+acts+'</div></div>';
+   }).join('')+foot();
+  bindFoot();
+  main.querySelectorAll('[data-a]').forEach(function(b){ b.onclick=function(){ s.q[b.dataset.i]=b.dataset.a; var q=p.queue[b.dataset.i];
+    if(b.dataset.a==='approved') toast(q.mode==='auto'?(lang==='es'?'Programado (simulado)':'Scheduled (simulated)'):(lang==='es'?'Listo para que lo publiques':'Ready for you to post'));
+    R[3](); }; });
+  main.querySelectorAll('[data-copy]').forEach(function(b){ b.onclick=function(){ var t=L(p.queue[b.dataset.copy].draft); try{ navigator.clipboard.writeText(t); }catch(e){} toast(L(T.copied)); }; });
+};
+
+/* Video studio */
+var vTimer=null, vAudio=null, vIdx=0;
+function stopVideo(){ if(vTimer){clearInterval(vTimer);vTimer=null;} if(vAudio){try{vAudio.pause();}catch(e){} vAudio=null;} if(window.speechSynthesis) speechSynthesis.cancel(); }
+R[4] = function(){
+  var p = P[prod];
+  main.innerHTML = head(4, lang==='es'?'Cada día el copiloto arma videos cortos con texto y voz. Ninguno sale sin tu aprobación.':'Every day the co-pilot makes short videos with text and voice. None goes out without your approval.')+
+   '<div class="studio"><div><div class="phone" id="phone"><div class="prog">'+p.slides.map(function(){return '<i><b></b></i>';}).join('')+'</div>'+
+   p.slides.map(function(sl,i){return '<div class="slide'+(i===0?' on':'')+'" style="background:'+sl.bg+'"><div class="big">'+esc(L(sl.big))+'</div><div class="sub">'+esc(L(sl.sub))+'</div></div>';}).join('')+
+   '<div class="handle">'+esc(p.handle)+'</div></div>'+
+   '<div class="row" style="justify-content:center;margin-top:14px"><button class="btn pri" id="play">&#9654; '+(lang==='es'?'Reproducir con voz':'Play with voice')+'</button><button class="btn" id="mute">'+(lang==='es'?'Sin voz':'No voice')+'</button></div></div>'+
+   '<div><div class="card"><div class="k">'+(lang==='es'?'Guion de voz':'Voiceover script')+'</div>'+esc(L(p.vo))+'</div>'+
+   '<div class="card" style="margin-top:12px"><div class="k">'+(lang==='es'?'Publicación':'Publishing')+'</div>'+
+   '<div class="row" style="margin-bottom:8px"><span class="tag t-auto">Instagram</span><span class="tag t-auto">TikTok</span><span class="tag t-auto">YouTube Shorts</span><span class="tag t-auto">Facebook</span></div>'+
+   (lang==='es'?'Programado para hoy 6:30 p. m. (simulado). Voz: Microsoft Edge neural, costo cero. Las publicaciones automáticas en TikTok y YouTube requieren que esas plataformas aprueben la app.':'Scheduled for today 6:30 pm (simulated). Voice: Microsoft Edge neural, zero cost. Auto-posting to TikTok and YouTube needs those platforms to approve the app.')+
+   '</div><div class="card" style="margin-top:12px"><div class="k">'+(lang==='es'?'Enlace con seguimiento':'Tracked link')+'</div><code>ringlypro.com/m/'+(prod==='jobup'?'ju-tt-1108':'rp-ig-1108')+'</code><div class="why">'+(lang==='es'?'Cada registro y pago se atribuye a este video.':'Every signup and payment is tied back to this video.')+'</div></div></div></div>'+foot();
+  bindFoot();
+  document.getElementById('play').onclick=function(){ playVideo(true); };
+  document.getElementById('mute').onclick=function(){ playVideo(false); };
+};
+function playVideo(voice){
+  stopVideo();
+  var p=P[prod], slides=main.querySelectorAll('.slide'), bars=main.querySelectorAll('.prog i b'), n=slides.length, dur=5000, t0=Date.now();
+  bars.forEach(function(b){b.style.width='0';});
+  function frame(){
+    var el=Date.now()-t0, i=Math.min(n-1,Math.floor(el/dur));
+    slides.forEach(function(s,k){s.classList.toggle('on',k===i);});
+    bars.forEach(function(b,k){ b.style.width = k<i?'100%':(k===i?Math.min(100,(el-i*dur)/dur*100)+'%':'0'); });
+    if(el>=n*dur){ clearInterval(vTimer); vTimer=null; }
+  }
+  function start(len){ if(len) dur=Math.max(3000,len*1000/n); t0=Date.now(); frame(); vTimer=setInterval(frame,100); }
+  if(!voice){ start(); return; }
+  var text=L(p.vo);
+  fetch('/api/tts/edge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,voice:L(p.voice)})})
+   .then(function(r){ if(!r.ok) throw 0; return r.blob(); })
+   .then(function(b){ if(!b||b.size<200) throw 0; vAudio=new Audio(URL.createObjectURL(b));
+      vAudio.onloadedmetadata=function(){ start(isFinite(vAudio.duration)?vAudio.duration:0); };
+      vAudio.play().catch(function(){ start(); }); })
+   .catch(function(){
+      if(window.speechSynthesis){ var u=new SpeechSynthesisUtterance(text); u.lang=lang==='es'?'es-MX':'en-US'; speechSynthesis.speak(u); }
+      start();
+   });
+}
+
+R[5] = function(){
+  var p=P[prod], f=p.funnel, max=f[0];
+  var labels = lang==='es'?['Visitas','Registros','Suscriptores pagos']:['Visits','Signups','Paid subscribers'];
+  main.innerHTML = head(5, lang==='es'?'Cada enlace lleva una marca, así el copiloto sabe qué canal trajo cada pago. Estas cifras son de ejemplo.':'Every link is tagged, so the co-pilot knows which channel brought each payment. These figures are samples.')+
+   '<div class="card"><div class="k">'+(lang==='es'?'Embudo, 30 días (ejemplo)':'Funnel, 30 days (sample)')+'</div><div class="funnel">'+
+   f.map(function(v,i){ return '<div class="bar" style="width:'+Math.max(12,v/max*100)+'%">'+labels[i]+' · '+v.toLocaleString(lang==='es'?'es-CO':'en-US')+(i>0?' ('+(v/f[i-1]*100).toFixed(1)+'%)':'')+'</div>'; }).join('')+'</div></div>'+
+   '<div class="card" style="margin-top:14px;overflow-x:auto"><div class="k">'+(lang==='es'?'Por canal (ejemplo)':'By channel (sample)')+'</div><table class="t"><thead><tr><th>'+(lang==='es'?'Canal':'Channel')+'</th><th style="text-align:right">'+labels[0]+'</th><th style="text-align:right">'+labels[1]+'</th><th style="text-align:right">'+labels[2]+'</th><th>'+(lang==='es'?'Decisión':'Decision')+'</th></tr></thead><tbody>'+
+   p.channels.map(function(c){ var keep=c[3]>=4; return '<tr><td>'+esc(c[0])+'</td><td class="num">'+c[1]+'</td><td class="num">'+c[2]+'</td><td class="num">'+c[3]+'</td><td><span class="tag '+(keep?'t-ok':'t-you')+'">'+(keep?(lang==='es'?'Mantener':'Keep'):(lang==='es'?'Revisar':'Review'))+'</span></td></tr>'; }).join('')+
+   '</tbody></table></div>'+
+   '<div class="card honest" style="margin-top:14px">'+(lang==='es'?'En el producto real estas cifras vienen de tus enlaces con seguimiento y de los pagos en Stripe. Sin datos, la pantalla dice "sin conectar", nunca muestra números inventados.':'In the real product these figures come from your tracked links and your Stripe payments. With no data the screen says "not connected"; it never shows invented numbers.')+'</div>'+foot();
+  bindFoot();
+};
+
+var CHAT = {
+ jobup:[
+  {q:{en:'What should I do today?',es:'¿Qué hago hoy?'},a:{en:'Three things, in this order:\n1. Approve the TikTok video (5 sec).\n2. Post the r/jobs reply from your account (2 min).\n3. Apply landing fix 2: price beside the button.\nEverything else can wait until tomorrow.',es:'Tres cosas, en este orden:\n1. Aprueba el video de TikTok (5 s).\n2. Publica la respuesta en r/jobs desde tu cuenta (2 min).\n3. Aplica el ajuste 2 del landing: precio junto al botón.\nLo demás puede esperar a mañana.'}},
+  {q:{en:'Which channel is working?',es:'¿Qué canal funciona?'},a:{en:'In the sample month, Blog / SEO brought the most paid subscribers (12), then TikTok (7). LinkedIn brought 4, so it stays for now. I would add one more article a week before adding any new channel.',es:'En el mes de ejemplo, Blog / SEO trajo más suscriptores pagos (12), luego TikTok (7). LinkedIn trajo 4, así que se queda por ahora. Yo agregaría un artículo más por semana antes de abrir otro canal.'}},
+  {q:{en:'Should I run paid ads?',es:'¿Debo pagar anuncios?'},a:{en:'Not yet. Your signup-to-paid rate is the number to fix first; ads would buy visits into a leaky funnel. Revisit after week 3.',es:'Todavía no. Primero hay que mejorar el paso de registro a pago; los anuncios comprarían visitas para un embudo con fugas. Lo revisamos después de la semana 3.'}}],
+ ringlypro:[
+  {q:{en:'What should I do today?',es:'¿Qué hago hoy?'},a:{en:'Three things:\n1. Approve the Instagram reel.\n2. Post the Facebook group question from your account.\n3. Move the demo number to the top of ringlypro.com.\nThe chamber email can go tomorrow.',es:'Tres cosas:\n1. Aprueba el reel de Instagram.\n2. Publica la pregunta en el grupo de Facebook desde tu cuenta.\n3. Sube el número de demostración en ringlypro.com.\nEl correo a la cámara puede ir mañana.'}},
+  {q:{en:'Which channel is working?',es:'¿Qué canal funciona?'},a:{en:'In the sample month, Blog / SEO brought 7 paid subscribers, Instagram and Facebook groups 4 each. Reddit (2) and chambers (1) are on review. Chambers are slow but each talk can bring many owners, so I would give them one more month.',es:'En el mes de ejemplo, Blog / SEO trajo 7 suscriptores pagos, Instagram y los grupos de Facebook 4 cada uno. Reddit (2) y las cámaras (1) están en revisión. Las cámaras son lentas, pero cada charla puede traer muchos dueños; les daría un mes más.'}},
+  {q:{en:'Should I run paid ads?',es:'¿Debo pagar anuncios?'},a:{en:'A small local test could make sense after the demo number is on top, because a caller who hears the AI converts best. Not before.',es:'Una prueba local pequeña puede tener sentido después de subir el número de demostración, porque quien escucha la IA es quien más compra. Antes no.'}}]
+};
+R[6] = function(){
+  var c = CHAT[prod];
+  main.innerHTML = head(6, lang==='es'?'Pregúntale lo que sea sobre tu marketing. Responde con tus propios datos, no con promesas.':'Ask anything about your marketing. It answers from your own data, not promises.')+
+   '<div class="card"><div class="chat" id="chat"><div class="msg ai">'+(lang==='es'?'Hola. Soy tu CMO IA para '+P[prod].name+'. Elige una pregunta.':'Hi. I am your AI CMO for '+P[prod].name+'. Pick a question.')+'</div></div>'+
+   '<div class="chips">'+c.map(function(x,i){return '<button data-c="'+i+'">'+esc(L(x.q))+'</button>';}).join('')+'</div></div>'+
+   '<div class="card" style="margin-top:14px"><div class="k">'+(lang==='es'?'Siguiente paso':'Next step')+'</div>'+(lang==='es'?'Este simulador usa respuestas fijas. La versión real usaría tus datos de enlaces, registros y pagos, y nunca citaría una cifra que no exista en ellos.':'This simulator uses fixed answers. The real version would answer from your link, signup and payment data, and never quote a figure that is not in it.')+'</div>'+foot();
+  bindFoot();
+  var chat=document.getElementById('chat');
+  main.querySelectorAll('[data-c]').forEach(function(b){ b.onclick=function(){
+    var x=c[b.dataset.c]; chat.insertAdjacentHTML('beforeend','<div class="msg me">'+esc(L(x.q))+'</div>');
+    var typing=document.createElement('div'); typing.className='msg ai'; typing.textContent='...'; chat.appendChild(typing); chat.scrollTop=chat.scrollHeight;
+    setTimeout(function(){ typing.textContent=L(x.a); chat.scrollTop=chat.scrollHeight; },700);
+  }; });
+};
+
+function render(){ setT(); R[step]();
+  var on=document.querySelector('#steps button.on'); var nav=document.getElementById('steps');
+  if(on && nav.scrollWidth>nav.clientWidth) nav.scrollLeft = on.offsetLeft - 12; }
+document.querySelectorAll('#prodSeg button').forEach(function(b){ b.onclick=function(){ stopVideo(); prod=b.dataset.p; render(); }; });
+document.querySelectorAll('#langSeg button').forEach(function(b){ b.onclick=function(){ stopVideo(); lang=b.dataset.l; render(); }; });
+try{ var q=new URLSearchParams(location.search); if(q.get('lang')==='es') lang='es'; if(q.get('p')==='ringlypro') prod='ringlypro'; }catch(e){}
+if(lang==='en' && /^es/i.test(navigator.language||'') && !/lang=en/.test(location.search)) lang='es';
+render();
+})();
+</script>
+</body>
+</html>
