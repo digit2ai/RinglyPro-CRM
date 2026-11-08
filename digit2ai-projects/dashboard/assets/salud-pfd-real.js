@@ -130,7 +130,7 @@
 
     // ---------------- left tape: this month, what came in and what went out ----------------
     (function () {
-      var x = 120, w = 104, y0 = 112, h = 380, inc = r.mes.entro.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0, out = r.mes.salio.v, top = Math.max(inc + pe, out, 100);
+      var x = 120, w = 104, y0 = 112, h = 380, inc = r.mes.entro.v, pe = (r.mes.por_entrar && r.mes.por_entrar.v) || 0, out = r.mes.salio.v, top = Math.max(inc, out, 100);
       o.push('<rect x="' + x + '" y="' + y0 + '" width="' + w + '" height="' + h + '" fill="rgba(0,0,0,.45)"/>');
       o.push('<rect x="' + x + '" y="' + (y0 - 30) + '" width="' + w + '" height="30" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 - 9) + '" fill="#fff" font-size="15">MES <tspan font-size="18" font-weight="700">' + esc(MESES[Number(s.hoy.slice(5, 7)) - 1].toUpperCase()) + '</tspan></text>');
       var bh = h - 120, bw = 34;
@@ -140,11 +140,6 @@
         o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 40 + bh) + '" fill="' + b[2] + '" font-size="11" text-anchor="middle">' + b[3] + '</text>');
         o.push('<text x="' + (b[0] + bw / 2) + '" y="' + (y0 + 58 + bh) + '" fill="' + b[2] + '" font-size="15" font-weight="700" text-anchor="middle">' + esc(k(b[1])) + '</text>');
       });
-      if (pe > 0) { // still to come in this month: outlined on top of what came in
-        var hi = Math.max(2, inc / top * bh), hp = Math.max(2, pe / top * bh), xx = x + 14;
-        o.push('<rect x="' + (xx + 1) + '" y="' + (y0 + 21 + bh - hi - hp) + '" width="' + (bw - 2) + '" height="' + (hp - 2) + '" fill="rgba(110,231,122,.18)" stroke="' + C.green + '" stroke-width="2" stroke-dasharray="5 3"/>');
-        o.push('<text x="' + (xx + bw / 2) + '" y="' + (y0 + 14 + bh - hi - hp) + '" fill="' + C.green + '" font-size="12" font-weight="700" text-anchor="middle">+' + esc(k(pe)) + '</text>');
-      }
       var n = r.mes.neto.v;
       if (pe > 0) o.push('<text x="' + (x + w / 2) + '" y="' + (y0 + h - 12) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">+' + esc(k(pe)) + ' POR ENTRAR</text>');
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + 6) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="14">NETO <tspan font-size="19" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
