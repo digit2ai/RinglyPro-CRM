@@ -18,6 +18,11 @@ const cerebro = require('../services/saludFinanciera/cerebro');
 const { toCents, fmt } = require('../services/saludFinanciera/money');
 const alarmas = require('../services/saludFinanciera/alarmas');
 const autopagosSvc = require('../services/saludFinanciera/autopagos');
+const realSvc = require('../services/saludFinanciera/real');
+
+// REAL MODE (owner 2026-11-08): the panel shows only real money and what is still to be paid; the plan stays in
+// the database as reference and is never projected or compared. SALUD_FINANCIERA_PLAN=on brings the plan panel back.
+const modoReal = () => process.env.SALUD_FINANCIERA_PLAN !== 'on';
 
 const router = express.Router();
 
@@ -213,6 +218,24 @@ router.post('/alarmas/visto', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// The real-mode payload: bank balance, real movements, what is still to be paid. Plan-based alarms are left out.
+async function saludReal(req, a, rows) {
+  const q = (sql) => deps.sequelize.query(sql, { replacements: { u: req.sf.userId, t: req.sf.tenantId } }).then(x => x[0]).catch(() => []);
+  const [cuentas, items, cfg, ap] = await Promise.all([
+    q('SELECT mask, rol, saldo_actual::text AS saldo_actual, saldo_disponible::text AS saldo_disponible, saldo_at FROM sf_plaid_accounts WHERE user_id = :u AND tenant_id = :t AND incluir ORDER BY mask'),
+    q("SELECT estado, ultimo_sync FROM sf_plaid_items WHERE user_id = :u AND tenant_id = :t AND estado <> 'desconectado' ORDER BY ultimo_sync DESC NULLS LAST"),
+    q('SELECT alarmas_vistas FROM sf_config WHERE user_id = :u AND tenant_id = :t'),
+    autopagos(req, a)
+  ]);
+  const vistas = cfg[0] && Array.isArray(cfg[0].alarmas_vistas) ? cfg[0].alarmas_vistas : [];
+  const r = realSvc.construir({ hoy: a.today, rows, cuentas, item: items[0] || null, autopagos: ap && !ap.error ? ap : null });
+  const banco = await revisarAlarmas(req, a, { dias_negativos: [], obligaciones_descubiertas: [] });
+  const extra = alarmasAutopago(ap, vistas);
+  const propias = realSvc.alarmas(r, vistas);
+  const al = propias.filter(x => x.nivel === 'stall').concat(extra.filter(x => x.nivel === 'stall'), banco, propias.filter(x => x.nivel !== 'stall'), extra.filter(x => x.nivel !== 'stall'));
+  return { success: true, modo: 'real', hoy: a.today, real: r, autopagos: ap, alarmas: al };
+}
+
 router.get('/acceso', (req, res) => res.json({ success: true, ok: true }));
 
 router.get('/salud', async (req, res) => {
@@ -220,6 +243,7 @@ router.get('/salud', async (req, res) => {
     const { rows, opts } = await context(req);
     const a = engine.analyze(rows, opts);
     const resumen = engine.publicSummary(a);
+    if (modoReal()) return res.set('Cache-Control', 'no-store').json(await saludReal(req, a, rows));
     res.set('Cache-Control', 'no-store').json({
       success: true,
       ...resumen,
@@ -249,8 +273,11 @@ router.get('/salud', async (req, res) => {
 
 router.get('/movimientos', async (req, res) => {
   try {
-    const { rows, opts } = await context(req);
-    const a = engine.analyze(rows, opts);
+    const ctx = await context(req);
+    const verPlan = !modoReal() || req.query.plan === '1';
+    // real mode: the running balance is real money only; plan rows appear only when asked for, as reference
+    const rows = verPlan ? ctx.rows : ctx.rows.filter(r => r.origen === 'real' || r.estado === 'cumplido');
+    const a = engine.analyze(rows, verPlan ? ctx.opts : { ...ctx.opts, colchonCents: 0 });
     let out = withSaldo(rows, a);
     const { desde, hasta, categoria, mes } = req.query;
     if (mes && /^\d{4}-\d{2}$/.test(mes)) out = out.filter(r => r.fecha.slice(0, 7) === mes);
@@ -258,7 +285,7 @@ router.get('/movimientos', async (req, res) => {
     if (hasta && engine.isISO(hasta)) out = out.filter(r => r.fecha <= hasta);
     if (categoria && engine.CATEGORIAS.includes(categoria)) out = out.filter(r => r.categoria === categoria);
     const meses = [...new Set(rows.map(r => r.fecha.slice(0, 7)))].sort();
-    res.set('Cache-Control', 'no-store').json({ success: true, data: out, meses, fecha_min: a.fecha_min });
+    res.set('Cache-Control', 'no-store').json({ success: true, data: out, meses, fecha_min: verPlan ? a.fecha_min : null, modo: modoReal() ? 'real' : 'plan', con_plan: verPlan });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 

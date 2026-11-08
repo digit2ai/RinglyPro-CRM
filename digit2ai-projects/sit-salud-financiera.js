@@ -305,6 +305,14 @@ async function apiTests() {
     }
     ok((await call('/salud', WRONGMAIL)).s === 404, 'owner id with a non-owner email -> 404');
     let r = await call('/salud', A);
+    { const prev = process.env.SALUD_FINANCIERA_PLAN; delete process.env.SALUD_FINANCIERA_PLAN;
+      const rr = await call('/salud', A);
+      ok(rr.s === 200 && rr.j.modo === 'real' && rr.j.real && rr.j.real.saldo.v === 0 && rr.j.score === undefined && rr.j.pfd === undefined, 'real mode is the default: on a plan-only seed the balance is $0 and no plan figure is sent', rr.j && rr.j.real && rr.j.real.saldo);
+      const mm = await call('/movimientos', A);
+      ok(mm.s === 200 && mm.j.modo === 'real' && mm.j.data.every(x => x.origen === 'real' || x.estado === 'cumplido'), 'real mode table lists only real money; the plan only with ?plan=1');
+      const mp = await call('/movimientos?plan=1', A);
+      ok(mp.s === 200 && mp.j.con_plan && mp.j.data.some(x => x.origen === 'plan'), 'the plan stays in the database and can be shown as reference');
+      process.env.SALUD_FINANCIERA_PLAN = 'on'; void prev; r = await call('/salud', A); }
     ok(r.s === 200 && near(r.j.score, 63, 0.5) && r.j.color === 'verde' && r.j.cierre_mes_actual.saldo === '$4,568.48' && r.j.cierre_ultimo_mes.saldo === '$4,468.48' && r.j.cierre_fin_de_ano.mes === '2026-12' && r.j.cierre_fin_de_ano.saldo === '$3,668.48' && r.j.cierres_proximos.map(c => c.mes + ' ' + c.saldo).join() === '2026-11 $1,868.48,2026-12 $3,668.48,2027-01 $4,468.48' && r.j.cierres_trimestre.map(c => c.mes).join() === '2026-10,2026-11,2026-12' && r.j.semana.proxima_semana === '$200.00' && r.j.zona.desde === '2026-12-06' && r.j.tendencia.sube === false && r.j.obligaciones.cubiertas === r.j.obligaciones.total && r.j.saldo_min === '$68.48' && r.j.fecha_min === '2026-12-11', 'GET /salud on seed: ~63 verde, cierre octubre $4,568.48, cierre enero $4,468.48, all payments covered, $68.48 on 2026-12-11', r.j);
     { const P = r.j.pfd;
       ok(P && P.saldo_hoy.t === '$8,968.48' && P.saldo_min.t === '$68.48' && P.fecha_min === '2026-12-11', 'instrument panel: altimeter and MIN bug are the engine figures', P);
@@ -905,10 +913,63 @@ function alarmasTests() {
   ok(by['Zelle a Lina Stagg'] && by['Zelle a Lina Stagg'].clave === 'lina', 'a Zelle reads as the person and searches by first name', by['Zelle a Lina Stagg']);
 }
 
+// REAL MODE (owner 2026-11-08): the panel shows only real money; the plan is never projected or compared.
+function realTests() {
+  console.log('\n-- real mode (bank balance, no plan) --');
+  const R = require('./src/services/saludFinanciera/real');
+  const hoy = '2026-11-08';
+  const rows = [
+    { id: 1, fecha: '2026-11-01', tipo: 'ingreso', categoria: 'otro', concepto: 'Apertura', monto: '1000.00', origen: 'real', estado: null, fuente: 'manual' },
+    { id: 2, fecha: '2026-11-03', tipo: 'egreso', categoria: 'otro', concepto: 'Publix', monto: '100.00', origen: 'real', estado: null, fuente: 'plaid' },
+    { id: 3, fecha: '2026-11-05', tipo: 'egreso', categoria: 'otro', concepto: 'Online Banking transfer to CHK 7485', monto: '500.00', origen: 'real', estado: null, fuente: 'plaid' },
+    { id: 4, fecha: '2026-11-05', tipo: 'ingreso', categoria: 'otro', concepto: 'Online Banking transfer from CHK 5122', monto: '500.00', origen: 'real', estado: null, fuente: 'plaid' },
+    { id: 5, fecha: '2026-11-07', tipo: 'egreso', categoria: 'otro', concepto: 'Chevron', monto: '20.00', origen: 'real', estado: null, fuente: 'plaid', pendiente_banco: true },
+    { id: 6, fecha: '2026-11-06', tipo: 'ingreso', categoria: 'salario', concepto: 'Salario', monto: '3000.00', monto_real: '3000.00', origen: 'plan', estado: 'cumplido' },
+    // the plan: must never move the balance
+    { id: 7, fecha: '2026-11-06', tipo: 'egreso', categoria: 'corte', concepto: 'Corte', monto: '3500.00', origen: 'plan', estado: 'pendiente' },
+    { id: 8, fecha: '2026-11-20', tipo: 'ingreso', categoria: 'salario', concepto: 'Salario', monto: '3000.00', origen: 'plan', estado: 'pendiente' },
+    { id: 9, fecha: '2026-11-20', tipo: 'egreso', categoria: 'pago_lina', concepto: 'Pago Lina', monto: '1500.00', origen: 'plan', estado: 'pendiente' },
+    { id: 10, fecha: '2027-01-20', tipo: 'egreso', categoria: 'pago_lina', concepto: 'Lejos', monto: '99.00', origen: 'plan', estado: 'pendiente' },
+    // typed by hand for a future date: listed, never counted
+    { id: 11, fecha: '2026-11-30', tipo: 'ingreso', categoria: 'ingreso_extra', concepto: 'Cliente', monto: '700.00', origen: 'real', estado: null, fuente: 'manual' }
+  ];
+  const cuentas = [{ mask: '5122', rol: 'gastos', saldo_actual: '400.00', saldo_disponible: '380.00' }, { mask: '7485', rol: 'corte', saldo_actual: '3500.00', saldo_disponible: '3500.00' }];
+  const ap = { items: [{ concepto: 'Render', fecha: '2026-11-10', dias: 2, monto_cents: 20000, estimado: false }, { concepto: 'Lejano', fecha: '2026-12-30', dias: 52, monto_cents: 100, estimado: false }] };
+  const r = R.construir({ hoy, rows, cuentas, item: { ultimo_sync: new Date().toISOString(), estado: 'activo' }, autopagos: ap });
+  ok(r.saldo.v === 3880 && r.fuente === 'banco', 'SALDO is the bank available balance of the included accounts', r.saldo);
+  ok(r.libro.v === 3880 && r.cuadra, 'the ledger counts real rows and bank-confirmed plan rows only: a pending plan row never moves it', r.libro);
+  ok(!r.por_cobrar.some(x => x.id === 8) && r.por_cobrar.length === 1 && r.por_cobrar[0].id === 11, 'a planned income is not money; a future hand-typed income is listed, not counted');
+  ok(r.mes.entro.v === 4000 && r.mes.salio.v === 120, 'this month excludes moves between his own accounts', r.mes);
+  ok(r.pendientes.n === 1 && r.pendientes.neto.v === 20, 'pending bank charges are reported');
+  const nombres = r.por_pagar.map(p => p.concepto);
+  ok(nombres.join('|') === 'Corte|Render|Pago Lina', 'por pagar = pending plan outflows + bank autopays, 30 days, by date; no incomes, nothing past 30 days', nombres);
+  ok(r.por_pagar[0].vencido && r.por_pagar[0].queda.v === 380 && r.por_pagar[0].cubierto, 'an overdue payment stays owed; "queda" runs on TODAY money');
+  ok(r.por_pagar[2].queda.v === -1320 && !r.por_pagar[2].cubierto && r.sin_cubrir.concepto === 'Pago Lina', 'no future salary is assumed: the first uncovered payment is named');
+  ok(r.por_pagar[0].row && r.por_pagar[0].row.id === 7 && r.por_pagar[1].row === null, 'a plan payment carries its row for the edit dialog; an autopay does not');
+  ok(r.hist[0].fecha === '2026-11-01' && r.cambio_30d.dias === 7 && r.cambio_30d.desde === '2026-11-01' && r.cambio_30d.v === 2880, 'no record before the first real movement: the opening balance is not counted as growth', r.cambio_30d);
+  const rA = R.construir({ hoy, rows: rows.concat([{ id: 12, fecha: '2026-11-04', tipo: 'ingreso', categoria: 'otro', concepto: 'Ajuste de conciliación (saldo real BOA)', monto: '50.00', origen: 'real', estado: null, fuente: 'manual' }]), cuentas, item: null, autopagos: null });
+  ok(rA.cambio_30d.desde === '2026-11-04' && rA.hist[0].fecha === '2026-11-04' && rA.mes.entro.v === 4000, 'a reconciliation row restarts the record and is never counted as income', rA.cambio_30d);
+  const a1 = R.alarmas(r, []);
+  ok(!a1.some(a => a.nivel === 'stall'), 'an uncovered payment 12 days out is not a STALL yet', a1);
+  const r2 = R.construir({ hoy, rows, cuentas: [{ mask: '5122', saldo_disponible: '-5.00' }], item: null, autopagos: null });
+  const a2 = R.alarmas(r2, []);
+  ok(a2.some(a => a.nivel === 'stall' && /negativo/i.test(a.titulo)), 'a negative bank balance is a STALL');
+  ok(a2.some(a => /no cuadra/i.test(a.titulo)) && !r2.cuadra && r2.saldo.v === -5, 'a ledger that differs from the bank is reported, and the bank wins');
+  ok(a2.some(a => a.nivel === 'stall' && /Corte/.test(a.titulo)), 'an uncovered payment within 7 days (or overdue) is a STALL');
+  ok(R.alarmas(r2, a2.map(a => a.clave)).length === 0, 'every real-mode alarm can be dismissed');
+  const r3 = R.construir({ hoy, rows, cuentas: [], item: null, autopagos: null });
+  ok(r3.fuente === 'movimientos' && r3.saldo.v === 3880, 'with no bank, the ledger of real movements is the balance');
+  const old = new Date(Date.now() - 48 * 3600e3).toISOString();
+  ok(R.alarmas(R.construir({ hoy, rows, cuentas, item: { ultimo_sync: old }, autopagos: null }), []).some(a => /no se ha actualizado/.test(a.titulo)), 'a bank not synced for 36h+ is a caution');
+  const src = require('fs').readFileSync(__dirname + '/src/services/saludFinanciera/real.js', 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+  ok(!/saldo_final_plan|serie\.plan|minFrom|zonaCuidado/.test(src), 'real mode never reads the plan projection');
+}
+
 (async () => {
   await engineTests();
   alarmasTests();
   autopagosTests();
+  realTests();
   await linaTests();
   structuralTests();
   try { await apiTests(); } catch (e) { fail++; console.log('  FAIL api section crashed:', e.stack); }

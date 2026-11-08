@@ -88,11 +88,12 @@
       '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"><div class="spinner"></div></div></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
-      '<button class="btn btn-ghost" id="sf-extend">Extender plan</button></div>' +
+      '<button class="btn btn-ghost" id="sf-extend" hidden>Extender plan</button></div>' +
       '<div id="sf-bank" style="margin-bottom:16px"></div>' +
       '<div class="card card-accent-blue" id="sf-mov-card" style="margin-bottom:24px"><div class="section-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h3>Movimientos</h3>' +
       '<select id="sf-mes" style="padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></select></div>' +
-      '<p class="section-hint">Gris: plan pendiente. Azul: real. Verde: cumplido. Fondo resaltado: tu punto más bajo.</p>' +
+      '<p class="section-hint" id="sf-legend">Solo movimientos reales. El saldo de cada fila es dinero real.</p>' +
+      '<label id="sf-plan-lbl" style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--text-muted);margin-bottom:6px;min-height:32px"><input type="checkbox" id="sf-plan" style="width:18px;height:18px"> Ver plan (solo referencia)</label>' +
       '<div id="sf-filt" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">' +
       '<input id="sf-q" type="search" placeholder="Buscar concepto, monto o fecha" aria-label="Buscar" style="flex:1 1 220px;min-width:0;padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px">' +
       '<label style="display:flex;gap:4px;align-items:center;font-size:12px;color:var(--text-muted)">Desde<input id="sf-desde" type="date" style="padding:6px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px"></label>' +
@@ -106,6 +107,7 @@
     document.getElementById('sf-add').onclick = openAdd;
     document.getElementById('sf-extend').onclick = extendPlan;
     document.getElementById('sf-mes').onchange = function () { state.mes = this.value; loadMovs(); };
+    document.getElementById('sf-plan').onchange = function () { state.verPlan = this.checked; loadMovs(); };
     wireFilters();
     if (SHOW_LINA) wireLina();
     resumeOAuth();
@@ -298,18 +300,28 @@
   function loadSalud() {
     return sf('/salud').then(function (s) {
       if (!s.success) { document.getElementById('sf-pfd').innerHTML = '<p>' + (s._status === 404 ? 'Este módulo no está disponible para tu usuario.' : esc(s.error || 'No disponible')) + '</p>'; return; }
-      state.salud = s; if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
+      state.salud = s;
+      // REAL MODE (owner 2026-11-08): only real money on the panel; the plan stays as reference
+      var real = s.modo === 'real';
+      var ex = document.getElementById('sf-extend'); if (ex) ex.hidden = real;
+      var pl = document.getElementById('sf-plan-lbl'); if (pl) pl.style.display = real ? 'flex' : 'none';
+      if (real && window.drawSfPfdReal) window.drawSfPfdReal(document.getElementById('sf-pfd'), s);
+      else if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
     });
   }
 
   function loadMovs() {
-    var q = state.mes ? '?mes=' + encodeURIComponent(state.mes) : '';
+    var qs = []; if (state.mes) qs.push('mes=' + encodeURIComponent(state.mes)); if (state.verPlan) qs.push('plan=1');
+    var q = qs.length ? '?' + qs.join('&') : '';
     return sf('/movimientos' + q).then(function (j) {
       if (!j.success) return;
       state.movs = j.data; state.meses = j.meses;
       var sel = document.getElementById('sf-mes');
       if (sel) sel.innerHTML = '<option value="">Todos los meses</option>' + j.meses.map(function (m) { return '<option value="' + m + '"' + (m === state.mes ? ' selected' : '') + '>' + MESES[Number(m.slice(5, 7)) - 1] + ' ' + m.slice(0, 4) + '</option>'; }).join('');
-      state.fmin = j.fecha_min; redraw();
+      state.fmin = j.fecha_min;
+      var lg = document.getElementById('sf-legend');
+      if (lg) lg.textContent = j.modo === 'real' && !j.con_plan ? 'Solo movimientos reales. El saldo de cada fila es dinero real.' : 'Gris: plan pendiente (referencia). Azul: real. Verde: cumplido.' + (j.modo === 'real' ? ' Con el plan visible, el saldo de cada fila incluye el plan.' : ' Fondo resaltado: tu punto más bajo.');
+      redraw();
     });
   }
 
