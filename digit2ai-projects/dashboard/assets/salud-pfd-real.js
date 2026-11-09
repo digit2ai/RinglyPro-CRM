@@ -200,7 +200,7 @@
       var vals = all.map(function (d) { return d.saldo; }).concat([0, v]);
       var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
       var X = function (f) { return mx + 10 + (Date.parse(f) - t0) / ((t1 - t0) || 1) * (mw - 20); };
-      var Y = function (val) { return my + 24 + (hi - val) / ((hi - lo) || 1) * (mh - 62); };
+      var Y = function (val) { return my + 24 + (hi - val) / ((hi - lo) || 1) * (mh - 90); };
       if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
       var dd = '';
       past.forEach(function (p, i) { dd += (i ? ' L ' : 'M ') + X(p.fecha).toFixed(1) + ',' + Y(i === past.length - 1 ? v : p.saldo).toFixed(1); });
@@ -210,13 +210,17 @@
         fut.forEach(function (p) { df += ' L ' + X(p.fecha).toFixed(1) + ',' + Y(p.saldo).toFixed(1); });
         o.push('<path d="' + df + '" fill="none" stroke="' + C.mag + '" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>');
         fut.forEach(function (p) { o.push('<circle cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.saldo).toFixed(1) + '" r="3.5" fill="' + (p.saldo >= 0 ? C.green : C.red) + '"/>'); });
-        // below zero: print the date under the red dot
+        // below zero: the date goes in its own row at the foot of the map, joined to its dot by a thin line
+        var lastX = -1e9, fila = 0;
         fut.forEach(function (p) {
           if (p.saldo >= 0) return;
-          var lx = Math.max(mx + 18, Math.min(mx + mw - 18, X(p.fecha)));
-          var ly = Math.min(my + mh - 20, Y(p.saldo) + 17);
-          o.push('<rect x="' + (lx - 21).toFixed(1) + '" y="' + (ly - 11).toFixed(1) + '" width="42" height="14" rx="2" fill="#000"/>');
-          o.push('<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="#ff6b6b" font-size="11" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha)) + '</text>');
+          var dx = X(p.fecha), lx = Math.max(mx + 26, Math.min(mx + mw - 26, dx));
+          fila = lx - lastX < 52 ? 1 - fila : 0;   // too close to the previous tag: use the other row
+          lastX = lx;
+          var ry = my + mh - 22 - fila * 19;
+          o.push('<line x1="' + dx.toFixed(1) + '" y1="' + (Y(p.saldo) + 4).toFixed(1) + '" x2="' + lx.toFixed(1) + '" y2="' + (ry - 12) + '" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="2 2"/>');
+          o.push('<rect x="' + (lx - 25).toFixed(1) + '" y="' + (ry - 12) + '" width="50" height="16" rx="3" fill="#000" stroke="#ff6b6b" stroke-width="1"/>');
+          o.push('<text x="' + lx.toFixed(1) + '" y="' + ry + '" fill="#fff" font-size="11" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha)) + '</text>');
         });
       }
       o.push('<text x="' + (mx + 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10">' + esc(fc(all[0].fecha)) + '</text>');
