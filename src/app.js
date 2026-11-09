@@ -2086,6 +2086,7 @@ app.use('/api/contacts', contactsRoutes);
 app.use('/api/conference', require('./routes/conference-signup')); // Build With AI: public sign-up form -> contacts (client 15)
 app.use('/api/mcp-checkout', require('./routes/mcp-checkout')); // Digit2AI MCP Neural: $700 setup + $397/mo Stripe checkout for /mcp
 app.use('/api/synthex-lina', require('./routes/synthex-lina')); // Synthex SAI: Lina's meeting booking (loopback-only tools) + training page
+app.use('/api/equimind-pay', require('./routes/equimind-pay')); // EquiMind (equimind.app) credit payments: Stripe keys stay on this service
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
 app.use('/api/cv-engine', require('./routes/cv-engine')); // Multi-tenant CV Talent Engine (auth, analytics, opportunities, AI broadcast)
 app.use('/api/agent', require('./routes/cv-agent').router); // Phase 2 — public agent surface (resume.json, A2A card, MCP) per CV candidate
