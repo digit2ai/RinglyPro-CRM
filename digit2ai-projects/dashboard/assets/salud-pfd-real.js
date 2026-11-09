@@ -210,6 +210,12 @@
         fut.forEach(function (p) { df += ' L ' + X(p.fecha).toFixed(1) + ',' + Y(p.saldo).toFixed(1); });
         o.push('<path d="' + df + '" fill="none" stroke="' + C.mag + '" stroke-width="2" stroke-dasharray="5 4" stroke-linejoin="round"/>');
         fut.forEach(function (p) { o.push('<circle cx="' + X(p.fecha).toFixed(1) + '" cy="' + Y(p.saldo).toFixed(1) + '" r="3.5" fill="' + (p.saldo >= 0 ? C.green : C.red) + '"/>'); });
+        // below zero: print the date under the red dot
+        fut.forEach(function (p) {
+          if (p.saldo >= 0) return;
+          var lx = Math.max(mx + 18, Math.min(mx + mw - 18, X(p.fecha)));
+          o.push('<text x="' + lx.toFixed(1) + '" y="' + Math.min(my + mh - 18, Y(p.saldo) + 14).toFixed(1) + '" fill="' + C.red + '" font-size="10" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha)) + '</text>');
+        });
       }
       o.push('<text x="' + (mx + 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10">' + esc(fc(all[0].fecha)) + '</text>');
       if (X(s.hoy) - mx > 60 && mx + mw - X(s.hoy) > 50) o.push('<text x="' + X(s.hoy).toFixed(1) + '" y="' + (my + mh - 6) + '" fill="#fff" font-size="10" text-anchor="middle">HOY</text>');
