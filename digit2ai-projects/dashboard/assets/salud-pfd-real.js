@@ -225,7 +225,7 @@
 
     // ---------------- bottom center: next pay day ----------------
     (function () {
-      var bx = 330, by = 530, bw = 340, bh = 110, pr = r.proximo_pago, ok = !q0 || q0.cubierto;
+      var bx = 330, by = 380, bw = 340, bh = 110, pr = r.proximo_pago, ok = !q0 || q0.cubierto;
       o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="4" fill="#000" stroke="' + (ok ? C.mag : C.red) + '" stroke-width="2"/>');
       o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 22) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO DÍA DE PAGO</text>');
       if (!pr) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="#fff" font-size="18" text-anchor="middle">Sin día de pago en el plan</text>'); return; }
