@@ -3271,6 +3271,22 @@ try {
 }
 
 // =====================================================
+// NEOHAUL — plataforma de operación para Grupo NeoHaul (acarreo para HTR) at /neohaul/
+// Pedidos, viajes, estimaciones, facturas, gastos/diésel, nómina, taller y tablero.
+// =====================================================
+try {
+  const neohaulApp = require("../verticals/neohaul/src/index");
+  app.get("/neohaul", (req, res, next) => {
+    if (!req.originalUrl.split("?")[0].endsWith("/")) return res.redirect(301, "/neohaul/");
+    next();
+  });
+  app.use("/neohaul", neohaulApp);
+  console.log("NeoHaul mounted at /neohaul");
+} catch (error) {
+  console.log("⚠️ NeoHaul not available:", error.message);
+}
+
+// =====================================================
 // AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
 // =====================================================
 
