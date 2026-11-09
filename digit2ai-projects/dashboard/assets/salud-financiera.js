@@ -304,7 +304,7 @@
       // REAL MODE (owner 2026-11-08): only real money on the panel; the plan stays as reference
       var real = s.modo === 'real';
       var ex = document.getElementById('sf-extend'); if (ex) ex.hidden = real;
-      var pl = document.getElementById('sf-plan-lbl'); if (pl) pl.style.display = real ? 'flex' : 'none';
+      var pl = document.getElementById('sf-plan-lbl'); if (pl) pl.style.display = 'none';  // current only (owner 2026-11-09)
       if (real && window.drawSfPfdReal) window.drawSfPfdReal(document.getElementById('sf-pfd'), s);
       else if (window.drawSfPfd) window.drawSfPfd(document.getElementById('sf-pfd'), s);
     });

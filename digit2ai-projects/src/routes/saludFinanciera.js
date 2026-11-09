@@ -230,9 +230,10 @@ async function saludReal(req, a, rows) {
   const vistas = cfg[0] && Array.isArray(cfg[0].alarmas_vistas) ? cfg[0].alarmas_vistas : [];
   const r = realSvc.construir({ hoy: a.today, rows, cuentas, item: items[0] || null, autopagos: ap && !ap.error ? ap : null });
   const banco = await revisarAlarmas(req, a, { dias_negativos: [], obligaciones_descubiertas: [] });
-  const extra = alarmasAutopago(ap, vistas);
-  const propias = realSvc.alarmas(r, vistas);
-  const al = propias.filter(x => x.nivel === 'stall').concat(extra.filter(x => x.nivel === 'stall'), banco, propias.filter(x => x.nivel !== 'stall'), extra.filter(x => x.nivel !== 'stall'));
+  // CURRENT ONLY (owner 2026-11-09): no alarm about a future payment, an autopay or the ledger cuadre.
+  // What stays is what the bank says today: negative balance, bank not synced, and the bank's own alarms.
+  const propias = realSvc.alarmas(r, vistas).filter(x => !/^real-(nocubre|cuadre):/.test(x.clave));
+  const al = propias.filter(x => x.nivel === 'stall').concat(banco, propias.filter(x => x.nivel !== 'stall'));
   return { success: true, modo: 'real', hoy: a.today, real: r, autopagos: ap, alarmas: al };
 }
 
