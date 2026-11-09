@@ -189,7 +189,7 @@
 
     // ---------------- inset map: real balance (solid) then what is left before each pay day (dashed) ----------------
     (function () {
-      var mx = 18, my = 540, mw = 262, mh = 154, pts = r.hist || [];
+      var mx = 330, my = 364, mw = 340, mh = 160, pts = r.hist || [];
       o.push('<rect x="' + mx + '" y="' + my + '" width="' + mw + '" height="' + mh + '" fill="#0b2a18" stroke="#fff" stroke-width="1.5"/>');
       o.push('<text x="' + (mx + 8) + '" y="' + (my + 15) + '" fill="#cfd8e3" font-size="11">SALDO REAL · DÍAS DE PAGO</text>');
       var fut = qs.map(function (q) { return { fecha: q.hasta, saldo: q.queda.v }; });
@@ -229,16 +229,16 @@
       o.push('<circle cx="' + X(s.hoy).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="5" fill="#fff"/>');
     })();
 
-    // ---------------- bottom center: next pay day ----------------
+    // ---------------- bottom left: next pay day ----------------
     (function () {
-      var bx = 330, by = 380, bw = 340, bh = 110, pr = r.proximo_pago, ok = !q0 || q0.cubierto;
+      var bx = 18, by = 540, bw = 262, bh = 154, pr = r.proximo_pago, ok = !q0 || q0.cubierto;
       o.push('<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="' + bh + '" rx="4" fill="#000" stroke="' + (ok ? C.mag : C.red) + '" stroke-width="2"/>');
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 22) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO DÍA DE PAGO</text>');
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 30) + '" fill="' + C.mag + '" font-size="14" font-weight="700" text-anchor="middle">PRÓXIMO DÍA DE PAGO</text>');
       if (!pr) { o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 66) + '" fill="#fff" font-size="18" text-anchor="middle">Sin día de pago en el plan</text>'); return; }
       var dias = Math.round((Date.parse(pr) - Date.parse(s.hoy)) / 864e5), q1 = qs[1];
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 52) + '" fill="#fff" font-size="22" font-weight="700" text-anchor="middle">' + esc(fc(pr)) + ' · ' + (dias === 0 ? 'HOY' : dias === 1 ? 'MAÑANA' : 'EN ' + dias + ' DÍAS') + '</text>');
-      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 78) + '" fill="' + (ok ? C.green : C.red) + '" font-size="16" text-anchor="middle">' + (ok ? 'LLEGAS CON ' : 'NO ALCANZA · LLEGAS EN ') + esc(usd(antesPago)) + '</text>');
-      if (q1) o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 100) + '" fill="#c9d2de" font-size="14" text-anchor="middle">ENTRA +' + esc(usd(q1.entra.v)) + ' · SALE -' + esc(usd(q1.sale.v)) + '</text>');
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 70) + '" fill="#fff" font-size="21" font-weight="700" text-anchor="middle">' + esc(fc(pr)) + ' · ' + (dias === 0 ? 'HOY' : dias === 1 ? 'MAÑANA' : 'EN ' + dias + ' DÍAS') + '</text>');
+      o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 104) + '" fill="' + (ok ? C.green : C.red) + '" font-size="16" text-anchor="middle">' + (ok ? 'LLEGAS CON ' : 'NO ALCANZA · LLEGAS EN ') + esc(usd(antesPago)) + '</text>');
+      if (q1) o.push('<text x="' + (bx + bw / 2) + '" y="' + (by + 134) + '" fill="#c9d2de" font-size="13" text-anchor="middle">ENTRA +' + esc(usd(q1.entra.v)) + ' · SALE -' + esc(usd(q1.sale.v)) + '</text>');
     })();
 
     // ---------------- bottom right: DÍAS DE PAGO ----------------
