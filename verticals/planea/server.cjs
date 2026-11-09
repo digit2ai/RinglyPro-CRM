@@ -38,6 +38,13 @@ const hasPortal = fs.existsSync(path.join(portalDir, 'inicio.html'));
 let planeaBackend = null;
 try { planeaBackend = require('./backend.cjs'); } catch (e) { console.log('planea backend not loaded:', e.message); }
 const planeaAdmin = require('./admin.cjs');
+// Las rutas que leen la base (API, administración, cotizaciones) esperan el arranque
+// del backend en vez de contestar «en mantenimiento» durante un reinicio.
+const ESPERA_ARRANQUE_MS = Number(process.env.PLANEA_BOOT_WAIT_MS) || 25000;
+router.use(function (req, res, next) {
+  if (!planeaBackend || !planeaBackend.whenReady || !/^\/(api\/|admin\/api|quote)/.test(req.path)) return next();
+  planeaBackend.whenReady(ESPERA_ARRANQUE_MS).then(function () { next(); }, function () { next(); });
+});
 const mayaTextsMod = require('./maya-texts.cjs');
 const taxNotify = require('./tax-notify.cjs');
 const planeaQuote = require('./quote.cjs');

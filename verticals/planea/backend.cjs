@@ -238,7 +238,15 @@ async function init() {
     console.log('⚠️ Planea backend init failed:', e.message);
   }
 }
-init();
+const initPromise = init();
+// Tras un reinicio del servidor (cualquier despliegue del monorepo) Planea tarda unos
+// segundos en conectarse a su base. En vez de rechazar al usuario en ese intervalo, la
+// petición ESPERA a que termine el arranque (máximo ms). Si el arranque falló de verdad,
+// no espera nada: el guardia responde como antes.
+function whenReady(ms) {
+  if (ready || initErr) return Promise.resolve(ready);
+  return Promise.race([initPromise.then(function () { return ready; }), new Promise(function (r) { setTimeout(function () { r(ready); }, ms || 25000); })]);
+}
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 // Two cookies: the HttpOnly JWT (auth) + a JS-readable identity hint so the
@@ -1292,4 +1300,4 @@ function build() {
   return router;
 }
 
-module.exports = { build, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize, Periodo, _setMailer: (fn) => { mailer = fn; } };
+module.exports = { build, whenReady, status: () => ({ ready, error: initErr }), authUser, db: () => sequelize, Periodo, _setMailer: (fn) => { mailer = fn; } };
