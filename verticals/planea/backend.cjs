@@ -277,7 +277,7 @@ function authUser(req) {
   try { return jwt.verify(tok, SECRET); } catch (e) { return null; }
 }
 function requireReady(res) {
-  if (!ready) { res.status(503).json({ error: 'backend_not_ready', detail: initErr }); return false; }
+  if (!ready) { res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true }); return false; }
   return true;
 }
 function publicUser(u) { return { id: u.id, email: u.email, full_name: u.full_name || '' }; }

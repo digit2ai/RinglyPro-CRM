@@ -126,7 +126,7 @@
   </section>
 
   <section id="closed" class="card" hidden>
-    <h1>Módulo cerrado</h1>
+    <h1 id="closedTitle">Módulo cerrado</h1>
     <p id="closedMsg" class="mut"></p>
   </section>
 
@@ -347,7 +347,7 @@
   function boot() {
     if ($('prevBtn') && !$('prevBtn').__on) { $('prevBtn').__on = true; $('prevBtn').addEventListener('click', prevRun); }
     call('GET', '/me').then(function (r) {
-      if (r._status === 503) { $('closedMsg').textContent = r.message || 'El módulo no está disponible todavía.'; return show('closed'); }
+      if (r._status === 503) { if (r.mantenimiento) { $('closedTitle').textContent = 'En mantenimiento'; $('closedMsg').textContent = 'Estamos haciendo mantenimiento. Esta página se recarga sola en un minuto.'; setTimeout(boot, 15000); return show('closed'); } $('closedTitle').textContent = 'Módulo cerrado'; $('closedMsg').textContent = r.message || 'El módulo no está disponible todavía.'; return show('closed'); }
       if (r._status !== 200) return show('login');
       $('whoName').textContent = r.admin.name + ' · ' + r.admin.email;
       show('app'); tab(tabFromHash());

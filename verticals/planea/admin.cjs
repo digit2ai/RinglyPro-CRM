@@ -294,7 +294,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   api.use((req, res, next) => (req.method === 'POST' && req.path === '/kb' ? next() : (req.method === 'POST' && MID.test(req.path) ? midJson : smallJson)(req, res, next)));
   api.use((req, res, next) => {
     if (!secret()) return res.status(503).json({ error: 'cerrado', message: 'El módulo administrativo no está configurado (falta un secreto de firma).' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     // Toda escritura exige la cabecera propia: un formulario de otro sitio no la puede poner.
     if (req.method !== 'GET' && req.headers['x-planea-admin'] !== '1') return res.status(404).json({ error: 'not_found' });
     ensureTables(db()).then(() => next(), (e) => { console.error('[planea-admin] tablas', e.message); res.status(500).json({ error: 'error_interno' }); });
@@ -746,7 +746,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
     const ev = String((req.body && req.body.event) || '');
     if (['visit', 'score_view'].indexOf(ev) < 0) return res.status(400).json({ error: 'evento_no_admitido' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       await ensureTables(db());
       await db().query(`INSERT INTO planea_events (tenant_id, user_id, event, day) VALUES (:t, :u, :e, :d)
@@ -761,7 +761,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   // la fila queda cerrada (repetir la encuesta no cambia el tiempo medido).
   me.post('/me/onboarding', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     const b = req.body || {};
     const done = b.done === true;
     const step = Number(b.step);
@@ -788,7 +788,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
 
   me.get('/me/nps', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       await ensureTables(db());
       const [rows] = await db().query('SELECT score FROM planea_nps WHERE tenant_id = :t AND user_id = :u', { replacements: { t: tenant(), u: a.id } });
@@ -799,7 +799,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
     const s = Number(req.body && req.body.score);
     if (!Number.isInteger(s) || s < 0 || s > 10) return res.status(400).json({ error: 'puntaje_invalido' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       await ensureTables(db());
       const [rows] = await db().query(`INSERT INTO planea_nps (tenant_id, user_id, score) VALUES (:t, :u, :s)
@@ -817,7 +817,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
     && new Date(String(v) + 'T12:00:00Z').toISOString().slice(0, 10) === String(v);
   me.get('/me/reminders', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       await ensureTables(db());
       const [rows] = await db().query("SELECT id, to_char(fecha, 'YYYY-MM-DD') AS fecha, title, notes, remind_days, done FROM planea_reminders WHERE tenant_id = :t AND user_id = :u ORDER BY fecha",
@@ -828,7 +828,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   });
   me.post('/me/reminders', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     const b = req.body || {};
     const title = cleanText(b.title, 120), notes = cleanText(b.notes, 500);
     const rd = Number.isInteger(+b.remind_days) && +b.remind_days >= 0 && +b.remind_days <= 120 ? +b.remind_days : 7;
@@ -847,7 +847,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   });
   me.patch('/me/reminders/:id', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     const b = req.body || {};
     if (b.done !== true && b.done !== false) return res.status(400).json({ error: 'nada_que_cambiar' });
     try {
@@ -860,7 +860,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   });
   me.delete('/me/reminders/:id', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       await ensureTables(db());
       const [rows] = await db().query('DELETE FROM planea_reminders WHERE tenant_id = :t AND user_id = :u AND id = :id RETURNING id',
@@ -885,7 +885,7 @@ function build({ backend, sec, mayaSystem, mayaModel, fetchImpl }) {
   // Así no hay una segunda copia de las fechas que se desactualice.
   me.get('/me/calendar', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       res.set('Cache-Control', 'no-store');
       await ensureTables(db());

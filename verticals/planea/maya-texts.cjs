@@ -399,7 +399,7 @@ function mount(me, ctx) {
   me.get('/me/maya-texts', async (req, res) => {
     const a = userOf(req); if (!a) return res.status(401).json({ error: 'unauthorized' });
     res.set('Cache-Control', 'no-store');
-    if (!ready()) return res.status(503).json({ error: 'backend_not_ready' });
+    if (!ready()) return res.status(503).json({ error: 'Planea está en mantenimiento. Vuelve a intentarlo en un minuto.', code: 'backend_not_ready', mantenimiento: true });
     try {
       const sq = db();
       const [rows] = await sq.query('SELECT u.full_name AS uname, p.full_name AS pname, p.score_data FROM planea_users u LEFT JOIN planea_profiles p ON p.user_id = u.id WHERE u.id = :u LIMIT 1', { replacements: { u: a.id } });
