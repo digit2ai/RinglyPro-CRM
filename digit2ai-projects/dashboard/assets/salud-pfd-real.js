@@ -200,7 +200,7 @@
       var vals = all.map(function (d) { return d.saldo; }).concat([0, v]);
       var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
       var X = function (f) { return mx + 10 + (Date.parse(f) - t0) / ((t1 - t0) || 1) * (mw - 20); };
-      var Y = function (val) { return my + 24 + (hi - val) / ((hi - lo) || 1) * (mh - 42); };
+      var Y = function (val) { return my + 24 + (hi - val) / ((hi - lo) || 1) * (mh - 62); };
       if (lo < 0) o.push('<line x1="' + (mx + 4) + '" x2="' + (mx + mw - 4) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="' + C.red + '" stroke-dasharray="4 3"/>');
       var dd = '';
       past.forEach(function (p, i) { dd += (i ? ' L ' : 'M ') + X(p.fecha).toFixed(1) + ',' + Y(i === past.length - 1 ? v : p.saldo).toFixed(1); });
@@ -214,7 +214,9 @@
         fut.forEach(function (p) {
           if (p.saldo >= 0) return;
           var lx = Math.max(mx + 18, Math.min(mx + mw - 18, X(p.fecha)));
-          o.push('<text x="' + lx.toFixed(1) + '" y="' + Math.min(my + mh - 18, Y(p.saldo) + 14).toFixed(1) + '" fill="' + C.red + '" font-size="10" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha)) + '</text>');
+          var ly = Math.min(my + mh - 20, Y(p.saldo) + 17);
+          o.push('<rect x="' + (lx - 21).toFixed(1) + '" y="' + (ly - 11).toFixed(1) + '" width="42" height="14" rx="2" fill="#000"/>');
+          o.push('<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" fill="#ff6b6b" font-size="11" font-weight="700" text-anchor="middle">' + esc(fc(p.fecha)) + '</text>');
         });
       }
       o.push('<text x="' + (mx + 10) + '" y="' + (my + mh - 6) + '" fill="#cfd8e3" font-size="10">' + esc(fc(all[0].fecha)) + '</text>');
