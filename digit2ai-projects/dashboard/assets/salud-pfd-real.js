@@ -158,10 +158,10 @@
       // green pointer on the left: what came in
       var yi = Y(inc), yo = Y(out);
       o.push('<path d="M ' + (x + 4) + ' ' + yi + ' l -14 -22 h -84 v 44 h 84 z" fill="#000" stroke="' + C.green + '" stroke-width="2.5"/>');
-      o.push('<text x="' + (x - 56) + '" y="' + (yi - 4) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">ENTRÓ</text><text x="' + (x - 56) + '" y="' + (yi + 15) + '" fill="' + C.green + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(inc)) + '</text>');
+      o.push('<text x="' + (x - 56) + '" y="' + (yi - 4) + '" fill="' + C.green + '" font-size="11" text-anchor="middle">ENTRADA</text><text x="' + (x - 56) + '" y="' + (yi + 15) + '" fill="' + C.green + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(inc)) + '</text>');
       // red pointer on the right: what went out
       o.push('<path d="M ' + (x + w - 4) + ' ' + yo + ' l 14 -22 h 84 v 44 h -84 z" fill="#000" stroke="' + C.red + '" stroke-width="2.5"/>');
-      o.push('<text x="' + (x + w + 56) + '" y="' + (yo - 4) + '" fill="' + C.red + '" font-size="11" text-anchor="middle">SALIÓ</text><text x="' + (x + w + 56) + '" y="' + (yo + 15) + '" fill="' + C.red + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(out)) + '</text>');
+      o.push('<text x="' + (x + w + 56) + '" y="' + (yo - 4) + '" fill="' + C.red + '" font-size="11" text-anchor="middle">SALIDA</text><text x="' + (x + w + 56) + '" y="' + (yo + 15) + '" fill="' + C.red + '" font-size="21" font-weight="700" text-anchor="middle">' + esc(k(out)) + '</text>');
       var n = r.mes.neto.v;
       o.push('<rect x="' + x + '" y="' + (y0 + h) + '" width="' + w + '" height="34" fill="#000"/><text x="' + (x + w / 2) + '" y="' + (y0 + h + 24) + '" fill="#fff" font-size="13" text-anchor="middle">NETO <tspan font-size="18" font-weight="700" fill="' + (n >= 0 ? C.green : C.red) + '">' + (n > 0 ? '+' : '') + esc(k(n)) + '</tspan></text>');
       if (pe > 0) o.push('<text x="' + (x + w / 2) + '" y="' + (y0 + h - 10) + '" fill="' + C.green + '" font-size="12" font-weight="700" text-anchor="middle">+' + esc(k(pe)) + ' POR ENTRAR</text>');
