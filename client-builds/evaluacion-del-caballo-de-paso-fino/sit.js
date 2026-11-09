@@ -252,16 +252,16 @@ async function run(base) {
 
   // ---- Cuentas + créditos (sistema propio) ---------------------------------
   {
-    // Registro -> saldo inicial (bono; 0 por defecto).
+    // Registro -> saldo inicial: prueba gratis de 10 créditos.
     const email = 'sit+credits.' + Date.now() + '@digit2ai.com';
     const reg = await reqJson(base, 'POST', '/api/v1/account/register', { body: { email, password: 'sitpass123', nombre: 'Créditos' } });
     const tok = reg.json && reg.json.token;
-    check('POST /account/register -> 201 + token + credits', reg.status === 201 && !!tok && reg.json.user && reg.json.user.credits === 0,
+    check('POST /account/register -> 201 + token + 10 free-trial credits', reg.status === 201 && !!tok && reg.json.user && reg.json.user.credits === 10,
       `status=${reg.status} credits=${reg.json && reg.json.user && reg.json.user.credits}`);
 
     // /me refleja la cuenta.
     const me = await reqJson(base, 'GET', '/api/v1/account/me', { token: tok });
-    check('GET /account/me -> account + 0 credits', me.status === 200 && me.json && me.json.email === email && me.json.credits === 0, `status=${me.status}`);
+    check('GET /account/me -> account + 10 credits', me.status === 200 && me.json && me.json.email === email && me.json.credits === 10, `status=${me.status}`);
 
     // Duplicado -> 409.
     const dup = await reqJson(base, 'POST', '/api/v1/account/register', { body: { email, password: 'sitpass123' } });
@@ -283,6 +283,19 @@ async function run(base) {
     const setup = await reqJson(base, 'POST', '/api/v1/champ/demo-setup', { body: {} });
     const ins = setup.json && setup.json.inscripcion;
     const frames = synth.syntheticFrames('paso_fino', { ciclos: 6 });
+    // Free-trial credits are real: a paid analysis debits 1 (10 -> 9).
+    const trial = await reqChampSession(base, { token: tok, inscripcion_id: ins.id, superficie: 'tablado', frames });
+    check('free-trial credits pay for a real analysis -> charged + credits 9', trial.status === 201 && trial.json && trial.json.charged === true && trial.json.credits === 9,
+      `status=${trial.status} credits=${trial.json && trial.json.credits}`);
+    // /config reports the low-credit threshold the dashboard warns at.
+    const cfgLow = await reqJson(base, 'GET', '/api/v1/account/config', { token: tok });
+    check('GET /account/config -> low_credit_threshold 2', cfgLow.status === 200 && cfgLow.json && cfgLow.json.low_credit_threshold === 2, `got=${cfgLow.json && cfgLow.json.low_credit_threshold}`);
+    // Spend the rest of the trial so the out-of-credits path can be tested.
+    for (let i = 0; i < 12; i++) {
+      const left = (await reqJson(base, 'GET', '/api/v1/account/credits/balance', { token: tok })).json.credits;
+      if (left <= 0) break;
+      await reqChampSession(base, { token: tok, inscripcion_id: ins.id, superficie: 'tablado', frames });
+    }
     const noCred = await reqChampSession(base, { token: tok, inscripcion_id: ins.id, superficie: 'tablado', frames });
     check('real analysis with 0 credits -> 402 NO_CREDITS', noCred.status === 402 && noCred.json && noCred.json.code === 'NO_CREDITS', `status=${noCred.status}`);
 

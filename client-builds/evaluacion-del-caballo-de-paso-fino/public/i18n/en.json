@@ -131,7 +131,7 @@
   "back_home": "Back to home",
   "signup_sub": "Create your account to get started",
   "signup_title": "Create account",
-  "signup_note": "$10 gives you 10 credits (10 analyses). 1 credit per video analysis and 1 per sound analysis.",
+  "signup_note": "Free trial: your new account starts with 10 credits (10 analyses). 1 credit per video analysis and 1 per sound analysis.",
   "field_name": "Name",
   "signup_btn": "Create account",
   "signup_has_account": "Already have an account?",
@@ -147,7 +147,7 @@
   "landing_cta_start": "Get started",
   "landing_cta_panel": "Go to panel",
   "landing_hero_sub": "Evaluate your paso fino horse gait with AI: classify the gait, score it like a judge and surface findings, from video or audio.",
-  "landing_pricing_line": "Sign up free. Recharge from $10 (10 analyses). 1 credit = 1 analysis.",
+  "landing_pricing_line": "Sign up free and get 10 trial credits. Then recharge from $10 (10 analyses). 1 credit = 1 analysis.",
   "landing_tools_title": "Everything in one panel",
   "tool_juez_t": "Paso Fino",
   "tool_juez_d": "Upload video + audio: classify paso fino / trocha / trot-canter and score like a judge.",
@@ -287,5 +287,7 @@
   "final_b2_t": "$10 = 10 analyses",
   "final_b2_d": "1 credit per analysis. Top up anytime.",
   "final_b3_t": "Shareable reports",
-  "final_b3_d": "Every report has a public link."
+  "final_b3_d": "Every report has a public link.",
+  "low_credit_warn": "You are running low on credits: {n} left. Recharge so you do not run out.",
+  "low_credit_zero": "You are out of credits. Recharge to keep evaluating."
 }

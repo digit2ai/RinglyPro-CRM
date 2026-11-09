@@ -30,7 +30,14 @@ const account = require('../models/account');
 
 const JWT_SECRET = process.env.ECPF_JWT_SECRET || process.env.JWT_SECRET || 'ecpf-dev-secret';
 const COOKIE = 'ecpf_token';
-const WELCOME_BONUS = parseInt(process.env.ECPF_WELCOME_BONUS_CREDITS || '0', 10) || 0;
+// Free trial ("Prueba gratis" on equimind.app): every new account starts with 10
+// credits. ECPF_WELCOME_BONUS_CREDITS can override it (set it to a positive number).
+const WELCOME_BONUS = (function () {
+  const n = parseInt(process.env.ECPF_WELCOME_BONUS_CREDITS, 10);
+  return Number.isInteger(n) && n > 0 ? n : 10;
+})();
+// The UI warns the user when their balance is at or below this many credits.
+const LOW_CREDIT_THRESHOLD = 2;
 const CREDIT_PRICE = parseFloat(process.env.ECPF_CREDIT_PRICE_USD || '1') || 1; // $1 por crédito
 const PACKAGE_AMOUNTS = [10, 20, 40, 60, 80, 100];
 
@@ -159,6 +166,7 @@ router.get('/config', optionalAccount, (req, res) => {
     welcome_bonus: WELCOME_BONUS,
     logged_in: !!req.account,
     credits: req.account ? req.account.credits : null,
+    low_credit_threshold: LOW_CREDIT_THRESHOLD,
     email: req.account ? req.account.email : null
   });
 });

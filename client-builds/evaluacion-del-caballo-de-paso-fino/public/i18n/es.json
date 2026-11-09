@@ -131,7 +131,7 @@
   "back_home": "Volver al inicio",
   "signup_sub": "Crea tu cuenta para empezar",
   "signup_title": "Crear cuenta",
-  "signup_note": "Con $10 recibes 10 créditos (10 análisis). 1 crédito por análisis de video y 1 por análisis de sonido.",
+  "signup_note": "Prueba gratis: al crear tu cuenta recibes 10 créditos (10 análisis). 1 crédito por análisis de video y 1 por análisis de sonido.",
   "field_name": "Nombre",
   "signup_btn": "Crear cuenta",
   "signup_has_account": "¿Ya tienes cuenta?",
@@ -147,7 +147,7 @@
   "landing_cta_start": "Empieza ahora",
   "landing_cta_panel": "Ir al panel",
   "landing_hero_sub": "Evalúa la marcha de tu caballo de paso fino con inteligencia artificial: clasifica la modalidad, puntúa como un juez y detecta hallazgos, desde video o audio.",
-  "landing_pricing_line": "Regístrate gratis. Recarga desde $10 (10 análisis). 1 crédito = 1 análisis.",
+  "landing_pricing_line": "Regístrate gratis y recibe 10 créditos de prueba. Luego recarga desde $10 (10 análisis). 1 crédito = 1 análisis.",
   "landing_tools_title": "Todo en un panel",
   "tool_juez_t": "Caballo de Paso",
   "tool_juez_d": "Sube video + audio: clasifica paso fino / trocha / trote-galope y puntúa como un juez.",
@@ -287,5 +287,7 @@
   "final_b2_t": "$10 = 10 análisis",
   "final_b2_d": "1 crédito por análisis. Recarga cuando quieras.",
   "final_b3_t": "Comparte informes",
-  "final_b3_d": "Cada informe tiene un enlace público."
+  "final_b3_d": "Cada informe tiene un enlace público.",
+  "low_credit_warn": "Te quedan pocos créditos: {n}. Recarga para no quedarte sin análisis.",
+  "low_credit_zero": "Te quedaste sin créditos. Recarga para seguir evaluando."
 }

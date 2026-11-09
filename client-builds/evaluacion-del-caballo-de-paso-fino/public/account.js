@@ -35,12 +35,55 @@
         '</span>';
       el('rechargeBtn').addEventListener('click', openRecharge);
       el('logoutBtn').addEventListener('click', function (e) { e.preventDefault(); logout(); });
+      renderLowCredit();
     } else {
       box.innerHTML = '<a href="' + BASE + 'login?next=' + encodeURIComponent(location.pathname) + '" class="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white">' + t('login_cta', 'Iniciar sesión') + '</a>';
     }
   }
 
-  function setCount(n) { var c = el('creditCount'); if (c) c.textContent = n; if (cfg) cfg.credits = n; }
+  function setCount(n) { var c = el('creditCount'); if (c) c.textContent = n; if (cfg) cfg.credits = n; renderLowCredit(); }
+
+  // ---- Low-credit warning ---------------------------------------------------
+  // At <= low_credit_threshold (2) credits the chip turns amber and a banner
+  // appears under the top bar with a recharge button. At 0 it turns red.
+  function lowThreshold() { return cfg && cfg.low_credit_threshold != null ? cfg.low_credit_threshold : 2; }
+  function renderLowCredit() {
+    var n = cfg ? parseInt(cfg.credits, 10) : NaN;
+    var show = !!(cfg && cfg.logged_in) && Number.isInteger(n) && n <= lowThreshold();
+    var chip = el('creditCount'); var pill = chip ? chip.parentNode : null;
+    if (pill) {
+      // !important so the page theme cannot keep the chip green while the balance is low.
+      var set = function (k, v) { if (v) pill.style.setProperty(k, v, 'important'); else pill.style.removeProperty(k); };
+      set('background-color', show ? (n === 0 ? 'rgba(225,29,72,.18)' : 'rgba(217,119,6,.18)') : '');
+      set('color', show ? (n === 0 ? '#fda4af' : '#fcd34d') : '');
+      set('border-color', show ? (n === 0 ? 'rgba(225,29,72,.5)' : 'rgba(217,119,6,.5)') : '');
+    }
+    var banner = el('lowCreditBanner');
+    if (!show) { if (banner) banner.style.display = 'none'; return; }
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'lowCreditBanner';
+      banner.setAttribute('role', 'status');
+      banner.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 20px;padding:12px 14px;border-radius:12px;font-size:14px';
+      banner.innerHTML = '<span id="lowCreditText"></span>' +
+        '<button id="lowCreditBtn" class="bg-indigo-600 hover:bg-indigo-500" style="background:#4f46e5;color:#fff;font-weight:600;border-radius:8px;padding:6px 12px;font-size:13px"></button>';
+      // Place it right under the bar that holds the credit chip.
+      var anchor = el('creditChip'), bar = anchor;
+      while (bar && bar.parentNode && bar.parentNode !== document.body && !/^(HEADER|MAIN)$/.test(bar.parentNode.tagName)) bar = bar.parentNode;
+      if (bar && bar.parentNode && bar.parentNode !== document.body) bar.parentNode.insertBefore(banner, bar.nextSibling);
+      else document.body.insertBefore(banner, document.body.firstChild);
+      el('lowCreditBtn').addEventListener('click', openRecharge);
+    }
+    var zero = n === 0;
+    banner.style.display = 'flex';
+    banner.style.background = zero ? 'rgba(225,29,72,.12)' : 'rgba(217,119,6,.12)';
+    banner.style.border = '1px solid ' + (zero ? 'rgba(225,29,72,.45)' : 'rgba(217,119,6,.45)');
+    banner.style.color = zero ? '#fecdd3' : '#fde68a';
+    el('lowCreditText').textContent = zero
+      ? t('low_credit_zero', 'Te quedaste sin créditos. Recarga para seguir evaluando.')
+      : t('low_credit_warn', 'Te quedan pocos créditos: {n}. Recarga para no quedarte sin análisis.').replace('{n}', n);
+    el('lowCreditBtn').textContent = t('recharge', 'Recargar');
+  }
 
   function logout() {
     fetch(API + '/logout', { method: 'POST', credentials: 'same-origin' }).then(function () { location.reload(); });
@@ -136,7 +179,7 @@
   function onPaid(credits) {
     closeRecharge();
     // Pequeño aviso.
-    var b = el('creditChip'); if (b) { var n = el('creditCount'); if (n) { n.textContent = credits; } }
+    setCount(credits);
     if (window.__onCreditsChanged) window.__onCreditsChanged(credits);
   }
 
