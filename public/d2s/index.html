@@ -118,7 +118,7 @@ section.alt{background:var(--bg2)}
 .hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;
   mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%)}
-.hgrid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
+.hgrid{position:relative;display:grid;grid-template-columns:minmax(0,820px);gap:48px;align-items:center}
 @media(max-width:980px){.hgrid{grid-template-columns:1fr}}
 .pill{display:inline-flex;align-items:center;gap:10px;font-family:var(--fm);font-size:12.5px;color:var(--mut);background:var(--pillbg);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;margin-bottom:22px}
 .pill i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:blink 1.6s ease-in-out infinite}
@@ -512,23 +512,6 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       <div class="badges"><span>REST API</span><span>MCP</span><span>Siigo</span><span>Alegra</span><span>World Office</span><span>SAP</span><span>Oracle</span><span>Odoo</span></div>
     </div>
 
-    <div class="calc" aria-label="Calculadora de ahorro">
-      <span class="kick" style="margin-bottom:6px"><span class="es">Calcula tu caso</span><span class="en">Calculate your case</span></span>
-      <h3 class="ct"><span class="es">¿Cuánto te cuesta hoy <span class="grad">el trabajo manual?</span></span><span class="en">What does manual work <span class="grad">cost you today?</span></span></h3>
-      <div class="sl"><label for="cP"><span><span class="es">Personas que copian datos o atienden lo mismo</span><span class="en">People copying data or handling the same requests</span></span><b id="cPv">10</b></label><input type="range" id="cP" min="1" max="30" value="10"></div>
-      <div class="sl"><label for="cH"><span><span class="es">Horas diarias por persona en tareas repetitivas</span><span class="en">Daily hours per person on repetitive tasks</span></span><b id="cHv">4</b></label><input type="range" id="cH" min="1" max="8" value="4"></div>
-      <div class="sl"><label for="cC"><span><span class="es">Costo por semana de cada persona (USD)</span><span class="en">Weekly cost of each person (USD)</span></span><b id="cCv">$120</b></label><input type="range" id="cC" min="40" max="2400" step="10" value="120"></div>
-      <div class="sl"><label for="cA"><span><span class="es">Parte que se automatiza (supuesto que tú ajustas)</span><span class="en">Share that gets automated (an assumption you set)</span></span><b id="cAv">50%</b></label><input type="range" id="cA" min="10" max="80" step="5" value="50"></div>
-      <div class="res">
-        <span class="lbl"><span class="es">Horas que se liberan cada mes</span><span class="en">Hours freed every month</span></span>
-        <div class="big" id="cHrs">0 h</div>
-        <div class="row2"><span><span class="es">Trabajo manual hoy, por mes</span><span class="en">Manual work today, per month</span></span><b id="cMan">$0</b></div>
-        <div class="row2"><span><span class="es">Valor de las horas liberadas, por mes</span><span class="en">Value of the freed hours, per month</span></span><b id="cVal">$0</b></div>
-        <div class="row2"><span><span class="es">Suscripción mensual</span><span class="en">Monthly subscription</span></span><b>$388</b></div>
-        <div class="row2"><span><span class="es">Diferencia mensual</span><span class="en">Monthly difference</span></span><b id="cDif">$0</b></div>
-      </div>
-      <p class="cnote"><span class="es">Calculado con tus propios datos. Supuestos: 5 días y 40 horas de trabajo por semana; el porcentaje también es un supuesto. El diagnóstico lo mide con tu operación real.</span><span class="en">Calculated with your own figures. Assumptions: 5 days and 40 working hours a week; the percentage is an assumption too. The assessment measures it on your real operation.</span></p>
-    </div>
   </div>
 </header>
 
@@ -1018,27 +1001,6 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   var saved = null; try { saved = localStorage.getItem('synthex_lang'); } catch(e) {}
   set(saved === 'en' ? 'en' : 'es');
 
-  // Calculadora: solo aritmética con los datos que mueve el visitante (igual que /pymes).
-  function money(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
-  function calc(){
-    var p = +document.getElementById('cP').value, h = +document.getElementById('cH').value,
-        c = +document.getElementById('cC').value, a = +document.getElementById('cA').value / 100;
-    document.getElementById('cPv').textContent = p;
-    document.getElementById('cHv').textContent = h;
-    document.getElementById('cCv').textContent = '$' + c;
-    document.getElementById('cAv').textContent = Math.round(a * 100) + '%';
-    // h = horas DIARIAS por persona; c = costo SEMANAL por persona (40 h, 5 días).
-    var hrsMes = p * h * 5 * 52 / 12, hora = c / 40, man = hrsMes * hora, lib = hrsMes * a, val = lib * hora, dif = val - 388;
-    document.getElementById('cHrs').textContent = Math.round(lib).toLocaleString('en-US') + ' h';
-    document.getElementById('cMan').textContent = money(man);
-    document.getElementById('cVal').textContent = money(val);
-    var d = document.getElementById('cDif');
-    d.textContent = (dif >= 0 ? '+' : '−') + money(Math.abs(dif));
-    d.style.color = dif >= 0 ? (document.documentElement.getAttribute('data-theme') === 'light' ? '#047857' : '#34d399') : (document.documentElement.getAttribute('data-theme') === 'light' ? '#B45309' : '#fbbf24');
-  }
-  ['cP','cH','cC','cA'].forEach(function(id){ document.getElementById(id).addEventListener('input', calc); });
-  document.querySelectorAll('[data-theme-toggle]').forEach(function(b){ b.addEventListener('click', function(){ setTimeout(calc, 0); }); });
-  calc();
 
   // Solicitud de demostración: entra al mismo intake de proyectos, marcada como Synthex SAI. Sin pago en línea.
   var form = document.getElementById('leadForm'), btn = document.getElementById('sendBtn'), msg = document.getElementById('msg');
