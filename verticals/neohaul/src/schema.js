@@ -20,16 +20,45 @@ const OBRAS = [
   ['Bacheo E18', 'E18'], ['SICT N18', 'N18'], ['SICT N16', 'N16'],
   ['Viajes internos de plantas', 'INT'], ['REA4', 'REA4']
 ];
+// Confirmado por NeoHaul en «exel 12.xlsx» (10-nov-2026), con sus palabras.
+const NOTA_4400 = 'Por viaje a bacheo Santiago: $2,400 carpeta + $2,000 escombro (NeoHaul, 10-nov-2026).';
+const NOTA_ESCOMBRO = 'Se cobra a $225/t y lo pagan por 20 t: $4,500 por viaje (NeoHaul, 10-nov-2026).';
 // [nombre, material, origen, destino, unidad, precio, por_confirmar, nota]
 const TARIFAS = [
   ['Carpeta asfáltica · Planta Santiago → Monterrey', 'asfalto', 'Planta Santiago', 'Monterrey', 'tonelada', 170, false, null],
   ['Carpeta asfáltica · Planta Cadereyta → Monterrey', 'asfalto', 'Planta Cadereyta', 'Monterrey', 'tonelada', 185, false, null],
   ['Renta diaria · Planta Cadereyta → bacheo Santiago', 'asfalto', 'Planta Cadereyta', 'Bacheo Santiago', 'dia', 6500, false, null],
-  ['Planta Santiago → bacheo Santiago', 'asfalto', 'Planta Santiago', 'Bacheo Santiago', 'dia', 4400, true, 'Confirmar con NeoHaul si los $4,400 son por día o por viaje.'],
+  ['Planta Santiago → bacheo Santiago', 'asfalto', 'Planta Santiago', 'Bacheo Santiago', 'viaje', 4400, false, NOTA_4400],
   ['Recuperado (reciclado)', 'recuperado', null, null, 'tonelada', 150, false, null],
-  ['Escombro', 'escombro', null, null, 'tonelada', 250, true, 'El mensaje de NeoHaul dice $4,500 por 20 t; a $250/t serían $5,000. Confirmar.'],
+  ['Escombro (20 t por viaje)', 'escombro', null, null, 'viaje', 4500, false, NOTA_ESCOMBRO],
   ['Viajes internos en planta', 'asfalto', 'Planta', 'Planta', 'tonelada', 22, false, null]
 ];
+
+/** Ver el comentario de adentro. Exportada para que la SIT la pruebe contra una empresa con viajes. */
+async function confirmarTarifas(q, tenantId) {
+  // Las dos tarifas que sembramos "por confirmar" ya las confirmó NeoHaul. Solo se tocan si siguen
+  // exactamente como las sembramos (si alguien ya las editó, su edición gana). Si ya hay viajes con
+  // ellas, NO se cambian en su lugar: se retiran y se agrega la confirmada como fila nueva, para que
+  // ningún viaje viejo cambie de unidad (20 t a $250 jamás debe volverse 20 viajes a $4,500).
+  const corregir = async (where, nueva) => {
+    const [rows] = await q(`SELECT id FROM nh_tarifas WHERE tenant_id=:t AND por_confirmar AND ${where}`, { t: tenantId });
+    for (const r of rows) {
+      const [[u]] = await q('SELECT COUNT(*)::int AS n FROM nh_viajes WHERE tenant_id=:t AND tarifa_id=:id', { t: tenantId, id: r.id });
+      if (!u.n) {
+        await q('UPDATE nh_tarifas SET nombre=:n, unidad=:u, precio=:p, por_confirmar=FALSE, nota=:nota WHERE id=:id AND tenant_id=:t', { ...nueva, id: r.id, t: tenantId });
+      } else {
+        await q("UPDATE nh_tarifas SET active=FALSE, nota='Reemplazada por la tarifa confirmada (10-nov-2026); sus viajes conservan su precio.' WHERE id=:id AND tenant_id=:t", { id: r.id, t: tenantId });
+        await q(`INSERT INTO nh_tarifas (tenant_id,nombre,material,origen,destino,unidad,precio,por_confirmar,nota)
+          SELECT tenant_id,:n,material,origen,destino,:u,:p,FALSE,:nota FROM nh_tarifas WHERE id=:id AND tenant_id=:t`, { ...nueva, id: r.id, t: tenantId });
+      }
+      await q("INSERT INTO nh_activity (tenant_id,action,detail) VALUES (:t,'tarifa_confirmada',:d)", { t: tenantId, d: `${r.id} -> ${nueva.n} ${nueva.p}/${nueva.u}${u.n ? ' (fila nueva; ' + u.n + ' viajes conservan la anterior)' : ''}` });
+    }
+  };
+  await corregir("nombre='Planta Santiago → bacheo Santiago' AND precio=4400 AND unidad='dia'",
+    { n: 'Planta Santiago → bacheo Santiago', u: 'viaje', p: 4400, nota: NOTA_4400 });
+  await corregir("material='escombro' AND precio=250 AND unidad='tonelada'",
+    { n: 'Escombro (20 t por viaje)', u: 'viaje', p: 4500, nota: NOTA_ESCOMBRO });
+}
 
 async function init(db) {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', '20261109_neohaul_tables.sql'), 'utf8');
@@ -64,7 +93,8 @@ async function init(db) {
           VALUES (:t,:n,:m,:o,:d,:u,:p,:pc,:nota)`, { t: tenantId, n: nombre, m: material, o: origen, d: destino, u: unidad, p: precio, pc, nota });
       }
     }
+    await confirmarTarifas(q, tenantId);
   });
   return tenantId;
 }
-module.exports = { init, FLOTA, OBRAS, TARIFAS };
+module.exports = { init, confirmarTarifas, FLOTA, OBRAS, TARIFAS };

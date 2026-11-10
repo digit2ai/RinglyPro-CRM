@@ -82,11 +82,43 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.js'));
     const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     const code = Object.fromEntries(files.map((f) => [f, strip(fs.readFileSync(path.join(srcDir, f), 'utf8'))]));
+    ok('docs.js (lectores) no toca base de datos ni red', !/require\('\.\/db'\)|sequelize|https?\.request|fetch\(/.test(code['docs.js']));
     ok('solo llm.js llega a un modelo', files.filter((f) => /@anthropic-ai\/sdk/.test(code[f])).join() === 'llm.js');
     ok('ningún transporte de mensajes en el vertical', !files.some((f) => /twilio|sendgrid|nodemailer|graph\.facebook|messages\.create\(\s*\{\s*to/i.test(code[f])));
     ok('el servidor no lee importe/subtotal/total del cuerpo', !/body\.(importe|subtotal|total|iva|retencion|precio_unitario)\b/.test(code['index.js'].replace(/b\.precio_unitario/g, 'PU_SUELTA')) && !/b\.(importe|subtotal|iva|retencion)\b/.test(code['index.js']));
     ok('el tenant nunca sale del cuerpo', !/body\.tenant_id|b\.tenant_id/.test(code['index.js']));
     ok('el lector no calcula importes', !/importe/.test(code['llm.js']));
+
+    console.log('\nDocumentos reales (lectores puros, 10-nov-2026)');
+    const D = require('./src/docs');
+    // Mismos campos y formas que el vale HTR No. 41971; valores inventados (el repo es público).
+    const vale = { vale_no: '90001', folio: '70001', pedido: '70001', fecha: '28/09/2026', hora: '10:43', fecha_escrita: '28-07-26', placas: 'XX0224B', placas_escritas: 'XXO224B',
+      cliente: 'S I C T', producto: 'MARSHALL 3-4', destino: 'N-16', operador: 'Juan Prueba', temperatura: '175 Gr', transportista: 'GRUPO NEOHAUL',
+      peso_bruto: '30570 kg', peso_tara: '9500 kg TARA MANUAL', peso_neto: '21070 kg', legible: 'si' };
+    const cv = D.cleanOcr(vale);
+    ok('neto 21,070 kg = 21.07 t, dicho como conversión', cv.toneladas === 21.07 && cv.origen_toneladas === 'kg_a_t');
+    ok('fecha: la impresa por la báscula, y avisa que la escrita a mano difiere', cv.fecha === '2026-09-28' && cv.avisos.includes('fecha_escrita_distinta'));
+    ok('avisa tara manual', cv.avisos.includes('tara_manual'));
+    ok('O/0 en placas no cuenta como placas distintas', !cv.avisos.includes('placas_distintas'));
+    ok('vale No. y folio de báscula por separado', cv.vale_no === '90001' && cv.ticket_no === '70001');
+    ok('limpiar su propia salida da lo mismo (se guarda en ocr)', JSON.stringify(D.cleanOcr(cv)) === JSON.stringify(cv));
+    ok('bruto - tara distinto del neto = aviso', D.cleanOcr({ ...vale, peso_neto: '20000 kg' }).avisos.includes('neto_no_cuadra'));
+    ok('un número sin unidad no se interpreta como peso', D.cleanOcr({ peso_neto: '21070' }).toneladas === null);
+    ok('peso absurdo no pasa', D.cleanOcr({ peso_neto: '210700 kg' }).toneladas === null);
+    ok('otro transportista = aviso', D.cleanOcr({ transportista: 'OTRA SA' }).avisos.includes('otro_transportista'));
+    const sg = D.sugerir(cv, { trucks: [{ id: 7, placas: 'XX-0224-B' }, { id: 8, placas: 'ZZ1' }], obras: [{ id: 3, nombre: 'SICT N16', clave: 'N16' }, { id: 4, nombre: 'SICT N18', clave: 'N18' }],
+      drivers: [{ id: 5, nombre: 'Juan Prueba López' }, { id: 6, nombre: 'Pedro Otro' }] });
+    ok('sugiere camión por placas, obra por destino N-16 y chofer por nombre', sg.truck_id === 7 && sg.obra_id === 3 && sg.driver_id === 5, JSON.stringify(sg));
+    ok('dos camiones con las mismas placas = no sugiere ninguno', D.sugerir(cv, { trucks: [{ id: 1, placas: 'XX0224B' }, { id: 2, placas: 'XXO224B' }] }).truck_id === null);
+    const casos = ['8136414177', '+1 813 641 4177', '+52 1 81 1234 5678', '5218112345678', '528112345678', '123', '', '+44 20 7946 0958'];
+    ok('WhatsApp: 10 dígitos = México; +1 = EE. UU.', D.waNumero('8136414177') === '528136414177' && D.waNumero('+1 813 641 4177') === '18136414177' && D.waNumero('+52 1 81 1234 5678') === '528112345678' && D.waNumero('123') === null);
+    const appSrc = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+    const fnSrc = (appSrc.match(/function waNumero\(tel\) \{[\s\S]*?\n  \}/) || [])[0];
+    const waCliente = fnSrc && new Function(fnSrc + '; return waNumero;')();
+    ok('la pantalla y el servidor arman el mismo número de WhatsApp', !!waCliente && casos.every((c) => waCliente(c) === D.waNumero(c)), String(casos.map((c) => waCliente && waCliente(c))));
+    const sch = require('./src/schema');
+    const esc4500 = sch.TARIFAS.find((t) => t[1] === 'escombro'), b4400 = sch.TARIFAS.find((t) => t[5] === 4400);
+    ok('tarifas confirmadas por NeoHaul: escombro $4,500/viaje, bacheo $4,400/viaje', esc4500[4] === 'viaje' && esc4500[5] === 4500 && !esc4500[6] && b4400[4] === 'viaje' && !b4400[6]);
 
     console.log('\nPreparación');
     const mkTenant = async (slug) => { const [[t]] = await db.query("INSERT INTO nh_tenants (name,slug) VALUES (:n,:s) RETURNING id", { replacements: { n: 'SIT ' + slug, s: slug } }); tenants.push(t.id); return t.id; };
@@ -211,6 +243,145 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('camión repetido en el reparto cuenta una sola vez', dup.json.reparto.length === 2 && near(dup.json.total, 1000));
     ok('pago parcial deja saldo $200 pendiente', near(pg.saldo, 200) && pg.estado === 'pendiente');
 
+    console.log('\nDiésel por carga (CFDI de la gasolinera) y PPS');
+    const mkPdf = (lineas) => new Promise((resolve) => {
+      const PDF = require('pdfkit'); const d = new PDF({ size: 'LETTER', margin: 20, compress: false, pdfVersion: '1.4' }); const ch = [];
+      d.on('data', (c) => ch.push(c)); d.on('end', () => resolve(Buffer.concat(ch)));
+      d.fontSize(6); lineas.forEach((l, i) => d.text(l, 20, 20 + i * 9, { lineBreak: false })); d.end();
+    });
+    // Mismo formato que el PDF de Gas Manager de la estación J6; datos inventados.
+    const cfdi = (uuid, folio, totales) => ['I - INGRESO', uuid, folio, 'LU 01/JUN/26 12:07:16', 'E09999 - GASOLINERA SIT', 'RFC: XAX-010101-000', 'RFC: XEX-010101-000',
+      '1510150580.000LTR - LITROS$23.343561$1,828.22$292.52$1,867.48DIESELPL/9999/EXP/ES/2015-1000001', 'JU 28/MAY/26 07:56:191000001', 'FolioDespacho',
+      '15101505100.000LTR - LITROS$23.343561$2,285.27$365.64$2,334.36DIESELPL/9999/EXP/ES/2015-1000002', 'VI 29/MAY/26 16:10:041000002', 'FolioDespacho',
+      '1510151562.616LTR - LITROS$25.858152$1,573.95$251.83$1,619.14PREMIUMPL/9999/EXP/ES/2015-1000003', 'SA 30/MAY/26 11:36:351000003', 'Mang',
+      ...totales, '0.16', 'Tasa', 'SubTotal:', 'Tarjeta: 111, Titular: SIT, Placas:'];
+    const XLSX = require('xlsx');
+    const ppsBuf = (rows) => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'NEOHAUL'); return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }); };
+    const H = ['ORDEN', 'EMPRESA', 'NUM FACT', 'FECHA', 'TIPO', 'SALDO', 'PROVEEDOR', 'TOTAL FACT', 'CONCEPTO', 'CC', 'DESC CC', 'EXPLICACION', 'PRIORIDAD', 'SI NO PARCIAL', 'PAGO PARCIAL', 'PROPUESTA'];
+    const filaPps = (o, folio, serial, saldo, prov, total, cc) => [o, 'NEOHAUL', folio, serial, '            ', saldo, prov + '          ', total, 'Factura        ', cc || 'GENERAL     ', 'NEOHAUL', '', '', '', '', '0'];
+    const pps1 = ppsBuf([[3, '', '', '', '', 9731.97, '', 9731.97], H, filaPps(1, 'CC-500        ', 46175, 6730.97, 'GASOLINERA SIT', 6730.97),
+      filaPps(2, 4002, 46174, 3000, 'REFACCIONES SIT', 3000, 'N16'), filaPps(3, 'X-9', 46174, 900, 'PROVEEDOR MAL', 800)]);
+    const ip = await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: ppsBuf([]) }) });
+    ok('un Excel que no es PPS se rechaza con el motivo', ip.status === 400 && ip.json.error === 'no_es_pps');
+    const p1 = await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: pps1 }) });
+    ok('PPS: 2 nuevas, la de saldo > total se rechaza y se nombra', p1.status === 200 && p1.json.creadas === 2 && p1.json.rechazadas.length === 1 && p1.json.rechazadas[0].motivo === 'saldo', JSON.stringify(p1.json));
+    ok('PPS: compara con su renglón de totales (aquí no cuadra: trae 3 facturas)', p1.json.control && p1.json.control.cuadra === false);
+    const gPps = await sel("SELECT * FROM nh_gastos WHERE tenant_id=:t AND origen='pps' ORDER BY id", { t: A });
+    ok('PPS: fecha serial de Excel 46175 = 2026-06-02, espacios recortados, categoría sugerida', gPps.length === 2 && String(gPps[0].fecha).slice(0, 10) === '2026-06-02' && gPps[0].folio === 'CC-500' && gPps[0].proveedor === 'GASOLINERA SIT' && gPps[0].categoria === 'diesel', JSON.stringify(gPps[0]));
+    const pps2 = ppsBuf([[1, '', '', '', '', 1000, '', 6730.97], H, filaPps(1, 'CC-500', 46175, 1000, 'GASOLINERA SIT', 6730.97)]);
+    const p2 = (await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS2.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: pps2 }) })).json;
+    ok('PPS de la semana siguiente actualiza el saldo, no duplica', p2.creadas === 0 && p2.actualizadas === 1 && near((await sel('SELECT saldo FROM nh_gastos WHERE id=:id', { id: gPps[0].id }))[0].saldo, 1000));
+    ok('PPS: lo que ya no viene se avisa y NO se marca pagado solo', p2.no_vienen.some((x) => x.folio === '4002') && (await sel('SELECT estado FROM nh_gastos WHERE id=:id', { id: gPps[1].id }))[0].estado === 'pendiente');
+    ok('PPS: B no ve ni actualiza las facturas de A', ((await req('GET', '/gastos', { cookie: dirB })).json || []).length === 0);
+
+    const malo = await mkPdf(cfdi('AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEE0001', 'CC-501', ['$5,821.98', '$909.99', '$6,731.97']));
+    const dm = await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'f.pdf', type: 'application/pdf', data: malo }) });
+    ok('factura cuyas cargas no suman su total = 422 y no crea nada', dm.status === 422 && dm.json.error === 'no_cuadra' && (await sel("SELECT COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND folio='CC-501'", { t: A }))[0].n === 0);
+    const bueno = await mkPdf(cfdi('AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEE0002', 'CC-500', ['$5,820.98', '$909.99', '$6,730.97']));
+    const di = await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'f.pdf', type: 'application/pdf', data: bueno }) });
+    ok('PDF de la gasolinera: 3 cargas, 242.616 L, cuadra al centavo', di.status === 201 && di.json.cargas === 3 && di.json.litros === 242.616 && near(di.json.total, 6730.97), JSON.stringify(di.json));
+    ok('se agrega a la factura que ya venía en el PPS (no la duplica)', di.json.adjuntado_a_existente === true && di.json.gasto_id === gPps[0].id
+      && (await sel("SELECT COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND upper(folio)='CC-500'", { t: A }))[0].n === 1);
+    ok('la misma factura dos veces = 409', (await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'f.pdf', type: 'application/pdf', data: bueno }) })).status === 409);
+    const foto = await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'f.jpg', type: 'image/jpeg', data: jpg }) });
+    ok('una foto no es un CFDI: 415 con el arreglo', foto.status === 415 && foto.json.error === 'usa_pdf_o_xml_del_cfdi');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?><cfdi:Comprobante xmlns:cfdi="http://www.sat.gob.mx/cfd/4" Serie="CC" Folio="502" Fecha="2026-06-08T10:00:00" SubTotal="3734.96" Total="4320.00">
+      <cfdi:Emisor Rfc="XAX010101000" Nombre="GASOLINERA SIT"/><cfdi:Receptor Rfc="XEX010101000"/><cfdi:Conceptos>
+      <cfdi:Concepto Cantidad="80.000" ValorUnitario="23.343561" Importe="1867.48" NoIdentificacion="PL/9999-2000001" Descripcion="DIESEL"><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Impuesto="002" Importe="292.52"/></cfdi:Traslados></cfdi:Impuestos></cfdi:Concepto>
+      <cfdi:Concepto Cantidad="80.000" ValorUnitario="23.343561" Importe="1867.48" NoIdentificacion="PL/9999-2000002" Descripcion="DIESEL"><cfdi:Impuestos><cfdi:Traslados><cfdi:Traslado Impuesto="002" Importe="292.52"/></cfdi:Traslados></cfdi:Impuestos></cfdi:Concepto>
+      </cfdi:Conceptos><cfdi:Impuestos TotalImpuestosTrasladados="585.04"/><cfdi:Complemento><tfd:TimbreFiscalDigital xmlns:tfd="x" UUID="AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEE0003"/></cfdi:Complemento></cfdi:Comprobante>`;
+    const dx = await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'f.xml', type: 'text/xml', data: Buffer.from(xml) }) });
+    ok('XML CFDI 4.0: 2 cargas, nueva cuenta por pagar', dx.status === 201 && dx.json.cargas === 2 && dx.json.adjuntado_a_existente === false && near(dx.json.total, 4320), JSON.stringify(dx.json));
+    const gd = di.json.gasto_id;
+    const det = (await req('GET', '/diesel/' + gd, { cookie: capA })).json;
+    ok('las cargas nacen sin camión', det.cargas.length === 3 && det.sin_asignar.cargas === 3 && near(det.sin_asignar.total, 6730.97));
+    ok('B no ve las cargas de A', (await req('GET', '/diesel/' + gd, { cookie: dirB })).status === 404);
+    const [c1d, c2d, c3d] = det.cargas;
+    const truckB = (await req('POST', '/trucks', { cookie: dirB, body: { empresa: 'TTS', unidad: 'B T-01' } })).json;
+    ok('asignar una carga a un camión de otra empresa = 404', (await req('PUT', `/diesel/${gd}/cargas`, { cookie: capA, body: { asignaciones: [{ id: c1d.id, truck_id: truckB.id }] } })).status === 404);
+    ok('B no asigna cargas de A', (await req('PUT', `/diesel/${gd}/cargas`, { cookie: dirB, body: { asignaciones: [{ id: c1d.id, truck_id: truckB.id }] } })).status === 404);
+    ok('contador no asigna', (await req('PUT', `/diesel/${gd}/cargas`, { cookie: conA, body: { asignaciones: [{ id: c1d.id, truck_id: t1.id }] } })).status === 403);
+    const as = await req('PUT', `/diesel/${gd}/cargas`, { cookie: capA, body: { asignaciones: [{ id: c1d.id, truck_id: t1.id }, { id: c2d.id, truck_id: t1.id }, { id: c3d.id, truck_id: null }] } });
+    ok('asignadas: T-01 lleva 2 cargas ($2,160 + $2,700 = $4,860), la premium queda general', as.status === 200 && near(as.json.por_camion['SIT T-01'].total, 4860) && as.json.sin_asignar.cargas === 1, JSON.stringify(as.json.por_camion));
+    ok('con cargas ya no se reparte por km', (await req('PUT', `/gastos/${gd}/reparto`, { cookie: capA, body: { filas: [{ truck_id: t1.id, km: 1 }] } })).json.error === 'tiene_cargas');
+    ok('con cargas no se asigna además entera a un camión', (await req('PATCH', '/gastos/' + gd, { cookie: capA, body: { truck_id: t2.id } })).status === 409);
+    const tbd = (await req('GET', '/tablero?desde=2026-05-25', { cookie: conA })).json;
+    const cd1 = tbd.camiones.find((c) => c.id === t1.id);
+    ok('el diésel cuenta en la semana de la CARGA (25-may), no de la factura (2-jun)', cd1 && near(cd1.diesel, 4860) && Number(cd1.litros) === 180 && near(cd1.costos, 4860), JSON.stringify(cd1));
+    ok('el tablero avisa las cargas sin camión de la semana', tbd.diesel_sin_asignar.n === 1 && near(tbd.diesel_sin_asignar.total, 1870.97), JSON.stringify(tbd.diesel_sin_asignar));
+    const tbJun = (await req('GET', '/tablero?desde=2026-06-01', { cookie: conA })).json;
+    ok('la semana de la factura no la cuenta dos veces', near((tbJun.camiones.find((c) => c.id === t1.id) || {}).diesel || 0, 0));
+
+    const ex = await req('GET', '/gastos/pps.xlsx?semana=2026-11-09', { cookie: conA });
+    const exRows = XLSX.utils.sheet_to_json(XLSX.read(ex.buf, { type: 'buffer' }).Sheets.NEOHAUL, { header: 1, raw: true, defval: '' });
+    ok('PPS de salida: sus mismas 16 columnas', ex.status === 200 && JSON.stringify(exRows[1]) === JSON.stringify(H), JSON.stringify(exRows[1]));
+    const exSaldo = exRows.slice(2).reduce((a, r) => a + Math.round(Number(r[5]) * 100), 0) / 100;
+    ok('PPS de salida: el renglón 1 suma el saldo de sus filas', exRows.length > 2 && near(exRows[0][5], exSaldo) && exRows[0][0] === exRows.length - 2);
+    ok('PPS de salida: fecha como fecha de Excel', exRows.slice(2).some((r) => r[2] === 'CC-500' && r[3] === 46175), JSON.stringify(exRows.slice(2).map((r) => r.slice(0, 4))));
+    const exB = await req('GET', '/gastos/pps.xlsx', { cookie: dirB });
+    ok('PPS de B no trae nada de A', XLSX.utils.sheet_to_json(XLSX.read(exB.buf, { type: 'buffer' }).Sheets.NEOHAUL, { header: 1 }).length === 2);
+
+    ok('teléfono inválido = 400 con el motivo', (await req('POST', '/drivers', { cookie: dirA, body: { nombre: 'X', telefono: '123' } })).json.error === 'telefono_invalido');
+    const dus = (await req('POST', '/drivers', { cookie: dirA, body: { nombre: 'Prueba WhatsApp EE. UU.', telefono: '+1 813 641 4177', puesto: 'chofer' } })).json;
+    ok('teléfono de EE. UU. con +1 se guarda +18136414177', dus.telefono === '+18136414177');
+    const dmx = (await req('POST', '/drivers', { cookie: dirA, body: { nombre: 'Prueba MX', telefono: '81 3641 4177', puesto: 'chofer' } })).json;
+    ok('el mismo número sin lada se guarda como México (+52): por eso la pantalla lo advierte', dmx.telefono === '+528136414177');
+    ok('editar con teléfono inválido = 400, no 500', (await req('PATCH', '/drivers/' + dus.id, { cookie: dirA, body: { telefono: 'abc' } })).status === 400);
+    const vv = await req('POST', '/viajes', { cookie: capA, body: { fecha: '2026-11-05', obra_id: obra.id, tarifa_id: tar22.id, vale_no: 'V-41971', ticket_no: 'F-1', cantidad: 21.07 } });
+    ok('el mismo vale en otro viaje = 409 (sería cobrar dos veces)', vv.status === 201 && (await req('POST', '/viajes', { cookie: capA, body: { fecha: '2026-11-05', obra_id: obra.id, tarifa_id: tar22.id, vale_no: 'V-41971', ticket_no: 'F-2', cantidad: 21.07 } })).json.error === 'vale_duplicado');
+    await req('DELETE', '/viajes/' + vv.json.id, { cookie: capA });
+
+    console.log('\nArreglos de la revisión de seguridad');
+    // Foto del precio: cambiar la tarifa y luego editar solo las notas no re-cotiza el viaje.
+    const tarF = (await req('POST', '/tarifas', { cookie: dirA, body: { nombre: 'Foto SIT', unidad: 'tonelada', precio: 100 } })).json;
+    const vF = (await req('POST', '/viajes', { cookie: capA, body: { fecha: '2026-10-20', obra_id: obra.id, tarifa_id: tarF.id, cantidad: 2 } })).json;
+    await req('PATCH', '/tarifas/' + tarF.id, { cookie: dirA, body: { precio: 150, unidad: 'viaje' } });
+    const eF = await req('PATCH', '/viajes/' + vF.id, { cookie: capA, body: { notas: 'solo una nota' } });
+    ok('editar notas de un viaje viejo NO lo re-cotiza con la tarifa nueva ($200 sigue $200, en t)', eF.status === 200 && near(eF.json.importe, 200) && eF.json.unidad === 'tonelada', JSON.stringify(eF.json));
+    const eF2 = await req('PATCH', '/viajes/' + vF.id, { cookie: capA, body: { tarifa_id: tarF.id, cantidad: 3 } });
+    ok('cambiar la cantidad con la misma tarifa usa el precio de la foto ($300)', near(eF2.json.importe, 300));
+    await req('DELETE', '/viajes/' + vF.id, { cookie: capA });
+    // Corrección de tarifas sembradas: con viajes, se retira y se agrega fila nueva; sin viajes, se corrige en su lugar.
+    const qA = (sql, r) => db.query(sql, { replacements: r || {} });
+    const [[escV]] = await qA("INSERT INTO nh_tarifas (tenant_id,nombre,material,unidad,precio,por_confirmar) VALUES (:t,'Escombro','escombro','tonelada',250,TRUE) RETURNING id", { t: A });
+    await qA("INSERT INTO nh_viajes (tenant_id,fecha,obra_id,tarifa_id,cantidad,unidad,precio_unitario,importe) VALUES (:t,'2026-10-01',:o,:ta,20,'tonelada',250,5000)", { t: A, o: obra.id, ta: escV.id });
+    const [[b44]] = await qA("INSERT INTO nh_tarifas (tenant_id,nombre,unidad,precio,por_confirmar) VALUES (:t,'Planta Santiago → bacheo Santiago','dia',4400,TRUE) RETURNING id", { t: A });
+    await require('./src/schema').confirmarTarifas(qA, A);
+    const escAhora = (await sel('SELECT * FROM nh_tarifas WHERE id=:id', { id: escV.id }))[0];
+    const escNueva = (await sel("SELECT * FROM nh_tarifas WHERE tenant_id=:t AND nombre='Escombro (20 t por viaje)'", { t: A }))[0];
+    ok('escombro con viajes: la vieja se retira intacta ($250/t) y la confirmada es fila nueva ($4,500/viaje)', escAhora.active === false && Number(escAhora.precio) === 250 && escAhora.unidad === 'tonelada' && escNueva && Number(escNueva.precio) === 4500 && escNueva.unidad === 'viaje');
+    ok('el viaje viejo de escombro conserva $5,000', near((await sel('SELECT importe FROM nh_viajes WHERE tenant_id=:t AND tarifa_id=:ta', { t: A, ta: escV.id }))[0].importe, 5000));
+    const b44n = (await sel('SELECT * FROM nh_tarifas WHERE id=:id', { id: b44.id }))[0];
+    ok('$4,400 sin viajes: se corrige en su lugar a viaje, confirmada', b44n.unidad === 'viaje' && b44n.por_confirmar === false && b44n.active === true);
+    ok('la corrección queda en la bitácora', (await sel("SELECT COUNT(*)::int AS n FROM nh_activity WHERE tenant_id=:t AND action='tarifa_confirmada'", { t: A }))[0].n === 2);
+    // PPS: lo que la app sabe gana.
+    await req('PATCH', '/gastos/' + gPps[1].id, { cookie: capA, body: { estado: 'pagado' } });
+    const pps3 = ppsBuf([[2, '', '', '', '', 0, '', 0], H, filaPps(1, 'CC 500', 46175, 6730.97, 'ESTACION OTRO NOMBRE', 7000), filaPps(2, 4002, 46174, 3000, 'REFACCIONES SIT', 3000, 'N16')]);
+    const p3 = (await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS3.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: pps3 }) })).json;
+    const g4002 = (await sel('SELECT * FROM nh_gastos WHERE id=:id', { id: gPps[1].id }))[0];
+    ok('una factura pagada en la app no se reabre con un PPS viejo (y se avisa)', g4002.estado === 'pagado' && p3.avisos.some((x) => x.aviso === 'ya_pagada_en_la_app'), JSON.stringify(p3.avisos));
+    ok('otro proveedor con folio parecido y OTRO total no se confunde: es factura nueva', p3.creadas === 1);
+    const pps4 = ppsBuf([[1, '', '', '', '', 0, '', 0], H, filaPps(1, 'CC 500', 46175, 5000, 'ESTACION J6 OTRO NOMBRE', 6730.97)]);
+    const p4 = (await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS4.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: pps4 }) })).json;
+    ok('folio escrito distinto ("CC 500") + mismo total = la misma factura, no duplicado', p4.creadas === 0 && p4.actualizadas === 1, JSON.stringify(p4));
+    ok('un saldo mayor que el de la app no sube (PPS viejo) y se avisa', near((await sel('SELECT saldo FROM nh_gastos WHERE id=:id', { id: gPps[0].id }))[0].saldo, 1000) && p4.avisos.some((x) => x.aviso === 'saldo_mayor_que_en_la_app'));
+    const pps5 = ppsBuf([[1, '', '', '', '', 0, '', 0], H, filaPps(1, 'CC-500', 46175, 900, 'GASOLINERA SIT', 9999)]);
+    const p5 = (await req('POST', '/gastos/importar-pps', { cookie: capA, raw: multipart({}, 'archivo', { name: 'PPS5.xlsx', type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', data: pps5 }) })).json;
+    ok('con cargas, el PPS no cambia el total (las cargas dejarían de cuadrar) y se avisa', near((await sel('SELECT total FROM nh_gastos WHERE id=:id', { id: gPps[0].id }))[0].total, 6730.97) && p5.avisos.some((x) => x.aviso === 'total_distinto_con_cargas'), JSON.stringify(p5));
+    // Entradas hostiles o rotas.
+    const xmlDt = '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "aaaa">]><cfdi:Comprobante Total="1"></cfdi:Comprobante>';
+    ok('XML con DOCTYPE/ENTITY se rechaza antes de leerlo', (await req('POST', '/diesel/importar', { cookie: capA, raw: multipart({}, 'archivo', { name: 'x.xml', type: 'text/xml', data: Buffer.from(xmlDt) }) })).json.error === 'xml_con_doctype');
+    ok('carga sin litros = factura rechazada, no corregida', D.cerrarDiesel({ total: 0, cargas: [{ folio_despacho: '1', litros: 0, importe: 0, iva: 0, total: 0 }] }).error === 'carga_invalida');
+    ok('UUID que no tiene la forma del SAT se descarta', D.cerrarDiesel({ uuid: 'x'.repeat(80), total: 1, cargas: [{ folio_despacho: '1', litros: 1, importe: 1, iva: 0, total: 1 }] }).uuid === null);
+    ok('más de 2,000 asignaciones = 400, no se recortan en silencio', (await req('PUT', `/diesel/${gd}/cargas`, { cookie: capA, body: { asignaciones: Array.from({ length: 2001 }, () => ({ id: c1d.id, truck_id: t1.id })) } })).json.error === 'demasiadas_cargas');
+    ok('ORDEN no entero del PPS no rompe la importación', D.parsePps([H, [3.5, 'NEOHAUL', 'A1', 46175, '', 10, 'P', 10]]).filas[0].orden === null);
+    const big = 'Fecha,Ticket,Toneladas\n' + Array.from({ length: 2100 }, (_, i) => `05/11/2026,BIG-${i},1`).join('\n');
+    ok('hoja de más de 2,000 renglones se rechaza entera (no a medias)', (await req('POST', '/viajes/importar', { cookie: capA, raw: multipart({ obra_id: obra.id, tarifa_id: tar22.id }, 'archivo', { name: 'b.csv', type: 'text/csv', data: Buffer.from(big) }) })).json.error === 'demasiados_renglones');
+    const [[viejo]] = await qA("INSERT INTO nh_drivers (tenant_id,nombre,telefono) VALUES (:t,'Chofer viejo','81-1234') RETURNING id", { t: A });
+    ok('un teléfono viejo sin tocar no impide editar lo demás', (await req('PATCH', '/drivers/' + viejo.id, { cookie: dirA, body: { nombre: 'Chofer viejo 2', telefono: '81-1234' } })).status === 200);
+    const pdfChild = fs.readFileSync(path.join(__dirname, 'src', 'pdf-child.js'), 'utf8'), idxSrc = fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8');
+    ok('el PDF se lee en un PROCESO aparte, sin eval y sin variables de entorno', /fork\(path\.join\(__dirname, 'pdf-child\.js'\), \[\], \{ env: \{\}, execArgv: \['--disallow-code-generation-from-strings'/.test(idxSrc) && !/pdf-parse/.test(fs.readFileSync(path.join(__dirname, 'src', 'xlsx-worker.js'), 'utf8')) && /pdf-parse/.test(pdfChild));
+
     console.log('\nNómina');
     const nom = (await req('GET', '/nomina?semana=2026-11-03', { cookie: capA })).json;
     const fila = nom.filas.find((r) => r.driver_id === drv.id);
@@ -254,7 +425,7 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('sin excepciones', false, e && (e.stack || e.message));
   } finally {
     for (const t of tenants) {
-      for (const tb of ['nh_activity', 'nh_taller', 'nh_nomina', 'nh_gasto_reparto', 'nh_gastos', 'nh_facturas', 'nh_estimaciones', 'nh_viajes', 'nh_files', 'nh_asignaciones', 'nh_pedidos', 'nh_tarifas', 'nh_obras', 'nh_clients', 'nh_drivers', 'nh_trucks', 'nh_users']) {
+      for (const tb of ['nh_diesel_cargas', 'nh_activity', 'nh_taller', 'nh_nomina', 'nh_gasto_reparto', 'nh_gastos', 'nh_facturas', 'nh_estimaciones', 'nh_viajes', 'nh_files', 'nh_asignaciones', 'nh_pedidos', 'nh_tarifas', 'nh_obras', 'nh_clients', 'nh_drivers', 'nh_trucks', 'nh_users']) {
         await db.query(`DELETE FROM ${tb} WHERE tenant_id=:t`, { replacements: { t } }).catch(() => {});
       }
       await db.query('DELETE FROM nh_tenants WHERE id=:t', { replacements: { t } }).catch(() => {});

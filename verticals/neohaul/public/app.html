@@ -59,6 +59,10 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .login{max-width:380px;margin:10vh auto;padding:0 16px}
 .ticket-img{max-width:100%;max-height:340px;border-radius:8px;border:1px solid var(--line)}
 .muted{color:var(--mut)}
+.drop{display:flex;align-items:center;justify-content:center;text-align:center;min-height:110px;border:2px dashed var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--mut);background:#fafbfc}
+.drop.over{border-color:var(--acc);background:var(--soft);color:var(--acc-d)}
+.drop input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
+.drop.ok{border-color:var(--ok);color:var(--ok);background:#f2fbf6}
 .right{text-align:right}
 [hidden]{display:none!important}
 @media (max-width:820px){
@@ -77,6 +81,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=1" defer></script>
+<script src="app.js?v=2" defer></script>
 </body>
 </html>

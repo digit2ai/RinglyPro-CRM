@@ -291,3 +291,35 @@ CREATE TABLE IF NOT EXISTS nh_activity (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS nh_activity_tenant_ix ON nh_activity (tenant_id, created_at);
+
+-- ── 10-nov-2026: diésel por carga (CFDI de la gasolinera) y la propuesta de pagos (PPS) ──
+-- Cada carga del CFDI de la estación es una fila: folio de despacho, fecha y hora, litros e importe.
+-- Andrés asigna cada carga a un camión; el costo cuenta en la semana de la CARGA, no de la factura.
+CREATE TABLE IF NOT EXISTS nh_diesel_cargas (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL,
+  gasto_id INTEGER NOT NULL,
+  folio_despacho VARCHAR(40) NOT NULL,
+  fecha DATE,
+  hora VARCHAR(8),
+  producto VARCHAR(30),
+  litros NUMERIC(10,3) NOT NULL,
+  precio NUMERIC(14,6),
+  importe NUMERIC(14,2) NOT NULL,          -- antes de IVA, como lo imprime la estación
+  iva NUMERIC(14,2) NOT NULL,
+  total NUMERIC(14,2) NOT NULL,            -- importe + IVA: lo que de verdad costó la carga
+  truck_id INTEGER,                        -- NULL = sin asignar (cuenta como general)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS nh_diesel_cargas_folio_ux ON nh_diesel_cargas (tenant_id, gasto_id, folio_despacho);
+CREATE INDEX IF NOT EXISTS nh_diesel_cargas_truck_ix ON nh_diesel_cargas (tenant_id, truck_id, fecha);
+
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS uuid VARCHAR(40);
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS origen VARCHAR(20);        -- manual | pps | cfdi
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS empresa VARCHAR(60);
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS cc VARCHAR(60);
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS desc_cc VARCHAR(120);
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS explicacion VARCHAR(300);
+ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS orden_pps INTEGER;
+CREATE UNIQUE INDEX IF NOT EXISTS nh_gastos_uuid_ux ON nh_gastos (tenant_id, uuid) WHERE uuid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS nh_gastos_folio_ix ON nh_gastos (tenant_id, folio);

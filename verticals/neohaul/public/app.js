@@ -25,10 +25,27 @@
     usa_excel_o_csv: 'Para importar usa el archivo de Excel o CSV, no una foto.', sin_encabezados: 'No encontré las columnas Fecha, Ticket y Toneladas.',
     comision_fuera_de_rango: 'La comisión debe estar entre 0% y 15%.', semana_cerrada: 'Esa semana ya está cerrada.', password_too_short: 'Mínimo 10 caracteres.',
     wrong_current_password: 'La contraseña actual no es correcta.', solo_borrador: 'Solo se puede borrar una estimación en borrador.', transicion_invalida: 'Ese cambio de estado no es posible.',
-    monto_invalido: 'El monto no puede ser mayor que el saldo.', saldo_invalido: 'El saldo no puede ser mayor que el total.', faltan_datos: 'Faltan datos obligatorios.'
+    monto_invalido: 'El monto no puede ser mayor que el saldo.', telefono_invalido: 'Teléfono inválido. 10 dígitos para México; otro país con su lada, por ejemplo +1 813 641 4177.',
+    vale_duplicado: 'Ese número de vale ya está registrado: sería el mismo viaje cobrado dos veces.', no_cuadra: 'Las cargas de la factura no suman su total: no la importé.',
+    factura_ya_importada: 'Esa factura de combustible ya está importada.', folio_con_otro_total: 'Ya existe una factura con ese folio pero con otro total. Revísala antes de importar.',
+    usa_pdf_o_xml_del_cfdi: 'Sube el PDF o el XML de la factura (CFDI) de la gasolinera.', no_es_factura_de_combustible: 'Ese PDF no parece una factura de combustible con cargas.',
+    no_es_pps: 'No encontré las columnas NUM FACT y PROVEEDOR de la propuesta de pagos.', tiene_cargas: 'Esa factura ya tiene sus cargas: asígnalas por camión en lugar de repartir por km.',
+    sin_cargas: 'No encontré cargas en la factura.', cargas_repetidas: 'La factura trae folios de despacho repetidos.', saldo_invalido: 'El saldo no puede ser mayor que el total.', faltan_datos: 'Faltan datos obligatorios.'
   };
   const errMsg = (e) => ERR[e && e.error] || (e && e.ayuda) || 'No se pudo completar (' + esc((e && e.error) || 'error') + ').';
-  const waNum = (tel) => { let d = String(tel || '').replace(/\D/g, ''); if (d.length === 10) d = '52' + d; return d; };
+  // MISMA regla que el servidor (docs.js waNumero; la SIT compara las dos): 10 dígitos = México (+52); otro país, con +lada.
+  function waNumero(tel) {
+    const raw = String(tel || '').trim();
+    let d = raw.replace(/\D/g, '');
+    if (!d) return null;
+    if (raw.startsWith('+') || raw.startsWith('00')) { d = d.replace(/^00/, ''); if (d.length === 13 && d.startsWith('521')) d = '52' + d.slice(3); return d.length >= 11 && d.length <= 15 ? d : null; }
+    if (d.length === 10) return '52' + d;
+    if (d.length === 12 && d.startsWith('52')) return d;
+    if (d.length === 13 && d.startsWith('521')) return '52' + d.slice(3);
+    if (d.length === 11 && d.startsWith('1')) return d;
+    return null;
+  }
+  const waNum = (tel) => waNumero(tel) || '';
   const waLink = (tel, text) => 'https://wa.me/' + waNum(tel) + '?text=' + encodeURIComponent(text);
 
   async function api(path, opts = {}) {
@@ -55,6 +72,18 @@
   const truckLbl = (t) => `${t.unidad}${t.placas ? ' · ' + t.placas : ''}`;
   const val = (root, n) => { const el = root.querySelector(`[name="${n}"]`); return el ? (el.type === 'checkbox' ? el.checked : el.value) : undefined; };
   function formData(root) { const o = {}; root.querySelectorAll('[name]').forEach((el) => { o[el.name] = el.type === 'checkbox' ? el.checked : el.value; }); return o; }
+  /** Arrastrar y soltar: cualquier <input type=file> dentro de un .drop recibe el archivo soltado. */
+  document.addEventListener('dragover', (e) => { const z = e.target.closest && e.target.closest('.drop'); if (z) { e.preventDefault(); z.classList.add('over'); } });
+  document.addEventListener('dragleave', (e) => { const z = e.target.closest && e.target.closest('.drop'); if (z) z.classList.remove('over'); });
+  document.addEventListener('drop', (e) => {
+    const z = e.target.closest && e.target.closest('.drop'); if (!z) return;
+    e.preventDefault(); z.classList.remove('over');
+    const inp = z.querySelector('input[type=file]'); if (!inp || !e.dataTransfer.files.length) return;
+    const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); inp.files = dt.files;
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  document.addEventListener('change', (e) => { const z = e.target.closest && e.target.closest('.drop'); if (z && e.target.files && e.target.files[0]) { z.classList.add('ok'); z.querySelector('span').textContent = e.target.files[0].name; } });
+  const dropBox = (name, accept, texto) => `<label class="drop"><input type="file" name="${name}" accept="${accept}"><span>${texto}</span></label>`;
   function modal(html) {
     const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="box">${html}</div>`;
     m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.remove(); });
@@ -140,11 +169,11 @@
         ${k('Taller por cobrar', pesos(t.taller_por_cobrar.total), `${t.taller_por_cobrar.n} servicios a empresas hermanas`)}
       </div>
       <h2>Cuánto deja cada camión propio</h2>
-      <div class="card tbl"><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Ingresos</th><th class="n">Costos</th><th class="n">Resultado</th></tr></thead><tbody>
-      ${t.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}</td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Ingresos">${pesos(c.ingresos)}</td>
+      <div class="card tbl"><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">Costos</th><th class="n">Resultado</th></tr></thead><tbody>
+      ${t.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}</td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Ingresos">${pesos(c.ingresos)}</td><td class="n" data-l="Diésel">${Number(c.diesel) ? pesos(c.diesel) + '<div class="muted">' + qty(c.litros) + ' L</div>' : '—'}</td>
         <td class="n" data-l="Costos">${c.sin_costos ? '<span class="pill warn">sin costos capturados</span>' : pesos(c.costos)}</td>
         <td class="n" data-l="Resultado">${c.margen == null ? '—' : `<span class="pill ${c.margen < 0 ? 'bad' : 'ok'}">${pesos(c.margen)}</span>`}</td></tr>`).join('')}
-      </tbody></table>${t.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}</div>
+      </tbody></table>${t.diesel_sin_asignar && t.diesel_sin_asignar.n ? `<div class="note"><b>${t.diesel_sin_asignar.n} cargas de diésel</b> de esta semana (${pesos(t.diesel_sin_asignar.total)}) aún no tienen camión. Asígnalas en Gastos y diésel.</div>` : ''}${t.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}</div>
       <h2>Pagos propuestos esta semana</h2>
       <div class="card tbl">${t.pagos_semana.length ? `<table class="cards"><thead><tr><th>Proveedor</th><th>Folio</th><th>Camión</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.pagos_semana.map((g) => `<tr><td data-l="Proveedor">${esc(g.proveedor)}</td><td data-l="Folio">${esc(g.folio || '')}</td><td data-l="Camión">${esc(g.camion || 'General')}</td><td class="n" data-l="Monto">${pesos(g.monto_propuesto)}</td></tr>`).join('')}
@@ -202,17 +231,18 @@
   };
 
   /* ── viajes ── */
-  function viajeForm(v, prop) {
-    v = v || {}; prop = prop || {};
+  function viajeForm(v, prop, sug) {
+    v = v || {}; prop = prop || {}; sug = sug || {};
+    const pick = (k) => (v[k] != null ? v[k] : sug[k]);
     const tr = activos('trucks'), ch = activos('drivers').filter((d) => d.puesto === 'chofer');
     return `<div class="form">
       <div><label>Fecha</label><input type="date" name="fecha" value="${esc(String(v.fecha || prop.fecha || hoy()).slice(0, 10))}"></div>
-      <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, v.obra_id, 'Elige la obra')}</select></div>
-      <div class="wide"><label>Tarifa / ruta</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, v.tarifa_id, 'Elige la tarifa')}</select></div>
-      <div><label>Camión</label><select name="truck_id">${opts(tr, (t) => `${t.empresa} · ${truckLbl(t)}`, v.truck_id, 'Sin camión')}</select></div>
-      <div><label>Chofer</label><select name="driver_id">${opts(ch, (d) => d.nombre, v.driver_id, 'Sin chofer')}</select></div>
-      <div><label>No. de ticket</label><input name="ticket_no" value="${esc(v.ticket_no || prop.ticket_no || '')}"></div>
-      <div><label>No. de vale</label><input name="vale_no" value="${esc(v.vale_no || '')}"></div>
+      <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, pick('obra_id'), 'Elige la obra')}</select></div>
+      <div class="wide"><label>Tarifa / ruta</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, pick('tarifa_id'), 'Elige la tarifa')}</select></div>
+      <div><label>Camión</label><select name="truck_id">${opts(tr, (t) => `${t.empresa} · ${truckLbl(t)}`, pick('truck_id'), 'Sin camión')}</select></div>
+      <div><label>Chofer</label><select name="driver_id">${opts(ch, (d) => d.nombre, pick('driver_id'), 'Sin chofer')}</select></div>
+      <div><label>No. de ticket / folio báscula</label><input name="ticket_no" value="${esc(v.ticket_no || prop.ticket_no || '')}"></div>
+      <div><label>No. de vale</label><input name="vale_no" value="${esc(v.vale_no || prop.vale_no || '')}"></div>
       <div><label>Cantidad (t, días o viajes)</label><input name="cantidad" inputmode="decimal" value="${esc(v.cantidad != null ? Number(v.cantidad) : prop.toneladas != null ? prop.toneladas : '')}"></div>
       <div><label>Importe estimado</label><div class="kpi"><div class="v" id="imp">—</div></div></div>
       <div class="wide"><label>Notas</label><input name="notas" value="${esc(v.notas || '')}"></div></div>`;
@@ -226,12 +256,26 @@
     const tk = root.querySelector('[name=truck_id]');
     tk.addEventListener('change', () => { const t = S.cat.trucks.find((x) => String(x.id) === tk.value); if (t && t.chofer_id) root.querySelector('[name=driver_id]').value = t.chofer_id; });
   }
-  async function abrirViaje(v, prop, fileId, leido) {
+  const AVISO = { fecha_escrita_distinta: 'La fecha escrita a mano no coincide con la impresa por la báscula: se usó la impresa.', neto_no_cuadra: 'Bruto menos tara no da el neto impreso: revisa el peso.',
+    tara_manual: 'La tara se capturó a mano en la báscula.', placas_distintas: 'Las placas escritas no coinciden con las impresas.', otro_transportista: 'El sello no dice Grupo NeoHaul como transportista.',
+    peso_fuera_de_rango: 'El peso leído no es razonable: escríbelo.' };
+  function lecturaHtml(p, sug) {
+    const row = (l, x) => (x ? `<tr><td class="muted">${l}</td><td>${esc(x)}</td></tr>` : '');
+    const tk = sug && sug.truck_id ? (S.cat.trucks.find((t) => t.id === sug.truck_id) || {}).unidad : null;
+    return `<details class="card" open><summary><b>Lo que leyó la app</b></summary><table style="margin-top:6px">${row('Vale No.', p.vale_no)}${row('Folio báscula', p.folio)}${row('Pedido', p.pedido)}
+      ${row('Fecha impresa', [p.fecha_impresa, p.hora].filter(Boolean).join(' '))}${row('Fecha escrita', p.fecha_escrita)}${row('Placas', [p.placas, p.placas_escritas].filter(Boolean).join(' / '))}
+      ${row('Cliente', p.cliente)}${row('Producto', p.producto)}${row('Destino', p.destino)}${row('Operador', p.operador)}${row('Temperatura', p.temperatura)}
+      ${row('Bruto / tara / neto', [p.peso_bruto, p.peso_tara, p.peso_neto].filter(Boolean).join(' · '))}
+      ${row('Toneladas', p.toneladas != null ? qty(p.toneladas) + ' t' + (p.origen_toneladas === 'kg_a_t' ? ' (neto en kg ÷ 1000)' : '') : null)}</table>
+      ${(p.avisos || []).map((a) => `<div class="note">${esc(AVISO[a] || a)}</div>`).join('')}
+      ${p.placas && !tk ? '<div class="note">Ningún camión tiene esas placas en Catálogos: agrégalas y la próxima vez se elige solo.</div>' : ''}</details>`;
+  }
+  async function abrirViaje(v, prop, fileId, leido, sug) {
     const m = modal(`<h2 style="margin-top:0">${v ? 'Editar viaje' : 'Registrar viaje'}</h2>
       ${fileId ? `<img class="ticket-img" src="api/v1/files/${fileId}" alt="Foto del ticket">` : ''}
       ${leido === 'modelo' ? `<div class="note">La app leyó el ticket${prop && prop.fecha_impresa ? ' (fecha impresa: ' + esc(prop.fecha_impresa) + ')' : ''}. Revisa cada dato contra la foto antes de confirmar.${prop && prop.toneladas == null ? ' No pude leer el peso neto: escríbelo.' : ''}</div>`
         : fileId ? '<div class="note">No pude leer el ticket automáticamente. Captura los datos viendo la foto.</div>' : ''}
-      ${viajeForm(v, prop)}<div class="row" style="margin-top:12px">${v ? '<button class="btn primary" id="g">Guardar cambios</button>' : '<button class="btn primary" id="gc">Guardar y confirmar</button><button class="btn" id="g">Guardar sin confirmar</button>'}
+      ${prop && leido === 'modelo' ? lecturaHtml(prop, sug) : ''}${viajeForm(v, prop, sug)}<div class="row" style="margin-top:12px">${v ? '<button class="btn primary" id="g">Guardar cambios</button>' : '<button class="btn primary" id="gc">Guardar y confirmar</button><button class="btn" id="g">Guardar sin confirmar</button>'}
       <button class="btn" data-close>Cancelar</button></div><div class="err"></div>`);
     bindImporte(m.querySelector('.box'));
     const save = (confirmar) => busy(null, async () => {
@@ -274,12 +318,12 @@
       const file = e.target.files[0]; if (!file) return;
       const fd = new FormData(); fd.append('foto', file);
       const m = modal('<p>Leyendo el ticket…</p>');
-      try { const r = await api('viajes/leer-ticket', { method: 'POST', body: fd }); m.remove(); abrirViaje(null, r.propuesta || {}, r.file_id, r.leido_por); }
+      try { const r = await api('viajes/leer-ticket', { method: 'POST', body: fd }); m.remove(); abrirViaje(null, r.propuesta || {}, r.file_id, r.leido_por, r.sugerencias); }
       catch (er) { m.querySelector('.box').innerHTML = `<div class="err">${errMsg(er)}</div><button class="btn" data-close>Cerrar</button>`; }
     };
     document.getElementById('imp').onclick = () => {
       const m = modal(`<h2 style="margin-top:0">Importar tickets de Excel</h2><p class="muted">El archivo debe tener columnas <b>Fecha</b>, <b>Ticket</b> y <b>Toneladas</b> (como el Excel «PLANTA SANT»). Todos quedan sin confirmar.</p>
-        <div class="form"><div class="wide"><label>Archivo (.xlsx o .csv)</label><input type="file" name="archivo" accept=".xlsx,.xls,.csv"></div>
+        <div class="form"><div class="wide">${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel o CSV de planta, o toca para elegirlo')}</div>
         <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, '', 'Elige')}</select></div>
         <div><label>Tarifa</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, '', 'Elige')}</select></div>
         <div><label>Camión (opcional)</label><select name="truck_id">${opts(activos('trucks'), truckLbl, '', 'Sin camión')}</select></div>
@@ -404,11 +448,35 @@
   };
 
   /* ── gastos y diésel ── */
+  async function abrirCargas(gastoId) {
+    const d = await api('diesel/' + gastoId);
+    const tr = activos('trucks');
+    const resumen = (x) => Object.entries(x.por_camion).map(([k, v]) => `<div>${esc(k)}: ${v.cargas} cargas · ${qty(v.litros)} L · <b>${pesos(v.total)}</b></div>`).join('');
+    const m = modal(`<h2 style="margin-top:0">${esc(d.gasto.proveedor)} ${esc(d.gasto.folio || '')} · ${pesos(d.total)}</h2>
+      <p class="muted">Elige el camión de cada carga. La gasolina premium suele ser de camionetas: déjala sin camión si no es de uno de la lista (cuenta como gasto general).</p>
+      ${canEdit() ? `<div class="row" style="margin-bottom:8px"><select id="bulk" style="max-width:260px">${opts(tr, (t) => t.empresa + ' · ' + truckLbl(t), '', 'Camión para las marcadas')}</select><button class="btn small" id="bulkgo">Aplicar a las marcadas</button></div>` : ''}
+      <div class="tbl"><table class="cards"><thead><tr><th></th><th>Fecha</th><th>Hora</th><th>Despacho</th><th>Producto</th><th class="n">Litros</th><th class="n">Total</th><th>Camión</th></tr></thead><tbody>
+      ${d.cargas.map((c) => `<tr><td data-l="">${canEdit() ? `<input type="checkbox" data-mk="${c.id}" style="width:auto">` : ''}</td><td data-l="Fecha">${fmtF(c.fecha)}</td><td data-l="Hora">${esc(c.hora || '')}</td>
+        <td data-l="Despacho">${esc(c.folio_despacho)}</td><td data-l="Producto">${esc(c.producto)}</td><td class="n" data-l="Litros">${qty(c.litros)}</td><td class="n" data-l="Total">${pesos(c.total)}</td>
+        <td data-l="Camión">${canEdit() ? `<select data-ct="${c.id}">${opts(tr, truckLbl, c.truck_id, 'Sin camión')}</select>` : esc(c.camion || 'Sin camión')}</td></tr>`).join('')}</tbody></table></div>
+      <div id="res" style="margin-top:8px">${resumen(d)}</div>
+      <div class="row" style="margin-top:10px">${canEdit() ? '<button class="btn primary" id="ok">Guardar</button>' : ''}<button class="btn" data-close>Cerrar</button></div><div class="err"></div>`);
+    const bg = m.querySelector('#bulkgo');
+    if (bg) bg.onclick = () => { const k = m.querySelector('#bulk').value; m.querySelectorAll('[data-mk]:checked').forEach((cb) => { m.querySelector(`[data-ct="${cb.dataset.mk}"]`).value = k; cb.checked = false; }); };
+    const ok = m.querySelector('#ok');
+    if (ok) ok.onclick = () => busy(null, async () => {
+      const asignaciones = [...m.querySelectorAll('[data-ct]')].map((sl) => ({ id: sl.dataset.ct, truck_id: sl.value || null }));
+      try { const r = await api(`diesel/${gastoId}/cargas`, { method: 'PUT', body: { asignaciones } }); m.querySelector('#res').innerHTML = resumen(r) + '<div class="okmsg">Guardado.</div>'; }
+      catch (er) { m.querySelector('.err').textContent = errMsg(er); }
+    });
+    m.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]') && S.view === 'gastos') R.gastos(); });
+  }
   R.gastos = async function () {
     const est = S.gEstado || '';
     const gs = await api('gastos' + (est ? '?estado=' + est : ''));
     const tr = activos('trucks');
-    main().innerHTML = `<h1>Gastos y diésel</h1><p class="sub">Cada factura de proveedor va a un camión u obra. La factura única del diésel se reparte por kilómetros.</p>
+    main().innerHTML = `<h1>Gastos y diésel</h1><p class="sub">Cada factura de proveedor va a un camión u obra. La factura de la gasolinera se sube completa y cada carga se asigna a su camión.</p>
+      <div class="card row noprint">${canEdit() ? '<button class="btn primary" id="gdiesel">Subir factura de diésel (PDF o XML)</button><button class="btn" id="gpps">Cargar PPS (Excel)</button>' : ''}<a class="btn" href="api/v1/gastos/pps.xlsx?semana=${lunes()}">Descargar PPS de esta semana</a></div>
       ${canEdit() ? `<details class="card"><summary><b>Nuevo gasto</b></summary><form id="ng" class="form" style="margin-top:10px">
         <div><label>Fecha</label><input type="date" name="fecha" value="${hoy()}"></div><div><label>Proveedor</label><input name="proveedor" required></div>
         <div><label>Folio</label><input name="folio"></div><div><label>Categoría</label><select name="categoria">${['diesel', 'refacciones', 'taller', 'llantas', 'casetas', 'otros'].map((c) => `<option>${c}</option>`).join('')}</select></div>
@@ -420,11 +488,11 @@
       <div class="row" style="margin-bottom:10px"><select id="fe" style="max-width:200px">${['', 'pendiente', 'programado', 'pagado'].map((s) => `<option value="${s}"${s === est ? ' selected' : ''}>${s || 'Todos'}</option>`).join('')}</select></div>
       <div class="card tbl"><table class="cards"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Categoría</th><th>A qué va</th><th class="n">Total</th><th class="n">Saldo</th><th>Estado</th><th></th></tr></thead><tbody>
       ${gs.map((g) => `<tr><td data-l="Fecha">${fmtF(g.fecha)}</td><td data-l="Proveedor">${esc(g.proveedor)}<div class="muted">${esc(g.folio || '')} ${esc(g.concepto || '')}</div></td><td data-l="Categoría">${esc(g.categoria)}</td>
-        <td data-l="A qué va">${g.camion ? esc(g.camion) : g.reparto.length ? `Repartido en ${g.reparto.length} camiones` : g.obra ? esc(g.obra) : '<span class="pill warn">General</span>'}</td>
+        <td data-l="A qué va">${g.cargas ? (g.cargas_sin_camion ? `<span class="pill warn">${g.cargas_sin_camion} de ${g.cargas} cargas sin camión</span>` : `<span class="pill ok">${g.cargas} cargas asignadas</span>`) : g.camion ? esc(g.camion) : g.reparto.length ? `Repartido en ${g.reparto.length} camiones` : g.obra ? esc(g.obra) : '<span class="pill warn">General</span>'}${g.cc && g.cc !== 'GENERAL' ? `<div class="muted">CC ${esc(g.cc)}</div>` : ''}</td>
         <td class="n" data-l="Total">${pesos(g.total)}</td><td class="n" data-l="Saldo">${pesos(g.saldo)}</td>
         <td data-l="Estado"><span class="pill ${{ pendiente: 'warn', programado: 'acc', pagado: 'ok' }[g.estado]}">${g.estado}</span>${g.estado === 'programado' ? `<div class="muted">${pesos(g.monto_propuesto)} sem. ${fmtF(g.semana_pago)}</div>` : ''}</td>
         <td data-l=""><div class="row">${g.file_id ? `<a class="btn small" href="api/v1/files/${g.file_id}" target="_blank" rel="noopener">Factura</a>` : ''}
-          ${canEdit() && !g.truck_id ? `<button class="btn small" data-rep="${g.id}">Repartir por km</button>` : ''}
+          ${g.cargas ? `<button class="btn small${g.cargas_sin_camion ? ' primary' : ''}" data-car="${g.id}">Cargas por camión</button>` : canEdit() && !g.truck_id ? `<button class="btn small" data-rep="${g.id}">Repartir por km</button>` : ''}
           ${canEdit() && g.estado === 'pendiente' ? `<button class="btn small" data-prog="${g.id}">Programar pago</button>` : ''}
           ${canEdit() && g.estado === 'programado' ? `<button class="btn small primary" data-pag="${g.id}">Pagado</button>` : ''}</div></td></tr>`).join('')
       || '<tr><td colspan="8" class="muted">Sin gastos.</td></tr>'}</tbody></table></div>`;
@@ -439,7 +507,41 @@
         await api('gastos', { method: 'POST', body }); R.gastos();
       } catch (er) { f.querySelector('.err').textContent = errMsg(er); }
     };
+    const gd = document.getElementById('gdiesel'), gp = document.getElementById('gpps');
+    if (gd) gd.onclick = () => {
+      const m = modal(`<h2 style="margin-top:0">Factura de la gasolinera</h2><p class="muted">El PDF o XML del CFDI (como el de Estación de Servicio J6). Cada carga entra con su folio de despacho, fecha, hora y litros. Si la factura ya está en el PPS, se le agregan las cargas en vez de duplicarla.</p>
+        ${dropBox('archivo', '.pdf,.xml,application/pdf,text/xml', 'Arrastra aquí el PDF o XML, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
+      m.querySelector('#go').onclick = () => busy(null, async () => {
+        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
+        const fd = new FormData(); fd.append('archivo', f);
+        try {
+          const r = await api('diesel/importar', { method: 'POST', body: fd });
+          m.querySelector('#res').innerHTML = `<div class="okmsg">${esc(r.proveedor || '')} ${esc(r.folio || '')}: ${r.cargas} cargas, ${qty(r.litros)} L, ${pesos(r.total)}. Cuadra con el total de la factura.</div>
+            ${r.adjuntado_a_existente ? '<div class="note">Se agregó a la factura que ya estaba en cuentas por pagar.</div>' : ''}${r.reparto_km_reemplazado ? '<div class="note">Reemplazó el reparto por km que tenía.</div>' : ''}
+            ${!r.placas_tarjeta ? `<div class="note">La factura no dice qué camión hizo cada carga${r.tarjeta ? ' (tarjeta ' + esc(r.tarjeta) + ' es de toda la empresa)' : ''}. Asígnalas ahora.</div>` : ''}
+            <button class="btn primary" data-car="${r.gasto_id}">Asignar cargas a camiones</button>`;
+        } catch (er) { m.querySelector('.err').textContent = errMsg(er) + (er && er.calculado ? ` Factura ${pesos(er.factura.total)}, cargas ${pesos(er.calculado.total)}.` : ''); }
+      });
+      m.addEventListener('click', (ev) => { const c = ev.target.closest('[data-car]'); if (c) { m.remove(); abrirCargas(Number(c.dataset.car)); } else if (ev.target.closest('[data-close]')) R.gastos(); });
+    };
+    if (gp) gp.onclick = () => {
+      const m = modal(`<h2 style="margin-top:0">Cargar la propuesta de pagos (PPS)</h2><p class="muted">El Excel de la semana con sus 16 columnas (ORDEN … PROPUESTA). Las facturas nuevas se agregan, las que ya están se actualizan con su saldo. Lo que ya asignaste a un camión u obra no se toca.</p>
+        ${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel del PPS, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Cargar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
+      m.querySelector('#go').onclick = () => busy(null, async () => {
+        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
+        const fd = new FormData(); fd.append('archivo', f);
+        try {
+          const r = await api('gastos/importar-pps', { method: 'POST', body: fd });
+          m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creadas} nuevas, ${r.actualizadas} actualizadas. Saldo: ${pesos(r.resumen.saldo)} en ${r.resumen.facturas} facturas.</div>
+            ${r.control ? (r.control.cuadra ? '<div class="okmsg">Cuadra con el renglón de totales de su hoja.</div>' : `<div class="err">No cuadra con su renglón de totales (${pesos(r.control.saldo)}).</div>`) : ''}
+            ${r.rechazadas.map((x) => `<div class="muted">Renglón ${x.renglon} (${esc(x.folio || '')}): ${esc(x.motivo)}</div>`).join('')}
+            ${r.no_vienen.length ? `<div class="note">${r.no_vienen.length} facturas del PPS anterior ya no vienen (¿pagadas?): ${r.no_vienen.slice(0, 12).map((x) => esc(x.proveedor + ' ' + (x.folio || ''))).join(', ')}. Márcalas tú; no se cambian solas.</div>` : ''}`;
+        } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
+      });
+      m.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) R.gastos(); });
+    };
     main().onclick = async (e) => {
+      const car = e.target.closest('[data-car]'); if (car) return abrirCargas(Number(car.dataset.car));
       const b = e.target.closest('[data-rep],[data-prog],[data-pag]'); if (!b) return;
       const g = gs.find((x) => String(x.id) === (b.dataset.rep || b.dataset.prog || b.dataset.pag));
       if (b.dataset.rep) {
@@ -521,8 +623,8 @@
   /* ── catálogos ── */
   const CATS = {
     trucks: ['Camiones', [['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['unidad', 'Unidad / no. económico'], ['tipo', 'Tipo'], ['capacidad_m3', 'm³'], ['placas', 'Placas'], ['chofer_id', 'Chofer habitual', 'driver'], ['notas', 'Notas'], ['active', 'Activo', 'chk']]],
-    drivers: ['Choferes y mecánicos', [['nombre', 'Nombre'], ['telefono', 'WhatsApp'], ['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['puesto', 'Puesto', 'sel', ['chofer', 'mecanico']], ['salario_semanal', 'Salario semanal'], ['active', 'Activo', 'chk']]],
-    obras: ['Obras', [['nombre', 'Nombre'], ['clave', 'Clave'], ['client_id', 'Cliente', 'client'], ['ingeniero', 'Ingeniero'], ['ingeniero_tel', 'WhatsApp del ingeniero'], ['active', 'Activa', 'chk']]],
+    drivers: ['Choferes y mecánicos', [['nombre', 'Nombre'], ['telefono', 'WhatsApp (10 dígitos = México; otro país con +lada)'], ['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['puesto', 'Puesto', 'sel', ['chofer', 'mecanico']], ['salario_semanal', 'Salario semanal'], ['active', 'Activo', 'chk']]],
+    obras: ['Obras', [['nombre', 'Nombre'], ['clave', 'Clave'], ['client_id', 'Cliente', 'client'], ['ingeniero', 'Ingeniero'], ['ingeniero_tel', 'WhatsApp del ingeniero (10 dígitos = México)'], ['active', 'Activa', 'chk']]],
     tarifas: ['Tarifas', [['nombre', 'Nombre'], ['material', 'Material'], ['origen', 'Origen'], ['destino', 'Destino'], ['unidad', 'Cobro por', 'sel', ['tonelada', 'dia', 'viaje']], ['precio', 'Precio'], ['por_confirmar', 'Por confirmar', 'chk'], ['nota', 'Nota'], ['active', 'Activa', 'chk']]],
     clients: ['Clientes', [['nombre', 'Nombre'], ['rfc', 'RFC'], ['active', 'Activo', 'chk']]]
   };

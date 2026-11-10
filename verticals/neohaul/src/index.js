@@ -36,6 +36,7 @@ const db = require('./db');
 const schema = require('./schema');
 const M = require('./money');
 const llm = require('./llm');
+const D = require('./docs');
 
 const router = express.Router();
 const OWNER_EMAIL = String(process.env.NEOHAUL_OWNER_EMAIL || 'mstagg@digit2ai.com').toLowerCase();
@@ -222,19 +223,21 @@ const adminOnly = (req, res, next) => (canAdmin(req) ? next() : res.status(404).
 const own = (table, id, t) => one(`SELECT * FROM ${table} WHERE id=:id AND tenant_id=:t`, { id, t: t }, undefined);
 
 /* ── catálogos (camiones, choferes, clientes, obras, tarifas) ────────── */
+const BAD = Symbol('invalido');
+const tel = (v) => { if (v === '' || v == null) return null; const w = D.waNumero(v); return w ? '+' + w : BAD; };
 const CAT = {
   trucks: { table: 'nh_trucks', order: "CASE empresa WHEN 'NeoHaul' THEN 0 WHEN 'TTS' THEN 1 WHEN 'SEMAQSA' THEN 2 ELSE 3 END, unidad",
     fields: { empresa: (v) => (EMPRESAS.includes(v) ? v : undefined), unidad: (v) => str(v, 60) || undefined, tipo: (v) => strOrNull(v, 60),
       capacidad_m3: (v) => num(v), placas: (v) => strOrNull(v, 30), chofer_id: (v) => intId(v), notas: (v) => strOrNull(v, 500), active: (v) => !!v },
     required: ['empresa', 'unidad'], derive: (r) => { if (r.empresa) r.propio = r.empresa === 'NeoHaul'; } },
   drivers: { table: 'nh_drivers', order: 'nombre',
-    fields: { nombre: (v) => str(v, 160) || undefined, telefono: (v) => strOrNull(v, 40), empresa: (v) => (EMPRESAS.includes(v) ? v : undefined),
+    fields: { nombre: (v) => str(v, 160) || undefined, telefono: tel, empresa: (v) => (EMPRESAS.includes(v) ? v : undefined),
       puesto: (v) => (['chofer', 'mecanico'].includes(v) ? v : undefined), salario_semanal: (v) => moneyIn(v), active: (v) => !!v },
     required: ['nombre'] },
   clients: { table: 'nh_clients', order: 'nombre', fields: { nombre: (v) => str(v, 200) || undefined, rfc: (v) => strOrNull(v, 20), active: (v) => !!v }, required: ['nombre'] },
   obras: { table: 'nh_obras', order: 'nombre',
     fields: { client_id: (v) => intId(v), nombre: (v) => str(v, 200) || undefined, clave: (v) => strOrNull(v, 40), ingeniero: (v) => strOrNull(v, 160),
-      ingeniero_tel: (v) => strOrNull(v, 40), active: (v) => !!v },
+      ingeniero_tel: tel, active: (v) => !!v },
     required: ['client_id', 'nombre'], refs: { client_id: 'nh_clients' } },
   tarifas: { table: 'nh_tarifas', order: 'nombre',
     fields: { nombre: (v) => str(v, 200) || undefined, material: (v) => strOrNull(v, 60), origen: (v) => strOrNull(v, 120), destino: (v) => strOrNull(v, 120),
@@ -246,6 +249,7 @@ function pick(spec, body, partial) {
   for (const [k, fn] of Object.entries(spec.fields)) {
     if (!body || !(k in body)) continue;
     const v = fn(body[k]);
+    if (v === BAD) return { error: 'telefono_invalido' };
     if (v !== undefined) out[k] = v;
   }
   if (!partial) for (const k of spec.required) if (out[k] == null) return { error: 'missing_' + k };
@@ -273,7 +277,11 @@ for (const [name, spec] of Object.entries(CAT)) {
   api.patch('/' + name + '/:id', async (req, res) => {
     const id = intId(req.params.id);
     if (!id || !(await own(spec.table, id, req.tenant))) return res.status(404).json({ error: 'not_found' });
-    const { row } = pick(spec, req.body, true);
+    const before0 = await own(spec.table, id, req.tenant);
+    const body = { ...(req.body || {}) };
+    for (const k of ['telefono', 'ingeniero_tel']) if (k in body && String(body[k] || '') === String(before0[k] || '')) delete body[k]; // un teléfono viejo sin tocar no bloquea editar lo demás
+    const { row, error } = pick(spec, body, true);
+    if (error) return res.status(400).json({ error });
     if (!Object.keys(row).length) return res.status(400).json({ error: 'nothing_to_update' });
     if (!(await refsOk(spec, row, req.tenant))) return res.status(404).json({ error: 'not_found' });
     const before = await own(spec.table, id, req.tenant);
@@ -377,20 +385,20 @@ api.get('/files/:id', async (req, res) => {
   res.send(f.data);
 });
 
-/** Normaliza la propuesta del lector: solo valores que parecen lo que dicen ser. */
-function cleanOcr(o) {
-  if (!o || typeof o !== 'object') return null;
-  const t = num(String(o.toneladas == null ? '' : o.toneladas).replace(/[^\d.,]/g, '').replace(',', '.'));
-  const f = String(o.fecha || '').match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
-  let fecha = null;
-  if (f) { const y = f[3].length === 2 ? '20' + f[3] : f[3]; fecha = date(`${y}-${f[2].padStart(2, '0')}-${f[1].padStart(2, '0')}`); }
-  return {
-    ticket_no: /^[A-Za-z0-9\-/ ]{1,30}$/.test(String(o.ticket_no || '')) ? String(o.ticket_no).trim() : null,
-    fecha, fecha_impresa: strOrNull(o.fecha, 30),
-    toneladas: t != null && t > 0 && t <= 80 ? t : null,
-    placas: strOrNull(o.placas, 20),
-    legible: ['si', 'parcial', 'no'].includes(o.legible) ? o.legible : 'parcial'
-  };
+const cleanOcr = D.cleanOcr; // ver docs.js: escrito sobre el vale real de HTR
+/** Camión por placas, obra por destino, chofer por nombre y la tarifa que más se ha usado en esa obra. Solo propone. */
+async function sugerencias(req, p) {
+  const t = { t: req.tenant };
+  const s = D.sugerir(p, { trucks: await sel('SELECT id,placas,active FROM nh_trucks WHERE tenant_id=:t', t),
+    obras: await sel('SELECT id,nombre,clave,active FROM nh_obras WHERE tenant_id=:t', t), drivers: await sel('SELECT id,nombre,active FROM nh_drivers WHERE tenant_id=:t', t) });
+  s.tarifa_id = null;
+  if (s.obra_id) {
+    const ta = await one(`SELECT v.tarifa_id FROM nh_viajes v JOIN nh_tarifas ta ON ta.id=v.tarifa_id AND ta.tenant_id=v.tenant_id AND ta.active
+      WHERE v.tenant_id=:t AND v.obra_id=:o GROUP BY v.tarifa_id ORDER BY COUNT(*) DESC LIMIT 1`, { t: req.tenant, o: s.obra_id });
+    if (ta) s.tarifa_id = ta.tarifa_id;
+  }
+  if (s.truck_id && !s.driver_id) { const k = await one('SELECT chofer_id FROM nh_trucks WHERE id=:id AND tenant_id=:t', { id: s.truck_id, t: req.tenant }); if (k && k.chofer_id) s.driver_id = k.chofer_id; }
+  return s;
 }
 /** Sube la foto del ticket y devuelve una PROPUESTA. No crea ningún viaje. */
 api.post('/viajes/leer-ticket', upload.single('foto'), async (req, res) => {
@@ -398,7 +406,8 @@ api.post('/viajes/leer-ticket', upload.single('foto'), async (req, res) => {
   const f = await storeFile(req, 'ticket', req.file);
   if (f.error) return res.status(f.status).json({ error: f.error });
   const raw = f.mime === 'image/jpeg' ? await llm.leerTicket(f.buffer) : null;
-  res.json({ file_id: f.id, propuesta: cleanOcr(raw), leido_por: raw ? 'modelo' : (llm.aiEnabled() ? 'sin_lectura' : 'captura_manual') });
+  const propuesta = cleanOcr(raw);
+  res.json({ file_id: f.id, propuesta, sugerencias: propuesta ? await sugerencias(req, propuesta) : null, leido_por: raw ? 'modelo' : (llm.aiEnabled() ? 'sin_lectura' : 'captura_manual') });
 });
 api.post('/archivos', upload.single('archivo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'falta_archivo' });
@@ -447,8 +456,11 @@ async function buildViaje(req, b, prev) {
   for (const k of ['ticket_file_id', 'vale_file_id']) {
     if (v[k] && !(await one('SELECT id FROM nh_files WHERE id=:id AND tenant_id=:t', { id: v[k], t: req.tenant }))) return { error: 'file_not_found', status: 404 };
   }
-  v.unidad = tarifa.unidad;
-  v.precio_unitario = Number(tarifa.precio);
+  // El precio es una FOTO tomada al capturar: editar notas o camión no re-cotiza un viaje viejo con la
+  // tarifa de hoy (un escombro de 20 t a $250 se volvería 20 × $4,500). Solo cambiar la tarifa re-cotiza.
+  const mismaTarifa = prev && Number(prev.tarifa_id) === Number(v.tarifa_id);
+  v.unidad = mismaTarifa ? prev.unidad : tarifa.unidad;
+  v.precio_unitario = mismaTarifa ? Number(prev.precio_unitario) : Number(tarifa.precio);
   v.importe = M.importe(v.cantidad, v.precio_unitario);
   if (v.importe == null) return { error: 'importe_invalido' };
   return { v, tarifa };
@@ -460,6 +472,10 @@ api.post('/viajes', async (req, res) => {
   if (v.ticket_no) {
     const dup = await one('SELECT id FROM nh_viajes WHERE tenant_id=:t AND ticket_no=:n AND tarifa_id=:ta', { t: req.tenant, n: v.ticket_no, ta: v.tarifa_id });
     if (dup && !b.permitir_duplicado) return res.status(409).json({ error: 'ticket_duplicado', viaje_id: dup.id });
+  }
+  if (v.vale_no) { // el número impreso del vale es único: el mismo vale dos veces es el mismo viaje cobrado dos veces
+    const dup = await one('SELECT id FROM nh_viajes WHERE tenant_id=:t AND vale_no=:n', { t: req.tenant, n: v.vale_no });
+    if (dup && !b.permitir_duplicado) return res.status(409).json({ error: 'vale_duplicado', viaje_id: dup.id });
   }
   const ocr = b.ocr && typeof b.ocr === 'object' ? JSON.stringify(cleanOcr(b.ocr)) : null;
   const confirmar = !!b.confirmar;
@@ -508,13 +524,26 @@ api.delete('/viajes/:id', async (req, res) => {
  */
 const importUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024, files: 1 } });
 /** Corre el parser en un Worker con tiempo límite (ver xlsx-worker.js). */
-function parseSheet(buf) {
+function parsePdf(buf) {
+  return new Promise((resolve) => {
+    const { fork } = require('child_process');
+    const c = fork(path.join(__dirname, 'pdf-child.js'), [], { env: {}, execArgv: ['--disallow-code-generation-from-strings', '--max-old-space-size=256'], stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+    let fin = false;
+    const done = (r) => { if (fin) return; fin = true; clearTimeout(timer); try { c.kill('SIGKILL'); } catch (_) {} resolve(r); };
+    const timer = setTimeout(() => done({ error: 'archivo_muy_lento' }), 10000);
+    c.once('message', (m) => done(m && typeof m.text === 'string' ? { text: m.text } : { error: (m && m.error) || 'pdf_ilegible' }));
+    c.once('error', () => done({ error: 'pdf_ilegible' }));
+    c.once('exit', () => done({ error: 'pdf_ilegible' }));
+    c.send({ buf: buf.toString('base64') });
+  });
+}
+function parseSheet(buf, kind) {
   return new Promise((resolve) => {
     const { Worker } = require('worker_threads');
-    const w = new Worker(path.join(__dirname, 'xlsx-worker.js'), { workerData: { buf }, resourceLimits: { maxOldGenerationSizeMb: 256 } });
+    const w = new Worker(path.join(__dirname, 'xlsx-worker.js'), { workerData: { buf, kind: kind || 'sheet' }, env: {}, resourceLimits: { maxOldGenerationSizeMb: 256 } });
     const done = (r) => { clearTimeout(timer); w.terminate().catch(() => {}); resolve(r); };
     const timer = setTimeout(() => done({ error: 'archivo_muy_lento' }), 10000);
-    w.once('message', (m) => done(m && Array.isArray(m.rows) ? { rows: m.rows } : { error: (m && m.error) || 'archivo_ilegible' }));
+    w.once('message', (m) => done(m && Array.isArray(m.rows) ? { rows: m.rows } : m && typeof m.text === 'string' ? { text: m.text } : { error: (m && m.error) || 'archivo_ilegible' }));
     w.once('error', () => done({ error: 'archivo_ilegible' }));
   });
 }
@@ -731,7 +760,9 @@ api.patch('/facturas/:id', async (req, res) => {
 api.get('/gastos', async (req, res) => {
   const where = ['g.tenant_id=:t'], r = { t: req.tenant };
   if (['pendiente', 'programado', 'pagado'].includes(req.query.estado)) { where.push('g.estado=:e'); r.e = req.query.estado; }
-  const rows = await sel(`SELECT g.*, k.unidad AS camion, o.nombre AS obra FROM nh_gastos g LEFT JOIN nh_trucks k ON k.id=g.truck_id AND k.tenant_id=g.tenant_id
+  const rows = await sel(`SELECT g.*, k.unidad AS camion, o.nombre AS obra,
+    (SELECT COUNT(*)::int FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id) AS cargas,
+    (SELECT COUNT(*)::int FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id AND c.truck_id IS NULL) AS cargas_sin_camion FROM nh_gastos g LEFT JOIN nh_trucks k ON k.id=g.truck_id AND k.tenant_id=g.tenant_id
     LEFT JOIN nh_obras o ON o.id=g.obra_id AND o.tenant_id=g.tenant_id WHERE ${where.join(' AND ')} ORDER BY g.fecha DESC, g.id DESC LIMIT 500`, r);
   const rep = await sel(`SELECT r.*, k.unidad FROM nh_gasto_reparto r JOIN nh_trucks k ON k.id=r.truck_id AND k.tenant_id=r.tenant_id WHERE r.tenant_id=:t`, { t: req.tenant });
   rows.forEach((g) => { g.reparto = rep.filter((x) => x.gasto_id === g.id); });
@@ -772,6 +803,7 @@ api.patch('/gastos/:id', async (req, res) => {
   if (g.truck_id && (await one('SELECT id FROM nh_gasto_reparto WHERE gasto_id=:g AND tenant_id=:t LIMIT 1', { g: id, t: req.tenant }))) {
     return res.status(409).json({ error: 'ya_repartido' }); // contarlo en un camión y además repartido lo duplicaría en el tablero
   }
+  if (g.truck_id && (await one('SELECT id FROM nh_diesel_cargas WHERE gasto_id=:g AND tenant_id=:t LIMIT 1', { g: id, t: req.tenant }))) return res.status(409).json({ error: 'tiene_cargas' });
   if (b.estado === 'programado') {
     const monto = b.monto_propuesto != null ? moneyIn(b.monto_propuesto) : Number(prev.saldo);
     if (monto == null || monto <= 0 || monto > Number(prev.saldo)) return res.status(400).json({ error: 'monto_invalido' });
@@ -791,6 +823,7 @@ api.put('/gastos/:id/reparto', async (req, res) => {
   const id = intId(req.params.id), g = id && (await own('nh_gastos', id, req.tenant));
   if (!g) return res.status(404).json({ error: 'not_found' });
   if (g.truck_id) return res.status(409).json({ error: 'ya_asignado_a_un_camion' });
+  if (await one('SELECT id FROM nh_diesel_cargas WHERE tenant_id=:t AND gasto_id=:g LIMIT 1', { t: req.tenant, g: id })) return res.status(409).json({ error: 'tiene_cargas' });
   const porCamion = new Map();
   for (const f of (Array.isArray(req.body && req.body.filas) ? req.body.filas : []).slice(0, 100)) { const k = intId(f.truck_id); if (k) porCamion.set(k, num(f.km)); }
   const filas = [...porCamion].map(([truck_id, km]) => ({ truck_id, km }));
@@ -803,6 +836,238 @@ api.put('/gastos/:id/reparto', async (req, res) => {
   });
   audit(req, 'reparto', `${id} ${partes.length} camiones`);
   res.json({ reparto: partes, total: M.sum(partes.map((p) => p.monto)) });
+});
+
+/* ── diésel por carga: el CFDI de la gasolinera ──────────────────────── */
+// La factura de la estación (J6) trae cada carga con su folio de despacho, fecha, hora y litros,
+// pero NO dice qué camión cargó (la tarjeta 946 es de toda la empresa). Andrés asigna cada carga;
+// el costo cuenta en la semana de la carga. Las cargas deben sumar exactamente el total de la factura.
+const folioKey = (f) => String(f == null ? '' : f).toUpperCase().replace(/[^A-Z0-9]/g, '');
+const FOLIO_SQL = "regexp_replace(upper(COALESCE(folio,'')),'[^A-Z0-9]','','g')";
+const provKey = (p) => String(p || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '');
+const mismoProveedor = (a, b) => { const x = provKey(a), y = provKey(b); return !!x && !!y && (x.startsWith(y.slice(0, 12)) || y.startsWith(x.slice(0, 12))); };
+/** Una importación a la vez por empresa: las comprobaciones de duplicado se repiten con el candado tomado. */
+const lockImport = (req, tx) => exec("SELECT pg_advisory_xact_lock(hashtext('nh_import_' || :t))", { t: String(req.tenant) }, tx);
+const docUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 6 * 1024 * 1024, files: 1 } });
+const cent = (v) => M.toCents(v);
+api.post('/diesel/importar', docUpload.single('archivo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'falta_archivo' });
+  const buf = req.file.buffer, type = sniff(buf);
+  let doc;
+  if (type === 'application/pdf') {
+    const p = await parsePdf(buf);
+    if (p.error || typeof p.text !== 'string') return res.status(415).json({ error: p.error || 'pdf_ilegible' });
+    doc = D.dieselFromPdfText(p.text);
+  } else if (!type && !buf.slice(0, 4096).includes(0) && /<\s*(\w+:)?Comprobante\b/.test(buf.slice(0, 20000).toString('utf8'))) {
+    if (/<!DOCTYPE|<!ENTITY/i.test(buf.toString('utf8'))) return res.status(415).json({ error: 'xml_con_doctype' }); // un CFDI nunca trae DOCTYPE
+    doc = D.dieselFromXml(buf.toString('utf8'));
+  } else return res.status(415).json({ error: 'usa_pdf_o_xml_del_cfdi' });
+  if (doc.error) return res.status(400).json({ error: doc.error });
+  if (doc.repetidas.length) return res.status(422).json({ error: 'cargas_repetidas', folios: doc.repetidas.slice(0, 20) });
+  if (!doc.cuadra) return res.status(422).json({ error: 'no_cuadra', factura: { subtotal: doc.subtotal, iva: doc.iva, total: doc.total }, calculado: doc.calculado });
+  if (!doc.folio && !doc.uuid) return res.status(400).json({ error: 'sin_folio' });
+  if (doc.uuid) {
+    const ya = await one('SELECT id FROM nh_gastos WHERE tenant_id=:t AND uuid=:u', { t: req.tenant, u: doc.uuid });
+    if (ya) return res.status(409).json({ error: 'factura_ya_importada', gasto_id: ya.id });
+  }
+  // Si la factura ya entró como cuenta por pagar (por ejemplo desde el PPS), se le agregan las cargas en vez de duplicarla.
+  const nf = folioKey(doc.folio);
+  const mismos = nf ? (await sel(`SELECT * FROM nh_gastos WHERE tenant_id=:t AND ${FOLIO_SQL}=:f`, { t: req.tenant, f: nf }))
+    .filter((g) => g.categoria === 'diesel' || mismoProveedor(g.proveedor, doc.proveedor)) : [];
+  const iguales = mismos.filter((g) => cent(g.total) === cent(doc.total));
+  if (mismos.length && !iguales.length) return res.status(409).json({ error: 'folio_con_otro_total', folio: doc.folio, total_factura: doc.total, total_en_app: Number(mismos[0].total) });
+  if (iguales.length > 1) return res.status(409).json({ error: 'folio_ambiguo', folio: doc.folio });
+  const prev = iguales[0] || null;
+  if (prev && prev.truck_id) return res.status(409).json({ error: 'ya_asignado_a_un_camion', gasto_id: prev.id });
+  if (prev && (await one('SELECT id FROM nh_diesel_cargas WHERE tenant_id=:t AND gasto_id=:g LIMIT 1', { t: req.tenant, g: prev.id }))) return res.status(409).json({ error: 'factura_ya_importada', gasto_id: prev.id });
+  let gastoId, repartoReemplazado = false;
+  try {
+  await db.transaction(async (tx) => {
+    await lockImport(req, tx);
+    // Se vuelve a comprobar con el candado tomado: dos subidas a la vez no crean dos facturas.
+    if (doc.uuid && (await one('SELECT id FROM nh_gastos WHERE tenant_id=:t AND uuid=:u', { t: req.tenant, u: doc.uuid }, tx))) throw Object.assign(new Error('dup'), { http: 409, body: { error: 'factura_ya_importada' } });
+    if (prev) {
+      const now = await one('SELECT truck_id, (SELECT COUNT(*)::int FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id) AS n FROM nh_gastos g WHERE id=:id AND tenant_id=:t FOR UPDATE', { id: prev.id, t: req.tenant }, tx);
+      if (!now || now.truck_id || now.n) throw Object.assign(new Error('dup'), { http: 409, body: { error: now && now.truck_id ? 'ya_asignado_a_un_camion' : 'factura_ya_importada', gasto_id: prev.id } });
+    } else if (!doc.uuid && nf && (await one(`SELECT id FROM nh_gastos WHERE tenant_id=:t AND ${FOLIO_SQL}=:f`, { t: req.tenant, f: nf }, tx))) {
+      throw Object.assign(new Error('dup'), { http: 409, body: { error: 'factura_ya_importada' } });
+    }
+    if (prev) {
+      const [r] = await exec('DELETE FROM nh_gasto_reparto WHERE tenant_id=:t AND gasto_id=:g RETURNING id', { t: req.tenant, g: prev.id }, tx);
+      repartoReemplazado = r.length > 0;
+      await exec(`UPDATE nh_gastos SET uuid=:u, categoria='diesel' WHERE id=:id AND tenant_id=:t`, { u: doc.uuid, id: prev.id, t: req.tenant }, tx);
+      gastoId = prev.id;
+    } else {
+      const [r] = await exec(`INSERT INTO nh_gastos (tenant_id,fecha,proveedor,folio,concepto,categoria,total,saldo,uuid,origen,file_id,created_by)
+        VALUES (:t,:fecha,:p,:folio,:c,'diesel',:tot,:tot,:u,'cfdi',:f,:by) RETURNING id`,
+        { t: req.tenant, fecha: doc.fecha || hoyMx(), p: str(doc.proveedor, 200) || 'Gasolinera', folio: strOrNull(doc.folio, 60), c: str(`Combustible ${doc.litros} L${doc.tarjeta ? ' · tarjeta ' + doc.tarjeta : ''}`, 300),
+          tot: doc.total, u: doc.uuid, f: null, by: req.user.id }, tx);
+      gastoId = r[0].id;
+    }
+    for (const c of doc.cargas) {
+      await exec(`INSERT INTO nh_diesel_cargas (tenant_id,gasto_id,folio_despacho,fecha,hora,producto,litros,precio,importe,iva,total)
+        VALUES (:t,:g,:fd,:f,:h,:p,:l,:pr,:i,:iva,:tot)`,
+        { t: req.tenant, g: gastoId, fd: str(c.folio_despacho, 40), f: c.fecha, h: c.hora, p: str(c.producto, 30), l: c.litros, pr: c.precio, i: c.importe, iva: c.iva, tot: c.total }, tx);
+    }
+  });
+  } catch (e) { if (e.http) return res.status(e.http).json(e.body); throw e; }
+  // El PDF se guarda al final: una importación rechazada no deja archivos huérfanos.
+  if (type === 'application/pdf') {
+    const file = await storeFile(req, 'factura', req.file);
+    if (file && file.id) await exec('UPDATE nh_gastos SET file_id=COALESCE(file_id,:f) WHERE id=:id AND tenant_id=:t', { f: file.id, id: gastoId, t: req.tenant });
+  }
+  audit(req, 'diesel_importado', `${doc.folio || doc.uuid} ${doc.cargas.length} cargas ${M.pesos(doc.total)}`);
+  res.status(201).json({ gasto_id: gastoId, adjuntado_a_existente: !!prev, reparto_km_reemplazado: repartoReemplazado, folio: doc.folio, proveedor: doc.proveedor, fecha: doc.fecha,
+    cargas: doc.cargas.length, litros: doc.litros, por_producto: doc.por_producto, total: doc.total, tarjeta: doc.tarjeta, placas_tarjeta: doc.placas_tarjeta, formato: doc.formato });
+});
+async function dieselResumen(req, gastoId) {
+  const g = await own('nh_gastos', gastoId, req.tenant);
+  if (!g) return null;
+  const cargas = await sel(`SELECT c.*, k.unidad AS camion FROM nh_diesel_cargas c LEFT JOIN nh_trucks k ON k.id=c.truck_id AND k.tenant_id=c.tenant_id
+    WHERE c.tenant_id=:t AND c.gasto_id=:g ORDER BY c.fecha, c.hora, c.id`, { t: req.tenant, g: gastoId });
+  const porCamion = {};
+  for (const c of cargas) {
+    const k = c.truck_id ? c.camion : 'Sin asignar';
+    porCamion[k] = porCamion[k] || { cargas: 0, litros: 0, total: 0 };
+    porCamion[k].cargas++; porCamion[k].litros = Math.round((porCamion[k].litros + Number(c.litros)) * 1000) / 1000;
+    porCamion[k].total = M.fromCents(cent(porCamion[k].total) + cent(c.total));
+  }
+  const sin = cargas.filter((c) => !c.truck_id);
+  return { gasto: g, cargas, por_camion: porCamion, sin_asignar: { cargas: sin.length, total: M.sum(sin.map((c) => c.total)) }, total: M.sum(cargas.map((c) => c.total)) };
+}
+api.get('/diesel/:gastoId', async (req, res) => {
+  const r = intId(req.params.gastoId) && (await dieselResumen(req, intId(req.params.gastoId)));
+  if (!r) return res.status(404).json({ error: 'not_found' });
+  res.json(r);
+});
+api.put('/diesel/:gastoId/cargas', async (req, res) => {
+  const gid = intId(req.params.gastoId), g = gid && (await own('nh_gastos', gid, req.tenant));
+  if (!g) return res.status(404).json({ error: 'not_found' });
+  const lista = Array.isArray(req.body && req.body.asignaciones) ? req.body.asignaciones : [];
+  if (!lista.length) return res.status(400).json({ error: 'nada_que_hacer' });
+  if (lista.length > 2000) return res.status(400).json({ error: 'demasiadas_cargas' });
+  const cargas = new Set((await sel('SELECT id FROM nh_diesel_cargas WHERE tenant_id=:t AND gasto_id=:g', { t: req.tenant, g: gid })).map((c) => c.id));
+  const trucks = new Set((await sel('SELECT id FROM nh_trucks WHERE tenant_id=:t', { t: req.tenant })).map((k) => k.id));
+  const cambios = [];
+  for (const a of lista) {
+    const id = intId(a && a.id), k = a && a.truck_id ? intId(a.truck_id) : null;
+    if (!id || !cargas.has(id) || (a.truck_id && (!k || !trucks.has(k)))) return res.status(404).json({ error: 'not_found' });
+    cambios.push({ id, k });
+  }
+  await db.transaction(async (tx) => {
+    for (const c of cambios) await exec('UPDATE nh_diesel_cargas SET truck_id=:k WHERE id=:id AND tenant_id=:t AND gasto_id=:g', { k: c.k, id: c.id, t: req.tenant, g: gid }, tx);
+  });
+  audit(req, 'diesel_asignado', `${gid} ${cambios.length} cargas`);
+  res.json(await dieselResumen(req, gid));
+});
+
+/* ── PPS: la propuesta de pagos semanal de NeoHaul, de ida y vuelta ──── */
+const kpps = (p, f) => [p, f].map((x) => String(x == null ? '' : x).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()).join('|');
+const ccKey = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+api.post('/gastos/importar-pps', importUpload.single('archivo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'falta_archivo' });
+  const type = sniff(req.file.buffer), isText = !type && !req.file.buffer.slice(0, 4096).includes(0);
+  if (type !== 'application/zip' && !isText) return res.status(415).json({ error: 'usa_excel_o_csv' });
+  const parsed = await parseSheet(req.file.buffer);
+  if (parsed.error) return res.status(415).json({ error: parsed.error });
+  const pps = D.parsePps(parsed.rows);
+  if (pps.error) return res.status(400).json(pps);
+  const obras = await sel('SELECT id,nombre,clave FROM nh_obras WHERE tenant_id=:t', { t: req.tenant });
+  const trucks = await sel('SELECT id,unidad,placas FROM nh_trucks WHERE tenant_id=:t', { t: req.tenant });
+  const destino = (cc) => {
+    const k = ccKey(cc); if (!k || k === 'GENERAL') return {};
+    const o = obras.filter((x) => (x.clave && ccKey(x.clave) === k) || ccKey(x.nombre) === k);
+    if (o.length === 1) return { obra_id: o[0].id };
+    const tr = trucks.filter((x) => ccKey(x.unidad) === k || (x.placas && D.placaKey(x.placas) === D.placaKey(cc)));
+    return tr.length === 1 ? { truck_id: tr[0].id } : {};
+  };
+  const semana = M.lunes(hoyMx());
+  let creadas = 0, actualizadas = 0, actuales = []; const enArchivo = new Set(), avisos = [];
+  await db.transaction(async (tx) => {
+    await lockImport(req, tx);
+    // Leído con el candado tomado: dos cargas del PPS a la vez no duplican facturas.
+    actuales = await sel(`SELECT g.id,g.proveedor,g.folio,g.estado,g.origen,g.total,g.saldo,
+        EXISTS (SELECT 1 FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id)
+        OR EXISTS (SELECT 1 FROM nh_gasto_reparto r WHERE r.tenant_id=g.tenant_id AND r.gasto_id=g.id) AS detallado
+      FROM nh_gastos g WHERE g.tenant_id=:t`, { t: req.tenant }, tx);
+    const porClave = new Map(actuales.map((g) => [kpps(g.proveedor, g.folio), g]));
+    // Misma regla que el CFDI: folio normalizado + mismo total, para que el orden de carga no duplique.
+    const porFolioTotal = new Map();
+    for (const g of actuales) { const k = folioKey(g.folio) + '|' + cent(g.total); if (folioKey(g.folio)) porFolioTotal.set(k, porFolioTotal.has(k) ? null : g); }
+    for (const f of pps.filas) {
+      const key = kpps(f.proveedor, f.folio); enArchivo.add(key);
+      const prev = porClave.get(key) || porFolioTotal.get(folioKey(f.folio) + '|' + cent(f.total)) || null;
+      if (prev) enArchivo.add(kpps(prev.proveedor, prev.folio));
+      const prop = f.propuesta != null ? Math.min(f.propuesta, f.saldo) : null;
+      if (f.propuesta != null && f.propuesta > f.saldo) avisos.push({ renglon: f.renglon, folio: f.folio, aviso: 'propuesta_mayor_que_saldo' });
+      if (prev) {
+        // Lo que la app ya sabe gana: una factura pagada no se reabre y un saldo no sube con un PPS viejo.
+        if (prev.estado === 'pagado') { if (cent(f.saldo) > 0) avisos.push({ renglon: f.renglon, folio: f.folio, aviso: 'ya_pagada_en_la_app' }); continue; }
+        let saldo = f.saldo;
+        if (cent(f.saldo) > cent(prev.saldo)) { avisos.push({ renglon: f.renglon, folio: f.folio, aviso: 'saldo_mayor_que_en_la_app' }); saldo = Number(prev.saldo); }
+        let total = f.total;
+        if (cent(f.total) !== cent(prev.total) && prev.detallado) { avisos.push({ renglon: f.renglon, folio: f.folio, aviso: 'total_distinto_con_cargas' }); total = Number(prev.total); }
+        if (cent(saldo) > cent(total)) saldo = total;
+        const estado = cent(saldo) === 0 ? 'pagado' : prop ? 'programado' : null;
+        await exec(`UPDATE nh_gastos SET fecha=:fecha, total=:total, saldo=:saldo, empresa=:emp, cc=:cc, desc_cc=:dcc, explicacion=COALESCE(:ex,explicacion), orden_pps=:ord,
+            prioridad=COALESCE(:pri,prioridad), origen=COALESCE(origen,'pps'),
+            estado=COALESCE(:st::text, estado),
+            fecha_pago=CASE WHEN :st::text='pagado' THEN CAST(:hoy AS DATE) ELSE fecha_pago END,
+            monto_propuesto=CASE WHEN :st::text='programado' THEN :mp WHEN :st::text='pagado' THEN NULL ELSE monto_propuesto END,
+            semana_pago=CASE WHEN :st::text='programado' THEN CAST(:sp AS DATE) WHEN :st::text='pagado' THEN NULL ELSE semana_pago END
+          WHERE id=:id AND tenant_id=:t AND estado<>'pagado'`,
+          { t: req.tenant, fecha: f.fecha, total, saldo, emp: f.empresa, cc: f.cc, dcc: f.desc_cc, ex: f.explicacion, ord: f.orden, pri: f.prioridad,
+            st: estado, hoy: hoyMx(), mp: estado === 'programado' ? Math.min(prop, saldo) : null, sp: estado === 'programado' ? semana : null, id: prev.id }, tx);
+        actualizadas++;
+      } else {
+        const dest = destino(f.cc);
+        const estado = cent(f.saldo) === 0 ? 'pagado' : prop ? 'programado' : 'pendiente';
+        await exec(`INSERT INTO nh_gastos (tenant_id,fecha,proveedor,folio,concepto,categoria,total,saldo,truck_id,obra_id,prioridad,semana_pago,monto_propuesto,estado,fecha_pago,
+            empresa,cc,desc_cc,explicacion,orden_pps,origen,created_by)
+          VALUES (:t,:fecha,:p,:folio,:c,:cat,:total,:saldo,:k,:o,:pri,CAST(:sp AS DATE),:mp,:st,CAST(:fp AS DATE),:emp,:cc,:dcc,:ex,:ord,'pps',:by)`,
+          { t: req.tenant, fecha: f.fecha, p: f.proveedor, folio: f.folio, c: f.concepto, cat: f.categoria, total: f.total, saldo: f.saldo, k: dest.truck_id || null, o: dest.obra_id || null,
+            pri: f.prioridad, sp: estado === 'programado' ? semana : null, mp: estado === 'programado' ? prop : null, st: estado, fp: estado === 'pagado' ? hoyMx() : null,
+            emp: f.empresa, cc: f.cc, dcc: f.desc_cc, ex: f.explicacion, ord: f.orden, by: req.user.id }, tx);
+        creadas++;
+      }
+    }
+  });
+  // Lo que venía del PPS anterior y ya no viene suele estar pagado: se avisa, no se marca solo.
+  const noVienen = actuales.filter((g) => g.origen === 'pps' && g.estado !== 'pagado' && !enArchivo.has(kpps(g.proveedor, g.folio)))
+    .map((g) => ({ id: g.id, proveedor: g.proveedor, folio: g.folio }));
+  audit(req, 'pps_importado', `${creadas} nuevas ${actualizadas} actualizadas ${pps.errores.length} rechazadas`);
+  res.json({ creadas, actualizadas, rechazadas: pps.errores, avisos, resumen: pps.resumen, control: pps.control, no_vienen: noVienen });
+});
+function isoSemana(f) {
+  const d = new Date(f + 'T00:00:00Z'); const day = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - day + 3);
+  const y1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((d - y1) / 86400000 - 3 + ((y1.getUTCDay() + 6) % 7)) / 7);
+}
+api.get('/gastos/pps.xlsx', async (req, res) => {
+  const semana = M.lunes(date(req.query.semana) || hoyMx());
+  const gs = await sel(`SELECT g.*, k.unidad AS camion, o.clave AS obra_clave, o.nombre AS obra FROM nh_gastos g LEFT JOIN nh_trucks k ON k.id=g.truck_id AND k.tenant_id=g.tenant_id
+    LEFT JOIN nh_obras o ON o.id=g.obra_id AND o.tenant_id=g.tenant_id WHERE g.tenant_id=:t AND g.estado<>'pagado' AND g.saldo>0
+    ORDER BY g.orden_pps NULLS LAST, g.fecha, g.id`, { t: req.tenant });
+  const serial = (f) => Math.round((Date.parse(String(f).slice(0, 10) + 'T00:00:00Z') / 86400000) + 25569);
+  const filas = gs.map((g, i) => {
+    const prog = g.estado === 'programado' && String(g.semana_pago).slice(0, 10) === semana;
+    const parcial = prog && cent(g.monto_propuesto) < cent(g.saldo);
+    return [g.orden_pps || i + 1, g.empresa || 'NEOHAUL', g.folio || '', serial(g.fecha), '', Number(g.saldo), g.proveedor, Number(g.total), g.concepto || 'Factura',
+      g.cc || g.camion || g.obra_clave || g.obra || 'GENERAL', g.desc_cc || 'NEOHAUL', g.explicacion || '', g.prioridad || '', parcial ? 'SI' : '',
+      parcial ? Number(g.monto_propuesto) : '', prog ? Number(g.monto_propuesto) : 0];
+  });
+  const sumCol = (c) => M.sum(filas.map((r) => (typeof r[c] === 'number' ? r[c] : 0)));
+  const aoa = [[filas.length, '', '', '', '', sumCol(5), '', sumCol(7), '', '', '', '', '', '', sumCol(14), sumCol(15)], D.PPS_COLS, ...filas];
+  const XLSX = require('xlsx');
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  for (let r = 2; r < aoa.length; r++) { const c = ws[XLSX.utils.encode_cell({ r, c: 3 })]; if (c) c.z = 'dd/mm/yyyy'; }
+  ws['!cols'] = [6, 10, 14, 11, 6, 13, 40, 13, 10, 10, 10, 24, 10, 8, 12, 12].map((w) => ({ wch: w }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'NEOHAUL');
+  const [y, m, d] = semana.split('-');
+  audit(req, 'pps_exportado', `${semana} ${filas.length}`);
+  res.set({ 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'Content-Disposition': `attachment; filename="PPS S${isoSemana(semana)} NEOHAUL ${d}-${m}-${y.slice(2)}.xlsx"` });
+  res.send(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }));
 });
 
 /* ── nómina semanal ──────────────────────────────────────────────────── */
@@ -920,6 +1185,8 @@ api.get('/tablero', async (req, res) => {
   const pagosSemana = await sel(`SELECT g.id, g.proveedor, g.folio, g.categoria, g.monto_propuesto, g.saldo, k.unidad AS camion FROM nh_gastos g
     LEFT JOIN nh_trucks k ON k.id=g.truck_id AND k.tenant_id=g.tenant_id WHERE g.tenant_id=:t AND g.estado='programado' AND g.semana_pago=:d ORDER BY g.monto_propuesto DESC`, r);
   const porPagar = await q1("SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND estado<>'pagado'");
+  const dieselSin = await q1(`SELECT COUNT(*)::int AS n, COALESCE(SUM(c.total),0) AS s FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+    WHERE c.tenant_id=:t AND c.truck_id IS NULL AND COALESCE(c.fecha,g.fecha) BETWEEN :d AND :h`);
   const tallerCobrar = await q1("SELECT COALESCE(SUM(total),0) AS s, COUNT(*)::int AS n FROM nh_taller WHERE tenant_id=:t AND estado='por_cobrar'");
   // Por camión propio: ingresos de sus viajes en la semana contra sus costos directos capturados en la semana.
   const camiones = await sel(`SELECT k.id, k.unidad,
@@ -928,10 +1195,15 @@ api.get('/tablero', async (req, res) => {
       COALESCE((SELECT SUM(total) FROM nh_gastos g WHERE g.tenant_id=:t AND g.truck_id=k.id AND g.fecha BETWEEN :d AND :h),0) AS gastos,
       COALESCE((SELECT SUM(r.monto) FROM nh_gasto_reparto r JOIN nh_gastos g ON g.id=r.gasto_id AND g.tenant_id=r.tenant_id
         WHERE r.tenant_id=:t AND r.truck_id=k.id AND g.fecha BETWEEN :d AND :h),0) AS repartido,
-      COALESCE((SELECT SUM(total) FROM nh_taller s WHERE s.tenant_id=:t AND s.truck_id=k.id AND s.cliente='NeoHaul' AND s.fecha BETWEEN :d AND :h),0) AS taller
+      COALESCE((SELECT SUM(total) FROM nh_taller s WHERE s.tenant_id=:t AND s.truck_id=k.id AND s.cliente='NeoHaul' AND s.fecha BETWEEN :d AND :h),0) AS taller,
+      COALESCE((SELECT SUM(c.total) FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+        WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) BETWEEN :d AND :h),0) AS diesel,
+      COALESCE((SELECT SUM(c.litros) FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+        WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) BETWEEN :d AND :h),0) AS litros
     FROM nh_trucks k WHERE k.tenant_id=:t AND k.propio AND k.active ORDER BY k.unidad`, r);
   camiones.forEach((c) => {
-    c.costos = M.sum([c.gastos, c.repartido, c.taller]);
+    c.costos = M.sum([c.gastos, c.repartido, c.taller, c.diesel]);
+    c.litros = Number(c.litros);
     c.sin_costos = M.toCents(c.costos) === 0;
     c.margen = c.sin_costos ? null : M.fromCents(M.toCents(c.ingresos) - M.toCents(c.costos));
   });
@@ -948,7 +1220,8 @@ api.get('/tablero', async (req, res) => {
     cuentas_por_pagar: { n: porPagar.n, saldo: Number(porPagar.s) },
     taller_por_cobrar: { n: tallerCobrar.n, total: Number(tallerCobrar.s) },
     camiones,
-    notas: ['Costos por camión = gastos asignados + diésel repartido + taller propio de la semana. La nómina y las comisiones aún no se cargan por camión.']
+    diesel_sin_asignar: { n: dieselSin.n, total: Number(dieselSin.s) },
+    notas: ['Costos por camión = gastos asignados + diésel por carga (o repartido por km) + taller propio de la semana. La nómina y las comisiones aún no se cargan por camión.']
   });
 });
 
