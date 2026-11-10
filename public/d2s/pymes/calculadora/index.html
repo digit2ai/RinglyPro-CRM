@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Calculadora de ahorro mensual · Synthex SAI</title>
+<meta name="description" content="Calcule cuánto le cuesta cada mes el trabajo repetitivo y cuánto recupera su empresa al automatizarlo con inteligencia artificial.">
+<script>
+/* Tema antes de pintar: ?tema=oscuro|claro manda; si no, una elección guardada; si no, el sistema. */
+(function(){
+  var q = new URLSearchParams(location.search), t = q.get('tema');
+  if (t !== 'oscuro' && t !== 'claro') { try { t = localStorage.getItem('sx_calc_tema'); } catch (e) {} }
+  if (t !== 'oscuro' && t !== 'claro') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'oscuro' : 'claro';
+  document.documentElement.setAttribute('data-tema', t);
+  if (q.get('embed') === '1') document.documentElement.classList.add('embed');
+})();
+</script>
+<style>
+:root{
+  --bg:#f5f8f6; --card:#ffffff; --card2:#f0f5f2; --line:#dce5df; --txt:#0f1f17; --mut:#4c5f55;
+  --acc:#0f9d58; --acc-txt:#0a7a42; --acc-soft:rgba(15,157,88,.10); --on-acc:#ffffff; --bad:#b42318;
+  --cost:#c2410c; --cost-soft:rgba(194,65,12,.12);
+  --fd:'Space Grotesk','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  --fb:'Inter','Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+html[data-tema="oscuro"]{
+  --bg:#0B0F17; --card:#121a28; --card2:#172235; --line:rgba(255,255,255,.10); --txt:#f3f6fa; --mut:#a3b1c4;
+  --acc:#22c55e; --acc-txt:#4ade80; --acc-soft:rgba(34,197,94,.12); --on-acc:#052e16; --bad:#f87171;
+  --cost:#fb923c; --cost-soft:rgba(251,146,60,.14);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 40px}
+header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{font-family:var(--fd);font-size:clamp(24px,3.2vw,34px);line-height:1.15;letter-spacing:-.01em}
+.top p{color:var(--mut);margin-top:6px;max-width:62ch}
+.tema{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:999px;padding:9px 14px;font:600 14px var(--fb);cursor:pointer;min-height:44px}
+.tema:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:20px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card h2{font-family:var(--fd);font-size:18px;margin-bottom:6px}
+.cur{display:flex;align-items:center;gap:10px;margin-bottom:4px;color:var(--mut);font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--mut);font:700 13px var(--fb);padding:8px 14px;min-width:56px;min-height:36px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--on-acc)}
+.f{padding:14px 0;border-top:1px solid var(--line)}
+.f:first-of-type{border-top:0}
+.f label{font-weight:600;font-size:15px;display:block}
+.f .help{color:var(--mut);font-size:13px;margin-top:2px}
+.f .row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.f input[type=range]{flex:1;min-width:0;accent-color:var(--acc);height:28px}
+.f .box{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:var(--card2);padding:0 10px;flex:0 0 auto}
+.f .box input{width:96px;border:0;background:transparent;color:var(--txt);font:600 16px var(--fb);font-variant-numeric:tabular-nums;text-align:right;padding:9px 0;min-height:40px}
+.f .box input.wide{width:150px}
+.f .box span{color:var(--mut);font-size:13px;margin-left:6px;white-space:nowrap}
+.f .err{color:var(--bad);font-size:13px;margin-top:4px}
+.res .lead{font-size:14px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.res .big{font-family:var(--fd);font-weight:700;font-size:clamp(40px,5.6vw,60px);line-height:1.02;color:var(--acc-txt);margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.res .big small{font-size:.36em;color:var(--mut);font-weight:600;margin-left:6px}
+.res .sub{margin-top:6px;font-size:15px;color:var(--mut)}
+.bars{margin-top:18px;display:grid;gap:12px}
+.bar .bl{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:5px}
+.bar .bl b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar .track{height:14px;border-radius:999px;background:var(--card2);overflow:hidden}
+.bar .fill{height:100%;border-radius:999px;transition:width .25s ease}
+.bar.c .fill{background:var(--cost)} .bar.c .bl b{color:var(--cost)}
+.bar.s .fill{background:var(--acc)} .bar.s .bl b{color:var(--acc-txt)}
+.kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.kp div{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kp b{display:block;font-family:var(--fd);font-size:22px;font-variant-numeric:tabular-nums;color:var(--txt);overflow-wrap:anywhere}
+.kp span{font-size:12.5px;color:var(--mut)}
+.how{margin-top:20px}
+.how h2{font-family:var(--fd);font-size:18px;margin-bottom:10px}
+.how ol{padding-left:20px;display:grid;gap:8px}
+.how li{font-size:14.5px}
+.how .note{color:var(--mut);font-size:13px;margin-top:12px}
+@media (max-width:820px){ .grid{grid-template-columns:1fr} .wrap{padding:18px 16px 32px} }
+@media (max-width:480px){ .kp{grid-template-columns:1fr} .f .box input{width:80px} .f .box input.wide{width:120px} }
+/* Dentro de la presentación: sin encabezado ni fondo propio, más compacto. */
+html.embed body{background:transparent}
+html.embed .wrap{padding:4px 6px 16px;max-width:none}
+html.embed header.top{display:none}
+html.embed .f{padding:9px 0}
+html.embed .card{padding:16px 18px}
+html.embed .kp{margin-top:14px}
+html.embed .kp b{font-size:18px}
+html.embed .bars{margin-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>¿Cuánto le cuesta cada mes el trabajo repetitivo?</h1>
+      <p>Con tres datos de su empresa vea, al instante, cuánto paga hoy cada mes en tareas que se pueden automatizar y cuánto recupera con inteligencia artificial.</p>
+    </div>
+    <button type="button" class="tema" id="tema" aria-label="Cambiar entre modo claro y oscuro">Modo oscuro</button>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="hIn">
+      <h2 id="hIn">Sus datos</h2>
+      <div class="cur">Moneda
+        <div class="seg" role="group" aria-label="Moneda">
+          <button type="button" data-cur="COP" aria-pressed="true">COP</button>
+          <button type="button" data-cur="USD" aria-pressed="false">USD</button>
+        </div>
+      </div>
+
+      <div class="f" data-k="emp">
+        <label for="emp_n">Número de empleados que utilizan sistemas operativos</label>
+        <div class="help">Las personas que trabajan a diario en el ERP, la contabilidad, el CRM, Excel o el correo.</div>
+        <div class="row"><input type="range" id="emp_r" min="5" max="150" step="1" aria-label="Número de empleados que utilizan sistemas operativos">
+          <div class="box"><input type="number" id="emp_n" min="5" max="150" step="1" inputmode="numeric"><span>personas</span></div></div>
+        <div class="err" aria-live="polite"></div>
+      </div>
+
+      <div class="f" data-k="hrs">
+        <label for="hrs_n">Horas al día en tareas repetitivas, por persona</label>
+        <div class="help">Ej.: digitar datos, responder correos iguales, conciliar, armar reportes.</div>
+        <div class="row"><input type="range" id="hrs_r" min="0.5" max="8" step="0.5" aria-label="Horas al día en tareas repetitivas">
+          <div class="box"><input type="number" id="hrs_n" min="0" max="8" step="0.5" inputmode="decimal"><span>h / día</span></div></div>
+        <div class="err" aria-live="polite"></div>
+      </div>
+
+      <div class="f" data-k="cost">
+        <label for="cost_n">Salario más cargas laborales, por persona al mes</label>
+        <div class="help">Lo que la empresa paga en total cada mes por una persona.</div>
+        <div class="row"><input type="range" id="cost_r" aria-label="Salario más cargas laborales, por persona al mes">
+          <div class="box"><input type="number" class="wide" id="cost_n" min="0" inputmode="numeric"><span id="costCur">COP</span></div></div>
+        <div class="err" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="card res" aria-labelledby="hOut" aria-live="polite">
+      <div class="lead" id="hOut">Su empresa recupera cada mes</div>
+      <div class="big"><span id="rMain">0</span></div>
+      <p class="sub" id="rSub">Dinero que hoy paga en trabajo manual y que la automatización le devuelve.</p>
+      <div class="bars">
+        <div class="bar c"><div class="bl"><span>Hoy paga al mes en trabajo repetitivo</span><b id="rCosto">0</b></div><div class="track"><div class="fill" style="width:100%"></div></div></div>
+        <div class="bar s"><div class="bl"><span>Recupera al mes con Synthex SAI</span><b id="rAhorro">0</b></div><div class="track"><div class="fill" id="rAhorroBar" style="width:70%"></div></div></div>
+      </div>
+      <div class="kp">
+        <div><b id="rHorasMes">0</b><span>horas al mes que vuelven a su equipo</span></div>
+        <div><b id="rFte">0</b><span>personas de tiempo completo, sin contratar</span></div>
+        <div><b id="rAno">0</b><span>recuperados en un año</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card how" aria-labelledby="hHow">
+    <h2 id="hHow">Cómo se calcula</h2>
+    <ol>
+      <li><b>Costo mensual del trabajo repetitivo</b> = empleados × salario más cargas × (horas repetitivas al día ÷ jornada de 8 horas).</li>
+      <li><b>Lo que recupera al mes</b> = ese costo × 70%, la parte del trabajo repetitivo que se automatiza.</li>
+      <li><b>Horas al mes que vuelven a su equipo</b> = empleados × horas repetitivas al día × 70% × 22 días laborales.</li>
+      <li><b>Personas de tiempo completo</b> = esas horas ÷ 176 horas laborales al mes (22 días × 8 horas).</li>
+      <li><b>Recuperado en un año</b> = lo que recupera al mes × 12.</li>
+    </ol>
+    <p class="note">Usted ingresa tres datos. El 70% automatizable, los 22 días y la jornada de 8 horas son valores de referencia fijos; el diagnóstico los mide con su operación real antes de comprometer cualquier cifra.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var COST = { COP: { def: 3500000, min: 500000, max: 30000000, step: 50000 }, USD: { def: 2500, min: 100, max: 15000, step: 50 } };
+  /* Fijos en el sistema (no los elige el cliente): parte automatizable, días laborales y jornada. */
+  var FIJO = { pct: 70, dias: 22, jor: 8 };
+  var LIM = {
+    emp:  { min: 5,  max: 150, def: 25 },
+    hrs:  { min: 0,  max: 8,   def: 2 },
+    cost: { min: 0,  max: Infinity, def: COST.COP.def }
+  };
+  var cur = 'COP';
+  var st = { emp: 25, hrs: 2, cost: COST.COP.def, pct: FIJO.pct, dias: FIJO.dias, jor: FIJO.jor };
+  var $ = function(id){ return document.getElementById(id); };
+
+  var nf1 = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf0 = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+  function money(v){
+    var dec = (cur === 'USD' && Math.abs(v) < 1000) ? 2 : 0;
+    return '$ ' + new Intl.NumberFormat('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v) + ' ' + cur;
+  }
+  /* One decimal, half up, so 3,85 shows 3,9 (binary floats would otherwise round it down). */
+  function r1(v){ return Math.round(v * 10 + 1e-9) / 10; }
+  function f1(v){ return nf1.format(r1(v)); }
+  function hrs(v){ return f1(v) + ' h'; }
+  function n0(v){ return nf0.format(Math.round(v)); }
+
+  /* Lo que el usuario escribe nunca llega negativo ni fuera de rango; si se corrige, se dice. */
+  function clamp(k, raw){
+    var L = LIM[k], v = parseFloat(String(raw).replace(',', '.')), msg = '';
+    if (!isFinite(v)) { v = st[k]; msg = 'Escriba un número.'; }
+    if (v < L.min) { msg = (k === 'emp') ? 'El mínimo es ' + nf0.format(L.min) + '.' : 'No se aceptan valores negativos.'; v = L.min; }
+    if (v > L.max) { msg = 'El máximo es ' + nf0.format(L.max) + '.'; v = L.max; }
+    return { v: v, msg: msg };
+  }
+  function errEl(k){ return document.querySelector('.f[data-k="' + k + '"] .err'); }
+
+  function sync(k, from){
+    var r = $(k + '_r'), n = $(k + '_n');
+    if (from !== 'num') n.value = st[k];      // the field the person is typing in is left alone
+    if (from !== 'range') r.value = st[k];
+  }
+
+  function calc(){
+    var horasMes = st.dias * st.jor;                       // horas laborales al mes
+    var costoHora = st.cost / horasMes;
+    var costoRepMes = st.emp * st.cost * (st.hrs / st.jor); // lo que hoy cuesta el trabajo repetitivo, al mes
+    var libDia = st.hrs * (st.pct / 100);                  // por persona
+    var libMesP = libDia * st.dias;
+    var libMesEq = libMesP * st.emp;
+    var libAnoEq = libMesEq * 12;
+    var valP = libMesP * costoHora;
+    var valEq = valP * st.emp;                              // lo que recupera al mes, todo el equipo
+    var valAno = valEq * 12;
+    var fte = libMesEq / horasMes;
+    return { horasMes: horasMes, costoHora: costoHora, costoRepMes: costoRepMes, libDia: libDia, libMesP: libMesP, libMesEq: libMesEq, libAnoEq: libAnoEq, valP: valP, valEq: valEq, valAno: valAno, fte: fte };
+  }
+
+  function render(){
+    var c = calc();
+    $('rMain').textContent = money(c.valEq);
+    $('rCosto').textContent = money(c.costoRepMes);
+    $('rAhorro').textContent = money(c.valEq);
+    $('rAhorroBar').style.width = (c.costoRepMes > 0 ? Math.round(c.valEq / c.costoRepMes * 100) : 0) + '%';
+    $('rHorasMes').textContent = n0(c.libMesEq);
+    $('rFte').textContent = f1(c.fte);
+    $('rAno').textContent = money(c.valAno);
+  }
+
+  function setCostRange(){
+    var C = COST[cur], r = $('cost_r');
+    r.min = C.min; r.max = C.max; r.step = C.step;
+    $('cost_n').step = C.step; $('costCur').textContent = cur;
+  }
+
+  Object.keys(LIM).forEach(function(k){
+    var r = $(k + '_r'), n = $(k + '_n');
+    r.addEventListener('input', function(){ st[k] = parseFloat(r.value); errEl(k).textContent = ''; sync(k, 'range'); render(); });
+    n.addEventListener('input', function(){
+      if (n.value === '' ) return;                          // dejar escribir; se corrige al salir
+      var x = clamp(k, n.value); st[k] = x.v; errEl(k).textContent = x.msg; sync(k, 'num'); render();
+    });
+    n.addEventListener('change', function(){ var x = clamp(k, n.value); st[k] = x.v; errEl(k).textContent = x.msg; sync(k); render(); });
+    n.addEventListener('keydown', function(e){ if (e.key === '-' || e.key === 'e' || e.key === 'E') e.preventDefault(); });
+  });
+
+  [].forEach.call(document.querySelectorAll('[data-cur]'), function(btn){
+    btn.addEventListener('click', function(){
+      var to = btn.getAttribute('data-cur'); if (to === cur) return;
+      cur = to;
+      [].forEach.call(document.querySelectorAll('[data-cur]'), function(o){ o.setAttribute('aria-pressed', o === btn ? 'true' : 'false'); });
+      st.cost = COST[cur].def; errEl('cost').textContent = '';
+      setCostRange(); sync('cost'); render();
+    });
+  });
+
+  function temaLabel(){ $('tema').textContent = document.documentElement.getAttribute('data-tema') === 'oscuro' ? 'Modo claro' : 'Modo oscuro'; }
+  $('tema').addEventListener('click', function(){
+    var t = document.documentElement.getAttribute('data-tema') === 'oscuro' ? 'claro' : 'oscuro';
+    document.documentElement.setAttribute('data-tema', t);
+    try { localStorage.setItem('sx_calc_tema', t); } catch (e) {}
+    temaLabel();
+  });
+  temaLabel();
+
+  setCostRange();
+  Object.keys(LIM).forEach(function(k){ sync(k); });
+  render();
+  // Read by the /pymes/ deck (slide 15) so its figures are these, formatted the same way.
+  window.SXCALC = { calc: calc, state: st, cur: function(){ return cur; }, fmt: { money: money, f1: f1, hrs: hrs }, setCur: function(c){ var b = document.querySelector('[data-cur="' + c + '"]'); if (b) b.click(); } };
+})();
+</script>
+</body>
+</html>
