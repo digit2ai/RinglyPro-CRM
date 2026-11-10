@@ -119,10 +119,14 @@ router.get('/health', async (req, res) => {
   let dbOk = false; try { await ready; await sel('SELECT 1 AS ok'); dbOk = true; } catch (_) {}
   res.json({ service: 'neohaul', ok: dbOk && !!SECRET, database: dbOk, signing_secret: !!SECRET, ticket_reader: llm.aiEnabled() ? 'modelo' : 'captura_manual' });
 });
-router.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
-router.get('/', (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'app.html')); });
 // Guía narrada (Dalia). Pública como la pantalla de ingreso: solo muestra capturas con datos de ejemplo.
+// VA ANTES del static: public/presentacion/ es la carpeta de capturas y el static redirigía la página a
+// /presentacion/, donde las imágenes relativas quedaban una carpeta más adentro y ninguna se veía.
+// Las imágenes van con ruta absoluta: la página funciona en /presentacion y en /presentacion/ (un
+// navegador guarda aquel 301 viejo; redirigir de vuelta haría un ciclo).
 router.get(['/presentacion', '/guia'], (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'presentacion.html')); });
+router.use(express.static(path.join(__dirname, '..', 'public'), { index: false, redirect: false }));
+router.get('/', (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'app.html')); });
 
 /* ── api ─────────────────────────────────────────────────────────────── */
 const api = express.Router();

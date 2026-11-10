@@ -85,7 +85,7 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('docs.js (lectores) no toca base de datos ni red', !/require\('\.\/db'\)|sequelize|https?\.request|fetch\(/.test(code['docs.js']));
     const deck = fs.readFileSync(path.join(__dirname, 'public', 'presentacion.html'), 'utf8');
     const narr = eval('(' + deck.slice(deck.indexOf('var NARR = ') + 11, deck.indexOf('];', deck.indexOf('var NARR = ')) + 1) + ')');
-    const imgs = [...deck.matchAll(/src="(presentacion\/[^"]+)"/g)].map((m) => m[1]);
+    const imgs = [...deck.matchAll(/src="\/neohaul\/(presentacion\/[^"]+)"/g)].map((m) => m[1]);
     ok('guía narrada: una narración por lámina, bajo el tope de la voz, cada captura existe', (deck.match(/class="slide/g) || []).length === narr.length && narr.every((n) => n.length < 2000) && imgs.length > 15 && imgs.every((s) => fs.existsSync(path.join(__dirname, 'public', s))));
     ok('solo llm.js llega a un modelo', files.filter((f) => /@anthropic-ai\/sdk/.test(code[f])).join() === 'llm.js');
     ok('ningún transporte de mensajes en el vertical', !files.some((f) => /twilio|sendgrid|nodemailer|graph\.facebook|messages\.create\(\s*\{\s*to/i.test(code[f])));
