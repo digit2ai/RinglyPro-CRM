@@ -121,6 +121,8 @@ router.get('/health', async (req, res) => {
 });
 router.use(express.static(path.join(__dirname, '..', 'public'), { index: false }));
 router.get('/', (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'app.html')); });
+// Guía narrada (Dalia). Pública como la pantalla de ingreso: solo muestra capturas con datos de ejemplo.
+router.get(['/presentacion', '/guia'], (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'presentacion.html')); });
 
 /* ── api ─────────────────────────────────────────────────────────────── */
 const api = express.Router();
@@ -328,7 +330,7 @@ api.get('/disponibles', async (req, res) => {
   res.json(await sel(`SELECT k.*, d.nombre AS chofer, d.telefono FROM nh_trucks k LEFT JOIN nh_drivers d ON d.id=k.chofer_id AND d.tenant_id=k.tenant_id
     WHERE k.tenant_id=:t AND k.active AND NOT EXISTS (SELECT 1 FROM nh_asignaciones a JOIN nh_pedidos p ON p.id=a.pedido_id AND p.tenant_id=a.tenant_id
       WHERE a.truck_id=k.id AND a.tenant_id=:t AND p.fecha=:f AND p.estado IN ('abierto','asignado'))
-    ORDER BY ${CAT.trucks.order}`, { t: req.tenant, f: fecha }));
+    ORDER BY ${CAT.trucks.order.replace(/\bempresa\b/, 'k.empresa').replace(/\bunidad\b/, 'k.unidad')}`, { t: req.tenant, f: fecha })); // nh_drivers también tiene empresa: sin prefijo, Postgres la rechaza por ambigua
 });
 api.post('/pedidos/:id/asignar', async (req, res) => {
   const id = intId(req.params.id), p = id && (await own('nh_pedidos', id, req.tenant));

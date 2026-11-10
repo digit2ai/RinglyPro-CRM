@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1324">
+<title>NeoHaul · Cómo usar la plataforma</title>
+<style>
+:root{--bg:#0b1324;--bg2:#121d36;--card:#16233f;--line:rgba(150,170,215,.2);--ink:#f2f5fb;--ink2:#c8d1e4;--mut:#9eabc6;
+  --acc:#fb923c;--acc2:#fdba74;--gold:#e0b04a;--grn:#4ade80;--red:#f87171;--blu:#60a5fa;--wa:#25d366}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#060b16;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+body{overflow:hidden}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:1280px;height:720px;flex:0 0 auto;transform-origin:center center;overflow:hidden;
+  background:radial-gradient(1000px 600px at 82% -12%,#4a2a14 0%,transparent 58%),linear-gradient(180deg,var(--bg2),var(--bg))}
+.slide{position:absolute;left:0;top:0;width:1280px;height:626px;padding:34px 52px 0;display:none}
+.slide.on{display:block}
+.eyebrow{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--acc);font-weight:700;margin:0 0 10px}
+h1{font-size:58px;line-height:1.04;margin:0 0 18px;font-weight:800;letter-spacing:-.01em}
+h2{font-size:34px;line-height:1.12;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:18px;margin:0 0 6px;font-weight:700}
+p{margin:0 0 12px;font-size:19px;line-height:1.5;color:var(--ink2)}
+.acc{color:var(--acc)} .grn{color:var(--grn)} .gold{color:var(--gold)}
+.lead{font-size:22px;max-width:860px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)} .g5{grid-template-columns:repeat(5,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card p{font-size:15.5px;margin:0;line-height:1.45}
+.num{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:rgba(251,146,60,.18);color:var(--acc);font-weight:800;margin-bottom:8px}
+ul{margin:0;padding:0;list-style:none}
+li{position:relative;padding:0 0 10px 22px;font-size:17px;line-height:1.42;color:var(--ink2)}
+li::before{content:"";position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:50%;background:var(--acc)}
+li b,p b{color:var(--ink)}
+.sim{display:grid;grid-template-columns:760px 1fr;gap:28px;align-items:start}
+.sim.tel{grid-template-columns:auto 1fr;gap:34px}
+.sim.tel2{grid-template-columns:auto auto 1fr;gap:24px}
+.shot{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.shot .bar{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#0d1528;font-size:12px;color:var(--mut)}
+.shot .bar i{width:9px;height:9px;border-radius:50%;background:#33405f;display:inline-block}
+.shot .bar span{margin-left:8px}
+.shot img{display:block;width:100%;height:auto}
+.phone{width:258px;border-radius:34px;padding:10px;background:#05070d;border:2px solid #2c3650;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.phone img{display:block;width:100%;border-radius:24px}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;border:1px solid rgba(224,176,74,.5);color:var(--gold);border-radius:999px;padding:5px 11px;margin:0 0 12px}
+.sim h2{font-size:29px}
+.sim li{font-size:16.3px}
+.key{margin-top:8px;border-left:3px solid var(--acc);padding:8px 0 8px 14px;font-size:16.3px;color:var(--ink);line-height:1.42}
+.brand{position:absolute;right:52px;top:34px;font-size:12.5px;letter-spacing:.18em;color:var(--mut);font-weight:700}
+.brand b{color:var(--ink)}
+.pill{display:inline-block;border-radius:999px;background:rgba(251,146,60,.16);color:var(--acc2);font-weight:700;font-size:15px;padding:7px 16px;margin:0 8px 8px 0}
+/* flujo */
+.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:18px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 12px 14px;position:relative}
+.step b{display:block;font-size:15.5px;color:var(--ink);margin:4px 0 4px}
+.step span{font-size:13.5px;color:var(--ink2);line-height:1.35;display:block}
+.step .n{font-size:12px;font-weight:800;color:var(--acc);letter-spacing:.1em}
+.step:not(:last-child)::after{content:"›";position:absolute;right:-9px;top:38%;color:var(--acc);font-size:22px;font-weight:800}
+.par{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.par .step{border-style:dashed}
+.par .step::after{display:none}
+.who{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:700}
+/* WhatsApp */
+.wa{width:300px;border-radius:30px;padding:10px;background:#05070d;border:2px solid #2c3650;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.wa .scr{border-radius:22px;overflow:hidden;background:#0b141a;height:520px;display:flex;flex-direction:column}
+.wa .hd{background:#1f2c34;padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:14px;color:#e9edef;font-weight:600}
+.wa .av{width:30px;height:30px;border-radius:50%;background:#53636c;display:flex;align-items:center;justify-content:center;font-size:12px}
+.wa .hd small{display:block;font-weight:400;font-size:11px;color:#8696a0}
+.wa .bd{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:8px;background:#0b141a}
+.msg{max-width:84%;padding:7px 10px 16px;border-radius:9px;font-size:13px;line-height:1.38;color:#e9edef;position:relative}
+.msg.out{align-self:flex-end;background:#005c4b}
+.msg.in{align-self:flex-start;background:#202c33}
+.msg time{position:absolute;right:8px;bottom:3px;font-size:10px;color:#9fb3ad}
+.msg img{display:block;width:100%;border-radius:6px;margin-bottom:4px}
+.day{align-self:center;font-size:11px;color:#8696a0;background:#182229;border-radius:6px;padding:3px 8px}
+/* dock */
+#dock{position:absolute;left:0;right:0;bottom:0;height:94px;background:rgba(6,11,22,.93);border-top:1px solid var(--line);display:flex;align-items:center;gap:16px;padding:0 22px}
+#orb{flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe2c4,#f97316 48%,#6b2a08)}
+#orb.sp{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(251,146,60,.5)}70%{box-shadow:0 0 0 16px rgba(251,146,60,0)}100%{box-shadow:0 0 0 0 rgba(251,146,60,0)}}
+#cap{flex:1;min-width:0;font-size:15px;line-height:1.4;color:var(--ink);max-height:64px;overflow:hidden}
+#cap small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:2px}
+.ctl{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+.ctl button{width:44px;height:44px;line-height:1;border-radius:50%;border:1px solid var(--line);background:#141d33;color:var(--ink);font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
+.ctl button:hover{border-color:var(--acc)}
+#cnt{font-size:13px;color:var(--mut);min-width:54px;text-align:center}
+#prog{position:absolute;left:0;top:-2px;height:2px;background:var(--acc);width:0;transition:width .3s linear}
+.btn{display:inline-block;background:var(--acc);color:#2a1205;font-weight:800;font-size:17px;border-radius:999px;padding:14px 26px;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+#gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(6,11,22,.84);padding:30px}
+#gate p{max-width:580px;font-size:17px}
+#gate.off{display:none}
+@media (max-width:820px){
+  body{overflow:auto}
+  #wrap{position:static;display:block}
+  #stage{width:100%;height:auto;min-height:100vh;transform:none!important;padding-bottom:150px}
+  .slide{position:static;width:100%;height:auto;padding:26px 18px 6px}
+  .brand{position:static;margin-bottom:14px}
+  h1{font-size:36px} h2,.sim h2{font-size:25px} p,.lead{font-size:17px}
+  .g2,.g3,.g4,.g5,.sim,.sim.tel,.sim.tel2,.flow,.par{grid-template-columns:1fr}
+  .step::after{display:none}
+  .phone,.wa{margin:0 auto}
+  #dock{position:fixed;height:auto;min-height:92px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex-wrap:wrap;gap:10px}
+  #orb{flex-basis:36px;width:36px;height:36px}
+  #cap{flex:1 1 60%;font-size:13.5px;max-height:58px}
+  .ctl{width:100%;justify-content:center}
+  #gate{position:fixed}
+}
+@media (prefers-reduced-motion:reduce){#orb.sp{animation:none}}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+
+<section class="slide on" data-t="Bienvenida">
+  <div class="brand"><b>DIGIT2AI</b> · NEOHAUL</div>
+  <p class="eyebrow" style="margin-top:80px">Guía de uso · Grupo NeoHaul · Monterrey</p>
+  <h1>Cómo usar la plataforma<br><span class="acc">NeoHaul Operación</span></h1>
+  <p class="lead">Del pedido del ingeniero al tablero del jueves: cada viaje se captura una sola vez, y WhatsApp se queda como está.</p>
+  <p style="margin-top:22px"><span class="pill">aiagent.ringlypro.com/neohaul</span><span class="pill">Funciona desde el teléfono</span><span class="pill">Los choferes no instalan nada</span></p>
+  <p style="margin-top:28px;font-size:15px;color:var(--mut)">Narrada por Dalia, la voz de Digit2AI. Todas las pantallas muestran <b>datos de ejemplo</b>, no información real de NeoHaul.</p>
+</section>
+
+<section class="slide" data-t="Quién hace qué">
+  <p class="eyebrow">01 · Quién hace qué</p>
+  <h2>Cinco personas, y solo dos capturan</h2>
+  <div class="grid g5" style="margin-top:18px">
+    <div class="card"><div class="num">1</div><h3>Osbaldo · director</h3><p>Ve el tablero del jueves, decide pagos, cambia tarifas y da de alta a los usuarios.</p></div>
+    <div class="card"><div class="num">2</div><h3>Andrés · captura</h3><p>Anota pedidos, asigna camiones, sube la foto de cada vale y las facturas.</p></div>
+    <div class="card"><div class="num">3</div><h3>Contador</h3><p>Entra a ver todo: solo lectura. No puede cambiar nada.</p></div>
+    <div class="card"><div class="num">4</div><h3>Choferes</h3><p>Nada nuevo: reciben el viaje por WhatsApp y contestan con la foto del vale.</p></div>
+    <div class="card"><div class="num">5</div><h3>Ingeniero de HTR</h3><p>Pide por WhatsApp, como siempre, y recibe su estimación semanal.</p></div>
+  </div>
+  <p class="key" style="margin-top:20px">La regla de diseño que nos dieron: que se sienta natural. La plataforma quita trabajo, no agrega.</p>
+</section>
+
+<section class="slide" data-t="El flujo completo">
+  <p class="eyebrow">02 · El flujo completo</p>
+  <h2>Un viaje, de punta a punta</h2>
+  <div class="flow">
+    <div class="step"><span class="n">1</span><b>Pedido</b><span>El ingeniero pide por WhatsApp; Andrés lo anota.</span><span class="who">Andrés</span></div>
+    <div class="step"><span class="n">2</span><b>Asignación</b><span>Camión libre y aviso al chofer por WhatsApp.</span><span class="who">Andrés</span></div>
+    <div class="step"><span class="n">3</span><b>Viaje</b><span>Foto del vale: la app lo lee, Andrés confirma.</span><span class="who">Chofer · Andrés</span></div>
+    <div class="step"><span class="n">4</span><b>Estimación</b><span>Semanal por obra, solo viajes confirmados.</span><span class="who">Andrés → ingeniero</span></div>
+    <div class="step"><span class="n">5</span><b>Requisición</b><span>FOR-FYC-01 con IVA y retención.</span><span class="who">Andrés</span></div>
+    <div class="step"><span class="n">6</span><b>Factura y cobro</b><span>Folio CFDI, luego cobrada.</span><span class="who">Andrés · contador</span></div>
+  </div>
+  <p class="eyebrow" style="margin-top:22px">En paralelo, los costos</p>
+  <div class="par">
+    <div class="step"><b>Diésel</b><span>Factura de la gasolinera, carga por carga a cada camión.</span></div>
+    <div class="step"><b>Gastos y PPS</b><span>Facturas de proveedores y la propuesta de pagos semanal.</span></div>
+    <div class="step"><b>Nómina</b><span>Salario y comisión sobre viajes confirmados.</span></div>
+    <div class="step"><b>Taller</b><span>Servicios propios y a empresas hermanas.</span></div>
+  </div>
+  <p class="key" style="margin-top:16px">Todo termina en el <b>tablero del jueves</b>: qué se facturó, qué se debe, qué hay que pagar y cuánto deja cada camión.</p>
+</section>
+
+<section class="slide" data-t="Entrar">
+  <div class="sim tel">
+    <div class="phone"><img src="presentacion/tel-login.jpg" alt="Pantalla de ingreso en el teléfono"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">03 · Entrar</p>
+      <h2>Un enlace, un correo y una contraseña</h2>
+      <ul>
+        <li>Se abre en el navegador del teléfono o de la computadora: <b>aiagent.ringlypro.com/neohaul</b>.</li>
+        <li>Osbaldo da de alta a cada persona en <b>Usuarios</b>; la app muestra una <b>contraseña temporal una sola vez</b>.</li>
+        <li>Al primer ingreso, la app pide cambiarla. Hasta entonces, no deja hacer nada más.</li>
+        <li>Cuatro tipos de cuenta: dueño, director, captura y contador (solo lectura).</li>
+      </ul>
+      <p class="key">Cada quien ve lo que le toca. El contador puede revisar todo, pero no puede modificar nada.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Catálogos: camiones">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Catálogos · Camiones</span></div><img src="presentacion/catalogos-camiones.jpg" alt="Catálogo de camiones" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">04 · Antes de empezar</p>
+      <h2>Los camiones, con sus placas</h2>
+      <ul>
+        <li>Los de <b>NeoHaul</b> son propios: sus costos cuentan en el tablero.</li>
+        <li>Los de <b>TTS, SEMAQSA y externos</b> se asignan, pero no se les calcula resultado.</li>
+        <li>Cada camión lleva su <b>chofer habitual</b>: al elegirlo, el chofer se llena solo.</li>
+      </ul>
+      <p class="key">Con las placas capturadas, la app reconoce el camión directamente en la foto del vale.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Catálogos: choferes">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Catálogos · Choferes</span></div><img src="presentacion/catalogos-choferes.jpg" alt="Catálogo de choferes" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">05 · El WhatsApp de cada chofer</p>
+      <h2>Un número bien escrito evita un mensaje perdido</h2>
+      <ul>
+        <li>Diez dígitos se toman como <b>México (+52)</b>: 81 2345 6789.</li>
+        <li>Un número de otro país se escribe <b>con su lada</b>: +1 813 641 4177.</li>
+        <li>Si el número no es válido, la app no lo guarda y explica por qué.</li>
+      </ul>
+      <p class="key">Un número de Estados Unidos escrito sin +1 se convierte en un número de Monterrey de otra persona. Por eso la app lo advierte.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Catálogos: tarifas">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Catálogos · Tarifas</span></div><img src="presentacion/catalogos-tarifas.jpg" alt="Catálogo de tarifas" loading="lazy"></div>
+    <div><span class="tag">Tarifas de NeoHaul</span>
+      <p class="eyebrow">06 · Las tarifas, sin fórmulas</p>
+      <h2>Osbaldo cambia un precio aquí, no en Excel</h2>
+      <ul>
+        <li>Por tonelada, por día o por viaje: $170 y $185 la tonelada, renta de $6,500 al día, $4,400 por viaje a bacheo Santiago y escombro a $4,500 por viaje.</li>
+        <li>Solo el <b>director</b> puede cambiar una tarifa, y queda registrado el precio anterior y el nuevo.</li>
+        <li>Cada viaje guarda el precio del día en que se capturó: cambiar una tarifa <b>no mueve viajes viejos</b>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Paso 1: el pedido">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Pedidos</span></div><img src="presentacion/pedidos.jpg" alt="Pantalla de pedidos" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">07 · Paso 1</p>
+      <h2>El ingeniero pide por WhatsApp; Andrés lo anota una vez</h2>
+      <ul>
+        <li>Fecha, obra, tarifa, material y cuántos camiones.</li>
+        <li>Quién lo pidió queda registrado.</li>
+        <li>Desde ese momento el pedido aparece abierto hasta que se cierra.</li>
+      </ul>
+      <p class="key">Es la única vez que se escribe el pedido: cada paso siguiente le agrega información encima.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Paso 2: asignar">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Pedidos · Asignar camión</span></div><img src="presentacion/asignar.jpg" alt="Asignar camión a un pedido" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">08 · Paso 2</p>
+      <h2>Solo aparecen los camiones libres ese día</h2>
+      <ul>
+        <li>Primero los <b>propios</b>, luego TTS, SEMAQSA y externos.</li>
+        <li>Un camión ya ocupado en otro pedido ese día <b>no se puede asignar dos veces</b>.</li>
+        <li>Al lado de cada camión asignado aparece el botón verde <b>Avisar</b>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="El WhatsApp del chofer">
+  <div class="sim tel2">
+    <div class="wa"><div class="scr">
+      <div class="hd"><div class="av">JP</div><div>Juan Pérez<small>chofer · NeoHaul T-01</small></div></div>
+      <div class="bd">
+        <span class="day">MARTES</span>
+        <div class="msg out">Hola Juan Pérez. Viaje para SICT N16 el 11/11/2026, material: Carpeta asfáltica. Camión NeoHaul T-01. Al terminar mándame la foto del ticket y del vale. Gracias.<time>18:05</time></div>
+        <span class="day">MIÉRCOLES</span>
+        <div class="msg in">Listo, ya descargué en la N-16<time>09:31</time></div>
+        <div class="msg in"><img src="presentacion/vale-ejemplo.jpg" alt="Foto del vale de ejemplo">Aquí está el vale<time>09:31</time></div>
+        <div class="msg out">Recibido, gracias Juan<time>09:33</time></div>
+      </div></div></div>
+    <div style="max-width:420px"><span class="tag">Ejemplo de conversación</span>
+      <p class="eyebrow">09 · WhatsApp se queda</p>
+      <h2>La app escribe el mensaje; Andrés lo envía</h2>
+      <ul>
+        <li>Al tocar <b>Avisar</b>, se abre el WhatsApp de Andrés con el mensaje ya escrito: obra, fecha, material y camión.</li>
+        <li>Andrés solo toca <b>enviar</b>, desde su propio número, como siempre.</li>
+        <li>El chofer contesta en la misma conversación con la <b>foto del vale y del ticket</b>.</li>
+        <li>La app marca el camión como <b>avisado</b>.</li>
+      </ul>
+      <p class="key">El chofer no instala nada y no aprende nada nuevo. La app nunca manda mensajes por su cuenta.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Paso 3: la foto del vale">
+  <div class="sim tel2">
+    <div class="phone"><img src="presentacion/tel-viajes.jpg" alt="Viajes en el teléfono"></div>
+    <div class="phone"><img src="presentacion/tel-lectura.jpg" alt="Lectura del vale en el teléfono"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">10 · Paso 3</p>
+      <h2>Foto adentro, datos afuera</h2>
+      <ul>
+        <li>Andrés guarda la foto que mandó el chofer y toca <b>Subir foto del ticket</b>.</li>
+        <li>La app lee el vale: número, folio de báscula, placas, destino, operador y los pesos.</li>
+        <li>El peso neto viene en kilos: <b>21,070 kg son 21.07 toneladas</b>.</li>
+        <li>Propone el camión por sus placas, la obra por el destino y el chofer por su nombre.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Revisar y confirmar">
+  <div class="sim tel">
+    <div class="phone"><img src="presentacion/tel-lectura-2.jpg" alt="Revisar y confirmar el viaje"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">11 · Como una radiografía</p>
+      <h2>La app propone; Andrés revisa y confirma</h2>
+      <ul>
+        <li>Nada se guarda hasta que Andrés toca <b>Guardar y confirmar</b>.</li>
+        <li>El importe lo calcula la app con la tarifa: <b>nadie lo teclea</b>.</li>
+        <li>Avisa si algo no cuadra: la fecha escrita a mano distinta de la impresa, el bruto menos la tara que no da el neto, o una tara manual.</li>
+        <li>El mismo vale dos veces se rechaza: sería el mismo viaje <b>cobrado dos veces</b>.</li>
+      </ul>
+      <p class="key">Como en una radiografía: la máquina propone, la persona decide.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Los viajes de la semana">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Viajes</span></div><img src="presentacion/viajes.jpg" alt="Viajes de la semana" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">12 · La semana de un vistazo</p>
+      <h2>Capturados y confirmados, por obra</h2>
+      <ul>
+        <li>Cada viaje muestra su obra, camión, chofer, ticket, cantidad e importe.</li>
+        <li>Varios viajes se confirman de un jalón con <b>Confirmar seleccionados</b>.</li>
+        <li>El Excel de la planta se puede <b>arrastrar y soltar</b>: cada renglón dice si entró o por qué no.</li>
+      </ul>
+      <p class="key">Un viaje que ya está en una estimación queda bloqueado: no se edita ni se borra.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Paso 4: la estimación">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Estimaciones · Detalle</span></div><img src="presentacion/estimacion-detalle.jpg" alt="Detalle de una estimación" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">13 · Paso 4</p>
+      <h2>La estimación semanal sale sola</h2>
+      <ul>
+        <li>Se elige la obra y la semana: entran <b>solo los viajes confirmados</b>.</li>
+        <li>Se descarga en Excel y se envía al ingeniero por WhatsApp con el mensaje ya escrito.</li>
+        <li>Estados: borrador, enviada, <b>aprobada por HTR</b> y facturada.</li>
+      </ul>
+      <p class="key">Lo que antes era copiar renglones de un Excel a otro ahora es un botón.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Paso 5: requisición y cobro">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Facturas · Requisición FOR-FYC-01</span></div><img src="presentacion/requisicion.jpg" alt="Requisición de factura" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">14 · Pasos 5 y 6</p>
+      <h2>De la estimación aprobada a la factura cobrada</h2>
+      <ul>
+        <li>La requisición <b>FOR-FYC-01</b> se arma sola: subtotal, IVA de 16% y retención de 4%, calculados al centavo.</li>
+        <li>Cuando la auxiliar emite la factura, Andrés anota el <b>folio CFDI</b>.</li>
+        <li>Al cobrarse, se marca como cobrada y sale de lo que se debe.</li>
+      </ul>
+      <p class="key">Una estimación no se puede facturar dos veces: con una requisición viva, queda bloqueada.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Diésel por carga">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Gastos y diésel · Cargas por camión</span></div><img src="presentacion/diesel-cargas.jpg" alt="Cargas de diésel por camión" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">15 · Diésel</p>
+      <h2>La factura de la gasolinera, carga por carga</h2>
+      <ul>
+        <li>Se sube el <b>PDF o XML</b> de la factura: cada carga entra con su folio, fecha, hora y litros.</li>
+        <li>La app comprueba que las cargas <b>sumen exacto</b> el total; si no, no la acepta.</li>
+        <li>La factura no dice qué camión cargó: Andrés lo elige. La gasolina premium de las camionetas puede quedar como gasto general.</li>
+        <li>El costo cuenta en la <b>semana de la carga</b>, no en la de la factura.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Gastos y PPS">
+  <div class="sim">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Gastos y diésel</span></div><img src="presentacion/gastos.jpg" alt="Gastos y cuentas por pagar" loading="lazy"></div>
+    <div><span class="tag">Datos de ejemplo</span>
+      <p class="eyebrow">16 · Cuentas por pagar</p>
+      <h2>Cada factura de proveedor va a un camión, a una obra o a general</h2>
+      <ul>
+        <li>Refacciones, llantas o taller se asignan al camión: así se sabe <b>cuánto cuesta cada unidad</b>.</li>
+        <li><b>Cargar PPS</b>: se arrastra el Excel de la propuesta de pagos, con sus mismas dieciséis columnas.</li>
+        <li><b>Descargar PPS</b>: sale en el mismo formato, con la propuesta de la semana.</li>
+        <li>Una factura pagada en la app no se reabre con un PPS viejo, y nada se marca pagado solo.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-t="Nómina y taller">
+  <div class="grid g2">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Nómina</span></div><img src="presentacion/nomina.jpg" alt="Nómina semanal" loading="lazy"></div>
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Taller</span></div><img src="presentacion/taller.jpg" alt="Servicios de taller" loading="lazy"></div>
+  </div>
+  <p class="eyebrow" style="margin-top:16px">17 · Nómina y taller</p>
+  <div class="grid g2">
+    <ul><li><b>Nómina</b>: días trabajados, salario, bonos y la comisión del chofer, de 8 a 10% sobre sus viajes <b>confirmados</b>. Al cerrar la semana, ya no se edita.</li></ul>
+    <ul><li><b>Taller</b>: cada servicio con mecánico, horas, refacciones y mano de obra. Los servicios a empresas hermanas quedan <b>por cobrar</b>.</li></ul>
+  </div>
+</section>
+
+<section class="slide" data-t="El tablero del jueves">
+  <div class="grid g2" style="grid-template-columns:1fr 1fr">
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Tablero</span></div><img src="presentacion/tablero.jpg" alt="Tablero semanal" loading="lazy"></div>
+    <div class="shot"><div class="bar"><i></i><i></i><i></i><span>Tablero · Cuánto deja cada camión</span></div><img src="presentacion/tablero-camiones.jpg" alt="Resultado por camión" loading="lazy"></div>
+  </div>
+  <p class="eyebrow" style="margin-top:16px">18 · Para decidir el jueves</p>
+  <h2 style="font-size:27px">Facturado, por cobrar, por pagar y cuánto deja cada camión</h2>
+  <p style="font-size:16.5px">Un camión con costos más altos que sus ingresos aparece en rojo. Uno sin costos capturados dice <b>sin costos capturados</b>, nunca una ganancia inventada. El resumen se manda por WhatsApp con un toque.</p>
+</section>
+
+<section class="slide" data-t="Las reglas que protegen">
+  <p class="eyebrow">19 · Las reglas que protegen</p>
+  <h2>Lo que la plataforma nunca hace</h2>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card"><h3>No manda mensajes sola</h3><p>Todo WhatsApp lo envía una persona desde su propio teléfono.</p></div>
+    <div class="card"><h3>No acepta importes tecleados</h3><p>Viajes, estimaciones, IVA y retención los calcula la app, al centavo.</p></div>
+    <div class="card"><h3>No guarda una lectura sin revisar</h3><p>La foto del vale es una propuesta hasta que Andrés confirma.</p></div>
+    <div class="card"><h3>No cobra dos veces</h3><p>Un vale repetido o una estimación ya facturada se rechazan.</p></div>
+    <div class="card"><h3>No inventa ganancias</h3><p>Sin costos capturados, el tablero lo dice en vez de mostrar una utilidad.</p></div>
+    <div class="card"><h3>No marca pagado por su cuenta</h3><p>Lo que ya no viene en el PPS se avisa; la decisión es de ustedes.</p></div>
+  </div>
+</section>
+
+<section class="slide" data-t="Siguiente paso">
+  <p class="eyebrow">20 · Lo que falta y el siguiente paso</p>
+  <h2>Correr en paralelo con el Excel, sin dolor</h2>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h3 class="acc">Lo que necesitamos de NeoHaul</h3>
+      <ul style="margin-top:8px"><li>Placas y número económico de cada camión.</li><li>Nombre y WhatsApp de cada chofer.</li><li>Cómo identifica la gasolinera a cada camión, y el acceso al GPS.</li><li>La regla exacta de comisión de 8 a 10%.</li></ul></div>
+    <div class="card"><h3 class="grn">Lo que sigue</h3>
+      <ul style="margin-top:8px"><li>Sesión con Andrés para capturar una semana real.</li><li>Una semana en paralelo con el Excel, comparando cifras.</li><li>Conectar el GPS, primero con una descarga semanal.</li><li>Decidir qué archivos de Excel se pueden retirar.</li></ul></div>
+  </div>
+  <p style="margin-top:20px"><a class="btn" href="/neohaul/">Abrir la plataforma</a> &nbsp; <button class="btn ghost" id="again">Ver de nuevo</button></p>
+  <p style="margin-top:10px;font-size:14px;color:var(--mut)">Manuel Stagg · Digit2AI · mstagg@digit2ai.com</p>
+</section>
+
+<div id="dock">
+  <div id="prog"></div>
+  <div id="orb"></div>
+  <div id="cap"><small id="capT">Dalia · Digit2AI</small><span id="capX">Pulsa iniciar para escuchar la presentación.</span></div>
+  <div class="ctl">
+    <button id="prev" aria-label="Anterior">&#8249;</button>
+    <button id="play" aria-label="Pausar o reanudar">II</button>
+    <button id="next" aria-label="Siguiente">&#8250;</button>
+    <span id="cnt">1 / 21</span>
+  </div>
+</div>
+
+<div id="gate">
+  <p class="eyebrow">Digit2AI · NeoHaul Operación</p>
+  <h2>Guía de uso de la plataforma</h2>
+  <p>Dalia te la explica en voz alta, pantalla por pantalla. Puedes pausar o avanzar cuando quieras.</p>
+  <p><button class="btn" id="start">Iniciar con voz</button> &nbsp; <button class="btn ghost" id="silent">Ver sin audio</button></p>
+</div>
+
+</div></div>
+
+<script>
+(function(){
+  // Guía narrada de NeoHaul. Mismo motor que la presentación de FreightMind: voz Dalia en vivo por
+  // /api/tts/edge (sin llave, sin MP3 guardados), subtítulo por frase, avance automático, teclado,
+  // columna bajo 820 px y pausa de lectura cuando no hay voz.
+  // Un texto por lámina, en orden. Cifras en palabras para que Dalia las lea bien.
+  var NARR = [
+    'Hola, soy Dalia, la voz de Digit2AI. En los próximos minutos te voy a explicar cómo usar la plataforma de operación de Grupo NeoHaul, desde el pedido del ingeniero hasta el tablero del jueves. La idea central es sencilla: cada viaje se captura una sola vez, y WhatsApp se queda como está. Todas las pantallas que vas a ver tienen datos de ejemplo, no información real de NeoHaul.',
+    'Primero, quién hace qué. Osbaldo, como director, ve el tablero del jueves, decide los pagos, cambia las tarifas y da de alta a los usuarios. Andrés captura: anota los pedidos, asigna los camiones, sube la foto de cada vale y las facturas. El contador entra a ver todo, pero en modo de solo lectura. Los choferes no hacen nada nuevo: reciben el viaje por WhatsApp y contestan con la foto del vale. Y el ingeniero de HTR pide como siempre y recibe su estimación cada semana.',
+    'Este es el flujo completo de un viaje, en seis pasos. Uno, el pedido: el ingeniero pide por WhatsApp y Andrés lo anota. Dos, la asignación: se elige un camión libre y se avisa al chofer por WhatsApp. Tres, el viaje: el chofer manda la foto del vale, la app la lee y Andrés confirma. Cuatro, la estimación semanal por obra. Cinco, la requisición de factura. Y seis, el folio de la factura y el cobro. En paralelo se registran los costos: el diésel, los gastos con la propuesta de pagos, la nómina y el taller. Todo termina en el tablero del jueves.',
+    'Para entrar, basta abrir el enlace en el navegador del teléfono o de la computadora. Osbaldo da de alta a cada persona en la pantalla de usuarios, y la app muestra una contraseña temporal una sola vez. En el primer ingreso, la app pide cambiarla, y no deja hacer nada más hasta que se cambia. Hay cuatro tipos de cuenta: dueño, director, captura y contador. El contador puede revisar todo, pero no puede modificar nada.',
+    'Antes de empezar, conviene tener completos los catálogos. Primero, los camiones. Los de NeoHaul son propios, y sus costos cuentan en el tablero. Los de TTS, SEMAQSA y los externos se pueden asignar, pero no se les calcula resultado. Cada camión lleva su chofer habitual, para que al elegirlo el chofer se llene solo. Y algo importante: con las placas capturadas, la app reconoce el camión directamente en la foto del vale.',
+    'Luego, los choferes, con su número de WhatsApp. Un número de diez dígitos se toma como de México, con lada cincuenta y dos. Si el número es de otro país, se escribe con su lada; por ejemplo, más uno para Estados Unidos. Si el número no es válido, la app no lo guarda y explica por qué. Este detalle importa: un número de Estados Unidos escrito sin el más uno se convierte en un número de Monterrey de otra persona, y el mensaje le llegaría a un desconocido.',
+    'Las tarifas ya no viven en fórmulas de Excel. Aquí están las de NeoHaul: ciento setenta y ciento ochenta y cinco pesos por tonelada, la renta de seis mil quinientos pesos por día, cuatro mil cuatrocientos por viaje a bacheo Santiago, y el escombro a cuatro mil quinientos por viaje. Solo el director puede cambiar una tarifa, y el cambio queda registrado con el precio anterior y el nuevo. Además, cada viaje guarda el precio del día en que se capturó, así que cambiar una tarifa no mueve los viajes viejos.',
+    'Paso uno, el pedido. El ingeniero de HTR pide por WhatsApp, como siempre, y Andrés lo anota aquí: la fecha, la obra, la tarifa, el material y cuántos camiones necesita. También queda registrado quién lo pidió. Esta es la única vez que se escribe el pedido; cada paso siguiente le agrega información encima, sin volver a teclearlo.',
+    'Paso dos, asignar los camiones. Al tocar asignar, solo aparecen los camiones que están libres ese día, primero los propios y después los de TTS, SEMAQSA y los externos. Un camión que ya está ocupado en otro pedido ese mismo día no se puede asignar dos veces. Junto a cada camión asignado aparece un botón verde que dice avisar.',
+    'Y aquí entra WhatsApp. Al tocar avisar, se abre el WhatsApp de Andrés con el mensaje ya escrito: la obra, la fecha, el material y el camión, y le pide al chofer que al terminar mande la foto del ticket y del vale. Andrés solo toca enviar, desde su propio número, como siempre. El chofer contesta en la misma conversación con la foto del vale. El chofer no instala nada y no aprende nada nuevo. Y la app nunca manda mensajes por su cuenta: siempre los envía una persona.',
+    'Paso tres, el viaje. Andrés guarda la foto que le mandó el chofer y, desde la pantalla de viajes, toca subir foto del ticket. La app lee el vale: el número del vale, el folio de báscula, las placas, el destino, el operador y los pesos. El peso neto viene en kilos, y la app lo convierte: veintiún mil setenta kilos son veintiuno punto cero siete toneladas. Además propone el camión por sus placas, la obra por el destino y el chofer por su nombre.',
+    'Ahora Andrés revisa. Esto funciona como una radiografía: la máquina propone y la persona decide. Nada se guarda hasta que Andrés toca guardar y confirmar. El importe lo calcula la app con la tarifa; nadie lo teclea. Y la app avisa cuando algo no cuadra: si la fecha escrita a mano no coincide con la impresa por la báscula, si el peso bruto menos la tara no da el neto, o si la tara se capturó a mano. Si alguien sube el mismo vale dos veces, la app lo rechaza, porque sería el mismo viaje cobrado dos veces.',
+    'En la pantalla de viajes se ve toda la semana: cada viaje con su obra, camión, chofer, ticket, cantidad e importe, y si está capturado o confirmado. Varios viajes se pueden confirmar de un jalón. Y si la planta manda su Excel de tickets, se arrastra y se suelta aquí: cada renglón dice si entró o por qué no. Un viaje que ya está dentro de una estimación queda bloqueado; ya no se edita ni se borra.',
+    'Paso cuatro, la estimación semanal. Andrés elige la obra y la semana, y la app junta solo los viajes confirmados, con su subtotal. Se descarga en Excel y se envía al ingeniero por WhatsApp, también con el mensaje ya escrito. La estimación pasa por cuatro estados: borrador, enviada, aprobada por HTR, y facturada. Lo que antes era copiar renglones de un Excel a otro, ahora es un botón.',
+    'Pasos cinco y seis. Con la estimación aprobada, la requisición de factura, en el formato FOR guion FYC cero uno, se arma sola: el subtotal, el IVA de dieciséis por ciento y la retención de cuatro por ciento, calculados al centavo. Cuando la auxiliar emite la factura, Andrés anota el folio del CFDI. Y cuando se cobra, se marca como cobrada y sale de lo que se debe. Una estimación con una requisición viva queda bloqueada, para que no se pueda facturar dos veces.',
+    'Ahora, los costos. Primero el diésel. Andrés sube el PDF o el XML de la factura de la gasolinera, y cada carga entra con su folio de despacho, la fecha, la hora y los litros. La app comprueba que las cargas sumen exactamente el total de la factura; si no cuadran, no la acepta. Como la factura no dice qué camión cargó, Andrés elige el camión de cada carga. La gasolina premium de las camionetas puede quedarse como gasto general. Y el costo cuenta en la semana en que se cargó, no en la de la factura.',
+    'Las demás facturas de proveedores se asignan a un camión, a una obra o a gastos generales. Las refacciones, las llantas o el taller se cargan al camión, y así se sabe cuánto cuesta cada unidad. La propuesta de pagos semanal, el PPS, se carga arrastrando su mismo Excel, con sus dieciséis columnas, y se puede descargar en el mismo formato con la propuesta de la semana. Una factura que ya se pagó en la app no se reabre con un PPS viejo, y nada se marca como pagado por su cuenta.',
+    'En nómina se registran los días trabajados, el salario, los bonos y la comisión de cada chofer, de ocho a diez por ciento sobre sus viajes confirmados. Al cerrar la semana, ya no se puede editar. En el taller se anota cada servicio con su mecánico, las horas, las refacciones y la mano de obra. Los servicios que se le hacen a empresas hermanas quedan por cobrar.',
+    'Y todo termina en el tablero del jueves. En una sola pantalla, Osbaldo ve lo que se facturó, lo que se cobró, lo que le deben, lo que tiene que pagar esta semana y cuánto deja cada camión propio. Un camión con más costos que ingresos aparece en rojo. Y si a un camión todavía no se le han capturado costos, el tablero lo dice, en lugar de mostrar una ganancia inventada. El resumen de la semana se manda por WhatsApp con un solo toque.',
+    'Para cerrar, las reglas que protegen a NeoHaul. La plataforma no manda mensajes sola. No acepta importes tecleados: los calcula al centavo. No guarda la lectura de un vale sin que Andrés la revise. No cobra dos veces el mismo vale ni la misma estimación. No inventa ganancias. Y no marca nada como pagado por su cuenta: lo avisa, y la decisión es de ustedes.',
+    'Para correr la plataforma en paralelo con el Excel, necesitamos de NeoHaul las placas y el número económico de cada camión, el nombre y el WhatsApp de cada chofer, cómo identifica la gasolinera a cada camión, el acceso al GPS, y la regla exacta de la comisión. El siguiente paso es una sesión con Andrés para capturar una semana real, compararla con el Excel y decidir qué archivos se pueden retirar. Gracias por tu tiempo. Cuando quieras, abre la plataforma y empezamos.'
+  ];
+
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), orb = document.getElementById('orb');
+  var capT = document.getElementById('capT'), capX = document.getElementById('capX');
+  var cnt = document.getElementById('cnt'), prog = document.getElementById('prog');
+  var playB = document.getElementById('play'), gate = document.getElementById('gate');
+  var i = 0, token = 0, audio = null, timer = null, voiceOn = false, paused = false, cache = {};
+  var PLAY = '\u25B6\uFE0E';
+  var MOB = window.matchMedia('(max-width:820px)');
+
+  function fit(){
+    if (MOB.matches) { stage.style.transform = ''; return; }
+    var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  var sents = NARR.map(function(t){ return t.match(/[^.?!]+[.?!]+(\s|$)/g) || [t]; });
+  function capAt(frac){
+    var s = sents[i], total = NARR[i].length, acc = 0, k = 0;
+    for (; k < s.length - 1; k++) { acc += s[k].length; if (acc / total > frac) break; }
+    var txt = s[Math.min(k, s.length - 1)].trim();
+    if (capX.textContent !== txt) capX.textContent = txt;
+  }
+  function stopAll(){
+    token++;
+    if (audio) { try { audio.pause(); } catch(e){} audio = null; }
+    if (timer) { clearTimeout(timer); timer = null; }
+    orb.classList.remove('sp');
+  }
+  function fetchAudio(n){
+    if (cache[n]) return cache[n];
+    cache[n] = fetch('/api/tts/edge', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: NARR[n], voice: 'dalia', rate: '-3%' }) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.blob(); })
+      .then(function(b){ if (!b || b.size < 500) throw new Error('vacío'); return URL.createObjectURL(b); });
+    cache[n].catch(function(){ delete cache[n]; });
+    return cache[n];
+  }
+  function advance(t){ if (t !== token) return; if (i < slides.length - 1) show(i + 1); else { orb.classList.remove('sp'); } }
+  // Sin voz disponible: pausa de lectura proporcional al texto, para que la presentación avance igual.
+  function readingPause(t){
+    orb.classList.remove('sp');
+    timer = setTimeout(function(){ advance(t); }, Math.max(9000, NARR[i].length * 62));
+  }
+  function narrate(){
+    var t = token;
+    if (!voiceOn) return;
+    if (i + 1 < NARR.length) fetchAudio(i + 1).catch(function(){});
+    fetchAudio(i).then(function(url){
+      if (t !== token) return;
+      audio = new Audio(url);
+      audio.onended = function(){ advance(t); };
+      audio.onerror = function(){ if (t === token) readingPause(t); };
+      audio.ontimeupdate = function(){
+        if (t === token && audio && audio.duration) { capAt(audio.currentTime / audio.duration); } if (t === token && audio && audio.duration) prog.style.width = ((i + audio.currentTime / audio.duration) / slides.length * 100) + '%';
+      };
+      orb.classList.add('sp');
+      return audio.play();
+    }).catch(function(){ if (t === token) readingPause(t); });
+  }
+  function show(n){
+    stopAll();
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); });
+    if (MOB.matches) slides[i].scrollIntoView({ behavior:'smooth', block:'start' });
+    cnt.textContent = (i + 1) + ' / ' + slides.length;
+    capT.textContent = 'Dalia · ' + slides[i].getAttribute('data-t');
+    if (voiceOn) capAt(0); else capX.textContent = "Sin audio. Avanza con las flechas o pulsa reproducir para escuchar a Dalia.";
+    prog.style.width = (i / slides.length * 100) + '%';
+    paused = false; playB.textContent = voiceOn ? 'II' : PLAY;
+    narrate();
+  }
+  function toggle(){
+    if (!voiceOn) { voiceOn = true; show(i); return; }
+    if (!paused) { paused = true; playB.textContent = PLAY; orb.classList.remove('sp');
+      if (audio) audio.pause(); if (timer) { clearTimeout(timer); timer = null; } }
+    else { paused = false; playB.textContent = 'II';
+      if (audio) { orb.classList.add('sp'); audio.play(); } else { show(i); } }
+  }
+  document.getElementById('next').onclick = function(){ show(i + 1); };
+  document.getElementById('prev').onclick = function(){ show(i - 1); };
+  playB.onclick = toggle;
+  document.getElementById('start').onclick = function(){ gate.classList.add('off'); voiceOn = true; show(0); };
+  document.getElementById('silent').onclick = function(){ gate.classList.add('off'); voiceOn = false; show(0); };
+  document.getElementById('again').onclick = function(){ show(0); };
+  document.addEventListener('keydown', function(e){
+    if (!gate.classList.contains('off')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') show(i + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(i - 1);
+    else if (e.key === ' ') { e.preventDefault(); toggle(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+  MOB.addEventListener && MOB.addEventListener('change', function(){ fit(); slides.forEach(function(s, k){ s.classList.toggle('on', MOB.matches ? true : k === i); }); });
+  if (MOB.matches) slides.forEach(function(s){ s.classList.add('on'); });
+  window.addEventListener('beforeunload', stopAll);
+})();
+</script>
+</body>
+</html>
