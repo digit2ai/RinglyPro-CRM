@@ -101,25 +101,27 @@ async function knowledgeFor(lang) {
 }
 
 // ── slots ─────────────────────────────────────────────────────────────────
-function label(iso, lang) {
+const TZ_OF = (brand) => brand === 'd2s' ? 'America/Bogota' : LABEL_TZ;
+function label(iso, lang, brand) {
   const d = new Date(iso);
-  const loc = lang === 'en' ? 'en-US' : 'es-VE';
+  const loc = lang === 'en' ? 'en-US' : (brand === 'd2s' ? 'es-CO' : 'es-VE');
   const s = new Intl.DateTimeFormat(loc, {
-    timeZone: LABEL_TZ, weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hourCycle: 'h12'
+    timeZone: TZ_OF(brand), weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hourCycle: 'h12'
   }).format(d);
   return s;
 }
 
 router.get('/slots', onlyBrain, async (req, res) => {
   try {
+    const brand = req.query.brand === 'd2s' ? 'd2s' : 'synthex';
     const lang = req.query.lang === 'en' ? 'en' : 'es';
     const free = await booking().freeSlots();
     const days = booking().threeByThree(free, new Date().toISOString().slice(0, 10));
     const opciones = [];
-    days.forEach((d) => d.slots.forEach((iso) => opciones.push({ start: iso, texto: label(iso, lang) })));
+    days.forEach((d) => d.slots.forEach((iso) => opciones.push({ start: iso, texto: label(iso, lang, brand) })));
     res.json({
       ok: true,
-      zona_horaria: LABEL_TZ,
+      zona_horaria: TZ_OF(brand),
       duracion_minutos: booking().BOOK_MIN,
       opciones,
       nota: opciones.length
@@ -193,9 +195,10 @@ function validate(b) {
 // the model reads; the page reads the same object.
 // brand: 'synthex' (synthexsai.com + Lina) or 'digit2ai' (the digit2ai.com/presentacion deck).
 // Same calendar, same free-slot rule; only the calendar wording, the marker and the email change.
-const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:' };
+const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:', d2s: 'd2s_lina:' };
+const BRAND_OK = (b) => (b === 'digit2ai' || b === 'd2s') ? b : 'synthex';
 async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
-  brand = brand === 'digit2ai' ? 'digit2ai' : 'synthex';
+  brand = BRAND_OK(brand);
   const tag = BRAND_TAG[brand];
   const start = new Date(String(startRaw || ''));
   if (isNaN(start.getTime())) return { booked: false, error: 'horario inválido: consulta horarios_disponibles y usa un start exacto' };
@@ -212,7 +215,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
     if (prior.length) {
       await t.commit();
       const iso = new Date(prior[0].start_time).toISOString();
-      return { booked: true, already: true, start: iso, texto: label(iso, lang) };
+      return { booked: true, already: true, start: iso, texto: label(iso, lang, brand) };
     }
 
     const today = await db().query(
@@ -234,6 +237,8 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
     const description = [
       brand === 'digit2ai'
         ? `Reunión con Digit2AI, agendada desde ${source || 'la presentación narrada (digit2ai.com/presentacion)'}.`
+        : brand === 'd2s'
+        ? `Reunión con D2S, agendada ${origen === 'lina' ? 'por Lina (asistente virtual en aiagent.ringlypro.com/d2s)' : 'desde ' + (source || 'el formulario de aiagent.ringlypro.com/d2s')}.`
         : origen === 'lina'
         ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
         : source ? `Reunión con los agentes especializados de Synthex SAI, agendada desde ${source}.`
@@ -249,7 +254,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
       `INSERT INTO d2_calendar_events
          (workspace_id, project_id, title, description, event_type, start_time, end_time, all_day, language, created_at, updated_at)
        VALUES (1, NULL, :title, :description, 'meeting', :s, :e, false, :lang, NOW(), NOW())`,
-      { replacements: { title: `${brand === 'digit2ai' ? 'Digit2AI' : 'Synthex SAI'}: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
+      { replacements: { title: `${brand === 'digit2ai' ? 'Digit2AI' : brand === 'd2s' ? 'D2S' : 'Synthex SAI'}: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
           description, s: start.toISOString(), e: end.toISOString(), lang },
         transaction: t, logging: false });
     await t.commit();
@@ -258,7 +263,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
     const mail = await require('../services/synthexNotify').bookingConfirmed({
       ...v, start: iso, lang, tz, origen, brand, source, minutes: booking().BOOK_MIN
     }).catch((e) => ({ sent: false, reason: e.message }));
-    return { booked: true, start: iso, texto: label(iso, lang), zona_horaria: LABEL_TZ, correo_enviado: !!mail.sent };
+    return { booked: true, start: iso, texto: label(iso, lang, brand), zona_horaria: TZ_OF(brand), correo_enviado: !!mail.sent };
   } catch (e) {
     try { await t.rollback(); } catch (_) {}
     console.error('[synthex-lina] book error:', e.message);
@@ -276,7 +281,7 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
       nota: 'Pide de nuevo SOLO esos datos y confírmalos con la persona antes de reintentar.'
     });
   }
-  res.json(await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'lina', null));
+  res.json(await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'lina', null, req.query.brand === 'd2s' ? 'd2s' : 'synthex'));
 });
 
 // ── the demo form on synthexsai.com (public) ───────────────────────────────
@@ -315,7 +320,7 @@ router.post('/public/book', express.json({ limit: '4kb' }), async (req, res) => 
   const tz = /^[A-Za-z_]+\/[A-Za-z_\/-]+$/.test(String(b.tz || '')) ? String(b.tz).slice(0, 64) : null;
   // Where the button was (book-meeting.js sends host + path). Only URL-ish characters survive.
   const source = String(b.source || '').replace(/[^A-Za-z0-9.\/_-]/g, '').slice(0, 120) || null;
-  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz, b.brand === 'digit2ai' ? 'digit2ai' : 'synthex', source);
+  const r = await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'form', tz, BRAND_OK(b.brand), source);
   res.status(r.booked ? 200 : (/libre/.test(r.error || '') ? 409 : 400)).json({ booked: r.booked, already: !!r.already, start: r.start, email_sent: !!r.correo_enviado, error: r.booked ? undefined : (/libre/.test(r.error || '') ? 'slot_taken' : 'not_booked') });
 });
 

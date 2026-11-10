@@ -52,7 +52,22 @@ const BRANDS = {
       textLine: 'Your meeting with Digit2AI is confirmed.', team: 'The Digit2AI team' }
   }
 };
-const brandOf = (b) => BRANDS[b === 'digit2ai' ? 'digit2ai' : 'synthex'];
+// 'd2s' = aiagent.ringlypro.com/d2s (Colombia). Same look as Synthex, D2S name, Colombian systems.
+BRANDS.d2s = {
+  ...BRANDS.synthex,
+  name: 'D2S', site: 'https://aiagent.ringlypro.com/d2s/', siteLabel: 'aiagent.ringlypro.com/d2s', host: 'aiagent.ringlypro.com',
+  logo: 'https://aiagent.ringlypro.com/d2s/icon-512.png', word: 'D2S',
+  copyright: '&copy; 2026 D2S', ics: 'd2s.ics',
+  es: { body: (m) => `Vas a reunirte con nuestros agentes especializados para ver tu caso con tus sistemas reales. La reunión dura ${m} minutos y el equipo de D2S te contactará antes con el enlace.`,
+    prep: 'Para aprovecharla, ten a la mano: qué sistemas usas hoy (Siigo, Alegra, World Office, Excel, WhatsApp...) y la tarea que más horas le quita a tu equipo.',
+    summary: 'D2S: reunión con nuestros especialistas', subject: 'Tu reunión con D2S está confirmada',
+    textLine: 'Tu reunión con los agentes especializados de D2S está confirmada.', team: 'El equipo de D2S' },
+  en: { body: (m) => `You will meet our specialist agents to look at your case with your real systems. The meeting lasts ${m} minutes and the D2S team will contact you before it with the link.`,
+    prep: 'To make the most of it, have at hand: which systems you use today (Siigo, Alegra, World Office, Excel, WhatsApp...), and the task that takes your team the most hours.',
+    summary: 'D2S: meeting with our specialists', subject: 'Your D2S meeting is confirmed',
+    textLine: 'Your meeting with the D2S specialist agents is confirmed.', team: 'The D2S team' }
+};
+const brandOf = (b) => BRANDS[(b === 'digit2ai' || b === 'd2s') ? b : 'synthex'];
 
 let sender = null; // injectable for tests
 function mailer() {
@@ -148,8 +163,9 @@ async function bookingConfirmed(m) {
   const out = { sent: false, owner: false };
   if (String(process.env.SYNTHEX_EMAIL || '').toLowerCase() === 'off') return { ...out, reason: 'SYNTHEX_EMAIL=off' };
   if (!sender && !process.env.SENDGRID_API_KEY) return { ...out, reason: 'SENDGRID_API_KEY not set' };
-  const brand = m.brand === 'digit2ai' ? 'digit2ai' : 'synthex';
+  const brand = (m.brand === 'digit2ai' || m.brand === 'd2s') ? m.brand : 'synthex';
   const B = brandOf(brand);
+  if (brand === 'd2s' && !m.tz) m = { ...m, tz: 'America/Bogota' };
   const lang = m.lang === 'en' ? 'en' : 'es';
   const minutes = m.minutes || 60;
   const from = { email: FROM(), name: B.name };
@@ -167,13 +183,14 @@ async function bookingConfirmed(m) {
     console.error('[synthex-notify] client email failed:', out.reason);
   }
   const fromWhere = brand === 'digit2ai' ? (m.source || 'la presentación narrada (digit2ai.com/presentacion)')
+    : brand === 'd2s' ? (m.origen === 'lina' ? 'Lina (asistente) de aiagent.ringlypro.com/d2s' : (m.source || 'el formulario de aiagent.ringlypro.com/d2s'))
     : (m.origen === 'lina' ? 'Lina (asistente) de synthexsai.com' : (m.source || 'el formulario de synthexsai.com'));
   try {
     await mailer().send({
       to: OWNER(), from,
       subject: `Nueva reunión ${B.name}: ${m.nombre}${m.empresa ? ' (' + m.empresa + ')' : ''}`,
       text: [`Reunión agendada desde ${fromWhere}.`,
-        `Cuándo: ${when(m.start, 'es', brand === 'digit2ai' ? 'America/New_York' : 'America/Caracas')}`, `Nombre: ${m.nombre}`, m.empresa ? `Empresa: ${m.empresa}` : null,
+        `Cuándo: ${when(m.start, 'es', brand === 'digit2ai' ? 'America/New_York' : brand === 'd2s' ? 'America/Bogota' : 'America/Caracas')}`, `Nombre: ${m.nombre}`, m.empresa ? `Empresa: ${m.empresa}` : null,
         `Correo: ${m.email}`, `Teléfono: ${m.telefono}`, m.tema ? `Tema: ${m.tema}` : null,
         `Confirmación al cliente: ${out.sent ? 'enviada' : 'NO enviada (' + (out.reason || '') + ')'}`].filter(Boolean).join('\n')
     });

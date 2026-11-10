@@ -582,6 +582,31 @@ RULES
   }
 };
 
+// ── D2S (aiagent.ringlypro.com/d2s, Colombia: Eduardo de Lima + Manuel Stagg) ──
+// The same Lina as Synthex SAI, rebranded: every text (persona, greeting,
+// knowledge, tool descriptions) has Synthex replaced by D2S and Venezuela by
+// Colombia. Booking goes to /book?brand=d2s so the confirmation email is D2S.
+function d2sText(s) {
+  return String(s)
+    .replace(/synthexsai\.com\/?/gi, 'aiagent.ringlypro.com/d2s')
+    .replace(/Synthex SAI Technologies/g, 'D2S')
+    .replace(/SYNTHEX SAI/g, 'D2S').replace(/Synthex SAI/g, 'D2S').replace(/Synthex/g, 'D2S')
+    .replace(/venezolan([oa]s?)/g, 'colombian$1').replace(/Venezuelan/g, 'Colombian').replace(/Venezuela/g, 'Colombia')
+    .replace(/Saint, Profit Plus, Galac, a2, Valery (y|and) Data Pro/g, 'Siigo, Alegra, World Office, Helisa $1 ContaPyme')
+    .replace(/Saint, Profit/g, 'Siigo, Alegra');
+}
+function d2sDeep(v) {
+  if (typeof v === 'string') return d2sText(v);
+  if (typeof v === 'function') return (...a) => { const r = v(...a); return r && typeof r.then === 'function' ? r.then(d2sDeep) : d2sDeep(r); };
+  if (Array.isArray(v)) return v.map(d2sDeep);
+  if (v && typeof v === 'object') { const o = {}; for (const k of Object.keys(v)) o[k] = (k === 'base' || k === 'ruta' || k === 'input_schema' || k === 'voice' || k === 'name' && typeof v[k] === 'string' && /^[a-z_]+$/.test(v[k])) ? v[k] : d2sDeep(v[k]); return o; }
+  return v;
+}
+AGENTS.d2s = d2sDeep(AGENTS.synthex);
+if (AGENTS.d2s.tools) {
+  AGENTS.d2s.tools.definiciones = AGENTS.d2s.tools.definiciones.map((d) => (d.ruta === '/book' || d.ruta === '/slots') ? { ...d, ruta: d.ruta + '?brand=d2s' } : d);
+}
+
 function pick(field, lang, fallbackLang) {
   if (!field) return '';
   if (typeof field === 'string') return field;
