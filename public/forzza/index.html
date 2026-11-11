@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#071428">
+<title>Capital bajo control · Digit2AI</title>
+<style>html,body{background:#071428}</style>
+<link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="d2">DIGIT<b>2</b>AI</span><span class="sep"></span><span class="for">Propuesta para <span class="cname" id="cname" contenteditable="true" spellcheck="false" title="Nombre provisional, se puede editar">Empresa de Rafael</span></span></div>
+  <div class="topact">
+    <span class="badge">Datos simulados</span>
+    <button class="tbtn" id="toDeck" data-view="deck">Presentación</button>
+    <button class="tbtn accent" id="toSim" data-view="sim">Simular mi operación</button>
+    <button class="tbtn icon" id="fsBtn" title="Pantalla completa" aria-label="Pantalla completa">&#x26F6;</button>
+  </div>
+</header>
+
+<!-- ====================== PRESENTACIÓN ====================== -->
+<main id="deck" class="view">
+  <div class="stagewrap" id="stagewrap">
+    <div class="stage" id="stage">
+
+      <section class="slide" data-i="0">
+        <div class="eyebrow">01 · Así funciona tu negocio</div>
+        <div class="cols c-1-1">
+          <div>
+            <h1>Así funciona tu negocio</h1>
+            <p class="lead"><span class="js-cname">Empresa de Rafael</span> vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos.</p>
+            <p class="lead strong">Su necesidad principal es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando.</p>
+            <p class="pending">Por validar con Rafael: condiciones de compra, plazos de crédito, inventario y sistema actual.</p>
+          </div>
+          <div class="cycle">
+            <div class="cnode n1"><b>1</b>Compra de materiales</div>
+            <div class="cnode n2"><b>2</b>Venta a crédito</div>
+            <div class="cnode n3"><b>3</b>Cuenta por cobrar</div>
+            <div class="cnode n4"><b>4</b>Cobro</div>
+            <div class="cnode n5"><b>5</b>Capital disponible para operar</div>
+            <svg class="cyclesvg" viewBox="0 0 400 400" aria-hidden="true"><circle cx="200" cy="200" r="138" fill="none" stroke="#19c3b1" stroke-width="2" stroke-dasharray="6 8" class="spin"/></svg>
+            <div class="ccenter">El capital da la vuelta<br><span>y vuelve a comprar</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="1">
+        <div class="eyebrow">02 · El reto está entre vender y cobrar</div>
+        <h2>Los pagos pueden vencer antes de que los clientes paguen</h2>
+        <div class="tl" id="timeline"></div>
+        <div class="cols c-3 ideas">
+          <div class="idea"><b>Venta a crédito no es efectivo</b>Si entregas $100,000 de cemento y varilla a crédito, hoy tienes $100,000 por cobrar y $0 más en caja.</div>
+          <div class="idea"><b>Margen no es dinero disponible</b>Ganar $20,000 en un pedido no paga la nómina del día 15 si el cliente paga el día 35.</div>
+          <div class="idea"><b>Comparar fechas anticipa faltantes</b>Si cruzas cobros y pagos día por día, ves el hueco antes de que llegue.</div>
+        </div>
+        <div class="simtag">Datos simulados</div>
+      </section>
+
+      <section class="slide" data-i="2">
+        <div class="eyebrow">03 · Cuatro preguntas para controlar el capital</div>
+        <h2>Cuatro preguntas, respondidas al día</h2>
+        <div class="q4" id="q4"></div>
+        <div class="simtag">Datos simulados · cambian con el simulador</div>
+      </section>
+
+      <section class="slide" data-i="3">
+        <div class="eyebrow">04 · Toda la operación en un tablero</div>
+        <h2>Efectivo, cartera, obligaciones y proyección en un solo lugar</h2>
+        <div class="kpis k5" id="deckKpis"></div>
+        <div class="legend3">
+          <span><i class="sw real"></i>Efectivo real: lo que hay hoy</span>
+          <span><i class="sw exp"></i>Entradas esperadas: lo que te deben, todavía no es efectivo</span>
+          <span><i class="sw proj"></i>Proyección: lo que quedaría si todo ocurre en su fecha</span>
+        </div>
+        <div class="simtag">Datos simulados</div>
+      </section>
+
+      <section class="slide" data-i="4">
+        <div class="eyebrow">05 · Cada cliente con su estado de cuenta</div>
+        <h2>Ventas, vencimientos, abonos y saldo pendiente</h2>
+        <div class="stmtbar">Cliente: <select id="stmtClient" aria-label="Cliente"></select></div>
+        <div id="stmt"></div>
+        <div class="simtag">Datos simulados</div>
+      </section>
+
+      <section class="slide" data-i="5">
+        <div class="eyebrow">06 · Anticipar los faltantes</div>
+        <h2>Cerrar en positivo no evita quedarse sin efectivo a mitad del mes</h2>
+        <div class="cols c-2-1">
+          <div class="chartbox" id="deckChart"></div>
+          <div class="callouts" id="deckCallouts"></div>
+        </div>
+        <div class="simtag">Datos simulados</div>
+      </section>
+
+      <section class="slide" data-i="6">
+        <div class="eyebrow">07 · Simula una nueva venta</div>
+        <h2>¿Cuánto capital pide un pedido antes de cobrarlo?</h2>
+        <div class="cols c-1-1">
+          <div class="oform" id="deckOrderForm"></div>
+          <div id="deckOrderOut"></div>
+        </div>
+        <div class="simtag">Datos simulados · importes sin impuestos · no es una aprobación de crédito</div>
+      </section>
+
+      <section class="slide" data-i="7">
+        <div class="eyebrow">08 · Menos captura y mejor seguimiento</div>
+        <h2>Un documento o un mensaje se vuelve un registro, y una persona lo revisa</h2>
+        <div class="cols c-3 flow8">
+          <div class="doc mini">
+            <div class="dhead">FACTURA DE PROVEEDOR <span>Demostración</span></div>
+            <div class="drow"><span>Proveedor</span><b>Ferretera Simulada</b></div>
+            <div class="drow"><span>Concepto</span><b>Cemento gris, 200 bultos</b></div>
+            <div class="drow"><span>Importe</span><b>$24,500</b></div>
+            <div class="drow"><span>Vence</span><b>Día 18</b></div>
+          </div>
+          <div class="arrowcol">&#8594;<span>Registro propuesto</span></div>
+          <div class="review mini">
+            <div class="rtitle">Revisa antes de guardar</div>
+            <div class="rrow"><span>Tipo</span><b>Pago a proveedor</b></div>
+            <div class="rrow"><span>Importe</span><b>$24,500</b></div>
+            <div class="rrow"><span>Vencimiento</span><b>Día 18</b></div>
+            <div class="rrow"><span>Estado</span><b>Pendiente</b></div>
+            <div class="rbtns"><span class="pill ok">Guardar</span><span class="pill">Corregir</span></div>
+          </div>
+        </div>
+        <div class="cols c-1-1 wa8">
+          <div class="wa mini">
+            <div class="wahead">WhatsApp · demostración</div>
+            <div class="bub them">Buenas tardes, le deposité 40 mil del pedido.</div>
+            <div class="bub me">Gracias. Registramos su abono de $40,000. Su saldo pendiente queda en $80,000 con vencimiento el día 20.</div>
+            <div class="wanote">Borrador pendiente de revisión humana. No se envía nada.</div>
+          </div>
+          <ul class="benefits">
+            <li>Detectar desfases entre cobros y pagos</li>
+            <li>Dar seguimiento a clientes con saldo pendiente</li>
+            <li>Saber cuánto capital pide una nueva venta</li>
+            <li>Consultar compromisos desde el celular</li>
+            <li>Menos captura repetitiva y menos consolidación en Excel</li>
+          </ul>
+        </div>
+        <button class="cta small" data-goto-sim="capture">Probarlo en el simulador</button>
+      </section>
+
+      <section class="slide" data-i="8">
+        <div class="eyebrow">09 · Implementación en paralelo</div>
+        <h2>Prueba de concepto de cuatro semanas, junto con el proceso actual</h2>
+        <div class="weeks">
+          <div class="wk"><b>Semana 1</b>Conocer la operación y aprobar el documento de solución</div>
+          <div class="wk"><b>Semana 2</b>Configurar y desarrollar las funciones prioritarias</div>
+          <div class="wk"><b>Semana 3</b>Usar la herramienta en paralelo con el proceso actual</div>
+          <div class="wk"><b>Semana 4</b>Ajustar y evaluar resultados</div>
+        </div>
+        <div class="cols c-1-1 lists9">
+          <div><h4>Lo que comentaste</h4>
+            <ul class="chk"><li>Estados de cuenta</li><li>Compromisos próximos a vencer</li><li>Sueldos y nómina</li><li>Pagos</li><li>Mensualidades y financiamiento de vehículos</li><li>Menos trabajo manual en Excel</li><li>Ver todo desde el celular y la computadora</li></ul>
+          </div>
+          <div><h4>Funciones propuestas, por validar</h4>
+            <ul class="chk alt"><li>Ventas a crédito por cliente</li><li>Facturas pendientes y vencidas</li><li>Abonos y pagos parciales</li><li>Estado de cuenta por cliente</li><li>Calendario conjunto de cobros y pagos</li><li>Proyección diaria de efectivo</li><li>Efecto de una nueva venta sobre el capital</li><li>Seguimiento básico de compras y materiales</li></ul>
+          </div>
+        </div>
+        <p class="fine">El calendario depende del alcance acordado y de la información disponible.</p>
+      </section>
+
+      <section class="slide" data-i="9">
+        <div class="eyebrow">10 · Próximo paso</div>
+        <div class="cols c-1-1">
+          <div>
+            <h1>Una reunión de 30 a 60 minutos</h1>
+            <p class="lead">Con Rafael y con quien lleve la administración, para validar procesos, archivos y prioridades.</p>
+            <div class="nextbtns">
+              <div data-d2-book data-brand="digit2ai" data-source="aiagent.ringlypro.com/forzza" data-lang="es"></div>
+              <button class="cta ghost" data-goto-sim="top">Volver a simular</button>
+            </div>
+            <p class="fine">El precio se define después de conocer el alcance.</p>
+          </div>
+          <div class="bring">
+            <h4>Para el levantamiento, ayuda tener ejemplos de</h4>
+            <ul class="chk"><li>Ventas a crédito y condiciones de pago</li><li>Estados de cuenta de clientes</li><li>Abonos y cobranza</li><li>Pagos a proveedores</li><li>Nómina y gastos recurrentes</li><li>Financiamientos</li><li>Hojas de Excel y herramientas actuales</li><li>Control de inventario, si existe</li></ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="dock">
+    <div class="dockrow">
+      <button class="dbtn" id="prev" aria-label="Anterior">&#8249;</button>
+      <button class="dbtn play" id="play"><span id="playLbl">Escuchar a Dalia</span></button>
+      <button class="dbtn" id="next" aria-label="Siguiente">&#8250;</button>
+      <span class="count" id="count">1 / 10</span>
+      <button class="dbtn small" id="notesBtn">Notas</button>
+      <button class="dbtn small accent" data-goto-sim="top">Simular mi operación</button>
+    </div>
+    <div class="caption" id="caption"></div>
+    <div class="notes" id="notes" hidden></div>
+  </div>
+</main>
+
+<!-- ====================== SIMULADOR ====================== -->
+<main id="sim" class="view simview" hidden>
+  <div class="simhead">
+    <div>
+      <h1>Simulador de capital</h1>
+      <p class="sub">Datos simulados en MXN, sin impuestos. Los cambios se conservan al volver a la presentación.</p>
+    </div>
+    <div class="simhead-act">
+      <button class="cta ghost" id="backDeck">Volver a la presentación</button>
+      <button class="cta danger" id="resetAll">Restablecer datos</button>
+    </div>
+  </div>
+
+  <section class="panel ctrl">
+    <label>Efectivo real hoy <input type="number" id="inCash" step="1000" min="0"></label>
+    <label>Reserva mínima <input type="number" id="inReserve" step="1000" min="0"></label>
+    <div class="seg" id="horizon" role="group" aria-label="Horizonte"><span>Horizonte</span><button data-h="30">30 días</button><button data-h="60">60 días</button><button data-h="90">90 días</button></div>
+    <label>Inicio del escenario (día 0) <input type="date" id="inStart"></label>
+    <label class="evalbox">Fecha de evaluación <input type="range" id="inEval" min="0" max="60" value="0"><b id="evalLbl"></b></label>
+  </section>
+
+  <div class="alert" id="alert"></div>
+
+  <section class="kpis k8" id="simKpis"></section>
+
+  <section class="panel">
+    <div class="phead"><h3>Saldo diario proyectado</h3><div class="legend"><span><i class="ln cur"></i>Escenario modificado</span><span><i class="ln base"></i>Escenario inicial</span><span><i class="ln res"></i>Reserva mínima</span><span><i class="ln zero"></i>Cero</span></div></div>
+    <div class="chartbox big" id="simChart"></div>
+    <p class="fine">Un saldo proyectado negativo es una necesidad de fondos. No supone que exista un sobregiro autorizado.</p>
+  </section>
+
+  <section class="panel">
+    <div class="phead"><h3>Calendario de cobros y pagos</h3><div class="legend"><span><i class="sq in"></i>Cobro</span><span><i class="sq out"></i>Pago</span><span><i class="sq low"></i>Bajo la reserva</span><span><i class="sq neg"></i>Saldo negativo</span></div></div>
+    <div class="cal" id="cal"></div>
+    <div id="outside"></div>
+  </section>
+
+  <div class="cols c-1-1 gap">
+    <section class="panel">
+      <h3>Escenarios</h3>
+      <div class="scn">
+        <div class="srow"><span>Retrasar un cobro</span><select id="scDelayWho"></select><button class="sbtn" data-delay="15">+15 días</button><button class="sbtn" data-delay="30">+30 días</button></div>
+        <div class="srow"><span>Abono parcial</span><select id="scAbonoWho"></select><input type="number" id="scAbonoAmt" value="40000" step="1000" min="0"><button class="sbtn" id="scAbono">Registrar abono</button></div>
+        <div class="srow"><span>Pago a proveedor</span><select id="scSupWho"></select><input type="number" id="scSupDay" min="0" max="365" value="22"><button class="sbtn" id="scSup">Mover fecha</button></div>
+        <div class="srow note">Mover la fecha de un proveedor es un supuesto de negociación, no un acuerdo confirmado.</div>
+        <div class="srow"><span>Nómina</span><label class="tog"><input type="checkbox" id="scPayroll"> Aumentar 10 %</label></div>
+        <div class="srow"><span>Gasto extraordinario</span><input type="number" id="scExtraAmt" value="25000" step="1000" min="0"><input type="number" id="scExtraDay" value="12" min="0" max="365" title="Día"><button class="sbtn" id="scExtra">Agregar</button></div>
+        <div class="srow"><span>Anticipo del pedido</span><input type="range" id="scAdv" min="0" max="100" step="5" value="0"><b id="scAdvLbl">0 %</b></div>
+        <div class="srow"><span>Plazo de cobro del pedido</span><button class="sbtn" data-plazo="30">30 días</button><button class="sbtn" data-plazo="60">60 días</button></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h3>Escenario inicial contra modificado</h3>
+      <table class="cmp" id="cmp"></table>
+    </section>
+  </div>
+
+  <section class="panel" id="orderPanel">
+    <div class="phead"><h3>Simular una nueva venta a crédito</h3><span class="tagline">Los materiales se compran para este pedido. Las ventas de inventario existente se definen en el levantamiento.</span></div>
+    <div class="cols c-1-1">
+      <div class="oform" id="simOrderForm"></div>
+      <div id="simOrderOut"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="phead"><h3>Movimientos</h3>
+      <div class="filters">
+        <select id="fParty" aria-label="Cliente o proveedor"></select>
+        <select id="fCat" aria-label="Categoría"></select>
+        <select id="fStatus" aria-label="Estado"><option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="parcial">Abono parcial</option><option value="vencido">Vencido</option><option value="realizado">Realizado</option><option value="fuera">Fuera del horizonte</option></select>
+      </div>
+    </div>
+    <div class="tablewrap"><table class="mov" id="mov"></table></div>
+  </section>
+
+  <section class="panel" id="capture">
+    <h3>Captura revisada y WhatsApp (demostración)</h3>
+    <p class="fine">Nada de esto está conectado: no se lee ningún banco, no se envía ningún mensaje y no se ejecuta ningún pago.</p>
+    <div class="cols c-1-1 gap">
+      <div>
+        <div class="doc">
+          <div class="dhead">FACTURA DE PROVEEDOR <span>Ficticia</span></div>
+          <div class="drow"><span>Proveedor</span><b>Ferretera Simulada</b></div>
+          <div class="drow"><span>Concepto</span><b>Cemento gris, 200 bultos</b></div>
+          <div class="drow"><span>Importe sin impuestos</span><b>$24,500</b></div>
+          <div class="drow"><span>Fecha</span><b>Día 2</b></div>
+          <div class="drow"><span>Vence</span><b>Día 18</b></div>
+          <button class="sbtn" id="readDoc">Leer documento</button>
+        </div>
+        <form class="review" id="reviewForm" hidden>
+          <div class="rtitle">Registro propuesto. Revísalo antes de guardar.</div>
+          <label>Cliente o proveedor <input name="party"></label>
+          <label>Concepto <input name="concept"></label>
+          <label>Importe <input name="amount" type="number" min="0"></label>
+          <label>Fecha del documento (día) <input name="docDay" type="number" min="0"></label>
+          <label>Vencimiento (día) <input name="day" type="number" min="0"></label>
+          <label>Tipo <select name="kind"><option value="out">Pago (salida)</option><option value="in">Cobro (entrada)</option></select></label>
+          <label>Estado <select name="done"><option value="0">Pendiente</option><option value="1">Realizado</option></select></label>
+          <div class="rbtns"><button type="submit" class="sbtn ok">Guardar en el escenario</button><button type="button" class="sbtn" id="discardDoc">Descartar</button></div>
+          <div class="rmsg" id="reviewMsg"></div>
+        </form>
+      </div>
+      <div class="wa">
+        <div class="wahead">WhatsApp · demostración, no conectado</div>
+        <div class="bub them">Buenas tardes, le deposité 40 mil del pedido. <span class="who">Cliente A</span></div>
+        <button class="sbtn" id="waPropose">Proponer registro de abono</button>
+        <div id="waAbono" class="waprop" hidden></div>
+        <div class="bub me draft" id="waDraft"></div>
+        <textarea id="waEdit" hidden rows="4"></textarea>
+        <div class="rbtns"><button class="sbtn ok" id="waApprove">Aprobar envío</button><button class="sbtn" id="waEditBtn">Editar</button><button class="sbtn" id="waDiscard">Descartar</button></div>
+        <div class="rmsg" id="waMsg"></div>
+        <div class="bank">Conexión bancaria: <b>demostración, no activa</b>. En la prueba de concepto se decide si se importan estados de cuenta o se capturan.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>Tiempo administrativo liberado (opcional)</h3>
+    <div class="calc">
+      <label>Horas semanales en captura y consolidación <input type="number" id="cHours" value="10" min="0" step="1"></label>
+      <label>Reducción estimada (%) <input type="number" id="cPct" value="40" min="0" max="100" step="5"></label>
+      <label>Costo por hora (MXN) <input type="number" id="cRate" value="150" min="0" step="10"></label>
+      <div class="cout" id="cOut"></div>
+    </div>
+    <p class="fine">Horas liberadas al mes = horas semanales × 4.33 × porcentaje de reducción. El tiempo liberado no es necesariamente ahorro de efectivo: no se suma al saldo y no es un resultado garantizado.</p>
+  </section>
+
+  <footer class="simfoot">Propuesta de Digit2AI · Datos simulados · Sin integraciones activas</footer>
+</main>
+
+<script src="engine.js?v=2"></script>
+<script src="app.js?v=2"></script>
+<script src="/embed/book-meeting.js" defer></script>
+</body>
+</html>
