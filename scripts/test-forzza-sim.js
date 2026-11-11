@@ -149,6 +149,21 @@ eq((app.match(/notes: '/g) || []).length, 10, 'notas para el presentador en cada
       await pg.goto(base + '/forzza/', { waitUntil: 'networkidle0' });
       await pg.evaluate(() => localStorage.clear()); await pg.reload({ waitUntil: 'networkidle0' });
       eq(errs.length, 0, w + 'px: sin errores de JavaScript ' + errs.join(' | '));
+      ok(await pg.$eval('#intro', e => !e.hidden), w + 'px: pantalla de bienvenida visible al entrar');
+      ok(/sube el volumen/i.test(await pg.$eval('#intro', e => e.textContent)), w + 'px: pide subir el volumen');
+      ok(/sube el volumen/i.test(await pg.$eval('#volBanner', e => e.textContent)), w + 'px: aviso de volumen en la primera diapositiva');
+      await pg.evaluate(() => document.getElementById('introSkip').click());
+      ok(await pg.$eval('#intro', e => e.hidden), w + 'px: la bienvenida se cierra');
+      if (w < 800) {
+        for (let i = 0; i < 10; i++) {
+          const bad = await pg.evaluate(() => { const r = document.querySelector('.slide.on').getBoundingClientRect(); return document.documentElement.scrollWidth > innerWidth + 1 || r.right > innerWidth + 1; });
+          ok(!bad, w + 'px: diapositiva ' + (i + 1) + ' sin desbordamiento horizontal');
+          const small = await pg.evaluate(() => [...document.querySelectorAll('.dock button')].filter(b => b.offsetParent && (b.getBoundingClientRect().height < 44 || b.getBoundingClientRect().width < 44)).length);
+          eq(small, 0, w + 'px: controles de 44 px o más (diapositiva ' + (i + 1) + ')');
+          await pg.evaluate(() => document.getElementById('next').click());
+        }
+        await pg.evaluate(() => { for (let i = 0; i < 10; i++) document.getElementById('prev').click(); });
+      }
       for (let i = 0; i < 10; i++) {
         await pg.evaluate(() => document.getElementById('next').click());
       }

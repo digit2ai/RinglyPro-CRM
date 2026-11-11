@@ -7,18 +7,31 @@
 <meta name="theme-color" content="#071428">
 <title>Capital bajo control · Digit2AI</title>
 <style>html,body{background:#071428}</style>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="d2">DIGIT<b>2</b>AI</span><span class="sep"></span><span class="for">Propuesta para <span class="cname" id="cname" contenteditable="true" spellcheck="false" title="Nombre provisional, se puede editar">Empresa de Rafael</span></span></div>
+  <div class="brand"><span class="d2">DIGIT<b>2</b>AI</span><span class="sep"></span><span class="for"><span class="forlbl">Propuesta para </span><span class="cname" id="cname" contenteditable="true" spellcheck="false" title="Nombre provisional, se puede editar">Empresa de Rafael</span></span></div>
   <div class="topact">
     <span class="badge">Datos simulados</span>
     <button class="tbtn" id="toDeck" data-view="deck">Presentación</button>
-    <button class="tbtn accent" id="toSim" data-view="sim">Simular mi operación</button>
+    <button class="tbtn accent" id="toSim" data-view="sim">Simular<span class="long"> mi operación</span></button>
     <button class="tbtn icon" id="fsBtn" title="Pantalla completa" aria-label="Pantalla completa">&#x26F6;</button>
   </div>
 </header>
+
+<!-- bienvenida: pedir volumen; el toque también desbloquea el audio en iPhone -->
+<div class="intro" id="intro" hidden role="dialog" aria-modal="true" aria-labelledby="introT">
+  <div class="introcard">
+    <div class="spk"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18h8l11-9v30l-11-9H8z" fill="currentColor"/><path class="w1" d="M32 17c3 2 4.5 4.5 4.5 7s-1.5 5-4.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="w2" d="M37 11c5 3.5 7.5 8 7.5 13S42 33.5 37 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+    <h2 id="introT">Sube el volumen</h2>
+    <p>Dalia, la asistente de voz de Digit2AI, te va a explicar esta propuesta en unos minutos.</p>
+    <p class="small">Sube el volumen de tu celular y revisa que no esté en modo silencio.</p>
+    <button class="cta big" id="introPlay">Escuchar a Dalia</button>
+    <button class="linkbtn" id="introSkip">Ver sin audio</button>
+    <span class="badge">Datos simulados</span>
+  </div>
+</div>
 
 <!-- ====================== PRESENTACIÓN ====================== -->
 <main id="deck" class="view">
@@ -32,6 +45,7 @@
             <h1>Así funciona tu negocio</h1>
             <p class="lead"><span class="js-cname">Empresa de Rafael</span> vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos.</p>
             <p class="lead strong">Su necesidad principal es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando.</p>
+            <div class="volbanner" id="volBanner"><span class="spk sm"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18h8l11-9v30l-11-9H8z" fill="currentColor"/><path class="w1" d="M32 17c3 2 4.5 4.5 4.5 7s-1.5 5-4.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="w2" d="M37 11c5 3.5 7.5 8 7.5 13S42 33.5 37 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span><b>Sube el volumen</b> para escuchar a Dalia.</span><button class="sbtn ok" id="volPlay">Escuchar</button></div>
             <p class="pending">Por validar con Rafael: condiciones de compra, plazos de crédito, inventario y sistema actual.</p>
           </div>
           <div class="cycle">
@@ -116,7 +130,7 @@
             <div class="drow"><span>Importe</span><b>$24,500</b></div>
             <div class="drow"><span>Vence</span><b>Día 18</b></div>
           </div>
-          <div class="arrowcol">&#8594;<span>Registro propuesto</span></div>
+          <div class="arrowcol"><i class="arh">&#8594;</i><i class="arv">&#8595;</i><span>Registro propuesto</span></div>
           <div class="review mini">
             <div class="rtitle">Revisa antes de guardar</div>
             <div class="rrow"><span>Tipo</span><b>Pago a proveedor</b></div>
@@ -332,7 +346,7 @@
 </main>
 
 <script src="engine.js?v=2"></script>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=4"></script>
 <script src="/embed/book-meeting.js" defer></script>
 </body>
 </html>

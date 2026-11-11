@@ -40,7 +40,7 @@
   // ---------- narración (Dalia) y notas ----------
   var SLIDES = [
     { notes: 'Abrir con la síntesis de lo conversado, no como cita. Decir que es una propuesta con datos simulados. Mencionar que plazos, condiciones de compra, inventario y sistema actual se validan con Rafael.',
-      narr: 'Esta presentación usa datos simulados. La empresa de Rafael vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos. Lo que necesita es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando. El ciclo es este: compra de materiales, venta a crédito, cuenta por cobrar, cobro, y capital disponible para volver a operar. Los plazos, las condiciones de compra y el sistema actual todavía se van a validar con Rafael.' },
+      narr: 'Hola, soy Dalia, y te voy a explicar esta propuesta. Esta presentación usa datos simulados. La empresa de Rafael vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos. Lo que necesita es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando. El ciclo es este: compra de materiales, venta a crédito, cuenta por cobrar, cobro, y capital disponible para volver a operar. Los plazos, las condiciones de compra y el sistema actual todavía se van a validar con Rafael.' },
     { notes: 'Señalar el hueco entre los pagos de los días 7 a 15 y el primer cobro del día 20. Tres ideas: crédito no es efectivo, margen no es efectivo, comparar fechas anticipa faltantes.',
       narr: 'El reto está entre vender y cobrar. En este ejemplo, el día siete vence el pago a un proveedor, el día diez la mensualidad del vehículo y el día quince otro proveedor y la nómina. Pero el primer cliente paga hasta el día veinte. Durante esos días el dinero ya salió y todavía no regresa. Una venta a crédito genera una cuenta por cobrar, no efectivo. Y un buen margen no garantiza tener dinero para pagar la nómina a tiempo.' },
     { notes: 'Las cuatro respuestas se calculan con el escenario del simulador. Si se cambió algo en el simulador, las cifras ya lo reflejan.',
@@ -163,9 +163,9 @@
       else if (dd < 0) st = '<span class="st vencido">Vencida hace ' + (-dd) + ' días</span>';
       else if (m.paid > 0) st = '<span class="st parcial">Abono parcial · vence en ' + dd + ' días</span>';
       else st = '<span class="st pendiente">' + (dd === 0 ? 'Vence hoy' : 'Vence en ' + dd + ' días') + '</span>';
-      html += '<tr><td>' + esc(m.concept) + (m.delayed ? ' <span class="st sup">retrasado ' + m.delayed + ' días</span>' : '') + '</td><td>' + esc(dayLbl(m.day)) + '</td><td>' + money(m.amount) + '</td><td>' + money(m.paid || 0) + '</td><td><b>' + money(m.pending) + '</b></td><td>' + st + '</td></tr>';
+      html += '<tr><td data-l="Concepto">' + esc(m.concept) + (m.delayed ? ' <span class="st sup">retrasado ' + m.delayed + ' días</span>' : '') + '</td><td data-l="Vencimiento">' + esc(dayLbl(m.day)) + '</td><td data-l="Venta">' + money(m.amount) + '</td><td data-l="Abonado">' + money(m.paid || 0) + '</td><td data-l="Saldo"><b>' + money(m.pending) + '</b></td><td data-l="Estado">' + st + '</td></tr>';
       (m.payments || []).forEach(function (pp) {
-        html += '<tr><td colspan="3" style="padding-left:24px;color:#b4c4da">' + (pp.type === 'abono' ? 'Abono' : 'Cobro') + ' registrado el ' + esc(dayLbl(pp.day)) + '</td><td>' + money(pp.amount) + '</td><td colspan="2"></td></tr>';
+        html += '<tr class="payrow"><td colspan="3" style="padding-left:24px;color:#b4c4da">' + (pp.type === 'abono' ? 'Abono' : 'Cobro') + ' registrado el ' + esc(dayLbl(pp.day)) + '</td><td>' + money(pp.amount) + '</td><td colspan="2"></td></tr>';
       });
     });
     $('stmt').innerHTML = '<div class="stmt"><table><thead><tr><th>Concepto</th><th>Vencimiento</th><th>Venta</th><th>Abonado</th><th>Saldo</th><th>Estado</th></tr></thead><tbody>' + (html || '<tr><td colspan="6">Sin movimientos.</td></tr>') + '</tbody></table>' +
@@ -308,8 +308,8 @@
         if (m.pending > 0 && m.kind === 'in') act = '<input type="number" min="1" step="1000" value="' + m.pending + '" aria-label="Importe"><button class="sbtn mini" data-collect="' + esc(m.id) + '">Registrar cobro o abono</button>';
         else if (m.pending > 0) act = '<button class="sbtn mini" data-pay="' + esc(m.id) + '">Confirmar pago</button>';
         else act = '<span class="st realizado">' + (m.kind === 'in' ? 'Cobrado' : 'Pagado') + '</span>';
-        return '<tr class="' + (m.status === 'fuera' ? 'outh' : '') + '"><td>' + esc(dayLbl(m.day)) + '</td><td>' + esc(m.party) + '</td><td>' + esc(m.concept) + tags + '</td><td>' + esc(CAT[m.cat] || m.cat) + '</td>' +
-          '<td class="num ' + m.kind + '">' + (m.kind === 'in' ? '+' : '−') + money(m.amount) + '</td><td class="num">' + money(m.pending) + '</td><td><span class="st ' + m.status + '">' + STL[m.status] + '</span></td><td><div class="acts">' + act + '</div></td></tr>';
+        return '<tr class="' + (m.status === 'fuera' ? 'outh' : '') + '"><td data-l="Vence">' + esc(dayLbl(m.day)) + '</td><td data-l="Contraparte">' + esc(m.party) + '</td><td data-l="Concepto">' + esc(m.concept) + tags + '</td><td data-l="Categoría">' + esc(CAT[m.cat] || m.cat) + '</td>' +
+          '<td data-l="Importe" class="num ' + m.kind + '">' + (m.kind === 'in' ? '+' : '−') + money(m.amount) + '</td><td data-l="Pendiente" class="num">' + money(m.pending) + '</td><td data-l="Estado"><span class="st ' + m.status + '">' + STL[m.status] + '</span></td><td data-l="Acción"><div class="acts">' + act + '</div></td></tr>';
       }).join('') + (rows.length ? '' : '<tr><td colspan="8">Sin movimientos con estos filtros.</td></tr>') + '</tbody>';
   }
 
@@ -358,11 +358,16 @@
     pays.forEach(function (q, i) { var yy = i % 2 ? 22 : 52; g += '<line x1="' + x(q[0]) + '" x2="' + x(q[0]) + '" y1="' + (yy + 8) + '" y2="' + (mid - 8) + '" stroke="#ff7a7a"/><circle cx="' + x(q[0]) + '" cy="' + (mid) + '" r="7" fill="#ff7a7a"/><text x="' + x(q[0]) + '" y="' + yy + '" fill="#ffb3b3" font-size="14" font-weight="700" text-anchor="middle">Pago ' + esc(q[1]) + ' ' + money(q[2]) + '</text>'; });
     ins.forEach(function (q) { g += '<line x1="' + x(q[0]) + '" x2="' + x(q[0]) + '" y1="' + (mid + 8) + '" y2="' + (mid + 56) + '" stroke="#5fe0a0"/><circle cx="' + x(q[0]) + '" cy="' + mid + '" r="7" fill="#5fe0a0"/><text x="' + x(q[0]) + '" y="' + (mid + 76) + '" fill="#a8f0c8" font-size="14" font-weight="700" text-anchor="' + (q[0] >= 30 ? 'end' : 'middle') + '">Cobro ' + esc(q[1]) + ' ' + money(q[2]) + '</text>'; });
     g += '<text x="' + (W - 40) + '" y="' + (H - 6) + '" fill="#ffc35a" font-size="12" text-anchor="end">Escenario inicial · datos simulados</text>';
-    $('timeline').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Línea de tiempo de pagos y cobros">' + g + '</svg>';
+    var ev = pays.map(function (q) { return [q[0], 'out', 'Pago ' + q[1], q[2]]; }).concat(ins.map(function (q) { return [q[0], 'in', 'Cobro ' + q[1], q[2]]; })).sort(function (a, b) { return a[0] - b[0]; });
+    var v = '<ol class="tlv">' + ev.map(function (e, k) {
+      return '<li class="' + e[1] + (e[0] < 20 ? ' gap' : '') + '"><span class="tday">Día ' + e[0] + '</span><span class="tlbl">' + esc(e[2]) + '</span><b>' + (e[1] === 'in' ? '+' : '−') + money(e[3]) + '</b></li>';
+    }).join('') + '</ol><p class="tlnote">Del día 0 al 19 el dinero ya salió y todavía no regresa. Escenario inicial, datos simulados.</p>';
+    $('timeline').innerHTML = '<svg class="tlh" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Línea de tiempo de pagos y cobros">' + g + '</svg>' + v;
   }
 
   // ---------- presentación ----------
   var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  function isPhone() { return window.innerWidth <= 820; }
   function fit() {
     var st = $('stage');
     if (window.innerWidth <= 820) { st.style.transform = 'none'; return; }
@@ -378,13 +383,21 @@
     $('caption').textContent = SLIDES[ui.slide].narr;
     if (ui.slide === 5) { var p = E.project(S), b = E.project(baseline()); drawChart($('deckChart'), { series: p.series, base: b.series, reserve: S.reserve, min: p.min, minDay: p.minDay, minEnd: p.minEnd, evalDay: S.evalDay }); ui.drawnDeck = true; }
     if (ui.slide === 6) renderOrderOut();
+    if (isPhone() && ui.view === 'deck') window.scrollTo(0, 0);
+    $('volBanner') && ($('volBanner').hidden = ui.slide !== 0);
     save();
     if (playing) speak(ui.slide);
   }
 
   // voz: Edge neural (Dalia) por /api/tts/edge; si falla, voz del navegador; si tampoco, pausa de lectura
-  var playing = false, audio = null, cache = {}, token = 0, timer = null;
-  function stopAudio() { token++; if (audio) { try { audio.pause(); } catch (e) {} audio = null; } if (window.speechSynthesis) speechSynthesis.cancel(); clearTimeout(timer); }
+  var playing = false, cache = {}, token = 0, timer = null, playerTok = -1;
+  var player = new Audio(); player.preload = 'auto'; player.setAttribute('playsinline', '');
+  player.onended = function () { if (playerTok === token) advance(token); };
+  var SILENT = (function () { var n = 800, b = new Uint8Array(44 + n), dv = new DataView(b.buffer), w = function (o, t) { for (var i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+    w(0, 'RIFF'); dv.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, 8000, true); dv.setUint32(28, 8000, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true); w(36, 'data'); dv.setUint32(40, n, true); for (var i = 44; i < 44 + n; i++) b[i] = 128;
+    return URL.createObjectURL(new Blob([b], { type: 'audio/wav' })); })();
+  function unlockAudio() { try { playerTok = -1; player.src = SILENT; var pr = player.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {} }
+  function stopAudio() { token++; playerTok = -1; try { player.pause(); } catch (e) {} if (window.speechSynthesis) speechSynthesis.cancel(); clearTimeout(timer); }
   function fetchTTS(i) {
     if (cache[i]) return Promise.resolve(cache[i]);
     return fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: SLIDES[i].narr, voice: 'dalia' }) })
@@ -398,8 +411,8 @@
     if (i + 1 < slides.length) fetchTTS(i + 1).catch(function () {});
     fetchTTS(i).then(function (url) {
       if (t !== token) return;
-      audio = new Audio(url); audio.onended = function () { advance(t); };
-      return audio.play();
+      playerTok = t; player.src = url;
+      return player.play();
     }).catch(function () {
       if (t !== token) return;
       if (window.speechSynthesis && window.SpeechSynthesisUtterance) {
@@ -411,14 +424,16 @@
     });
   }
   function setPlaying(on) {
-    playing = on; $('playLbl').textContent = on ? 'Pausar' : 'Escuchar a Dalia';
-    if (on) speak(ui.slide); else { stopAudio(); }
+    playing = on; $('playLbl').textContent = on ? 'Pausar' : 'Escuchar a Dalia'; $('play').classList.toggle('on', on);
+    if (on) { unlockAudio(); speak(ui.slide); } else { stopAudio(); }
   }
 
   function showView(v, anchor) {
     ui.view = v;
     $('deck').hidden = v !== 'deck'; $('sim').hidden = v !== 'sim';
     $('toDeck').setAttribute('aria-current', v === 'deck'); $('toSim').setAttribute('aria-current', v === 'sim');
+    document.body.dataset.view = v;
+    if (v === 'sim') $('intro').hidden = true;
     if (v === 'sim') { if (playing) setPlaying(false); render(); if (anchor && anchor !== 'top' && $(anchor)) $(anchor).scrollIntoView({ behavior: 'smooth' }); else window.scrollTo(0, 0); }
     else { fit(); show(ui.slide); render(); }
     history.replaceState(null, '', v === 'sim' ? '#simulador' : '#presentacion');
@@ -429,6 +444,10 @@
     $('prev').onclick = function () { show(ui.slide - 1); };
     $('next').onclick = function () { show(ui.slide + 1); };
     $('play').onclick = function () { setPlaying(!playing); };
+    $('introPlay').onclick = function () { closeIntro(); show(0); setPlaying(true); };
+    $('introSkip').onclick = function () { closeIntro(); };
+    $('volPlay').onclick = function () { if (!playing) setPlaying(true); };
+    $('caption').onclick = function () { this.classList.toggle('open'); };
     $('notesBtn').onclick = function () { ui.notes = !ui.notes; $('notes').hidden = !ui.notes; };
     $('toDeck').onclick = function () { showView('deck'); };
     $('toSim').onclick = function () { showView('sim'); };
@@ -526,6 +545,9 @@
     setTimeout(fit, 200);
   }
 
+  function closeIntro() { $('intro').hidden = true; try { sessionStorage.setItem('fz_intro', '1'); } catch (e) {} }
+  function openIntro() { var seen = false; try { seen = sessionStorage.getItem('fz_intro') === '1'; } catch (e) {} if (!seen && ui.view === 'deck') $('intro').hidden = false; }
+
   // ---------- inicio ----------
   load();
   $('deckOrderForm').innerHTML = orderFormHTML(true);
@@ -534,5 +556,6 @@
   $('cHours').value = ui.calc.h; $('cPct').value = ui.calc.p; $('cRate').value = ui.calc.r;
   bind(); renderTimeline();
   showView(/simulador/.test(location.hash) ? 'sim' : 'deck');
+  openIntro();
   window.FzApp = { state: function () { return S; }, draft: function () { return draft; }, project: function () { return E.project(S); } };
 })();
