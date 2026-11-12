@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B0F17">
+<title>Global System Monitor · Synthex SAI</title>
+<meta name="description" content="Propuesta de Synthex SAI: plataforma de inteligencia geopolítica con evidencia trazable y revisión humana.">
+<style>html,body{background:#0B0F17}</style>
+<link rel="icon" href="/synthexai/icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=2">
+</head>
+<body data-view="deck">
+<header class="top">
+  <div style="display:flex;align-items:center;min-width:0">
+    <div class="logo" aria-label="Synthex SAI">
+      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="sxs" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE"/><stop offset="1" stop-color="#6366F1"/></linearGradient>
+          <radialGradient id="sxb" cx=".3" cy=".2" r="1"><stop offset="0" stop-color="#1b2740"/><stop offset="1" stop-color="#0B0F17"/></radialGradient>
+        </defs>
+        <rect width="64" height="64" rx="15" fill="url(#sxb)"/>
+        <rect x=".75" y=".75" width="62.5" height="62.5" rx="14.5" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+        <path d="M12 18C26 18 28 32 37 32M12 32H37M12 46C26 46 28 32 37 32" fill="none" stroke="url(#sxs)" stroke-width="4.6" stroke-linecap="round"/>
+        <path d="M37 32H50" stroke="#00F2FE" stroke-width="4.6" stroke-linecap="round"/>
+        <circle cx="37" cy="32" r="6.5" fill="#0B0F17" stroke="#00F2FE" stroke-width="3.2"/>
+        <circle cx="52.5" cy="32" r="3.4" fill="#00F2FE"/>
+      </svg>
+      <span>Synthex <small>SAI</small></span>
+    </div>
+    <div class="for">Propuesta para <b>Global System Monitor</b></div>
+  </div>
+  <div class="topact">
+    <span class="badge hdr">Datos de ejemplo</span>
+    <button class="tbtn" id="toDeck" aria-current="true">Presentación</button>
+    <button class="tbtn accent" id="toSim">Probar<span class="long"> el simulador</span></button>
+  </div>
+</header>
+
+<div class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="introT">
+  <div class="introcard">
+    <div class="spk"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18h8l11-9v30l-11-9H8z" fill="currentColor"/><path class="w1" d="M32 17c3 2 4.5 4.5 4.5 7s-1.5 5-4.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="w2" d="M37 11c5 3.5 7.5 8 7.5 13S42 33.5 37 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div>
+    <h2 id="introT">Sube el volumen</h2>
+    <p>Dalia te va a explicar Global System Monitor en unos minutos, con las pantallas de la plataforma.</p>
+    <p class="small">Si estás en el celular, revisa que no esté en modo silencio.</p>
+    <button class="cta" id="introPlay">Escuchar a Dalia</button>
+    <button class="linkbtn" id="introSkip">Ver sin audio</button>
+  </div>
+</div>
+
+<!-- ====================== PRESENTACIÓN ====================== -->
+<main id="deck" class="view">
+  <div class="stagewrap" id="stagewrap">
+    <div class="stage" id="stage">
+
+      <section class="slide" data-i="0">
+        <div class="cols">
+          <div>
+            <span class="kick">Synthex SAI · Propuesta</span>
+            <h1>Global System<br><span class="grad">Monitor</span></h1>
+            <p class="lead">De la noticia a la <b>evidencia trazable</b>: una plataforma que organiza información pública, la vincula a indicadores, hipótesis y escenarios, y deja que el <b>analista decida</b>.</p>
+            <div class="volbanner" id="volBanner"><span class="spk"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18h8l11-9v30l-11-9H8z" fill="currentColor"/><path class="w1" d="M32 17c3 2 4.5 4.5 4.5 7s-1.5 5-4.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="w2" d="M37 11c5 3.5 7.5 8 7.5 13S42 33.5 37 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span style="flex:1"><b>Sube el volumen</b> para escuchar a Dalia.</span><button class="sbtn ok" id="volPlay">Escuchar</button></div>
+            <p class="note">Todas las pantallas usan documentos y datos de ejemplo.</p>
+          </div>
+          <div class="radar" aria-hidden="true">
+            <svg viewBox="0 0 440 440">
+              <defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#00F2FE" stop-opacity=".5"/><stop offset="1" stop-color="#00F2FE" stop-opacity="0"/></linearGradient></defs>
+              <g fill="none" stroke="rgba(255,255,255,.10)"><circle cx="220" cy="220" r="200"/><circle cx="220" cy="220" r="140"/><circle cx="220" cy="220" r="80"/><path d="M20 220H420M220 20V420"/></g>
+              <path class="sweep" d="M220 220L220 20A200 200 0 0 1 393 120Z" fill="url(#rg)"/>
+              <g fill="#00F2FE"><circle class="dot" cx="300" cy="120" r="6"/><circle class="dot" cx="140" cy="300" r="5" style="animation-delay:.8s"/><circle class="dot" cx="330" cy="290" r="7" style="animation-delay:1.6s"/><circle class="dot" cx="170" cy="150" r="4" style="animation-delay:2.2s"/></g>
+              <g fill="#6366F1"><circle class="dot" cx="250" cy="340" r="5" style="animation-delay:1.1s"/><circle class="dot" cx="90" cy="210" r="5" style="animation-delay:.4s"/></g>
+              <circle cx="220" cy="220" r="10" fill="#0B0F17" stroke="#00F2FE" stroke-width="3"/>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="1">
+        <span class="kick">01 · El problema</span>
+        <h2>Mucha información. Poca <span class="grad">evidencia ordenada</span>.</h2>
+        <div class="grid2" style="margin-top:22px">
+          <div class="card pcard"><span class="num">DISPERSIÓN</span><h3>Fuentes, idiomas y formatos distintos</h3><p>Documentos oficiales, estadísticas, comunicados, noticias e informes llegan cada uno a su ritmo.</p></div>
+          <div class="card pcard"><span class="num">FALSA CORROBORACIÓN</span><h3>Diez copias parecen diez confirmaciones</h3><p>Un mismo despacho republicado aparenta corroboración independiente cuando es una sola fuente.</p></div>
+          <div class="card pcard"><span class="num">HIPÓTESIS SUELTAS</span><h3>La hipótesis vive lejos de su evidencia</h3><p>Lo que la respalda y lo que la contradice queda en carpetas, chats y memoria del analista.</p></div>
+          <div class="card pcard"><span class="num">SIN HISTORIAL</span><h3>Las evaluaciones cambian sin rastro</h3><p>Se pierde el razonamiento, la versión anterior y quién aprobó el cambio.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="2">
+        <div class="cols w">
+          <div>
+            <span class="kick">02 · La unidad central</span>
+            <h2>No es la noticia.<br>Es la <span class="grad">observación de evidencia</span>.</h2>
+            <p class="lead">Cada observación guarda qué se dijo, quién lo dijo, quién lo reportó, la fecha del hecho y la de publicación, el fragmento exacto y quién la aprobó.</p>
+            <p class="note">Desde cualquier conclusión se regresa, paso a paso, al documento original.</p>
+          </div>
+          <div class="chain" id="chain">
+            <div class="link"><b>Fuente</b><span>Quién publica, tipo, idioma, licencia, salud del conector</span></div>
+            <div class="link"><b>Documento</b><span>URL, huella digital, fecha de captura y versión</span></div>
+            <div class="link"><b>Afirmación</b><span>Sujeto, predicado, objeto · hecho, declaración o inferencia</span></div>
+            <div class="link"><b>Evidencia</b><span>Fragmento exacto, ubicación, polaridad a favor o en contra</span></div>
+            <div class="link"><b>Observación</b><span>Indicador, intensidad 0 a 10, confianza A a D, justificación</span></div>
+            <div class="link"><b>Hipótesis</b><span>Se fortalece o se debilita · solo con aprobación humana</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="3">
+        <span class="kick">03 · El flujo</span>
+        <h2>Nueve etapas. <span class="grad">Una persona aprueba.</span></h2>
+        <p class="lead">La plataforma trabaja de forma automática hasta el punto en que hace falta juicio. Ahí se detiene y pregunta.</p>
+        <div class="pipe" id="pipe">
+          <div class="step"><span class="n">01</span><h4>Descubrir</h4><p>Consulta fuentes registradas y detecta novedades.</p></div>
+          <div class="step"><span class="n">02</span><h4>Ingerir</h4><p>Recupera contenido y metadatos permitidos.</p></div>
+          <div class="step"><span class="n">03</span><h4>Normalizar</h4><p>Fechas, idioma, entidades, países y unidades.</p></div>
+          <div class="step"><span class="n">04</span><h4>Deduplicar</h4><p>Agrupa copias sin borrar originales.</p></div>
+          <div class="step"><span class="n">05</span><h4>Extraer</h4><p>Propone afirmaciones, entidades y cifras.</p></div>
+          <div class="step"><span class="n">06</span><h4>Contrastar</h4><p>Busca corroboración independiente y evidencia contraria.</p></div>
+          <div class="step human"><span class="tag">ANALISTA</span><span class="n">07</span><h4>Revisar</h4><p>Ambigüedades y alto impacto van a una persona.</p></div>
+          <div class="step human"><span class="tag">ANALISTA</span><span class="n">08</span><h4>Actualizar</h4><p>Se registra; nada se aprueba solo.</p></div>
+          <div class="step"><span class="n">09</span><h4>Publicar</h4><p>Paneles, alertas e informes con fecha de corte.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="4">
+        <div class="cols w" style="align-items:start">
+          <div>
+            <span class="kick">04 · Pantalla · Panel</span>
+            <h2>Intensidad y confianza, <span class="grad">nunca mezcladas</span>.</h2>
+            <p class="lead">Los doce indicadores maestros con su intensidad de 0 a 10 y su confianza de A a D. Un indicador sin observaciones aprobadas lo dice, en vez de inventar un valor.</p>
+            <button class="sbtn ok openSim" data-open="panel">Abrir en el simulador</button>
+          </div>
+          <div class="win"><div class="winbar"><i></i><i></i><i></i><span>gsm / panel</span></div><div class="winbody" data-screen="panel"></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="5">
+        <div class="cols w" style="align-items:start">
+          <div>
+            <span class="kick">05 · Pantalla · Hipótesis</span>
+            <h2>A favor y en contra, <span class="grad">lado a lado</span>.</h2>
+            <p class="lead">Cada hipótesis declara qué evidencia la debilitaría. Las propuestas sin aprobar se ven aparte y <b>no cuentan</b>. El estado solo lo cambia un analista, con justificación.</p>
+            <button class="sbtn ok openSim" data-open="hyp">Abrir en el simulador</button>
+          </div>
+          <div class="win"><div class="winbar"><i></i><i></i><i></i><span>gsm / hipótesis / H4</span></div><div class="winbody" data-screen="hyp"></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="6">
+        <div class="cols w" style="align-items:start">
+          <div>
+            <span class="kick">06 · Pantalla · Evidencia</span>
+            <h2>Cinco documentos.<br><span class="grad">Dos orígenes.</span></h2>
+            <p class="lead">El detector de republicaciones agrupa las copias de un mismo despacho sin borrarlas, y cuenta solo las fuentes de origen independientes.</p>
+            <p class="note">Diez republicaciones de un comunicado no son diez corroboraciones.</p>
+            <button class="sbtn ok openSim" data-open="evid">Abrir en el simulador</button>
+          </div>
+          <div class="win"><div class="winbar"><i></i><i></i><i></i><span>gsm / evidencia</span></div><div class="winbody" data-screen="evid"></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="7">
+        <div class="cols w" style="align-items:start">
+          <div>
+            <span class="kick">07 · Pantalla · Revisión</span>
+            <h2>La IA propone.<br><span class="grad">El analista aprueba.</span></h2>
+            <p class="lead">Cada propuesta señala el fragmento exacto de donde salió. Un documento con instrucciones escondidas se trata como <b>dato no confiable</b>: se marca y no cambia nada.</p>
+            <button class="sbtn ok openSim" data-open="review">Probar la revisión</button>
+          </div>
+          <div class="win"><div class="winbar"><i></i><i></i><i></i><span>gsm / cola de revisión</span></div><div class="winbody tall" data-screen="review"></div></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="8">
+        <div class="cols w">
+          <div>
+            <span class="kick">08 · Submatriz Venezuela</span>
+            <h2>Valor potencial vs. <span class="grad">capacidad de captura</span>.</h2>
+            <p class="lead">Tener recursos no equivale a tener poder efectivo. Cada dimensión compara las dos medidas, y cada barra sale de evidencia aprobada.</p>
+            <p class="note amber">Valores ilustrativos de esta lámina. En el piloto se calculan con evidencia revisada.</p>
+          </div>
+          <div class="card">
+            <div class="vz" id="vz"></div>
+            <div class="legend"><span><i style="background:linear-gradient(90deg,#00F2FE,#6366F1)"></i>Valor potencial</span><span><i style="background:#fbbf24"></i>Capacidad de captura</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="9">
+        <span class="kick">09 · Escenarios</span>
+        <h2>Cuatro escenarios que <span class="grad">pueden coexistir</span>.</h2>
+        <div class="grid4" style="margin-top:20px">
+          <div class="card pcard scn"><span class="num">S1</span><h3>Hegemonía adaptativa</h3><p>EE. UU. preserva liderazgo ajustando compromisos y entendimientos.</p></div>
+          <div class="card pcard scn"><span class="num">S2</span><h3>Multipolaridad competitiva</h3><p>Se amplían los centros de poder, con rivalidad y fricción persistentes.</p></div>
+          <div class="card pcard scn"><span class="num">S3</span><h3>Fragmentación sistémica</h3><p>Se debilitan reglas comunes, instituciones y cadenas de suministro.</p></div>
+          <div class="card pcard scn"><span class="num">S4</span><h3>Ruptura en cascada</h3><p>Crisis interconectadas generan contagio rápido y cambios estructurales.</p></div>
+        </div>
+        <div class="grid3" style="margin-top:16px">
+          <div class="card pcard"><h3>Condiciones</h3><p>Qué tendría que ser cierto para que el escenario avance.</p></div>
+          <div class="card pcard"><h3>Señales</h3><p>Qué indicadores y observaciones lo alimentan o lo frenan.</p></div>
+          <div class="card pcard"><h3>Sin probabilidades automáticas</h3><p>Solo con una metodología aprobada por el equipo.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="10">
+        <span class="kick">10 · Principios en el código</span>
+        <h2>No es una promesa. <span class="grad">Es una regla del sistema.</span></h2>
+        <div class="grid3" style="margin-top:20px">
+          <div class="card pcard"><span class="num">SEPARACIÓN</span><h3>Hecho, declaración, inferencia</h3><p>Escenario e hipótesis tampoco se mezclan. Cada afirmación lleva su tipo.</p></div>
+          <div class="card pcard"><span class="num">FALSABILIDAD</span><h3>Qué la refutaría</h3><p>Toda hipótesis registra la evidencia que la debilitaría.</p></div>
+          <div class="card pcard"><span class="num">CONTRADICCIÓN</span><h3>La evidencia adversa se ve</h3><p>No solo la que confirma. Siempre lado a lado.</p></div>
+          <div class="card pcard"><span class="num">APROBACIÓN</span><h3>Nada se publica solo</h3><p>Puntuaciones y cambios de hipótesis requieren a un analista autorizado.</p></div>
+          <div class="card pcard"><span class="num">DATO NO CONFIABLE</span><h3>El texto externo no da órdenes</h3><p>Instrucciones incrustadas en un documento no cambian las reglas.</p></div>
+          <div class="card pcard"><span class="num">AUDITORÍA</span><h3>Quién, qué, cuándo y por qué</h3><p>Cada cambio queda registrado con su valor anterior.</p></div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="11">
+        <div class="cols">
+          <div>
+            <span class="kick">11 · Cómo empezamos</span>
+            <h2>Pequeño, validable <span class="grad">y en semanas</span>.</h2>
+            <p class="lead">Una prueba de concepto de <b>cuatro semanas</b> con fuentes oficiales y abiertas, los doce indicadores, las ocho hipótesis, la cola de revisión, la auditoría y la exportación de informes con fecha de corte.</p>
+            <div class="d2book-wrap"><div data-d2-book data-brand="synthex" data-lang="es" data-source="aiagent.ringlypro.com/global-system-monitor"></div></div>
+          </div>
+          <div class="list">
+            <div class="item"><div class="t">Semana 1 · Fuentes y modelo de datos</div><div class="m">Catálogo inicial, licencias revisadas, cadena fuente-documento-afirmación-evidencia.</div></div>
+            <div class="item"><div class="t">Semana 2 · Ingesta y deduplicación</div><div class="m">Conectores programados, huella digital, detector de republicaciones y salud de fuentes.</div></div>
+            <div class="item"><div class="t">Semana 3 · Extracción asistida y revisión</div><div class="m">Propuestas con fragmento exacto, cola de revisión, intensidad y confianza aprobadas.</div></div>
+            <div class="item"><div class="t">Semana 4 · Panel, hipótesis e informes</div><div class="m">Fichas, cronología, alertas, auditoría y exportación con fecha de corte.</div></div>
+            <button class="sbtn ok" data-open="panel" style="align-self:flex-start">Probar el simulador ahora</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+  <div class="dock">
+    <button class="dbtn" id="prev" aria-label="Lámina anterior">&#8249;</button>
+    <button class="play" id="play"><span aria-hidden="true">&#9654;</span><span class="lbl" id="playLbl">Escuchar a Dalia</span></button>
+    <button class="dbtn" id="next" aria-label="Lámina siguiente">&#8250;</button>
+    <span class="count" id="count">1 / 12</span>
+    <div class="caption" id="caption" title="Toca para ver el texto completo"></div>
+  </div>
+</main>
+
+<!-- ====================== SIMULADOR ====================== -->
+<main id="sim" class="view" hidden>
+  <div class="simhead">
+    <div>
+      <h2>Simulador · Global System Monitor</h2>
+      <p>Documentos y fuentes ficticios. Prueba el flujo: ingiere, revisa, aprueba y exporta. Nada sale de este navegador.</p>
+    </div>
+    <div class="toolbar" style="margin:0">
+      <button class="sbtn" id="backDeck">Volver a la presentación</button>
+      <button class="sbtn" id="resetSim">Reiniciar</button>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="simBody"></div>
+</main>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js?v=2"></script>
+<script src="/embed/book-meeting.js" defer></script>
+</body>
+</html>
