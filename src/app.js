@@ -477,6 +477,19 @@ app.use((req, res, next) => {
     res.setHeader('Cache-Control', 'public, max-age=86400');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai', path.slice(1)));
   }
+  // Global System Monitor teaser (Dalia deck + simulator). Exact files only, so
+  // nothing here serves a path the caller made up.
+  if (path === '/global-system-monitor') return res.redirect(301, '/global-system-monitor/');
+  const GSM_FILES = { '/global-system-monitor/': 'index.html', '/global-system-monitor/index.html': 'index.html', '/global-system-monitor/style.css': 'style.css', '/global-system-monitor/app.js': 'app.js' };
+  if (GSM_FILES[path]) {
+    res.setHeader('Cache-Control', 'no-cache');
+    return res.sendFile(require('path').join(__dirname, '../public/global-system-monitor', GSM_FILES[path]));
+  }
+  if (path === '/synthexai/icon-512.png') {
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(require('path').join(__dirname, '../public/synthexai/icon-512.png'));
+  }
+  if (path === '/embed/book-meeting.js') return next();          // the "Agendar" button on the teaser's last slide
   if (/^\/synthexai\/?$/i.test(path)) return res.redirect(301, '/');
   res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthex SAI</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B0F17;color:#fff;font:16px Inter,system-ui,sans-serif;text-align:center"><div><p style="color:#94A3B8">Página no encontrada · Page not found</p><a href="/" style="color:#00F2FE">synthexsai.com</a></div></body>');
 });
