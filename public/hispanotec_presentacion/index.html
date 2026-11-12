@@ -17,6 +17,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 body{display:flex;flex-direction:column;overflow:hidden}
 #wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px}
 #stage{position:relative;aspect-ratio:16/9;width:min(100%,calc((100vh - 170px) * 16 / 9));max-height:100%;background:#000;box-shadow:0 18px 60px rgba(0,0,0,.6);overflow:hidden;touch-action:pan-y}
+#pan{position:absolute;top:0;left:0;width:100%;height:100%;will-change:transform}
+#pan.ease{transition:transform .35s linear}
 #stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .45s ease}
 #stage img.on{opacity:1}
 .hot{position:absolute;display:none;border-radius:6px}
@@ -46,17 +48,33 @@ button.main{background:var(--gold);color:#1a1306;border-color:var(--gold);font-w
   button{padding:0 12px}
   .hide-sm{display:none}
 }
-@media (prefers-reduced-motion:reduce){#stage img{transition:none}}
+/* Phone held upright: the slide fills the height and pans left to right with the narration. */
+#mini{display:none;position:relative;height:56px;aspect-ratio:16/9;margin:0 auto 8px;border-radius:4px;overflow:hidden;cursor:pointer;background:#000}
+#mini img{width:100%;height:100%;display:block;opacity:.75}
+#mini i{position:absolute;top:0;bottom:0;border:2px solid var(--gold);border-radius:3px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+#fit{display:none}
+body.vert{overflow:hidden;height:100dvh}
+body.vert #wrap{padding:0;align-items:stretch}
+body.vert #stage{width:100%;height:100%;aspect-ratio:auto;max-height:none;touch-action:none}
+body.vert #mini{display:block}
+body.vert #fit{display:inline-block}
+body.vert #dock{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+body.vert #cap{min-height:4.4em;font-size:15px;margin-bottom:6px}
+body.vert #ctl{gap:6px}
+body.vert button{padding:0 12px;font-size:14px}
+body.vert button.main{min-width:96px}
+@media (prefers-reduced-motion:reduce){#stage img{transition:none}#pan.ease{transition:none}}
 </style>
 </head>
 <body>
 <div id="wrap">
-  <div id="stage" aria-live="polite">
+  <div id="stage" aria-live="polite"><div id="pan">
     <a class="hot" id="hot20" href="https://aiagent.ringlypro.com/hispanotec/ecosystem/index.html" target="_blank" rel="noopener" aria-label="Abrir HISPANOTEC Digital" style="left:8%;top:93%;width:78%;height:6%"></a>
     <a class="hot" id="hot21" href="https://hispanotec.org/formulario-de-inscripcion/" target="_blank" rel="noopener" aria-label="Abrir el formulario de inscripción" style="left:75%;top:41%;width:17%;height:33%"></a>
-  </div>
+  </div></div>
 </div>
 <div id="dock">
+  <div id="mini" aria-hidden="true"><img alt="" src="slides/s01.jpg"><i></i></div>
   <div id="cap"></div>
   <div id="prog"><i id="bar"></i></div>
   <div id="ctl">
@@ -64,6 +82,7 @@ button.main{background:var(--gold);color:#1a1306;border-color:var(--gold);font-w
     <button id="play" class="main">Pausar</button>
     <button id="next" aria-label="Diapositiva siguiente">&#8250;</button>
     <span id="count">1 / 23</span>
+    <button id="fit" aria-pressed="false">Ver completa</button>
     <button id="subs" aria-pressed="true">Subtítulos</button>
     <button id="full" class="hide-sm">Pantalla completa</button>
   </div>
@@ -107,7 +126,7 @@ var NARR = [
 "Este es el momento de estar. La Hispanidad necesita instrumentos, y Hispanotec quiere ser uno de ellos. Si compartes esta visión, te pedimos que des el paso: únete al núcleo inicial de Hispanotec. Para que mañana puedas decir: yo estuve ahí cuando todo empezó. Juntos, construir para trascender. Gracias."
 ];
 var TTS = '/api/tts/edge', VOICE = 'dalia';
-var stage = document.getElementById('stage'), cap = document.getElementById('cap'), bar = document.getElementById('bar');
+var stage = document.getElementById('stage'), pan = document.getElementById('pan'), mini = document.getElementById('mini'), cap = document.getElementById('cap'), bar = document.getElementById('bar');
 var playBtn = document.getElementById('play'), count = document.getElementById('count');
 var imgs = [], cache = {}, cur = 0, playing = false, voice = true, token = 0, timer = null, pauseStart = 0;
 var audio = new Audio(); audio.preload = 'auto';
@@ -117,11 +136,48 @@ for (var i = 0; i < N; i++) {
   im.alt = 'Diapositiva ' + (i + 1) + ' de ' + N;
   im.decoding = 'async';
   if (i < 2) im.src = 'slides/s' + pad(i + 1) + '.jpg';
-  stage.appendChild(im);
+  pan.appendChild(im);
   imgs.push(im);
 }
 // keep hotspots above images
-['hot20','hot21'].forEach(function(id){ stage.appendChild(document.getElementById(id)); });
+['hot20','hot21'].forEach(function(id){ pan.appendChild(document.getElementById(id)); });
+
+// ---- vertical (portrait phone) mode ----
+var vertMq = window.matchMedia('(orientation: portrait) and (max-width: 820px)');
+var vert = false, fitAll = false, panX = 0, manual = false, maxX = 0;
+function layout(){
+  vert = vertMq.matches && !fitAll;
+  document.body.classList.toggle('vert', vertMq.matches);
+  if (!vert) { pan.style.width = '100%'; pan.style.transform = ''; maxX = 0; drawMini(); return; }
+  var h = stage.clientHeight, w = stage.clientWidth;
+  var iw = h * 16 / 9;
+  if (iw <= w) { pan.style.width = '100%'; maxX = 0; }
+  else { pan.style.width = iw + 'px'; maxX = iw - w; }
+  setPan(panX, false);
+}
+function setPan(x, ease){
+  panX = Math.max(0, Math.min(maxX, x));
+  pan.classList.toggle('ease', !!ease);
+  pan.style.transform = maxX ? 'translateX(' + (-panX) + 'px)' : '';
+  drawMini();
+}
+function drawMini(){
+  var box = mini.querySelector('i');
+  if (!vert || !maxX) { box.style.left = '0'; box.style.width = '100%'; return; }
+  var total = maxX + stage.clientWidth;
+  box.style.left = (panX / total * 100) + '%';
+  box.style.width = (stage.clientWidth / total * 100) + '%';
+}
+// Follow the narration: hold the left edge briefly, end on the right edge before the slide changes.
+function autoPan(frac){
+  if (!vert || manual || !maxX) return;
+  // Slides whose text sits on the left stay there while it is read, then move to the image.
+  var hold = [1,5,6,7,8,9,23].indexOf(cur + 1) >= 0 ? 0.55 : 0.06;
+  var f = Math.max(0, Math.min(1, (frac - hold) / (0.88 - hold)));
+  setPan(f * maxX, true);
+}
+window.addEventListener('resize', layout);
+if (vertMq.addEventListener) vertMq.addEventListener('change', layout); else vertMq.addListener(layout);
 
 function pad(n){ return (n < 10 ? '0' : '') + n; }
 function sentences(t){ return t.match(/[^.!?¿¡]*[¿¡]?[^.!?]*[.!?]+|\S[^.!?]*$/g) || [t]; }
@@ -142,10 +198,13 @@ function showCaption(i, frac){
   for (var k = 0; k < parts.length; k++) { acc += parts[k].length; pick = parts[k]; if (acc >= at) break; }
   cap.textContent = pick.trim();
   bar.style.width = (Math.max(0, Math.min(1, frac)) * 100) + '%';
+  autoPan(frac);
 }
 
 function render(){
   imgs.forEach(function(im, k){ im.classList.toggle('on', k === cur); });
+  mini.querySelector('img').src = 'slides/s' + pad(cur + 1) + '.jpg';
+  manual = false; setPan(0, false);
   ensureImg(cur); ensureImg(cur + 1); ensureImg(cur + 2);
   count.textContent = (cur + 1) + ' / ' + N;
   document.getElementById('prev').disabled = cur === 0;
@@ -255,6 +314,16 @@ document.getElementById('mute').addEventListener('click', function(){ begin(fals
 playBtn.addEventListener('click', togglePlay);
 document.getElementById('prev').addEventListener('click', function(){ go(cur - 1); });
 document.getElementById('next').addEventListener('click', function(){ go(cur + 1); });
+document.getElementById('fit').addEventListener('click', function(){
+  fitAll = !fitAll; this.setAttribute('aria-pressed', String(fitAll));
+  this.textContent = fitAll ? 'Ampliar' : 'Ver completa';
+  layout();
+});
+mini.addEventListener('click', function(e){
+  if (!vert || !maxX) return;
+  var r = mini.getBoundingClientRect(), total = maxX + stage.clientWidth;
+  manual = true; setPan((e.clientX - r.left) / r.width * total - stage.clientWidth / 2, true);
+});
 document.getElementById('subs').addEventListener('click', function(){
   var off = cap.classList.toggle('off'); this.setAttribute('aria-pressed', String(!off));
 });
@@ -273,15 +342,33 @@ document.addEventListener('keydown', function(e){
   else if (e.key === 't' || e.key === 'T') document.getElementById('subs').click();
 });
 var tx = null;
-stage.addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; }, { passive:true });
+var startPan = 0, startEdge = null;
+stage.addEventListener('touchstart', function(e){
+  tx = e.touches[0].clientX; startPan = panX;
+  startEdge = !maxX ? 'both' : panX <= 1 ? 'left' : panX >= maxX - 1 ? 'right' : null;
+}, { passive:true });
+stage.addEventListener('touchmove', function(e){
+  if (tx === null || !vert || !maxX) return;
+  var dx = e.touches[0].clientX - tx;
+  if (Math.abs(dx) > 6) { manual = true; setPan(startPan - dx, false); }
+}, { passive:true });
 stage.addEventListener('touchend', function(e){
   if (tx === null) return;
   var dx = e.changedTouches[0].clientX - tx; tx = null;
-  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+  if (Math.abs(dx) < 60) return;
+  // In the upright view a drag pans the slide; only a swipe past its edge changes slide.
+  if (vert && maxX) {
+    if (dx < 0 && (startEdge === 'right' || startEdge === 'both')) go(cur + 1);
+    else if (dx > 0 && (startEdge === 'left' || startEdge === 'both')) go(cur - 1);
+    return;
+  }
+  go(cur + (dx < 0 ? 1 : -1));
 });
 var h = parseInt((location.hash || '').replace('#', ''), 10);
 if (h >= 1 && h <= N) cur = h - 1;
+layout();
 render();
+window.addEventListener('load', layout);
 })();
 </script>
 </body>
