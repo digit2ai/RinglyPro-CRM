@@ -28,6 +28,10 @@ const OUT = arg('out', path.join(os.homedir(), 'Desktop', 'HISPANOTEC_presentaci
 let CRF = +arg('crf', 30);
 const MAX_MB = +arg('mb', 15.5);
 const TTS = arg('tts', 'https://aiagent.ringlypro.com/api/tts/edge');
+// --slides=11-16 renders a part. WhatsApp re-encodes every video it sends to fit its own
+// size cap and silently TRIMS what does not fit (measured 2026-11-12: a 14:44 file was cut
+// at about 8:40), so the deck ships as parts of about five minutes each.
+const RANGE = (arg('slides', '') || '').split('-').map(Number);
 const FW = 720, FH = 1280, CAP_H = 230, IMG_H = FH - CAP_H, FPS = 5, TAIL = 0.45, OVERLAP = 90;
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
@@ -60,7 +64,8 @@ function captionSvg(text) {
   const stills = []; // {file, dur}
   const audios = [];
   let total = 0;
-  for (let i = 0; i < NARR.length; i++) {
+  const first = RANGE[0] ? RANGE[0] - 1 : 0, last = RANGE[1] ? RANGE[1] - 1 : NARR.length - 1;
+  for (let i = first; i <= last; i++) {
     const n = String(i + 1).padStart(2, '0');
     // 1. voice
     const mp3 = path.join(work, 'a' + n + '.mp3');
