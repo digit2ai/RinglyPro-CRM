@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HISPANOTEC · Presentación</title>
+<meta name="description" content="Presentación narrada de HISPANOTEC: la red de proyectos y alianzas para construir la Hispanidad del siglo XXI.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#070d1f">
+<meta property="og:title" content="HISPANOTEC · Presentación">
+<meta property="og:image" content="https://aiagent.ringlypro.com/hispanotec_presentacion/slides/s01.jpg">
+<link rel="preload" as="image" href="slides/s01.jpg">
+<style>
+:root{--bg:#070d1f;--bar:#0c1530;--line:rgba(212,175,95,.28);--gold:#d4af5f;--ink:#eef1f8;--mut:#a9b3c9}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;overflow:hidden}
+#wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px}
+#stage{position:relative;aspect-ratio:16/9;width:min(100%,calc((100vh - 170px) * 16 / 9));max-height:100%;background:#000;box-shadow:0 18px 60px rgba(0,0,0,.6);overflow:hidden;touch-action:pan-y}
+#stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .45s ease}
+#stage img.on{opacity:1}
+.hot{position:absolute;display:none;border-radius:6px}
+.hot:focus-visible{outline:3px solid var(--gold)}
+#dock{background:var(--bar);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+#cap{max-width:1100px;margin:0 auto 8px;min-height:2.9em;font-size:16px;line-height:1.45;text-align:center;color:var(--ink)}
+#cap.off{display:none}
+#prog{height:3px;background:rgba(255,255,255,.12);border-radius:3px;max-width:1100px;margin:0 auto 10px;overflow:hidden}
+#prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .25s linear}
+#ctl{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:15px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;min-height:44px;min-width:44px;padding:0 16px;cursor:pointer}
+button:hover{border-color:var(--gold)}
+button:disabled{opacity:.4;cursor:default}
+button.main{background:var(--gold);color:#1a1306;border-color:var(--gold);font-weight:600;min-width:120px}
+#count{color:var(--mut);font-size:14px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+#welcome{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,8,20,.86);backdrop-filter:blur(3px)}
+#welcome .box{max-width:460px;text-align:center;background:var(--bar);border:1px solid var(--line);border-radius:18px;padding:28px 24px}
+#welcome h1{margin:0 0 6px;font-size:22px;letter-spacing:.14em;color:var(--gold);font-weight:600}
+#welcome p{margin:10px 0;color:var(--mut);line-height:1.5}
+#welcome button{margin-top:12px}
+#welcome .alt{display:block;margin:12px auto 0;border:0;color:var(--mut);text-decoration:underline;min-height:44px}
+@media (max-width:820px){
+  #wrap{padding:0;align-items:center}
+  #stage{width:100%;box-shadow:none}
+  body{overflow:auto}
+  #cap{font-size:15px}
+  button{padding:0 12px}
+  .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){#stage img{transition:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage" aria-live="polite">
+    <a class="hot" id="hot20" href="https://aiagent.ringlypro.com/hispanotec/ecosystem/index.html" target="_blank" rel="noopener" aria-label="Abrir HISPANOTEC Digital" style="left:8%;top:93%;width:78%;height:6%"></a>
+    <a class="hot" id="hot21" href="https://hispanotec.org/formulario-de-inscripcion/" target="_blank" rel="noopener" aria-label="Abrir el formulario de inscripción" style="left:75%;top:41%;width:17%;height:33%"></a>
+  </div>
+</div>
+<div id="dock">
+  <div id="cap"></div>
+  <div id="prog"><i id="bar"></i></div>
+  <div id="ctl">
+    <button id="prev" aria-label="Diapositiva anterior">&#8249;</button>
+    <button id="play" class="main">Pausar</button>
+    <button id="next" aria-label="Diapositiva siguiente">&#8250;</button>
+    <span id="count">1 / 23</span>
+    <button id="subs" aria-pressed="true">Subtítulos</button>
+    <button id="full" class="hide-sm">Pantalla completa</button>
+  </div>
+</div>
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="wt">
+  <div class="box">
+    <h1 id="wt">HISPANOTEC</h1>
+    <p>Presentación narrada por Dalia.</p>
+    <p><strong>Sube el volumen</strong> y, si estás en el móvil, quita el modo silencio.</p>
+    <button id="start" class="main">Comenzar</button>
+    <button id="mute" class="alt">Ver sin voz</button>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+var N = 23;
+var NARR = [
+"Bienvenidos. Esto es Hispanotec: la red de proyectos y alianzas para construir la Hispanidad del siglo veintiuno. Cinco palabras la resumen: talento, empresa, tecnología, cooperación y futuro. Y un propósito: conectar talento, impulsar proyectos y construir futuro.",
+"Este es el espacio de la Hispanidad: España, Hispanoamérica y Filipinas, unidos por la lengua y por la historia, y conectados con comunidades hispanas en varios continentes. Es una red que ya existe en el mapa. Nuestra tarea es activarla.",
+"La Hispanidad en cifras: España, Hispanoamérica y Filipinas. Quinientos veinte millones de hablantes nativos de español, según el Instituto Cervantes en dos mil veinticinco: es la tercera lengua materna del mundo. Cerca de seiscientos cuarenta millones de personas viven en este espacio. El producto interior bruto conjunto de España e Hispanoamérica ronda los seis coma tres billones de dólares. Filipinas suma más de quinientos doce mil millones de dólares y ciento dieciocho millones de habitantes, con un vínculo histórico hispano. Y en veintiún países el español es idioma oficial; además, es el segundo idioma más usado en internet.",
+"Antecedentes. Hicimos un análisis prospectivo de la Hispanidad en el mundo y preguntamos a cinco inteligencias artificiales dónde se situaría un bloque iberoamericano ampliado, con España, Hispanoamérica, Portugal, Brasil, Filipinas y el lobby hispano de Estados Unidos, frente a los demás bloques del siglo veintiuno. ChatGPT lo situó en tercer lugar. Perplexity, en tercer lugar. Copilot, en cuarto. Claude, en primer lugar. Y DeepSeek, en tercero. Unido, este bloque estaría entre los primeros del mundo.",
+"Hoy no buscamos espectadores. Buscamos constructores. Estamos formando el primer núcleo de socios de Hispanotec: personas que quieran aportar conocimiento, contactos, proyectos, experiencia, capacidad empresarial y presencia internacional. Colaboración, innovación, proyectos e impacto.",
+"El problema. La Hispanidad tiene potencial, pero actúa fragmentada. Compartimos lengua, historia, cultura y afinidades. Pero muchas oportunidades se pierden por falta de una red de confianza, de canales operativos, de conexión entre profesionales, de estructuras de cooperación y de proyectos compartidos. Hay potencial: un alcance común en todo el mundo. Y hay fragmentación: conexiones débiles, aisladas e insuficientes.",
+"La oportunidad. El mundo se reorganiza en grandes bloques: el anglosajón, el chino, el ruso, el indio, y el hispano. En la geoeconomía internacional no basta con tener historia, cultura o razón. Hace falta escala, para sostener la influencia; voz, para definir agendas y normas; instrumentos económicos, tecnológicos y financieros; red, con alianzas y conectividad global; y estrategia, con visión de largo plazo. Porque si no eres comensal, formas parte del menú.",
+"De comunidad sentimental a potencia efectiva. La lengua y la cultura común no bastan. El español y la cultura común nos dan una ventaja extraordinaria. Pero si no se articulan institucional, económica, tecnológica y estratégicamente, seguiremos siendo una gran potencia potencial, pero no una potencia efectiva. Se trata de convertir la afinidad en cooperación, los contactos en red, las ideas en proyectos y la simpatía en compromiso.",
+"Qué es Hispanotec. Una plataforma de ejecución de proyectos. Hispanotec conecta el talento técnico, empresarial e institucional del mundo hispano para impulsar proyectos con impacto. Conecta personas, empresas, conocimiento, oportunidades, instituciones y territorios. Y todo ese engranaje tiene un solo resultado: la ejecución de proyectos con impacto.",
+"Qué nos diferencia. Hispanotec rompe tres paradigmas. Primero: futuro, no nostalgia. Segundo: relación entre hispanos, no subordinación. Y tercero: hermanamiento, no confrontación. Somos una asociación técnica con alma hispana y vocación de acción.",
+"Qué hacemos: convertimos en realidad los proyectos, en cinco pasos. Uno, propuesta de proyecto: el asociado presenta una iniciativa técnica o empresarial. Dos, análisis de oportunidad y viabilidad: evaluamos el impacto estratégico y la factibilidad real de la propuesta. Tres, nombramiento de equipo: conectamos expertos y técnicos de distintos países para formar el grupo de trabajo. Cuatro, captación de recursos: facilitamos la financiación o las alianzas necesarias para el éxito. Y cinco, ejecución del proyecto: impulsamos la solución, con resultados medibles y beneficios para la comunidad. Siempre con rigor técnico, cooperación hispana y resultados medibles.",
+"De la idea a la realidad: así funciona un proyecto. Primero, publica tu idea: una ficha sencilla y los documentos que ya tengas. Es gratis, y recibes respuesta en cinco días hábiles. Segundo, forma tu equipo: tu idea tiene su espacio en Hispanotec Digital y, si quieres, una convocatoria de colaboradores. Tú eliges a quién incorporas. Tercero, pide el sello: con el equipo y el presupuesto cerrados, el proyecto hace la aportación de su tramo, desde quinientos euros, a repartir. Solo en dos mil veintisiete, habrá diez plazas al cincuenta por ciento. Cuarto, validamos: revisamos el proyecto contigo en treinta días como máximo y, al validarlo, recibís el certificado y el uso del nombre Proyecto Hispanotec. Y quinto, hazlo realidad: tu equipo lidera el proyecto con el respaldo de la red, con un breve informe al año que prepara la plataforma. Hispanotec valida el proyecto, abre su red y su plataforma, y conecta con clientes, socios y financiación. El equipo del proyecto lo lidera, lo ejecuta y responde de su resultado. Y las decisiones de Hispanotec las toman siempre personas.",
+"Caso práctico: impulsar la exportación hispana. Un productor hispano quiere exportar fruta tropical a Europa, entrando por España. Necesita cumplir normas, resolver la logística y ganar confianza comercial. Hispanotec acompaña el proceso y activa una red de valor: un grupo técnico especializado en normativa, etiquetado y preparación documental; orientación en logística y cadena de frío, para que el producto llegue en condiciones óptimas; y una red de apoyo que lo conecta con perfiles, aliados y oportunidades. El proyecto gana solidez, credibilidad y recorrido, y el productor puede competir en igualdad de condiciones en el mercado europeo. Hispanotec sí acompaña el proceso, suma conocimiento y red, y reduce las barreras de entrada. Pero no sustituye al productor, no certifica por sí misma y no se apropia del negocio.",
+"Caso práctico: impulsar el relato de la Hispanidad. Un creador impulsa un proyecto cultural sobre la Hispanidad y necesita apoyo para hacerlo crecer sin perder su autoría. Hispanotec acompaña el proyecto y activa una red de valor: aporta expertos y criterio, crea un grupo de trabajo y lo conecta con aliados y oportunidades. El proyecto gana solidez, prestigio y recorrido, con rigor histórico y científico y acceso estratégico al sector. El creador mantiene la autoría y el proyecto puede llegar más lejos, con más credibilidad, más alianzas y más impacto cultural. Hispanotec sí acompaña el proyecto, suma conocimiento y red, y abre oportunidades. Pero no sustituye al autor, no impone el enfoque artístico y no se apropia del proyecto.",
+"Ejemplos de proyectos estratégicos. Hispanotec transforma la herencia cultural en acción técnica, mediante proyectos de alto impacto. Unión Hispánica Digital, por la soberanía tecnológica: un ecosistema propio con plataformas, inteligencia artificial en español y un mercado digital, para reducir la dependencia externa. El Plan Director de Desarrollo Tecnológico, de dos mil veintiséis a dos mil treinta y seis: una hoja de ruta a diez años para liderar la innovación y la economía del conocimiento en Iberoamérica. Los mapas de infraestructuras y capacidades críticas, para identificar y gestionar de forma compartida los activos tecnológicos clave. Y los corredores logísticos y plataformas multimodales, que integran puertos, aeropuertos y ferrovías para potenciar el comercio entre países hispanos.",
+"Hispanotec en acción: primeros proyectos operativos, diseñados para activar la red desde el primer día. El primero es la Red Técnica Hispana: una comunidad cualificada de profesionales, directivos y empresarios, con perfiles organizados por especialidad, experiencia y localización, para formar equipos con rapidez. Se trata de saber quiénes somos y qué capacidades tenemos, porque sin red no hay proyectos, y sin confianza no hay colaboración. El segundo es el Sistema de Acceso a Oportunidades Internacionales: un directorio de fuentes por país y sector, como las plataformas de contratación pública de España, Compranet en México o SEACE en Perú; las cámaras de comercio y las asociaciones empresariales; y los organismos multilaterales, como la CAF, el BID o el Banco Mundial. Los socios comparten las oportunidades, y la red se activa bajo demanda. Hispanotec es un puente.",
+"Qué papel puedes tener tú. Cada socio puede aportar algo distinto. El técnico aporta conocimiento y soluciones especializadas. El empresario, visión de mercado, recursos y capacidad de ejecución. El académico, investigación, conocimiento y formación de alto nivel. El institucional, respaldo, credibilidad y capacidad de influencia. Y el internacional, conexión global, alianzas y apertura de nuevos mercados. Puedes aportar conocimiento, contactos, proyectos, experiencia, difusión, presencia internacional, capacidad empresarial, apoyo institucional o financiación. No buscamos solo socios pasivos. Buscamos protagonistas.",
+"¿Qué te aporta Hispanotec? Un socio obtiene siete cosas. Uno: la pertenencia a una red internacional cualificada. Dos: acceso a oportunidades. Tres: visibilidad profesional. Cuatro: participación en proyectos. Cinco: contacto con perfiles de alto nivel. Seis: la posibilidad de impulsar iniciativas propias. Y siete: la contribución a una causa con impacto real. Red, oportunidades, proyectos e impacto.",
+"Qué hemos construido ya: una base real para empezar. Hispanotec ya cuenta con una asociación constituida, un equipo promotor, una web y un formulario de inscripción, las primeras áreas de trabajo, una junta directiva ejecutiva, los primeros proyectos, y Hispanotec Digital. Una base de comunidad, conocimiento, colaboración e impacto.",
+"Hispanotec Digital es la infraestructura tecnológica, basada en inteligencia artificial, al servicio de la asociación. Hispanotec ha alcanzado un acuerdo de colaboración con Digit Two A I para desarrollarla: plataforma digital, gestión de miembros, conexión profesional, evaluación de proyectos, análisis de información y, en el futuro, funciones de intercambio empresarial. La plataforma apoya la gestión interna y la coordinación de proyectos, el acompañamiento metodológico, la identificación de perfiles y capacidades, la conexión entre posibles colaboradores, el análisis de oportunidades y la mejora progresiva de los procesos internos. Y un principio esencial: la inteligencia artificial actúa solo como herramienta de asistencia, análisis y recomendación, sin sustituir la capacidad de decisión humana. La decisión final es humana.",
+"Hazte asociado. Únete a una red técnica y profesional que impulsa proyectos con impacto real, para construir un futuro más próspero para los ciudadanos hispanos. Son cuatro pasos. Accede a la web con el código QR o con el enlace. Completa tu solicitud con tus datos y tu perfil profesional. La asociación revisa tu solicitud y confirma el encaje. Y activa tu participación: formaliza tu alta y empieza a colaborar en proyectos con propósito. Tu adhesión es un compromiso con Hispanotec y con una Hispanidad más próspera. Súmate, colabora, transforma. El futuro lo construimos juntos.",
+"Qué ocurre después. No entras en una lista. Entras en una red viva. La ruta del nuevo socio tiene seis pasos: la inscripción; un contacto de bienvenida; la identificación de tu perfil e intereses; la asignación a un área o grupo; una primera reunión operativa; y la participación en proyectos o iniciativas. De la incorporación a la participación activa.",
+"Este es el momento de estar. La Hispanidad necesita instrumentos, y Hispanotec quiere ser uno de ellos. Si compartes esta visión, te pedimos que des el paso: únete al núcleo inicial de Hispanotec. Para que mañana puedas decir: yo estuve ahí cuando todo empezó. Juntos, construir para trascender. Gracias."
+];
+var TTS = '/api/tts/edge', VOICE = 'dalia';
+var stage = document.getElementById('stage'), cap = document.getElementById('cap'), bar = document.getElementById('bar');
+var playBtn = document.getElementById('play'), count = document.getElementById('count');
+var imgs = [], cache = {}, cur = 0, playing = false, voice = true, token = 0, timer = null, pauseStart = 0;
+var audio = new Audio(); audio.preload = 'auto';
+
+for (var i = 0; i < N; i++) {
+  var im = document.createElement('img');
+  im.alt = 'Diapositiva ' + (i + 1) + ' de ' + N;
+  im.decoding = 'async';
+  if (i < 2) im.src = 'slides/s' + pad(i + 1) + '.jpg';
+  stage.appendChild(im);
+  imgs.push(im);
+}
+// keep hotspots above images
+['hot20','hot21'].forEach(function(id){ stage.appendChild(document.getElementById(id)); });
+
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function sentences(t){ return t.match(/[^.!?¿¡]*[¿¡]?[^.!?]*[.!?]+|\S[^.!?]*$/g) || [t]; }
+function ensureImg(i){ if (i >= 0 && i < N && !imgs[i].src) imgs[i].src = 'slides/s' + pad(i + 1) + '.jpg'; }
+
+function fetchVoice(i){
+  if (cache[i]) return cache[i];
+  cache[i] = fetch(TTS, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: NARR[i], voice: VOICE }) })
+    .then(function(r){ if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
+    .then(function(b){ if (!b || b.size < 500) throw new Error('empty'); return URL.createObjectURL(b); })
+    .catch(function(e){ delete cache[i]; throw e; });
+  return cache[i];
+}
+
+function showCaption(i, frac){
+  var parts = sentences(NARR[i]), total = NARR[i].length, acc = 0, pick = parts[0];
+  var at = Math.max(0, Math.min(1, frac)) * total;
+  for (var k = 0; k < parts.length; k++) { acc += parts[k].length; pick = parts[k]; if (acc >= at) break; }
+  cap.textContent = pick.trim();
+  bar.style.width = (Math.max(0, Math.min(1, frac)) * 100) + '%';
+}
+
+function render(){
+  imgs.forEach(function(im, k){ im.classList.toggle('on', k === cur); });
+  ensureImg(cur); ensureImg(cur + 1); ensureImg(cur + 2);
+  count.textContent = (cur + 1) + ' / ' + N;
+  document.getElementById('prev').disabled = cur === 0;
+  document.getElementById('next').disabled = cur === N - 1;
+  document.getElementById('hot20').style.display = cur === 19 ? 'block' : 'none';
+  document.getElementById('hot21').style.display = cur === 20 ? 'block' : 'none';
+  showCaption(cur, 0);
+}
+
+function stopAll(){
+  token++;
+  clearInterval(timer); timer = null;
+  try { audio.pause(); } catch(e) {}
+  if (window.speechSynthesis) speechSynthesis.cancel();
+}
+
+function go(i, autoplay){
+  stopAll();
+  cur = Math.max(0, Math.min(N - 1, i));
+  render();
+  if (autoplay !== false && playing) narrate();
+}
+
+function advance(t){
+  if (t !== token) return;
+  if (cur < N - 1) { go(cur + 1, true); }
+  else { playing = false; playBtn.textContent = 'Repetir'; bar.style.width = '100%'; }
+}
+
+function readingPause(t){
+  // No voice: show the text sentence by sentence and move on after a reading time.
+  var ms = Math.max(6000, NARR[cur].length * 55), start = Date.now();
+  timer = setInterval(function(){
+    if (t !== token) return;
+    var f = (Date.now() - start) / ms;
+    showCaption(cur, f);
+    if (f >= 1) { clearInterval(timer); timer = null; advance(t); }
+  }, 200);
+}
+
+function browserVoice(t){
+  var ss = window.speechSynthesis;
+  if (!ss) return readingPause(t);
+  var u = new SpeechSynthesisUtterance(NARR[cur]);
+  var vs = ss.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+  if (vs[0]) u.voice = vs[0];
+  u.lang = vs[0] ? vs[0].lang : 'es-ES';
+  u.rate = 1;
+  var start = Date.now(), est = NARR[cur].length * 65;
+  timer = setInterval(function(){ if (t === token) showCaption(cur, (Date.now() - start) / est); }, 250);
+  u.onend = function(){ clearInterval(timer); timer = null; advance(t); };
+  u.onerror = function(){ clearInterval(timer); timer = null; if (t === token) readingPause(t); };
+  ss.speak(u);
+}
+
+function narrate(){
+  var t = ++token;
+  if (!voice) return readingPause(t);
+  fetchVoice(cur + 1 < N ? cur + 1 : cur).catch(function(){});
+  fetchVoice(cur).then(function(url){
+    if (t !== token) return;
+    audio.src = url;
+    audio.onended = function(){ advance(t); };
+    audio.ontimeupdate = function(){ if (t === token && audio.duration) showCaption(cur, audio.currentTime / audio.duration); };
+    var p = audio.play();
+    if (p && p.catch) p.catch(function(){ if (t === token) browserVoice(t); });
+  }).catch(function(){ if (t === token) browserVoice(t); });
+}
+
+function togglePlay(){
+  if (!playing) {
+    playing = true; playBtn.textContent = 'Pausar';
+    if (cur === N - 1 && bar.style.width === '100%') { go(0, true); return; }
+    if (audio.src && audio.paused && audio.currentTime > 0 && !audio.ended) { audio.play().catch(function(){}); return; }
+    narrate();
+  } else {
+    playing = false; playBtn.textContent = 'Reproducir';
+    if (!audio.paused) { audio.pause(); return; }
+    stopAll();
+  }
+}
+
+// iPhone blocks play() that comes after a network wait: unlock the shared element inside the tap.
+function unlock(){
+  try {
+    var sr = 8000, n = 800, buf = new ArrayBuffer(44 + n * 2), d = new DataView(buf);
+    function s(o, str){ for (var k = 0; k < str.length; k++) d.setUint8(o + k, str.charCodeAt(k)); }
+    s(0,'RIFF'); d.setUint32(4, 36 + n * 2, true); s(8,'WAVE'); s(12,'fmt ');
+    d.setUint32(16,16,true); d.setUint16(20,1,true); d.setUint16(22,1,true);
+    d.setUint32(24,sr,true); d.setUint32(28,sr*2,true); d.setUint16(32,2,true); d.setUint16(34,16,true);
+    s(36,'data'); d.setUint32(40, n * 2, true);
+    audio.src = URL.createObjectURL(new Blob([buf], { type:'audio/wav' }));
+    var p = audio.play(); if (p && p.catch) p.catch(function(){});
+  } catch(e) {}
+}
+
+function begin(withVoice){
+  voice = withVoice;
+  document.getElementById('welcome').remove();
+  if (withVoice) unlock();
+  playing = true; playBtn.textContent = 'Pausar';
+  setTimeout(function(){ go(cur, true); }, withVoice ? 120 : 0);
+}
+
+document.getElementById('start').addEventListener('click', function(){ begin(true); });
+document.getElementById('mute').addEventListener('click', function(){ begin(false); });
+playBtn.addEventListener('click', togglePlay);
+document.getElementById('prev').addEventListener('click', function(){ go(cur - 1); });
+document.getElementById('next').addEventListener('click', function(){ go(cur + 1); });
+document.getElementById('subs').addEventListener('click', function(){
+  var off = cap.classList.toggle('off'); this.setAttribute('aria-pressed', String(!off));
+});
+document.getElementById('full').addEventListener('click', function(){
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+});
+document.addEventListener('keydown', function(e){
+  if (document.getElementById('welcome')) { if (e.key === 'Enter') begin(true); return; }
+  if (e.key === 'ArrowRight' || e.key === 'PageDown') go(cur + 1);
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(cur - 1);
+  else if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+  else if (e.key === 'Home') go(0);
+  else if (e.key === 'End') go(N - 1);
+  else if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
+  else if (e.key === 't' || e.key === 'T') document.getElementById('subs').click();
+});
+var tx = null;
+stage.addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; }, { passive:true });
+stage.addEventListener('touchend', function(e){
+  if (tx === null) return;
+  var dx = e.changedTouches[0].clientX - tx; tx = null;
+  if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+});
+var h = parseInt((location.hash || '').replace('#', ''), 10);
+if (h >= 1 && h <= N) cur = h - 1;
+render();
+})();
+</script>
+</body>
+</html>
