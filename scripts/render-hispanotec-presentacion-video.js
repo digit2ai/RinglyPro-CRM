@@ -64,12 +64,20 @@ function captionSvg(text) {
   const stills = []; // {file, dur}
   const audios = [];
   let total = 0;
-  const first = RANGE[0] ? RANGE[0] - 1 : 0, last = RANGE[1] ? RANGE[1] - 1 : NARR.length - 1;
-  for (let i = first; i <= last; i++) {
+  // --guion=<json> renders a shortened cut: [{slide, text}], each on its own vertical slide.
+  const GUION = arg('guion', '');
+  let items;
+  if (GUION) items = JSON.parse(fs.readFileSync(GUION, 'utf8')).items.map(x => ({ i: x.slide - 1, text: x.text }));
+  else {
+    const first = RANGE[0] ? RANGE[0] - 1 : 0, last = RANGE[1] ? RANGE[1] - 1 : NARR.length - 1;
+    items = []; for (let i = first; i <= last; i++) items.push({ i, text: NARR[i] });
+  }
+  for (const item of items) {
+    const i = item.i, TEXT = item.text;
     const n = String(i + 1).padStart(2, '0');
     // 1. voice
     const mp3 = path.join(work, 'a' + n + '.mp3');
-    const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: NARR[i], voice: 'dalia' }) });
+    const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: TEXT, voice: 'dalia' }) });
     if (!r.ok) throw new Error('tts ' + r.status + ' on slide ' + n);
     fs.writeFileSync(mp3, Buffer.from(await r.arrayBuffer()));
     const voiceDur = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp3]).toString().trim();
@@ -96,7 +104,7 @@ function captionSvg(text) {
     for (let k = 0; k < steps.length; k++) { acc += steps[k] / sumSteps * voiceDur; pageCuts.push(acc); }
     pageCuts[pageCuts.length - 1] = dur;
     // sentence cuts, proportional to characters
-    const sents = sentences(NARR[i]); const chars = sents.reduce((a, s) => a + s.length, 0);
+    const sents = sentences(TEXT); const chars = sents.reduce((a, s) => a + s.length, 0);
     const sentCuts = [0]; acc = 0;
     for (const s of sents) { acc += s.length / chars * voiceDur; sentCuts.push(acc); }
     sentCuts[sentCuts.length - 1] = dur;
