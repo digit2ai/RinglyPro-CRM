@@ -320,12 +320,22 @@ if(/[?&]brand=synthex/i.test(location.search)){document.addEventListener('DOMCon
   document.title='Synthex SAI MCP Brain';
 });}
 /* ?brand=labora: the same relabel for grupolabora.com. */
-if(/[?&]brand=labora(&|$)/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
+if(/[?&]brand=labora(&|$)/i.test(location.search)){window.D2_ES=true;document.addEventListener('DOMContentLoaded',function(){
+  /* Labora: the same animation, every label in Spanish (owner 2026-11-13). Nothing else changes. */
   var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
-  set('.label-c','&#9660; LABORA MCP BRAIN &#9650;');
-  set('.sealed','<b></b>100+ AGENT WORKFORCE · WIRED VIA OPEN MCP');
+  set('.label-c','&#9660; CEREBRO MCP LABORA &#9650;');
+  set('.sealed','<b></b>MÁS DE 100 AGENTES · CONECTADOS POR MCP ABIERTO');
   set('.dm-brain .t','LABORA');
-  document.title='Labora MCP Brain';
+  document.title='Cerebro MCP de Labora';
+  var ES=[['ANALISTA SR.','informes · planes · estrategia'],['INVESTIGACIÓN','búsqueda web · competencia'],['CONTACTO','correos · WhatsApp · ES/EN'],
+    ['ARQUITECTO','construye · prueba · entrega'],['TRIAJE','califica · alerta · recomienda'],['ACTAS','resumen · tareas'],
+    ['IA DE VOZ','Rachel · Ana · Lina · 24/7'],['HALLAZGOS','riesgos · bloqueos · responsables'],['ESPECIALISTA IA','12 servicios de IA · expertos'],['PREPARACIÓN IA','equipo de 5 · una unidad']];
+  ES.forEach(function(e,i){var n=document.getElementById('n'+i);if(!n)return;var a=n.querySelector('.name'),c=n.querySelector('.cap');if(a)a.textContent=e[0];if(c)c.textContent=e[1];});
+  var dm=document.querySelectorAll('.dm-a');
+dm.forEach(function(d){var nm=d.querySelector('.nm');if(!nm)return;var k=['SENIOR BA','RESEARCH','OUTREACH','ARCHITECT','INBOX TRIAGE','MINUTES','VOICE AI','FINDINGS','AI SPECIALIST','AI READINESS'].indexOf(nm.textContent.trim());if(k<0)return;nm.textContent=ES[k][0];var cp=d.querySelector('.cp');if(cp)cp.textContent=ES[k][1];});
+  var labs=document.querySelectorAll('.pnl .lab');if(labs[0])labs[0].textContent='NÚCLEO · CONTEXTO';if(labs[1])labs[1].textContent='NÚCLEO · RUTEO';
+  set('.pnl.mcp .big','CEREBRO');set('.pnl.mcp .st','10 núcleo · enlazados');set('.dm-brain .big','CEREBRO');set('.dm-brain .st','10 núcleo · enlazados · EN VIVO');
+  var ok=document.querySelector('.pnl.orch .ok');if(ok)ok.innerHTML='<b></b>ACTIVO';
 });}
 /* ?brand=d2s: the same relabel for the D2S landing (aiagent.ringlypro.com/d2s). */
 if(/[?&]brand=d2s(&|$)/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
@@ -637,16 +647,16 @@ if(/[?&]brand=d2s(&|$)/i.test(location.search)){document.addEventListener('DOMCo
       var x=document.createElement('div');x.className='plus';x.textContent='+';x.style.left=p[0]+'px';x.style.top=p[1]+'px';st.appendChild(x);});})();
   // agent cycle
   var agents=[
-    {id:'n0',link:'L0',name:'SENIOR BA'},{id:'n1',link:'L1',name:'RESEARCH'},
-    {id:'n2',link:'L2',name:'OUTREACH'},{id:'n3',link:'L3',name:'ARCHITECT'},
-    {id:'n4',link:'L4',name:'INBOX TRIAGE'},{id:'n5',link:'L5',name:'MINUTES'},
-    {id:'n6',link:'L6',name:'VOICE AI'},{id:'n7',link:'L7',name:'FINDINGS'},
-    {id:'n8',link:'L8',name:'AI SPECIALIST'},{id:'n9',link:'L9',name:'AI READINESS'}];
+    {id:'n0',link:'L0',name:'SENIOR BA',es:'ANALISTA SR.'},{id:'n1',link:'L1',name:'RESEARCH',es:'INVESTIGACIÓN'},
+    {id:'n2',link:'L2',name:'OUTREACH',es:'CONTACTO'},{id:'n3',link:'L3',name:'ARCHITECT',es:'ARQUITECTO'},
+    {id:'n4',link:'L4',name:'INBOX TRIAGE',es:'TRIAJE'},{id:'n5',link:'L5',name:'MINUTES',es:'ACTAS'},
+    {id:'n6',link:'L6',name:'VOICE AI',es:'IA DE VOZ'},{id:'n7',link:'L7',name:'FINDINGS',es:'HALLAZGOS'},
+    {id:'n8',link:'L8',name:'AI SPECIALIST',es:'ESPECIALISTA IA'},{id:'n9',link:'L9',name:'AI READINESS',es:'PREPARACIÓN IA'}];
   var seg=document.getElementById('seg').children,orchLab=document.getElementById('orchLab'),ai=-1;
   function tick(){agents.forEach(function(a){document.getElementById(a.id).classList.remove('active');document.getElementById(a.link).classList.remove('hot');});
     ai=(ai+1)%agents.length;if(ai===0)for(var k=0;k<seg.length;k++)seg[k].classList.remove('on');
     var a=agents[ai];document.getElementById(a.id).classList.add('active');document.getElementById(a.link).classList.add('hot');
-    seg[ai].classList.add('on');orchLab.textContent='ORCHESTRATOR · '+a.name+'  ['+(ai+1)+'/'+agents.length+']';}
+    seg[ai].classList.add('on');orchLab.textContent=(window.D2_ES?'ORQUESTADOR · '+(a.es||a.name):'ORCHESTRATOR · '+a.name)+'  ['+(ai+1)+'/'+agents.length+']';}
   tick();setInterval(tick,1700);
 
   // ===== live triage (real endpoint) =====
