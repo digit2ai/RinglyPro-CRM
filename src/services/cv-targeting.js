@@ -112,6 +112,16 @@ function evaluateJob(job, ctx) {
   const blockedEmp = settingsSvc.employerBlocked(settings, job.company);
   if (blockedEmp) return { allowed: false, flagged: false, reasons: [blockedEmp.reason + ': ' + blockedEmp.matched], geo: null, watch: null };
 
+  // City rule: the posting names one of the profile's cities, or it is remote.
+  const cities = (((settings.targeting || {}).cities) || []).map((x) => String(x).toLowerCase().trim()).filter(Boolean);
+  if (cities.length) {
+    const loc = String(job.location || '').toLowerCase();
+    const remote = job.remote === true || /\bremote\b/.test(loc);
+    if (!remote && !cities.some((c) => loc.includes(c))) {
+      return { allowed: false, flagged: false, reasons: ['location: not ' + cities.join('/') + ' or remote'], geo: null, watch: null };
+    }
+  }
+
   const db = dealbreakerHit(job, settings);
   if (db) return { allowed: false, flagged: false, reasons: [db.reason], geo: null, watch: null };
 

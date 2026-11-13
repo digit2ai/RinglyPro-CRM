@@ -493,7 +493,9 @@ Saved searches, a daily digest (`GET /digest`), the application **pipeline** (ne
 ### Phase 8 — entity identity
 `GET /entity/dossier` generates a sourced Wikidata submission from the profile record and **assesses notability honestly**: with only self-published and social links on file it reports the bar is NOT met and refuses to propose an item that would be deleted. The Q-ID is a settings field (`entity.wikidata_qid`), so adding it later is data entry.
 
-**SIT:** `node scripts/test-cv-engine-v2.js` -> **115/115**, zero external keys (heuristic path). Covers cross-profile isolation, settings isolation, privacy absence on public surfaces, do-not-contact/excluded-employer enforcement, guessed-board quarantine, the messy location cases, and provisioning a new profile end to end. It creates its own `sit_*` profiles/jobs and deletes them.
+**Employer allow-list + city rule (2026-11-13):** `targeting.only_employers` (whole-word match, so "Citi" never admits "Citizens Bank"; empty = everyone) and `targeting.cities` (city named OR remote), checked in `employerBlocked` and `cv-targeting.evaluateJob`.
+
+**SIT:** `node scripts/test-cv-engine-v2.js` -> **144/144**, zero external keys (heuristic path). Covers cross-profile isolation, settings isolation, privacy absence on public surfaces, do-not-contact/excluded-employer enforcement, guessed-board quarantine, the messy location cases, and provisioning a new profile end to end. It creates its own `sit_*` profiles/jobs and deletes them.
 
 **Configure a profile:** `node scripts/configure-cv-profile.js <slug>` writes settings (same as the UI) and reports what only the owner can state.
 
@@ -2043,7 +2045,9 @@ A Citi requisition at any status past `new` appears in `/cv-admin` → **Pipelin
 
 **UI:** `/citi-tracker/` — top bar carries the `jobs.citi.com/job/tampa` browse link, a paste-to-import box (req id, Workday URL or careers URL), the agent status pill and Run. Tabs: Board (honest close-date countdown, red under 3 days; salary only when stated) · Pool · Skills · Searches · Agent. The requisition drawer carries **"Tailor my résumé for this req"** and the gap triage (`I did this` / `Adjacent` / `No`).
 
-**SIT:** `node verticals/citijobs/sit.js` → **139/139**, zero external keys, offline against recorded fixtures of the real payloads. Asserts the invariants, not the happy path: the six field mappings, salary copied-or-absent, vocabulary never self-promoting, a rejected term staying dead, bullets verbatim from the pool, the summary verifier catching an invented number/acronym/tool, the single permitted auto-transition, an APPLIED row never auto-closing, the daily claim refusing a second scheduled run, the request budget, and cross-profile isolation.
+**PROFILE SCOPE IS DATA (2026-11-13).** `cj_profiles.settings` may carry `employers` (allow-list, e.g. `["citi","jpmorgan"]`), `cities` (the posting must name one OR be remote; hybrid counts only in a listed city) and `remote_ok` (default true). Enforced inside `prefilter.locationAllowed`, so the agent, the board and the pool all obey it; empty = no change. Manuel is scoped to Citi + JPMorgan, IT Project Technology Lead family, Tampa or remote; every other board row was ARCHIVED (not deleted, so the agent never re-adds it) and other banks' queries disabled.
+
+**SIT:** `node verticals/citijobs/sit.js` → **230/230**, zero external keys, offline against recorded fixtures of the real payloads. Asserts the invariants, not the happy path: the six field mappings, salary copied-or-absent, vocabulary never self-promoting, a rejected term staying dead, bullets verbatim from the pool, the summary verifier catching an invented number/acronym/tool, the single permitted auto-transition, an APPLIED row never auto-closing, the daily claim refusing a second scheduled run, the request budget, and cross-profile isolation.
 
 **Environment Variables:**
 - `CITIJOBS_JWT_SECRET` — signs the `citijobs_token` cookie (falls back to `JWT_SECRET`), 30d. SET on prod.

@@ -46,7 +46,9 @@ function defaults() {
       availability: { status: 'open', start_date: '', notice_period: '' },
       score_floor: 0,
       dealbreakers: [],
-      excluded_employers: []
+      excluded_employers: [],
+      only_employers: [],               // allow-list; empty = every employer
+      cities: []                        // posting must name one of these cities OR be remote; empty = no city rule
     },
     outreach: {
       from_name: '', from_email: '', signature: '', phone: '', booking_url: '',
@@ -204,6 +206,8 @@ function sanitize(input) {
   t.score_floor = Math.max(0, Math.min(100, Math.round(num(t.score_floor) || 0)));
   t.dealbreakers = strList(t.dealbreakers, 40, 120);
   t.excluded_employers = strList(t.excluded_employers, 100, 120);
+  t.only_employers = strList(t.only_employers, 50, 120);
+  t.cities = strList(t.cities, 20, 80);
 
   // outreach
   const o = s.outreach;
@@ -345,6 +349,7 @@ function countryPolicy(settings) {
 }
 
 // Is this employer off limits for this profile? (excluded list OR confidential mode)
+function normCo(x) { return String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim(); }
 function employerBlocked(settings, company) {
   const c = String(company || '').toLowerCase().trim();
   if (!c) return null;
@@ -356,6 +361,12 @@ function employerBlocked(settings, company) {
   });
   const ex = hit(t.excluded_employers);
   if (ex) return { blocked: true, reason: 'excluded employer', matched: ex };
+  // Allow-list, matched on whole words so "Citi" never admits "Citizens Bank".
+  const only = (t.only_employers || []).map(normCo).filter(Boolean);
+  if (only.length) {
+    const cn = ' ' + normCo(c) + ' ';
+    if (!only.some((n) => cn.includes(' ' + n + ' '))) return { blocked: true, reason: 'not a target employer', matched: company };
+  }
   if (pv.confidential_mode && pv.confidential_mode.enabled) {
     const cf = hit(pv.confidential_mode.employers);
     if (cf) return { blocked: true, reason: 'confidential mode', matched: cf };

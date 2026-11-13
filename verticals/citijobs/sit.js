@@ -348,6 +348,20 @@ async function cleanup() {
   });
   ok('an empty state list means EVERY state, not none',
     prefilter.locationAllowed({ location: 'McLean, VA' }, { countries: ['United States'], states: [] }).ok === true);
+  // Per-profile scope: only these employers, only these cities or remote.
+  const scoped = { countries: ['United States'], states: [], settings: { employers: ['citi', 'jpmorgan'], cities: ['Tampa'] } };
+  [[{ employer: 'citi', location: 'Tampa Florida United States', remote_type: 'Hybrid' }, true, 'Citi hybrid in Tampa'],
+    [{ employer: 'jpmorgan', location: 'Tampa, FL, United States' }, true, 'JPMorgan in Tampa'],
+    [{ employer: 'citi', location: 'Remote - United States' }, true, 'Citi remote (named in location)'],
+    [{ employer: 'jpmorgan', location: 'Atlanta, GA, United States', remote_type: 'Remote' }, true, 'remote with an Atlanta address'],
+    [{ employer: 'citi', location: 'Jacksonville Florida United States', remote_type: 'Hybrid' }, false, 'hybrid outside Tampa'],
+    [{ employer: 'citi', location: 'Jersey City New Jersey United States', remote_type: 'Hybrid' }, false, 'hybrid in New Jersey'],
+    [{ employer: 'pnc', location: 'Tampa, FL' }, false, 'an employer not on the list, even in Tampa'],
+    [{ location: 'Tampa Florida United States' }, true, 'a row with no employer is Citi']
+  ].forEach(([r, want, label]) => ok(`scope: ${label} ${want ? 'shows' : 'hidden'}`, prefilter.locationAllowed(r, scoped).ok === want));
+  ok('scope: empty settings change nothing', prefilter.locationAllowed({ employer: 'pnc', location: 'Pittsburgh, PA' }, { countries: ['United States'] }).ok === true);
+  ok('scope: remote_ok:false drops remote outside the city',
+    prefilter.locationAllowed({ employer: 'citi', location: 'Remote - United States' }, { countries: [], settings: { cities: ['Tampa'], remote_ok: false } }).ok === false);
   ok('the state is read from a name as well as a code', prefilter.stateOf('Tampa Florida United States') === 'FL');
   ok('...and from a facility code', prefilter.stateOf('Data Center PA690') === 'PA');
   ok('a location naming no state yields null, not a guess', prefilter.stateOf('Remote') === null);

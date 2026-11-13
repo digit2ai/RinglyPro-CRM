@@ -151,6 +151,18 @@ async function cleanup() {
   const exSet = settingsSvc.sanitize({ targeting: { excluded_employers: ['Acme Bank'] } });
   ok('excluded employer matches case-insensitively', !!settingsSvc.employerBlocked(exSet, 'acme bank'));
   ok('excluded employer does not over-match an unrelated company', !settingsSvc.employerBlocked(exSet, 'Globex'));
+  const onlySet = settingsSvc.sanitize({ targeting: { only_employers: ['Citi', 'Citigroup', 'JPMorgan', 'J.P. Morgan', 'JPMorgan Chase'], cities: ['Tampa'] } });
+  ok('allow-list keeps Citi', !settingsSvc.employerBlocked(onlySet, 'Citi'));
+  ok('allow-list keeps "JPMorgan Chase & Co."', !settingsSvc.employerBlocked(onlySet, 'JPMorgan Chase & Co.'));
+  ok('allow-list keeps "J.P. Morgan"', !settingsSvc.employerBlocked(onlySet, 'J.P. Morgan'));
+  ok('allow-list does NOT admit "Citizens Bank" for "Citi"', !!settingsSvc.employerBlocked(onlySet, 'Citizens Bank'));
+  ok('allow-list blocks an employer not on it', !!settingsSvc.employerBlocked(onlySet, 'PNC'));
+  ok('no allow-list = every employer', !settingsSvc.employerBlocked(settingsSvc.sanitize({}), 'PNC'));
+  const ev = (job) => targeting.evaluateJob(Object.assign({ company: 'Citi' }, job), { settings: onlySet }).allowed;
+  ok('city rule: Tampa on-site passes', ev({ location: 'Tampa, FL, United States' }) === true);
+  ok('city rule: remote passes', ev({ location: 'United States', remote: true }) === true);
+  ok('city rule: Jacksonville hybrid is refused', ev({ location: 'Jacksonville, FL' }) === false);
+  ok('city rule: employer off the list refused even in Tampa', ev({ company: 'PNC', location: 'Tampa, FL' }) === false);
   const cfSet = settingsSvc.sanitize({ privacy: { confidential_mode: { enabled: true, employers: ['Current Corp'] } } });
   ok('confidential mode blocks the named employer', !!settingsSvc.employerBlocked(cfSet, 'Current Corp'));
   const dncSet = settingsSvc.sanitize({ outreach: { do_not_contact: { emails: ['no@x.com'], domains: ['spam.io'] } } });

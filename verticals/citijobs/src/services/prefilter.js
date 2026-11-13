@@ -97,6 +97,36 @@ function stateAllowed(req, profile) {
  * respects the state list too.
  */
 function locationAllowed(req, profile) {
+  const scope = scopeAllowed(req, profile);
+  if (!scope.ok) return scope;
+  return countryAllowed(req, profile);
+}
+
+/**
+ * Per-profile scope, read from profile.settings (data, never code):
+ *   employers: ['citi','jpmorgan']  only these employers. Empty = every employer.
+ *   cities:    ['Tampa']            the posting must name one of these cities OR
+ *                                   be remote. Empty = no city rule.
+ *   remote_ok: false                turns the remote exception off (default on).
+ * A hybrid role counts only in a listed city: "hybrid" says nothing about where.
+ */
+function isRemote(req) {
+  return /\bremote\b/i.test(String(req.remote_type || '')) || /\bremote\b/i.test(String(req.location || ''));
+}
+function scopeAllowed(req, profile) {
+  const st = (profile && profile.settings) || {};
+  const emps = Array.isArray(st.employers) ? st.employers.map((e) => String(e).toLowerCase()).filter(Boolean) : [];
+  const emp = String(req.employer || 'citi').toLowerCase();
+  if (emps.length && !emps.includes(emp)) return { ok: false, reason: `employer ${emp} not in ${emps.join(', ')}` };
+  const cities = Array.isArray(st.cities) ? st.cities.map((c) => String(c).toLowerCase().trim()).filter(Boolean) : [];
+  if (!cities.length) return { ok: true, reason: null };
+  const loc = String(req.location || '').toLowerCase();
+  if (cities.some((c) => loc.includes(c))) return { ok: true, reason: null };
+  if (st.remote_ok !== false && isRemote(req)) return { ok: true, reason: null };
+  return { ok: false, reason: `location "${req.location || 'not stated'}" is not ${cities.join('/')} or remote` };
+}
+
+function countryAllowed(req, profile) {
   // An EXPLICITLY EMPTY list means "anywhere". Only an absent list falls back to
   // US-only. Collapsing the two would make the United-States-only switch
   // impossible to turn off — it would keep filtering while claiming not to.
@@ -218,4 +248,4 @@ function shouldScore(pre, profile) {
   return pre.score >= floor;
 }
 
-module.exports = { score, shouldScore, locationAllowed, stateAllowed, stateOf, looksUS, salaryAllowed, tokens, US_STATE_CODES };
+module.exports = { score, shouldScore, locationAllowed, scopeAllowed, isRemote, stateAllowed, stateOf, looksUS, salaryAllowed, tokens, US_STATE_CODES };
