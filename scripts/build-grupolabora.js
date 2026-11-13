@@ -53,6 +53,7 @@ function text(s, rel) {
     .replace(/brand d2s/g, 'brand labora').replace(/&copy; 2026 D2S/g, '&copy; 2026 Labora · Cali, Colombia').replace(/'D2S - '/g, "'Labora - '").replace(/\['D2S'\]/g, "['Labora']")
     .replace(/D2S Engine v2\.4/g, 'Labora · IA')
     .replace(/D2S <i>SAI<\/i>/g, 'Labora').replace(/MCP · D2S ENGINE/g, 'PERSONAS · EMPRESAS · OPORTUNIDADES')
+    .replace(/og\.jpg\?v=2/g, 'og.jpg?v=3')
     .replace(/D2S/g, 'Labora');
 }
 
@@ -88,18 +89,24 @@ function lightDefault(html) {
     console.log(p, h.length, 'bytes', left.length ? 'LEFTOVER: ' + [...new Set(left)].join(',') : 'clean');
   }
   // images from the logo inside the PDF
-  const src = path.join(__dirname, 'grupolabora-logo-source.png');
+  // The logo is a CIRCLE: crop the PDF image to a square and cut everything outside
+  // its ring to transparent, so no square edge shows anywhere (owner 2026-11-13).
+  const raw = path.join(__dirname, 'grupolabora-logo-source.png');
+  const meta = await sharp(raw).metadata(); const side = Math.min(meta.width, meta.height);
+  const sq = await sharp(raw).extract({ left: Math.floor((meta.width - side) / 2), top: Math.floor((meta.height - side) / 2), width: side, height: side }).png().toBuffer();
+  const mask = Buffer.from(`<svg width="${side}" height="${side}"><circle cx="${side / 2}" cy="${side / 2}" r="${side / 2 - 2}" fill="#fff"/></svg>`);
+  const src = await sharp(sq).composite([{ input: mask, blend: 'dest-in' }]).png().toBuffer();
   await sharp(src).resize(512, 512).png().toFile(path.join(OUT, 'icon-512.png'));
-  await sharp(src).resize(180, 180).png().toFile(path.join(OUT, 'apple-touch-icon.png'));
+  await sharp(src).resize(180, 180).flatten({ background: '#ffffff' }).png().toFile(path.join(OUT, 'apple-touch-icon.png'));
   await sharp(src).resize(256, 256).png().toFile(path.join(OUT, 'logo.png'));
   const logo = await sharp(src).resize(420, 420).png().toBuffer();
   const og = (title, sub) => Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
     <rect width="1200" height="630" fill="${BLUE}"/><rect y="600" width="1200" height="30" fill="${GREEN}"/>
     <text x="540" y="270" font-family="Helvetica,Arial,sans-serif" font-size="64" font-weight="800" fill="#fff">${title}</text>
     <text x="540" y="340" font-family="Helvetica,Arial,sans-serif" font-size="30" fill="#CFE3F5">${sub}</text>
-    <text x="540" y="420" font-family="Helvetica,Arial,sans-serif" font-size="24" letter-spacing="4" fill="#8FE3C8">PERSONAS | EMPRESAS | OPORTUNIDADES</text></svg>`);
+    <text x="540" y="420" font-family="Helvetica,Arial,sans-serif" font-size="21" letter-spacing="2" fill="#8FE3C8">PERSONAS | EMPRESAS | OPORTUNIDADES</text></svg>`);
   for (const [file, t, s] of [['og.jpg', 'Labora', 'Inteligencia artificial para tu empresa'], ['pymes/og.jpg', 'Labora', 'Automatización con IA · Presentación']]) {
-    await sharp(og(t, s)).composite([{ input: Buffer.from(`<svg width="440" height="440"><circle cx="220" cy="220" r="218" fill="#fff"/></svg>`), left: 70, top: 95 }, { input: logo, left: 80, top: 105 }])
+    await sharp(og(t, s)).composite([{ input: logo, left: 80, top: 105 }])
       .jpeg({ quality: 88 }).toFile(path.join(OUT, file));
   }
   console.log('images written');
