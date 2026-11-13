@@ -24,6 +24,7 @@ const PRICES = Object.freeze({
 if (PRICES.deposit_cents + PRICES.balance_cents !== PRICES.development_cents) throw new Error('gsm-proposal: split does not add up');
 
 const BRAND_LOGO = 'https://synthexsai.com/icon-512.png';
+const BRAND_ROUND = 'https://synthexsai.com/stripe-product.png'; // round mark for the product picture
 const BRAND_WORDMARK = 'https://synthexsai.com/stripe-logo.png'; // white wordmark for Stripe's dark panel
 const STRIPE_API = '2025-09-30.clover';
 
@@ -74,7 +75,7 @@ router.post('/checkout', express.json({ limit: '2kb' }), async (req, res) => {
       price_data: {
         currency: 'usd',
         unit_amount: item.cents,
-        product_data: { name: item.name, images: [BRAND_LOGO] },
+        product_data: { name: item.name, images: [BRAND_ROUND] },
         ...(item.mode === 'subscription' ? { recurring: { interval: 'month' } } : {})
       },
       quantity: 1
