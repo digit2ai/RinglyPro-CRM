@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=720">
+<title>HISPANOTEC · diapositivas del video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Vertical 720x1050 slides for the WhatsApp video (the bottom 230 px of the frame is the caption).
+   Rendered by scripts/render-hispanotec-video-pro.js: one screenshot per narration sentence;
+   an element with data-s="k" appears from sentence k on. */
+:root{--bg:#070d1f;--bg2:#0e1b3d;--gold:#d4af5f;--gold2:#f1d48a;--ink:#f3f5fa;--mut:#aab6cf;--line:rgba(212,175,95,.35);--card:rgba(255,255,255,.045)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:720px;height:1050px;overflow:hidden;background:var(--bg)}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+.s{display:none;position:relative;width:720px;height:1050px;padding:56px 52px 84px;overflow:hidden;
+  background:radial-gradient(900px 600px at 85% -10%,rgba(212,175,95,.16),transparent 60%),radial-gradient(700px 700px at -10% 110%,rgba(46,84,170,.30),transparent 60%),linear-gradient(180deg,var(--bg2),var(--bg))}
+.s.on{display:flex;flex-direction:column;justify-content:center}
+.in{width:100%}
+.s::before{content:"";position:absolute;inset:0;opacity:.18;pointer-events:none;
+  background-image:radial-gradient(rgba(212,175,95,.55) 1px,transparent 1.4px);background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(circle at 70% 30%,#000 0,transparent 70%);mask-image:radial-gradient(circle at 70% 30%,#000 0,transparent 70%)}
+.s > *{position:relative}
+.hide{visibility:hidden}
+.kick{font:600 15px/1 Inter;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.kick::before{content:"";width:34px;height:2px;background:var(--gold)}
+h1,h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:600;line-height:1.02;letter-spacing:-.01em}
+h2{font-size:62px;margin-bottom:22px}
+h2 em,.g{font-style:normal;color:var(--gold)}
+.lead{font-size:22px;line-height:1.45;color:var(--mut);margin-bottom:28px}
+.foot{position:absolute;left:56px;right:56px;bottom:34px;display:flex;align-items:center;justify-content:space-between;font:600 13px/1 Inter;letter-spacing:.3em;color:rgba(212,175,95,.75)}
+.foot .n{letter-spacing:.1em;color:var(--mut)}
+.mark{width:44px;height:44px;border-radius:50%;border:2px solid var(--gold);display:grid;place-items:center;font:700 22px/1 "Cormorant Garamond";color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 22px}
+.row{display:flex;gap:16px;align-items:center}
+.num{flex:0 0 52px;width:52px;height:52px;border-radius:50%;background:linear-gradient(160deg,var(--gold2),var(--gold));color:#1a1306;display:grid;place-items:center;font:700 21px/1 Inter}
+.t{font-size:23px;font-weight:600;line-height:1.25}
+.d{font-size:18px;color:var(--mut);line-height:1.4;margin-top:4px}
+.list{display:flex;flex-direction:column;gap:14px}
+.chip{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:12px 20px;font-size:21px;font-weight:600;background:var(--card)}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.quote{font-family:"Cormorant Garamond";font-style:italic;font-size:46px;line-height:1.12;color:var(--gold2);text-align:center;padding:26px 10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.big{font-family:"Cormorant Garamond";font-weight:700;font-size:86px;line-height:.95;color:var(--gold2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.src{position:absolute;left:56px;right:56px;bottom:66px;font-size:13px;color:rgba(170,182,207,.7);line-height:1.4}
+/* cover */
+.cover{justify-content:center;align-items:center;text-align:center}
+.emb{width:170px;height:170px;border-radius:50%;border:3px solid var(--gold);display:grid;place-items:center;margin:0 auto 34px;
+  box-shadow:0 0 0 10px rgba(212,175,95,.08),0 0 80px rgba(212,175,95,.35);background:radial-gradient(circle at 40% 30%,#1b2b58,#0a1430)}
+.emb span{font:700 100px/1 "Cormorant Garamond";color:var(--gold2);transform:translateY(4px)}
+.cover h1{font-size:92px;letter-spacing:.06em;color:var(--gold2);margin-bottom:22px}
+.cover .lead{font-size:27px;color:var(--ink);max-width:560px;margin:0 auto 34px}
+.words{font:600 17px/1.6 Inter;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+/* ranking */
+.rank .row{justify-content:space-between;padding:16px 24px}
+.rank .ai{font-size:28px;font-weight:600}
+.rank .pos{font:700 34px/1 Inter;color:var(--gold2)}
+.rank .top{border-color:var(--gold);background:rgba(212,175,95,.13)}
+/* hub */
+.hub{position:relative;width:560px;height:470px;margin:6px auto 0}
+.hub .c{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:170px;height:170px;border-radius:50%;border:3px solid var(--gold);display:grid;place-items:center;text-align:center;background:radial-gradient(circle at 40% 30%,#1b2b58,#0a1430);box-shadow:0 0 60px rgba(212,175,95,.3);font:700 22px/1.1 Inter;letter-spacing:.06em}
+.hub .c b{display:block;font:700 54px/1 "Cormorant Garamond";color:var(--gold2)}
+.hub .o{position:absolute;width:150px;padding:13px 6px;text-align:center;border:1px solid var(--line);border-radius:14px;background:#0d1838;font-size:19px;font-weight:600}
+.hub svg{position:absolute;inset:0}
+.arrow{margin:22px auto 0;text-align:center;font-size:26px;font-weight:700;color:#1a1306;background:linear-gradient(160deg,var(--gold2),var(--gold));border-radius:999px;padding:16px 30px;width:fit-content}
+/* steps timeline */
+.tl{display:flex;flex-direction:column;gap:12px}
+.tl .card{padding:15px 20px}
+.tl .t{font-size:22px}
+.tl .d{font-size:17px;margin-top:2px}
+.tag{display:inline-block;margin-top:8px;font-size:15px;font-weight:700;color:var(--gold2);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.yesno h4{font:700 15px/1 Inter;letter-spacing:.2em;margin-bottom:12px}
+.yesno li{list-style:none;font-size:17px;line-height:1.35;margin:8px 0;padding-left:24px;position:relative}
+.yesno .y li::before{content:"✓";position:absolute;left:0;color:#7fd89a;font-weight:700}
+.yesno .n li::before{content:"✕";position:absolute;left:0;color:#ef8a8a;font-weight:700}
+.check li{list-style:none;display:flex;align-items:center;gap:16px;font-size:24px;font-weight:600;padding:14px 20px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:11px}
+.check li::before{content:"✓";flex:0 0 34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,var(--gold2),var(--gold));color:#1a1306;font-weight:800;font-size:19px}
+.qr{width:210px;height:210px;background:#fff;border-radius:16px;padding:12px}
+.cta{font-family:"Cormorant Garamond";font-weight:700;font-size:44px;color:var(--gold2);text-align:center}
+</style>
+</head>
+<body>
+
+<!-- 1 Portada -->
+<section class="s cover">
+  <div class="emb"><span>H</span></div>
+  <h1>HISPANOTEC</h1>
+  <p class="lead">La red de proyectos y alianzas para construir la Hispanidad del siglo XXI</p>
+  <p class="words">Talento · Empresa · Tecnología<br>Cooperación · Futuro</p>
+  <p class="lead hide" data-s="1" style="margin-top:44px;font-size:24px;color:var(--gold2)">Conectar talento. Impulsar proyectos. Construir futuro.</p>
+</section>
+
+<!-- 2 Cifras -->
+<section class="s">
+  <div class="kick">La Hispanidad en cifras</div>
+  <h2>España, Hispanoamérica <em>y Filipinas</em></h2>
+  <div class="list" style="gap:18px;margin-top:10px">
+    <div class="card"><div class="big">520 M</div><div class="d" style="font-size:20px">hablantes nativos de español · tercera lengua materna del mundo</div></div>
+    <div class="card"><div class="big">21</div><div class="d" style="font-size:20px">países con el español como idioma oficial</div></div>
+    <div class="card hide" data-s="1"><div class="big">6,3 billones $</div><div class="d" style="font-size:20px">PIB conjunto de España e Hispanoamérica</div></div>
+    <div class="card hide" data-s="1"><div class="t" style="font-size:26px">Filipinas · 118 M habitantes</div><div class="d" style="font-size:20px">más de 512.000 M $ de PIB y un vínculo histórico hispano</div></div>
+  </div>
+  <p class="src">Fuentes: Instituto Cervantes 2025 · FMI / Banco Mundial · Statista</p>
+</section>
+
+<!-- 3 Ranking IA -->
+<section class="s rank">
+  <div class="kick">Antecedentes</div>
+  <h2>¿Dónde estaría un bloque <em>iberoamericano unido?</em></h2>
+  <p class="lead">Lo preguntamos a cinco inteligencias artificiales.</p>
+  <div class="list hide" data-s="1">
+    <div class="card row"><span class="ai">ChatGPT</span><span class="pos">3.º</span></div>
+    <div class="card row"><span class="ai">Perplexity</span><span class="pos">3.º</span></div>
+    <div class="card row"><span class="ai">Copilot</span><span class="pos">4.º</span></div>
+    <div class="card row"><span class="ai">DeepSeek</span><span class="pos">3.º</span></div>
+    <div class="card row top hide" data-s="2"><span class="ai">Claude</span><span class="pos">1.º</span></div>
+  </div>
+</section>
+
+<!-- 4 Problema -->
+<section class="s">
+  <div class="kick">El problema</div>
+  <h2>Tenemos potencial, pero <em>actuamos fragmentados</em></h2>
+  <p class="lead">Compartimos lengua, historia, cultura y afinidades.</p>
+  <div class="list hide" data-s="1">
+    <div class="d" style="font-size:20px;margin-bottom:4px">Pero muchas oportunidades se pierden por falta de:</div>
+    <div class="card row"><span class="num">1</span><span class="t">Redes de confianza</span></div>
+    <div class="card row"><span class="num">2</span><span class="t">Canales operativos</span></div>
+    <div class="card row"><span class="num">3</span><span class="t">Conexión entre profesionales</span></div>
+    <div class="card row"><span class="num">4</span><span class="t">Proyectos compartidos</span></div>
+  </div>
+</section>
+
+<!-- 5 Oportunidad -->
+<section class="s">
+  <div class="kick">La oportunidad</div>
+  <h2>El mundo se reorganiza en <em>grandes bloques</em></h2>
+  <p class="lead hide" data-s="1">No basta con historia, cultura o razón. Hace falta:</p>
+  <div class="hide" data-s="1" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:40px">
+    <span class="chip">Escala</span><span class="chip">Voz</span><span class="chip">Instrumentos</span><span class="chip">Red</span><span class="chip">Estrategia</span>
+  </div>
+  <div class="quote hide" data-s="2">«Si no eres comensal,<br>formas parte del menú.»</div>
+</section>
+
+<!-- 6 Qué es -->
+<section class="s">
+  <div class="kick">Qué es HISPANOTEC</div>
+  <h2>Una plataforma de <em>ejecución de proyectos</em></h2>
+  <div class="hub hide" data-s="1">
+    <svg viewBox="0 0 560 470"><g stroke="rgba(212,175,95,.45)" stroke-width="2" fill="none"><line x1="280" y1="235" x2="280" y2="40"/><line x1="280" y1="235" x2="75" y2="130"/><line x1="280" y1="235" x2="485" y2="130"/><line x1="280" y1="235" x2="75" y2="345"/><line x1="280" y1="235" x2="485" y2="345"/><line x1="280" y1="235" x2="280" y2="430"/></g></svg>
+    <div class="o" style="left:205px;top:12px">Personas</div>
+    <div class="o" style="left:0;top:104px">Empresas</div>
+    <div class="o" style="right:0;top:104px">Conocimiento</div>
+    <div class="o" style="left:0;top:318px">Instituciones</div>
+    <div class="o" style="right:0;top:318px">Oportunidades</div>
+    <div class="o" style="left:205px;top:404px">Territorios</div>
+    <div class="c"><div><b>H</b>HISPANOTEC</div></div>
+  </div>
+  <div class="arrow hide" data-s="1">→ Proyectos con impacto</div>
+</section>
+
+<!-- 7 Paradigmas -->
+<section class="s">
+  <div class="kick">Qué nos diferencia</div>
+  <h2>Rompemos <em>tres paradigmas</em></h2>
+  <div class="list" style="gap:18px;margin-top:16px">
+    <div class="card row"><span class="num">1</span><div><div class="t" style="font-size:30px">Futuro,</div><div class="d" style="font-size:22px">no nostalgia.</div></div></div>
+    <div class="card row hide" data-s="1"><span class="num">2</span><div><div class="t" style="font-size:30px">Relación entre hispanos,</div><div class="d" style="font-size:22px">no subordinación.</div></div></div>
+    <div class="card row hide" data-s="2"><span class="num">3</span><div><div class="t" style="font-size:30px">Hermanamiento,</div><div class="d" style="font-size:22px">no confrontación.</div></div></div>
+  </div>
+  <p class="lead hide" data-s="2" style="margin-top:34px;text-align:center;color:var(--gold2);font-size:24px">Una asociación técnica con alma hispana<br>y vocación de acción.</p>
+</section>
+
+<!-- 8 Cómo funciona -->
+<section class="s">
+  <div class="kick">Cómo funciona</div>
+  <h2 style="font-size:54px">De la idea <em>a la realidad</em></h2>
+  <div class="tl">
+    <div class="card row"><span class="num">1</span><div><div class="t">Publica tu idea</div><span class="tag">Gratis · respuesta en 5 días hábiles</span></div></div>
+    <div class="card row hide" data-s="2"><span class="num">2</span><div><div class="t">Forma tu equipo</div><span class="tag">Tú eliges a quién incorporas</span></div></div>
+    <div class="card row hide" data-s="3"><span class="num">3</span><div><div class="t">Pide el sello</div><span class="tag">Desde 500 €, a repartir</span></div></div>
+    <div class="card row hide" data-s="4"><span class="num">4</span><div><div class="t">Validamos</div><span class="tag">En 30 días como máximo</span></div></div>
+    <div class="card row hide" data-s="4"><span class="num">5</span><div><div class="t">Hazlo realidad</div><span class="tag">Con el respaldo de toda la red</span></div></div>
+  </div>
+  <p class="lead hide" data-s="5" style="margin-top:20px;text-align:center;color:var(--gold2);font-size:21px">Las decisiones las toman siempre personas.</p>
+</section>
+
+<!-- 9 Caso práctico -->
+<section class="s">
+  <div class="kick">Caso práctico</div>
+  <h2 style="font-size:54px">Impulsar la <em>exportación hispana</em></h2>
+  <div class="card" style="margin-bottom:14px"><div class="t">El desafío</div><div class="d">Un productor hispano quiere exportar fruta tropical a Europa entrando por España.</div></div>
+  <div class="list hide" data-s="1" style="gap:10px">
+    <div class="d" style="color:var(--gold);font-weight:600;letter-spacing:.12em;font-size:14px">LA INTERVENCIÓN DE HISPANOTEC</div>
+    <div class="card row" style="padding:13px 18px"><span class="num" style="flex-basis:40px;height:40px;font-size:19px">1</span><span class="t" style="font-size:20px">Normativa, etiquetado y documentación</span></div>
+    <div class="card row" style="padding:13px 18px"><span class="num" style="flex-basis:40px;height:40px;font-size:19px">2</span><span class="t" style="font-size:20px">Logística y cadena de frío</span></div>
+    <div class="card row" style="padding:13px 18px"><span class="num" style="flex-basis:40px;height:40px;font-size:19px">3</span><span class="t" style="font-size:20px">Red de aliados y oportunidades</span></div>
+  </div>
+  <p class="lead hide" data-s="2" style="margin:14px 0 0;color:var(--ink);font-size:21px">Resultado: compite en igualdad de condiciones en el mercado europeo.</p>
+  <div class="yesno hide" data-s="3">
+    <div class="card y"><h4 style="color:#7fd89a">HISPANOTEC SÍ</h4><ul><li>Acompaña el proceso</li><li>Suma conocimiento y red</li></ul></div>
+    <div class="card n"><h4 style="color:#ef8a8a">HISPANOTEC NO</h4><ul><li>Sustituye al productor</li><li>Se apropia del negocio</li></ul></div>
+  </div>
+</section>
+
+<!-- 10 Proyectos estratégicos -->
+<section class="s">
+  <div class="kick">Proyectos estratégicos</div>
+  <h2 style="font-size:56px">Pensamos <em>en grande</em></h2>
+  <div class="grid2" style="margin-top:8px">
+    <div class="card" style="min-height:230px"><span class="num">1</span><div class="t" style="margin-top:14px">Unión Hispánica Digital</div><div class="d">Soberanía tecnológica con IA en español.</div></div>
+    <div class="card" style="min-height:230px"><span class="num">2</span><div class="t" style="margin-top:14px">Plan Director 2026-2036</div><div class="d">Diez años para liderar la innovación.</div></div>
+    <div class="card" style="min-height:230px"><span class="num">3</span><div class="t" style="margin-top:14px">Mapas de capacidades críticas</div><div class="d">Activos tecnológicos clave, compartidos.</div></div>
+    <div class="card" style="min-height:230px"><span class="num">4</span><div class="t" style="margin-top:14px">Corredores logísticos</div><div class="d">Puertos, aeropuertos y ferrovías entre nuestros países.</div></div>
+  </div>
+</section>
+
+<!-- 11 Primeros proyectos -->
+<section class="s">
+  <div class="kick">En acción desde el primer día</div>
+  <h2 style="font-size:56px">Primeros <em>proyectos operativos</em></h2>
+  <div class="card" style="margin-bottom:18px"><div class="t" style="font-size:28px;color:var(--gold2)">Red Técnica Hispana</div><div class="d" style="font-size:20px">Saber quiénes somos y qué sabemos hacer: perfiles por especialidad, experiencia y país.</div><div class="d" style="font-size:18px;margin-top:10px;color:var(--ink)">Sin red no hay proyectos. Sin confianza no hay colaboración.</div></div>
+  <div class="card"><div class="t" style="font-size:28px;color:var(--gold2)">Acceso a oportunidades internacionales</div><div class="d" style="font-size:20px">Licitaciones y oportunidades compartidas por los socios:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><span class="chip" style="font-size:16px;padding:8px 14px">España</span><span class="chip" style="font-size:16px;padding:8px 14px">México · Compranet</span><span class="chip" style="font-size:16px;padding:8px 14px">Perú · SEACE</span><span class="chip" style="font-size:16px;padding:8px 14px">CAF · BID · Banco Mundial</span></div></div>
+</section>
+
+<!-- 12 Papel del socio -->
+<section class="s">
+  <div class="kick">Qué papel puedes tener tú</div>
+  <h2 style="font-size:54px">Cada socio aporta <em>algo distinto</em></h2>
+  <div class="list" style="gap:11px">
+    <div class="card row" style="padding:14px 20px"><span class="t" style="flex:0 0 190px;color:var(--gold2)">Técnico</span><span class="d" style="margin:0">Conocimiento y soluciones</span></div>
+    <div class="card row" style="padding:14px 20px"><span class="t" style="flex:0 0 190px;color:var(--gold2)">Empresario</span><span class="d" style="margin:0">Mercado, recursos y ejecución</span></div>
+    <div class="card row" style="padding:14px 20px"><span class="t" style="flex:0 0 190px;color:var(--gold2)">Académico</span><span class="d" style="margin:0">Investigación y formación</span></div>
+    <div class="card row" style="padding:14px 20px"><span class="t" style="flex:0 0 190px;color:var(--gold2)">Institucional</span><span class="d" style="margin:0">Respaldo y credibilidad</span></div>
+    <div class="card row" style="padding:14px 20px"><span class="t" style="flex:0 0 190px;color:var(--gold2)">Internacional</span><span class="d" style="margin:0">Alianzas y nuevos mercados</span></div>
+  </div>
+  <div class="quote hide" data-s="1" style="margin-top:26px;font-size:42px">No buscamos socios pasivos.<br>Buscamos <b>protagonistas</b>.</div>
+</section>
+
+<!-- 13 Qué te aporta -->
+<section class="s">
+  <div class="kick">Qué gana un socio</div>
+  <h2>¿Qué te aporta <em>HISPANOTEC?</em></h2>
+  <div class="list" style="gap:13px">
+    <div class="card row"><span class="num">1</span><span class="t">Una red internacional cualificada</span></div>
+    <div class="card row"><span class="num">2</span><span class="t">Acceso a oportunidades</span></div>
+    <div class="card row"><span class="num">3</span><span class="t">Participación en proyectos</span></div>
+    <div class="card row"><span class="num">4</span><span class="t">Visibilidad profesional</span></div>
+    <div class="card row"><span class="num">5</span><span class="t">Impulsar tus propias iniciativas</span></div>
+  </div>
+</section>
+
+<!-- 14 Ya construido -->
+<section class="s">
+  <div class="kick">Qué hemos construido ya</div>
+  <h2>Una base real <em>para empezar</em></h2>
+  <ul class="check">
+    <li>Asociación constituida</li><li>Equipo promotor</li><li>Junta directiva ejecutiva</li><li>Primeras áreas de trabajo</li><li>Primeros proyectos</li><li>HISPANOTEC Digital</li>
+  </ul>
+</section>
+
+<!-- 15 HISPANOTEC Digital -->
+<section class="s">
+  <div class="kick">HISPANOTEC Digital</div>
+  <h2 style="font-size:54px">Inteligencia artificial <em>al servicio de la asociación</em></h2>
+  <div class="grid2" style="gap:12px">
+    <div class="card"><div class="t" style="font-size:20px">Conectar perfiles y capacidades</div></div>
+    <div class="card"><div class="t" style="font-size:20px">Evaluar proyectos</div></div>
+    <div class="card"><div class="t" style="font-size:20px">Encontrar oportunidades</div></div>
+    <div class="card"><div class="t" style="font-size:20px">Coordinar el trabajo de la red</div></div>
+  </div>
+  <div class="card hide" data-s="1" style="margin-top:22px;text-align:center;border-color:var(--gold);background:rgba(212,175,95,.12);padding:26px">
+    <div class="d" style="font-size:19px;margin:0 0 8px">La IA asiste, analiza y recomienda.</div>
+    <div class="t" style="font-size:32px;color:var(--gold2)">La decisión final es humana.</div>
+  </div>
+  <p class="src" style="bottom:70px">Desarrollada en colaboración con DIGIT2AI.</p>
+</section>
+
+<!-- 16 Hazte asociado -->
+<section class="s">
+  <div class="kick">Únete</div>
+  <h2>Hazte <em>asociado</em></h2>
+  <div class="tl" style="gap:10px">
+    <div class="card row" style="padding:13px 18px"><span class="num">1</span><span class="t">Escanea el código o entra en la web</span></div>
+    <div class="card row" style="padding:13px 18px"><span class="num">2</span><span class="t">Completa tu solicitud</span></div>
+    <div class="card row" style="padding:13px 18px"><span class="num">3</span><span class="t">La asociación la revisa</span></div>
+    <div class="card row" style="padding:13px 18px"><span class="num">4</span><span class="t">Empieza a colaborar</span></div>
+  </div>
+  <div class="row" style="margin-top:22px;justify-content:center;gap:26px">
+    <img class="qr" src="qr.png" alt="">
+    <div class="d" style="font-size:19px;max-width:250px;color:var(--ink)">hispanotec.org/<br>formulario-de-inscripcion</div>
+  </div>
+</section>
+
+<!-- 17 Cierre -->
+<section class="s" style="justify-content:center">
+  <div class="kick">Este es el momento de estar</div>
+  <h2 style="font-size:58px">La Hispanidad necesita <em>instrumentos</em></h2>
+  <p class="lead" style="font-size:25px;color:var(--ink)">HISPANOTEC quiere ser uno de ellos. Únete al núcleo inicial.</p>
+  <div class="quote hide" data-s="2">«Yo estuve ahí<br>cuando todo empezó.»</div>
+  <p class="cta hide" data-s="3" style="margin-top:30px">Comparte este video</p>
+</section>
+
+<script>
+var S = document.querySelectorAll('.s');
+S.forEach(function(s, i){
+  var f = document.createElement('div'); f.className = 'foot';
+  f.innerHTML = '<span>HISPANOTEC</span><span class="n">' + (i + 1) + ' / ' + S.length + '</span>';
+  if (!s.classList.contains('cover')) s.appendChild(f);
+});
+window.show = function(slide, sentence){
+  S.forEach(function(s, i){ s.classList.toggle('on', i === slide); });
+  S[slide].querySelectorAll('[data-s]').forEach(function(el){
+    el.classList.toggle('hide', +el.getAttribute('data-s') > sentence);
+  });
+};
+window.count = S.length;
+// Each slide's content is wrapped and zoomed as large as it can be while still fitting the
+// frame, so no slide is left half empty and none overflows.
+S.forEach(function(s){
+  if (s.classList.contains('cover')) return;
+  var w = document.createElement('div'); w.className = 'in';
+  Array.prototype.slice.call(s.childNodes).forEach(function(c){ if (!(c.classList && c.classList.contains('foot')) && !(c.classList && c.classList.contains('src'))) w.appendChild(c); });
+  s.insertBefore(w, s.firstChild);
+});
+window.fit = function(){
+  // transform:scale, not zoom: the content is laid out at 616/z px wide and scaled up,
+  // so its true height is offsetHeight * z (zoom made the measurement unreliable).
+  var TOP = 44, AVAIL = 1050 - 44 - 92, W = 616;
+  S.forEach(function(s, i){
+    var w = s.querySelector('.in'); if (!w) return;
+    show(i, 99);
+    w.style.position = 'absolute'; w.style.left = '52px'; w.style.transformOrigin = '0 0';
+    var lo = 0.8, hi = 1.55;
+    for (var k = 0; k < 16; k++){
+      var z = (lo + hi) / 2; w.style.width = (W / z) + 'px';
+      if (w.offsetHeight * z <= AVAIL && w.scrollWidth <= W / z + 1) lo = z; else hi = z;
+    }
+    w.style.width = (W / lo) + 'px';
+    w.style.transform = 'scale(' + lo + ')';
+    w.style.top = (TOP + (AVAIL - w.offsetHeight * lo) / 2) + 'px';
+    w.dataset.z = lo.toFixed(2);
+  });
+  show(0, 99); window.fitted = true;
+};
+document.fonts.ready.then(window.fit);
+</script>
+</body>
+</html>
