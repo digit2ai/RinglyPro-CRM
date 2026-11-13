@@ -112,7 +112,7 @@ async function cornerColor(file) {
     const spec = L[i];
     if (!spec) throw new Error('no vertical layout for slide ' + i);
     const bg = spec.bg || await cornerColor(slide);
-    const parts = [], links = [];
+    const parts = [], links = [], rowsOut = [];
     let y = PAD;
     for (const row of spec.rows) {
       const rw = Math.min(row.w || W - 2 * PAD, W - 2 * PAD);
@@ -132,13 +132,14 @@ async function cornerColor(file) {
         x += w + GAP;
       }
       if (row.link) links.push({ href: row.link, top: y, left: Math.round((W - rw) / 2), width: rw, height: H });
+      rowsOut.push({ top: y, height: H });
       y += H + GAP;
     }
     const total = y - GAP + PAD;
     await sharp({ create: { width: W, height: total, channels: 3, background: bg } })
       .composite(parts).jpeg({ quality: 84, mozjpeg: true }).toFile(path.join(OUT, 'vertical', 'v' + n + '.jpg'));
     layout[i] = {
-      h: total, bg,
+      h: total, bg, rows: rowsOut,
       links: links.map(l => ({ href: l.href, top: +(l.top / total * 100).toFixed(2), left: +(l.left / W * 100).toFixed(2), width: +(l.width / W * 100).toFixed(2), height: +(l.height / total * 100).toFixed(2) }))
     };
     console.log('slide ' + n + ': ' + W + 'x' + total + ' bg ' + bg);

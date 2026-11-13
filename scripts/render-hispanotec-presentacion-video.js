@@ -87,20 +87,35 @@ function captionSvg(text) {
     audios.push({ mp3, dur });
     // 2. pages of the vertical slide
     const bg = (layout[i + 1] && layout[i + 1].bg) || '#070d1f';
-    const slide = await sharp(path.join(ROOT, 'vertical', 'v' + n + '.jpg')).resize(FW).toBuffer({ resolveWithObject: true });
-    const H = slide.info.height, tops = [];
-    if (H <= IMG_H) tops.push(null);
-    else { for (let t = 0; t < H - IMG_H; t += IMG_H - OVERLAP) tops.push(t); tops.push(H - IMG_H); }
-    const pages = [];
-    for (let k = 0; k < tops.length; k++) {
-      const t = tops[k];
-      const img = t === null
-        ? await sharp({ create: { width: FW, height: IMG_H, channels: 3, background: bg } }).composite([{ input: slide.data, top: Math.round((IMG_H - H) / 2), left: 0 }]).png().toBuffer()
-        : await sharp(slide.data).extract({ left: 0, top: t, width: FW, height: IMG_H }).png().toBuffer();
-      pages.push(img);
+    // Pages are whole rows of the vertical slide (title, a card, a column...), never a cut through
+    // one: rows are grouped while the group fits the frame at no less than MIN_SCALE, then the
+    // group is shrunk to fit. A slide that fits whole is shown whole.
+    const L = layout[i + 1] || {};
+    const src = path.join(ROOT, 'vertical', 'v' + n + '.jpg');
+    const meta = await sharp(src).metadata();
+    const SW = meta.width, MIN_SCALE = 0.62, MARGIN = 24;
+    const rows = (L.rows && L.rows.length) ? L.rows : [{ top: 0, height: meta.height }];
+    const fitH = (h) => Math.min(FW / SW, (IMG_H - 2 * MARGIN) / h);
+    const groups = []; let g = null;
+    for (const r of rows) {
+      if (!g) { g = { top: r.top, bottom: r.top + r.height }; continue; }
+      const h = r.top + r.height - g.top;
+      if (fitH(h) >= MIN_SCALE * FW / SW) g.bottom = r.top + r.height;
+      else { groups.push(g); g = { top: r.top, bottom: r.top + r.height }; }
+    }
+    if (g) groups.push(g);
+    if (groups.length === 1) { groups[0].top = 0; groups[0].bottom = meta.height; }
+    const pages = [], steps = [];
+    for (const gr of groups) {
+      const pad = groups.length === 1 ? 0 : 12;
+      const top = Math.max(0, gr.top - pad), h = Math.min(meta.height, gr.bottom + pad) - top;
+      const sc = fitH(h), w = Math.round(SW * sc), hh = Math.round(h * sc);
+      const piece = await sharp(src).extract({ left: 0, top, width: SW, height: h }).resize(w, hh).png().toBuffer();
+      pages.push(await sharp({ create: { width: FW, height: IMG_H, channels: 3, background: bg } })
+        .composite([{ input: piece, left: Math.round((FW - w) / 2), top: Math.round((IMG_H - hh) / 2) }]).png().toBuffer());
+      steps.push(h);
     }
     // page k is on screen for a share of the slide proportional to the new picture it brings
-    const steps = tops.map((t, k) => t === null ? 1 : (k === 0 ? IMG_H : tops[k] - tops[k - 1]));
     const sumSteps = steps.reduce((a, b) => a + b, 0);
     const pageCuts = [0]; let acc = 0;
     for (let k = 0; k < steps.length; k++) { acc += steps[k] / sumSteps * voiceDur; pageCuts.push(acc); }
