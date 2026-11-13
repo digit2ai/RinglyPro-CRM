@@ -8,38 +8,46 @@ const RESUMES = {
   manuelstagg: {
     basics: {
       name: 'Manuel Stagg',
-      label: 'Senior SME & Full-Stack AI Solutions Architect',
-      email: 'manuelstagg@gmail.com', phone: '+1 656-600-1400',
+      label: 'IT Project Technology Lead · IT Project Delivery · Systems Integration · Financial Services Technology',
+      email: 'manuelstagg@gmail.com', phone: '+1 813-641-4177',
       url: 'https://manuelstagg.com',
-      summary: 'Senior SME and Full-Stack AI Solutions Architect. 25+ years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, Financial Crimes Risk Management, enterprise data services under the Citi Consent Order) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production across multiple verticals. Bilingual EN/ES.',
-      location: { city: 'Wesley Chapel', region: 'FL', countryCode: 'US' },
+      summary: 'IT Project Technology Lead with 20+ years in Citigroup technology, plus Silicon Valley Bank, delivering enterprise integration, data migration and financial-crime platforms in heavily regulated environments. Develops detailed IT work plans, technical schedules, project estimates, resource plans and status reports, and interfaces with senior management on project status. Leads project governance and systems integration delivery across SDLC, Agile and Waterfall. Sound understanding of risk, compliance and regulatory frameworks (OCC Consent Orders, MRA/MRIA, AML, KYC, Sanctions). Hands-on AI architect who builds multi-agent systems on the Model Context Protocol (MCP). PMP, PSPO, TOGAF. Bilingual English/Spanish.',
+      location: { city: 'Wesley Chapel', region: 'FL', postalCode: '33543', countryCode: 'US' },
       profiles: [
-        { network: 'LinkedIn', url: 'https://www.linkedin.com/in/manuel-stagg-7a11a9a0' },
-        { network: 'Web', url: 'https://digit2ai.com' }
+        { network: 'LinkedIn', url: 'https://www.linkedin.com/in/manuel-stagg-7a11a9a0' }
       ]
     },
     work: [
-      { name: 'MCP Neural Intelligence / Digit2AI', position: 'Full-Stack AI Solutions Architect', startDate: '2023',
-        summary: 'Architect of MCP Neural Intelligence — an AI reasoning layer wired into production across multiple verticals. End-to-end delivery: multi-agent systems, LLMOps, full-stack engineering.' },
-      { name: 'Citigroup / SolomonEdwards (Silicon Valley Bank contract)', position: 'Financial Crimes Risk Management (FCRM) — Individual Contributor SME',
-        summary: 'Subject-matter expert on financial crimes risk management: KYC/AML, OFAC sanctions and regulatory controls at tier-1 institutional scale.' },
-      { name: 'Citigroup — Enterprise Architecture (CEAM), Citi Consent Order', position: 'Citi Technology Infrastructure (CTI) — Data Services SME',
-        summary: 'Data services subject-matter expert within Citi Technology Infrastructure and Enterprise Architecture (CEAM), supporting Consent Order remediation programs.' },
-      { name: 'Citigroup', position: 'Banking Industry — Compliance, Risk & Enterprise Technology',
-        summary: '25+ years across compliance, risk and enterprise technology at tier-1 institutional scale on global programs.' }
+      { name: 'Citigroup — Data Governance Integration Platform', position: 'Senior IT Project Manager Lead', startDate: '2023-01', location: 'Tampa, FL',
+        summary: "Lead delivery of Citi's Data Governance Integration Platform, a publish/subscribe integration layer replacing point-to-point interfaces under the Consent Order Data Operating Model. Cut the Dataverse SLA breach rate by about 60% (1.82% to 0.72%, Q3 to Q4 2025) across 18,110+ critical data feeds; delivered the LVID to LEID and CSI to DRIFT migrations and a file-to-API HR data migration; maintain IT work plans, schedules, estimates, resource plans, RAID logs and RAG reporting in PTS." },
+      { name: 'Hands-On AI Engineering — Continuous Learning & Personal Projects', position: 'Personal projects', startDate: '2024',
+        summary: 'Generative AI, multi-agent workflows and the Model Context Protocol (MCP), full delivery lifecycle with Python, Node.js, React, PostgreSQL and AWS. Personal time and own equipment; no Citi data or systems used.' },
+      { name: 'Silicon Valley Bank, Financial Crime Risk Management (via Solomon Edwards)', position: 'Senior IT Project Manager Lead (Contract)', startDate: '2021-12', endDate: '2022-12', location: 'Tampa, FL',
+        summary: 'Led IT initiatives across FCRM/Compliance value streams (BSA, Sanctions, KYC, AML, OFSAA) and corrective-action plans for OCC Consent Orders, MRAs and MRIAs; Epic delivery forecasts, BRDs and payment-gateway data mapping (SWIFT, Fedwire, ISO 20022, SEPA) for OFSAA 8.0.5 and FircoSoft Continuity.' },
+      { name: 'Citigroup — AML Global Data Intelligence', position: 'AML Data Intelligence Business Analyst', startDate: '2012-08', endDate: '2021-12', location: 'Tampa, FL',
+        summary: 'Tuned Oracle Mantas with below-the-line / above-the-line testing; built the Data Intelligence Global Tracker (DIGT) in Jira; led integration of the Global Sanctions Name Screening System with Oracle Mantas.' },
+      { name: 'Citigroup — Global Sanctions', position: 'Senior Business Systems Analyst', startDate: '2011-07', endDate: '2012-07', location: 'Tampa, FL',
+        summary: 'Managed Global Sanctions rule sets in Global Interdict (Citi Screening 2.5) and Actimize, keeping UAT and Production consistent.' }
     ],
+    education: [
+      { institution: 'Universidad Nacional Experimental Politécnica "Antonio José de Sucre", Maracaibo, Venezuela', area: 'Finance', studyType: 'Bachelor of Arts' }
+    ],
+    certificates: ['Project Management Professional (PMP)', 'Professional Scrum Product Owner (PSPO)', 'TOGAF Part 1 & 2', 'Data Management Professional', 'Business Intelligence Analyst', 'Business Analysis Modeling', 'SWIFT Message Types', 'ISO 20022 MX Messages'].map((name) => ({ name })),
     skills: [
-      { name: 'AI & MCP', keywords: ['MCP Neural Intelligence', 'Multi-agent systems', 'LLMOps', 'Full-stack engineering', 'AI solution architecture'] },
-      { name: 'Banking Risk & Compliance', keywords: ['KYC', 'AML', 'OFAC sanctions', 'Financial Crimes Risk Management (FCRM)', 'Enterprise data services', 'CEAM', 'Regulatory remediation'] }
+      { name: 'IT Project Management', keywords: ['Project Governance', 'SDLC', 'Agile/Scrum', 'Waterfall', 'IT Work Plans', 'Technical Schedules', 'Project Estimates', 'Resource Plans', 'Critical Path', 'RAID Logs', 'RAG Reporting', 'RTM', 'Change Management', 'PTS', 'MS Project', 'Jira', 'Confluence', 'ServiceNow'] },
+      { name: 'Integration & Architecture', keywords: ['Enterprise Integration Platforms', 'REST/JSON APIs', 'JDBC', 'MQ', 'Publish/Subscribe', 'Apache Kafka', 'Solace', 'Apache Camel', 'Data Migration', 'Enterprise Architecture (CEAM)'] },
+      { name: 'Data & Governance', keywords: ['Data Governance', 'Data Lineage', 'Data Quality', 'SLA Monitoring', 'Collibra', 'Ab Initio', 'Solidatus', 'SQL', 'Oracle', 'PostgreSQL'] },
+      { name: 'Financial Crime & Payments', keywords: ['OFSAA', 'Oracle Mantas', 'Actimize', 'FircoSoft Continuity', 'Silent Eight', 'SWIFT', 'Fedwire', 'ISO 20022', 'SEPA'] },
+      { name: 'Engineering & AI', keywords: ['Python', 'Node.js', 'JavaScript', 'React', 'AWS', 'CI/CD', 'Git', 'Generative AI', 'Multi-Agent Workflows', 'Model Context Protocol (MCP)', 'RPA'] },
+      { name: 'Testing', keywords: ['SIT', 'UAT', 'PAT', 'End-to-End and Integration Testing', 'Test Plans and Scripts'] }
     ],
     languages: [
       { language: 'English', fluency: 'Native or bilingual' },
       { language: 'Spanish', fluency: 'Native or bilingual' }
     ],
     meta: { slug: 'manuelstagg', availability: 'open',
-      targetRoles: 'Full-Stack AI Solutions Architect; AI in Banking, Risk & Compliance (KYC/AML/Sanctions); MCP / Multi-Agent Systems & LLMOps; Fractional CTO / AI Advisory' }
+      targetRoles: 'IT Project Technology Lead; Senior IT Project Manager; Systems Integration / Data Migration Delivery; Financial Services Technology (AML/KYC/Sanctions) — Tampa, hybrid or remote' }
   },
-
   anastagg: {
     basics: {
       name: 'Ana I. Stagg',

@@ -1436,11 +1436,11 @@ app.get(['/es'], (req, res, next) => {
 // get real crawl instructions instead of the JSON "Endpoint not found" error. Only the CV
 // domains are handled; every other host falls through to existing behavior.
 const CV_SITES = {
-  'manuelstagg.com': { name: 'Manuel Stagg', role: 'Senior SME & Full-Stack AI Solutions Architect', es: true,
-    blurb: 'Senior SME and Full-Stack AI Solutions Architect. 25 years in the Banking Industry (Citigroup — KYC/AML, OFAC sanctions, CEAM) and architect of MCP Neural Intelligence, an AI reasoning layer wired into production. Bilingual EN/ES. Wesley Chapel, FL.',
-    email: 'manuelstagg@gmail.com', phone: '+1 656-600-1400',
-    links: ['https://www.linkedin.com/in/manuel-stagg-7a11a9a0', 'https://digit2ai.com'],
-    topics: 'MCP Neural Intelligence; multi-agent AI systems; LLMOps; AI in banking, risk and compliance (KYC, AML, OFAC sanctions); Financial Crimes Risk Management; full-stack engineering' },
+  'manuelstagg.com': { name: 'Manuel Stagg', role: 'IT Project Technology Lead', es: true,
+    blurb: 'IT Project Technology Lead with 20+ years in Citigroup technology, plus Silicon Valley Bank, delivering enterprise integration, data migration and financial-crime platforms in heavily regulated environments. PMP, PSPO, TOGAF. Bilingual EN/ES. Wesley Chapel, FL (Tampa Bay).',
+    email: 'manuelstagg@gmail.com', phone: '+1 813-641-4177',
+    links: ['https://www.linkedin.com/in/manuel-stagg-7a11a9a0'],
+    topics: 'IT project delivery; project governance; systems integration; data migration; enterprise integration platforms; data governance; financial services technology (AML, KYC, sanctions); OCC Consent Order and MRA/MRIA remediation' },
   'anastagg.com': { name: 'Ana I. Stagg', role: 'Securities & Derivatives Analyst — Custody Billing & Financial Operations', es: false,
     blurb: 'Bilingual Securities & Derivatives Analyst at Citi supporting global custody and safekeeping billing for institutional clients: fee calculation, contractual pricing validation, invoice reconciliation, billing QA and compliance. B.S. Business Administration (HRM) & Psychology. Tampa, FL.',
     email: 'ana.staggp@gmail.com', phone: '+1 813-438-9000',
