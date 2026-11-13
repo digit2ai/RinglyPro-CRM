@@ -439,7 +439,9 @@ const SYNTHEX_PASS_THROUGH = new Set([
   '/api/voice-agent/chat',                      // her brain (books meetings via /api/synthex-lina, loopback only)
   '/api/synthex-lina/public/slots',             // demo form: free times on 3 days
   '/api/synthex-lina/public/book',              // demo form: book one + Synthex-branded email confirmation
-  '/projects/api/v1/intake/public/request'      // "Agendar demostración" form
+  '/projects/api/v1/intake/public/request',     // "Agendar demostración" form
+  '/api/gsm-proposal/config',                   // Global System Monitor proposal: prices
+  '/api/gsm-proposal/checkout'                  // Global System Monitor proposal: Stripe checkout
 ]);
 app.use((req, res, next) => {
   const host = (req.get('host') || '').toLowerCase().split(':')[0];
@@ -480,7 +482,8 @@ app.use((req, res, next) => {
   // Global System Monitor teaser (Dalia deck + simulator). Exact files only, so
   // nothing here serves a path the caller made up.
   if (path === '/global-system-monitor') return res.redirect(301, '/global-system-monitor/');
-  const GSM_FILES = { '/global-system-monitor/': 'index.html', '/global-system-monitor/index.html': 'index.html', '/global-system-monitor/style.css': 'style.css', '/global-system-monitor/app.js': 'app.js' };
+  const GSM_FILES = { '/global-system-monitor/': 'index.html', '/global-system-monitor/index.html': 'index.html', '/global-system-monitor/style.css': 'style.css', '/global-system-monitor/app.js': 'app.js', '/global-system-monitor/propuesta/': 'propuesta/index.html', '/global-system-monitor/propuesta/index.html': 'propuesta/index.html' };
+  if (path === '/global-system-monitor/propuesta') return res.redirect(301, '/global-system-monitor/propuesta/');
   if (GSM_FILES[path]) {
     res.setHeader('Cache-Control', 'no-cache');
     return res.sendFile(require('path').join(__dirname, '../public/global-system-monitor', GSM_FILES[path]));
@@ -2132,6 +2135,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/conference', require('./routes/conference-signup')); // Build With AI: public sign-up form -> contacts (client 15)
 app.use('/api/mcp-checkout', require('./routes/mcp-checkout')); // Digit2AI MCP Neural: $700 setup + $397/mo Stripe checkout for /mcp
+app.use('/api/gsm-proposal', require('./routes/gsm-proposal')); // Global System Monitor proposal (Synthex SAI): 30/70 PoC + monthly hypercare Stripe checkout
 app.use('/api/synthex-lina', require('./routes/synthex-lina')); // Synthex SAI: Lina's meeting booking (loopback-only tools) + training page
 app.use('/api/equimind-pay', require('./routes/equimind-pay')); // EquiMind (equimind.app) credit payments: Stripe keys stay on this service
 app.use('/api/cv', require('./routes/cv-analytics')); // First-party page-view analytics for the CV pages
