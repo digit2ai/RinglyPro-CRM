@@ -319,6 +319,14 @@ if(/[?&]brand=synthex/i.test(location.search)){document.addEventListener('DOMCon
   set('.dm-brain .t','SYNTHEX SAI');
   document.title='Synthex SAI MCP Brain';
 });}
+/* ?brand=labora: the same relabel for grupolabora.com. */
+if(/[?&]brand=labora(&|$)/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
+  var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
+  set('.label-c','&#9660; LABORA MCP BRAIN &#9650;');
+  set('.sealed','<b></b>100+ AGENT WORKFORCE · WIRED VIA OPEN MCP');
+  set('.dm-brain .t','LABORA');
+  document.title='Labora MCP Brain';
+});}
 /* ?brand=d2s: the same relabel for the D2S landing (aiagent.ringlypro.com/d2s). */
 if(/[?&]brand=d2s(&|$)/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
   var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};

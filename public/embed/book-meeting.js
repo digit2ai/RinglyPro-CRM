@@ -15,7 +15,7 @@
  *
  * Attributes (on the element):
  *   data-lang    es | en | auto (default auto: follows <html lang>, live, then the browser)
- *   data-brand   digit2ai (default) | synthex | d2s — wording of the calendar entry + email
+ *   data-brand   digit2ai (default) | synthex | d2s | labora — wording of the calendar entry + email
  *   data-source  short label of where it was booked (default: this page's host + path)
  *   data-label   custom button text for an empty element (one text for both languages)
  * Script tag:    data-api="https://origin" to override the API origin (default: this script's own origin)
@@ -101,7 +101,7 @@
   var saved = { nombre: '', email: '', telefono: '', empresa: '' };
   var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
   function T() { return TX[cur.lang]; }
-  function brandName() { return cur.brand === 'synthex' ? 'Synthex SAI' : cur.brand === 'd2s' ? 'D2S' : 'Digit2AI'; }
+  function brandName() { return cur.brand === 'synthex' ? 'Synthex SAI' : cur.brand === 'd2s' ? 'D2S' : cur.brand === 'labora' ? 'Labora' : 'Digit2AI'; }
   function loc() { return cur.lang === 'en' ? 'en-US' : 'es'; }
   function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
   function fDay(iso) { return cap(new Intl.DateTimeFormat(loc(), { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso))); }
@@ -209,7 +209,7 @@
   function open(trigger) {
     build();
     cur.lang = langOf(trigger);
-    var bAttr = trigger && trigger.getAttribute('data-brand'); cur.brand = (bAttr === 'synthex' || bAttr === 'd2s') ? bAttr : 'digit2ai';
+    var bAttr = trigger && trigger.getAttribute('data-brand'); cur.brand = (bAttr === 'synthex' || bAttr === 'd2s' || bAttr === 'labora') ? bAttr : 'digit2ai';
     cur.source = ((trigger && trigger.getAttribute('data-source')) || (location.hostname + location.pathname)).slice(0, 160);
     last = document.activeElement; ov.hidden = false; window.D2BOOK_OPEN = true;
     st.days = null; st.start = null; load();

@@ -67,7 +67,17 @@ BRANDS.d2s = {
     summary: 'D2S: meeting with our specialists', subject: 'Your D2S meeting is confirmed',
     textLine: 'Your meeting with the D2S specialist agents is confirmed.', team: 'The D2S team' }
 };
-const brandOf = (b) => BRANDS[(b === 'digit2ai' || b === 'd2s') ? b : 'synthex'];
+// 'labora' = grupolabora.com (Colombia: Isabel, Alejandro, Juan Alberto, Eduardo, Manuel). Labora blue + green.
+BRANDS.labora = {
+  ...BRANDS.d2s,
+  name: 'Labora', site: 'https://grupolabora.com/', siteLabel: 'grupolabora.com', host: 'grupolabora.com',
+  logo: 'https://grupolabora.com/icon-512.png', word: 'Labora',
+  bg: '#021A33', card: '#0A2E55', box: '#04213F', cy: '#159F79', vi: '#2E6DB4', boxLine: 'rgba(21,159,121,.35)', btnTxt: '#021A33',
+  copyright: '&copy; 2026 Labora', ics: 'labora.ics',
+  es: Object.fromEntries(Object.entries(BRANDS.d2s.es).map(([k, v]) => [k, typeof v === 'function' ? (m) => v(m).replace(/D2S/g, 'Labora') : v.replace(/D2S/g, 'Labora')])),
+  en: Object.fromEntries(Object.entries(BRANDS.d2s.en).map(([k, v]) => [k, typeof v === 'function' ? (m) => v(m).replace(/D2S/g, 'Labora') : v.replace(/D2S/g, 'Labora')]))
+};
+const brandOf = (b) => BRANDS[(b === 'digit2ai' || b === 'd2s' || b === 'labora') ? b : 'synthex'];
 
 let sender = null; // injectable for tests
 function mailer() {
@@ -163,9 +173,9 @@ async function bookingConfirmed(m) {
   const out = { sent: false, owner: false };
   if (String(process.env.SYNTHEX_EMAIL || '').toLowerCase() === 'off') return { ...out, reason: 'SYNTHEX_EMAIL=off' };
   if (!sender && !process.env.SENDGRID_API_KEY) return { ...out, reason: 'SENDGRID_API_KEY not set' };
-  const brand = (m.brand === 'digit2ai' || m.brand === 'd2s') ? m.brand : 'synthex';
+  const brand = (m.brand === 'digit2ai' || m.brand === 'd2s' || m.brand === 'labora') ? m.brand : 'synthex';
   const B = brandOf(brand);
-  if (brand === 'd2s' && !m.tz) m = { ...m, tz: 'America/Bogota' };
+  if ((brand === 'd2s' || brand === 'labora') && !m.tz) m = { ...m, tz: 'America/Bogota' };
   const lang = m.lang === 'en' ? 'en' : 'es';
   const minutes = m.minutes || 60;
   const from = { email: FROM(), name: B.name };
@@ -183,6 +193,7 @@ async function bookingConfirmed(m) {
     console.error('[synthex-notify] client email failed:', out.reason);
   }
   const fromWhere = brand === 'digit2ai' ? (m.source || 'la presentación narrada (digit2ai.com/presentacion)')
+    : brand === 'labora' ? (m.origen === 'lina' ? 'Lina (asistente) de grupolabora.com' : (m.source || 'el formulario de grupolabora.com'))
     : brand === 'd2s' ? (m.origen === 'lina' ? 'Lina (asistente) de aiagent.ringlypro.com/d2s' : (m.source || 'el formulario de aiagent.ringlypro.com/d2s'))
     : (m.origen === 'lina' ? 'Lina (asistente) de synthexsai.com' : (m.source || 'el formulario de synthexsai.com'));
   try {
@@ -190,7 +201,7 @@ async function bookingConfirmed(m) {
       to: OWNER(), from,
       subject: `Nueva reunión ${B.name}: ${m.nombre}${m.empresa ? ' (' + m.empresa + ')' : ''}`,
       text: [`Reunión agendada desde ${fromWhere}.`,
-        `Cuándo: ${when(m.start, 'es', brand === 'digit2ai' ? 'America/New_York' : brand === 'd2s' ? 'America/Bogota' : 'America/Caracas')}`, `Nombre: ${m.nombre}`, m.empresa ? `Empresa: ${m.empresa}` : null,
+        `Cuándo: ${when(m.start, 'es', brand === 'digit2ai' ? 'America/New_York' : (brand === 'd2s' || brand === 'labora') ? 'America/Bogota' : 'America/Caracas')}`, `Nombre: ${m.nombre}`, m.empresa ? `Empresa: ${m.empresa}` : null,
         `Correo: ${m.email}`, `Teléfono: ${m.telefono}`, m.tema ? `Tema: ${m.tema}` : null,
         `Confirmación al cliente: ${out.sent ? 'enviada' : 'NO enviada (' + (out.reason || '') + ')'}`].filter(Boolean).join('\n')
     });

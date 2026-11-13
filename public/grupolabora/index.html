@@ -1,0 +1,1247 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Labora</title>
+<meta name="description" content="Labora: la inteligencia artificial de los mejores proveedores, unida en un solo cerebro MCP con más de cien agentes y conectada a los sistemas que ya usas.">
+<meta property="og:title" content="Labora">
+<meta property="og:description" content="Inteligencia que sintetiza datos. Sistemas que ejecutan a escala.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Labora">
+<meta property="og:url" content="https://grupolabora.com/">
+<meta property="og:locale" content="es_LA">
+<meta property="og:image" content="https://grupolabora.com/og.jpg?v=2">
+<meta property="og:image:secure_url" content="https://grupolabora.com/og.jpg?v=2">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Labora: inteligencia que sintetiza datos.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://grupolabora.com/og.jpg?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="canonical" href="https://grupolabora.com/">
+<meta name="robots" content="noindex, nofollow">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "¿Quiénes son ustedes y qué hacen con mi información sensible?", "acceptedAnswer": {"@type": "Answer", "text": "Labora opera con cifrado punto a punto y entornos aislados por cliente. Tu información no se comparte ni se usa para entrenar modelos públicos: solo se procesan metadatos operativos para automatizar el flujo dentro de tu misma empresa o negocio."}}, {"@type": "Question", "name": "¿Y si pago la configuración y el sistema no funciona?", "acceptedAnswer": {"@type": "Answer", "text": "Empiezas con una prueba de concepto de 4 semanas. El anticipo de USD 245 es la puerta de entrada: compromete los recursos de desarrollo. El saldo de la configuración base inicial (USD 685 en total) se paga al final de las 4 semanas, cuando ves la solución operativa y validas tus propios datos funcionando. La suscripción empieza a correr desde la fecha en que estés listo para generar datos con tus propias soluciones."}}, {"@type": "Question", "name": "¿Tengo que botar mi sistema actual o cambiar mi forma de trabajar?", "acceptedAnswer": {"@type": "Answer", "text": "No. Labora no reemplaza tu sistema: se conecta a él. Automatiza las tareas repetitivas por encima de tu software administrativo, contable o de inventarios, o de tus hojas de Excel, y resuelve en minutos lo que hoy te toma horas."}}, {"@type": "Question", "name": "¿Cómo les pago mensualmente desde Colombia?", "acceptedAnswer": {"@type": "Answer", "text": "Con esquemas flexibles adaptados a la realidad corporativa, a través de plataformas de pago empresariales sin fricciones: Stripe y PayPal."}}, {"@type": "Question", "name": "Mis empleados no son técnicos. ¿Lo van a querer usar?", "acceptedAnswer": {"@type": "Answer", "text": "La interfaz principal puede ser tan sencilla como un mensaje por WhatsApp o una nota de voz. Si tu empleado sabe enviar una nota de voz o escribir un chat, ya sabe usar Labora."}}, {"@type": "Question", "name": "¿La inteligencia artificial no es solo para corporaciones grandes?", "acceptedAnswer": {"@type": "Answer", "text": "No. Los problemas de tu operación diaria son reales: compras innecesarias, viajes vacíos en transporte, inventarios que no cuadran y facturas con errores humanos. No vendemos «IA abstracta»: vendemos soluciones directas, automatización de procesos y reducción de costos operativos."}}, {"@type": "Question", "name": "Si el sistema se cae un martes a mediodía, ¿quién me responde?", "acceptedAnswer": {"@type": "Answer", "text": "El soporte de Labora incluye Hypercare: resolución automática inmediata de incidencias, respaldada por especialistas técnicos y un equipo con presencia comercial directa."}}, {"@type": "Question", "name": "¿En cuánto tiempo recupero los USD 388 mensuales?", "acceptedAnswer": {"@type": "Answer", "text": "Durante la prueba de concepto de 4 semanas se fija una métrica clara de ahorro: horas-hombre recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro demostrado no supera el costo de la suscripción, no se continúa."}}, {"@type": "Question", "name": "¿Qué pasa si luego quiero cancelar? ¿Se quedan con mis datos?", "acceptedAnswer": {"@type": "Answer", "text": "No. Toda la data estructurada y los reportes que genera la plataforma son propiedad exclusiva tuya, y se exportan en formatos universales (Excel, CSV o base de datos) en cualquier momento."}}, {"@type": "Question", "name": "¿Qué fortaleza tienen como empresa?", "acceptedAnswer": {"@type": "Answer", "text": "Es una entidad con experiencia y, junto con sus alianzas institucionales, es una garantía para tu empresa o negocio desde el primer momento."}}]}</script>
+<meta name="theme-color" content="#021A33">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>html,body{background:#021A33}html[data-theme="light"],html[data-theme="light"] body{background:#F7F9FC}</style>
+<script>/* tema guardado antes de pintar, para que no parpadee (patrón de BuyersLine y LevelUp) */
+try{var t=localStorage.getItem('labora_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<style>
+/* Identidad de Labora según la guía de Gustavo: base Obsidian, acento cian
+   eléctrico para acción, cobalto/violeta para degradados; Geist para títulos,
+   Inter para texto, JetBrains Mono para etiquetas y datos. */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#021A33;--bg2:#04213F;--card:#0A2E55;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);
+  --txt:#FFFFFF;--mut:#94A3B8;--cy:#159F79;--cy2:#159F79;--co:#02427F;--vi:#02427F;--on:#021A33;
+  --fh:'Geist','Inter',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --fb:'Inter',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  --fm:'JetBrains Mono','Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --maxw:1160px;
+  --cyt:#159F79;--g1:#159F79;--g2:#02427F;--navbg:rgba(2,26,51,.82);--pillbg:rgba(10,46,85,.6);--badge:#c4cfdd;--amber:#fbbf24;--okt:#d1fae5;--badt:#fee2e2;
+}
+/* Modo claro. Mismo principio que BuyersLine: el cian brillante es un RELLENO
+   (botones, puntos, barras); sobre blanco no puede ser texto (mide ~1.4:1), así
+   que el texto de acento usa cian oscuro #02427F (5.4:1). Textos #021A33 y
+   #475569 sobre #F7F9FC/#FFFFFF. La consola y el diagrama siguen oscuros. */
+html[data-theme="light"]{
+  --bg:#F7F9FC;--bg2:#EEF2F7;--card:#FFFFFF;--line:rgba(15,23,42,.09);--line2:rgba(15,23,42,.16);
+  --txt:#021A33;--mut:#475569;--cyt:#02427F;--g1:#02427F;--g2:#159F79;
+  --navbg:rgba(247,249,252,.86);--pillbg:#FFFFFF;--badge:#334155;--amber:#B45309;--okt:#065F46;--badt:#991B1B;
+}
+html{scroll-behavior:smooth}
+body{color:var(--txt);font-family:var(--fb);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;background:var(--bg)}
+html[lang="es"] .en,html[lang="en"] .es{display:none!important}
+[hidden]{display:none!important}
+a{color:var(--cyt)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+h1,h2,h3{font-family:var(--fh);letter-spacing:-.02em;line-height:1.1}
+h1{font-size:clamp(36px,4.6vw,58px);font-weight:800}
+h2{font-size:clamp(28px,3.4vw,42px);font-weight:700;margin-bottom:14px}
+h3{font-size:19px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
+.lead{color:var(--mut);font-size:clamp(17px,1.4vw,20px);max-width:760px}
+.grad{background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mono{font-family:var(--fm)}
+.kick{font-family:var(--fm);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyt);margin-bottom:12px;display:block}
+
+/* navegación */
+nav{position:sticky;top:0;z-index:30;background:var(--navbg);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--txt);font-family:var(--fh);font-weight:700;font-size:20px;letter-spacing:-.02em}
+.logo svg{flex:0 0 auto}
+.logo small{font-weight:600;color:var(--cyt)}
+.links{display:flex;gap:26px;font-size:15px}
+.links a{color:var(--mut);text-decoration:none}
+.links a:hover{color:var(--txt)}
+.navr{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--mut);font:600 12.5px var(--fm);min-width:44px;min-height:40px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--cy);color:var(--on)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:12px;font-weight:600;text-decoration:none;border:1px solid var(--line2);color:var(--txt);background:transparent;font-family:var(--fb);font-size:16px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.btn.pri{background:var(--cy);color:var(--on);border-color:var(--cy);font-weight:700;box-shadow:0 0 0 0 rgba(21,159,121,.0)}
+.btn.pri:hover{box-shadow:0 8px 30px rgba(21,159,121,.28);transform:translateY(-1px)}
+.btn:focus-visible,.lang button:focus-visible,.links a:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+nav .btn{min-height:40px;padding:0 16px;font-size:14px;border-radius:10px}
+/* Menú hamburguesa en todas las pantallas: .links es el panel desplegable. */
+.links{display:none;position:absolute;top:calc(100% + 8px);right:20px;width:300px;flex-direction:column;gap:4px;padding:10px;
+  border-radius:16px;background:var(--card);border:1px solid var(--line2);box-shadow:0 18px 50px rgba(0,0,0,.45);z-index:40}
+.menu-open .links{display:flex}
+.links a{display:flex;align-items:center;min-height:48px;padding:0 14px;border-radius:10px;color:var(--txt);font-size:16px}
+.links a:hover{background:var(--pillbg)}
+.links a.mcta{justify-content:center;gap:6px;margin-top:6px;background:var(--cy);color:var(--on);font-weight:700}
+nav .wrap{position:relative}
+.burger{width:44px;height:44px;flex:0 0 44px;border-radius:12px;border:1px solid var(--line2);background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:0;color:var(--txt)}
+.burger span{display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .2s,opacity .2s}
+.menu-open .burger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.menu-open .burger span:nth-child(2){opacity:0}
+.menu-open .burger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.burger:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+@media(min-width:521px){.links a.mcta{display:none}}
+@media(max-width:520px){nav .btn{display:none}.navr{gap:8px}.lang button{min-width:38px}
+  .links{position:fixed;top:64px;left:0;right:0;width:auto;border-radius:0 0 18px 18px;padding:12px 16px calc(16px + env(safe-area-inset-bottom));
+    max-height:calc(100dvh - 64px);overflow:auto}
+  .links a{min-height:52px;font-size:17px}}
+@media(prefers-reduced-motion:reduce){.burger span{transition:none}}
+
+section{padding:88px 0;border-bottom:1px solid var(--line)}
+section.alt{background:var(--bg2)}
+
+/* hero */
+.hero{padding:76px 0 84px;position:relative;overflow:hidden;
+  background:radial-gradient(800px 420px at 85% -5%,rgba(46,109,180,.22),transparent 60%),radial-gradient(700px 380px at -5% 105%,rgba(21,159,121,.12),transparent 60%)}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;
+  mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 75%)}
+.hgrid{position:relative;display:grid;grid-template-columns:minmax(0,820px);gap:48px;align-items:center}
+@media(max-width:980px){.hgrid{grid-template-columns:1fr}}
+.pill{display:inline-flex;align-items:center;gap:10px;font-family:var(--fm);font-size:12.5px;color:var(--mut);background:var(--pillbg);border:1px solid var(--line2);border-radius:999px;padding:7px 14px;margin-bottom:22px}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--cy);box-shadow:0 0 10px var(--cy);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.hero h1{margin-bottom:20px}
+.hero h1 .l2{display:block}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.proof{margin-top:22px;font-size:13.5px;color:var(--mut)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.badges span{font-family:var(--fm);font-size:12px;color:var(--badge);border:1px solid var(--line2);border-radius:8px;padding:5px 10px;background:var(--pillbg)}
+
+/* consola simulada */
+.win{--line:rgba(255,255,255,.08);--mut:#94A3B8;--txt:#fff;color:#fff;background:rgba(10,46,85,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(21,159,121,.28);border-radius:18px;
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(46,109,180,.15) inset,0 0 60px rgba(21,159,121,.08);overflow:hidden}
+.win .tb{display:flex;align-items:center;gap:7px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.win .tb i{width:11px;height:11px;border-radius:50%;background:#2a3446}
+.win .tb i:nth-child(1){background:#f87171}.win .tb i:nth-child(2){background:#fbbf24}.win .tb i:nth-child(3){background:#34d399}
+.win .tb span{margin-left:8px;font-family:var(--fm);font-size:12px;color:var(--mut)}
+.wbody{display:grid;grid-template-columns:1.25fr 1fr}
+@media(max-width:520px){.wbody{grid-template-columns:1fr}}
+.code{padding:18px 16px 20px;font-family:var(--fm);font-size:12px;line-height:1.85;color:#c4cfdd;border-right:1px solid var(--line);min-height:252px}
+@media(max-width:520px){.code{border-right:0;border-bottom:1px solid var(--line)}}
+.code .c{color:#64748b}.code .k{color:var(--cy)}.code .v{color:#9CC3EE}.code .ok{color:#34d399}
+.code .ln{opacity:0;animation:type .01s forwards}
+@keyframes type{to{opacity:1}}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--cy);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+.metrics{padding:18px;display:flex;flex-direction:column;gap:14px}
+.m small{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.m b{font-family:var(--fh);font-weight:700;font-size:34px;color:var(--cy);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.15}
+.m b em{font-style:normal;font-size:16px;color:var(--mut);font-weight:600;margin-left:4px}
+.bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar span{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--cy),var(--vi));animation:load 2.8s ease-in-out infinite}
+@keyframes load{0%{width:8%}60%{width:96%}100%{width:96%}}
+.wnote{padding:9px 14px;border-top:1px solid var(--line);font-family:var(--fm);font-size:11px;color:#64748b}
+
+/* tarjetas */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;position:relative;transition:border-color .2s}
+.card:hover{border-color:rgba(21,159,121,.35)}
+.card p{color:var(--mut);font-size:15.5px}
+.card .tag{font-family:var(--fm);font-size:12px;color:var(--cyt);letter-spacing:.08em;display:block;margin-bottom:10px}
+.card.no{border-left:3px solid #f87171}
+.usp{margin-top:34px;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.usp li{list-style:none;border-left:2px solid var(--cy);padding:4px 0 4px 14px;color:var(--mut);font-size:15px}
+.usp b{display:block;color:var(--txt);font-size:15.5px;margin-bottom:2px;font-weight:600}
+
+/* diagrama */
+.dia{margin-top:30px;background:#04213F;border:1px solid var(--line);border-radius:18px;padding:16px}
+.dia svg{width:100%;height:auto;display:block}
+
+/* tablas */
+.tw{overflow-x:auto;margin-top:26px;border:1px solid var(--line);border-radius:16px}
+table{width:100%;border-collapse:collapse;min-width:540px;font-size:15.5px}
+/* Phones: the tables fit the screen and wrap, no sideways scroll that hides the right column (Gustavo v2.4, item 07). */
+@media(max-width:640px){table{min-width:0;font-size:14px;table-layout:fixed}th,td{padding:12px 10px!important;overflow-wrap:anywhere;word-break:normal;hyphens:auto}}
+th,td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--fm);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);background:var(--card);font-weight:500}
+th.us{color:var(--cyt)}
+tr:last-child td{border-bottom:0}
+td.hi{color:var(--txt);font-weight:600}
+td.lo{color:var(--mut)}
+td.us{color:var(--txt);font-weight:600;background:rgba(21,159,121,.04)}
+
+/* sistemas */
+.sys{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:32px}
+.sys ul{list-style:none;margin-top:6px}
+.sys li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-weight:500}
+.sys li:first-child{border-top:0}
+.sys em{font-style:normal;font-family:var(--fm);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);border:1px solid currentColor;border-radius:999px;padding:2px 8px}
+
+/* agentes */
+.agents{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:30px}
+.ag{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.ag h3{font-size:16px}
+.ag p{color:var(--mut);font-size:14px;line-height:1.5}
+
+/* precios */
+.price{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));margin-top:30px}
+.pc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+.pc.feat{border-color:rgba(21,159,121,.6);box-shadow:0 0 0 1px rgba(21,159,121,.35) inset,0 20px 60px rgba(21,159,121,.06)}
+.pc .amt{font-family:var(--fh);font-size:48px;font-weight:800;letter-spacing:-.03em;margin:8px 0}
+.pc .amt small{font-size:15px;color:var(--mut);font-weight:500;letter-spacing:0}
+.pc p{color:var(--mut);font-size:15px}
+.pc ul{margin-top:14px;padding-left:18px;color:var(--mut);font-size:15px}
+.pc li{margin-bottom:6px}
+.split{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:16px}
+.split .card ul{list-style:none;margin-top:6px}
+.split .card li{padding:7px 0;border-top:1px solid var(--line);font-size:15px}
+.split .card li:first-child{border-top:0}
+.split .q{border-color:rgba(46,109,180,.5)}
+.split .q .tag{color:#9CC3EE}
+
+/* formulario */
+.lead-f{max-width:820px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;margin-top:30px}
+.fg{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin:16px 0}
+.fg label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.fg .full{grid-column:1/-1}
+.fg input,.fg select,.fg textarea{font:16px var(--fb);color:var(--txt);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:11px 12px;min-height:46px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:2px solid var(--cy);outline-offset:1px}
+.fg .bad{border-color:#f87171}
+@media(max-width:640px){.fg{grid-template-columns:1fr}}
+.msg{padding:14px 16px;border-radius:12px;border:1px solid var(--line2);background:var(--card);font-size:15px;max-width:820px;margin-top:16px}
+.msg.ok{border-color:#34d399;color:var(--okt)}.msg.bad{border-color:#f87171;color:var(--badt)}
+.fine{margin-top:14px;color:var(--mut);font-size:13.5px}
+
+/* pasos */
+ol.steps{list-style:none;counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:30px}
+ol.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+ol.steps li::before{content:"0" counter(s);font-family:var(--fm);font-size:13px;color:var(--cyt);display:block;margin-bottom:8px}
+ol.steps p{color:var(--mut);font-size:15px}
+
+.final{text-align:center;background:radial-gradient(700px 300px at 50% 0%,rgba(46,109,180,.18),transparent 70%)}
+.final .lead{margin:0 auto 28px}
+footer{padding:30px 0 44px;color:var(--mut);font-size:13.5px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:640px){section{padding:64px 0}.hero{padding:48px 0 60px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important}.code .ln{opacity:1}}
+
+html[data-theme="light"] .win{background:#05254A;box-shadow:0 30px 70px rgba(15,23,42,.22),0 0 0 1px rgba(46,109,180,.15) inset}
+html[data-theme="light"] .dia{border-color:rgba(15,23,42,.12)}
+html[data-theme="light"] .card,html[data-theme="light"] .pc,html[data-theme="light"] ol.steps li,html[data-theme="light"] .ag,html[data-theme="light"] .lead-f{box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05)}
+html[data-theme="light"] .hero{background:radial-gradient(800px 420px at 85% -5%,rgba(46,109,180,.14),transparent 60%),radial-gradient(700px 380px at -5% 105%,rgba(21,159,121,.14),transparent 60%)}
+html[data-theme="light"] .niva{--ink-mute:#475569}
+html[data-theme="light"] .split .q .tag{color:#02427F}
+/* botón de tema (sol / luna) */
+.theme{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:var(--txt);cursor:pointer}
+.theme:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.theme .sun{display:none}
+html[data-theme="dark"] .theme .sun{display:block}html[data-theme="dark"] .theme .moon{display:none}
+
+/* calculadora de ahorro (la misma aritmética que /pymes) */
+.calc{background:var(--card);border:1px solid var(--line2);border-radius:20px;padding:24px 24px 18px;position:relative;
+  box-shadow:0 30px 80px rgba(0,0,0,.35),0 0 0 1px rgba(46,109,180,.12) inset}
+.calc::before{content:"";position:absolute;left:24px;right:24px;top:0;height:2px;background:linear-gradient(90deg,var(--cy),var(--vi));border-radius:2px}
+.calc .ct{font-size:clamp(20px,1.9vw,24px);margin-bottom:6px}
+.sl{margin-top:14px}
+.sl label{display:flex;justify-content:space-between;gap:14px;font-size:14.5px;color:var(--mut);line-height:1.35}
+.sl label b{color:var(--txt);font-family:var(--fh);font-size:17px;white-space:nowrap}
+.sl input{width:100%;margin-top:6px;accent-color:#159F79;height:28px;cursor:pointer}
+.res{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.res .lbl{font-family:var(--fm);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--cyt)}
+.res .big{font-family:var(--fh);font-weight:800;font-size:clamp(38px,4vw,50px);line-height:1.05;letter-spacing:-.02em;margin:4px 0 6px;
+  background:linear-gradient(90deg,var(--g1),var(--g2));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.res .row2{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:9px 0;font-size:15px;color:var(--mut)}
+.res .row2 b{color:var(--txt);font-family:var(--fh);font-variant-numeric:tabular-nums}
+.cnote{font-size:13px;color:var(--mut);margin-top:6px;line-height:1.5}
+html[data-theme="light"] .calc{box-shadow:0 1px 2px rgba(15,23,42,.05),0 24px 60px rgba(15,23,42,.10)}
+html[data-theme="light"] .sl input{accent-color:#0891B2}
+/* ── Orbe narrador: copiado de public/neural-intelligence.html (digit2ai.com) ── */
+.niva{--panel:#0A2E55;--bg2:#04213F;--line2:rgba(255,255,255,.15);--mut:#94A3B8;--txt:#fff;--dim:#64748b;--accent:#159F79;--accent2:#02427F;
+  --font-display:var(--fh);--font-body:var(--fb)}
+/* ===== Bilingual Neural Voice orb (Layer 3) — sophisticated MCP brain, right-center ===== */
+.niva{position:fixed;right:clamp(16px,3.5vw,56px);top:50%;transform:translateY(-50%);z-index:60;font-family:var(--font-body);
+  --accent-cyan:#22d3ee;--accent-violet:#8b5cf6;--accent-magenta:#0E7A5D;--ink-mute:#9db0cc;
+  --font-mono:'Space Grotesk',ui-monospace,monospace;--orb-size:clamp(150px,17vw,210px)}
+.niva .orb-wrap{position:relative;width:var(--orb-size);height:var(--orb-size);cursor:pointer;--orb-amp:0;outline:none;transition:transform .2s}
+.niva .orb-wrap:hover{transform:scale(1.02)}
+.niva .orb-wrap:focus-visible{outline:3px solid var(--accent-cyan);outline-offset:8px;border-radius:50%;box-shadow:0 0 0 6px rgba(21,159,121,.15)}
+.niva .orb-svg{width:100%;height:100%;display:block;
+  filter:drop-shadow(0 8px 32px rgba(21,159,121,.28)) drop-shadow(0 4px 18px rgba(139,92,246,.22));transition:filter 120ms linear}
+/* idle rotations (Iron Man / Tron) */
+.niva .orb-ring-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 32s linear infinite}
+.niva .orb-ring-mid{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 22s linear infinite}
+.niva .orb-ring-inner{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 14s linear infinite}
+.niva .orb-iris-outer{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpinRev 18s linear infinite}
+.niva .orb-iris-segs{transform-box:fill-box;transform-origin:120px 120px;animation:orbSpin 9s linear infinite}
+@keyframes orbSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbSpinRev{from{transform:rotate(360deg)}to{transform:rotate(0)}}
+.niva .orb-scan{transform-box:fill-box;transform-origin:120px 120px;animation:orbScanSweep 6s linear infinite}
+@keyframes orbScanSweep{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.niva .orb-crosshair{animation:orbCrosshairBlink 2.4s ease-in-out infinite}
+@keyframes orbCrosshairBlink{0%,100%{opacity:.15}50%{opacity:.5}}
+.niva .orb-ring{opacity:0;transform-box:fill-box;transform-origin:center}
+/* thinking — particles orbit while neural audio is fetched */
+.niva .orb-particles{opacity:0}
+.niva .orb-particle{transform-box:fill-box;transform-origin:120px 120px;animation:orbOrbit 2.6s linear infinite;filter:drop-shadow(0 0 4px currentColor)}
+.niva .orb-wrap[data-state="thinking"] .orb-particles{opacity:1}
+.niva .orb-wrap[data-state="thinking"] .orb-core{animation:orbThinkSpin 6s linear infinite}
+.niva .orb-wrap[data-state="thinking"] .orb-ring{opacity:.7;animation:orbRingTight 2.4s ease-in-out infinite}
+@keyframes orbOrbit{from{transform:rotate(0) translate(0)}to{transform:rotate(360deg) translate(0)}}
+@keyframes orbThinkSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes orbRingTight{0%,100%{transform:scale(1);stroke-opacity:.4}50%{transform:scale(.92);stroke-opacity:.7}}
+/* speaking — saturated halo */
+.niva .orb-wrap[data-state="speaking"] .orb-core,.niva .orb-wrap[data-state="speaking"] .orb-glow{filter:brightness(1.3) saturate(1.2)}
+.niva .orb-wrap[data-state="speaking"] .orb-svg{filter:drop-shadow(0 8px 42px rgba(21,159,121,.5)) drop-shadow(0 4px 22px rgba(14,122,93,.32)) brightness(1.08)}
+/* caption under the orb */
+.niva .orb-caption{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(300px,52vw);text-align:center;
+  font-family:var(--font-mono);font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink-mute);line-height:1.4;transition:color .2s}
+.niva .orb-wrap:hover .orb-caption{color:var(--accent-cyan)}
+.niva .orb-wrap[data-state="thinking"] .orb-caption{color:var(--accent-violet)}
+.niva .orb-wrap[data-state="speaking"] .orb-caption{color:var(--accent-magenta)}
+.orb-cap-idle,.orb-cap-active{display:none}
+.niva .orb-wrap[data-state="idle"] .orb-cap-idle{display:inline}
+.niva .orb-wrap:not([data-state="idle"]) .orb-cap-active{display:inline}
+.orb-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* compact control chip — anchored UNDER the orb, right-aligned so it never covers the slide text */
+  background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line2);border-radius:14px;
+  padding:11px 12px;box-shadow:0 20px 56px rgba(0,0,0,.6);display:none}
+/* during a session, keep the status caption visible even when the orb dims to 'idle' on pause */
+/* header, voice picker and HD toggle removed from the chip — minimal by design */
+@media (max-width:900px){.niva{--orb-size:clamp(122px,24vw,150px)}}
+@media (max-width:640px){
+  .niva{right:12px;top:auto;bottom:16px;transform:none}
+  .niva .orb-caption{font-size:9px;letter-spacing:1px}
+  /* orb sits at the bottom on mobile, so the chip opens ABOVE it (still right-aligned) */
+  .niva .orb-ring-outer,.niva .orb-ring-mid,.niva .orb-ring-inner,.niva .orb-iris-outer,.niva .orb-iris-segs,
+  .niva .orb-scan,.niva .orb-crosshair,.niva .orb-particle{animation:none!important}
+  .niva .orb-svg animate,.niva .orb-svg animateTransform{display:none}
+  .niva .orb-wrap:hover{transform:none}
+}
+/* ============ Mobile pass ============ */
+@media (max-width:640px){
+  .niva{--orb-size:clamp(100px,24vw,126px);right:14px;bottom:clamp(20px,4vh,36px);top:auto;transform:none}
+  .niva .orb-caption{display:block;font-size:9px;letter-spacing:.4px;bottom:-18px;left:auto;right:2px;transform:none;text-align:right;max-width:158px;white-space:normal;line-height:1.3}
+  .niva .orb-wrap[data-state="idle"]{animation:orbNudge 2.8s ease-in-out infinite}
+}
+@keyframes orbNudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.niva .orb-wrap[data-state="idle"]{animation:none}}
+section,header.hero{scroll-margin-top:64px}
+/* cerebro en vivo */
+.brain-embed{position:relative;width:100%;margin:28px auto 0;aspect-ratio:12/7;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 26px 80px rgba(0,0,0,.5);background:#070a12}
+.brain-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+/* Labora: the orb lives in the bottom-right corner so it never covers the brain or the console */
+.niva{top:auto;bottom:76px;right:28px;transform:none;--orb-size:clamp(160px,13vw,200px)}
+/* Lina's conversation panel opens to the LEFT of the big orb; the orb itself is the launcher */
+.d2orb-launch{display:none!important}
+.d2orb-root{right:calc(clamp(160px,13vw,200px) + 64px)!important;bottom:84px!important}
+.d2orb-cap{max-height:240px!important}
+@media (max-width:640px){
+  .niva{--orb-size:clamp(140px,38vw,160px);right:14px;bottom:clamp(44px,8vh,72px)}
+  .d2orb-root{left:12px!important;right:12px!important;bottom:calc(clamp(140px,38vw,160px) + clamp(44px,8vh,72px) + 34px)!important;align-items:stretch!important}
+  .d2orb-panel{width:auto!important}
+}
+
+/* preguntas frecuentes + pregúntale a Lina */
+.faq{display:grid;gap:12px;margin-top:26px}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:16px;transition:border-color .2s}
+.qa[open]{border-color:var(--line2)}
+.qa summary{list-style:none;cursor:pointer;display:flex;gap:14px;align-items:center;padding:18px 20px;min-height:56px;font-family:var(--fd);font-weight:600;font-size:17px;line-height:1.35}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"+";margin-left:auto;font-size:22px;color:var(--cyt);flex:none}
+.qa[open] summary::after{content:"\2212"}
+.qa .qn{font-family:var(--fm);font-size:13px;color:var(--cyt);flex:none}
+.qa .qb{padding:0 20px 18px 20px;color:var(--mut);font-size:15.5px;line-height:1.6}
+.ask{margin-top:26px;background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:20px}
+.ask-l{display:block;font-family:var(--fd);font-weight:700;font-size:17px;margin-bottom:10px}
+.ask-row{display:flex;gap:10px;flex-wrap:wrap}
+.ask-row input{flex:1 1 220px;min-height:48px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);color:var(--txt);padding:0 14px;font:16px var(--fb)}
+.ask-mic{width:48px;height:48px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ask-mic.on{border-color:#f87171;color:#f87171}
+.ask-row .btn{min-height:48px}
+
+/* Same orb and moving-star background as the last slide of /pymes (owner request 2026-10-28) */
+.niva .orb-wrap::before{content:"";position:absolute;inset:-18%;border-radius:50%;background:radial-gradient(circle,rgba(46,109,180,.30),rgba(14,122,93,.16) 45%,transparent 70%);filter:blur(10px);pointer-events:none}
+.niva .orb-svg{position:relative;filter:drop-shadow(0 8px 42px rgba(21,159,121,.5)) drop-shadow(0 4px 22px rgba(14,122,93,.32)) brightness(1.08)}
+body{background:transparent!important}
+#labstars{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:block}
+section.alt{background:rgba(14,19,32,.55)}
+html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
+
+/* demo form, step 2: pick a time */
+.slots{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-top:18px}
+.slots .slot-h{grid-column:1/-1;margin:0;font-family:var(--fd);font-size:20px}
+.slots > .fine{grid-column:1/-1;margin:0}
+.slot-day{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.slot-d{font-weight:700;font-size:15px}
+.slot-b{width:100%;justify-content:center;min-height:44px}
+
+/* "Agendar demostración": calendar window (pick a time, then details, then thanks) */
+.bk-ov{position:fixed;inset:0;z-index:2147483100;background:rgba(5,8,14,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+.bk-ov[hidden]{display:none}
+.bk{width:min(720px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border:1px solid var(--line2);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.55);position:relative;padding:26px 24px 22px}
+.bk::before{content:"";position:absolute;left:24px;right:24px;top:0;height:3px;background:linear-gradient(90deg,var(--cy),var(--vi));border-radius:3px}
+.bk-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font-size:22px;cursor:pointer}
+.bk h3{font-family:var(--fd);font-size:24px;margin:0 40px 4px 0}
+.bk .sub{color:var(--mut);font-size:15px;margin:0 0 16px}
+.bk-steps{display:flex;flex-wrap:wrap;gap:8px;margin:0 48px 16px 0;font-family:var(--fm);font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.bk-steps span{color:var(--mut)}.bk-steps span.on{color:var(--cyt)}
+.bk-days{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+.bk-day{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bk-day b{font-size:15px}
+.bk-t{min-height:44px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--txt);font:600 15px var(--fb);cursor:pointer}
+.bk-t:hover,.bk-t:focus-visible{border-color:var(--cy)}
+.bk-t.sel{background:var(--cy);color:#011526;border-color:var(--cy)}
+.bk-pick{margin:4px 0 14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(21,159,121,.35);background:rgba(21,159,121,.06);font-weight:600}
+.bk-f{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.bk-f label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--mut)}
+.bk-f input{min-height:48px;border-radius:12px;border:1px solid var(--line2);background:var(--bg);color:var(--txt);padding:0 14px;font:16px var(--fb)}
+.bk-f input.bad{border-color:#f87171}
+.bk-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.bk-err{color:var(--badt);font-size:14px;margin-top:10px}
+.bk-ok{text-align:center;padding:10px 4px}
+.bk-ok .ic{width:64px;height:64px;border-radius:50%;margin:4px auto 14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--cy),var(--vi));color:#011526;font-size:30px;font-weight:700}
+@media(max-width:640px){.bk-days{grid-template-columns:1fr}.bk-f{grid-template-columns:1fr}.bk{padding:22px 16px 18px}.bk h3{font-size:21px}}
+
+</style>
+</head>
+<body>
+<canvas id="labstars" aria-hidden="true"></canvas>
+<script>
+(function(){
+  // Puntos de colores que se mueven y se unen con líneas, como la última lámina de /pymes.
+  var c = document.getElementById('labstars'); if (!c || !c.getContext) return;
+  var ctx = c.getContext('2d'), pts = [], W = 0, H = 0, R = 1;
+  var COLORS = ['rgba(2,66,127,','rgba(21,159,121,','rgba(46,109,180,','rgba(143,227,200,'];
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size(){
+    R = Math.min(window.devicePixelRatio || 1, 2);
+    W = c.width = Math.round(innerWidth * R); H = c.height = Math.round(innerHeight * R);
+    var n = Math.max(35, Math.min(95, Math.round(innerWidth * innerHeight / 15000)));
+    while (pts.length < n) pts.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-.5)*.45*R, vy: (Math.random()-.5)*.45*R, r: (Math.random()*2.4+1)*R, c: COLORS[pts.length % 4] });
+    pts.length = n;
+    pts.forEach(function(p){ if (p.x > W) p.x = Math.random()*W; if (p.y > H) p.y = Math.random()*H; });
+  }
+  function draw(){
+    var light = document.documentElement.getAttribute('data-theme') === 'light';
+    var line = light ? 'rgba(2,66,127,' : 'rgba(150,170,255,', lim = 170 * R;
+    ctx.clearRect(0, 0, W, H);
+    for (var a = 0; a < pts.length; a++){
+      var p = pts[a];
+      if (!still) { p.x += p.vx; p.y += p.vy; if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1; }
+      for (var b = a + 1; b < pts.length; b++){
+        var q = pts[b], dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
+        if (d < lim){ ctx.strokeStyle = line + ((1 - d/lim) * (light ? .14 : .18)) + ')'; ctx.lineWidth = R; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+      }
+    }
+    for (var m = 0; m < pts.length; m++){ var t = pts[m]; ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fillStyle = t.c + (light ? '0.7)' : '0.8)'); ctx.fill(); }
+  }
+  size(); addEventListener('resize', size);
+  if (still) { draw(); new MutationObserver(draw).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] }); return; }
+  (function frame(){ draw(); requestAnimationFrame(frame); })();
+})();
+</script>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Labora">
+      <img src="logo.png" width="36" height="36" alt="" class="lablogo" style="border-radius:50%;background:#fff;display:block">
+      <span>Labora</span>
+    </a>
+    <div class="links" id="sxLinks">
+      <a href="#producto"><span class="es">Producto</span><span class="en">Product</span></a>
+      <a href="#como"><span class="es">Cómo funciona</span><span class="en">How it works</span></a>
+      <a href="#sistemas"><span class="es">Integraciones</span><span class="en">Integrations</span></a>
+      <a href="#precio"><span class="es">Precios</span><span class="en">Pricing</span></a>
+      <a href="#faq"><span class="es">Preguntas</span><span class="en">FAQ</span></a>
+      <a href="pymes/"><span class="es">Presentación</span><span class="en">Presentation</span></a>
+      <a class="mcta" href="#demo"><span class="es">Comenzar ahora</span><span class="en">Get started</span> &rarr;</a>
+    </div>
+    <div class="navr">
+      <button type="button" class="theme" data-theme-toggle aria-label="Cambiar tema / Switch theme">
+        <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>
+        <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/></svg>
+      </button>
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-set-lang="es" aria-pressed="true">ES</button>
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn pri" href="#demo"><span class="es">Comenzar ahora</span><span class="en">Get started</span> &rarr;</a>
+      <button type="button" class="burger" id="sxBurger" aria-controls="sxLinks" aria-expanded="false" aria-label="Menú / Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hgrid">
+    <div>
+      <span class="pill"><i></i>Labora · IA · <span class="es">Modelos de síntesis y automatización</span><span class="en">Synthesis and automation models</span></span>
+      <h1>
+        <span class="es">Inteligencia que <span class="grad">sintetiza datos.</span><span class="l2">Sistemas que ejecutan a escala.</span></span>
+        <span class="en">Intelligence that <span class="grad">synthesizes data.</span><span class="l2">Systems that execute at scale.</span></span>
+      </h1>
+      <p class="lead">
+        <span class="es">Labora une la lógica de tus operaciones con la IA de los mejores proveedores del mundo (Anthropic, OpenAI, Google, AWS y Microsoft Azure) bajo un solo cerebro MCP con más de cien agentes especializados. Se conecta a los sistemas que ya usas, sin reemplazar nada.</span>
+        <span class="en">Labora joins the logic of your operations with the AI of the world's best providers (Anthropic, OpenAI, Google, AWS and Microsoft Azure) under one MCP brain with more than one hundred specialized agents. It plugs into the systems you already use, replacing nothing.</span>
+      </p>
+      <div class="cta">
+        <a class="btn pri" href="#demo"><span class="es">Desplegar Labora</span><span class="en">Deploy Labora</span> &rarr;</a>
+        <a class="btn" href="#demo" data-book-demo><span class="es">Agendar demostración</span><span class="en">Book a demo</span></a>
+      </div>
+      <p class="proof"><span class="es">No reemplaza tu sistema, se conecta a él · Cifrado punto a punto y entornos aislados por cliente · Prueba de concepto de 4 semanas</span><span class="en">It does not replace your system, it plugs into it · End-to-end encryption and an isolated environment per client · 4-week proof of concept</span></p>
+      <div class="badges"><span>REST API</span><span>MCP</span><span>Siigo</span><span>Alegra</span><span>World Office</span><span>SAP</span><span>Oracle</span><span>Odoo</span></div>
+    </div>
+
+  </div>
+</header>
+
+<section id="cerebro" class="alt">
+  <div class="wrap" style="text-align:center">
+    <span class="kick"><span class="es">En vivo</span><span class="en">Live</span></span>
+    <h2><span class="es">Un cerebro. Cada agente. <span class="grad">Conectados por MCP abierto.</span></span><span class="en">One brain. Every agent. <span class="grad">Wired via open MCP.</span></span></h2>
+    <div class="brain-embed">
+      <iframe src="/ringlypro-architect-factory.html?embed=stage&amp;brand=labora" title="Labora MCP Brain" loading="lazy"></iframe>
+    </div>
+    <p class="lead" style="margin:18px auto 0"><span class="es">El protocolo abierto MCP lleva el contexto compartido y orquesta cada agente especializado en tiempo real: entra contexto, sale acción coordinada.</span><span class="en">The open MCP protocol carries shared context and orchestrates every specialized agent in real time: context in, coordinated action out.</span></p>
+  </div>
+</section>
+
+<section id="producto">
+  <div class="wrap">
+    <span class="kick"><span class="es">Qué es</span><span class="en">What it is</span></span>
+    <h2><span class="es">IA avanzada que llega <span class="grad">ya integrada.</span></span><span class="en">Advanced AI that arrives <span class="grad">already integrated.</span></span></h2>
+    <p class="lead"><span class="es">Un servicio de inteligencia artificial avanzada, como el que ofrecen Anthropic u OpenAI, con una diferencia: llega integrado y listo para trabajar dentro de tu empresa. Funciona como un USB: se conecta y tu empresa gana una capacidad nueva.</span><span class="en">An advanced AI service, like the ones Anthropic or OpenAI offer, with one difference: it arrives integrated and ready to work inside your company. It works like a USB: plug it in and your company gains a new capability.</span></p>
+    <div class="grid">
+      <div class="card"><span class="tag">01</span><h3><span class="es">Un cerebro central</span><span class="en">One central brain</span></h3><p><span class="es">Recibe cada solicitud, decide qué agentes la atienden, reparte el trabajo y entrega un solo resultado.</span><span class="en">It takes each request, decides which agents handle it, splits the work and returns one result.</span></p></div>
+      <div class="card"><span class="tag">02</span><h3><span class="es">Más de cien agentes</span><span class="en">Over one hundred agents</span></h3><p><span class="es">Cada agente tiene un rol, reglas y entregables: análisis, ingeniería, finanzas, cumplimiento, ventas, voz y datos.</span><span class="en">Each agent has a role, rules and deliverables: analysis, engineering, finance, compliance, sales, voice and data.</span></p></div>
+      <div class="card"><span class="tag">03</span><h3><span class="es">Conectores estándar MCP</span><span class="en">Standard MCP connectors</span></h3><p><span class="es">WhatsApp, emails, calendarios, citas y agendas de trabajo.</span><span class="en">WhatsApp, email, calendars, appointments and work schedules.</span></p></div>
+      <div class="card"><span class="tag">04</span><h3><span class="es">Varios proveedores</span><span class="en">Many providers</span></h3><p><span class="es">Cada tarea usa el servicio del agente que mejor la resuelve, y se cambian sin que lo notes.</span><span class="en">Each task uses the agent service that does it best, and they are swapped without you noticing.</span></p></div>
+    </div>
+    <ul class="usp">
+      <li><b><span class="es">Se conecta, no reemplaza</span><span class="en">It plugs in, replaces nothing</span></b><span class="es">Tu equipo sigue trabajando igual, ahora con IA.</span><span class="en">Your team keeps working the same way, now with AI.</span></li>
+      <li><b><span class="es">Resultados en semanas</span><span class="en">Results in weeks</span></b><span class="es">No contratas ni configuras cada proveedor por separado.</span><span class="en">No signing up for or configuring each provider separately.</span></li>
+      <li><b><span class="es">Sigues siendo el dueño</span><span class="en">You remain the owner</span></b><span class="es">Tus datos y tu propiedad intelectual siguen siendo tuyos.</span><span class="en">Your data and intellectual property stay yours.</span></li>
+      <li><b><span class="es">Siempre al día</span><span class="en">Always up to date</span></b><span class="es">Cuando sale un modelo mejor o un nuevo agente, lo recibes sin hacer nada.</span><span class="en">When a better model or new agent comes out, you get it without doing anything.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="sistemas" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Integraciones</span><span class="en">Integrations</span></span>
+    <h2><span class="es">Se conecta con lo que <span class="grad">ya usas.</span></span><span class="en">It connects to what you <span class="grad">already use.</span></span></h2>
+    <p class="lead"><span class="es">Los sistemas administrativos que usan las empresas en Colombia, más los de retail, transporte y finanzas: tus sistemas de siempre, ahora con inteligencia.</span><span class="en">The admin systems Colombian companies run, plus retail, transport and finance: your usual systems, now with intelligence.</span></p>
+    <div class="sys">
+      <div class="card"><span class="tag"><span class="es">COLOMBIA</span><span class="en">COLOMBIA</span></span><ul><li>Siigo <em><span class="es">agente</span><span class="en">agent</span></em></li><li>Alegra <em><span class="es">agente</span><span class="en">agent</span></em></li><li>World Office <em><span class="es">agente</span><span class="en">agent</span></em></li><li>Helisa <em><span class="es">agente</span><span class="en">agent</span></em></li><li>ContaPyme <em><span class="es">agente</span><span class="en">agent</span></em></li><li>SAP Business One · Odoo</li></ul></div>
+      <div class="card"><span class="tag"><span class="es">RETAIL Y COMERCIO</span><span class="en">RETAIL AND COMMERCE</span></span><ul><li>SAP Retail</li><li>Oracle Retail</li><li>Dynamics 365 Commerce</li><li>Shopify</li><li>VTEX</li><li>Odoo</li></ul></div>
+      <div class="card"><span class="tag"><span class="es">TRANSPORTE Y LOGÍSTICA</span><span class="en">TRANSPORT AND LOGISTICS</span></span><ul><li>Oracle Transportation Management</li><li>SAP TM</li><li>Blue Yonder</li><li>Manhattan Associates</li><li>McLeod Software</li><li>Samsara</li></ul></div>
+      <div class="card"><span class="tag"><span class="es">FINANZAS Y ERP</span><span class="en">FINANCE AND ERP</span></span><ul><li>SAP Business One</li><li>Oracle NetSuite</li><li>QuickBooks · Sage</li><li>Siigo · Alegra</li><li>CONTPAQi · Aspel <em><span class="es">agente</span><span class="en">agent</span></em></li><li>Dynamics 365 Business Central</li></ul></div>
+    </div>
+    <p class="fine"><span class="es">Con API, la conexión es directa. «Agente» = sistema local sin API pública: se instala un agente ligero en tu servidor. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</span><span class="en">With an API, the connection is direct. "Agent" = local system without a public API: a light agent is installed on your server. The exact connection is confirmed in the assessment. Trademarks belong to their owners.</span></p>
+  </div>
+</section>
+
+<section id="como">
+  <div class="wrap">
+    <span class="kick"><span class="es">Cómo funciona</span><span class="en">How it works</span></span>
+    <h2><span class="es">Una solicitud, <span class="grad">un solo resultado.</span></span><span class="en">One request, <span class="grad">one result.</span></span></h2>
+    <p class="lead"><span class="es">La solicitud baja de tu empresa al cerebro, el cerebro la reparte entre agentes, y cada agente usa el mejor servicio disponible. El resultado vuelve por el mismo camino.</span><span class="en">The request goes from your company to the brain, the brain splits it among agents, and each agent uses the best service available. The result comes back the same way.</span></p>
+    <div class="dia">
+      <svg viewBox="0 0 760 470" role="img" aria-label="Tu empresa, cerebro Labora, agentes y proveedores" font-family="Inter,system-ui,sans-serif">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#94A3B8"/></marker>
+          <linearGradient id="gb" x1="0" x2="1"><stop offset="0" stop-color="#159F79" stop-opacity=".16"/><stop offset="1" stop-color="#02427F" stop-opacity=".16"/></linearGradient></defs>
+        <g fill="none" stroke="#94A3B8" stroke-width="1.4"><path d="M380 92V140" marker-end="url(#ar)" marker-start="url(#ar)"/><path d="M380 204V252" marker-end="url(#ar)"/><path d="M380 316V364" marker-end="url(#ar)"/></g>
+        <g font-size="12" fill="#94A3B8" font-family="JetBrains Mono,monospace">
+          <text x="392" y="121" class="es">conectores MCP: el enchufe tipo USB</text><text x="392" y="121" class="en">MCP connectors: the USB-style plug</text>
+          <text x="392" y="233" class="es">activa solo los agentes necesarios</text><text x="392" y="233" class="en">activates only the agents needed</text>
+          <text x="392" y="345" class="es">el mejor modelo para cada tarea</text><text x="392" y="345" class="en">the best model for each task</text>
+        </g>
+        <rect x="24" y="28" width="712" height="64" rx="12" fill="#0A2E55" stroke="rgba(255,255,255,.15)"/>
+        <text x="380" y="55" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Tu empresa</tspan><tspan class="en">Your company</tspan></text>
+        <text x="380" y="76" text-anchor="middle" font-size="12.5" fill="#94A3B8">SAP · Oracle · Siigo · Alegra · World Office</text>
+        <rect x="24" y="140" width="712" height="64" rx="12" fill="url(#gb)" stroke="#159F79" stroke-width="1.6"/>
+        <text x="380" y="167" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Cerebro Labora (MCP)</tspan><tspan class="en">Labora brain (MCP)</tspan></text>
+        <text x="380" y="188" text-anchor="middle" font-size="12.5" fill="#cbd5e1"><tspan class="es">Recibe la solicitud, elige los agentes, reparte el trabajo y une el resultado</tspan><tspan class="en">Takes the request, picks the agents, splits the work and joins the result</tspan></text>
+        <rect x="24" y="252" width="712" height="64" rx="12" fill="rgba(46,109,180,.12)" stroke="#02427F" stroke-width="1.4"/>
+        <text x="380" y="279" text-anchor="middle" font-size="15" font-weight="700" fill="#fff"><tspan class="es">Más de cien agentes por función</tspan><tspan class="en">Over one hundred agents by function</tspan></text>
+        <text x="380" y="300" text-anchor="middle" font-size="12.5" fill="#94A3B8"><tspan class="es">Ingeniería, datos, negocio, finanzas y legal, industria, servicios de IA</tspan><tspan class="en">Engineering, data, business, finance and legal, industry, AI services</tspan></text>
+        <rect x="24" y="364" width="712" height="88" rx="12" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.15)"/>
+        <text x="40" y="386" font-size="12" font-weight="600" fill="#94A3B8"><tspan class="es">Proveedores integrados (y otros terceros)</tspan><tspan class="en">Integrated providers (and other third parties)</tspan></text>
+        <g fill="none" stroke="rgba(255,255,255,.18)"><rect x="40" y="398" width="90" height="38" rx="8"/><rect x="138" y="398" width="90" height="38" rx="8"/><rect x="236" y="398" width="90" height="38" rx="8"/><rect x="334" y="398" width="90" height="38" rx="8"/><rect x="432" y="398" width="90" height="38" rx="8"/><rect x="530" y="398" width="90" height="38" rx="8"/><rect x="628" y="398" width="92" height="38" rx="8"/></g>
+        <g font-size="13" font-weight="600" fill="#fff" text-anchor="middle"><text x="85" y="422">Anthropic</text><text x="183" y="422">OpenAI</text><text x="281" y="422">Google</text><text x="379" y="422">AWS</text><text x="477" y="422">Azure</text><text x="575" y="422">GitHub</text><text x="674" y="422">Render</text></g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="proveedores" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Lo mejor de cada proveedor</span><span class="en">The best of each provider</span></span>
+    <h2><span class="es">Los líderes del mercado, <span class="grad">bajo un solo cerebro.</span></span><span class="en">Market leaders, <span class="grad">under one brain.</span></span></h2>
+    <p class="lead"><span class="es">No contratas, configuras ni pagas por separado cada uno de estos servicios.</span><span class="en">You don't sign up for, configure or pay for each of these services separately.</span></p>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Proveedor</span><span class="en">Provider</span></th><th><span class="es">Qué aporta</span><span class="en">What it brings</span></th></tr></thead>
+      <tbody>
+        <tr><td class="hi">Anthropic (Claude)</td><td class="lo"><span class="es">Razonamiento, redacción, agentes y programación asistida</span><span class="en">Reasoning, writing, agents and assisted coding</span></td></tr>
+        <tr><td class="hi">OpenAI (ChatGPT)</td><td class="lo"><span class="es">Modelos de lenguaje y generación de contenido</span><span class="en">Language models and content generation</span></td></tr>
+        <tr><td class="hi">Google (Gemini y Cloud)</td><td class="lo"><span class="es">Modelos multimodales, mapas, calendario y correo</span><span class="en">Multimodal models, maps, calendar and email</span></td></tr>
+        <tr><td class="hi">Amazon Web Services</td><td class="lo"><span class="es">Almacenamiento seguro de archivos y voz telefónica</span><span class="en">Secure file storage and phone voice</span></td></tr>
+        <tr><td class="hi">Microsoft Azure</td><td class="lo"><span class="es">Voces neuronales en español e inglés</span><span class="en">Neural voices in Spanish and English</span></td></tr>
+        <tr><td class="hi">GitHub</td><td class="lo"><span class="es">Código, versiones y automatización de pruebas</span><span class="en">Code, versioning and test automation</span></td></tr>
+        <tr><td class="hi">Render</td><td class="lo"><span class="es">Servidores, bases de datos y despliegue continuo</span><span class="en">Servers, databases and continuous deployment</span></td></tr>
+        <tr><td class="hi"><span class="es">Otros terceros</span><span class="en">Other third parties</span></td><td class="lo"><span class="es">Telefonía, mensajería, pagos y correo</span><span class="en">Telephony, messaging, payments and email</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="agentes">
+  <div class="wrap">
+    <span class="kick"><span class="es">Fuerza de trabajo</span><span class="en">Workforce</span></span>
+    <h2><span class="es">Agentes que se activan <span class="grad">solo cuando hacen falta.</span></span><span class="en">Agents that activate <span class="grad">only when needed.</span></span></h2>
+    <p class="lead"><span class="es">El cerebro activa solo los agentes que cada tarea necesita. La fuerza de trabajo crece cada trimestre y recibes los nuevos agentes automáticamente.</span><span class="en">The brain activates only the agents each task needs. The workforce grows every quarter and you get new agents automatically.</span></p>
+    <div class="agents">
+      <div class="ag"><h3><span class="es">Núcleo siempre activo</span><span class="en">Always-on core</span></h3><p><span class="es">Negocio, investigación, correos, software, triage, actas, voz y alertas</span><span class="en">Business, research, email, software, triage, minutes, voice and alerts</span></p></div>
+      <div class="ag"><h3><span class="es">Preparación para IA</span><span class="en">AI readiness</span></h3><p><span class="es">Costo, riesgo, datos y hoja de ruta</span><span class="en">Cost, risk, data and roadmap</span></p></div>
+      <div class="ag"><h3><span class="es">Ingeniería</span><span class="en">Engineering</span></h3><p><span class="es">Desarrollo, seguridad, pruebas y despliegue</span><span class="en">Development, security, testing and release</span></p></div>
+      <div class="ag"><h3><span class="es">Datos y ML</span><span class="en">Data and ML</span></h3><p><span class="es">Extracción, análisis, pronósticos y tableros</span><span class="en">Extraction, analysis, forecasting and dashboards</span></p></div>
+      <div class="ag"><h3><span class="es">IA nativa y confianza</span><span class="en">AI-native and trust</span></h3><p><span class="es">Evaluación, citas, seguridad de IA y costos</span><span class="en">Evaluation, citations, AI safety and cost</span></p></div>
+      <div class="ag"><h3><span class="es">Negocio y ventas</span><span class="en">Business and sales</span></h3><p><span class="es">Estrategia, precios, mercadeo y retención</span><span class="en">Strategy, pricing, marketing and retention</span></p></div>
+      <div class="ag"><h3><span class="es">Finanzas, legal y talento</span><span class="en">Finance, legal and talent</span></h3><p><span class="es">Contabilidad, contratos, cumplimiento y privacidad</span><span class="en">Accounting, contracts, compliance and privacy</span></p></div>
+      <div class="ag"><h3><span class="es">Industria y diseño</span><span class="en">Industry and design</span></h3><p><span class="es">Salud, logística, agro, pagos, experiencia y traducción</span><span class="en">Health, logistics, agro, payments, UX and translation</span></p></div>
+      <div class="ag"><h3><span class="es">Servicios de IA</span><span class="en">AI services</span></h3><p><span class="es">Expertos que diseñan y verifican cada servicio</span><span class="en">Experts who design and verify every service</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="usos" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Para qué sirve</span><span class="en">What it is for</span></span>
+    <h2><span class="es">IA en el trabajo diario, <span class="grad">no solo en un chat.</span></span><span class="en">AI in daily work, <span class="grad">not just in a chat.</span></span></h2>
+    <p class="lead"><span class="es">No vendemos «IA abstracta» ni es solo para corporaciones grandes. Resolvemos problemas reales de tu operación: compras innecesarias, viajes vacíos en transporte, inventarios que no cuadran y facturas con errores humanos.</span><span class="en">We don't sell "abstract AI", and it isn't only for large corporations. We solve real problems in your operation: unnecessary purchases, empty trips in transport, inventories that don't reconcile and invoices with human errors.</span></p>
+    <div class="grid">
+      <div class="card"><h3><span class="es">Atención 24/7</span><span class="en">24/7 service</span></h3><p><span class="es">Asistentes de voz y texto en español e inglés que responden, agendan y toman mensajes.</span><span class="en">Voice and text assistants in Spanish and English that answer, book and take messages.</span></p></div>
+      <div class="card"><h3><span class="es">Documentos</span><span class="en">Documents</span></h3><p><span class="es">Lectura de facturas, contratos y formularios, con la fuente de cada dato señalada.</span><span class="en">Reading invoices, contracts and forms, with the source of each value marked.</span></p></div>
+      <div class="card"><h3><span class="es">Conocimiento interno</span><span class="en">Internal knowledge</span></h3><p><span class="es">Respuestas con los manuales y políticas de tu empresa, citando de dónde salen.</span><span class="en">Answers from your company's manuals and policies, citing where they come from.</span></p></div>
+      <div class="card"><h3><span class="es">Automatización</span><span class="en">Automation</span></h3><p><span class="es">Tareas repetitivas entre sistemas: copiar datos, dar seguimiento, recordar vencimientos.</span><span class="en">Repetitive work across systems: copying data, follow-ups, deadline reminders.</span></p></div>
+      <div class="card"><h3><span class="es">Ventas y mercadeo</span><span class="en">Sales and marketing</span></h3><p><span class="es">Calificación de prospectos y borradores de campañas, aprobados por una persona.</span><span class="en">Lead scoring and campaign drafts, approved by a person.</span></p></div>
+      <div class="card"><h3><span class="es">Tan fácil como WhatsApp</span><span class="en">As easy as WhatsApp</span></h3><p><span class="es">Si tu equipo sabe enviar una nota de voz o escribir un chat, ya sabe usar Labora. Nadie tiene que volverse técnico.</span><span class="en">If your team can send a voice note or type a chat, they already know how to use Labora. Nobody has to become technical.</span></p></div>
+      <div class="card"><h3><span class="es">Software a la medida</span><span class="en">Custom software</span></h3><p><span class="es">Aplicaciones nuevas construidas, probadas y publicadas en semanas.</span><span class="en">New apps built, tested and launched in weeks.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="seguridad">
+  <div class="wrap">
+    <span class="kick"><span class="es">Seguridad y control</span><span class="en">Security and control</span></span>
+    <h2><span class="es">Las reglas viven <span class="grad">en el sistema.</span></span><span class="en">The rules live <span class="grad">in the system.</span></span></h2>
+    <p class="lead"><span class="es">Labora no reemplaza tus sistemas, no es dueño de nada tuyo, no es un modelo propio y no decide por ti.</span><span class="en">Labora does not replace your systems, owns nothing of yours, is not its own model and does not decide for you.</span></p>
+    <div class="grid">
+      <div class="card"><span class="tag">DATA</span><h3><span class="es">Cifrado y entornos aislados</span><span class="en">Encrypted, isolated environments</span></h3><p><span class="es">Cifrado punto a punto y un entorno aislado por cliente. Tu información no se comparte ni se usa para entrenar modelos públicos.</span><span class="en">End-to-end encryption and an isolated environment per client. Your information is not shared or used to train public models.</span></p></div>
+      <div class="card"><span class="tag">APPROVAL</span><h3><span class="es">Aprobación humana</span><span class="en">Human approval</span></h3><p><span class="es">Nada se envía, se paga ni se publica sin autorización.</span><span class="en">Nothing is sent, paid or published without authorization.</span></p></div>
+      <div class="card"><span class="tag">AUDIT</span><h3><span class="es">Registro completo</span><span class="en">Full audit trail</span></h3><p><span class="es">Cada acción de cada agente queda registrada.</span><span class="en">Every action by every agent is logged.</span></p></div>
+      <div class="card"><span class="tag">EXPORT</span><h3><span class="es">Tus datos son tuyos</span><span class="en">Your data is yours</span></h3><p><span class="es">Toda la data y los reportes se exportan en Excel, CSV o base de datos cuando quieras. Si cancelas, te los llevas.</span><span class="en">All data and reports export to Excel, CSV or a database whenever you want. If you cancel, you take them with you.</span></p></div>
+      <div class="card"><span class="tag">HYPERCARE</span><h3><span class="es">Soporte que responde</span><span class="en">Support that answers</span></h3><p><span class="es">Resolución automática inmediata de incidencias, respaldada por especialistas técnicos y un equipo con presencia comercial directa.</span><span class="en">Immediate automatic resolution of incidents, backed by technical specialists and a team with a direct commercial presence.</span></p></div>
+      <div class="card"><span class="tag">TRUTH</span><h3><span class="es">Sin cifras inventadas</span><span class="en">No invented figures</span></h3><p><span class="es">Si un dato no existe, el sistema lo dice. No lo adivina.</span><span class="en">If a value does not exist, the system says so. It does not guess.</span></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="diferencia" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Frente a un solo proveedor</span><span class="en">Versus a single provider</span></span>
+    <h2><span class="es">Un proveedor entrega la materia prima. <span class="grad">Labora la entrega integrada.</span></span><span class="en">A provider delivers the raw material. <span class="grad">Labora delivers it integrated.</span></span></h2>
+    <div class="tw"><table>
+      <thead><tr><th><span class="es">Todo integrado</span><span class="en">All integrated</span></th><th><span class="es">Un solo proveedor</span><span class="en">One provider</span></th><th class="us">Labora</th></tr></thead>
+      <tbody>
+        <tr><td class="hi"><span class="es">Modelos</span><span class="en">Models</span></td><td class="lo"><span class="es">Solo los suyos</span><span class="en">Only its own</span></td><td class="us"><span class="es">Los mejores de varios</span><span class="en">The best of several</span></td></tr>
+        <tr><td class="hi"><span class="es">Conexión con tus sistemas</span><span class="en">Connection to your systems</span></td><td class="lo"><span class="es">La construyes tú</span><span class="en">You build it</span></td><td class="us"><span class="es">Ya integrada por MCP</span><span class="en">Already integrated via MCP</span></td></tr>
+        <tr><td class="hi"><span class="es">Agentes por función</span><span class="en">Agents by function</span></td><td class="lo"><span class="es">Los armas tú</span><span class="en">You assemble them</span></td><td class="us"><span class="es">Más de cien, listos</span><span class="en">Over one hundred, ready</span></td></tr>
+        <tr><td class="hi"><span class="es">Voz, telefonía y mensajería</span><span class="en">Voice, phone and messaging</span></td><td class="lo"><span class="es">Aparte</span><span class="en">Separate</span></td><td class="us"><span class="es">Incluidas</span><span class="en">Included</span></td></tr>
+        <tr><td class="hi"><span class="es">Aprobación y auditoría</span><span class="en">Approval and audit</span></td><td class="lo"><span class="es">La diseñas tú</span><span class="en">You design it</span></td><td class="us"><span class="es">Incorporadas</span><span class="en">Built in</span></td></tr>
+        <tr><td class="hi"><span class="es">Evalúa tus proveedores</span><span class="en">Evaluate your providers</span></td><td class="lo"><span class="es">Estás atado</span><span class="en">You're locked in</span></td><td class="us"><span class="es">Se cambia de proveedor</span><span class="en">The provider is swapped</span></td></tr>
+        <tr><td class="hi"><span class="es">Soporte</span><span class="en">Support</span></td><td class="lo"><span class="es">Tickets en otro idioma</span><span class="en">Tickets, wait your turn</span></td><td class="us"><span class="es">Soporte Hypercare</span><span class="en">Hypercare support</span></td></tr>
+        <tr><td class="hi"><span class="es">Si decides cancelar</span><span class="en">If you decide to cancel</span></td><td class="lo"><span class="es">Tus datos quedan atrapados</span><span class="en">Your data stays locked in</span></td><td class="us"><span class="es">Te llevas tus datos</span><span class="en">You take your data with you</span></td></tr>
+        <tr><td class="hi"><span class="es">Tiempo para empezar</span><span class="en">Time to start</span></td><td class="lo"><span class="es">Meses</span><span class="en">Months</span></td><td class="us"><span class="es">4 semanas</span><span class="en">4 weeks</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="precio">
+  <div class="wrap">
+    <span class="kick"><span class="es">Precios</span><span class="en">Pricing</span></span>
+    <h2><span class="es">Se contrata <span class="grad">como un servicio.</span></span><span class="en">Contracted <span class="grad">as a service.</span></span></h2>
+    <p class="lead"><span class="es">Un anticipo para empezar, el saldo de la configuración cuando validas los resultados, y una suscripción mensual que corre desde que estás listo para generar datos.</span><span class="en">A deposit to start, the rest of the setup once you validate the results, and a monthly subscription that runs from the day you are ready to generate data.</span></p>
+    <div class="price">
+      <div class="pc">
+        <span class="kick" style="margin:0"><span class="es">Configuración inicial</span><span class="en">Initial setup</span></span>
+        <div class="amt">$685 <small>USD · <span class="es">pago único</span><span class="en">one time</span></small></div>
+        <p><span class="es">Creación de la instancia de tu empresa y conexión del cerebro MCP.</span><span class="en">Creating your company's instance and connecting the MCP brain.</span></p>
+        <ul>
+          <li><span class="es">Anticipo de entrada: <b>USD 245</b></span><span class="en">Entry deposit: <b>USD 245</b></span></li>
+          <li><span class="es">Saldo al final de la prueba de 4 semanas, cuando ves la solución operativa con tus propios datos</span><span class="en">The rest at the end of the 4-week proof of concept, once you see the solution running with your own data</span></li>
+        </ul>
+      </div>
+      <div class="pc feat">
+        <span class="kick" style="margin:0"><span class="es">Suscripción mensual</span><span class="en">Monthly subscription</span></span>
+        <div class="amt">$388 <small>USD / <span class="es">mes</span><span class="en">month</span></small></div>
+        <p><span class="es">Uso de la inteligencia artificial avanzada y mantenimiento del ecosistema.</span><span class="en">Use of the advanced AI and ecosystem maintenance.</span></p>
+        <ul>
+          <li><span class="es">Consumo de tokens estándar incluido</span><span class="en">Standard token usage included</span></li>
+          <li><span class="es">Acceso a la fuerza de trabajo de agentes</span><span class="en">Access to the agent workforce</span></li>
+          <li><span class="es">Nuevos agentes cada trimestre</span><span class="en">New agents every quarter</span></li>
+          <li><span class="es">Empieza a correr cuando estás listo para generar datos</span><span class="en">Starts running when you are ready to generate data</span></li>
+          <li><span class="es">Soporte Hypercare incluido</span><span class="en">Hypercare support included</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="split">
+      <div class="card"><span class="tag"><span class="es">INCLUIDO EN LA SUSCRIPCIÓN</span><span class="en">INCLUDED IN THE SUBSCRIPTION</span></span><ul>
+        <li><span class="es">Diagnóstico de tu operación</span><span class="en">Assessment of your operation</span></li>
+        <li><span class="es">Conexión del cerebro a tus sistemas</span><span class="en">Connecting the brain to your systems</span></li>
+        <li><span class="es">Soluciones estándar: atención 24/7, documentos, conocimiento interno</span><span class="en">Standard solutions: 24/7 service, documents, internal knowledge</span></li>
+        <li><span class="es">La fuerza de trabajo de agentes</span><span class="en">The agent workforce</span></li></ul></div>
+      <div class="card q"><span class="tag"><span class="es">SE COTIZA APARTE</span><span class="en">QUOTED SEPARATELY</span></span><ul>
+        <li><span class="es">Desarrollo a la medida de tu negocio</span><span class="en">Development tailored to your business</span></li>
+        <li><span class="es">Automatizaciones propias de tus procesos</span><span class="en">Automations specific to your processes</span></li>
+        <li><span class="es">Optimización de tu operación e integraciones especiales</span><span class="en">Optimizing your operation and special integrations</span></li></ul>
+        <p class="fine"><span class="es">Antes de empezar ves las horas y el costo de cada componente. Nada se cobra sin tu aprobación.</span><span class="en">Before starting you see the hours and cost of each component. Nothing is charged without your approval.</span></p></div>
+    </div>
+    <p class="fine"><span class="es">Pagas desde Colombia o desde cualquier país con Stripe o PayPal. Un consumo de tokens por encima del estándar se cotiza aparte.</span><span class="en">Pay from Colombia or anywhere with Stripe or PayPal. Token usage above the standard is quoted separately.</span></p>
+  </div>
+</section>
+
+<section id="empezar" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Cómo empezar</span><span class="en">How to start</span></span>
+    <h2><span class="es">Pequeño y seguro: <span class="grad">máximo cuatro semanas.</span></span><span class="en">Small and safe: <span class="grad">four weeks at most.</span></span></h2>
+    <p class="lead"><span class="es">Una prueba de concepto de 4 semanas con una métrica clara de ahorro: horas-hombre recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro demostrado no supera el costo de la suscripción, no se continúa.</span><span class="en">A 4-week proof of concept with a clear savings metric: staff hours recovered, fuel saved or losses avoided. If the savings shown do not exceed the cost of the subscription, it does not continue.</span></p>
+    <ol class="steps">
+      <li><h3><span class="es">Diagnóstico</span><span class="en">Assessment</span></h3><p><span class="es">Medimos costo, riesgo y calidad de datos, y entregamos una hoja de ruta.</span><span class="en">We measure cost, risk and data quality, and deliver a roadmap.</span></p></li>
+      <li><h3><span class="es">Primer paso seguro</span><span class="en">A safe first step</span></h3><p><span class="es">Elegimos un proceso de bajo riesgo y alto valor.</span><span class="en">We pick a low-risk, high-value process.</span></p></li>
+      <li><h3><span class="es">Conexión</span><span class="en">Connection</span></h3><p><span class="es">El cerebro se conecta a los sistemas que ese proceso usa.</span><span class="en">The brain connects to the systems that process uses.</span></p></li>
+      <li><h3><span class="es">Resultados medidos</span><span class="en">Measured results</span></h3><p><span class="es">Medimos el ahorro con tus datos reales. Si no supera la suscripción, no se continúa.</span><span class="en">We measure the savings on your real data. If they do not beat the subscription, it does not continue.</span></p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="demo" class="final">
+  <div class="wrap">
+    <span class="kick"><span class="es">Siguiente paso</span><span class="en">Next step</span></span>
+    <h2><span class="es">Convierte tu empresa en una <span class="grad">empresa inteligente.</span></span><span class="en">Turn your company into an <span class="grad">intelligent company.</span></span></h2>
+    <p class="lead"><span class="es">Cuéntanos de tu empresa y agendamos una demostración con tus sistemas reales.</span><span class="en">Tell us about your company and we will book a demo with your real systems.</span></p>
+    <form id="leadForm" class="lead-f" novalidate style="margin:0 auto;text-align:left">
+      <div class="fg">
+        <label><span class="es">Nombre completo *</span><span class="en">Full name *</span><input name="full_name" required maxlength="120" autocomplete="name"></label>
+        <label><span class="es">Correo *</span><span class="en">Email *</span><input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+        <label><span class="es">Teléfono / WhatsApp *</span><span class="en">Phone / WhatsApp *</span><input name="phone" type="tel" required maxlength="40" autocomplete="tel"></label>
+        <label><span class="es">Empresa *</span><span class="en">Company *</span><input name="company_name" required maxlength="120" autocomplete="organization"></label>
+        <label><span class="es">País</span><span class="en">Country</span><input name="country" maxlength="80" autocomplete="country-name"></label>
+        <label><span class="es">Industria</span><span class="en">Industry</span><input name="industry" maxlength="120"></label>
+        <label class="full"><span class="es">¿Qué quieres lograr con la IA? *</span><span class="en">What do you want to achieve with AI? *</span><textarea name="problem" required maxlength="4000" rows="4"></textarea></label>
+        <label class="full"><span class="es">¿Qué sistemas usas hoy? (SAP, Oracle, CONTPAQi...)</span><span class="en">What systems do you use today? (SAP, Oracle, NetSuite...)</span><input name="existing_stack" maxlength="500"></label>
+      </div>
+      <p class="fine" style="margin:0 0 14px"><span class="es">Al enviar, aceptas que el equipo de Labora te contacte por correo o teléfono sobre tu solicitud.</span><span class="en">By sending, you agree that the Labora team may contact you by email or phone about your request.</span></p>
+      <button type="submit" class="btn pri" id="sendBtn"><span class="es">Agendar demostración</span><span class="en">Book a demo</span> &rarr;</button>
+      <div id="msg" class="msg" role="status" hidden></div>
+      <div id="slotBox" class="slots" hidden></div>
+    </form>
+  </div>
+</section>
+
+<section id="faq" class="alt">
+  <div class="wrap">
+    <span class="kick"><span class="es">Preguntas frecuentes</span><span class="en">Frequently asked questions</span></span>
+    <h2><span class="es">Las dudas que más escuchamos, <span class="grad">respondidas.</span></span><span class="en">The questions we hear most, <span class="grad">answered.</span></span></h2>
+    <p class="lead"><span class="es">Los diez miedos más comunes de una empresa antes de dar el paso, y lo que hacemos con cada uno.</span><span class="en">The ten most common fears a company has before taking the step, and what we do about each one.</span></p>
+    <div class="ask" id="ask">
+      <label for="askIn" class="ask-l"><span class="es">Pregúntale a Lina</span><span class="en">Ask Ava</span></label>
+      <div class="ask-row">
+        <input id="askIn" type="text" maxlength="300" autocomplete="off" placeholder="¿Cómo les pago desde Colombia?">
+        <button type="button" id="askMic" class="ask-mic" aria-label="Preguntar con la voz / Ask by voice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button type="button" id="askGo" class="btn pri"><span class="es">Preguntar</span><span class="en">Ask</span></button>
+      </div>
+    </div>
+    <div class="faq">
+      <details class="qa" data-k="datos informacion confidencial confidencialidad seguridad seguro cifrado privacidad fuga fiscal seniat sensible margenes costos clientes quienes entrenar modelos data information privacy security encrypted leak who train" data-id="datos">
+        <summary><span class="qn">01</span><span class="qt"><span class="es">¿Quiénes son ustedes y qué hacen con mi información sensible?</span><span class="en">Who are you, and what do you do with my sensitive information?</span></span></summary>
+        <div class="qb"><p><span class="es">Labora opera con cifrado punto a punto y entornos aislados por cliente. Tu información no se comparte ni se usa para entrenar modelos públicos: solo se procesan metadatos operativos para automatizar el flujo dentro de tu misma empresa o negocio.</span><span class="en">Labora runs with end-to-end encryption and an isolated environment for each client. Your information is not shared or used to train public models: only operational metadata is processed, to automate the flow inside your own company or business.</span></p></div>
+      </details>
+      <details class="qa" data-k="pago pagar funciona falla riesgo anticipo configuracion garantia prueba concepto semanas 685 245 mitad resultados risk pay works fail deposit setup guarantee proof concept weeks" data-id="riesgo">
+        <summary><span class="qn">02</span><span class="qt"><span class="es">¿Y si pago la configuración y el sistema no funciona?</span><span class="en">What if I pay for the setup and the system doesn't work?</span></span></summary>
+        <div class="qb"><p><span class="es">Empiezas con una prueba de concepto de 4 semanas. El anticipo de USD 245 es la puerta de entrada: compromete los recursos de desarrollo. El saldo de la configuración base inicial (USD 685 en total) se paga al final de las 4 semanas, cuando ves la solución operativa y validas tus propios datos funcionando. La suscripción empieza a correr desde la fecha en que estés listo para generar datos con tus propias soluciones.</span><span class="en">You start with a 4-week proof of concept. The USD 245 deposit is the way in: it commits the development resources. The rest of the base setup (USD 685 in total) is paid at the end of the 4 weeks, once you see the solution running and validate your own data working. The subscription starts counting on the day you are ready to generate data with your own solutions.</span></p></div>
+      </details>
+      <details class="qa" data-k="reemplazar reemplaza botar cambiar sistema actual excel software administrativo contable inventario aprender cero saint profit galac replace throw away change current system learn scratch" data-id="reemplazo">
+        <summary><span class="qn">03</span><span class="qt"><span class="es">¿Tengo que botar mi sistema actual o cambiar mi forma de trabajar?</span><span class="en">Do I have to throw out my current system or change how I work?</span></span></summary>
+        <div class="qb"><p><span class="es">No. Labora no reemplaza tu sistema: se conecta a él. Automatiza las tareas repetitivas por encima de tu software administrativo, contable o de inventarios, o de tus hojas de Excel, y resuelve en minutos lo que hoy te toma horas.</span><span class="en">No. Labora does not replace your system: it connects to it. It automates the repetitive work on top of your admin, accounting or inventory software, or your Excel sheets, and solves in minutes what takes you hours today.</span></p></div>
+      </details>
+      <details class="qa" data-k="pago pagar mensual venezuela divisas efectivo tarjeta stripe paypal metodo cobro dolares payment pay monthly card method dollars cash" data-id="pagos">
+        <summary><span class="qn">04</span><span class="qt"><span class="es">¿Cómo les pago mensualmente desde Colombia?</span><span class="en">How do I pay you every month from Colombia?</span></span></summary>
+        <div class="qb"><p><span class="es">Con esquemas flexibles adaptados a la realidad corporativa, a través de plataformas de pago empresariales sin fricciones: Stripe y PayPal.</span><span class="en">With flexible options adapted to how companies actually operate, through business payment platforms with no friction: Stripe and PayPal.</span></p></div>
+      </details>
+      <details class="qa" data-k="empleados personal equipo tecnicos complejo usar whatsapp voz nota chat despacho almacen rechazo dificil employees staff team technical complex use voice note hard" data-id="personal">
+        <summary><span class="qn">05</span><span class="qt"><span class="es">Mis empleados no son técnicos. ¿Lo van a querer usar?</span><span class="en">My employees aren't technical. Will they want to use it?</span></span></summary>
+        <div class="qb"><p><span class="es">La interfaz principal puede ser tan sencilla como un mensaje por WhatsApp o una nota de voz. Si tu empleado sabe enviar una nota de voz o escribir un chat, ya sabe usar Labora.</span><span class="en">The main interface can be as simple as a WhatsApp message or a voice note. If your employee can send a voice note or type a chat, they already know how to use Labora.</span></p></div>
+      </details>
+      <details class="qa" data-k="grande grandes corporaciones pequena pyme negocio caro costosa futurista abstracta multinacional para mi big large small business expensive futuristic abstract" data-id="pyme">
+        <summary><span class="qn">06</span><span class="qt"><span class="es">¿La inteligencia artificial no es solo para corporaciones grandes?</span><span class="en">Isn't artificial intelligence only for large corporations?</span></span></summary>
+        <div class="qb"><p><span class="es">No. Los problemas de tu operación diaria son reales: compras innecesarias, viajes vacíos en transporte, inventarios que no cuadran y facturas con errores humanos. No vendemos «IA abstracta»: vendemos soluciones directas, automatización de procesos y reducción de costos operativos.</span><span class="en">No. The problems in your daily operation are real: unnecessary purchases, empty trips in transport, inventories that don't reconcile and invoices with human errors. We don't sell "abstract AI": we sell direct solutions, process automation and lower operating costs.</span></p></div>
+      </details>
+      <details class="qa" data-k="soporte cae falla caida error responde ayuda hypercare especialistas tecnico humano nube abandonado support down outage help specialists human cloud" data-id="soporte">
+        <summary><span class="qn">07</span><span class="qt"><span class="es">Si el sistema se cae un martes a mediodía, ¿quién me responde?</span><span class="en">If the system goes down on a Tuesday at noon, who answers?</span></span></summary>
+        <div class="qb"><p><span class="es">El soporte de Labora incluye Hypercare: resolución automática inmediata de incidencias, respaldada por especialistas técnicos y un equipo con presencia comercial directa.</span><span class="en">Labora support includes Hypercare: immediate automatic resolution of incidents, backed by technical specialists and a team with a direct commercial presence.</span></p></div>
+      </details>
+      <details class="qa" data-k="retorno inversion recupero recuperar 388 mensual suscripcion ahorro metrica horas combustible mermas costo fijo vale roi return investment recover subscription savings metric fuel worth" data-id="retorno">
+        <summary><span class="qn">08</span><span class="qt"><span class="es">¿En cuánto tiempo recupero los USD 388 mensuales?</span><span class="en">How long until I recover the USD 388 a month?</span></span></summary>
+        <div class="qb"><p><span class="es">Durante la prueba de concepto de 4 semanas se fija una métrica clara de ahorro: horas-hombre recuperadas, combustible ahorrado o mermas evitadas. Si el ahorro demostrado no supera el costo de la suscripción, no se continúa.</span><span class="en">During the 4-week proof of concept a clear savings metric is set: staff hours recovered, fuel saved or losses avoided. If the savings shown do not exceed the cost of the subscription, it does not continue.</span></p></div>
+      </details>
+      <details class="qa" data-k="cancelar cancelo salir atrapado dependencia proveedor quedan datos exportar excel csv base propiedad secuestrado cancel leave locked trapped vendor keep export own property" data-id="salida">
+        <summary><span class="qn">09</span><span class="qt"><span class="es">¿Qué pasa si luego quiero cancelar? ¿Se quedan con mis datos?</span><span class="en">What happens if I want to cancel later? Do you keep my data?</span></span></summary>
+        <div class="qb"><p><span class="es">No. Toda la data estructurada y los reportes que genera la plataforma son propiedad exclusiva tuya, y se exportan en formatos universales (Excel, CSV o base de datos) en cualquier momento.</span><span class="en">No. All the structured data and reports the platform produces belong to you alone, and they can be exported in universal formats (Excel, CSV or a database) at any time.</span></p></div>
+      </details>
+      <details class="qa" data-k="fortaleza solidez empresa respaldo confianza contrato alianzas experiencia technologies quien estan detras strength solid company backing trust contract alliances experience" data-id="respaldo">
+        <summary><span class="qn">10</span><span class="qt"><span class="es">¿Qué fortaleza tienen como empresa?</span><span class="en">How strong are you as a company?</span></span></summary>
+        <div class="qb"><p><span class="es">Es una entidad con experiencia y, junto con sus alianzas institucionales, es una garantía para tu empresa o negocio desde el primer momento.</span><span class="en">It is an experienced entity and, together with its institutional alliances, a guarantee for your company or business from the very first moment.</span></p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>&copy; 2026 Labora · Cali, Colombia</span>
+    <span><span class="es">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub, Render y los sistemas mencionados son marcas de sus respectivos dueños. Labora no está afiliada a ellos.</span><span class="en">Anthropic, OpenAI, Google, AWS, Microsoft, GitHub, Render and the systems named are trademarks of their respective owners. Labora is not affiliated with them.</span></span>
+  </div>
+</footer>
+
+<div class="niva" id="niva">
+  <div class="orb-wrap" id="nivaOrb" role="button" tabindex="0" data-state="idle"
+       aria-label="Escribirle a Lina, la asistente virtual de Labora / Chat with the Labora virtual assistant"
+       aria-describedby="niva-cap">
+    <span class="orb-sr" id="nivaSr" aria-live="polite"></span>
+    <svg class="orb-svg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="orbCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#8FE3C8" stop-opacity="1"/>
+              <stop offset="0.25" stop-color="#159F79" stop-opacity="0.95"/>
+              <stop offset="0.55" stop-color="#2E6DB4" stop-opacity="0.85"/>
+              <stop offset="0.82" stop-color="#02427F" stop-opacity="0.7"/>
+              <stop offset="1" stop-color="#0E7A5D" stop-opacity="0.5"/>
+            </radialGradient>
+            <radialGradient id="orbGlow" cx="0.5" cy="0.5">
+              <stop offset="0" stop-color="#159F79" stop-opacity="0.4"/>
+              <stop offset="0.45" stop-color="#02427F" stop-opacity="0.22"/>
+              <stop offset="1" stop-color="#0E7A5D" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="orbInnerCore" cx="0.5" cy="0.45">
+              <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.35" stop-color="#8FE3C8" stop-opacity="0.95"/>
+              <stop offset="1" stop-color="#159F79" stop-opacity="0.4"/>
+            </radialGradient>
+            <linearGradient id="orbRingGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#159F79"/>
+              <stop offset="0.4" stop-color="#2E6DB4"/>
+              <stop offset="0.75" stop-color="#02427F"/>
+              <stop offset="1" stop-color="#0E7A5D"/>
+            </linearGradient>
+            <linearGradient id="orbScan" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#159F79" stop-opacity="0"/>
+              <stop offset="0.5" stop-color="#8FE3C8" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#159F79" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle class="orb-glow" cx="120" cy="120" r="112" fill="url(#orbGlow)">
+            <animate attributeName="r" values="104;120;104" dur="5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.6;1;0.6" dur="5s" repeatCount="indefinite"/>
+          </circle>
+          <g class="orb-ring-outer">
+            <circle cx="120" cy="120" r="108" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.6" stroke-dasharray="2 4" opacity="0.55"/>
+            <circle cx="120" cy="12"  r="2.5" fill="#159F79" opacity="0.9"/>
+            <circle cx="228" cy="120" r="2.5" fill="#2E6DB4" opacity="0.9"/>
+            <circle cx="120" cy="228" r="2.5" fill="#0E7A5D" opacity="0.9"/>
+            <circle cx="12"  cy="120" r="2.5" fill="#02427F" opacity="0.9"/>
+          </g>
+          <g class="orb-ring-mid">
+            <circle cx="120" cy="120" r="96" fill="none" stroke="url(#orbRingGrad)" stroke-width="0.8" stroke-dasharray="6 3" opacity="0.7"/>
+            <g fill="#8FE3C8">
+              <circle cx="120" cy="24"  r="1.5"/><circle cx="188" cy="52"  r="1.5"/>
+              <circle cx="216" cy="120" r="1.5"/><circle cx="188" cy="188" r="1.5"/>
+              <circle cx="120" cy="216" r="1.5"/><circle cx="52"  cy="188" r="1.5"/>
+              <circle cx="24"  cy="120" r="1.5"/><circle cx="52"  cy="52"  r="1.5"/>
+            </g>
+          </g>
+          <circle class="orb-ring-inner" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" stroke-dasharray="10 2 2 2" opacity="0.85"/>
+          <g class="orb-scan">
+            <line x1="120" y1="120" x2="120" y2="32" stroke="url(#orbScan)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+          </g>
+          <circle class="orb-ring orb-ring-1" cx="120" cy="120" r="92" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.45"/>
+          <circle class="orb-ring orb-ring-2" cx="120" cy="120" r="84" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="orb-ring orb-ring-3" cx="120" cy="120" r="76" fill="none" stroke="url(#orbRingGrad)" stroke-width="1.5" stroke-opacity="0.65"/>
+          <g class="orb-particles">
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#159F79"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#02427F" style="animation-delay:-1.2s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2.5" fill="#0E7A5D" style="animation-delay:-2.4s"/>
+            <circle class="orb-particle" cx="120" cy="36" r="2" fill="#2E6DB4" style="animation-delay:-3.6s"/>
+          </g>
+          <circle class="orb-iris-outer" cx="120" cy="120" r="66" fill="none" stroke="url(#orbRingGrad)" stroke-width="1" opacity="0.5">
+            <animate attributeName="r" values="64;70;64" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-iris-segs" cx="120" cy="120" r="56" fill="none" stroke="#159F79" stroke-width="2" stroke-dasharray="14 18" stroke-linecap="round" opacity="0.75"/>
+          <circle class="orb-core" cx="120" cy="120" r="48" fill="url(#orbCore)">
+            <animate attributeName="r" values="44;52;44" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-inner" cx="120" cy="120" r="32" fill="url(#orbCore)" opacity="0.95">
+            <animate attributeName="r" values="34;28;34" dur="4.5s" repeatCount="indefinite"/>
+          </circle>
+          <circle class="orb-core-pinpoint" cx="120" cy="120" r="14" fill="url(#orbInnerCore)">
+            <animate attributeName="r" values="12;18;12" dur="2.2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.85;1;0.85" dur="2.2s" repeatCount="indefinite"/>
+          </circle>
+          <ellipse class="orb-highlight" cx="108" cy="106" rx="14" ry="9" fill="rgba(255,255,255,0.45)" opacity="0.55">
+            <animate attributeName="opacity" values="0.35;0.75;0.35" dur="4.5s" repeatCount="indefinite"/>
+          </ellipse>
+          <g class="orb-crosshair" opacity="0.35" stroke="#8FE3C8" stroke-width="0.6">
+            <line x1="120" y1="2"   x2="120" y2="10"/><line x1="120" y1="230" x2="120" y2="238"/>
+            <line x1="2"   y1="120" x2="10"  y2="120"/><line x1="230" y1="120" x2="238" y2="120"/>
+          </g>
+        </svg>
+    <div class="orb-caption" id="niva-cap">
+      <span class="orb-cap-idle" id="nivaCapIdle">Escríbele a Lina</span>
+      <span class="orb-cap-active" id="nivaCapActive">Lina te escucha</span>
+    </div>
+  </div>
+</div>
+
+<div data-voice-orb data-mode="text" data-agent="labora" data-position="bottom-right" data-accent="#159F79" data-accent2="#02427F"></div>
+<script src="/embed/voice-orb.js?v=4" defer></script>
+<script>
+(function(){
+  // Lina es una asistente que CONVERSA (persona "labora" en src/config/voice-agents.js):
+  // el orbe grande abre su conversación y refleja su estado. El cerebro, la voz y las
+  // citas viven en /embed/voice-orb.js + /api/voice-agent/chat + /api/synthex-lina.
+  var wrap = document.getElementById('nivaOrb');
+  var capA = document.getElementById('nivaCapActive'), capI = document.getElementById('nivaCapIdle');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function root(){ return document.querySelector('.d2orb-root'); }
+  function tap(){
+    var o = window.D2AIVoiceOrb, r = root(); if (!o || !r) return;
+    if (r.classList.contains('is-open')) o.close(); else o.open();
+  }
+  wrap.addEventListener('click', tap);
+  wrap.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
+  var TXT = {
+    // Por ahora Lina solo escribe (data-mode="text"): sin voz y sin micrófono.
+    es: { idle:'Escríbele a Lina', listening:'Escríbele a Lina', thinking:'Lina está pensando', speaking:'Lina está respondiendo' },
+    en: { idle:'Chat with Lina', listening:'Chat with Lina', thinking:'Lina is thinking', speaking:'Lina is replying' }
+  };
+  function sync(){
+    var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball'), st = 'idle';
+    if (r && ball && r.classList.contains('is-open') && r.classList.contains('is-live')) {
+      st = ball.classList.contains('is-speaking') ? 'speaking' : ball.classList.contains('is-thinking') ? 'thinking' : 'listening';
+    }
+    wrap.setAttribute('data-state', st);
+    var t = TXT[L()]; capI.textContent = t.idle; capA.textContent = t[st] || t.listening;
+  }
+  (function hook(){
+    var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball');
+    if (!ball) return setTimeout(hook, 300);
+    var mo = new MutationObserver(sync);
+    mo.observe(ball, { attributes:true, attributeFilter:['class'] });
+    mo.observe(r, { attributes:true, attributeFilter:['class'] });
+    sync();
+  })();
+  // El selector de idioma de arriba cambia también el idioma de Lina.
+  window.__setVoiceLang = function(l){ if (window.D2AIVoiceOrb) window.D2AIVoiceOrb.setLang(l); sync(); };
+})();
+</script>
+
+<script>
+(function(){
+  // Idioma: español por defecto, inglés con el selector de arriba a la derecha.
+  var btns = document.querySelectorAll('[data-set-lang]');
+  function set(l){
+    document.documentElement.lang = l;
+    btns.forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-set-lang') === l ? 'true' : 'false'); });
+    try { localStorage.setItem('labora_lang', l); } catch(e) {}
+    if (window.__setVoiceLang) window.__setVoiceLang(l);   // Lina in Spanish, Ava in English
+  }
+  window.applyLanguage = set;
+
+  // Tema claro / oscuro: oscuro por defecto (la marca), la elección se recuerda.
+  var root = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  function paint(){ if (meta) meta.setAttribute('content', root.getAttribute('data-theme') === 'light' ? '#F7F9FC' : '#021A33'); }
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(b){ b.addEventListener('click', function(){
+    var t = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', t); paint();
+    try { localStorage.setItem('labora_theme', t); } catch(e) {}
+  }); });
+  paint();
+  btns.forEach(function(b){ b.addEventListener('click', function(){ set(b.getAttribute('data-set-lang')); }); });
+  var saved = null; try { saved = localStorage.getItem('labora_lang'); } catch(e) {}
+  set(saved === 'en' ? 'en' : 'es');
+
+
+  // Solicitud de demostración: entra al mismo intake de proyectos, marcada como Labora. Sin pago en línea.
+  var form = document.getElementById('leadForm'), btn = document.getElementById('sendBtn'), msg = document.getElementById('msg');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function show(kind, es, en){ msg.hidden = false; msg.className = 'msg ' + kind; msg.textContent = L() === 'en' ? en : es; }
+  // Paso 2: tres días con horarios libres del calendario de Digit2AI. Al tocar uno se agenda
+  // y SendGrid envía la confirmación con la imagen de Labora (/api/synthex-lina/public/*).
+  function pickSlot(d){
+    var box = document.getElementById('slotBox');
+    box.hidden = false; box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'Loading available times…' : 'Cargando horarios disponibles…') + '</p>';
+    var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    function fmtDay(iso){ return new Intl.DateTimeFormat(L() === 'en' ? 'en-US' : 'es-VE', { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)); }
+    function fmtTime(iso){ return new Intl.DateTimeFormat(L() === 'en' ? 'en-US' : 'es-VE', { hour:'numeric', minute:'2-digit', hourCycle: 'h12' }).format(new Date(iso)); }
+    fetch('/api/synthex-lina/public/slots').then(function(r){ return r.json(); }).then(function(j){
+      if (!j.ok || !j.days || !j.days.length) { box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'No times are free right now. We will contact you to book.' : 'No hay horarios libres ahora mismo. Te contactaremos para agendar.') + '</p>'; return; }
+      box.innerHTML = '';
+      var h = document.createElement('h3'); h.className = 'slot-h'; h.textContent = L() === 'en' ? 'Choose your demo time' : 'Elige el horario de tu demostración'; box.appendChild(h);
+      var note = document.createElement('p'); note.className = 'fine'; note.textContent = (L() === 'en' ? 'Times in your time zone' : 'Horas en tu zona horaria') + (tz ? ' (' + tz + ')' : '') + ' · ' + j.minutes + ' min'; box.appendChild(note);
+      j.days.forEach(function(day){
+        var col = document.createElement('div'); col.className = 'slot-day';
+        var t = document.createElement('div'); t.className = 'slot-d'; var dn = fmtDay(day.slots[0]); t.textContent = dn.charAt(0).toUpperCase() + dn.slice(1); col.appendChild(t);
+        day.slots.forEach(function(iso){
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'btn slot-b'; b.textContent = fmtTime(iso);
+          b.addEventListener('click', function(){ book(iso, b); });
+          col.appendChild(b);
+        });
+        box.appendChild(col);
+      });
+    }).catch(function(){ box.innerHTML = '<p class="fine">' + (L() === 'en' ? 'Could not load times. We will contact you to book.' : 'No se pudieron cargar los horarios. Te contactaremos para agendar.') + '</p>'; });
+    function book(iso, b){
+      box.querySelectorAll('.slot-b').forEach(function(x){ x.disabled = true; });
+      b.classList.add('pri');
+      fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+        nombre: d.full_name, email: d.email, telefono: d.phone, empresa: d.company_name, tema: (d.problem || '').slice(0, 300), start: iso, lang: L(), tz: tz, brand: 'labora' }) })
+        .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
+        .then(function(x){
+          if (x.j.booked) {
+            var whenTxt = (fmtDay(x.j.start) + ', ' + fmtTime(x.j.start)).replace(/\.$/, '');
+            box.innerHTML = '';
+            var ok = document.createElement('div'); ok.className = 'msg ok';
+            ok.textContent = (L() === 'en'
+              ? (x.j.already ? 'You already have a demo booked: ' : 'Your demo is booked: ') + whenTxt + '.' + (x.j.email_sent ? ' We sent the confirmation to ' + d.email + '.' : '')
+              : (x.j.already ? 'Ya tienes una demostración agendada: ' : 'Tu demostración quedó agendada: ') + whenTxt + '.' + (x.j.email_sent ? ' Te enviamos la confirmación a ' + d.email + '.' : ''));
+            box.appendChild(ok); msg.hidden = true;
+          } else if (x.j.error === 'slot_taken') {
+            show('bad', 'Ese horario se acaba de ocupar. Elige otro.', 'That time was just taken. Please pick another.'); pickSlot(d);
+          } else {
+            box.querySelectorAll('.slot-b').forEach(function(y){ y.disabled = false; }); b.classList.remove('pri');
+            show('bad', 'No se pudo agendar. Revisa tu correo y teléfono, o intenta otro horario.', 'Could not book. Check your email and phone, or try another time.');
+          }
+        })
+        .catch(function(){ box.querySelectorAll('.slot-b').forEach(function(y){ y.disabled = false; }); show('bad', 'No se pudo agendar. Intenta de nuevo.', 'Could not book. Please try again.'); });
+    }
+  }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var d = {}; new FormData(form).forEach(function(v, k){ d[k] = String(v).trim(); });
+    var missing = false;
+    ['full_name','email','phone','company_name','problem'].forEach(function(k){
+      var el = form.elements[k]; var bad = !d[k] || (k === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d[k]));
+      el.classList.toggle('bad', bad); if (bad) missing = true;
+    });
+    if (missing){ show('bad', 'Completa los campos marcados con *.', 'Please complete the fields marked with *.'); return; }
+    btn.disabled = true; show('', 'Enviando...', 'Sending...');
+    fetch('/projects/api/v1/intake/public/request', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+      full_name:d.full_name, email:d.email, phone:d.phone, company_name:d.company_name, country:d.country, industry:d.industry,
+      existing_stack:d.existing_stack, problem:d.problem,
+      project_title:'Labora - ' + d.company_name,
+      project_description:'Solicitud de demostración de Labora desde grupolabora.com.\n\n' + d.problem,
+      ai_category:['Labora'], heard_from:'Labora landing', utm_source:'grupolabora-landing', utm_campaign:'grupolabora-demo',
+      referrer_url: document.referrer || ''
+    }) })
+      .then(function(r){ return r.json().then(function(j){ return { ok:r.ok, j:j }; }); })
+      .then(function(x){
+        if (!x.ok || !x.j.success) throw new Error('lead_failed');
+        form.querySelectorAll('input,textarea,select').forEach(function(el){ el.disabled = true; });
+        btn.hidden = true;
+        show('ok', 'Recibimos tu solicitud. Ahora elige el día y la hora de tu demostración.', 'We received your request. Now pick the day and time of your demo.');
+        pickSlot(d);
+      })
+      .catch(function(){ btn.disabled = false; show('bad', 'No se pudo enviar. Intenta de nuevo en un momento.', 'Could not send. Please try again in a moment.'); });
+  });
+})();
+</script>
+<script>
+(function(){
+  // Pregúntale a Lina: la pregunta escrita o dictada va a la MISMA Lina del orbe,
+  // que sabe todo lo de Labora y puede agendar la reunión.
+  var inp = document.getElementById('askIn'), go = document.getElementById('askGo'), mic = document.getElementById('askMic');
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function ask(){
+    var q = inp.value.trim(); if (!q || !window.D2AIVoiceOrb) return;
+    inp.value = '';
+    window.D2AIVoiceOrb.send(q);
+  }
+  go.addEventListener('click', ask);
+  inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); ask(); } });
+  // Dictado apagado mientras Lina está en modo solo texto.
+  var SR = null;
+  if (!SR) { mic.style.display = 'none'; }
+  else mic.addEventListener('click', function(){
+    var r = new SR(); r.lang = L() === 'en' ? 'en-US' : 'es-419'; r.interimResults = false; r.maxAlternatives = 1;
+    mic.classList.add('on');
+    r.onresult = function(e){ inp.value = e.results[0][0].transcript; ask(); };
+    r.onend = function(){ mic.classList.remove('on'); };
+    r.onerror = function(){ mic.classList.remove('on'); };
+    try { r.start(); } catch (e) { mic.classList.remove('on'); }
+  });
+  function ph(){ inp.placeholder = L() === 'en' ? 'How do I pay from Colombia?' : '¿Cómo les pago desde Colombia?'; }
+  new MutationObserver(ph).observe(document.documentElement, { attributes:true, attributeFilter:['lang'] }); ph();
+})();
+</script>
+<div class="bk-ov" id="bkOv" hidden>
+  <div class="bk" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+    <button type="button" class="bk-x" id="bkX" aria-label="Cerrar / Close">&times;</button>
+    <div id="bkBody"></div>
+  </div>
+</div>
+<script>
+(function(){
+  // "Agendar demostración": 1) tres días con horarios libres del calendario de Digit2AI Projects,
+  // 2) nombre, correo, teléfono y empresa, 3) se agenda, SendGrid envía la confirmación y aquí se agradece.
+  var ov = document.getElementById('bkOv'), body = document.getElementById('bkBody'), last = null;
+  var st = { days: null, start: null, minutes: 60 };
+  var tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
+  function T(es, en){ return L() === 'en' ? en : es; }
+  function loc(){ return L() === 'en' ? 'en-US' : 'es-VE'; }
+  function cap(x){ return x.charAt(0).toUpperCase() + x.slice(1); }
+  function fDay(iso){ return cap(new Intl.DateTimeFormat(loc(), { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso))); }
+  function fTime(iso){ return new Intl.DateTimeFormat(loc(), { hour:'numeric', minute:'2-digit', hourCycle: 'h12' }).format(new Date(iso)); }
+  function when(iso){ return new Intl.DateTimeFormat(loc(), { weekday:'long', day:'numeric', month:'long' }).format(new Date(iso)) + ', ' + fTime(iso); }
+  function dot(t){ return /\.$/.test(t) ? t : t + '.'; }
+  function el(tag, cls, txt){ var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  function head(step, title, sub){
+    body.innerHTML = '';
+    var s = el('div', 'bk-steps');
+    [T('1 · Horario','1 · Time'), T('2 · Tus datos','2 · Your details'), T('3 · Listo','3 · Done')].forEach(function(t, i){ var x = el('span', i + 1 === step ? 'on' : '', t); s.appendChild(x); });
+    body.appendChild(s);
+    var h = el('h3', null, title); h.id = 'bkTitle'; body.appendChild(h);
+    if (sub) body.appendChild(el('p', 'sub', sub));
+  }
+  function stepTime(){
+    head(1, T('Agenda tu demostración', 'Book your demo'),
+      T('Elige el día y la hora que mejor te quede. Horas en tu zona horaria', 'Pick the day and time that suits you. Times in your time zone') + (tz ? ' (' + tz + ')' : '') + ' · ' + st.minutes + ' min.');
+    if (!st.days) { body.appendChild(el('p', 'fine', T('Cargando horarios disponibles…', 'Loading available times…'))); return; }
+    if (!st.days.length) { body.appendChild(el('p', 'fine', T('No hay horarios libres en este momento. Déjanos tus datos en el formulario de abajo y te contactamos.', 'No times are free right now. Leave your details in the form below and we will contact you.'))); return; }
+    var g = el('div', 'bk-days');
+    st.days.forEach(function(d){
+      var c = el('div', 'bk-day'); c.appendChild(el('b', null, fDay(d.slots[0])));
+      d.slots.forEach(function(iso){
+        var b = el('button', 'bk-t' + (iso === st.start ? ' sel' : ''), fTime(iso)); b.type = 'button';
+        b.addEventListener('click', function(){ st.start = iso; stepDetails(); });
+        c.appendChild(b);
+      });
+      g.appendChild(c);
+    });
+    body.appendChild(g);
+  }
+  var saved = { nombre:'', email:'', telefono:'', empresa:'' };
+  function field(name, label, type, ac){
+    var l = el('label'); l.appendChild(document.createTextNode(label));
+    var i = document.createElement('input'); i.name = name; i.type = type || 'text'; i.autocomplete = ac || 'off'; i.maxLength = 160; i.value = saved[name] || '';
+    i.addEventListener('input', function(){ saved[name] = i.value; i.classList.remove('bad'); });
+    l.appendChild(i); return l;
+  }
+  function stepDetails(){
+    head(2, T('Tus datos', 'Your details'), T('Te enviaremos la confirmación por correo.', 'We will email you the confirmation.'));
+    body.appendChild(el('div', 'bk-pick', cap(when(st.start))));
+    var f = el('div', 'bk-f');
+    f.appendChild(field('nombre', T('Nombre y apellido *', 'Full name *'), 'text', 'name'));
+    f.appendChild(field('email', T('Correo *', 'Email *'), 'email', 'email'));
+    f.appendChild(field('telefono', T('Teléfono / WhatsApp *', 'Phone / WhatsApp *'), 'tel', 'tel'));
+    f.appendChild(field('empresa', T('Empresa', 'Company'), 'text', 'organization'));
+    body.appendChild(f);
+    var err = el('div', 'bk-err'); err.setAttribute('role', 'status'); body.appendChild(err);
+    var row = el('div', 'bk-row');
+    var back = el('button', 'btn', T('Cambiar horario', 'Change time')); back.type = 'button'; back.addEventListener('click', stepTime);
+    var go = el('button', 'btn pri', T('Confirmar demostración', 'Confirm demo')); go.type = 'button';
+    row.appendChild(back); row.appendChild(go); body.appendChild(row);
+    body.appendChild(el('p', 'fine', T('Al confirmar, aceptas que el equipo de Labora te contacte por correo o teléfono sobre tu demostración.', 'By confirming, you agree that the Labora team may contact you by email or phone about your demo.')));
+    setTimeout(function(){ var i = body.querySelector('input[name=nombre]'); if (i) i.focus(); }, 30);
+    go.addEventListener('click', function(){
+      var bad = [];
+      if (saved.nombre.trim().length < 2) bad.push('nombre');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(saved.email.trim())) bad.push('email');
+      if (saved.telefono.replace(/\D/g, '').length < 7) bad.push('telefono');
+      body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', bad.indexOf(i.name) !== -1); });
+      if (bad.length) { err.textContent = T('Revisa los campos marcados.', 'Please check the highlighted fields.'); return; }
+      go.disabled = true; back.disabled = true; err.textContent = T('Agendando…', 'Booking…');
+      fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
+        nombre: saved.nombre.trim(), email: saved.email.trim(), telefono: saved.telefono.trim(), empresa: saved.empresa.trim(),
+        tema: T('Demostración agendada desde el botón del inicio', 'Demo booked from the hero button'), start: st.start, lang: L(), tz: tz, brand: 'labora' }) })
+        .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
+        .then(function(x){
+          if (x.j.booked) return stepDone(x.j);
+          go.disabled = false; back.disabled = false;
+          if (x.j.error === 'slot_taken') { err.textContent = T('Ese horario se acaba de ocupar. Elige otro.', 'That time was just taken. Please pick another.'); st.days = null; st.start = null; load(); return; }
+          if (x.s === 429) { err.textContent = T('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Please wait a few minutes.'); return; }
+          if (x.j.fields) body.querySelectorAll('.bk-f input').forEach(function(i){ i.classList.toggle('bad', x.j.fields.indexOf(i.name) !== -1); });
+          err.textContent = T('No se pudo agendar. Revisa tus datos e intenta de nuevo.', 'Could not book. Check your details and try again.');
+        })
+        .catch(function(){ go.disabled = false; back.disabled = false; err.textContent = T('No se pudo agendar. Intenta de nuevo.', 'Could not book. Please try again.'); });
+    });
+  }
+  function stepDone(j){
+    body.innerHTML = '';
+    var s = el('div', 'bk-steps'); [T('1 · Horario','1 · Time'), T('2 · Tus datos','2 · Your details'), T('3 · Listo','3 · Done')].forEach(function(t, i){ s.appendChild(el('span', i === 2 ? 'on' : '', t)); }); body.appendChild(s);
+    var ok = el('div', 'bk-ok');
+    ok.appendChild(el('div', 'ic', '\u2713'));
+    var first = saved.nombre.trim().split(' ')[0];
+    var h = el('h3', null, T('¡Muchísimas gracias, ' + first + '!', 'Thank you so much, ' + first + '!')); h.id = 'bkTitle'; h.style.margin = '0 0 8px'; ok.appendChild(h);
+    ok.appendChild(el('p', 'sub', (j.already ? T('Ya tenías una demostración agendada para el ', 'You already had a demo booked for ') : T('Tu demostración quedó agendada para el ', 'Your demo is booked for ')) + dot(when(j.start))));
+    ok.appendChild(el('p', 'sub', j.email_sent
+      ? T('Vas a recibir un correo de confirmación en ' + saved.email.trim() + ' con la invitación para tu calendario. Si no lo ves, revisa tu carpeta de spam.', 'You will receive a confirmation email at ' + saved.email.trim() + ' with a calendar invite. If you do not see it, check your spam folder.')
+      : T('El equipo de Labora te contactará para confirmar.', 'The Labora team will contact you to confirm.')));
+    var c = el('button', 'btn pri', T('Cerrar', 'Close')); c.type = 'button'; c.addEventListener('click', close); ok.appendChild(c);
+    body.appendChild(ok);
+  }
+  function load(){
+    stepTime();
+    fetch('/api/synthex-lina/public/slots').then(function(r){ return r.json(); }).then(function(j){
+      st.days = (j && j.ok && j.days) ? j.days : []; st.minutes = (j && j.minutes) || 60; stepTime();
+    }).catch(function(){ st.days = []; stepTime(); });
+  }
+  function open(e){
+    if (e) e.preventDefault();
+    last = document.activeElement; ov.hidden = false; document.body.style.overflow = 'hidden';
+    st.days = null; st.start = null; load();
+    setTimeout(function(){ document.getElementById('bkX').focus(); }, 30);
+  }
+  function close(){ ov.hidden = true; document.body.style.overflow = ''; if (last && last.focus) last.focus(); }
+  document.querySelectorAll('[data-book-demo]').forEach(function(b){ b.addEventListener('click', open); });
+  document.getElementById('bkX').addEventListener('click', close);
+  ov.addEventListener('click', function(e){ if (e.target === ov) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !ov.hidden) close(); });
+  window.LaboraBookDemo = open;
+})();
+</script>
+<script>
+/* Menú hamburguesa: abre/cierra, se cierra al elegir, al tocar fuera y con Escape. */
+(function(){
+  var b=document.getElementById('sxBurger'), m=document.getElementById('sxLinks'); if(!b||!m) return;
+  function set(o){ document.documentElement.classList.toggle('menu-open',o); b.setAttribute('aria-expanded',o?'true':'false'); }
+  function open(){ return b.getAttribute('aria-expanded')==='true'; }
+  b.addEventListener('click',function(e){ e.stopPropagation(); set(!open()); });
+  m.addEventListener('click',function(e){ if(e.target.closest('a')) set(false); });
+  document.addEventListener('click',function(e){ if(open()&&!m.contains(e.target)) set(false); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&open()){ set(false); b.focus(); } });
+})();
+</script>
+</body>
+</html>

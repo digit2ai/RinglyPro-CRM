@@ -101,10 +101,11 @@ async function knowledgeFor(lang) {
 }
 
 // ── slots ─────────────────────────────────────────────────────────────────
-const TZ_OF = (brand) => brand === 'd2s' ? 'America/Bogota' : LABEL_TZ;
+const CO_BRANDS = new Set(['d2s', 'labora']); // Colombian brands: Bogota time, es-CO wording
+const TZ_OF = (brand) => CO_BRANDS.has(brand) ? 'America/Bogota' : LABEL_TZ;
 function label(iso, lang, brand) {
   const d = new Date(iso);
-  const loc = lang === 'en' ? 'en-US' : (brand === 'd2s' ? 'es-CO' : 'es-VE');
+  const loc = lang === 'en' ? 'en-US' : (CO_BRANDS.has(brand) ? 'es-CO' : 'es-VE');
   const s = new Intl.DateTimeFormat(loc, {
     timeZone: TZ_OF(brand), weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hourCycle: 'h12'
   }).format(d);
@@ -113,7 +114,7 @@ function label(iso, lang, brand) {
 
 router.get('/slots', onlyBrain, async (req, res) => {
   try {
-    const brand = req.query.brand === 'd2s' ? 'd2s' : 'synthex';
+    const brand = CO_BRANDS.has(req.query.brand) ? req.query.brand : 'synthex';
     const lang = req.query.lang === 'en' ? 'en' : 'es';
     const free = await booking().freeSlots();
     const days = booking().threeByThree(free, new Date().toISOString().slice(0, 10));
@@ -195,8 +196,8 @@ function validate(b) {
 // the model reads; the page reads the same object.
 // brand: 'synthex' (synthexsai.com + Lina) or 'digit2ai' (the digit2ai.com/presentacion deck).
 // Same calendar, same free-slot rule; only the calendar wording, the marker and the email change.
-const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:', d2s: 'd2s_lina:' };
-const BRAND_OK = (b) => (b === 'digit2ai' || b === 'd2s') ? b : 'synthex';
+const BRAND_TAG = { synthex: 'synthex_lina:', digit2ai: 'd2ai_deck:', d2s: 'd2s_lina:', labora: 'labora_lina:' };
+const BRAND_OK = (b) => (b === 'digit2ai' || b === 'd2s' || b === 'labora') ? b : 'synthex';
 async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
   brand = BRAND_OK(brand);
   const tag = BRAND_TAG[brand];
@@ -239,6 +240,8 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
         ? `Reunión con Digit2AI, agendada desde ${source || 'la presentación narrada (digit2ai.com/presentacion)'}.`
         : brand === 'd2s'
         ? `Reunión con D2S, agendada ${origen === 'lina' ? 'por Lina (asistente virtual en aiagent.ringlypro.com/d2s)' : 'desde ' + (source || 'el formulario de aiagent.ringlypro.com/d2s')}.`
+        : brand === 'labora'
+        ? `Reunión con Labora, agendada ${origen === 'lina' ? 'por Lina (asistente virtual en grupolabora.com)' : 'desde ' + (source || 'el formulario de grupolabora.com')}.`
         : origen === 'lina'
         ? 'Reunión con los agentes especializados de Synthex SAI, agendada por Lina (asistente virtual en synthexsai.com).'
         : source ? `Reunión con los agentes especializados de Synthex SAI, agendada desde ${source}.`
@@ -254,7 +257,7 @@ async function bookMeeting(v, startRaw, lang, origen, tz, brand, source) {
       `INSERT INTO d2_calendar_events
          (workspace_id, project_id, title, description, event_type, start_time, end_time, all_day, language, created_at, updated_at)
        VALUES (1, NULL, :title, :description, 'meeting', :s, :e, false, :lang, NOW(), NOW())`,
-      { replacements: { title: `${brand === 'digit2ai' ? 'Digit2AI' : brand === 'd2s' ? 'D2S' : 'Synthex SAI'}: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
+      { replacements: { title: `${brand === 'digit2ai' ? 'Digit2AI' : brand === 'd2s' ? 'D2S' : brand === 'labora' ? 'Labora' : 'Synthex SAI'}: ${v.nombre}${v.empresa ? ' (' + v.empresa + ')' : ''}`.slice(0, 500),
           description, s: start.toISOString(), e: end.toISOString(), lang },
         transaction: t, logging: false });
     await t.commit();
@@ -281,7 +284,7 @@ router.post('/book', onlyBrain, express.json({ limit: '4kb' }), async (req, res)
       nota: 'Pide de nuevo SOLO esos datos y confírmalos con la persona antes de reintentar.'
     });
   }
-  res.json(await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'lina', null, req.query.brand === 'd2s' ? 'd2s' : 'synthex'));
+  res.json(await bookMeeting(v, b.start, b.lang === 'en' ? 'en' : 'es', 'lina', null, CO_BRANDS.has(req.query.brand) ? req.query.brand : 'synthex'));
 });
 
 // ── the demo form on synthexsai.com (public) ───────────────────────────────

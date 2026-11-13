@@ -607,6 +607,21 @@ if (AGENTS.d2s.tools) {
   AGENTS.d2s.tools.definiciones = AGENTS.d2s.tools.definiciones.map((d) => (d.ruta === '/book' || d.ruta === '/slots') ? { ...d, ruta: d.ruta + '?brand=d2s' } : d);
 }
 
+// ── Labora (grupolabora.com, Colombia: Isabel Bueno, Alejandro Rojas, Juan Alberto Bueno,
+// Eduardo de Lima, Manuel Stagg) ── the D2S Lina again, with D2S replaced by Labora and the
+// site by grupolabora.com. Booking goes to ?brand=labora so the email is Labora's.
+function laboraDeep(v) {
+  if (typeof v === 'string') return v.replace(/aiagent\.ringlypro\.com\/d2s\/?/gi, 'grupolabora.com').replace(/D2S/g, 'Labora');
+  if (typeof v === 'function') return (...a) => { const r = v(...a); return r && typeof r.then === 'function' ? r.then(laboraDeep) : laboraDeep(r); };
+  if (Array.isArray(v)) return v.map(laboraDeep);
+  if (v && typeof v === 'object') { const o = {}; for (const k of Object.keys(v)) o[k] = (k === 'base' || k === 'ruta' || k === 'input_schema' || k === 'voice' || k === 'name' && typeof v[k] === 'string' && /^[a-z_]+$/.test(v[k])) ? v[k] : laboraDeep(v[k]); return o; }
+  return v;
+}
+AGENTS.labora = laboraDeep(AGENTS.d2s);
+if (AGENTS.labora.tools) {
+  AGENTS.labora.tools.definiciones = AGENTS.labora.tools.definiciones.map((d) => typeof d.ruta === 'string' ? { ...d, ruta: d.ruta.replace('brand=d2s', 'brand=labora') } : d);
+}
+
 function pick(field, lang, fallbackLang) {
   if (!field) return '';
   if (typeof field === 'string') return field;

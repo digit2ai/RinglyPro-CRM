@@ -495,6 +495,40 @@ app.use((req, res, next) => {
 });
 
 // ═════════════════════════════════════════════════════════════════════════
+// LABORA DOMAIN: grupolabora.com (Colombia; Isabel Bueno, Alejandro Rojas, Juan
+// Alberto Bueno, Eduardo de Lima, Manuel Stagg). The synthexsai.com landing, deck
+// and calculator under the Labora brand, built by scripts/build-grupolabora.js
+// into public/grupolabora/. Same rules as the Synthex handler: www 301s to the
+// apex, exact files only, only the paths the pages call fall through, and
+// everything else ends in a Labora 404, never the CRM (before this handler the
+// domain served the CRM dashboard).
+// ═════════════════════════════════════════════════════════════════════════
+const LABORA_HOSTS = new Set(['grupolabora.com', 'www.grupolabora.com']);
+const LABORA_FILES = {
+  '/': 'index.html', '/index.html': 'index.html',
+  '/pymes/': 'pymes/index.html', '/pymes/index.html': 'pymes/index.html',
+  '/pymes/calculadora/': 'pymes/calculadora/index.html', '/pymes/calculadora/index.html': 'pymes/calculadora/index.html',
+  '/og.jpg': 'og.jpg', '/pymes/og.jpg': 'pymes/og.jpg', '/icon-512.png': 'icon-512.png',
+  '/apple-touch-icon.png': 'apple-touch-icon.png', '/logo.png': 'logo.png'
+};
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!LABORA_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://grupolabora.com' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  if (SYNTHEX_PASS_THROUGH.has(path) || path === '/embed/book-meeting.js') return next();
+  if (path === '/pymes') return res.redirect(301, '/pymes/');
+  if (path === '/pymes/calculadora') return res.redirect(301, '/pymes/calculadora/');
+  const file = LABORA_FILES[path];
+  if (file) {
+    res.setHeader('Cache-Control', file.endsWith('.html') ? 'no-cache' : 'public, max-age=86400');
+    return res.sendFile(require('path').join(__dirname, '../public/grupolabora', file));
+  }
+  res.status(404).type('html').send('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Labora</title><body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F7F9FC;color:#021A33;font:16px Inter,system-ui,sans-serif;text-align:center"><div><p style="color:#475569">Página no encontrada · Page not found</p><a href="/" style="color:#02427F">grupolabora.com</a></div></body>');
+});
+
+// ═════════════════════════════════════════════════════════════════════════
 // LEVELUP MEDIA MARKETING DOMAIN: levelupmediamarketing.com serves the
 // verticals/levelup router at its ROOT (baseUrl ''), so every {{BASE}} in its
 // pages, manifest and worker resolves to the root. www 301s to the apex.
