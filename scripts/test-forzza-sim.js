@@ -120,11 +120,11 @@ ok(/sobregiro autorizado/i.test(html + app), 'aclara que negativo no es sobregir
 ok(/no es necesariamente ahorro/i.test(html), 'aclara que el tiempo liberado no es ahorro de efectivo');
 ok(/4\.33/.test(html) && /4\.33/.test(app), 'fórmula de horas liberadas');
 ok(/voice: 'dalia'/.test(app), 'narración con la voz de Dalia');
-ok(/class="slide"/g.test(html) && (html.match(/class="slide"/g) || []).length === 10, 'diez diapositivas');
+ok(/class="slide"/g.test(html) && (html.match(/class="slide"/g) || []).length === 13, 'trece diapositivas');
 const narr = app.match(/narr: '([^']+)'/g) || [];
-eq(narr.length, 10, 'una narración por diapositiva');
+eq(narr.length, 13, 'una narración por diapositiva');
 ok(narr.every(n => n.length < 2000 && !/\d/.test(n)), 'narraciones bajo 2000 caracteres y con cifras en palabras');
-eq((app.match(/notes: '/g) || []).length, 10, 'notas para el presentador en cada diapositiva');
+eq((app.match(/notes: '/g) || []).length, 13, 'notas para el presentador en cada diapositiva');
 
 // --- navegador ---
 (async () => {
@@ -155,19 +155,19 @@ eq((app.match(/notes: '/g) || []).length, 10, 'notas para el presentador en cada
       await pg.evaluate(() => document.getElementById('introSkip').click());
       ok(await pg.$eval('#intro', e => e.hidden), w + 'px: la bienvenida se cierra');
       if (w < 800) {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 13; i++) {
           const bad = await pg.evaluate(() => { const r = document.querySelector('.slide.on').getBoundingClientRect(); return document.documentElement.scrollWidth > innerWidth + 1 || r.right > innerWidth + 1; });
           ok(!bad, w + 'px: diapositiva ' + (i + 1) + ' sin desbordamiento horizontal');
           const small = await pg.evaluate(() => [...document.querySelectorAll('.dock button')].filter(b => b.offsetParent && (b.getBoundingClientRect().height < 44 || b.getBoundingClientRect().width < 44)).length);
           eq(small, 0, w + 'px: controles de 44 px o más (diapositiva ' + (i + 1) + ')');
           await pg.evaluate(() => document.getElementById('next').click());
         }
-        await pg.evaluate(() => { for (let i = 0; i < 10; i++) document.getElementById('prev').click(); });
+        await pg.evaluate(() => { for (let i = 0; i < 13; i++) document.getElementById('prev').click(); });
       }
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 13; i++) {
         await pg.evaluate(() => document.getElementById('next').click());
       }
-      eq(await pg.$eval('#count', e => e.textContent), '10 / 10', w + 'px: navegación hasta la última diapositiva');
+      eq(await pg.$eval('#count', e => e.textContent), '13 / 13', w + 'px: navegación hasta la última diapositiva');
       await pg.evaluate(() => document.querySelector('[data-goto-sim]').click());
       await new Promise(r => setTimeout(r, 200));
       const k = await pg.$$eval('#simKpis .kv', els => els.map(e => e.textContent));
@@ -188,14 +188,14 @@ eq((app.match(/notes: '/g) || []).length, 10, 'notas para el presentador en cada
       eq(await pg.$$eval('#simKpis .kv', els => els[4].textContent), '$45,000', w + 'px: horizonte 30 días');
       // volver conserva cambios
       await pg.evaluate(() => document.getElementById('backDeck').click());
-      eq(await pg.$eval('#count', e => e.textContent), '10 / 10', w + 'px: regresa a la misma diapositiva');
+      eq(await pg.$eval('#count', e => e.textContent), '13 / 13', w + 'px: regresa a la misma diapositiva');
       eq(await pg.evaluate(() => FzApp.state().horizon), 30, w + 'px: conserva los cambios al volver');
       // WhatsApp demo no envía nada
       await pg.evaluate(() => { location.hash = ''; document.getElementById('toSim').click(); document.getElementById('waApprove').click(); });
       ok(/no se envió/i.test(await pg.$eval('#waMsg', e => e.textContent)), w + 'px: WhatsApp demostración sin envío');
       await pg.screenshot({ path: path.join(process.env.SHOT_DIR || '/tmp', 'forzza-sim-' + w + '.png'), fullPage: false });
       await pg.evaluate(() => document.getElementById('toDeck').click());
-      await pg.evaluate(() => { for (let i = 0; i < 9; i++) document.getElementById('prev').click(); for (let i = 0; i < 5; i++) document.getElementById('next').click(); });
+      await pg.evaluate(() => { for (let i = 0; i < 12; i++) document.getElementById('prev').click(); for (let i = 0; i < 5; i++) document.getElementById('next').click(); });
       await new Promise(r => setTimeout(r, 400));
       await pg.screenshot({ path: path.join(process.env.SHOT_DIR || '/tmp', 'forzza-deck6-' + w + '.png') });
       await pg.close();

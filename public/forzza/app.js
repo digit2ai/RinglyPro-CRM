@@ -39,8 +39,8 @@
 
   // ---------- narración (Dalia) y notas ----------
   var SLIDES = [
-    { notes: 'Abrir con la síntesis de lo conversado, no como cita. Decir que es una propuesta con datos simulados. Mencionar que plazos, condiciones de compra, inventario y sistema actual se validan con Rafael.',
-      narr: 'Hola, soy Dalia, y te voy a explicar esta propuesta. Esta presentación usa datos simulados. La empresa de Rafael vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos. Lo que necesita es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando. El ciclo es este: compra de materiales, venta a crédito, cuenta por cobrar, cobro, y capital disponible para volver a operar. Los plazos, las condiciones de compra y el sistema actual todavía se van a validar con Rafael.' },
+    { notes: 'Abrir con lo que Rafael contó en la reunión: clientes que construyen o mejoran su casa, crédito, factura o efectivo, y los malabares para pagar a proveedores y contratistas. Decir que la presentación usa datos simulados.',
+      narr: 'Hola, soy Dalia, y te voy a explicar esta propuesta, actualizada con lo que conversamos en la reunión. La presentación usa datos simulados. La empresa de Rafael vende varilla, arena, cemento y otros materiales a crédito, en su mayoría a personas que construyen o mejoran su propia casa. Unos pagan con factura y otros en efectivo. Como nos dijiste, el dinero existe, pero hay que hacer malabares para que alcance a pagar a proveedores y contratistas a tiempo. La operación mueve unos cuatro millones de pesos al mes, con un equipo de cuatro personas y camiones propios. El ciclo es este: compra de materiales, venta a crédito, cuenta por cobrar, cobro, y capital disponible para volver a operar.' },
     { notes: 'Señalar el hueco entre los pagos de los días 7 a 15 y el primer cobro del día 20. Tres ideas: crédito no es efectivo, margen no es efectivo, comparar fechas anticipa faltantes.',
       narr: 'El reto está entre vender y cobrar. En este ejemplo, el día siete vence el pago a un proveedor, el día diez la mensualidad del vehículo y el día quince otro proveedor y la nómina. Pero el primer cliente paga hasta el día veinte. Durante esos días el dinero ya salió y todavía no regresa. Una venta a crédito genera una cuenta por cobrar, no efectivo. Y un buen margen no garantiza tener dinero para pagar la nómina a tiempo.' },
     { notes: 'Las cuatro respuestas se calculan con el escenario del simulador. Si se cambió algo en el simulador, las cifras ya lo reflejan.',
@@ -55,10 +55,16 @@
       narr: 'Antes de aceptar un pedido grande se puede simular. Una venta de cien mil pesos, con setenta y cinco mil de materiales y cinco mil de entrega, deja un margen ilustrativo de veinte mil pesos, antes de impuestos y otros gastos. Pero el día cinco salen ochenta mil pesos que regresan hasta el día treinta y cinco. Con un anticipo del treinta por ciento, la salida inicial baja a cincuenta mil pesos. No es una aprobación de crédito: es el efecto sobre el capital bajo los supuestos que se capturan.' },
     { notes: 'Todo es demostración: no hay banco ni WhatsApp conectados. Una persona revisa cada registro y cada mensaje antes de guardarlo o enviarlo.',
       narr: 'Menos captura y mejor seguimiento. Una factura o un mensaje se convierte en un registro propuesto, y una persona revisa cliente, importe, fechas y tipo antes de guardarlo. También se puede preparar un recordatorio de cobranza por WhatsApp que alguien aprueba antes de enviarlo. En esta demostración no se envía ningún mensaje ni se conecta ningún banco.' },
-    { notes: 'La prueba corre en paralelo con el proceso actual: nada se deja de hacer como hoy hasta comprobar que funciona. El calendario depende del alcance.',
-      narr: 'La propuesta es una prueba de concepto de cuatro semanas, en paralelo con el proceso actual. Semana uno: conocer la operación y aprobar el documento de solución. Semana dos: configurar las funciones prioritarias. Semana tres: usar la herramienta junto con el proceso de siempre. Semana cuatro: ajustar y evaluar. El calendario depende del alcance y de la información disponible.' },
-    { notes: 'Pedir la reunión de 30 a 60 minutos con Rafael y quien lleve la administración. Pedir ejemplos de archivos. El precio se define después del alcance.',
-      narr: 'El siguiente paso es una reunión de treinta a sesenta minutos con Rafael y con quien lleve la administración, para validar procesos, archivos y prioridades. Ayuda tener ejemplos de ventas a crédito, estados de cuenta, abonos, pagos a proveedores, nómina, financiamientos y las hojas de Excel que usan hoy. El precio se define después de conocer el alcance. Gracias.' }
+    { notes: 'Repasar el flujo que describió Rafael: pedido, despacho, entrega con foto, factura y cobro. Tocar el dolor de los pedidos que tardan en liberarse. Costo por camión y horas de nómina salen de los mismos registros.',
+      narr: 'Del pedido a la entrega, un solo flujo. El pedido llega por llamada o por WhatsApp y se redacta en el sistema. El despachador lo recibe y lo libera, sin esperas ni llamadas para preguntar cuándo sale. El chofer toma una foto de entrega y queda registrada la hora. Se sube la foto de la factura y se asocia al pedido, y el saldo del cliente entra a la cobranza. Con los mismos registros sabes cuánto te cuesta cada camión en gasolina y mantenimiento, y cuántas horas de nómina se trabajaron. La mayoría de los datos entra con fotos, y una persona revisa antes de guardar.' },
+    { notes: 'La analogía de la avioneta Cessna: altitud, velocidad, inclinación y horizonte, pero financieros. Los cuatro instrumentos se calculan con el escenario del simulador. La conexión bancaria es parte de la implementación; en la demostración no hay banco conectado.',
+      narr: 'Este es el tablero tipo cabina. Como en una avioneta, en dos segundos ves la altitud, la velocidad, la inclinación y el horizonte, pero de tus finanzas. La altitud es el efectivo de hoy. La velocidad es la cartera por cobrar. La inclinación es si el efectivo y la cartera alcanzan para cubrir lo que debes. Y el horizonte es el saldo más bajo que viene. Cada instrumento se pone en verde, amarillo o rojo cuando te sales de la línea. En la implementación se conecta el banco, para que el número que ves sea el real. En esta demostración no hay ningún banco conectado.' },
+    { notes: 'El modelo de predicción depende de calificar a cada cliente. No prometer un porcentaje de precisión: se mide con los datos reales. La ruta de cuatro a ocho millones y el treinta por ciento son metas, no garantías.',
+      narr: 'Con tu cartera de clientes calificada según cómo paga cada uno, el modelo de predicción estima cuándo vas a cobrar y qué reserva de efectivo conviene mantener. También cruza los pedidos, las cargas que vienen en camino y los cobros de la semana. Su precisión se mide con tus datos reales durante la prueba. Con tu propia estadística armamos el mapa para pasar de unos cuatro millones a ocho millones al mes, con una meta intermedia de crecer un treinta por ciento, y una brújula que cada mes te dice si vas en la línea. Son metas, no promesas.' },
+    { notes: 'Lo acordado: Rafael envía su información y en una semana se presenta el primer modelo con sus datos. Los ajustes menores toman una o dos semanas. Todo corre en paralelo con el proceso actual.',
+      narr: 'La propuesta es una prueba de concepto de cuatro semanas, en paralelo con el proceso actual. Semana uno: recibir tu información y presentarte el primer modelo ya cargado con tus datos. Semana dos: hacer los ajustes y configurar las funciones prioritarias. Semana tres: usar la herramienta junto con el proceso de siempre. Semana cuatro: ajustar y evaluar. Si los ajustes son menores, toman una o dos semanas.' },
+    { notes: 'Pedir la información por el medio que Rafael prefiera: correo, acceso al sistema o Google Drive. Puede cambiar los nombres. Agendar la siguiente reunión para mostrar el modelo con sus datos.',
+      narr: 'El siguiente paso es que nos envíes tu información, por correo electrónico, con acceso a tu sistema o en una carpeta de Google Drive, como te resulte más fácil. No hace falta compartir nombres: puedes cambiarlos. Nos ayudan los estados de cuenta del banco, las ventas a crédito y los saldos, las compras de material, los pagos a proveedores y contratistas, la nómina, los gastos de los camiones y las hojas de Excel que usan hoy. En la próxima reunión te mostramos el modelo con tus datos y hacemos los ajustes. Gracias.' }
   ];
 
   // ---------- gráfica ----------
@@ -143,6 +149,27 @@
       kpi('Cartera vencida', money(p.overdue), 'Al ' + dayLbl(S.evalDay), p.overdue > 0 ? 'bad' : 'exp') +
       kpi('Obligaciones pendientes', money(p.obligations), 'Pagos, nómina y mensualidades', 'bad') +
       kpi('Saldo final proyectado', money(p.final), 'Día ' + p.horizon + '. Mínimo ' + money(p.min) + ', día ' + p.minDay, 'proj', p.final < 0);
+  }
+
+  // tablero tipo cabina: cuatro instrumentos con semáforo, calculados con el mismo escenario
+  function gauge(name, metric, value, sub, level, frac) {
+    var col = { ok: '#5fe0a0', warn: '#ffc35a', bad: '#ff7a7a' }[level];
+    var lbl = { ok: 'En la línea', warn: 'Atención', bad: 'Fuera de la línea' }[level];
+    frac = Math.max(0.04, Math.min(1, frac));
+    var a = Math.PI * (1 - frac), x = 60 + 46 * Math.cos(a), y = 60 - 46 * Math.sin(a);
+    return '<div class="gauge ' + level + '"><svg viewBox="0 0 120 70" aria-hidden="true"><path d="M14 60 A46 46 0 0 1 106 60" fill="none" stroke="rgba(160,190,230,.2)" stroke-width="10" stroke-linecap="round"/>' +
+      '<path d="M14 60 A46 46 0 0 1 ' + x.toFixed(1) + ' ' + y.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round"/></svg>' +
+      '<div class="gname">' + esc(name) + '</div><div class="gmet">' + esc(metric) + '</div><div class="gval">' + value + '</div><div class="gsub">' + esc(sub) + '</div><div class="glvl"><i style="background:' + col + '"></i>' + lbl + '</div></div>';
+  }
+  function renderGauges(p) {
+    var res = S.reserve || 0;
+    var cover = p.obligations > 0 ? (p.cash + p.receivable) / p.obligations : 2;
+    var ovr = p.receivable > 0 ? p.overdue / p.receivable : 0;
+    $('gauges').innerHTML =
+      gauge('Altitud', 'Efectivo hoy', money(p.cash), 'Reserva mínima ' + money(res), p.cash >= res ? 'ok' : p.cash > 0 ? 'warn' : 'bad', res > 0 ? p.cash / (res * 4) : 1) +
+      gauge('Velocidad', 'Cartera por cobrar', money(p.receivable), 'Vencida ' + money(p.overdue), ovr === 0 ? 'ok' : ovr < 0.25 ? 'warn' : 'bad', 1 - ovr) +
+      gauge('Inclinación', 'Cobertura de pagos', (Math.round(cover * 100)) + ' %', 'Efectivo y cartera contra obligaciones', cover >= 1.2 ? 'ok' : cover >= 1 ? 'warn' : 'bad', cover / 2) +
+      gauge('Horizonte', 'Menor saldo proyectado', money(p.min), 'Día ' + p.minDay + ' de ' + p.horizon, p.min >= res ? 'ok' : p.min >= 0 ? 'warn' : 'bad', p.min >= res ? 0.9 : p.min >= 0 ? 0.5 : 0.15);
   }
 
   function clientsList(p) {
@@ -337,7 +364,7 @@
   // ---------- render general ----------
   function render() {
     var p = E.project(S), b = E.project(baseline());
-    renderQ4(p); renderDeckKpis(p); renderStatement(p); renderCallouts(p);
+    renderQ4(p); renderDeckKpis(p); renderGauges(p); renderStatement(p); renderCallouts(p);
     if (ui.slide === 5 || !ui.drawnDeck) drawChart($('deckChart'), { series: p.series, base: b.series, reserve: S.reserve, min: p.min, minDay: p.minDay, minEnd: p.minEnd, evalDay: S.evalDay });
     syncOrderForms(); renderOrderOut();
     if (ui.view === 'sim') renderSim(p, b);

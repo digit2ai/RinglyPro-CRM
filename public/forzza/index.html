@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#071428">
 <title>Capital bajo control · Digit2AI</title>
 <style>html,body{background:#071428}</style>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <header class="top">
@@ -43,10 +43,10 @@
         <div class="cols c-1-1">
           <div>
             <h1>Así funciona tu negocio</h1>
-            <p class="lead"><span class="js-cname">Empresa de Rafael</span> vende productos y materiales de construcción a crédito: entrega hoy y recupera el dinero después, mientras atiende pagos, nómina, mensualidades y otros compromisos.</p>
-            <p class="lead strong">Su necesidad principal es balancear el capital: saber cuánto efectivo tiene, cuánto le deben, cuándo espera cobrar y cuánto necesita para cumplir y seguir operando.</p>
+            <p class="lead"><span class="js-cname">Empresa de Rafael</span> vende varilla, arena, cemento y otros materiales a crédito, en su mayoría a personas que construyen o mejoran su propia casa. Unos pagan con factura y otros en efectivo.</p>
+            <p class="lead strong">Como nos dijiste en la reunión: el dinero existe, pero hay que hacer malabares para que alcance a pagar a proveedores y contratistas a tiempo.</p>
             <div class="volbanner" id="volBanner"><span class="spk sm"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 18h8l11-9v30l-11-9H8z" fill="currentColor"/><path class="w1" d="M32 17c3 2 4.5 4.5 4.5 7s-1.5 5-4.5 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="w2" d="M37 11c5 3.5 7.5 8 7.5 13S42 33.5 37 37" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span><b>Sube el volumen</b> para escuchar a Dalia.</span><button class="sbtn ok" id="volPlay">Escuchar</button></div>
-            <p class="pending">Por validar con Rafael: condiciones de compra, plazos de crédito, inventario y sistema actual.</p>
+            <p class="pending">Confirmado en la reunión: operación de unos cuatro millones de pesos al mes, equipo de cuatro personas y camiones propios. Por validar con tus datos: plazos de crédito, inventario y sistema actual.</p>
           </div>
           <div class="cycle">
             <div class="cnode n1"><b>1</b>Compra de materiales</div>
@@ -159,17 +159,67 @@
       </section>
 
       <section class="slide" data-i="8">
-        <div class="eyebrow">09 · Implementación en paralelo</div>
-        <h2>Prueba de concepto de cuatro semanas, junto con el proceso actual</h2>
+        <div class="eyebrow">09 · Del pedido a la entrega</div>
+        <h2>Un solo flujo, del primer mensaje al cobro</h2>
+        <div class="flow5">
+          <div class="wk"><b>1 · Pedido</b>Llega por llamada o WhatsApp y se redacta en el sistema</div>
+          <div class="wk"><b>2 · Despacho</b>El despachador lo recibe y lo libera, sin esperas ni llamadas de seguimiento</div>
+          <div class="wk"><b>3 · Entrega</b>El chofer toma una foto de entrega y queda registrada la hora</div>
+          <div class="wk"><b>4 · Factura</b>Se sube la foto de la factura y se asocia al pedido</div>
+          <div class="wk"><b>5 · Cobro</b>El saldo del cliente se actualiza y entra a la cobranza</div>
+        </div>
+        <div class="cols c-3 ideas">
+          <div class="idea"><b>Cuánto cuesta cada camión</b>Gasolina, mantenimiento y cambios de aceite ligados a cada entrega.</div>
+          <div class="idea"><b>Horas de nómina</b>El sistema calcula las horas trabajadas a partir de los registros del día.</div>
+          <div class="idea"><b>Menos captura</b>La mayoría de los datos entra con fotos; una persona revisa antes de guardar.</div>
+        </div>
+        <p class="fine">Basado en lo que nos contaste. El orden y los pasos se ajustan a como opera tu equipo hoy.</p>
+      </section>
+
+      <section class="slide" data-i="9">
+        <div class="eyebrow">10 · El tablero tipo cabina</div>
+        <h2>Como la cabina de una avioneta, pero financiera</h2>
+        <div class="cols c-2-1">
+          <div class="gauges" id="gauges"></div>
+          <div class="callouts">
+            <div class="idea"><b>En dos segundos</b>Qué está fallando, dónde está la pérdida y cómo corregirla.</div>
+            <div class="idea"><b>Rojo, amarillo y verde</b>Cada indicador cambia de color cuando te sales de la línea.</div>
+            <div class="idea"><b>Números reales</b>En la implementación se conecta el banco, para que el efectivo que ves sea el que tienes. En esta demostración no hay banco conectado.</div>
+          </div>
+        </div>
+        <div class="simtag">Datos simulados · cambian con el simulador</div>
+      </section>
+
+      <section class="slide" data-i="10">
+        <div class="eyebrow">11 · Predicción, cobranza y crecimiento</div>
+        <h2>El mapa y la brújula para pasar de cuatro a ocho millones</h2>
+        <div class="cols c-1-1">
+          <div>
+            <h4>Modelo de predicción y cobranza</h4>
+            <ul class="chk"><li>Cada cliente recibe una calificación según cómo paga</li><li>Con la cartera calificada, el modelo estima cuándo vas a cobrar</li><li>Te dice qué reserva de efectivo conviene mantener</li><li>Cruza pedidos, cargas por llegar y cobros de la semana</li></ul>
+            <p class="fine">La precisión del modelo se mide con tus datos reales durante la prueba; no es un resultado garantizado.</p>
+          </div>
+          <div class="road">
+            <div class="rstep"><span>Hoy</span><b>~$4 M al mes</b></div>
+            <div class="rstep mid"><span>Meta intermedia</span><b>+30 %</b></div>
+            <div class="rstep top"><span>Meta</span><b>$8 M al mes</b></div>
+            <p class="fine">El mapa (roadmap) se arma con tu estadística; la brújula indica cada mes si vas en la línea. Metas, no promesas.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-i="11">
+        <div class="eyebrow">12 · Implementación en paralelo</div>
+        <h2>Primer modelo con tus datos en una semana, prueba completa en cuatro</h2>
         <div class="weeks">
-          <div class="wk"><b>Semana 1</b>Conocer la operación y aprobar el documento de solución</div>
-          <div class="wk"><b>Semana 2</b>Configurar y desarrollar las funciones prioritarias</div>
+          <div class="wk"><b>Semana 1</b>Recibir tu información y presentar el primer modelo cargado con tus datos</div>
+          <div class="wk"><b>Semana 2</b>Ajustes en la siguiente reunión y funciones prioritarias</div>
           <div class="wk"><b>Semana 3</b>Usar la herramienta en paralelo con el proceso actual</div>
           <div class="wk"><b>Semana 4</b>Ajustar y evaluar resultados</div>
         </div>
         <div class="cols c-1-1 lists9">
           <div><h4>Lo que comentaste</h4>
-            <ul class="chk"><li>Estados de cuenta</li><li>Compromisos próximos a vencer</li><li>Sueldos y nómina</li><li>Pagos</li><li>Mensualidades y financiamiento de vehículos</li><li>Menos trabajo manual en Excel</li><li>Ver todo desde el celular y la computadora</li></ul>
+            <ul class="chk"><li>Malabares para pagar a proveedores y contratistas</li><li>Pedidos que tardan en liberarse y en entregarse</li><li>Costo por camión: gasolina y mantenimiento</li><li>Sueldos, horas y nómina</li><li>Clientes con factura y clientes en efectivo</li><li>Eliminar los Excel y los reportes manuales</li><li>Ver todo desde el celular y la computadora</li></ul>
           </div>
           <div><h4>Funciones propuestas, por validar</h4>
             <ul class="chk alt"><li>Ventas a crédito por cliente</li><li>Facturas pendientes y vencidas</li><li>Abonos y pagos parciales</li><li>Estado de cuenta por cliente</li><li>Calendario conjunto de cobros y pagos</li><li>Proyección diaria de efectivo</li><li>Efecto de una nueva venta sobre el capital</li><li>Seguimiento básico de compras y materiales</li></ul>
@@ -178,12 +228,13 @@
         <p class="fine">El calendario depende del alcance acordado y de la información disponible.</p>
       </section>
 
-      <section class="slide" data-i="9">
-        <div class="eyebrow">10 · Próximo paso</div>
+      <section class="slide" data-i="12">
+        <div class="eyebrow">13 · Próximo paso</div>
         <div class="cols c-1-1">
           <div>
-            <h1>Una reunión de 30 a 60 minutos</h1>
-            <p class="lead">Con Rafael y con quien lleve la administración, para validar procesos, archivos y prioridades.</p>
+            <h1>Envíanos tu información</h1>
+            <p class="lead">Por correo electrónico, con acceso a tu sistema o en una carpeta compartida de Google Drive, como te resulte más fácil. No hace falta compartir nombres: puedes cambiarlos.</p>
+            <p class="lead">En la próxima reunión te mostramos el modelo ya cargado con tus datos y hacemos los ajustes.</p>
             <div class="nextbtns">
               <div data-d2-book data-brand="digit2ai" data-source="aiagent.ringlypro.com/forzza" data-lang="es"></div>
               <button class="cta ghost" data-goto-sim="top">Volver a simular</button>
@@ -191,8 +242,8 @@
             <p class="fine">El precio se define después de conocer el alcance.</p>
           </div>
           <div class="bring">
-            <h4>Para el levantamiento, ayuda tener ejemplos de</h4>
-            <ul class="chk"><li>Ventas a crédito y condiciones de pago</li><li>Estados de cuenta de clientes</li><li>Abonos y cobranza</li><li>Pagos a proveedores</li><li>Nómina y gastos recurrentes</li><li>Financiamientos</li><li>Hojas de Excel y herramientas actuales</li><li>Control de inventario, si existe</li></ul>
+            <h4>Lo que necesitamos para el primer modelo</h4>
+            <ul class="chk"><li>Estados de cuenta del banco de los últimos meses</li><li>Ventas a crédito, clientes y saldos pendientes</li><li>Abonos y cobranza</li><li>Compras de material: varilla, arena, cemento</li><li>Pagos a proveedores y contratistas</li><li>Nómina y sueldos</li><li>Camiones: gasolina, mantenimiento y financiamientos</li><li>Las hojas de Excel y reportes que usan hoy</li></ul>
           </div>
         </div>
       </section>
@@ -346,7 +397,7 @@
 </main>
 
 <script src="engine.js?v=2"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 <script src="/embed/book-meeting.js" defer></script>
 </body>
 </html>
