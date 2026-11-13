@@ -36,6 +36,8 @@ const FW = 720, FH = 1280, CAP_H = 230, IMG_H = FH - CAP_H, FPS = 5, TAIL = 0.45
 
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const NARR = Function('return ' + html.match(/var NARR = (\[[\s\S]*?\n\]);/)[1])();
+// Spoken-only spelling (same as the page): the voice read 'Hispanotec Digital' as English.
+const say = t => t.replace(/Hispanotec Digital/gi, 'Hispanotec dijital');
 const sentences = t => (t.match(/[^.!?¿¡]*[¿¡]?[^.!?]*[.!?]+|\S[^.!?]*$/g) || [t]).map(s => s.trim()).filter(Boolean);
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function wrap(text, max) {
@@ -77,7 +79,7 @@ function captionSvg(text) {
     const n = String(i + 1).padStart(2, '0');
     // 1. voice
     const mp3 = path.join(work, 'a' + n + '.mp3');
-    const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: TEXT, voice: 'dalia' }) });
+    const r = await fetch(TTS, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: say(TEXT), voice: 'dalia' }) });
     if (!r.ok) throw new Error('tts ' + r.status + ' on slide ' + n);
     fs.writeFileSync(mp3, Buffer.from(await r.arrayBuffer()));
     const voiceDur = +execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', mp3]).toString().trim();

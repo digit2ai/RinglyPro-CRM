@@ -126,6 +126,9 @@ var NARR = [
 "Este es el momento de estar. La Hispanidad necesita instrumentos, y Hispanotec quiere ser uno de ellos. Si compartes esta visión, te pedimos que des el paso: únete al núcleo inicial de Hispanotec. Para que mañana puedas decir: yo estuve ahí cuando todo empezó. Juntos, construir para trascender. Gracias."
 ];
 var TTS = '/api/tts/edge', VOICE = 'dalia';
+// Spoken-only spelling: the voice read 'Hispanotec Digital' as English. 'dijital' is how
+// Spanish spells that sound; the caption keeps the real name.
+function say(t){ return t.replace(/Hispanotec Digital/gi, 'Hispanotec dijital'); }
 var stage = document.getElementById('stage'), pan = document.getElementById('pan'), mini = document.getElementById('mini'), cap = document.getElementById('cap'), bar = document.getElementById('bar');
 var playBtn = document.getElementById('play'), count = document.getElementById('count');
 var imgs = [], cache = {}, cur = 0, playing = false, voice = true, token = 0, timer = null, pauseStart = 0;
@@ -184,7 +187,7 @@ function ensureImg(i){ if (i >= 0 && i < N && !imgs[i].src) imgs[i].src = 'slide
 
 function fetchVoice(i){
   if (cache[i]) return cache[i];
-  cache[i] = fetch(TTS, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: NARR[i], voice: VOICE }) })
+  cache[i] = fetch(TTS, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ text: say(NARR[i]), voice: VOICE }) })
     .then(function(r){ if (!r.ok) throw new Error('tts ' + r.status); return r.blob(); })
     .then(function(b){ if (!b || b.size < 500) throw new Error('empty'); return URL.createObjectURL(b); })
     .catch(function(e){ delete cache[i]; throw e; });
