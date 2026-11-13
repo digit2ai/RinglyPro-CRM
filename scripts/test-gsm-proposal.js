@@ -4,7 +4,7 @@ process.env.STRIPE_SECRET_KEY = 'sk_test_fake_for_sit';
 const route = require('../src/routes/gsm-proposal');
 let pass = 0, fail = 0; const ok = (c, m) => { if (c) pass++; else { fail++; console.log('FAIL', m); } };
 const calls = [];
-route._setStripe({ checkout: { sessions: { create: async (o) => { calls.push(o); return { url: 'https://checkout.stripe.test/x' }; } } } });
+route._setStripe({ checkout: { sessions: { create: async (o, opt) => { o._opt = opt; calls.push(o); return { url: 'https://checkout.stripe.test/x' }; } } } });
 
 (async () => {
   const P = route._PRICES;
@@ -20,6 +20,9 @@ route._setStripe({ checkout: { sessions: { create: async (o) => { calls.push(o);
   r = await post({ item: 'balance' }); ok(calls[1].line_items[0].price_data.unit_amount === 1032920 && calls[1].mode === 'payment', 'balance 70%');
   r = await post({ item: 'hypercare' });
   ok(calls[2].mode === 'subscription' && calls[2].line_items[0].price_data.recurring.interval === 'month' && calls[2].line_items[0].price_data.unit_amount === 119000, 'hypercare monthly subscription');
+  ok(calls.every(c => c.branding_settings && c.branding_settings.display_name === 'Synthex SAI' && /synthexsai\.com/.test(c.branding_settings.logo.url)), 'checkout branded Synthex SAI with logo');
+  ok(calls.every(c => c._opt && /clover/.test(c._opt.apiVersion)), 'branding call uses an API version that supports it');
+  ok(!JSON.stringify(calls).match(/digit2ai/i), 'no Digit2AI in what Stripe receives');
   r = await post({ item: '__proto__' }); ok(r.code === 400, 'prototype key refused');
   r = await post({ item: 'free' }); ok(r.code === 400, 'unknown item refused');
   await post({ item: 'deposit' }, 'evil.example');

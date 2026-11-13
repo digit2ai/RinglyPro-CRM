@@ -23,10 +23,14 @@ const PRICES = Object.freeze({
 });
 if (PRICES.deposit_cents + PRICES.balance_cents !== PRICES.development_cents) throw new Error('gsm-proposal: split does not add up');
 
+const BRAND_LOGO = 'https://synthexsai.com/icon-512.png';
+const BRAND_WORDMARK = 'https://synthexsai.com/stripe-logo.png'; // white wordmark for Stripe's dark panel
+const STRIPE_API = '2025-09-30.clover';
+
 const ITEMS = {
-  deposit: { mode: 'payment', cents: PRICES.deposit_cents, name: 'Global System Monitor - Anticipo 30% (inicio de la prueba de concepto)' },
-  balance: { mode: 'payment', cents: PRICES.balance_cents, name: 'Global System Monitor - Saldo 70% (semana 4 de la prueba de concepto)' },
-  hypercare: { mode: 'subscription', cents: PRICES.hypercare_cents, name: 'Global System Monitor - Hypercare mensual' }
+  deposit: { mode: 'payment', cents: PRICES.deposit_cents, name: 'Synthex SAI · Global System Monitor - Anticipo 30% (inicio de la prueba de concepto)' },
+  balance: { mode: 'payment', cents: PRICES.balance_cents, name: 'Synthex SAI · Global System Monitor - Saldo 70% (semana 4 de la prueba de concepto)' },
+  hypercare: { mode: 'subscription', cents: PRICES.hypercare_cents, name: 'Synthex SAI · Global System Monitor - Hypercare mensual' }
 };
 
 // Return URL host comes from an allow-list, never echoed from the request.
@@ -70,21 +74,34 @@ router.post('/checkout', express.json({ limit: '2kb' }), async (req, res) => {
       price_data: {
         currency: 'usd',
         unit_amount: item.cents,
-        product_data: { name: item.name },
+        product_data: { name: item.name, images: [BRAND_LOGO] },
         ...(item.mode === 'subscription' ? { recurring: { interval: 'month' } } : {})
       },
       quantity: 1
     };
     const meta = { product: 'gsm_proposal', item: key, proposer: 'synthex_sai' };
+    // The Stripe account belongs to Digit2AI; the client must see Synthex SAI.
+    // branding_settings overrides name, logo and colours for THIS session only.
+    // It exists from API 2025-09-30.clover; the SDK here pins basil, so the call
+    // asks for clover explicitly (verified live 2026-11-13).
+    const branding = {
+      display_name: 'Synthex SAI',
+      logo: { type: 'url', url: BRAND_WORDMARK },
+      icon: { type: 'url', url: BRAND_LOGO },
+      background_color: '#0B0F17',
+      button_color: '#00F2FE',
+      border_style: 'rounded'
+    };
     const session = await s.checkout.sessions.create({
       mode: item.mode,
       line_items: [line],
       metadata: meta,
-      ...(item.mode === 'subscription' ? { subscription_data: { metadata: meta } } : { payment_intent_data: { metadata: meta }, invoice_creation: { enabled: true } }),
+      ...(item.mode === 'subscription' ? { subscription_data: { metadata: meta } } : { payment_intent_data: { metadata: meta, statement_descriptor_suffix: 'SYNTHEXSAI' }, invoice_creation: { enabled: true } }),
+      branding_settings: branding,
       locale: 'es',
       success_url: back + '?pago=ok&item=' + key + '#pagos',
       cancel_url: back + '?pago=cancelado#pagos'
-    });
+    }, { apiVersion: STRIPE_API });
     res.json({ ok: true, url: session.url });
   } catch (e) {
     console.error('gsm-proposal checkout:', e.message);

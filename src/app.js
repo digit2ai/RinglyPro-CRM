@@ -475,7 +475,7 @@ app.use((req, res, next) => {
     return res.sendFile(require('path').join(__dirname, '../public/synthexai/pymes/og.jpg'));
   }
   // Link-preview image and icons (WhatsApp, iMessage, LinkedIn read og:image).
-  if (path === '/og.jpg' || path === '/icon-512.png' || path === '/apple-touch-icon.png') {
+  if (path === '/og.jpg' || path === '/icon-512.png' || path === '/apple-touch-icon.png' || path === '/stripe-logo.png') {
     res.setHeader('Cache-Control', 'public, max-age=86400');
     return res.sendFile(require('path').join(__dirname, '../public/synthexai', path.slice(1)));
   }
