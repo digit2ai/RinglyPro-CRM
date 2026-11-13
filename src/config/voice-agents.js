@@ -610,14 +610,23 @@ if (AGENTS.d2s.tools) {
 // ── Labora (grupolabora.com, Colombia: Isabel Bueno, Alejandro Rojas, Juan Alberto Bueno,
 // Eduardo de Lima, Manuel Stagg) ── the D2S Lina again, with D2S replaced by Labora and the
 // site by grupolabora.com. Booking goes to ?brand=labora so the email is Labora's.
+// Labora publishes NO prices (owner 2026-11-13): every line that quotes the Synthex
+// figures is dropped, and Lina says the offer is defined in the meeting.
+function laboraNoPrices(t) {
+  return t.split('\n').filter((l) => !/\b(685|388|245)\b|seiscientos ochenta|trescientos ochenta|doscientos cuarenta/i.test(l)).join('\n')
+    .replace(/o cuánto cuesta\?/g, 'o cómo empezar?').replace(/or what it costs\?/g, 'or how to start?');
+}
 function laboraDeep(v) {
-  if (typeof v === 'string') return v.replace(/aiagent\.ringlypro\.com\/d2s\/?/gi, 'grupolabora.com').replace(/D2S/g, 'Labora');
+  if (typeof v === 'string') return laboraNoPrices(v.replace(/aiagent\.ringlypro\.com\/d2s\/?/gi, 'grupolabora.com').replace(/D2S/g, 'Labora'));
   if (typeof v === 'function') return (...a) => { const r = v(...a); return r && typeof r.then === 'function' ? r.then(laboraDeep) : laboraDeep(r); };
   if (Array.isArray(v)) return v.map(laboraDeep);
   if (v && typeof v === 'object') { const o = {}; for (const k of Object.keys(v)) o[k] = (k === 'base' || k === 'ruta' || k === 'input_schema' || k === 'voice' || k === 'name' && typeof v[k] === 'string' && /^[a-z_]+$/.test(v[k])) ? v[k] : laboraDeep(v[k]); return o; }
   return v;
 }
 AGENTS.labora = laboraDeep(AGENTS.d2s);
+for (const L of ['es', 'en']) if (AGENTS.labora.persona && typeof AGENTS.labora.persona[L] === 'string') AGENTS.labora.persona[L] += L === 'es'
+  ? '\n- Labora no publica precios: la propuesta se define a la medida de cada empresa en la reunión. Si preguntan cuánto cuesta, dilo así y ofrece agendar la reunión. Nunca digas una cifra de precio.'
+  : '\n- Labora does not publish prices: the proposal is tailored to each company in the meeting. If asked what it costs, say so and offer to book the meeting. Never state a price figure.';
 if (AGENTS.labora.tools) {
   AGENTS.labora.tools.definiciones = AGENTS.labora.tools.definiciones.map((d) => typeof d.ruta === 'string' ? { ...d, ruta: d.ruta.replace('brand=d2s', 'brand=labora') } : d);
 }

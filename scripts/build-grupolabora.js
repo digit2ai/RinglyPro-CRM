@@ -77,12 +77,29 @@ function lightDefault(html) {
     .replace(/(html\[data-theme="light"\]\{[\s\S]*?--cyt:)[^;]+;--g1:[^;]+;--g2:[^;]+;/, `$1${BLUE};--g1:${BLUE};--g2:${GREEN};`);
 }
 
+// NO PRICES ON LABORA (owner 2026-11-13): the offer is defined case by case in the
+// meeting. Drops the price section, its menu link, the FAQ questions that quote a
+// figure (also from the FAQ JSON-LD), and renumbers the remaining questions.
+const PRICE = /\b(685|388|245)\b/;
+function noPrices(h) {
+  h = h.replace(/<section id="precio">[\s\S]*?<\/section>\s*/, '');
+  h = h.replace(/\s*<a href="#precio">[\s\S]*?<\/a>/g, '').replace(/href="#precio"/g, 'href="#demo"');
+  h = h.replace(/\s*<details class="qa"[\s\S]*?<\/details>/g, (d) => PRICE.test(d) ? '' : d);
+  let n = 0; h = h.replace(/<span class="qn">\d+<\/span>/g, () => '<span class="qn">' + String(++n).padStart(2, '0') + '</span>');
+  h = h.replace(/(<script type="application\/ld\+json">)([\s\S]*?)(<\/script>)/, (m, o, j, c) => {
+    try { const d = JSON.parse(j); if (d.mainEntity) d.mainEntity = d.mainEntity.filter((q) => !PRICE.test(JSON.stringify(q))); return o + JSON.stringify(d) + c; } catch (e) { return m; }
+  });
+  if (/\$\s?\d|USD\s?\d|\d\s?USD/.test(h.replace(/<script[\s\S]*?<\/script>/g, ''))) throw new Error('a price is still on the Labora landing');
+  return h;
+}
+
 (async () => {
   const pages = [['index.html', ''], ['pymes/index.html', '../'], ['pymes/calculadora/index.html', '../../']];
   for (const [p, rel] of pages) {
     let h = fs.readFileSync(path.join(SRC, p), 'utf8');
     h = brand(text(h, rel), rel);
     if (p === 'index.html') h = lightDefault(h);
+    if (p === 'index.html') h = noPrices(h);
     fs.mkdirSync(path.dirname(path.join(OUT, p)), { recursive: true });
     fs.writeFileSync(path.join(OUT, p), h);
     const left = (h.match(/D2S|d2s|aiagent\.ringlypro\.com\/d2s|#00F2FE|#6366F1/gi) || []);
