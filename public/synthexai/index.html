@@ -924,8 +924,8 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   </div>
 </div>
 
-<div data-voice-orb data-mode="text" data-agent="synthex" data-position="bottom-right" data-accent="#00F2FE" data-accent2="#6366F1"></div>
-<script src="/embed/voice-orb.js?v=4" defer></script>
+<div data-voice-orb data-mode="reply" data-agent="synthex" data-position="bottom-right" data-accent="#00F2FE" data-accent2="#6366F1"></div>
+<script src="/embed/voice-orb.js?v=5" defer></script>
 <script>
 (function(){
   // Lina es una asistente que CONVERSA (persona "synthex" en src/config/voice-agents.js):
@@ -942,13 +942,13 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   wrap.addEventListener('click', tap);
   wrap.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); } });
   var TXT = {
-    // Por ahora Lina solo escribe (data-mode="text"): sin voz y sin micrófono.
+    // Lina responde por escrito y con la voz de Dalia (data-mode="reply"); la pregunta es solo escrita, nunca micrófono.
     es: { idle:'Escríbele a Lina', listening:'Escríbele a Lina', thinking:'Lina está pensando', speaking:'Lina está respondiendo' },
     en: { idle:'Chat with Lina', listening:'Chat with Lina', thinking:'Lina is thinking', speaking:'Lina is replying' }
   };
   function sync(){
     var r = root(), ball = r && r.querySelector('.d2orb-panel .d2orb-ball'), st = 'idle';
-    if (r && ball && r.classList.contains('is-open') && r.classList.contains('is-live')) {
+    if (r && ball && r.classList.contains('is-open') && (r.classList.contains('is-live') || ball.classList.contains('is-speaking') || ball.classList.contains('is-thinking'))) {
       st = ball.classList.contains('is-speaking') ? 'speaking' : ball.classList.contains('is-thinking') ? 'thinking' : 'listening';
     }
     wrap.setAttribute('data-state', st);

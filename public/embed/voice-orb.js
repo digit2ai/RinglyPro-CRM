@@ -23,6 +23,9 @@
  *   data-icon     image drawn inside the orb ball (opt-in; unset keeps the plain orb)
  *   data-mode     "text" = chat only: the agent never speaks and the microphone is never
  *                 requested; the visitor types (opt-in; unset keeps voice)
+ *                 "reply" = the visitor types (no microphone, ever) and the agent answers
+ *                 in writing AND aloud through /api/tts/edge; a speaker button in the
+ *                 panel mutes the voice for that visitor
  *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
  *                 keeps the right caption when it calls setLang()
  *
@@ -106,6 +109,8 @@
     '.d2orb-name{font-size:15px;font-weight:700;line-height:1.2}',
     '.d2orb-role{font-size:12px;color:rgba(255,255,255,.62);line-height:1.35;margin-top:2px}',
     '.d2orb-x{margin-left:auto;background:none;border:0;color:rgba(255,255,255,.6);font-size:22px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:8px}',
+    '.d2orb-mute{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:32px}',
+    '.d2orb-mute + .d2orb-x{margin-left:0}',
     '.d2orb-x:hover{color:#fff;background:rgba(255,255,255,.1)}',
     '.d2orb-status{padding:0 16px;font-size:12px;font-weight:600;color:var(--d2orb-accent,#22d3ee);text-transform:uppercase;letter-spacing:.6px}',
     '.d2orb-cap{margin:10px 16px 0;min-height:44px;max-height:170px;overflow-y:auto;font-size:14px;line-height:1.5;color:rgba(255,255,255,.9)}',
@@ -183,7 +188,11 @@
     var pos = d.position === 'bottom-left' ? 'bottom-left' : 'bottom-right';
     var icon = d.icon || '';
     // Text-only: no TTS call, no getUserMedia, ever. Everything else is the same agent.
-    var TEXT_ONLY = d.mode === 'text';
+    // "reply": typed in, spoken + written out. Same no-microphone path as "text".
+    var REPLY_VOICE = d.mode === 'reply';
+    var TEXT_ONLY = d.mode === 'text' || REPLY_VOICE;
+    var muted = false;
+    if (REPLY_VOICE) { try { muted = localStorage.getItem('d2orb_muted') === '1'; } catch (e) {} }
 
     var lang = (d.lang || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
     if (lang !== 'es') lang = 'en';
@@ -206,6 +215,7 @@
         '<div class="d2orb-head">' +
           '<div class="d2orb-ball" data-el="ball" role="button" tabindex="0"></div>' +
           '<div><div class="d2orb-name" data-el="name"></div><div class="d2orb-role" data-el="role"></div></div>' +
+          (REPLY_VOICE ? '<button class="d2orb-x d2orb-mute" data-el="mute" type="button"></button>' : '') +
           '<button class="d2orb-x" data-el="close" type="button">&times;</button>' +
         '</div>' +
         '<div class="d2orb-status" data-el="status"></div>' +
@@ -243,7 +253,7 @@
     var pageContext = '';
 
     function setState(s) {
-      if (TEXT_ONLY && s !== 'thinking' && s !== 'error') s = 'textidle';
+      if (TEXT_ONLY && s !== 'thinking' && s !== 'error' && !(REPLY_VOICE && s === 'speaking')) s = 'textidle';
       ball.classList.remove('is-listening', 'is-speaking', 'is-thinking');
       statusEl.textContent = T[s] || T.idle;
       if (s === 'listening' || s === 'speaking' || s === 'thinking') ball.classList.add('is-' + s);
@@ -319,7 +329,7 @@
         .catch(function () { return null; });
     }
     function speak(text, onEnd) {
-      if (TEXT_ONLY) { if (onEnd) onEnd(); return; }
+      if (TEXT_ONLY && (!REPLY_VOICE || muted)) { if (onEnd) onEnd(); return; }
       stopAudio();
       var myToken = speakToken;
       var c = ensureCtx();
@@ -543,6 +553,26 @@
 
     $('launch').addEventListener('click', open);
     $('close').addEventListener('click', close);
+    var muteBtn = $('mute');
+    function paintMute() {
+      if (!muteBtn) return;
+      var es = cfg.lang === 'es';
+      muteBtn.innerHTML = muted
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
+      var lbl = muted ? (es ? 'Activar la voz' : 'Turn voice on') : (es ? 'Silenciar la voz' : 'Mute voice');
+      muteBtn.setAttribute('aria-label', lbl); muteBtn.title = lbl;
+      muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    }
+    if (muteBtn) {
+      paintMute();
+      muteBtn.addEventListener('click', function () {
+        muted = !muted;
+        try { localStorage.setItem('d2orb_muted', muted ? '1' : '0'); } catch (e) {}
+        if (muted) { stopAudio(); setState('idle'); }
+        paintMute();
+      });
+    }
     endBtn.addEventListener('click', endCall);
     ball.addEventListener('click', function () { if (TEXT_ONLY) { input.focus(); return; } if (live) endCall(); else startCall(); });
     ball.addEventListener('keydown', function (e) {
@@ -566,6 +596,7 @@
       $('role').textContent = cfg.role;
       $('launchTxt').textContent = launchLabel();
       input.placeholder = T.typed; sendBtn.textContent = T.send; endBtn.textContent = T.hangup;
+      if (typeof paintMute === 'function') paintMute();
       setState('idle');
     }
     fetch(API + '/api/voice-agent/config?agent=' + encodeURIComponent(AGENT) + '&lang=' + encodeURIComponent(lang))
