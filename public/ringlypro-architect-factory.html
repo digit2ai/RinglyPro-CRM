@@ -309,42 +309,32 @@ body.embed-stage > .viewport{display:block !important;width:100%;margin:0 !impor
 </head>
 <body>
 <script>
-/* ?brand=synthex relabels the embedded brain for the Synthex SAI landing
-   (/SynthexAI). Only the labels change; the animation is the same. Without the
-   parameter nothing here runs, so digit2ai.com keeps its own labels. */
-if(/[?&]brand=synthex/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
+/* ?brand=synthex|labora|d2s: the Spanish-language landings embed this brain.
+   Every label goes to Spanish (Labora 2026-11-13; Synthex and D2S 2026-11-14,
+   owner request). Only the labels change; the animation is the same. Without
+   the parameter nothing here runs, so digit2ai.com keeps its own labels. */
+(function(){
+  var m=/[?&]brand=(synthex|labora|d2s)(&|$)/i.exec(location.search);if(!m)return;
+  var BR={synthex:'SYNTHEX SAI',labora:'LABORA',d2s:'D2S'}[m[1].toLowerCase()];
+  window.D2_ES=true;
+  document.addEventListener('DOMContentLoaded',function(){
   var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
-  set('.label-c','&#9660; SYNTHEX SAI MCP BRAIN &#9650;');
-  set('.sealed','<b></b>100+ AGENT WORKFORCE · WIRED VIA OPEN MCP');
-  set('.dm-brain .t','SYNTHEX SAI');
-  document.title='Synthex SAI MCP Brain';
-});}
-/* ?brand=labora: the same relabel for grupolabora.com. */
-if(/[?&]brand=labora(&|$)/i.test(location.search)){window.D2_ES=true;document.addEventListener('DOMContentLoaded',function(){
-  /* Labora: the same animation, every label in Spanish (owner 2026-11-13). Nothing else changes. */
-  var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
-  set('.label-c','&#9660; CEREBRO MCP LABORA &#9650;');
+  set('.label-c','&#9660; CEREBRO MCP '+BR+' &#9650;');
   set('.sealed','<b></b>MÁS DE 100 AGENTES · CONECTADOS POR MCP ABIERTO');
-  set('.dm-brain .t','LABORA');
-  document.title='Cerebro MCP de Labora';
+  set('.dm-brain .t',BR);
+  document.documentElement.lang='es';
+  document.title='Cerebro MCP de '+(BR==='SYNTHEX SAI'?'Synthex SAI':BR==='LABORA'?'Labora':BR);
   var ES=[['ANALISTA SR.','informes · planes · estrategia'],['INVESTIGACIÓN','búsqueda web · competencia'],['CONTACTO','correos · WhatsApp · ES/EN'],
     ['ARQUITECTO','construye · prueba · entrega'],['TRIAJE','califica · alerta · recomienda'],['ACTAS','resumen · tareas'],
     ['IA DE VOZ','Rachel · Ana · Lina · 24/7'],['HALLAZGOS','riesgos · bloqueos · responsables'],['ESPECIALISTA IA','12 servicios de IA · expertos'],['PREPARACIÓN IA','equipo de 5 · una unidad']];
   ES.forEach(function(e,i){var n=document.getElementById('n'+i);if(!n)return;var a=n.querySelector('.name'),c=n.querySelector('.cap');if(a)a.textContent=e[0];if(c)c.textContent=e[1];});
   var dm=document.querySelectorAll('.dm-a');
-dm.forEach(function(d){var nm=d.querySelector('.nm');if(!nm)return;var k=['SENIOR BA','RESEARCH','OUTREACH','ARCHITECT','INBOX TRIAGE','MINUTES','VOICE AI','FINDINGS','AI SPECIALIST','AI READINESS'].indexOf(nm.textContent.trim());if(k<0)return;nm.textContent=ES[k][0];var cp=d.querySelector('.cp');if(cp)cp.textContent=ES[k][1];});
+  dm.forEach(function(d){var nm=d.querySelector('.nm');if(!nm)return;var k=['SENIOR BA','RESEARCH','OUTREACH','ARCHITECT','INBOX TRIAGE','MINUTES','VOICE AI','FINDINGS','AI SPECIALIST','AI READINESS'].indexOf(nm.textContent.trim());if(k<0)return;nm.textContent=ES[k][0];var cp=d.querySelector('.cp');if(cp)cp.textContent=ES[k][1];});
   var labs=document.querySelectorAll('.pnl .lab');if(labs[0])labs[0].textContent='NÚCLEO · CONTEXTO';if(labs[1])labs[1].textContent='NÚCLEO · RUTEO';
   set('.pnl.mcp .big','CEREBRO');set('.pnl.mcp .st','10 núcleo · enlazados');set('.dm-brain .big','CEREBRO');set('.dm-brain .st','10 núcleo · enlazados · EN VIVO');
   var ok=document.querySelector('.pnl.orch .ok');if(ok)ok.innerHTML='<b></b>ACTIVO';
-});}
-/* ?brand=d2s: the same relabel for the D2S landing (aiagent.ringlypro.com/d2s). */
-if(/[?&]brand=d2s(&|$)/i.test(location.search)){document.addEventListener('DOMContentLoaded',function(){
-  var set=function(sel,html){var el=document.querySelector(sel);if(el)el.innerHTML=html;};
-  set('.label-c','&#9660; D2S MCP BRAIN &#9650;');
-  set('.sealed','<b></b>100+ AGENT WORKFORCE · WIRED VIA OPEN MCP');
-  set('.dm-brain .t','D2S');
-  document.title='D2S MCP Brain';
-});}
+  });
+})();
 </script>
 <script>if(/[?&]embed=/i.test(location.search)){document.documentElement.className+=' embed';document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('embed-stage');window.dispatchEvent(new Event('resize'));});}</script>
 
