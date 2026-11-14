@@ -31,6 +31,52 @@
   function fechaLarga(iso) { if (!iso) return ''; var p = iso.split('-'); return Number(p[2]) + ' de ' + MESES[Number(p[1]) - 1]; }
   function todayNY() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()); }
 
+  // ---------- spending questions (owner 2026-11-14): answered from the bank's own transactions ----------
+  var ASK_CHIPS = ['¿Cuánto gasté en Amazon este mes?', 'Gasolina esta semana', 'Gastos en Latitude este mes', 'Total de gastos este mes', '¿Cuánto me entró este mes?'];
+  var inputCss = 'flex:1 1 220px;min-width:0;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-size:16px';
+  function askHtml() {
+    return '<div class="card card-accent-blue" id="sf-ask" style="margin-bottom:16px">' +
+      '<div class="section-header"><h3>Pregunta sobre tus gastos</h3></div>' +
+      '<p class="section-hint">Responde con los movimientos de tu banco. Ej.: "¿cuánto gasté en Amazon este mes?"</p>' +
+      '<div id="sf-ask-log" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>' +
+      '<form id="sf-ask-form" style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<input id="sf-ask-in" type="text" autocomplete="off" maxlength="300" placeholder="Escribe tu pregunta" aria-label="Pregunta" style="' + inputCss + '">' +
+      '<button class="btn btn-primary" type="submit" id="sf-ask-go" style="min-height:44px;padding:0 18px">Preguntar</button></form>' +
+      '<div id="sf-ask-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
+      ASK_CHIPS.map(function (c) { return '<button type="button" class="btn btn-sm btn-ghost" style="min-height:36px" data-ask="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') +
+      '</div></div>';
+  }
+  function wireAsk() {
+    var form = document.getElementById('sf-ask-form');
+    if (!form) return;
+    form.onsubmit = function (e) { e.preventDefault(); var i = document.getElementById('sf-ask-in'); var t = i.value.trim(); if (t) { i.value = ''; ask(t); } };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (b) { b.onclick = function () { ask(b.getAttribute('data-ask')); }; });
+  }
+  function ask(texto) {
+    var log = document.getElementById('sf-ask-log'); if (!log) return;
+    var go = document.getElementById('sf-ask-go'); go.disabled = true;
+    log.innerHTML = '<div style="align-self:flex-end;max-width:85%;padding:8px 12px;border-radius:12px;background:var(--bg-input);border:1px solid var(--border)">' + esc(texto) + '</div>' +
+      '<div id="sf-ask-wait" style="color:var(--text-muted);font-size:14px">Buscando en tu banco...</div>';
+    sf('/preguntar', { method: 'POST', body: { texto: texto, previo: state.askPrevio || null } }).then(function (j) {
+      var w = document.getElementById('sf-ask-wait'); if (w) w.remove();
+      if (!j.success) { log.insertAdjacentHTML('beforeend', '<div style="color:var(--danger,#e5484d)">' + esc(j.error || 'No pude responder') + '</div>'); return; }
+      if (j.consulta) state.askPrevio = j.consulta;
+      var html = '<div style="max-width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);line-height:1.5">' + esc(j.respuesta) + '</div>';
+      (j.resultados || []).forEach(function (r) {
+        if (!r.detalle || !r.detalle.length) return;
+        var filas = r.detalle.slice(0, 15).map(function (d) {
+          return '<tr><td style="white-space:nowrap">' + esc(fechaCorta(d.fecha)) + '</td><td>' + esc(d.concepto) + (d.pendiente ? ' <span style="color:var(--text-muted);font-size:12px">(pendiente)</span>' : '') + '</td><td style="text-align:right;white-space:nowrap">' + esc(d.monto) + '</td></tr>';
+        }).join('');
+        html += '<details style="font-size:14px"><summary style="cursor:pointer;min-height:32px;padding:6px 0">Ver ' + r.n + (r.n === 1 ? ' movimiento' : ' movimientos') + ' (' + esc(fechaCorta(r.desde)) + (r.desde !== r.hasta ? ' a ' + esc(fechaCorta(r.hasta)) : '') + ') · ' + esc(r.total) + '</summary>' +
+          '<div style="overflow-x:auto"><table class="data-table" style="width:100%"><tbody>' + filas + '</tbody></table></div>' +
+          (r.detalle.length > 15 ? '<p class="section-hint">y ' + (r.detalle.length - 15) + ' más.</p>' : '') + '</details>';
+      });
+      log.insertAdjacentHTML('beforeend', html);
+    }).catch(function () {
+      var w = document.getElementById('sf-ask-wait'); if (w) w.textContent = 'Sin conexión. Intenta de nuevo.';
+    }).then(function () { go.disabled = false; });
+  }
+
   // ---------- nav: only the owner ever sees the item ----------
   window.sfInitNav = function () {
     var li = document.getElementById('nav-salud-financiera');
@@ -86,6 +132,7 @@
       '<div id="sf-root" style="max-width:1100px;margin:0 auto">' +
       (SHOW_LINA ? orbHtml() : '') +
       '<div class="card card-accent-blue" style="margin-bottom:16px;padding:12px"><div class="section-header"><h3>Panel de instrumentos</h3></div><div id="sf-pfd"><div class="spinner"></div></div></div>' +
+      askHtml() +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
       '<button class="btn btn-primary" id="sf-add" style="flex:1 1 220px;padding:14px 16px;font-size:16px;font-weight:600">+ Agregar movimiento</button>' +
       '<button class="btn btn-ghost" id="sf-extend" hidden>Extender plan</button></div>' +
@@ -109,6 +156,7 @@
     document.getElementById('sf-mes').onchange = function () { state.mes = this.value; loadMovs(); };
     document.getElementById('sf-plan').onchange = function () { state.verPlan = this.checked; loadMovs(); };
     wireFilters();
+    wireAsk();
     if (SHOW_LINA) wireLina();
     resumeOAuth();
     return refresh();

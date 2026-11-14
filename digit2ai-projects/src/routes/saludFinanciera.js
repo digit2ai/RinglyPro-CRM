@@ -519,6 +519,54 @@ router.get('/lina/historial', async (req, res) => {
   catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// SPENDING QUESTIONS (owner 2026-11-14): "¿cuánto gasté en Amazon este mes?". Deterministic, no model:
+// the answer is a sum of the owner's own bank transactions (included accounts only).
+const gastosSvc = require('../services/saludFinanciera/gastos');
+router.post('/preguntar', async (req, res) => {
+  try {
+    const texto = String((req.body || {}).texto || '').trim().slice(0, 300);
+    if (!texto) return res.status(400).json({ success: false, error: 'texto requerido' });
+    if (linaLimited(req.sf.userId)) return res.status(429).json({ success: false, error: 'Demasiadas preguntas seguidas. Espera un momento.' });
+    const pv = (req.body || {}).previo;
+    const previo = pv && typeof pv === 'object' ? { tipo: pv.tipo === 'ingreso' ? 'ingreso' : 'gasto', termino: String(pv.termino || '').slice(0, 40), categoria: typeof pv.categoria === 'string' ? pv.categoria : null } : null;
+    const hoy = deps.today();
+    const q = gastosSvc.interpretar(texto, hoy, previo);
+    if (!q) return res.json({ success: true, entendido: false, respuesta: 'Pregúntame por gastos o ingresos, por ejemplo: "¿cuánto gasté en Amazon este mes?", "gasolina esta semana" o "total de gastos en octubre".' });
+    const desde = q.periodos.reduce((a, p) => (p.desde < a ? p.desde : a), hoy);
+    const inicio = desde < gastosSvc.periodo('ultimos 120 dias', hoy).desde ? desde : gastosSvc.periodo('ultimos 120 dias', hoy).desde;
+    const [txns] = await deps.sequelize.query(
+      `SELECT x.fecha::text AS fecha, x.nombre, x.comercio, x.monto_cents, x.pending, x.pfc_primary, x.pfc_detailed
+         FROM sf_plaid_txn x JOIN sf_plaid_accounts a ON a.account_id = x.account_id AND a.user_id = x.user_id AND a.tenant_id = x.tenant_id
+        WHERE x.user_id = :u AND x.tenant_id = :t AND a.incluir = TRUE AND x.fecha >= :d AND x.fecha <= :h`,
+      { replacements: { u: req.sf.userId, t: req.sf.tenantId, d: inicio, h: hoy } });
+    let buscar = '', nombre = '', corregido = false;
+    if (q.termino) {
+      const r = gastosSvc.resolverTermino(q.termino, txns.map(x => (x.comercio || '') + ' ' + (x.nombre || '')));
+      if (!r) return res.json({ success: true, entendido: true, consulta: { tipo: q.tipo, termino: q.termino, categoria: null },
+        respuesta: 'No encontré ningún comercio parecido a "' + q.termino + '" en tus cuentas.' });
+      buscar = r.buscar; corregido = r.corregido; nombre = buscar.replace(/\b\w/g, c => c.toUpperCase());
+    }
+    const partes = q.periodos.map(p => {
+      const qq = { ...q, periodo: p };
+      const filas = gastosSvc.filtrar(qq, txns, buscar);
+      const r = gastosSvc.responder(qq, filas, { buscar, nombre, corregido });
+      if (q.categoria === 'gasolina') {
+        // a station that also sells snacks: the bank files some of its charges as a store, so say so
+        const otras = gastosSvc.otrasDelMismoComercio(qq, txns, filas);
+        if (otras.texto) r.texto += ' ' + otras.texto;
+      }
+      return r;
+    });
+    // say the correction once, not once per period
+    const respuesta = partes.map((r, i) => i && corregido ? r.texto.replace(/^Busqué "[^"]*"\. /, '') : r.texto).join(' ');
+    res.json({ success: true, entendido: true, respuesta, resultados: partes,
+      consulta: { tipo: q.tipo, termino: buscar || q.termino, categoria: q.categoria } });
+  } catch (e) {
+    console.error('[SaludFinanciera] preguntar error:', e.message);
+    res.status(500).json({ success: false, error: 'No pude responder esa pregunta' });
+  }
+});
+
 module.exports = router;
 module.exports._deps = deps;
 module.exports._ownerOnly = ownerOnly;

@@ -970,8 +970,55 @@ function realTests() {
   ok(!/saldo_final_plan|serie\.plan|minFrom|zonaCuidado/.test(src), 'real mode never reads the plan projection');
 }
 
+function gastosTests() {
+  console.log('\n-- spending questions (gastos.js) --');
+  const G = require('./src/services/saludFinanciera/gastos');
+  const hoy = '2026-11-14';
+  const q1 = G.interpretar('cuanto he hastado en amazon este mes?', hoy);
+  ok(q1 && q1.termino === 'amazon' && q1.periodo.desde === '2026-11-01' && q1.periodo.hasta === hoy, 'amazon este mes (typo "hastado" is filler)', q1);
+  const q2 = G.interpretar('dame el total de gastos de latitide este mes o esta semana', hoy);
+  ok(q2 && q2.termino === 'latitide' && q2.periodos.length === 2 && q2.periodos[1].desde === '2026-11-09', 'mes o semana answers both; week starts Monday', q2 && q2.periodos);
+  const q3 = G.interpretar('dame el gasto en Gas Station de este mes o semana?', hoy);
+  ok(q3 && q3.categoria === 'gasolina' && !q3.termino, 'Gas Station = gas category, not a merchant', q3);
+  ok(G.interpretar('Gasolina esta semana', hoy) && G.interpretar('Gasolina esta semana', hoy).categoria === 'gasolina', 'a bare category is a question');
+  ok(G.interpretar('hola', hoy) === null, 'not a spending question -> null');
+  const q4 = G.interpretar('y la semana pasada', hoy, { tipo: 'gasto', termino: 'amazon' });
+  ok(q4 && q4.termino === 'amazon' && q4.periodo.desde === '2026-11-02' && q4.periodo.hasta === '2026-11-08', 'follow-up reuses the subject', q4);
+  ok(G.interpretar('cuanto gaste en octubre', hoy).periodo.hasta === '2026-10-31', 'month name -> that month');
+  ok(G.interpretar('cuanto gaste en diciembre', hoy).periodo.desde === '2025-12-01', 'a future month name means last year');
+  const textos = ['LATITUDE VENTU 11/04 MOBILE PURCHASE', 'Amazon', 'Chevron'];
+  const r = G.resolverTermino('latitide', textos);
+  ok(r && r.buscar === 'latitude' && r.corregido, 'typo latitide -> latitude', r);
+  ok(G.resolverTermino('zzqxw', textos) === null, 'nothing close -> null (never guesses)');
+  const tx = [
+    { fecha: '2026-11-14', comercio: 'Latitude Venture', nombre: 'LATITUDE VENTURE', monto_cents: 2985, pending: true, pfc_detailed: 'TRANSPORTATION_GAS', pfc_primary: 'TRANSPORTATION' },
+    { fecha: '2026-11-05', comercio: 'Latitude Ventu', nombre: 'LATITUDE VENTU', monto_cents: 1493, pending: false, pfc_detailed: 'GENERAL_MERCHANDISE_OTHER', pfc_primary: 'GENERAL_MERCHANDISE' },
+    { fecha: '2026-11-09', comercio: 'Chevron', nombre: 'Chevron', monto_cents: 2416, pending: false, pfc_detailed: 'TRANSPORTATION_GAS', pfc_primary: 'TRANSPORTATION' },
+    { fecha: '2026-11-05', comercio: 'Amazon', nombre: 'AMAZON MKTPL', monto_cents: 2540, pending: false, pfc_detailed: 'GENERAL_MERCHANDISE_ONLINE_MARKETPLACES', pfc_primary: 'GENERAL_MERCHANDISE' },
+    { fecha: '2026-11-06', comercio: 'Amazon', nombre: 'AMAZON REFUND', monto_cents: -999, pending: false, pfc_primary: 'TRANSFER_IN' },
+    { fecha: '2026-10-30', comercio: 'Amazon', nombre: 'AMAZON DIGITAL', monto_cents: 2032, pending: false, pfc_primary: 'ENTERTAINMENT' },
+    { fecha: '2026-11-03', comercio: '', nombre: 'Online Banking transfer to CHK 7485', monto_cents: 50000, pending: false, pfc_primary: 'TRANSFER_OUT' }
+  ];
+  const fa = G.filtrar(q1, tx, 'amazon');
+  ok(fa.length === 1 && fa[0].monto_cents === 2540, 'only outflows inside the period (refund and October excluded)', fa);
+  const ra = G.responder(q1, fa, { buscar: 'amazon', nombre: 'Amazon' });
+  ok(ra.total === '$25.40' && /Gastaste \$25\.40 en Amazon este mes/.test(ra.texto), 'answer sums the rows', ra.texto);
+  const qt = G.interpretar('cuanto gaste en total este mes', hoy);
+  ok(!G.filtrar(qt, tx, '').some(x => /online banking transfer/i.test(x.nombre)), 'own BOA transfers are not spending');
+  const fg = G.filtrar(q3, tx, '');
+  ok(fg.length === 2 && fg.every(x => x.pfc_detailed === 'TRANSPORTATION_GAS'), 'gas = bank gas category');
+  const og = G.otrasDelMismoComercio(q3, tx, fg);
+  ok(og.total_cents === 1493 && /Latitude/.test(og.texto), 'same station filed as store is mentioned apart, not added silently', og);
+  const src = require('fs').readFileSync(__dirname + '/src/services/saludFinanciera/gastos.js', 'utf8');
+  ok(!/require\(['"](sequelize|@anthropic|\.\.\/\.\.\/models)/.test(src), 'gastos.js is pure (no DB, no model)');
+  const route = require('fs').readFileSync(__dirname + '/src/routes/saludFinanciera.js', 'utf8');
+  const m = route.slice(route.indexOf("router.post('/preguntar'"));
+  ok(/x\.user_id = :u AND x\.tenant_id = :t AND a\.incluir = TRUE/.test(m), '/preguntar reads only the session user\'s included accounts');
+}
+
 (async () => {
   await engineTests();
+  gastosTests();
   alarmasTests();
   autopagosTests();
   realTests();
