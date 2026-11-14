@@ -353,6 +353,14 @@ section,header.hero{scroll-margin-top:64px}
   .d2orb-panel{width:auto!important}
 }
 
+/* Lina en grande en el hero: el mismo orbe flotante se mueve aquí mientras el hero está a la vista */
+.orb-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.orb-hero .ct{margin:4px 0 0}
+.orb-hero .cnote{margin-top:34px}
+.orb-dock{min-height:calc(var(--hero-orb) + 40px);display:flex;align-items:center;justify-content:center;--hero-orb:clamp(240px,26vw,340px)}
+.niva.in-hero{position:relative!important;right:auto!important;bottom:auto!important;top:auto!important;transform:none!important;--orb-size:clamp(240px,26vw,340px)!important}
+.niva.in-hero .orb-caption{bottom:-30px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;text-align:center!important;font-size:12px!important;letter-spacing:2px!important;max-width:none!important;white-space:nowrap!important}
+@media (max-width:640px){.orb-dock{--hero-orb:clamp(200px,62vw,260px)}.niva.in-hero{--orb-size:clamp(200px,62vw,260px)!important}.niva.in-hero .orb-wrap[data-state="idle"]{animation:none}}
 /* preguntas frecuentes + pregúntale a Lina */
 .faq{display:grid;gap:12px;margin-top:26px}
 .qa{background:var(--card);border:1px solid var(--line);border-radius:16px;transition:border-color .2s}
@@ -515,17 +523,11 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       <div class="badges"><span>REST API</span><span>MCP</span><span>Saint</span><span>Profit Plus</span><span>Galac</span><span>SAP</span><span>Oracle</span><span>Odoo</span></div>
     </div>
 
-    <div class="calc usbc" aria-label="Cómo se conecta">
-      <span class="kick" style="margin-bottom:6px"><span class="es">La idea</span><span class="en">The idea</span></span>
-      <h3 class="ct"><span class="es">Un USB para la <span class="grad">inteligencia de negocio.</span></span><span class="en">A USB for <span class="grad">business intelligence.</span></span></h3>
-      <div class="usb">
-        <div class="ub"><b><span class="es">Tu empresa</span><span class="en">Your company</span></b><span>Saint · Profit Plus · Galac · SAP · Excel</span></div>
-        <div class="ua">API</div>
-        <div class="ub mid"><b><span class="es">Cerebro MCP</span><span class="en">MCP brain</span></b><span><span class="es">Más de cien agentes especializados</span><span class="en">Over one hundred specialized agents</span></span></div>
-        <div class="ua">MCP</div>
-        <div class="ub"><b><span class="es">Ecosistema de IA</span><span class="en">AI ecosystem</span></b><span>Anthropic · OpenAI · Google · AWS · Azure</span></div>
-      </div>
-      <p class="cnote"><span class="es">Igual que un USB le da a tu computadora una capacidad nueva en segundos, Synthex SAI conecta tu empresa a un ecosistema inteligente. No se reemplaza nada.</span><span class="en">Just as a USB gives your computer a new capability in seconds, Synthex SAI connects your company to an intelligent ecosystem. Nothing is replaced.</span></p>
+    <div class="orb-hero" id="orbSlot">
+      <span class="kick"><span class="es">Habla con Lina</span><span class="en">Talk to Lina</span></span>
+      <h3 class="ct"><span class="es">Toca el orbe y <span class="grad">pregúntale lo que quieras.</span></span><span class="en">Tap the orb and <span class="grad">ask her anything.</span></span></h3>
+      <div class="orb-dock" id="orbDock"></div>
+      <p class="cnote"><span class="es">Escríbele tu pregunta: Lina te responde por escrito y con su voz, y puede agendar tu demostración.</span><span class="en">Type your question: Lina answers in writing and out loud, and can book your demo.</span></p>
     </div>
   </div>
 </header>
@@ -750,6 +752,15 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
         <label><span class="es">Empresa *</span><span class="en">Company *</span><input name="company_name" required maxlength="120" autocomplete="organization"></label>
         <label><span class="es">País</span><span class="en">Country</span><input name="country" maxlength="80" autocomplete="country-name"></label>
         <label><span class="es">Industria</span><span class="en">Industry</span><input name="industry" maxlength="120"></label>
+        <label class="full"><span class="es">¿Cuántos empleados tiene tu empresa? *</span><span class="en">How many employees does your company have? *</span><select name="employees" required>
+          <option value=""></option>
+          <option value="1-9">1 - 9</option>
+          <option value="10-49">10 - 49</option>
+          <option value="50-99">50 - 99</option>
+          <option value="100-249">100 - 249</option>
+          <option value="250-500">250 - 500</option>
+          <option value="500+">Más de 500 / Over 500</option>
+        </select></label>
         <label class="full"><span class="es">¿Qué quieres lograr con la IA? *</span><span class="en">What do you want to achieve with AI? *</span><textarea name="problem" required maxlength="4000" rows="4"></textarea></label>
         <label class="full"><span class="es">¿Qué sistemas usas hoy? (SAP, Oracle, CONTPAQi...)</span><span class="en">What systems do you use today? (SAP, Oracle, NetSuite...)</span><input name="existing_stack" maxlength="500"></label>
       </div>
@@ -932,6 +943,17 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
   // el orbe grande abre su conversación y refleja su estado. El cerebro, la voz y las
   // citas viven en /embed/voice-orb.js + /api/voice-agent/chat + /api/synthex-lina.
   var wrap = document.getElementById('nivaOrb');
+  // Mientras el hero está a la vista, el orbe vive en grande dentro de él; al bajar, vuelve a la esquina.
+  (function(){
+    var niva = document.getElementById('niva'), dock = document.getElementById('orbDock'), home = niva.parentNode, next = niva.nextSibling;
+    if (!dock || !('IntersectionObserver' in window)) return;
+    function place(inHero){
+      if (inHero && niva.parentNode !== dock) { dock.appendChild(niva); niva.classList.add('in-hero'); document.body.classList.add('orb-in-hero'); }
+      else if (!inHero && niva.parentNode === dock) { home.insertBefore(niva, next); niva.classList.remove('in-hero'); document.body.classList.remove('orb-in-hero'); }
+    }
+    place(true);
+    new IntersectionObserver(function(es){ es.forEach(function(e){ place(e.isIntersecting); }); }, { threshold: 0.15 }).observe(dock.parentNode);
+  })();
   var capA = document.getElementById('nivaCapActive'), capI = document.getElementById('nivaCapIdle');
   function L(){ return document.documentElement.lang === 'en' ? 'en' : 'es'; }
   function root(){ return document.querySelector('.d2orb-root'); }
@@ -1024,7 +1046,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
       box.querySelectorAll('.slot-b').forEach(function(x){ x.disabled = true; });
       b.classList.add('pri');
       fetch('/api/synthex-lina/public/book', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
-        nombre: d.full_name, email: d.email, telefono: d.phone, empresa: d.company_name, tema: (d.problem || '').slice(0, 300), start: iso, lang: L(), tz: tz }) })
+        nombre: d.full_name, email: d.email, telefono: d.phone, empresa: d.company_name, tema: ('[' + d.employees + ' empleados] ' + (d.problem || '')).slice(0, 300), start: iso, lang: L(), tz: tz }) })
         .then(function(r){ return r.json().then(function(j){ return { s:r.status, j:j }; }); })
         .then(function(x){
           if (x.j.booked) {
@@ -1049,7 +1071,7 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
     ev.preventDefault();
     var d = {}; new FormData(form).forEach(function(v, k){ d[k] = String(v).trim(); });
     var missing = false;
-    ['full_name','email','phone','company_name','problem'].forEach(function(k){
+    ['full_name','email','phone','company_name','employees','problem'].forEach(function(k){
       var el = form.elements[k]; var bad = !d[k] || (k === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d[k]));
       el.classList.toggle('bad', bad); if (bad) missing = true;
     });
@@ -1057,9 +1079,9 @@ html[data-theme="light"] section.alt{background:rgba(238,242,247,.6)}
     btn.disabled = true; show('', 'Enviando...', 'Sending...');
     fetch('/projects/api/v1/intake/public/request', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({
       full_name:d.full_name, email:d.email, phone:d.phone, company_name:d.company_name, country:d.country, industry:d.industry,
-      existing_stack:d.existing_stack, problem:d.problem,
+      existing_stack:d.existing_stack, problem:d.problem, company_size:d.employees,
       project_title:'Synthex SAI - ' + d.company_name,
-      project_description:'Solicitud de demostración de Synthex SAI desde aiagent.ringlypro.com/SynthexAI.\n\n' + d.problem,
+      project_description:'Solicitud de demostración de Synthex SAI desde aiagent.ringlypro.com/SynthexAI.\nEmpleados: ' + d.employees + '\n\n' + d.problem,
       ai_category:['Synthex SAI'], heard_from:'SynthexAI landing', utm_source:'synthexai-landing', utm_campaign:'synthexai-demo',
       referrer_url: document.referrer || ''
     }) })
