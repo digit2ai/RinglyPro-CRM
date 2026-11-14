@@ -97,7 +97,7 @@ require.cache[sdkPath] = { id: sdkPath, filename: sdkPath, loaded: true, exports
   const dc = await post('/api/synthex-lina/calc', { personas: 1, horas_dia: 1, costo_semana: 40 }, { 'X-Forwarded-For': '8.8.8.8' });
   ok(dc.status === 404, 'calc refused from outside');
   const pageSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/index.html'), 'utf8');
-  ok(/hrsMes = p \* h \* 5 \* 52 \/ 12, hora = c \/ 40/.test(pageSrc) && /dif = val - 388/.test(pageSrc), 'page calculator still uses the formula Lina copies');
+  ok(!/id="cP"|Calcula tu caso|\$685|\$388/.test(pageSrc) && /id="beneficios"/.test(pageSrc), 'landing follows the deck: no calculator, no prices, benefits section (2026-11-14)');
   const deckSrc = require('fs').readFileSync(path.join(__dirname, '../public/synthexai/pymes/index.html'), 'utf8');
   // Since 2026-11-06 the /pymes/ deck frames its own "Horas liberadas" calculator (owner spec: monthly cost,
   // working days, % automatable), so it no longer shares the landing page's weekly-cost formula.

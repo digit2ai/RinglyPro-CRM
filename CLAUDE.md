@@ -1160,6 +1160,10 @@ What Discovery substitutes is the front: the Department asks a CEO to describe t
 - `DISCOVERY_MODEL` — reserved for narrative prose; the figures are deterministic either way. Falls back to `AIR_MODEL`, default `claude-haiku-4-5-20251001`.
 - Inherits the AI Readiness cost model wholesale (`AIR_BUILD_RATE_USD_HR`, `AIR_HOURS_PER_PROCESS`, `AIR_CAPTURE_RATE_PILOT`, `AIR_PILOT_WEEKS`, …) — one override changes both surfaces, which is the intent.
 
+### synthexsai.com landing follows the /pymes/ deck (2026-11-14)
+
+Owner request: the landing (`public/synthexai/index.html`) now carries the deck's content: the hero calculator was replaced by the deck's USB diagram (Tu empresa -> Cerebro MCP -> Ecosistema de IA), and sections were added for "El punto de partida" (`#partida`), "Qué no es" (`#noes`) and "Lo que gana tu empresa" (`#beneficios`, menu link replaces Precios). The comparison table (`#diferencia`) and the price section (`#precio`, $685/$245/$388) were REMOVED, like in the deck: the offer is tailor-made. FAQ 02/04/08 and the FAQ JSON-LD no longer quote a figure. **Still quoting prices, not changed:** Lina's `synthex` persona and `synthex-knowledge.js` (and so D2S), plus her `calcular_ahorro` tool that compares against the $388 subscription.
+
 ### synthexsai.com/pymes/ — a copy of digit2ai.com/presentacion, plus the "Horas liberadas" calculator (2026-11-06)
 
 Owner request: the Synthex deck (`public/synthexai/pymes/index.html`) is now an exact copy of the Digit2AI deck (`public/mcp/presentacion/index.html`, what digit2ai.com/presentacion frames), 16 slides, with Synthex SAI everywhere (logo, cyan/indigo colours, name, synthexsai.com, booking `data-brand="synthex"` through the shared `book-meeting.js`, Lina voice Dalia). The previous 18-slide Synthex deck with the four simulators is in git history (commit faba893f and earlier).
