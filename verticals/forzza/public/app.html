@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#012a72">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Forzza · Capital</title>
 <style>
-:root{--bg:#f3f4f6;--card:#fff;--ink:#111827;--txt:#1f2937;--mut:#4b5563;--line:#e5e7eb;--acc:#005dab;--acc-d:#00498a;--lime:#89c403;--lime-d:#618a05;--lime-t:#4d6e02;--rep:#0b4fa3;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--soft:#e8f1fa;--soft-lime:#f1f8e1}
+:root{--bg:#f3f5f9;--card:#fff;--ink:#0b1630;--txt:#1f2937;--mut:#4b5563;--line:#e2e6ee;--acc:#012a72;--acc-d:#011d52;--navy:#012a72;--lime:#012a72;--lime-d:#012a72;--lime-t:#012a72;--rep:#012a72;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--soft:#e8eef9;--soft-lime:#e8eef9}
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 Montserrat,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--acc-d)}
 button,input,select,textarea{font:inherit}
 input,select,textarea{font-size:16px;width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--txt)}
@@ -24,18 +25,19 @@ label{display:block;font-size:13px;color:var(--mut);margin:0 0 4px}
 .btn.small{min-height:34px;padding:5px 10px;font-size:13px}
 .btn.danger{color:var(--bad)}
 .btn:disabled{opacity:.5;cursor:default}
-header.top{position:sticky;top:0;z-index:20;background:#fff;color:var(--ink);border-bottom:3px solid var(--lime);display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top))}
-header.top .brand{font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
-header.top .brand i{display:inline-block;width:12px;height:22px;border-radius:3px;background:var(--lime)}
-.sicar-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--lime-t);background:var(--soft-lime);border:1px solid #d6eaa6;border-radius:99px;padding:3px 10px}
-header.top .brand small{font-weight:500;opacity:.75;margin-left:6px}
+header.top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;border-bottom:0;display:flex;align-items:center;gap:12px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top))}
+header.top .brand{font-weight:600;letter-spacing:.2px;display:flex;align-items:center;gap:10px;color:#fff}
+header.top .brand img{height:30px;width:auto;display:block}
+
+.sicar-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#fff;background:transparent;border:1px solid rgba(255,255,255,.55);border-radius:99px;padding:3px 10px}
+header.top .brand small{font-weight:500;opacity:.85;padding-left:10px;border-left:1px solid rgba(255,255,255,.4)}
 header.top .sp{flex:1}
-.burger{display:none;background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:20px}
+.burger{display:none;background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:20px}
 .layout{display:flex;min-height:calc(100vh - 60px)}
 nav.side{width:220px;flex:0 0 220px;background:#fff;border-right:1px solid var(--line);padding:10px 8px}
 nav.side a{display:block;padding:10px 12px;border-radius:8px;color:var(--txt);text-decoration:none;font-weight:400;min-height:44px}
-nav.side a.on{background:var(--soft-lime);color:var(--ink);box-shadow:inset 3px 0 0 var(--lime)}
-nav.side .grp{font-size:12px;text-transform:uppercase;color:var(--ink);font-weight:800;letter-spacing:.6px;margin:14px 12px 4px}
+nav.side a.on{background:var(--soft);color:var(--navy);font-weight:600;box-shadow:inset 3px 0 0 var(--navy)}
+nav.side .grp{font-size:12px;text-transform:uppercase;color:var(--navy);font-weight:800;letter-spacing:.6px;margin:14px 12px 4px}
 main{flex:1;min-width:0;padding:18px;max-width:1200px}
 h1{font-size:22px;margin:0 0 4px;color:var(--ink)}
 h2{font-size:17px;margin:18px 0 8px;color:var(--ink)}
@@ -61,9 +63,11 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .okmsg{color:var(--ok);font-size:14px;margin-top:6px}
 .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}
 .modal .box{background:#fff;border-radius:12px;max-width:760px;width:100%;padding:18px}
-.login{max-width:380px;margin:10vh auto;padding:0 16px}
+.login{max-width:400px;margin:8vh auto;padding:0 16px}
+.login .logo{display:block;width:240px;max-width:80%;margin:0 auto 18px}
 .ticket-img{max-width:100%;max-height:340px;border-radius:8px;border:1px solid var(--line)}
 .muted{color:var(--mut)}
+header.top .muted{color:#dbe4f5!important}
 .drop{display:flex;align-items:center;justify-content:center;text-align:center;min-height:110px;border:2px dashed var(--line);border-radius:12px;padding:14px;cursor:pointer;color:var(--mut);background:#fafbfc}
 .drop.over{border-color:var(--acc);background:var(--soft);color:var(--acc-d)}
 .drop input[type=file]{position:absolute;opacity:0;width:1px;height:1px}
@@ -102,6 +106,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=6" defer></script>
+<script src="app.js?v=7" defer></script>
 </body>
 </html>

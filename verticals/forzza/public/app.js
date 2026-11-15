@@ -106,9 +106,9 @@
       <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="#94a3b8" stroke-width="1.2"/>
       ${reserva != null ? `<line x1="${L}" x2="${W - R}" y1="${y(reserva)}" y2="${y(reserva)}" stroke="#b45309" stroke-dasharray="6 4" stroke-width="1.5"/>` : ''}
       ${extra ? `<path d="${path(extra)}" fill="none" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 4"/>` : ''}
-      <path d="${path(serie.map((d) => d.saldo))}" fill="none" stroke="#005dab" stroke-width="2.4"/>
-      <circle cx="${x(min)}" cy="${y(serie[min].saldo)}" r="5" fill="${serie[min].saldo < 0 ? '#b91c1c' : '#005dab'}"/>${xt}</svg>
-      <div class="legend"><span><i style="background:#005dab"></i>Saldo proyectado</span>${extra ? '<span><i style="background:#7c3aed"></i>Con el pedido simulado</span>' : ''}
+      <path d="${path(serie.map((d) => d.saldo))}" fill="none" stroke="#012a72" stroke-width="2.4"/>
+      <circle cx="${x(min)}" cy="${y(serie[min].saldo)}" r="5" fill="${serie[min].saldo < 0 ? '#b91c1c' : '#012a72'}"/>${xt}</svg>
+      <div class="legend"><span><i style="background:#012a72"></i>Saldo proyectado</span>${extra ? '<span><i style="background:#7c3aed"></i>Con el pedido simulado</span>' : ''}
       ${reserva != null ? '<span><i style="background:#b45309"></i>Reserva mínima</span>' : ''}<span><i style="background:#94a3b8"></i>Cero</span><span>● Punto más bajo</span></div>`;
   }
   function alertasHtml(a) { return (a || []).map((x) => `<div class="al ${x.nivel}">${esc(x.texto)}</div>`).join(''); }
@@ -116,7 +116,7 @@
 
   /* ── sesión ── */
   function renderLogin(msg) {
-    $app.innerHTML = `<div class="login"><div class="card"><h1>Forzza · Capital</h1><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
+    $app.innerHTML = `<div class="login"><img class="logo" src="logo-azul.png" alt="Forzza · Materiales para la construcción"><div class="card"><h1>Capital</h1><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Correo</label><input name="email" type="email" autocomplete="username" required></div>
       <div><label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required></div>
       <button class="btn primary">Entrar</button><div class="err">${esc(msg || '')}</div></form></div></div>`;
@@ -151,7 +151,7 @@
   ];
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Menú" aria-expanded="false">☰</button>
-      <div class="brand"><i></i>Forzza<small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
+      <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
       <span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
@@ -239,10 +239,10 @@
       ${reserva != null ? `<line x1="${L}" x2="${W - R}" y1="${y(reserva)}" y2="${y(reserva)}" stroke="#b45309" stroke-dasharray="7 5" stroke-width="1.6"/><text x="${W - R}" y="${y(reserva) - 5}" text-anchor="end" style="fill:#b45309">Reserva ${esc(c$(reserva).replace('.00', ''))}</text>` : ''}
       <line x1="${x(ev)}" x2="${x(ev)}" y1="${T}" y2="${H - B}" stroke="#64748b" stroke-dasharray="3 4"/><text x="${x(ev) + 5}" y="${T + 10}">evaluación</text>
       <path d="${escal(ini)}" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 5"/>
-      <path d="${escal(mod.map((d) => d.saldo))}" fill="none" stroke="#005dab" stroke-width="2.6"/>
-      <circle cx="${x(mi)}" cy="${y(ind.minimo.saldo)}" r="5.5" fill="${neg ? '#b91c1c' : '#618a05'}"/>
+      <path d="${escal(mod.map((d) => d.saldo))}" fill="none" stroke="#012a72" stroke-width="2.6"/>
+      <circle cx="${x(mi)}" cy="${y(ind.minimo.saldo)}" r="5.5" fill="${neg ? '#b91c1c' : '#047857'}"/>
       <text x="${Math.min(x(mi) + 8, W - 200)}" y="${y(ind.minimo.saldo) + (y(ind.minimo.saldo) > H - 60 ? -10 : 18)}" style="fill:#111827;font-weight:700">Mínimo ${esc(c$(ind.minimo.saldo).replace('.00', ''))} · ${mi === mf ? 'día ' + mi : 'días ' + mi + '–' + mf}</text>${xt}</svg>
-      <div class="legend"><span><i style="background:#005dab"></i>Escenario modificado</span><span><i style="background:#94a3b8"></i>Escenario inicial (punteado)</span>${reserva != null ? '<span><i style="background:#b45309"></i>Reserva mínima</span>' : ''}<span><i style="background:#94a3b8;height:1px"></i>Cero</span></div>`;
+      <div class="legend"><span><i style="background:#012a72"></i>Escenario modificado</span><span><i style="background:#94a3b8"></i>Escenario inicial (punteado)</span>${reserva != null ? '<span><i style="background:#b45309"></i>Reserva mínima</span>' : ''}<span><i style="background:#94a3b8;height:1px"></i>Cero</span></div>`;
   }
   const SIM0 = () => ({ horizonte: 60, efectivo: '', reserva: undefined, eval_dia: 15, historico: undefined, entradas_pct: 0, salidas_pct: 0, retraso: 0, vencido: 'excluir', mover: {}, venta: null, puntuales: [] });
   const ORIGEN = { cobro: ['Por cobrar', 'ok'], pago: ['Por pagar', 'bad'], fijo: ['Gasto fijo', 'warn'], estimado: ['Estimado', ''], simulado: ['Supuesto', 'acc'] };
