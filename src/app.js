@@ -3339,6 +3339,22 @@ try {
 }
 
 // =====================================================
+// FORZZA — control de capital (efectivo, por cobrar, por pagar, gastos fijos) at /forzza/app/
+// La presentación sigue en /forzza/ (archivos estáticos de public/forzza).
+// =====================================================
+try {
+  const forzzaApp = require("../verticals/forzza/src/index");
+  app.get("/forzza/app", (req, res, next) => {
+    if (!req.originalUrl.split("?")[0].endsWith("/")) return res.redirect(301, "/forzza/app/");
+    next();
+  });
+  app.use("/forzza/app", forzzaApp);
+  console.log("Forzza mounted at /forzza/app");
+} catch (error) {
+  console.log("⚠️ Forzza not available:", error.message);
+}
+
+// =====================================================
 // AI RADAR — capture AI discoveries from the phone share sheet (served at /airadar/)
 // =====================================================
 
