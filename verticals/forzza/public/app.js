@@ -175,40 +175,155 @@
   const R = {};
   const ALIAS = { simulador: 'proyeccion' }; // la vista Simulador se unió a Proyección
 
-  /* ── tablero ── */
+  /* ── tablero: salud financiera en gráficas ── */
+  const NAVY = '#012a72', VERDE = '#047857', AMBAR = '#b45309', ROJO = '#b91c1c';
+  const k$ = (c) => { const v = Number(c) / 100, a = Math.abs(v), s = v < 0 ? '-' : ''; return a >= 1e6 ? `${s}$${(a / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M` : a >= 1e3 ? `${s}$${Math.round(a / 1e3)}k` : `${s}$${Math.round(a)}`; };
+  const pc = (x, d) => (x == null ? '—' : (x * 100).toFixed(d == null ? 0 : d) + '%');
+  const NIVEL = { sana: ['Sana', VERDE], atencion: ['Atención', AMBAR], riesgo: ['En riesgo', ROJO], sin_datos: ['Sin datos', '#64748b'] };
+  function gauge(puntos, nivel) {
+    const W = 260, H = 160, cx = 130, cy = 130, r = 104, w = 22;
+    const pt = (v, rr) => { const a = Math.PI * (1 - v / 100); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)]; };
+    const arc = (a, b, col) => { const [x1, y1] = pt(a, r), [x2, y2] = pt(b, r); return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${col}" stroke-width="${w}" fill="none"/>`; };
+    const v = puntos == null ? 0 : puntos, [nx, ny] = pt(v, r - 30);
+    return `<svg viewBox="0 0 ${W} ${H}" class="gauge" role="img" aria-label="Calificación ${puntos == null ? 'sin datos' : puntos + ' de 100'}">
+      ${arc(0, 49.5, '#f3c2c2')}${arc(50.5, 74.5, '#f0d7a6')}${arc(75.5, 100, '#b7e2cd')}${puntos == null ? '' : arc(0, Math.max(0.5, v), NIVEL[nivel][1])}
+      ${puntos == null ? '' : `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="0"/>${(() => { const [mx, my] = pt(v, r); return `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="13" fill="#fff" stroke="#0b1630" stroke-width="3"/>`; })()}`}
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" style="font-size:46px;font-weight:800;fill:#0b1630">${puntos == null ? '—' : puntos}</text>
+      <text x="${cx}" y="${cy + 12}" text-anchor="middle" style="font-size:12px;fill:#4b5563">de 100</text>
+      <text x="22" y="${H - 2}" style="font-size:11px;fill:#4b5563">0</text><text x="${W - 22}" y="${H - 2}" text-anchor="end" style="font-size:11px;fill:#4b5563">100</text></svg>`;
+  }
+  function anillo(p, label) {
+    const r = 30, C = 2 * Math.PI * r, v = p == null ? 0 : Math.max(0, Math.min(1, p)), col = p == null ? '#94a3b8' : v >= 0.3 ? ROJO : v >= 0.1 ? AMBAR : VERDE;
+    return `<div class="ring"><svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="${r}" stroke="#e2e6ee" stroke-width="9" fill="none"/>
+      <circle cx="40" cy="40" r="${r}" stroke="${col}" stroke-width="9" fill="none" stroke-dasharray="${(C * v).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)" stroke-linecap="round"/>
+      <text x="40" y="45" text-anchor="middle" style="font-size:16px;font-weight:800;fill:#0b1630">${pc(p)}</text></svg><div class="muted" style="font-size:12px">${label}</div></div>`;
+  }
+  function abanico(mc, efectivo, reserva) {
+    const W = 760, H = 280, L = 70, R = 30, T = 14, B = 30, b = mc.bandas;
+    let lo = Math.min(0, efectivo, ...b.map((d) => d.p5)), hi = Math.max(efectivo, ...b.map((d) => d.p95), reserva || 0);
+    const raw = (hi - lo) / 5, pow = Math.pow(10, Math.floor(Math.log10(raw || 1))), step = [1, 2, 2.5, 5, 10].map((k) => k * pow).find((s) => s >= raw);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = (i) => L + (i * (W - L - R)) / b.length, y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo || 1);
+    const pts = [[0, efectivo, efectivo, efectivo, efectivo, efectivo]].concat(b.map((d, i) => [i + 1, d.p5, d.p25, d.p50, d.p75, d.p95]));
+    const band = (a, c) => 'M' + pts.map((p) => `${x(p[0]).toFixed(1)} ${y(p[a]).toFixed(1)}`).join('L') + 'L' + pts.slice().reverse().map((p) => `${x(p[0]).toFixed(1)} ${y(p[c]).toFixed(1)}`).join('L') + 'Z';
+    const line = (a) => 'M' + pts.map((p) => `${x(p[0]).toFixed(1)} ${y(p[a]).toFixed(1)}`).join('L');
+    const grid = []; for (let v = lo; v <= hi + step / 2; v += step) grid.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e2e6ee"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${k$(v)}</text>`);
+    const xt = [0, 30, 60, 90].filter((i) => i <= b.length).map((i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${i ? 'día ' + i : 'hoy'}</text>`).join('');
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Rango de saldos posibles a ${b.length} días">${grid.join('')}
+      ${y(0) > T && y(0) < H - B ? `<rect x="${L}" y="${y(0)}" width="${W - L - R}" height="${H - B - y(0)}" fill="#fdeaea" opacity=".55"/>` : ''}
+      <path d="${band(1, 5)}" fill="${NAVY}" opacity=".12"/><path d="${band(2, 4)}" fill="${NAVY}" opacity=".22"/>
+      <path d="${line(3)}" fill="none" stroke="${NAVY}" stroke-width="2.6"/>
+      <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="${ROJO}" stroke-width="1.4"/>
+      ${reserva != null ? `<line x1="${L}" x2="${W - R}" y1="${y(reserva)}" y2="${y(reserva)}" stroke="${AMBAR}" stroke-dasharray="7 5" stroke-width="1.6"/>` : ''}${xt}</svg>
+      <div class="legend"><span><i style="background:${NAVY}"></i>Lo más probable</span><span><i style="background:${NAVY};opacity:.35;height:8px"></i>Rango normal (50% de los casos)</span><span><i style="background:${NAVY};opacity:.15;height:8px"></i>Rango amplio (90%)</span><span><i style="background:${ROJO};height:2px"></i>Cero</span>${reserva != null ? `<span><i style="background:${AMBAR}"></i>Reserva</span>` : ''}</div>`;
+  }
+  function barrasMes(meses) {
+    if (!meses.length) return '<p class="empty">Importa estados de cuenta de al menos un mes completo.</p>';
+    const W = 380, H = 210, L = 8, B = 34, T = 18, max = Math.max(...meses.map((m) => Math.max(m.entradas, m.salidas))) || 1;
+    const g = (W - L * 2) / meses.length, bw = Math.min(34, g / 3), y = (v) => T + (H - T - B) * (1 - v / max);
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Entradas y salidas por mes">${meses.map((m, i) => {
+      const cx = L + g * i + g / 2, mes = MES[Number(m.mes.slice(5)) - 1] + ' ' + m.mes.slice(2, 4);
+      return `<rect x="${cx - bw - 2}" y="${y(m.entradas)}" width="${bw}" height="${H - B - y(m.entradas)}" rx="3" fill="${VERDE}"/>
+        <rect x="${cx + 2}" y="${y(m.salidas)}" width="${bw}" height="${H - B - y(m.salidas)}" rx="3" fill="${ROJO}" opacity=".85"/>
+        <text x="${cx}" y="${H - 18}" text-anchor="middle">${esc(mes)}</text>
+        <text x="${cx}" y="${H - 4}" text-anchor="middle" style="font-weight:700;fill:${m.neto >= 0 ? VERDE : ROJO}">${m.neto >= 0 ? '+' : ''}${k$(m.neto)}</text>`;
+    }).join('')}</svg><div class="legend"><span><i style="background:${VERDE}"></i>Entró</span><span><i style="background:${ROJO}"></i>Salió</span><span>abajo: lo que quedó</span></div>`;
+  }
+  function calor(arr) {
+    if (!arr.length) return '<p class="empty">Sin historia de bancos.</p>';
+    const max = Math.max(...arr.map(Math.abs)) || 1;
+    return `<div class="heat">${arr.map((v, i) => { const a = Math.min(1, Math.abs(v) / max); const bg = v >= 0 ? `rgba(4,120,87,${(0.1 + 0.85 * a).toFixed(2)})` : `rgba(185,28,28,${(0.1 + 0.85 * a).toFixed(2)})`;
+      return `<div class="hc" style="background:${bg};color:${a > 0.45 ? '#fff' : '#0b1630'}" title="Día ${i + 1}: ${v >= 0 ? 'entra' : 'sale'} ${c$(Math.abs(v))} en promedio"><b>${i + 1}</b><span>${k$(v)}</span></div>`; }).join('')}</div>
+      <div class="legend"><span><i style="background:${VERDE}"></i>Días en que entra más de lo que sale</span><span><i style="background:${ROJO}"></i>Días que aprietan</span></div>`;
+  }
+  function barrasH(items, color) {
+    if (!items.length) return '<p class="empty">Sin datos.</p>';
+    const max = Math.max(...items.map((i) => i.v)) || 1;
+    return items.map((i) => `<div class="hb"><div class="hb-l">${esc(i.l)}</div><div class="hb-t"><i style="width:${Math.max(1, (i.v / max) * 100).toFixed(1)}%;background:${color}"></i></div><div class="hb-v">${k$(i.v)}${i.n ? ` <span class="muted">${i.n}</span>` : ''}</div></div>`).join('');
+  }
+  function lorenz(c) {
+    const S = 220, P = 26, z = (v) => P + v * (S - P * 2);
+    const d = 'M' + c.lorenz.map(([a, b]) => `${z(a).toFixed(1)} ${(S - z(b)).toFixed(1)}`).join('L');
+    return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:240px" role="img" aria-label="Curva de Lorenz de los cobros">
+      <rect x="${P}" y="${P}" width="${S - 2 * P}" height="${S - 2 * P}" fill="#f6f8fc" stroke="#e2e6ee"/>
+      <path d="${d}L${z(1)} ${S - z(0)}Z" fill="${NAVY}" opacity=".12"/>
+      <line x1="${z(0)}" y1="${S - z(0)}" x2="${z(1)}" y2="${S - z(1)}" stroke="#94a3b8" stroke-dasharray="5 4"/>
+      <path d="${d}" fill="none" stroke="${NAVY}" stroke-width="2.4"/>
+      <text x="${S / 2}" y="${S - 6}" text-anchor="middle" style="font-size:10px;fill:#4b5563">% de clientes →</text>
+      <text x="10" y="${S / 2}" transform="rotate(-90 10 ${S / 2})" text-anchor="middle" style="font-size:10px;fill:#4b5563">% de lo cobrado →</text></svg>`;
+  }
+  function aging(cart) {
+    const T = [['por_vencer', 'Por vencer', NAVY], ['d1_30', '1–30', '#d97706'], ['d31_60', '31–60', AMBAR], ['d61_90', '61–90', '#c2410c'], ['d90_mas', '+90', ROJO]];
+    const tot = cart.total || 1;
+    return `<div class="stack">${T.map(([k, , c]) => (cart[k].monto ? `<i style="width:${(cart[k].monto / tot * 100).toFixed(1)}%;background:${c}"></i>` : '')).join('')}</div>
+      <div class="legend">${T.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l}: ${k$(cart[k].monto)}</span>`).join('')}</div>`;
+  }
   R.tablero = async function () {
-    const t = await api('tablero');
-    const bajo = t.minimo.saldo < 0 ? 'bad' : t.reserva != null && t.minimo.saldo < t.reserva ? 'bad' : 'ok';
-    main().innerHTML = `<h1>Tablero</h1><p class="sub">Hoy ${fmtF(t.hoy)} · proyección a ${t.horizonte} días (hasta ${fmtF(t.hasta)})</p>
-      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza por <a href="#bancos">Bancos</a> (saldo de cada cuenta), luego <a href="#cxc">Por cobrar</a>, <a href="#cxp">Por pagar</a> y <a href="#fijos">Gastos fijos</a>. Se pueden importar de Excel.</div>` : ''}
+    const [t, s] = await Promise.all([api('tablero'), api('salud').catch(() => null)]);
+    const mc = s && s.monte_carlo, cal = s && s.calificacion, niv = NIVEL[(cal && cal.nivel) || 'sin_datos'];
+    const de = s && s.dias_efectivo, deCol = de == null ? '#94a3b8' : de >= 30 ? VERDE : de >= 15 ? AMBAR : ROJO;
+    const cats = (s && s.categorias) || [];
+    const conc = s && s.concentracion;
+    main().innerHTML = `<h1>Tablero</h1><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
+      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza por <a href="#bancos">Bancos</a>, luego <a href="#sicar">Importar de SICAR</a>.</div>` : ''}
       ${alertasHtml(t.alertas)}
-      <div class="grid">
-        ${kpi('Efectivo hoy', c$(t.efectivo), t.cuentas.filter((c) => c.incluir).map((c) => `${esc(c.nombre)}: ${c$(c.saldo)}`).join('<br>'))}
-        ${kpi('Te deben (por cobrar)', c$(t.cartera.total), `${t.cartera.n} documentos · vencido ${c$(t.cartera.vencido)}`)}
-        ${kpi('Debes (por pagar)', c$(t.por_pagar_total), `${c$(t.por_pagar_30)} en los próximos 30 días${t.cxp_vencido ? ' · vencido ' + c$(t.cxp_vencido) : ''}`)}
-        ${kpi('Punto más bajo', c$(t.minimo.saldo), `el ${fmtF(t.minimo.fecha)}`, bajo)}
-        ${kpi('Reserva mínima', t.reserva == null ? 'Sin definir' : c$(t.reserva), t.reserva == null ? '<a href="#ajustes">Definirla</a>' : t.falta_para_reserva ? `Faltan ${c$(t.falta_para_reserva)}` : 'Se cumple todo el periodo')}
-        ${kpi('Saldo al ' + fmtC(t.hasta), c$(t.final), 'si todo se cobra y paga en su fecha')}
-        ${kpi('SICAR', t.sicar_ultima ? 'Importado' : 'Sin importar', t.sicar_ultima ? 'última vez ' + fmtF(String(t.sicar_ultima).slice(0, 10)) + ' · <a href="#sicar">importar</a>' : '<a href="#sicar">Importar reportes de SICAR</a>')}
+      <div class="card hero">
+        <div class="hero-g">${gauge(cal && cal.puntos, cal ? cal.nivel : 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
+          <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Calificación de salud financiera, de 0 a 100</div></div>
+        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación?</h2>
+          ${cal ? cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
+            <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
+            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) + ' · ' : ''}${esc(p.regla)}</div></div>`).join('') : '<p class="muted">Sin datos de bancos todavía.</p>'}
+          ${cal && cal.peso_calificado < 100 ? `<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás. Se completan al importar los créditos de SICAR.</p>` : ''}</div>
       </div>
-      <div class="card">${chart(t.serie, t.reserva)}</div>
+      <div class="grid kpis">
+        ${kpi('Efectivo hoy', c$(t.efectivo), t.cuentas.filter((c) => c.incluir).map((c) => `${esc(c.nombre)}: ${k$(c.saldo)}`).join(' · '))}
+        <div class="card kpi"><div class="l">Días de efectivo</div><div class="v" style="color:${deCol}">${de == null ? '—' : de.toFixed(1)}</div>
+          <div class="thermo"><i style="width:${de == null ? 0 : Math.min(100, de / 60 * 100).toFixed(0)}%;background:${deCol}"></i><b style="left:25%"></b><b style="left:50%"></b></div>
+          <div class="n">Cuánto aguantas sin cobrar nada${s && s.salida_diaria ? ` (salen ${k$(s.salida_diaria)} al día)` : ''}. Marcas: 15 y 30 días.</div></div>
+        ${kpi('Saldo más probable en 90 días', mc ? c$(mc.final.p50) : '—', mc ? `Entre ${k$(mc.final.p5)} y ${k$(mc.final.p95)} en 9 de cada 10 casos` : 'Sin historia de bancos', mc && mc.final.p50 < 0 ? 'bad' : '')}
+        ${kpi('Punto más bajo probable', mc ? c$(mc.minimo.p50) : '—', mc ? `En un mal caso (1 de 20): ${k$(mc.minimo.p5)}` : '', mc && mc.minimo.p50 < 0 ? 'bad' : '')}
+      </div>
+      ${mc ? `<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es quedarse sin dinero?</h2>
+        <p class="muted" style="margin:0;font-size:13px">${mc.caminos.toLocaleString('es-MX')} futuros posibles, armados con lo que de verdad pasó en los bancos (${esc(mc.desde)} a ${esc(mc.hasta)}, ${mc.meses_historia} meses). Es una estimación: con pocos meses de historia el rango real puede ser más amplio.</p></div>
+        <div class="rings">${anillo(mc.prob_negativo_en[30], 'en 30 días')}${anillo(mc.prob_negativo_en[60], 'en 60 días')}${anillo(mc.prob_negativo_en[90], 'en 90 días')}</div></div>
+        ${abanico(mc, t.efectivo, s.reserva)}</div>` : ''}
+      <div class="grid two">
+        <div class="card"><h2 style="margin-top:0">Mes por mes</h2>${barrasMes((s && s.meses) || [])}</div>
+        <div class="card"><h2 style="margin-top:0">¿Qué días del mes aprietan?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio de lo que entra menos lo que sale, por día del mes.</p>${calor((s && s.calor) || [])}</div>
+      </div>
+      <div class="grid two">
+        <div class="card"><h2 style="margin-top:0">A dónde se va el dinero</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio al mes, sin traspasos entre tus cuentas.</p>
+          ${barrasH(cats.filter((c) => c.salidas > 0 && c.categoria !== 'traspaso').sort((a, b) => b.salidas - a.salidas).slice(0, 8).map((c) => ({ l: CAT_LBL[c.categoria] || c.categoria, v: c.salidas })), ROJO)}</div>
+        <div class="card"><h2 style="margin-top:0">De dónde viene</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio al mes. Préstamos y aportaciones no son venta.</p>
+          ${barrasH(cats.filter((c) => c.entradas > 0 && c.categoria !== 'traspaso').sort((a, b) => b.entradas - a.entradas).slice(0, 8).map((c) => ({ l: CAT_LBL[c.categoria] || c.categoria, v: c.entradas })), VERDE)}
+          <p class="muted" style="font-size:12px;margin:8px 0 0">"Sin categoría" es grande: categorízalo en <a href="#bancos">Bancos</a> y estos cuadros dicen más.</p></div>
+      </div>
+      <div class="card"><h2 style="margin-top:0">¿Dependes de pocos clientes?</h2>${conc ? `<div class="conc">
+        <div>${lorenz(conc)}</div>
+        <div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+            ${kpi('Los 5 mayores', pc(conc.top5), 'de lo cobrado', conc.top5 >= 0.6 ? 'bad' : '')}${kpi('Índice Gini', conc.gini.toFixed(2), '0 = parejo · 1 = uno solo')}${kpi('Clientes', String(conc.n), 'con nombre en el banco')}</div>
+          ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), NAVY)}
+          <p class="muted" style="font-size:12px;margin:8px 0 0">Últimos 6 meses. Solo los depósitos que traen el nombre del cliente (${pc(conc.cobertura)} de lo cobrado); los depósitos sin nombre no entran. Con los créditos de SICAR queda exacto.</p></div></div>`
+        : '<p class="empty">Aún no hay depósitos con nombre de cliente.</p>'}</div>
+      <div class="card"><h2 style="margin-top:0">Lo que te deben y lo que debes</h2>${t.cartera.total || (s && s.por_pagar) ? `
+        <div class="grid" style="margin-bottom:10px">${kpi('Te deben', c$(t.cartera.total), 'vencido ' + c$(t.cartera.vencido), t.cartera.vencido ? 'bad' : '')}${kpi('Debes', c$(t.por_pagar_total), c$(t.por_pagar_30) + ' en 30 días')}
+          ${kpi('Días para cobrar (DSO)', s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO)', s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
+        ${t.cartera.total ? aging(t.cartera) : ''}`
+        : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#sicar">Importar de SICAR</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
       <h2>Próximos 14 días</h2>
       <div class="card tbl">${t.proximos.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.proximos.map((e) => `<tr><td data-l="Fecha">${fmtF(e.fecha)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td><td data-l="Concepto">${esc(e.concepto)}</td>
           <td data-l="Tipo">${{ cobro: 'Cobro', pago: 'Pago a proveedor', fijo: 'Gasto fijo' }[e.tipo] || esc(e.tipo)}</td><td class="n" data-l="Monto">${sentido(e.monto)}</td></tr>`).join('')}
-        </tbody></table>` : '<p class="empty">Nada en los próximos 14 días.</p>'}</div>
-      <h2>Antigüedad de lo que te deben</h2>
-      <div class="grid">${[['por_vencer', 'Por vencer'], ['d1_30', '1 a 30 días vencido'], ['d31_60', '31 a 60'], ['d61_90', '61 a 90'], ['d90_mas', 'Más de 90']]
-        .map(([k, l]) => kpi(l, c$(t.cartera[k].monto), `${t.cartera[k].n} documentos`, k === 'por_vencer' ? '' : t.cartera[k].monto ? 'bad' : '')).join('')}</div>
-      <h2>Este mes en los bancos (desde ${fmtF(t.mes.desde)})</h2>
-      <div class="card tbl">${t.mes.por_categoria.length ? `<table class="cards"><thead><tr><th>Categoría</th><th class="n">Entró</th><th class="n">Salió</th><th class="n">Movimientos</th></tr></thead><tbody>
-        ${t.mes.por_categoria.map((r) => `<tr><td data-l="Categoría"><a href="#bancos" data-cat="${esc(r.categoria)}">${esc(CAT_LBL[r.categoria] || r.categoria)}</a></td>
-          <td class="n" data-l="Entró">${r.entradas ? c$(r.entradas) : '—'}</td><td class="n" data-l="Salió">${r.salidas ? c$(r.salidas) : '—'}</td><td class="n" data-l="Movimientos">${r.n}</td></tr>`).join('')}
-        </tbody></table>` : '<p class="empty">Sin movimientos este mes. Importa el estado de cuenta en Bancos.</p>'}</div>`;
-    main().onclick = (e) => { const a = e.target.closest('[data-cat]'); if (a) S.bCat = a.dataset.cat; };
+        </tbody></table>` : '<p class="empty">Nada registrado en los próximos 14 días.</p>'}</div>
+      <p class="muted" style="font-size:12px">Reserva mínima: ${t.reserva == null ? '<a href="#ajustes">sin definir</a>' : c$(t.reserva)} · SICAR: ${t.sicar_ultima ? 'importado el ' + fmtF(String(t.sicar_ultima).slice(0, 10)) : 'sin importar'} · <a href="#proyeccion">Ver la proyección y simular escenarios</a></p>`;
   };
+  function valParte(p) {
+    if (p.clave === 'liquidez') return p.valor.toFixed(1) + ' días';
+    if (p.clave === 'flujo') return (p.valor >= 0 ? 'entra ' : 'sale ') + pc(Math.abs(p.valor), 1) + (p.valor >= 0 ? ' más de lo que sale' : ' más de lo que entra');
+    return pc(p.valor);
+  }
 
-  /* ── proyección ── */
   function E_alertas(p) {
     const a = [];
     if (p.primero_negativo) a.push({ nivel: 'alto', texto: `El saldo queda en negativo el ${fmtF(p.primero_negativo)}. Faltan ${c$(p.falta_para_cero)} para no quedar abajo de cero.` });

@@ -427,14 +427,64 @@ async function baseSimulador(tenant, hoy) {
     datosHasta = conDatos.map((c) => c.ultimo).sort().pop();
     if (ini <= fin) cobertura = { desde: ini, hasta: fin };
   }
-  let patron = null;
+  let patron = null, historia = null;
   if (cobertura) {
     const movs = await sel(`SELECT m.fecha::text AS fecha, m.monto, m.categoria FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id
       WHERE m.tenant_id=:t AND c.incluir AND c.active AND m.categoria <> 'traspaso' AND m.fecha BETWEEN :d AND :h`, { t: tenant, d: cobertura.desde, h: cobertura.hasta });
     patron = E.patronHistorico(movs, cobertura);
+    if (patron) historia = E.historiaDiaria(movs, patron.meses.map((m) => m.mes));
   }
-  return { st, patron, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length };
+  return { st, patron, historia, cobertura, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length };
 }
+/**
+ * Salud financiera para el tablero: calificación 0–100, Monte Carlo a 90 días, días de efectivo,
+ * concentración de clientes (Gini), meses, mapa de calor y a dónde se va el dinero. Solo lectura.
+ * Todo sale de los bancos y documentos reales; lo que es estimación lo dice.
+ */
+const OPERATIVA_FUERA = ['traspaso', 'prestamo', 'aportacion_socios'];
+api.get('/salud', async (req, res) => {
+  const hoy = hoyMx();
+  const { st, patron, historia, cobertura, datosHasta } = await baseSimulador(req.tenant, hoy);
+  const base = entradaMotor(st, hoy, { horizonte: 90, opciones: { vencido: 'excluir', retraso: 0 } });
+  const p = E.proyectar(base);
+  const cartera = E.antiguedad(st.cxc, hoy);
+  const reserva = st.cfg.reserva_minima;
+  const mc = historia ? E.monteCarlo({ hoy, efectivo: st.efectivo, historia, eventos: p.eventos, horizonte: 90, caminos: 2000, reserva, semilla: Number(hoy.replace(/-/g, '')) + req.tenant }) : null;
+  const pm = patron ? patron.promedio_mes : null;
+  const cats = patron ? patron.por_categoria : {};
+  const sum = (k, filtro) => Object.entries(cats).filter(([c]) => filtro(c)).reduce((a, [, v]) => a + v[k], 0);
+  const entOp = patron ? sum('entradas', (c) => !OPERATIVA_FUERA.includes(c)) : null;
+  const salOp = patron ? sum('salidas', (c) => !OPERATIVA_FUERA.includes(c) && c !== 'retiro_socios') : null;
+  // Concentración: depósitos de clientes con nombre del pagador, últimos 6 meses.
+  const desde6 = E.addDays(hoy, -183);
+  const dep = await sel(`SELECT UPPER(REGEXP_REPLACE(TRIM(m.contraparte), '\\s+', ' ', 'g')) AS nombre, SUM(m.monto) AS monto FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id
+    WHERE m.tenant_id=:t AND c.incluir AND m.monto>0 AND m.categoria IN ('cliente','sin_categoria') AND m.fecha>=:d AND m.contraparte IS NOT NULL AND TRIM(m.contraparte)<>'' GROUP BY 1`, { t: req.tenant, d: desde6 });
+  const tot = await one(`SELECT COALESCE(SUM(m.monto),0) AS m FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id
+    WHERE m.tenant_id=:t AND c.incluir AND m.monto>0 AND m.categoria IN ('cliente','sin_categoria') AND m.fecha>=:d`, { t: req.tenant, d: desde6 });
+  const conc = E.concentracion(dep.map((r) => ({ nombre: r.nombre, monto: E.toC(r.monto) })));
+  if (conc) conc.cobertura = E.toC(tot.m) ? conc.total / E.toC(tot.m) : null;
+  const cxpTotal = st.cxp.reduce((a, x) => a + x.pendiente, 0);
+  const diasEf = pm && pm.salidas ? st.efectivo / (pm.salidas / 30.4) : null;
+  const cal = E.calificacion({
+    dias_efectivo: diasEf, prob_negativo_60: mc ? mc.prob_negativo_en[60] : null,
+    margen_flujo: pm && pm.salidas ? (pm.entradas - pm.salidas) / pm.salidas : null,
+    vencido_pct: cartera.total ? cartera.vencido / cartera.total : null, top5: conc && conc.n >= 5 ? conc.top5 : null
+  });
+  res.json({
+    hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura,
+    calificacion: cal, monte_carlo: mc,
+    dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
+    promedio_mes: pm, entradas_operativas_mes: entOp, salidas_operativas_mes: salOp,
+    meses: patron ? patron.meses : [],
+    calor: patron ? Array.from({ length: 31 }, (_, i) => patron.dias.promedio.ent[i + 1] - patron.dias.promedio.sal[i + 1]) : [],
+    categorias: Object.entries(cats).map(([k, v]) => ({ categoria: k, ...v })).sort((a, b) => (b.entradas + b.salidas) - (a.entradas + a.salidas)),
+    concentracion: conc,
+    cartera,
+    dso: cartera.total && entOp ? cartera.total / (entOp / 30.4) : null,
+    dpo: cxpTotal && salOp ? cxpTotal / (salOp / 30.4) : null,
+    por_pagar: cxpTotal
+  });
+});
 api.post('/simulador', async (req, res) => {
   const hoy = hoyMx(), b = req.body || {};
   const { st, patron, datosHasta, sinCuentasConDatos } = await baseSimulador(req.tenant, hoy);

@@ -333,4 +333,101 @@ function alertas(p, cartera, cxpVencido) {
   return out;
 }
 
-module.exports = { patronHistorico, eventosEstimados, escenario, indicadores, ventaEventos, fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };
+
+/* ── Salud financiera: Monte Carlo, concentración, calificación ──────── */
+/** Generador pseudoaleatorio con semilla (mulberry32): el mismo dato da el mismo resultado al recargar. */
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const pct = (arr, q) => { if (!arr.length) return 0; const i = (arr.length - 1) * q, lo = Math.floor(i), hi = Math.ceil(i); return Math.round(arr[lo] + (arr[hi] - arr[lo]) * (i - lo)); };
+/**
+ * Monte Carlo sobre la historia REAL de los bancos. historia = { 'AAAA-MM': [neto día 1..31] } (centavos, sin
+ * traspasos, solo meses completos). Cada semana futura toma 7 días seguidos de un mes del pasado elegido al azar,
+ * en el mismo día del mes ±2. Así se conservan los picos de quincena y fin de mes y a la vez cada camino
+ * es distinto. Los documentos reales (por cobrar, por pagar, fijos) se suman igual en todos los caminos.
+ * Es una estimación, no un dato: con pocos meses de historia el rango es más angosto de lo que será.
+ */
+function monteCarlo(o) {
+  const meses = Object.keys(o.historia || {});
+  const H = Math.max(1, Math.min(180, Math.round(Number(o.horizonte) || 90)));
+  const N = Math.max(100, Math.min(5000, Math.round(Number(o.caminos) || 2000)));
+  if (!meses.length) return null;
+  const fijos = new Array(H + 1).fill(0);
+  for (const e of o.eventos || []) { const k = diffDays(o.hoy, e.fecha); if (k >= 1 && k <= H) fijos[k] += e.monto; else if (k < 1 && k > -400) fijos[1] += e.monto; }
+  const fechas = []; for (let k = 1; k <= H; k++) fechas.push(addDays(o.hoy, k));
+  const doms = fechas.map((f) => Number(f.slice(8))), lds = fechas.map(ultimoDia);
+  const r = rng(o.semilla || 20261115);
+  const porDia = Array.from({ length: H }, () => new Float64Array(N));
+  const minimos = new Float64Array(N), finales = new Float64Array(N);
+  let negativo = 0, bajoReserva = 0; const neg30 = { 30: 0, 60: 0, 90: 0 };
+  for (let n = 0; n < N; n++) {
+    let saldo = o.efectivo, min = saldo, fueNeg = 0, fueBajo = false;
+    let m = null, off = 0;
+    for (let k = 0; k < H; k++) {
+      // Bloques de 7 días seguidos de un mismo mes del pasado: el dinero que entra un día y sale al siguiente
+      // viaja junto (días sueltos al azar exageran el riesgo). Cada bloque arranca en un mes al azar, ±2 días.
+      if (k % 7 === 0) { m = o.historia[meses[Math.floor(r() * meses.length)]]; off = Math.floor(r() * 5) - 2; }
+      let d = doms[k] + off; d = Math.max(1, Math.min(31, d));
+      let neto = m[d] || 0;
+      if (doms[k] === lds[k]) for (let i = doms[k] + 1; i <= 31; i++) neto += m[i] || 0; // mes corto: junta los días que no tiene
+      saldo += neto + fijos[k + 1];
+      porDia[k][n] = saldo;
+      if (saldo < min) min = saldo;
+      if (saldo < 0 && !fueNeg) fueNeg = k + 1;
+      if (o.reserva != null && saldo < o.reserva) fueBajo = true;
+    }
+    minimos[n] = min; finales[n] = saldo;
+    if (fueNeg) { negativo++; for (const h of [30, 60, 90]) if (fueNeg <= h) neg30[h]++; }
+    if (fueBajo) bajoReserva++;
+  }
+  const bandas = porDia.map((col, k) => { const a = Array.from(col).sort((x, y) => x - y); return { fecha: fechas[k], p5: pct(a, 0.05), p25: pct(a, 0.25), p50: pct(a, 0.5), p75: pct(a, 0.75), p95: pct(a, 0.95) }; });
+  const mins = Array.from(minimos).sort((x, y) => x - y), fins = Array.from(finales).sort((x, y) => x - y);
+  return {
+    caminos: N, horizonte: H, meses_historia: meses.length, desde: meses[0], hasta: meses[meses.length - 1], bandas,
+    prob_negativo: negativo / N, prob_negativo_en: { 30: H >= 30 ? neg30[30] / N : null, 60: H >= 60 ? neg30[60] / N : null, 90: H >= 90 ? neg30[90] / N : null },
+    prob_bajo_reserva: o.reserva == null ? null : bajoReserva / N,
+    minimo: { p5: pct(mins, 0.05), p50: pct(mins, 0.5) }, final: { p5: pct(fins, 0.05), p50: pct(fins, 0.5), p95: pct(fins, 0.95) }
+  };
+}
+/** Neto por día del mes, por mes completo de la historia (para el Monte Carlo y el mapa de calor). */
+function historiaDiaria(movs, meses) {
+  const h = {}; for (const m of meses) h[m] = new Array(32).fill(0);
+  for (const x of movs) { const f = String(x.fecha).slice(0, 10); if (h[f.slice(0, 7)]) h[f.slice(0, 7)][Number(f.slice(8))] += toC(x.monto) || 0; }
+  return h;
+}
+/**
+ * Concentración: Gini, índice Herfindahl (HHI, 0 a 10,000) y cuánto pesan los 5 mayores.
+ * montos: [{nombre, monto}] en centavos. Devuelve la curva de Lorenz (≤ 21 puntos) para dibujarla.
+ */
+function concentracion(montos) {
+  const xs = (montos || []).filter((m) => m.monto > 0).sort((a, b) => a.monto - b.monto);
+  const n = xs.length, total = xs.reduce((a, m) => a + m.monto, 0);
+  if (n < 2 || !total) return null;
+  let acum = 0, area = 0; const curva = [[0, 0]];
+  xs.forEach((m, i) => { const prev = acum; acum += m.monto; area += (prev + acum) / 2 / total / n; curva.push([(i + 1) / n, acum / total]); });
+  const paso = Math.max(1, Math.ceil(n / 20)); const lorenz = curva.filter((_, i) => i % paso === 0 || i === curva.length - 1);
+  const desc = xs.slice().reverse();
+  const hhi = Math.round(desc.reduce((a, m) => a + Math.pow((m.monto / total) * 100, 2), 0));
+  return { n, total, gini: Math.max(0, Math.min(1, 1 - 2 * area)), hhi, top5: desc.slice(0, 5).reduce((a, m) => a + m.monto, 0) / total,
+    mayores: desc.slice(0, 8).map((m) => ({ nombre: m.nombre, monto: m.monto, parte: m.monto / total })), lorenz };
+}
+/**
+ * Calificación de salud 0–100 con reglas FIJAS y visibles (no es un modelo). Cada parte dice cómo se calculó.
+ * Una parte sin dato no se califica y su peso se reparte entre las demás (y se dice).
+ */
+const lin = (v, malo, bueno) => (bueno > malo ? Math.max(0, Math.min(1, (v - malo) / (bueno - malo))) : Math.max(0, Math.min(1, (malo - v) / (malo - bueno))));
+function calificacion(d) {
+  const partes = [
+    { clave: 'liquidez', nombre: 'Días de efectivo', peso: 25, valor: d.dias_efectivo, regla: '0 días = 0 puntos, 30 días o más = completo', f: (v) => lin(v, 0, 30) },
+    { clave: 'riesgo', nombre: 'Probabilidad de quedar en negativo (60 días)', peso: 25, valor: d.prob_negativo_60, regla: '50% o más = 0 puntos, 0% = completo', f: (v) => lin(v, 0.5, 0) },
+    { clave: 'flujo', nombre: 'Flujo neto de los meses', peso: 20, valor: d.margen_flujo, regla: 'sale 10% más de lo que entra = 0, entra 5% más de lo que sale = completo', f: (v) => lin(v, -0.10, 0.05) },
+    { clave: 'cartera', nombre: 'Cartera vencida', peso: 15, valor: d.vencido_pct, regla: '50% vencido o más = 0, nada vencido = completo', f: (v) => lin(v, 0.5, 0) },
+    { clave: 'concentracion', nombre: 'Dependencia de pocos clientes', peso: 15, valor: d.top5, regla: 'los 5 mayores pesan 80% o más = 0, 30% o menos = completo', f: (v) => lin(v, 0.8, 0.3) }
+  ];
+  const con = partes.filter((p) => p.valor != null && Number.isFinite(p.valor));
+  const pesoTotal = con.reduce((a, p) => a + p.peso, 0);
+  for (const p of partes) { const ok = con.includes(p); p.puntos = ok ? Math.round(p.f(p.valor) * p.peso * 10) / 10 : null; p.calificada = ok; delete p.f; }
+  if (!pesoTotal) return { puntos: null, nivel: 'sin_datos', partes };
+  const puntos = Math.round(con.reduce((a, p) => a + p.puntos, 0) / pesoTotal * 100);
+  return { puntos, nivel: puntos >= 75 ? 'sana' : puntos >= 50 ? 'atencion' : 'riesgo', partes, peso_calificado: pesoTotal };
+}
+
+module.exports = { monteCarlo, historiaDiaria, concentracion, calificacion, rng, patronHistorico, eventosEstimados, escenario, indicadores, ventaEventos, fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };

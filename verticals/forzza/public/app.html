@@ -103,9 +103,25 @@ header.top .muted{color:#dbe4f5!important}
 .grid>.card{margin-bottom:0}.grid{margin-bottom:14px}
 @media (max-width:520px){.sicar-badge,header.top>.muted{display:none}.grid{grid-template-columns:1fr 1fr;gap:8px}.kpi .v{font-size:17px}.grid>.card{padding:10px}}
 </style>
+<style>
+.hero{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:center}
+.hero-g{display:flex;flex-direction:column;align-items:center}.gauge{width:100%;max-width:280px}
+.nivel{color:#fff;font-weight:700;border-radius:99px;padding:4px 16px;margin-top:-4px}
+.part{margin-bottom:10px}.part-h{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:3px}
+.hb-t{height:10px;background:#eef1f6;border-radius:99px;overflow:hidden}.hb-t i{display:block;height:100%;border-radius:99px}
+.hb{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+.hb-l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hb-v{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.thermo{position:relative;height:10px;background:#eef1f6;border-radius:99px;margin:6px 0 4px}.thermo i{display:block;height:100%;border-radius:99px}.thermo b{position:absolute;top:-3px;width:2px;height:16px;background:#64748b}
+.rings{display:flex;gap:10px}.ring{text-align:center}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.hc{border-radius:6px;padding:5px 4px;font-size:11px;line-height:1.2;text-align:center;min-height:42px;display:flex;flex-direction:column;justify-content:center}.hc span{font-size:10px}
+.conc{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start}
+.stack{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#eef1f6}.stack i{display:block;height:100%}
+@media (max-width:820px){.hero,.conc{grid-template-columns:1fr}.rings{width:100%;justify-content:space-around}.grid.two{grid-template-columns:1fr}.hb{grid-template-columns:minmax(80px,40%) 1fr auto}}
+</style>
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=7" defer></script>
+<script src="app.js?v=8" defer></script>
 </body>
 </html>

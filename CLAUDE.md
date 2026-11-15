@@ -2588,6 +2588,15 @@ The pitch simulator's layout (8 cards, initial vs modified scenario chart, reser
 - Scenario changes: customers paying N days late, overdue receivables counted or not, ±% on estimated in/outflows, move a supplier payment (only this tenant's own payables — a foreign id is ignored), a credit sale, one-off movements within the horizon.
 - **2026-11-15 data load** (owner request): HSBC Apr–Oct and BBVA Jul–Oct statements (PDF, loaded by a local script outside the repo; every statement reconciles opening + deposits − withdrawals = closing to the centavo; HSBC's PDF text is EBCDIC cp037 and is decoded) and the SICAR purchases report. **"traspaso" means ONLY HSBC↔BBVA**: card cash advances = préstamo, partner contributions = aportación, money sent to Banorte/other Forzza accounts not loaded = otro.
 
+### Tablero = financial health in pictures (`GET /api/v1/salud`, owner request 2026-11-15)
+
+Read-only; every figure comes from the banks and documents and is computed in `engine.js` (seeded, so a reload shows the same numbers).
+- **Health score 0–100 with FIXED, visible rules, not a model** (`calificacion`): days of cash 25 (0→30 days), Monte Carlo probability of going negative in 60 days 25 (50%→0%), monthly net flow 20 (−10%→+5% of outflows), overdue receivables 15, top-5 client share 15 (80%→30%). **A part with no data is not scored as zero**: its weight is spread over the rest and the page says "sin dato". ≥75 Sana · 50–74 Atención · <50 En riesgo.
+- **Monte Carlo** (`monteCarlo`): 2,000 paths × 90 days from the real bank history (full months, no traspasos), in **7-day blocks** of a random past month at the same day-of-month ±2 (single random days ignore that money comes in one day and goes out the next, and overstated the risk); real documents are added to every path. Fan chart P5/P25/P50/P75/P95 and the probability of a negative balance at 30/60/90 days. Labelled an estimate (only 4 months of history).
+- **Concentration** (`concentracion`): Gini, HHI and top-5 share with a Lorenz curve, from client deposits that carry the payer's name (last 6 months; the share of collections that has a name is shown). Exact once the SICAR credit reports arrive.
+- Also: days of cash (thermometer), month-by-month in/out, day-of-month heat map, where money goes / comes from, and aging + DSO/DPO, which show "falta el dato" until receivables/payables exist.
+- First reading on real data (2026-11-15): score 49 (En riesgo) — 5 days of cash, 32% chance of a negative balance within 60 days.
+
 ### SICAR integration (Forzza's POS/admin system, sicar.mx)
 
 **SICAR HAS NO PUBLIC API AND NO DOCUMENTED DATABASE ACCESS** (researched 2026-11-15: manual.sicar.mx, web search; Nube SICAR only syncs between branches; MicroZync is a third-party Mercado Libre connector). What every SICAR report does is "Previa (F3)" → save as PDF or Excel. So the integration is **importing those reports**, by hand or through a bridge.
