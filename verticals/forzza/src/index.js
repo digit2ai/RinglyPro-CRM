@@ -233,7 +233,7 @@ api.use((req, res, next) => (req.user.must_change ? res.status(403).json({ error
 const canEdit = (req) => ['owner', 'director', 'capturista'].includes(req.user.role);
 const canAdmin = (req) => ['owner', 'director'].includes(req.user.role);
 // Simular no guarda nada: el contador (solo lectura) también puede.
-const SOLO_CALCULO = ['/simulador', '/simular-venta'];
+const SOLO_CALCULO = ['/simulador', '/simular-venta', '/dalia/chat'];
 api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) || (req.method === 'POST' && SOLO_CALCULO.includes(req.path)) ? next() : res.status(403).json({ error: 'read_only' })));
 const adminOnly = (req, res, next) => (canAdmin(req) ? next() : res.status(404).json({ error: 'not_found' }));
 const own = (table, id, t, tx) => one(`SELECT * FROM ${table} WHERE id=:id AND tenant_id=:t`, { id, t }, tx);
@@ -371,7 +371,8 @@ function entradaMotor(st, hoy, o) {
   return { hoy, horizonte: o.horizonte, reserva: st.cfg.reserva_minima, efectivo: st.efectivo, cxc: st.cxc, cxp: st.cxp, fijos: st.fijos, opciones: o.opciones };
 }
 
-api.get('/tablero', async (req, res) => {
+async function tableroDe(tenant, query) {
+  const req = { tenant, query: query || {} };
   const hoy = hoyMx(), st = await cargarEstado(req.tenant, hoy), o = opcionesDe(req.query, st.cfg);
   const p = E.proyectar(entradaMotor(st, hoy, o));
   const cartera = E.antiguedad(st.cxc, hoy);
@@ -384,7 +385,7 @@ api.get('/tablero', async (req, res) => {
     FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id WHERE m.tenant_id=:t AND c.incluir AND m.fecha>=:d AND m.fecha<=:h
     GROUP BY m.categoria ORDER BY m.categoria`, { t: req.tenant, d: mes, h: hoy });
   const proximos = p.eventos.filter((e) => e.fecha <= E.addDays(hoy, 14));
-  res.json({
+  return ({
     hoy, efectivo: st.efectivo, cuentas: st.cuentas.map((c) => ({ id: c.id, nombre: c.nombre, banco: c.banco, terminacion: c.terminacion, incluir: c.incluir, uso: c.uso, saldo: c.saldo, fecha_saldo: c.fecha_saldo })),
     reserva: p.reserva, minimo: p.minimo, final: p.final, hasta: p.hasta, horizonte: p.horizonte, primero_bajo_reserva: p.primero_bajo_reserva, primero_negativo: p.primero_negativo,
     falta_para_reserva: p.falta_para_reserva, falta_para_cero: p.falta_para_cero,
@@ -395,7 +396,8 @@ api.get('/tablero', async (req, res) => {
     sicar_ultima: ((await one('SELECT MAX(created_at) AS u FROM fz_sicar_imports WHERE tenant_id=:t', { t: req.tenant })) || {}).u || null,
     sin_datos: !st.cxc.length && !st.cxp.length && !st.fijos.length && st.cuentas.every((c) => !c.fecha_saldo)
   });
-});
+}
+api.get('/tablero', async (req, res) => res.json(await tableroDe(req.tenant, req.query)));
 api.get('/proyeccion', async (req, res) => {
   const hoy = hoyMx(), st = await cargarEstado(req.tenant, hoy), o = opcionesDe(req.query, st.cfg);
   res.json(E.proyectar(entradaMotor(st, hoy, o)));
@@ -442,7 +444,8 @@ async function baseSimulador(tenant, hoy) {
  * Todo sale de los bancos y documentos reales; lo que es estimación lo dice.
  */
 const OPERATIVA_FUERA = ['traspaso', 'prestamo', 'aportacion_socios'];
-api.get('/salud', async (req, res) => {
+async function saludDe(tenant) {
+  const req = { tenant };
   const hoy = hoyMx();
   const { st, patron, historia, cobertura, datosHasta } = await baseSimulador(req.tenant, hoy);
   const base = entradaMotor(st, hoy, { horizonte: 90, opciones: { vencido: 'excluir', retraso: 0 } });
@@ -470,7 +473,7 @@ api.get('/salud', async (req, res) => {
     margen_flujo: pm && pm.salidas ? (pm.entradas - pm.salidas) / pm.salidas : null,
     vencido_pct: cartera.total ? cartera.vencido / cartera.total : null, top5: conc && conc.n >= 5 ? conc.top5 : null
   });
-  res.json({
+  return ({
     hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura,
     calificacion: cal, monte_carlo: mc,
     dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
@@ -484,6 +487,22 @@ api.get('/salud', async (req, res) => {
     dpo: cxpTotal && salOp ? cxpTotal / (salOp / 30.4) : null,
     por_pagar: cxpTotal
   });
+}
+api.get('/salud', async (req, res) => res.json(await saludDe(req.tenant)));
+/* ── Dalia: asistente financiera (orbe de Digit2AI). Solo lee; la empresa sale de la sesión. ── */
+const dalia = require('./dalia');
+const daliaDeps = () => ({ E, hoyMx, sel, one, tableroDe, saludDe, sicarResumenDe, cargarEstado, entradaMotor });
+api.post('/dalia/chat', async (req, res) => {
+  const k = 'dalia|' + req.user.id;
+  if (tooMany(k, 40)) return res.status(429).json({ reply: 'Me hiciste muchas preguntas seguidas. Espera unos minutos y seguimos.', error: 'too_many' });
+  noteAttempt(k);
+  const t = await one('SELECT name FROM fz_tenants WHERE id=:t', { t: req.tenant });
+  const r = await dalia.responder((req.body || {}).messages, {
+    tenant: req.tenant, empresa: t && t.name, usuario: req.user.name || null, rol: req.user.role,
+    D: daliaDeps()
+  });
+  audit(req, 'dalia', (r.composed_by || '') + (r.herramientas && r.herramientas.length ? ': ' + r.herramientas.join(',') : ''));
+  res.json({ reply: r.reply, source: r.source, composed_by: r.composed_by });
 });
 api.post('/simulador', async (req, res) => {
   const hoy = hoyMx(), b = req.body || {};
@@ -1069,7 +1088,8 @@ api.get('/sicar/importaciones', async (req, res) => {
     u.email AS por FROM fz_sicar_imports i LEFT JOIN fz_users u ON u.id=i.created_by AND u.tenant_id=i.tenant_id WHERE i.tenant_id=:t ORDER BY i.id DESC LIMIT 100`, { t: req.tenant }));
 });
 /** Análisis de lo importado de SICAR. Solo documentos vigentes (V); las devoluciones restan. */
-api.get('/sicar/resumen', async (req, res) => {
+async function sicarResumenDe(tenant, query) {
+  const req = { tenant, query: query || {} };
   const hoy = hoyMx();
   const desde = date(req.query.desde) || (Number(hoy.slice(0, 4)) - 1) + hoy.slice(4, 7) + '-01', hasta = date(req.query.hasta) || hoy;
   const vig = "(est='V' OR doc='DEV' OR tipo IN ('abono_cliente','abono_proveedor'))";
@@ -1096,9 +1116,10 @@ api.get('/sicar/resumen', async (req, res) => {
   if (fp) fp.saldo_app = st.cxp.reduce((a, x) => a + x.pendiente, 0);
   const c = (rows, keys) => rows.map((r) => { const o = { ...r }; for (const k of keys) o[k] = E.toC(r[k]); return o; });
   const [ult] = await sel('SELECT MAX(created_at) AS u FROM fz_sicar_imports WHERE tenant_id=:t', { t: req.tenant });
-  res.json({ desde, hasta, meses: c(meses, ['compras', 'gastos', 'ventas', 'cobrado']), proveedores: c(proveedores, ['total']), gastos: c(gastos, ['total']), clientes: c(clientes, ['total']),
+  return ({ desde, hasta, meses: c(meses, ['compras', 'gastos', 'ventas', 'cobrado']), proveedores: c(proveedores, ['total']), gastos: c(gastos, ['total']), clientes: c(clientes, ['total']),
     conciliacion: { cxc: fc, cxp: fp }, ultima_importacion: ult.u });
-});
+}
+api.get('/sicar/resumen', async (req, res) => res.json(await sicarResumenDe(req.tenant, req.query)));
 /* Llaves del puente SICAR (solo director/dueño). */
 api.get('/llaves', adminOnly, async (req, res) => {
   res.json(await sel('SELECT id, nombre, prefijo, created_at, last_used_at, revoked_at FROM fz_api_keys WHERE tenant_id=:t ORDER BY id DESC', { t: req.tenant }));
@@ -1206,4 +1227,5 @@ module.exports._verifyOwner = null; // la SIT inyecta aquí la verificación del
 module.exports._db = db;
 module.exports._waNumero = waNumero;
 module.exports._excelDate = excelDate;
-module.exports._pdfRows = null; // la SIT puede inyectar aquí un lector de PDF
+module.exports._pdfRows = null;
+module.exports._daliaDeps = daliaDeps; // la SIT puede inyectar aquí un lector de PDF

@@ -111,7 +111,8 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     const ui = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
     const mig = fs.readFileSync(path.join(__dirname, 'migrations', '20261115_forzza_tables.sql'), 'utf8');
     ok('engine.js no toca base de datos ni red', !/require\('\.\/db'\)|sequelize|https?\.|fetch\(/.test(code['engine.js']));
-    ok('ningún transporte de mensajes ni modelo', !files.some((f) => /twilio|sendgrid|nodemailer|@anthropic-ai|graph\.facebook/i.test(code[f])));
+    ok('ningún transporte de mensajes', !files.some((f) => /twilio|sendgrid|nodemailer|graph\.facebook/i.test(code[f])));
+    ok('el modelo solo se alcanza desde dalia.js', files.filter((f) => /@anthropic-ai/.test(code[f])).join(',') === 'dalia.js');
     ok('el tenant nunca sale del cuerpo', !/body\.tenant_id|b\.tenant_id|query\.tenant_id/.test(code['index.js']));
     const tablaDe = (n) => (mig.match(new RegExp('CREATE TABLE IF NOT EXISTS ' + n + ' \\(([\\s\\S]*?)\\n\\);')) || [])[1] || '';
     ok('ningún saldo pendiente se guarda en cxc/cxp: se calcula', ['fz_cxc', 'fz_cxp'].every((n) => tablaDe(n) && !/pendiente|saldo/i.test(tablaDe(n))));
@@ -472,6 +473,52 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const real = fs.readFileSync(process.env.FORZZA_SICAR_MUESTRA);
       const rr = await req('POST', '/sicar/importar', { cookie: capA.cookie, raw: multipart({ aplicar: '0' }, { name: 'muestra.pdf', type: 'application/pdf', data: real }) });
       ok('PDF REAL de SICAR (solo local): se lee completo y cuadra con su total, sin guardar', rr.status === 200 && rr.json.cuadra === true && rr.json.n_errores === 0 && rr.json.aplicado === false, JSON.stringify(rr.json && { t: rr.json.tipo, c: rr.json.cuadra, e: rr.json.n_errores }));
+    }
+
+    console.log('\nDalia (asistente financiera)');
+    {
+      const DL = require('./src/dalia');
+      const src = fs.readFileSync(path.join(__dirname, 'src', 'dalia.js'), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '');
+      ok('dalia.js no escribe nada (sin INSERT/UPDATE/DELETE)', !/\b(INSERT|UPDATE|DELETE)\b/i.test(src));
+      ok('ninguna herramienta acepta empresa ni usuario como argumento', DL.TOOLS.every((t) => !/tenant|empresa_id|user/i.test(JSON.stringify(t.input_schema))));
+      const otros = fs.readdirSync(path.join(__dirname, 'src')).filter((f) => f.endsWith('.js') && f !== 'dalia.js' && fs.readFileSync(path.join(__dirname, 'src', f), 'utf8').includes('@anthropic-ai/sdk'));
+      ok('dalia.js es el único archivo que llega a un modelo', otros.length === 0, otros.join(','));
+      const perm = DL._permitidos([{ total: '$1,234,567.89', p: 0.32 }]);
+      ok('verificador: una cifra inventada se detecta', DL._sinFuente('Tienes $999,999 en caja.', perm).length === 1);
+      ok('verificador: la cifra de la herramienta, redondeada o en millones, pasa', DL._sinFuente('Hay $1,234,568, unos 1.2 millones, con 32% de riesgo, desde 2026.', perm).length === 0);
+      ok('verificador: un porcentaje inventado se detecta', DL._sinFuente('La probabilidad es 45%.', perm).length === 1);
+
+      ok('sin sesión no responde', (await req('POST', '/dalia/chat', { body: { messages: [{ role: 'user', content: 'hola' }] } })).status === 401);
+      const keyBak = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+      const hk = await req('POST', '/dalia/chat', { cookie: conA.cookie, body: { messages: [{ role: 'assistant', content: 'Hola' }, { role: 'user', content: '¿Cuánto efectivo hay?' }] } });
+      ok('sin modelo: el contador recibe un resumen marcado como heurístico', hk.status === 200 && hk.json.composed_by === 'heuristic' && /efectivo/.test(hk.json.reply), JSON.stringify(hk.json).slice(0, 160));
+      if (keyBak) process.env.ANTHROPIC_API_KEY = keyBak;
+
+      // Un movimiento que solo existe en la empresa B.
+      const [[cb]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,incluir) VALUES (:t,'SIT B','BBVA',TRUE) RETURNING id", { replacements: { t: B } });
+      const secreto = 'SITDALIAB' + STAMP;
+      await db.query("INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,monto,categoria) VALUES (:t,:c,:f,:k,777777.77,'cliente')", { replacements: { t: B, c: cb.id, f: hoyMx(), k: secreto } });
+      let vistas = [];
+      const fake = (respuestas) => ({ messages: { create: async (p) => {
+        const last = p.messages[p.messages.length - 1];
+        if (Array.isArray(last.content) && last.content[0] && last.content[0].type === 'tool_result') vistas.push(JSON.parse(last.content[0].content));
+        return respuestas.shift()(p);
+      } } });
+      const usar = (name, input) => () => ({ content: [{ type: 'tool_use', id: 'tu' + Math.random(), name, input }] });
+      const decir = (t) => () => ({ content: [{ type: 'text', text: t }] });
+      DL._setClient(fake([usar('buscar_movimientos', { texto: secreto, tenant_id: B, empresa: B }), (p) => ({ content: [{ type: 'text', text: 'Encontré ' + vistas[0].movimientos_encontrados + ' movimientos.' }] })]));
+      const iso = await req('POST', '/dalia/chat', { cookie: dirA.cookie, body: { messages: [{ role: 'user', content: 'busca ' + secreto }] } });
+      ok('aislamiento: un tenant_id en los argumentos no trae datos de otra empresa', iso.status === 200 && vistas[0] && vistas[0].movimientos_encontrados === 0 && !JSON.stringify(vistas[0]).includes('777,777'), JSON.stringify(vistas[0]).slice(0, 160));
+      vistas = [];
+      DL._setClient(fake([usar('estado_hoy', {}), (p) => ({ content: [{ type: 'text', text: 'Hoy tienes ' + vistas[0].efectivo_total_hoy + ' en el banco.' }] })]));
+      const ok1 = await req('POST', '/dalia/chat', { cookie: dirA.cookie, body: { messages: [{ role: 'user', content: '¿Cuánto efectivo tengo?' }] } });
+      ok('una cifra que sale de la herramienta llega tal cual', ok1.json.composed_by === 'model' && ok1.json.reply.includes(vistas[0].efectivo_total_hoy), JSON.stringify(ok1.json).slice(0, 160));
+      DL._setClient(fake([usar('estado_hoy', {}), decir('Tienes $98,765,432.10 en caja.'), decir('Son $98,765,432.10, seguro.')]));
+      const inv = await req('POST', '/dalia/chat', { cookie: dirA.cookie, body: { messages: [{ role: 'user', content: '¿Cuánto tengo?' }] } });
+      ok('una cifra inventada dos veces se descarta y no llega al usuario', inv.json.composed_by === 'discarded' && !inv.json.reply.includes('98,765'), JSON.stringify(inv.json).slice(0, 160));
+      DL._setClient(null);
+      const act = await q("SELECT detail FROM fz_activity WHERE tenant_id=:t AND action='dalia' ORDER BY id DESC LIMIT 1", { t: A });
+      ok('la bitácora guarda qué herramientas usó, nunca la pregunta', act[0] && !/Cuánto/.test(act[0].detail || ''));
     }
 
     console.log('\nUsuarios');

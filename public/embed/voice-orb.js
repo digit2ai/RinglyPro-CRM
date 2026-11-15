@@ -26,6 +26,10 @@
  *                 "reply" = the visitor types (no microphone, ever) and the agent answers
  *                 in writing AND aloud through /api/tts/edge; a speaker button in the
  *                 panel mutes the voice for that visitor
+ *   data-chat     SAME-ORIGIN path of a host app's own brain (e.g. "/forzza/app/api/v1/dalia/chat").
+ *                 Opt-in: unset keeps /api/voice-agent/chat. The request carries the page's own
+ *                 session cookie, so the host app answers from its own data behind its own login.
+ *   data-chat-header  one extra request header for that brain, "Name: value" (e.g. a CSRF header)
  *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
  *                 keeps the right caption when it calls setLang()
  *
@@ -180,6 +184,9 @@
     var d = host.dataset || {};
     var API = (d.api || SCRIPT_ORIGIN || '').replace(/\/$/, '');
     var AGENT = d.agent || 'digit2ai';
+    // A host app's own brain: same-origin path only, never another host.
+    var CHAT = /^\/(?!\/)[A-Za-z0-9\/_.-]{1,200}$/.test(d.chat || '') ? d.chat : '';
+    var CHAT_HDR = /^([A-Za-z0-9-]{1,40}):\s*([ -~]{1,120})$/.exec(d.chatHeader || '');
     var accent = d.accent || '#22d3ee';
     // Optional second colour of the ball, its ring and its glow. Unset keeps the
     // original cyan-to-violet orb, so every product that does not pass them is
@@ -371,8 +378,10 @@
           if (liveCtx) ctx = String(liveCtx).slice(0, 4000) + '\n\n' + pageContext;
         }
       } catch (e) { /* page hook failed: fall back to page text */ }
-      fetch(API + '/api/voice-agent/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      var hdrs = { 'Content-Type': 'application/json' };
+      if (CHAT && CHAT_HDR) hdrs[CHAT_HDR[1]] = CHAT_HDR[2];
+      fetch(CHAT || (API + '/api/voice-agent/chat'), {
+        method: 'POST', headers: hdrs, credentials: 'same-origin',
         body: JSON.stringify({ agent: AGENT, lang: cfg.lang, context: ctx, messages: history.slice(-40) })
       })
         .then(function (r) { return r.json(); })

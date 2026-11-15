@@ -140,6 +140,27 @@
     await loadCat();
     shell();
     go(location.hash.slice(1) || 'tablero');
+    mountDalia();
+  }
+  /* Dalia: el orbe de Digit2AI. Se escribe la pregunta y responde por texto y por voz, con los datos de esta empresa. */
+  function mountDalia() {
+    document.body.classList.remove('fz-out');
+    if (document.getElementById('dalia-orb')) return;
+    const h = document.createElement('div');
+    h.id = 'dalia-orb';
+    h.setAttribute('data-voice-orb', '');
+    h.setAttribute('data-mode', 'reply');
+    h.setAttribute('data-agent', 'forzza');
+    h.setAttribute('data-lang', 'es');
+    h.setAttribute('data-label', 'Pregúntale a Dalia');
+    h.setAttribute('data-chat', new URL('api/v1/dalia/chat', location.href).pathname);
+    h.setAttribute('data-chat-header', 'X-Forzza: 1');
+    h.setAttribute('data-accent', '#7fb2ff');
+    h.setAttribute('data-accent2', '#012A72');
+    document.body.appendChild(h);
+    const sc = document.createElement('script');
+    sc.src = '/embed/voice-orb.js?v=2'; sc.defer = true;
+    document.body.appendChild(sc);
   }
 
   const VIEWS = [
@@ -159,7 +180,7 @@
     const side = document.getElementById('side'), b = document.getElementById('burger');
     b.onclick = () => { side.classList.toggle('open'); b.setAttribute('aria-expanded', side.classList.contains('open')); };
     side.onclick = (e) => { if (e.target.closest('a')) { side.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); } };
-    document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; renderLogin(); };
+    document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; document.body.classList.add('fz-out'); renderLogin(); };
   }
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');

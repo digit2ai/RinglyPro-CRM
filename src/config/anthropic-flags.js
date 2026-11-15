@@ -78,6 +78,11 @@ const REGISTRY = {
     sites: ['verticals/delca/src/llm.js (Dalia: menu chat + order taking with tools)'],
     off_behaviour: "rule-based order parser, composed_by:'heuristic'",
     note: 'Every price and total is computed from dlc_products; a reply with a figure that is not on the menu or in the cart is discarded.' },
+  // ENABLED on creation 2026-11-15 (owner request): Dalia, the finance assistant inside Forzza
+  // Capital (/forzza/app). Read-only tools; a reply with a figure no tool produced is discarded.
+  forzza:           { status: 'enabled', names: ['Forzza', 'Forzza Capital', 'Materiales Forzza'], disabled_on: null,
+    sites: ['verticals/forzza/src/dalia.js (POST /forzza/app/api/v1/dalia/chat)'],
+    off_behaviour: "resumen fijo del tablero, composed_by:'heuristic'" },
   vallemilagro:     { status: 'enabled', names: ['Valle Milagro'], disabled_on: null,
     sites: ['verticals/vallemilagro/src/llm.js (agente Valle y agente Scout con búsqueda web)'],
     off_behaviour: 'Valle responde por la ruta sin modelo, marcada; el Scout no corre y lo dice',
