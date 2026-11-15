@@ -517,6 +517,19 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const inv = await req('POST', '/dalia/chat', { cookie: dirA.cookie, body: { messages: [{ role: 'user', content: '¿Cuánto tengo?' }] } });
       ok('una cifra inventada dos veces se descarta y no llega al usuario', inv.json.composed_by === 'discarded' && !inv.json.reply.includes('98,765'), JSON.stringify(inv.json).slice(0, 160));
       DL._setClient(null);
+      const D = router._daliaDeps();
+      ok('bitácora: el contador no la puede consultar con Dalia', !!(await DL._ejecutar('actividad', {}, { tenant: A, rol: 'contador', D })).error);
+      ok('calculadora: rechaza un número que no salió de una herramienta', /no salieron/.test((await DL._ejecutar('calcular', { expresion: '999999 * 2' }, { tenant: A, D, permitidos: () => [1234] })).error || ''));
+      ok('calculadora: solo aritmética, nada de código', /Solo números/.test((await DL._ejecutar('calcular', { expresion: 'process.exit(1)' }, { tenant: A, D, permitidos: () => [] })).error || ''));
+      const antes = (await q('SELECT COUNT(*)::int n FROM fz_movimientos WHERE tenant_id=:t', { t: A }))[0].n;
+      const esc = await DL._ejecutar('escenario', { historico: 'promedio', movimientos_supuestos: [{ fecha: E.addDays(hoyMx(), 5), monto: -1000 }] }, { tenant: A, D });
+      ok('escenario: responde y no guarda nada', !!esc.punto_mas_bajo && (await q('SELECT COUNT(*)::int n FROM fz_movimientos WHERE tenant_id=:t', { t: A }))[0].n === antes);
+      const sf = await DL._ejecutar('saldo_en_fecha', { fecha: hoyMx() }, { tenant: A, D });
+      ok('saldo en fecha: solo cuentas de su empresa', sf.cuentas.every((c) => c.cuenta !== 'SIT B'));
+      for (const t of ['documentos', 'historial_cobros_pagos', 'catalogo', 'configuracion_y_equipo', 'cobertura_de_datos', 'buscar_sicar', 'saldos_sicar']) {
+        const r = await DL._ejecutar(t, { lado: 'cobrar', tipo: 'clientes' }, { tenant: B, rol: 'director', D });
+        ok('herramienta ' + t + ' responde sin error', r && !r.error && !JSON.stringify(r).includes('Cobranza A'), JSON.stringify(r).slice(0, 120));
+      }
       const act = await q("SELECT detail FROM fz_activity WHERE tenant_id=:t AND action='dalia' ORDER BY id DESC LIMIT 1", { t: A });
       ok('la bitácora guarda qué herramientas usó, nunca la pregunta', act[0] && !/Cuánto/.test(act[0].detail || ''));
     }

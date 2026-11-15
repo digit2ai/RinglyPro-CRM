@@ -150,6 +150,7 @@
     h.id = 'dalia-orb';
     h.setAttribute('data-voice-orb', '');
     h.setAttribute('data-mode', 'reply');
+    h.setAttribute('data-voice-default', 'off');
     h.setAttribute('data-agent', 'forzza');
     h.setAttribute('data-lang', 'es');
     h.setAttribute('data-label', 'Pregúntale a Dalia');
@@ -159,7 +160,7 @@
     h.setAttribute('data-accent2', '#012A72');
     document.body.appendChild(h);
     const sc = document.createElement('script');
-    sc.src = '/embed/voice-orb.js?v=2'; sc.defer = true;
+    sc.src = '/embed/voice-orb.js?v=3'; sc.defer = true;
     document.body.appendChild(sc);
   }
 

@@ -29,6 +29,7 @@
  *   data-chat     SAME-ORIGIN path of a host app's own brain (e.g. "/forzza/app/api/v1/dalia/chat").
  *                 Opt-in: unset keeps /api/voice-agent/chat. The request carries the page's own
  *                 session cookie, so the host app answers from its own data behind its own login.
+ *   data-voice-default "off" = a "reply" orb starts muted; the speaker button turns the voice on
  *   data-chat-header  one extra request header for that brain, "Name: value" (e.g. a CSRF header)
  *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
  *                 keeps the right caption when it calls setLang()
@@ -199,7 +200,14 @@
     var REPLY_VOICE = d.mode === 'reply';
     var TEXT_ONLY = d.mode === 'text' || REPLY_VOICE;
     var muted = false;
-    if (REPLY_VOICE) { try { muted = localStorage.getItem('d2orb_muted') === '1'; } catch (e) {} }
+    // An orb that starts silent keeps its own choice, so a voice turned on elsewhere on this host does not leak in.
+    var MUTE_KEY = d.voiceDefault === 'off' ? 'd2orb_muted:' + (d.agent || 'digit2ai') : 'd2orb_muted';
+    // data-voice-default="off": a "reply" orb starts silent until the visitor turns the voice on.
+    // The visitor's own choice (stored) always wins; unset keeps the old default (voice on).
+    if (REPLY_VOICE) {
+      var stored = null; try { stored = localStorage.getItem(MUTE_KEY); } catch (e) {}
+      muted = stored === '1' || stored === '0' ? stored === '1' : d.voiceDefault === 'off';
+    }
 
     var lang = (d.lang || document.documentElement.lang || 'en').slice(0, 2).toLowerCase();
     if (lang !== 'es') lang = 'en';
@@ -577,7 +585,7 @@
       paintMute();
       muteBtn.addEventListener('click', function () {
         muted = !muted;
-        try { localStorage.setItem('d2orb_muted', muted ? '1' : '0'); } catch (e) {}
+        try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
         if (muted) { stopAudio(); setState('idle'); }
         paintMute();
       });

@@ -491,7 +491,7 @@ async function saludDe(tenant) {
 api.get('/salud', async (req, res) => res.json(await saludDe(req.tenant)));
 /* ── Dalia: asistente financiera (orbe de Digit2AI). Solo lee; la empresa sale de la sesión. ── */
 const dalia = require('./dalia');
-const daliaDeps = () => ({ E, hoyMx, sel, one, tableroDe, saludDe, sicarResumenDe, cargarEstado, entradaMotor });
+const daliaDeps = () => ({ E, hoyMx, sel, one, tableroDe, saludDe, sicarResumenDe, cargarEstado, entradaMotor, baseSimulador, config, CATEGORIAS });
 api.post('/dalia/chat', async (req, res) => {
   const k = 'dalia|' + req.user.id;
   if (tooMany(k, 40)) return res.status(429).json({ reply: 'Me hiciste muchas preguntas seguidas. Espera unos minutos y seguimos.', error: 'too_many' });
