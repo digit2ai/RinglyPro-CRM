@@ -468,7 +468,8 @@ api.post('/simulador', async (req, res) => {
     // El efectivo del tablero (suma de las cuentas incluidas): el simulador lo muestra como punto de partida.
     efectivo_bancos: st.efectivo, efectivo_usado: efectivo,
     inicial: { serie: ini.serie.map((d) => d.saldo), indicadores: E.indicadores(base, ini, b.eval_dia) },
-    modificado: { serie: mod.serie.map((d) => ({ fecha: d.fecha, saldo: d.saldo })), indicadores: E.indicadores(base, mod, b.eval_dia), eventos: lim(mod), vencido_no_contado: mod.vencido_no_contado.length, venta: mod.venta },
+    modificado: { serie: mod.serie.map((d) => ({ fecha: d.fecha, saldo: d.saldo })), indicadores: E.indicadores(base, mod, b.eval_dia), eventos: lim(mod), vencido_no_contado: mod.vencido_no_contado.slice(0, 200).map((e) => ({ concepto: e.concepto, vencimiento: e.vencimiento, dias_vencido: e.dias_vencido, monto: e.monto })),
+      fuera: (mod.fuera || []).slice(0, 100).map((e) => ({ fecha: e.fecha, concepto: e.concepto, monto: e.monto })), venta: mod.venta },
     patron: patron && { meses: patron.meses, n: patron.n, desde: patron.desde, hasta: patron.hasta, promedio_mes: patron.promedio_mes, peor_mes: patron.peor_mes, mejor_mes: patron.mejor_mes,
       por_categoria: Object.entries(patron.por_categoria).map(([k, v]) => ({ categoria: k, ...v })).sort((a, z) => (z.entradas + z.salidas) - (a.entradas + a.salidas)) },
     pagos: st.cxp.filter((x) => x.pendiente > 0).map((x) => ({ id: x.id, proveedor: x.proveedor, folio: x.folio, vencimiento: x.vencimiento, fecha_programada: x.fecha_programada, pendiente: x.pendiente })),

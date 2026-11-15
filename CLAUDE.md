@@ -2579,7 +2579,9 @@ Built 2026-11-15 for Rafael Marroquín (construction materials sold on credit, M
 - Bank import (Excel/CSV): duplicates skipped by row hash; a movement typed in the app (cobro/pago/fijo) within ±3 days and the same amount is **conciliated** with the bank row, not duplicated. PDF bank statements are NOT read (BBVA/HSBC PDFs vary).
 - Collection reminders are `wa.me` links the user sends; **no message transport exists** (SIT greps).
 
-### Simulador con datos reales (`#simulador`, `POST /api/v1/simulador`, owner request 2026-11-15)
+### Proyección = the real-data simulator (`#proyeccion`, `POST /api/v1/simulador`, owner request 2026-11-15)
+
+**Simulador and Proyección were MERGED into one screen named Proyección (owner 2026-11-15)**; `#simulador` still opens it. The old document-only view is gone from the UI, but `GET /api/v1/proyeccion` stays (the SIT and "¿Tomo este pedido?", the renamed "Simular venta a crédito", use it). The "Efectivo real hoy" field starts with the tablero's bank balance.
 
 The pitch simulator's layout (8 cards, initial vs modified scenario chart, reserve, zero, evaluation line, lowest point with its days) run on Forzza's REAL money. **The server computes everything** (`engine.escenario` + `engine.indicadores`); the page only draws. **Nothing is saved** — the read-only accountant may simulate too (`SOLO_CALCULO`), and the SIT asserts no row is written.
 - **Historical base** (`engine.patronHistorico`): the real bank movements, **traspasos between the accounts loaded (HSBC↔BBVA) excluded**, only over the window where EVERY included account has data (HSBC from April, BBVA from July → July–October) and only **full months**. Future days repeat what happened on that day of the month (a short month collects its missing days on its last day); modes: average month / like the worst month / like the best month. **Labelled an estimate everywhere**, starts tomorrow, and the page warns when banks are loaded only up to a past date and when the pattern is mixed with real documents (double counting).

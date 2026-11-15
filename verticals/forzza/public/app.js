@@ -143,7 +143,7 @@
   }
 
   const VIEWS = [
-    ['grp', 'Capital'], ['tablero', 'Tablero'], ['simulador', 'Simulador'], ['proyeccion', 'Proyección'], ['simular', '¿Tomo este pedido?'],
+    ['grp', 'Capital'], ['tablero', 'Tablero'], ['proyeccion', 'Proyección'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
@@ -164,6 +164,7 @@
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
   async function go(v) {
+    v = ALIAS[v] || v;
     if (!R[v]) v = 'tablero';
     S.view = v;
     document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
@@ -172,6 +173,7 @@
     try { await R[v](); } catch (e) { if (e && e.error !== 'not_signed_in') main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }
   }
   const R = {};
+  const ALIAS = { simulador: 'proyeccion' }; // la vista Simulador se unió a Proyección
 
   /* ── tablero ── */
   R.tablero = async function () {
@@ -207,36 +209,6 @@
   };
 
   /* ── proyección ── */
-  R.proyeccion = async function () {
-    const q = S.proy;
-    const p = await api(`proyeccion?horizonte=${q.horizonte}&vencido=${q.vencido}&retraso=${q.retraso}`);
-    const porDia = {};
-    p.eventos.forEach((e) => { (porDia[e.fecha] = porDia[e.fecha] || []).push(e); });
-    const dias = p.serie.filter((d) => porDia[d.fecha]);
-    main().innerHTML = `<h1>Proyección</h1><p class="sub">Saldo de cada día si todo se cobra y se paga en su fecha. Solo cuenta lo pendiente.</p>
-      <div class="card form noprint">
-        <div><label>Horizonte</label><select id="h">${[30, 60, 90, 120, 180].map((h) => `<option value="${h}"${h === p.horizonte ? ' selected' : ''}>${h} días</option>`).join('')}</select></div>
-        <div><label>Cobros vencidos</label><select id="v"><option value="excluir"${p.opciones.vencido === 'excluir' ? ' selected' : ''}>No contarlos (no hay fecha)</option><option value="hoy"${p.opciones.vencido === 'hoy' ? ' selected' : ''}>Contarlos hoy</option></select></div>
-        <div><label>Si los clientes pagan tarde (días)</label><input id="r" type="number" min="0" max="180" value="${p.opciones.retraso}"></div>
-      </div>
-      ${alertasHtml(E_alertas(p))}
-      <div class="grid">${kpi('Efectivo hoy', c$(p.efectivo))}${kpi('Entra', c$(p.entradas), 'en el periodo')}${kpi('Sale', c$(p.salidas), 'en el periodo')}
-        ${kpi('Punto más bajo', c$(p.minimo.saldo), 'el ' + fmtF(p.minimo.fecha), p.minimo.saldo < 0 ? 'bad' : 'ok')}${kpi('Saldo final', c$(p.final), fmtF(p.hasta))}</div>
-      <div class="card">${chart(p.serie, p.reserva)}</div>
-      <h2>Día por día</h2>
-      <div class="card tbl">${dias.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Movimientos</th><th class="n">Entra</th><th class="n">Sale</th><th class="n">Saldo</th></tr></thead><tbody>
-        ${dias.map((d) => `<tr><td data-l="Fecha">${fmtF(d.fecha)}</td><td data-l="Movimientos">${porDia[d.fecha].map((e) => `${esc(e.concepto)} ${sentido(e.monto)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}`).join('<br>')}</td>
-          <td class="n" data-l="Entra">${d.entradas ? c$(d.entradas) : '—'}</td><td class="n" data-l="Sale">${d.salidas ? c$(d.salidas) : '—'}</td>
-          <td class="n" data-l="Saldo"><b class="${d.saldo < 0 ? 'amt-out' : ''}">${c$(d.saldo)}</b></td></tr>`).join('')}</tbody></table>` : '<p class="empty">Sin movimientos en el periodo.</p>'}</div>
-      ${p.vencido_no_contado.length ? `<h2>Cobros vencidos que no se cuentan</h2><div class="card tbl"><table class="cards"><tbody>${p.vencido_no_contado.map((e) =>
-        `<tr><td data-l="Cliente">${esc(e.concepto)}</td><td data-l="Venció">${fmtF(e.vencimiento)} · ${e.dias_vencido} días</td><td class="n" data-l="Pendiente">${c$(e.monto)}</td></tr>`).join('')}</tbody></table>
-        <p class="muted" style="font-size:13px">Pon una fecha de compromiso en Por cobrar y entran a la proyección ese día.</p></div>` : ''}
-      ${p.fuera.length ? `<h2>Después del horizonte</h2><div class="card tbl"><table class="cards"><tbody>${p.fuera.map((e) =>
-        `<tr><td data-l="Fecha">${fmtF(e.fecha)}</td><td data-l="Concepto">${esc(e.concepto)}</td><td class="n" data-l="Monto">${sentido(e.monto)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
-    const upd = () => { S.proy = { horizonte: document.getElementById('h').value, vencido: document.getElementById('v').value, retraso: document.getElementById('r').value || 0 }; R.proyeccion(); };
-    ['h', 'v'].forEach((id) => { document.getElementById(id).onchange = upd; });
-    document.getElementById('r').onchange = upd;
-  };
   function E_alertas(p) {
     const a = [];
     if (p.primero_negativo) a.push({ nivel: 'alto', texto: `El saldo queda en negativo el ${fmtF(p.primero_negativo)}. Faltan ${c$(p.falta_para_cero)} para no quedar abajo de cero.` });
@@ -274,10 +246,10 @@
   }
   const SIM0 = () => ({ horizonte: 60, efectivo: '', reserva: undefined, eval_dia: 15, historico: undefined, entradas_pct: 0, salidas_pct: 0, retraso: 0, vencido: 'excluir', mover: {}, venta: null, puntuales: [] });
   const ORIGEN = { cobro: ['Por cobrar', 'ok'], pago: ['Por pagar', 'bad'], fijo: ['Gasto fijo', 'warn'], estimado: ['Estimado', ''], simulado: ['Supuesto', 'acc'] };
-  R.simulador = async function () {
+  R.proyeccion = async function () {
     S.sim = S.sim || SIM0();
     const s = S.sim;
-    main().innerHTML = `<h1>Simulador</h1><p class="sub">Con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Cambia el escenario y mira qué pasa. <b>Nada de esto se guarda.</b></p>
+    main().innerHTML = `<h1>Proyección</h1><p class="sub">El saldo de cada día con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Abajo puedes cambiar el escenario y ver qué pasa. <b>Los cambios no se guardan.</b></p>
       <div class="card"><div class="form">
         <div><label>Efectivo real hoy</label><input id="s_ef" inputmode="decimal" placeholder="el de los bancos" value="${esc(s.efectivo)}"><div class="muted" id="s_efn" style="font-size:12px;margin-top:3px"></div></div>
         <div><label>Reserva mínima</label><input id="s_res" inputmode="decimal" placeholder="la de Ajustes" value="${s.reserva == null ? '' : esc(s.reserva)}"></div>
@@ -377,7 +349,12 @@
           ${r.patron.meses.map((m) => `<tr><td data-l="Mes">${esc(m.mes)}${m.mes === r.patron.peor_mes ? ' <span class="pill bad">peor</span>' : m.mes === r.patron.mejor_mes ? ' <span class="pill ok">mejor</span>' : ''}</td><td class="n" data-l="Entró">${c$(m.entradas)}</td><td class="n" data-l="Salió">${c$(m.salidas)}</td><td class="n" data-l="Neto">${sentido(m.neto)}</td></tr>`).join('')}</tbody></table></div>
           <div class="card tbl"><table class="cards"><thead><tr><th>Categoría (promedio al mes)</th><th class="n">Entra</th><th class="n">Sale</th></tr></thead><tbody>
           ${r.patron.por_categoria.map((c) => `<tr><td data-l="Categoría">${esc(CAT_LBL[c.categoria] || c.categoria)}</td><td class="n" data-l="Entra">${c.entradas ? c$(c.entradas) : '—'}</td><td class="n" data-l="Sale">${c.salidas ? c$(c.salidas) : '—'}</td></tr>`).join('')}</tbody></table>
-          <p class="muted" style="font-size:12px">Ajusta las categorías en Bancos para que este cuadro diga más.</p></div></div>` : ''}`;
+          <p class="muted" style="font-size:12px">Ajusta las categorías en Bancos para que este cuadro diga más.</p></div></div>` : ''}
+        ${r.modificado.vencido_no_contado.length ? `<h2>Cobros vencidos que no se cuentan</h2><div class="card tbl"><table class="cards"><tbody>${r.modificado.vencido_no_contado.map((e) =>
+          `<tr><td data-l="Cliente">${esc(e.concepto)}</td><td data-l="Venció">${fmtF(e.vencimiento)} · ${e.dias_vencido} días</td><td class="n" data-l="Pendiente">${c$(e.monto)}</td></tr>`).join('')}</tbody></table>
+          <p class="muted" style="font-size:13px">Pon una fecha de compromiso en Por cobrar y entran a la proyección ese día, o elige "Contarlos hoy".</p></div>` : ''}
+        ${r.modificado.fuera.length ? `<h2>Después del horizonte</h2><div class="card tbl"><table class="cards"><tbody>${r.modificado.fuera.map((e) =>
+          `<tr><td data-l="Fecha">${fmtF(e.fecha)}</td><td data-l="Concepto">${esc(e.concepto)}</td><td class="n" data-l="Monto">${sentido(e.monto)}</td></tr>`).join('')}</tbody></table></div>` : ''}`;
     }
     main().oninput = (e) => { if (e.target.closest('#s_np')) return; if (e.target.dataset.mv !== undefined) { if (e.target.value) s.mover[e.target.dataset.mv] = e.target.value; else delete s.mover[e.target.dataset.mv]; } leer(); correr(); };
     main().onchange = (e) => { if (e.target.closest('#s_np')) return; leer(); correr(); };
@@ -388,7 +365,7 @@
       if (e.target.id === 's_add') {
         const p = formData($('s_np')); if (!Number(p.monto)) return; s.puntuales.push(p); $('s_np').querySelector('[name=monto]').value = ''; $('s_np').querySelector('[name=concepto]').value = ''; pintarPuntuales(); return correr();
       }
-      if (e.target.id === 's_reset') { S.sim = SIM0(); return R.simulador(); }
+      if (e.target.id === 's_reset') { S.sim = SIM0(); return R.proyeccion(); }
     };
     if (s.historico) $('s_hist').value = s.historico;
     pintarPuntuales();
