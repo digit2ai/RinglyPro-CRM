@@ -279,7 +279,7 @@
     const s = S.sim;
     main().innerHTML = `<h1>Simulador</h1><p class="sub">Con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Cambia el escenario y mira qué pasa. <b>Nada de esto se guarda.</b></p>
       <div class="card"><div class="form">
-        <div><label>Efectivo real hoy</label><input id="s_ef" inputmode="decimal" placeholder="el de los bancos" value="${esc(s.efectivo)}"></div>
+        <div><label>Efectivo real hoy</label><input id="s_ef" inputmode="decimal" placeholder="el de los bancos" value="${esc(s.efectivo)}"><div class="muted" id="s_efn" style="font-size:12px;margin-top:3px"></div></div>
         <div><label>Reserva mínima</label><input id="s_res" inputmode="decimal" placeholder="la de Ajustes" value="${s.reserva == null ? '' : esc(s.reserva)}"></div>
         <div><label>Horizonte</label><div class="tabs" style="margin:0">${[30, 60, 90].map((h) => `<button class="btn small${s.horizonte === h ? ' on' : ''}" data-h="${h}">${h} días</button>`).join('')}</div></div>
         <div><label>Día de evaluación (desde hoy)</label><input id="s_ev" type="number" min="0" max="180" value="${s.eval_dia}"></div>
@@ -331,6 +331,12 @@
       if (s.reserva !== undefined) body.reserva = s.reserva;
       let r; try { r = await api('simulador', { method: 'POST', body }); } catch (e) { $('s_out').innerHTML = `<div class="err">${errMsg(e)}</div>`; return; }
       if (s.historico === undefined) { s.historico = r.historico; }
+      // Sin cambio del usuario, la casilla muestra el saldo de bancos del tablero.
+      const bancos = (r.efectivo_bancos / 100).toFixed(2);
+      if (s.efectivo === '' && document.activeElement !== $('s_ef')) $('s_ef').value = bancos;
+      const propio = s.efectivo !== '' && s.efectivo !== bancos;
+      $('s_efn').innerHTML = propio ? `Bancos: ${c$(r.efectivo_bancos)} · <a href="#" id="s_efb">usar el de bancos</a>` : 'Saldo de bancos del tablero';
+      if (propio) $('s_efb').onclick = (e) => { e.preventDefault(); s.efectivo = ''; $('s_ef').value = bancos; correr(); };
       $('s_hist').value = r.historico;
       const k = r.modificado.indicadores, k0 = r.inicial.indicadores;
       const msg = k.primero_negativo ? ['alto', `Con estos supuestos el saldo queda en negativo el ${fmtF(k.primero_negativo)}. Faltan ${c$(k.falta_para_cero)} para no quedar abajo de cero.`]
