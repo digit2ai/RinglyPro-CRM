@@ -392,6 +392,36 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('resumen: la foto de saldos de SICAR se compara con la app', rs.conciliacion.cxp && rs.conciliacion.cxp.saldo_sicar === 0 && rs.conciliacion.cxp.saldo_app >= 500000, JSON.stringify(rs.conciliacion));
     ok('un archivo que no es de SICAR = 400 con la instrucción', (await subir(capA.cookie, [[R([1, 'Factura'])]], false)).json.error === 'no_es_reporte_sicar');
 
+    console.log('\nSimulador (patrón histórico y escenarios)');
+    const hm = [];
+    for (const mes of ['2026-07', '2026-08']) { hm.push({ fecha: mes + '-05', monto: '10000', categoria: 'cliente' }, { fecha: mes + '-15', monto: '-4000', categoria: 'nomina' }, { fecha: mes + '-31', monto: '-1000', categoria: 'renta' }); }
+    hm.push({ fecha: '2026-09-02', monto: '999999', categoria: 'cliente' }); // septiembre a medias: no entra
+    const pat = E.patronHistorico(hm, { desde: '2026-07-01', hasta: '2026-09-10' });
+    ok('patrón: solo meses completos (un mes a medias no cuenta)', pat.n === 2 && pat.meses.map((m) => m.mes).join() === '2026-07,2026-08' && pat.promedio_mes.entradas === C(10000));
+    ok('patrón: por día del mes y por categoría', pat.dias.promedio.ent[5] === C(10000) && pat.dias.promedio.sal[15] === C(4000) && pat.por_categoria.nomina.salidas === C(4000));
+    const est = E.eventosEstimados(pat, 'promedio', '2026-11-20', 15, {});
+    ok('estimado: noviembre (30 días) junta en el día 30 lo del 31', est.some((e) => e.fecha === '2026-11-30' && e.monto === C(-1000)) && !est.some((e) => e.fecha === '2026-11-20'));
+    ok('estimado: ajuste de -50% en entradas', E.eventosEstimados(pat, 'promedio', '2026-11-30', 10, { entradas_pct: -50 }).find((e) => e.fecha === '2026-12-05').monto === C(5000));
+    const bs = { hoy: '2026-11-20', horizonte: 30, reserva: 1000, efectivo: C(5000), cxc: [{ id: 1, cliente: 'A', vencimiento: '2026-11-25', pendiente: C(3000) }], cxp: [{ id: 7, proveedor: 'P', vencimiento: '2026-11-22', pendiente: C(6000) }], fijos: [], patron: pat };
+    const e0 = E.escenario(bs, {}), e1 = E.escenario(bs, { mover: [{ cxp_id: 7, fecha: '2026-11-26' }] });
+    ok('escenario: sin cambios el pago deja el saldo en -$1,000 el día 2', e0.minimo.saldo === C(-1000) && e0.minimo.fecha === '2026-11-22' && e0.minimo.hasta === '2026-11-24');
+    ok('escenario: mover el pago después del cobro evita el negativo', e1.minimo.saldo === C(2000) && !e1.primero_negativo);
+    ok('escenario: un movimiento supuesto entra en su fecha', E.escenario(bs, { puntuales: [{ fecha: '2026-11-21', monto: '2000' }] }).minimo.saldo === C(1000));
+    ok('escenario: la base histórica se suma solo si se pide', E.escenario(bs, { historico: 'promedio' }).eventos.some((e) => e.tipo === 'estimado') && !e0.eventos.some((e) => e.tipo === 'estimado'));
+    const ki = E.indicadores(bs, e0, 10);
+    ok('indicadores: cartera, vencida al día de evaluación, obligaciones', ki.cartera === C(3000) && ki.cartera_vencida === C(3000) && E.indicadores(bs, e0, 2).cartera_vencida === 0 && ki.obligaciones === C(6000));
+    const sm = await req('POST', '/simulador', { cookie: conA.cookie, body: { horizonte: 60, mover: [{ cxp_id: 999999999, fecha: hoyMx() }], puntuales: [{ fecha: '2099-01-01', monto: 5, tipo: 'entrada' }] } });
+    ok('API: el contador puede simular (no guarda nada) y responde las 8 cifras', sm.status === 200 && sm.json.modificado.indicadores && 'falta_para_reserva' in sm.json.modificado.indicadores && sm.json.inicial.serie.length === 61, JSON.stringify(sm.json).slice(0, 200));
+    ok('API: un pago ajeno o una fecha fuera del horizonte no cambian nada', sm.json.modificado.indicadores.final === sm.json.inicial.indicadores.final);
+    const pagoA = (await q("SELECT id FROM fz_cxp WHERE tenant_id=:t AND estado<>'pagada' AND estado<>'cancelada' LIMIT 1", { t: A }))[0];
+    const smB = await req('POST', '/simulador', { cookie: dirB.cookie, body: { horizonte: 30, mover: pagoA ? [{ cxp_id: pagoA.id, fecha: hoyMx() }] : [] } });
+    ok('API: B no ve los pagos de A en su simulador', smB.status === 200 && smB.json.pagos.length === 0 && smB.json.modificado.indicadores.obligaciones === 0);
+    const antesSim = await cuenta('fz_movimientos', A);
+    await req('POST', '/simulador', { cookie: dirA.cookie, body: { puntuales: [{ fecha: hoyMx(), monto: 1000, tipo: 'salida' }], venta: { precio: 100 } } });
+    ok('simular no escribe nada en la base', await cuenta('fz_movimientos', A) === antesSim);
+    const srcIdx = strip(fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8'));
+    ok('el patrón excluye los traspasos entre cuentas propias', /categoria <> 'traspaso'/.test(srcIdx));
+
     console.log('\nPuente SICAR (llaves)');
     ok('capturista no crea llaves (404)', (await req('POST', '/llaves', { cookie: capA.cookie, body: {} })).status === 404);
     const lk = await req('POST', '/llaves', { cookie: dirA.cookie, body: { nombre: 'PC de caja' } });

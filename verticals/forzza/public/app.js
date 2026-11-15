@@ -143,7 +143,7 @@
   }
 
   const VIEWS = [
-    ['grp', 'Capital'], ['tablero', 'Tablero'], ['proyeccion', 'Proyección'], ['simular', 'Simular venta a crédito'],
+    ['grp', 'Capital'], ['tablero', 'Tablero'], ['simulador', 'Simulador'], ['proyeccion', 'Proyección'], ['simular', 'Simular venta a crédito'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
@@ -168,7 +168,7 @@
     S.view = v;
     document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
     main().innerHTML = '<p class="muted">Cargando…</p>';
-    main().onclick = null;
+    main().onclick = null; main().oninput = null; main().onchange = null;
     try { await R[v](); } catch (e) { if (e && e.error !== 'not_signed_in') main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }
   }
   const R = {};
@@ -243,6 +243,151 @@
     if (p.reserva != null && p.primero_bajo_reserva) a.push({ nivel: p.primero_negativo ? 'medio' : 'alto', texto: `El ${fmtF(p.primero_bajo_reserva)} el saldo baja de la reserva. Faltan ${c$(p.falta_para_reserva)}.` });
     return a;
   }
+
+  /* ── simulador con datos reales ── */
+  const diaN = (hoyF, f) => Math.round((Date.parse(f + 'T00:00:00Z') - Date.parse(hoyF + 'T00:00:00Z')) / 86400000);
+  function chartSim(r) {
+    const mod = r.modificado.serie, ini = r.inicial.serie, ind = r.modificado.indicadores, reserva = ind.reserva;
+    const W = 900, H = 300, L = 74, R = 14, T = 22, B = 28;
+    const vals = mod.map((d) => d.saldo).concat(ini).concat(reserva != null ? [reserva] : []).concat([0]);
+    let lo = Math.min(...vals), hi = Math.max(...vals); if (hi === lo) hi = lo + 100;
+    const raw = (hi - lo) / 4, pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 2.5, 5, 10].map((k) => k * pow).find((s) => s >= raw);
+    lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+    const x = (i) => L + (i * (W - L - R)) / Math.max(1, mod.length - 1);
+    const y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
+    const escal = (arr) => arr.map((v, i) => (i ? `H${x(i).toFixed(1)}V${y(v).toFixed(1)}` : `M${x(0)} ${y(v).toFixed(1)}`)).join(''); // escalones, como el banco
+    const grid = []; for (let v = lo; v <= hi + step / 2; v += step) grid.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${esc(c$(v).replace('.00', ''))}</text>`);
+    const ev = Math.max(0, Math.min(mod.length - 1, diaN(r.hoy, ind.fecha_evaluacion)));
+    const mi = Math.max(0, diaN(r.hoy, ind.minimo.fecha)), mf = Math.max(mi, diaN(r.hoy, ind.minimo.hasta));
+    const xt = [0, Math.floor(mod.length / 3), Math.floor((2 * mod.length) / 3), mod.length - 1].map((i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(fmtC(mod[i].fecha))}</text>`).join('');
+    const neg = ind.minimo.saldo < 0;
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Saldo diario proyectado"><g class="grid">${grid.join('')}</g>
+      <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="#94a3b8" stroke-width="1.2"/>
+      ${reserva != null ? `<line x1="${L}" x2="${W - R}" y1="${y(reserva)}" y2="${y(reserva)}" stroke="#b45309" stroke-dasharray="7 5" stroke-width="1.6"/><text x="${W - R}" y="${y(reserva) - 5}" text-anchor="end" style="fill:#b45309">Reserva ${esc(c$(reserva).replace('.00', ''))}</text>` : ''}
+      <line x1="${x(ev)}" x2="${x(ev)}" y1="${T}" y2="${H - B}" stroke="#64748b" stroke-dasharray="3 4"/><text x="${x(ev) + 5}" y="${T + 10}">evaluación</text>
+      <path d="${escal(ini)}" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 5"/>
+      <path d="${escal(mod.map((d) => d.saldo))}" fill="none" stroke="#005dab" stroke-width="2.6"/>
+      <circle cx="${x(mi)}" cy="${y(ind.minimo.saldo)}" r="5.5" fill="${neg ? '#b91c1c' : '#618a05'}"/>
+      <text x="${Math.min(x(mi) + 8, W - 200)}" y="${y(ind.minimo.saldo) + (y(ind.minimo.saldo) > H - 60 ? -10 : 18)}" style="fill:#111827;font-weight:700">Mínimo ${esc(c$(ind.minimo.saldo).replace('.00', ''))} · ${mi === mf ? 'día ' + mi : 'días ' + mi + '–' + mf}</text>${xt}</svg>
+      <div class="legend"><span><i style="background:#005dab"></i>Escenario modificado</span><span><i style="background:#94a3b8"></i>Escenario inicial (punteado)</span>${reserva != null ? '<span><i style="background:#b45309"></i>Reserva mínima</span>' : ''}<span><i style="background:#94a3b8;height:1px"></i>Cero</span></div>`;
+  }
+  const SIM0 = () => ({ horizonte: 60, efectivo: '', reserva: undefined, eval_dia: 15, historico: undefined, entradas_pct: 0, salidas_pct: 0, retraso: 0, vencido: 'excluir', mover: {}, venta: null, puntuales: [] });
+  const ORIGEN = { cobro: ['Por cobrar', 'ok'], pago: ['Por pagar', 'bad'], fijo: ['Gasto fijo', 'warn'], estimado: ['Estimado', ''], simulado: ['Supuesto', 'acc'] };
+  R.simulador = async function () {
+    S.sim = S.sim || SIM0();
+    const s = S.sim;
+    main().innerHTML = `<h1>Simulador</h1><p class="sub">Con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Cambia el escenario y mira qué pasa. <b>Nada de esto se guarda.</b></p>
+      <div class="card"><div class="form">
+        <div><label>Efectivo real hoy</label><input id="s_ef" inputmode="decimal" placeholder="el de los bancos" value="${esc(s.efectivo)}"></div>
+        <div><label>Reserva mínima</label><input id="s_res" inputmode="decimal" placeholder="la de Ajustes" value="${s.reserva == null ? '' : esc(s.reserva)}"></div>
+        <div><label>Horizonte</label><div class="tabs" style="margin:0">${[30, 60, 90].map((h) => `<button class="btn small${s.horizonte === h ? ' on' : ''}" data-h="${h}">${h} días</button>`).join('')}</div></div>
+        <div><label>Día de evaluación (desde hoy)</label><input id="s_ev" type="number" min="0" max="180" value="${s.eval_dia}"></div>
+        <div><label>Base histórica de los bancos</label><select id="s_hist"><option value="no">No usar (solo documentos)</option><option value="promedio">Mes promedio</option><option value="peor">Como el peor mes</option><option value="mejor">Como el mejor mes</option></select></div>
+      </div></div>
+      <div id="s_out"><p class="muted">Calculando…</p></div>
+      <h2>Cambia el escenario</h2>
+      <div class="card"><div class="form">
+        <div><label>Los clientes pagan tarde (días)</label><input id="s_ret" type="number" min="0" max="180" value="${s.retraso}"></div>
+        <div><label>Cobros ya vencidos</label><select id="s_ven"><option value="excluir">No contarlos (no hay fecha)</option><option value="hoy"${s.vencido === 'hoy' ? ' selected' : ''}>Contarlos hoy</option></select></div>
+        <div><label>Entradas estimadas: <b id="s_epv">${s.entradas_pct}%</b></label><input id="s_ep" type="range" min="-50" max="50" step="5" value="${s.entradas_pct}"></div>
+        <div><label>Salidas estimadas: <b id="s_spv">${s.salidas_pct}%</b></label><input id="s_sp" type="range" min="-50" max="50" step="5" value="${s.salidas_pct}"></div>
+      </div><p class="muted" style="font-size:13px;margin:6px 0 0">Los porcentajes mueven solo lo estimado con la historia de los bancos, no los documentos reales.</p></div>
+      <div class="card"><h2 style="margin-top:0">Nueva venta a crédito</h2><div class="form" id="s_venta">
+        <div><label>Precio de venta</label><input name="precio" inputmode="decimal" value="${esc((s.venta || {}).precio || '')}"></div>
+        <div><label>Costo del material</label><input name="costo" inputmode="decimal" value="${esc((s.venta || {}).costo || '')}"></div>
+        <div><label>Gastos de entrega</label><input name="entrega" inputmode="decimal" value="${esc((s.venta || {}).entrega || '')}"></div>
+        <div><label>Anticipo</label><input name="anticipo" inputmode="decimal" value="${esc((s.venta || {}).anticipo || '')}"></div>
+        <div><label>Entrega en (días)</label><input name="dia_entrega" type="number" min="0" value="${esc((s.venta || {}).dia_entrega ?? 5)}"></div>
+        <div><label>Pago al proveedor en (días)</label><input name="dia_proveedor" type="number" min="0" value="${esc((s.venta || {}).dia_proveedor ?? 5)}"></div>
+        <div><label>Días de crédito</label><input name="dias_credito" type="number" min="0" value="${esc((s.venta || {}).dias_credito ?? 30)}"></div>
+      </div></div>
+      <div class="card"><h2 style="margin-top:0">Movimientos supuestos</h2><p class="muted" style="margin-top:0">Un préstamo, un retiro de socios, la compra de un camión: lo que quieras probar.</p>
+        <div id="s_punt"></div><div class="form" id="s_np" style="margin-top:8px">
+        <div><label>Fecha</label><input type="date" name="fecha" value="${addD(hoy(), 7)}"></div>
+        <div><label>Tipo</label><select name="tipo"><option value="salida">Salida</option><option value="entrada">Entrada</option></select></div>
+        <div><label>Monto</label><input name="monto" inputmode="decimal"></div><div><label>Concepto</label><input name="concepto"></div>
+        <div><button class="btn" id="s_add">Agregar</button></div></div></div>
+      <div class="card" id="s_pagos"></div>
+      <div class="row"><button class="btn" id="s_reset">Restablecer escenario</button></div>
+      <div id="s_det"></div>`;
+    const $ = (id) => document.getElementById(id);
+    let t = null;
+    const correr = () => { clearTimeout(t); t = setTimeout(calcular, 250); };
+    const leer = () => {
+      s.efectivo = $('s_ef').value.trim(); s.reserva = $('s_res').value.trim() || undefined; // vacío = la de Ajustes
+      s.eval_dia = Number($('s_ev').value) || 0; s.historico = $('s_hist').value; s.retraso = Number($('s_ret').value) || 0; s.vencido = $('s_ven').value;
+      s.entradas_pct = Number($('s_ep').value); s.salidas_pct = Number($('s_sp').value);
+      $('s_epv').textContent = (s.entradas_pct > 0 ? '+' : '') + s.entradas_pct + '%'; $('s_spv').textContent = (s.salidas_pct > 0 ? '+' : '') + s.salidas_pct + '%';
+      const v = formData($('s_venta')); s.venta = v.precio ? v : null;
+    };
+    const pintarPuntuales = () => {
+      $('s_punt').innerHTML = s.puntuales.length ? `<table class="cards"><tbody>${s.puntuales.map((p, i) => `<tr><td data-l="Fecha">${fmtF(p.fecha)}</td><td data-l="Concepto">${esc(p.concepto || '')}</td>
+        <td class="n" data-l="Monto">${sentido((p.tipo === 'entrada' ? 1 : -1) * Math.round(Number(p.monto) * 100))}</td><td class="right" data-l=""><button class="btn small danger" data-qp="${i}">Quitar</button></td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="margin:0">Ninguno.</p>';
+    };
+    async function calcular() {
+      const body = { horizonte: s.horizonte, efectivo: s.efectivo, eval_dia: s.eval_dia, historico: s.historico, entradas_pct: s.entradas_pct, salidas_pct: s.salidas_pct,
+        retraso: s.retraso, vencido: s.vencido, venta: s.venta, puntuales: s.puntuales, mover: Object.entries(s.mover).map(([id, f]) => ({ cxp_id: id, fecha: f })) };
+      if (s.reserva !== undefined) body.reserva = s.reserva;
+      let r; try { r = await api('simulador', { method: 'POST', body }); } catch (e) { $('s_out').innerHTML = `<div class="err">${errMsg(e)}</div>`; return; }
+      if (s.historico === undefined) { s.historico = r.historico; }
+      $('s_hist').value = r.historico;
+      const k = r.modificado.indicadores, k0 = r.inicial.indicadores;
+      const msg = k.primero_negativo ? ['alto', `Con estos supuestos el saldo queda en negativo el ${fmtF(k.primero_negativo)}. Faltan ${c$(k.falta_para_cero)} para no quedar abajo de cero.`]
+        : k.reserva != null && k.primero_bajo_reserva ? ['medio', `Con estos supuestos el saldo baja de la reserva mínima el ${fmtF(k.primero_bajo_reserva)}. Faltan ${c$(k.falta_para_reserva)}.`]
+        : ['info', `Con estos supuestos el saldo se mantiene sobre ${k.reserva != null ? 'la reserva mínima' : 'cero'} todo el periodo.`];
+      const dif = k.minimo.saldo - k0.minimo.saldo;
+      const mi = diaN(r.hoy, k.minimo.fecha), mf = diaN(r.hoy, k.minimo.hasta);
+      $('s_out').innerHTML = `${r.avisos.map((a) => `<div class="al ${a.nivel}">${esc(a.texto)}</div>`).join('')}
+        <div class="al ${msg[0]}">${esc(msg[1])}${dif ? ` Frente al escenario inicial, el punto más bajo ${dif > 0 ? 'mejora' : 'empeora'} ${c$(Math.abs(dif))}.` : ''}</div>
+        <div class="grid">
+          ${kpi('Efectivo disponible actual', c$(k.efectivo), s.efectivo ? 'Escrito a mano' : r.datos_hasta ? 'Bancos al ' + fmtF(r.datos_hasta) : 'Efectivo real')}
+          ${kpi('Cartera pendiente de cobro', c$(k.cartera), 'Entrada esperada, no es efectivo')}
+          ${kpi('Cartera vencida', c$(k.cartera_vencida), 'Al día ' + s.eval_dia + ' · ' + fmtC(k.fecha_evaluacion), k.cartera_vencida ? 'bad' : '')}
+          ${kpi('Obligaciones pendientes', c$(k.obligaciones), 'Incluye ' + c$(k.obligaciones_en_horizonte) + ' dentro del horizonte' + (k.salidas_estimadas ? ' · más ' + c$(k.salidas_estimadas) + ' de salidas estimadas' : ''))}
+          ${kpi('Saldo final proyectado', c$(k.final), 'Día ' + r.horizonte + ' · ' + fmtC(k.hasta))}
+          ${kpi('Menor saldo del periodo', c$(k.minimo.saldo), (mi === mf ? 'Día ' + mi + ' (' + fmtC(k.minimo.fecha) + ')' : 'Días ' + mi + ' a ' + mf + ' (' + fmtC(k.minimo.fecha) + ' a ' + fmtC(k.minimo.hasta) + ')'), k.minimo.saldo < 0 ? 'bad' : '')}
+          ${kpi('Faltante respecto a cero', c$(k.falta_para_cero), 'Para no quedar en negativo', k.falta_para_cero ? 'bad' : 'ok')}
+          ${kpi('Faltante respecto a la reserva', k.reserva == null ? '—' : c$(k.falta_para_reserva), k.reserva == null ? 'Sin reserva definida' : 'Reserva ' + c$(k.reserva), k.falta_para_reserva ? 'bad' : k.reserva == null ? '' : 'ok')}
+        </div>
+        ${r.modificado.venta ? `<div class="note">Venta simulada: margen ${c$(r.modificado.venta.margen)}; quedan ${c$(r.modificado.venta.saldo_a_credito)} por cobrar el ${fmtF(r.modificado.venta.fecha_cobro)}.</div>` : ''}
+        <div class="card"><h2 style="margin-top:0">Saldo diario proyectado</h2>${chartSim(r)}
+          ${r.historico !== 'no' && r.patron ? `<p class="muted" style="font-size:13px;margin:8px 0 0">Lo estimado repite cómo se movieron los bancos de ${fmtF(r.patron.desde)} a ${fmtF(r.patron.hasta)} (${r.patron.n} meses, sin traspasos entre cuentas propias). Es una estimación, no un dato.</p>` : ''}</div>`;
+      // pagos a proveedores que se pueden mover
+      $('s_pagos').innerHTML = `<h2 style="margin-top:0">Mover pagos a proveedores</h2>${r.pagos.length ? `<p class="muted" style="margin-top:0">Supuesto de negociación con el proveedor, no un acuerdo.</p><div class="tbl"><table class="cards"><tbody>
+        ${r.pagos.slice(0, 60).map((p) => `<tr><td data-l="Proveedor">${esc(p.proveedor)} ${esc(p.folio || '')}</td><td data-l="Vence">${fmtF(p.fecha_programada || p.vencimiento)}</td><td class="n" data-l="Pendiente">${c$(p.pendiente)}</td>
+          <td data-l="Nueva fecha"><input type="date" data-mv="${p.id}" value="${esc(s.mover[p.id] || '')}" min="${r.hoy}" style="max-width:170px"></td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="muted" style="margin:0">No hay pagos a proveedores cargados. Importa el Reporte de Créditos de Proveedores de SICAR.</p>'}`;
+      // detalle
+      const porDia = {}; for (const e of r.modificado.eventos) (porDia[e.fecha] = porDia[e.fecha] || []).push(e);
+      const saldoDe = Object.fromEntries(r.modificado.serie.map((d) => [d.fecha, d.saldo]));
+      const fechas = Object.keys(porDia).sort();
+      $('s_det').innerHTML = `<h2>Movimientos del escenario</h2><div class="card tbl">${fechas.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Movimiento</th><th>Origen</th><th class="n">Monto</th><th class="n">Saldo del día</th></tr></thead><tbody>
+        ${fechas.map((f) => porDia[f].map((e, i) => `<tr><td data-l="Fecha">${i ? '' : fmtF(f)}</td><td data-l="Movimiento">${esc(e.concepto)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td>
+          <td data-l="Origen"><span class="pill ${(ORIGEN[e.tipo] || ['', ''])[1]}">${esc((ORIGEN[e.tipo] || [e.tipo])[0])}</span></td><td class="n" data-l="Monto">${sentido(e.monto)}</td>
+          <td class="n" data-l="Saldo">${i === porDia[f].length - 1 ? c$(saldoDe[f]) : ''}</td></tr>`).join('')).join('')}</tbody></table>` : '<p class="empty">Sin movimientos en el periodo.</p>'}</div>
+        ${r.patron ? `<h2>Así se ha movido el dinero (bancos, ${r.patron.n} meses)</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+          <div class="card tbl"><table class="cards"><thead><tr><th>Mes</th><th class="n">Entró</th><th class="n">Salió</th><th class="n">Neto</th></tr></thead><tbody>
+          ${r.patron.meses.map((m) => `<tr><td data-l="Mes">${esc(m.mes)}${m.mes === r.patron.peor_mes ? ' <span class="pill bad">peor</span>' : m.mes === r.patron.mejor_mes ? ' <span class="pill ok">mejor</span>' : ''}</td><td class="n" data-l="Entró">${c$(m.entradas)}</td><td class="n" data-l="Salió">${c$(m.salidas)}</td><td class="n" data-l="Neto">${sentido(m.neto)}</td></tr>`).join('')}</tbody></table></div>
+          <div class="card tbl"><table class="cards"><thead><tr><th>Categoría (promedio al mes)</th><th class="n">Entra</th><th class="n">Sale</th></tr></thead><tbody>
+          ${r.patron.por_categoria.map((c) => `<tr><td data-l="Categoría">${esc(CAT_LBL[c.categoria] || c.categoria)}</td><td class="n" data-l="Entra">${c.entradas ? c$(c.entradas) : '—'}</td><td class="n" data-l="Sale">${c.salidas ? c$(c.salidas) : '—'}</td></tr>`).join('')}</tbody></table>
+          <p class="muted" style="font-size:12px">Ajusta las categorías en Bancos para que este cuadro diga más.</p></div></div>` : ''}`;
+    }
+    main().oninput = (e) => { if (e.target.closest('#s_np')) return; if (e.target.dataset.mv !== undefined) { if (e.target.value) s.mover[e.target.dataset.mv] = e.target.value; else delete s.mover[e.target.dataset.mv]; } leer(); correr(); };
+    main().onchange = (e) => { if (e.target.closest('#s_np')) return; leer(); correr(); };
+    main().onclick = (e) => {
+      const h = e.target.closest('[data-h]');
+      if (h) { s.horizonte = Number(h.dataset.h); main().querySelectorAll('[data-h]').forEach((b) => b.classList.toggle('on', b === h)); return correr(); }
+      const q = e.target.closest('[data-qp]'); if (q) { s.puntuales.splice(Number(q.dataset.qp), 1); pintarPuntuales(); return correr(); }
+      if (e.target.id === 's_add') {
+        const p = formData($('s_np')); if (!Number(p.monto)) return; s.puntuales.push(p); $('s_np').querySelector('[name=monto]').value = ''; $('s_np').querySelector('[name=concepto]').value = ''; pintarPuntuales(); return correr();
+      }
+      if (e.target.id === 's_reset') { S.sim = SIM0(); return R.simulador(); }
+    };
+    if (s.historico) $('s_hist').value = s.historico;
+    pintarPuntuales();
+    calcular();
+  };
 
   /* ── simular venta a crédito ── */
   R.simular = async function () {

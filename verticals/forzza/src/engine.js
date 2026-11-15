@@ -141,7 +141,7 @@ function proyectar(e) {
   return {
     hoy, horizonte: H, hasta: fin, efectivo: e.efectivo || 0, reserva,
     serie, eventos, fuera, vencido_no_contado: vencidoNoContado,
-    minimo: { saldo: min.saldo, fecha: min.fecha },
+    minimo: { saldo: min.saldo, fecha: min.fecha, hasta: (() => { let i = serie.findIndex((d) => d.fecha === min.fecha); while (i + 1 < serie.length && serie[i + 1].saldo === min.saldo) i++; return serie[i].fecha; })() },
     final: serie[serie.length - 1].saldo,
     primero_bajo_reserva: primeroBajoReserva,
     primero_negativo: primeroNegativo,
@@ -174,11 +174,12 @@ function antiguedad(cxc, hoy) {
  * No guarda nada y no aprueba crédito: compara la proyección con y sin el pedido.
  * dias_* se cuentan desde hoy. anticipo en pesos (se cobra el día de entrega).
  */
-function simularVenta(base, v) {
+/** Movimientos que nacen de una venta a crédito (se derivan de la venta: no se guardan). */
+function ventaEventos(hoy, v) {
   const precio = toC(v.precio) || 0, costo = toC(v.costo) || 0, entrega = toC(v.entrega) || 0;
   const anticipo = Math.max(0, Math.min(precio, toC(v.anticipo) || 0));
   if (precio <= 0) return { error: 'precio_invalido' };
-  const d = (n) => addDays(base.hoy, Math.max(0, Math.min(365, Math.round(Number(n) || 0))));
+  const d = (n) => addDays(hoy, Math.max(0, Math.min(365, Math.round(Number(n) || 0))));
   const diaEntrega = d(v.dia_entrega), diaProv = d(v.dia_proveedor);
   const diaCobro = addDays(diaEntrega, Math.max(0, Math.min(365, Math.round(Number(v.dias_credito) || 0))));
   const extra = [];
@@ -186,6 +187,12 @@ function simularVenta(base, v) {
   if (entrega > 0) extra.push({ fecha: diaEntrega, monto: -entrega, concepto: 'Gastos de entrega (simulado)', tipo: 'simulado' });
   if (anticipo > 0) extra.push({ fecha: diaEntrega, monto: anticipo, concepto: 'Anticipo del pedido (simulado)', tipo: 'simulado' });
   if (precio - anticipo > 0) extra.push({ fecha: diaCobro, monto: precio - anticipo, concepto: 'Saldo del pedido a crédito (simulado)', tipo: 'simulado' });
+  return { extra, precio, costo, entrega, anticipo, diaCobro };
+}
+function simularVenta(base, v) {
+  const ve = ventaEventos(base.hoy, v);
+  if (ve.error) return ve;
+  const { extra, precio, costo, entrega, anticipo, diaCobro } = ve;
   const sin = proyectar(base), con = proyectar({ ...base, extra: (base.extra || []).concat(extra) });
   return {
     margen: precio - costo - entrega, salida_antes_de_cobrar: costo + entrega, salida_neta: costo + entrega - anticipo,
@@ -194,6 +201,120 @@ function simularVenta(base, v) {
     con: { minimo: con.minimo, final: con.final, falta_para_reserva: con.falta_para_reserva, primero_negativo: con.primero_negativo, primero_bajo_reserva: con.primero_bajo_reserva },
     cambio_minimo: con.minimo.saldo - sin.minimo.saldo,
     serie_con: con.serie.map((x) => x.saldo), serie_sin: sin.serie.map((x) => x.saldo)
+  };
+}
+
+
+/* ── Simulador con datos reales ──────────────────────────────────────── */
+const ultimoDia = (f) => lastDay(Number(f.slice(0, 4)), Number(f.slice(5, 7)) - 1);
+/**
+ * Patrón histórico a partir de los movimientos REALES del banco (ya filtrados: solo cuentas que
+ * suman al efectivo y sin traspasos entre cuentas propias). Usa SOLO meses completos dentro de la
+ * cobertura (desde/hasta) en que todas las cuentas tienen datos: un mes a medias haría parecer
+ * que entra menos dinero del que entra. Devuelve, por mes y por día del mes, entradas y salidas.
+ * Esto NO es un dato: es "si los próximos meses se mueven como los pasados", y así se etiqueta.
+ */
+function patronHistorico(movs, cobertura) {
+  if (!cobertura || !valid(cobertura.desde) || !valid(cobertura.hasta) || cobertura.desde > cobertura.hasta) return null;
+  const meses = [];
+  for (let f = cobertura.desde.slice(0, 7) + '-01'; f <= cobertura.hasta; ) {
+    const fin = f.slice(0, 8) + String(ultimoDia(f)).padStart(2, '0');
+    // Completo si empieza dentro de la cobertura y la cobertura llega a su último día (o al 25, por estados que cierran antes de fin de mes).
+    if (f >= cobertura.desde && (cobertura.hasta >= fin || (cobertura.hasta.slice(0, 7) === f.slice(0, 7) && Number(cobertura.hasta.slice(8)) >= 25))) meses.push(f.slice(0, 7));
+    const d = parse(f); d.setUTCMonth(d.getUTCMonth() + 1); f = iso(d);
+  }
+  if (!meses.length) return null;
+  const porMes = {};
+  for (const m of meses) porMes[m] = { mes: m, ent: new Array(32).fill(0), sal: new Array(32).fill(0), entradas: 0, salidas: 0, cats: {} };
+  for (const x of movs) {
+    const f = String(x.fecha).slice(0, 10), pm = porMes[f.slice(0, 7)];
+    if (!pm) continue;
+    const c = toC(x.monto) || 0, dia = Number(f.slice(8));
+    const k = x.categoria || 'sin_categoria';
+    pm.cats[k] = pm.cats[k] || { entradas: 0, salidas: 0 };
+    if (c > 0) { pm.ent[dia] += c; pm.entradas += c; pm.cats[k].entradas += c; } else { pm.sal[dia] -= c; pm.salidas -= c; pm.cats[k].salidas -= c; }
+  }
+  const lista = meses.map((m) => ({ ...porMes[m], neto: porMes[m].entradas - porMes[m].salidas }));
+  const n = lista.length;
+  const prom = { ent: new Array(32).fill(0), sal: new Array(32).fill(0) };
+  for (const m of lista) for (let i = 1; i <= 31; i++) { prom.ent[i] += m.ent[i] / n; prom.sal[i] += m.sal[i] / n; }
+  for (let i = 1; i <= 31; i++) { prom.ent[i] = Math.round(prom.ent[i]); prom.sal[i] = Math.round(prom.sal[i]); }
+  const peor = lista.reduce((a, b) => (b.neto < a.neto ? b : a)), mejor = lista.reduce((a, b) => (b.neto > a.neto ? b : a));
+  const cats = {};
+  for (const m of lista) for (const [k, v] of Object.entries(m.cats)) { cats[k] = cats[k] || { entradas: 0, salidas: 0 }; cats[k].entradas += v.entradas / n; cats[k].salidas += v.salidas / n; }
+  for (const v of Object.values(cats)) { v.entradas = Math.round(v.entradas); v.salidas = Math.round(v.salidas); }
+  return {
+    meses: lista.map((m) => ({ mes: m.mes, entradas: m.entradas, salidas: m.salidas, neto: m.neto })), n, desde: cobertura.desde, hasta: cobertura.hasta,
+    promedio_mes: { entradas: Math.round(lista.reduce((a, m) => a + m.entradas, 0) / n), salidas: Math.round(lista.reduce((a, m) => a + m.salidas, 0) / n) },
+    peor_mes: peor.mes, mejor_mes: mejor.mes, por_categoria: cats,
+    dias: { promedio: prom, peor: { ent: peor.ent, sal: peor.sal }, mejor: { ent: mejor.ent, sal: mejor.sal } }
+  };
+}
+/**
+ * Entradas y salidas estimadas día por día a partir del patrón: el día 15 del mes futuro recibe lo que
+ * en la historia pasa el día 15. Un mes corto acumula en su último día lo de los días que no tiene.
+ * Empieza MAÑANA: lo de hoy ya está (o no) en el banco. ajustes: % sobre entradas y salidas.
+ */
+function eventosEstimados(patron, modo, hoy, H, ajustes) {
+  if (!patron || !patron.dias[modo]) return [];
+  const p = patron.dias[modo], out = [];
+  const fe = 1 + Math.max(-90, Math.min(200, Number((ajustes || {}).entradas_pct) || 0)) / 100;
+  const fs = 1 + Math.max(-90, Math.min(200, Number((ajustes || {}).salidas_pct) || 0)) / 100;
+  const etiqueta = modo === 'promedio' ? 'mes promedio' : modo === 'peor' ? 'como el peor mes (' + patron.peor_mes + ')' : 'como el mejor mes (' + patron.mejor_mes + ')';
+  for (let k = 1; k <= H; k++) {
+    const f = addDays(hoy, k), dom = Number(f.slice(8)), ld = ultimoDia(f);
+    let e = 0, s = 0;
+    for (let i = dom; i <= (dom === ld ? 31 : dom); i++) { e += p.ent[i]; s += p.sal[i]; }
+    e = Math.round(e * fe); s = Math.round(s * fs);
+    if (e) out.push({ fecha: f, monto: e, concepto: 'Entradas estimadas (' + etiqueta + ')', tipo: 'estimado' });
+    if (s) out.push({ fecha: f, monto: -s, concepto: 'Salidas estimadas (' + etiqueta + ')', tipo: 'estimado' });
+  }
+  return out;
+}
+/**
+ * Un escenario del simulador sobre la base real. cambios (nada se guarda):
+ *  historico: 'no'|'promedio'|'peor'|'mejor' · entradas_pct / salidas_pct (solo sobre lo estimado)
+ *  retraso (días de atraso de la cobranza) · vencido ('excluir'|'hoy')
+ *  mover: [{cxp_id, fecha}] (supuesto de negociación con el proveedor, no un acuerdo)
+ *  venta: {precio, costo, entrega, anticipo, dia_entrega, dia_proveedor, dias_credito}
+ *  puntuales: [{fecha, monto (pesos, + entra / − sale), concepto}]
+ */
+function escenario(base, cambios) {
+  const c = cambios || {};
+  const mover = new Map((c.mover || []).filter((m) => valid(m.fecha)).map((m) => [Number(m.cxp_id), m.fecha]));
+  const cxp = (base.cxp || []).map((x) => (mover.has(Number(x.id)) ? { ...x, fecha_programada: mover.get(Number(x.id)), movido: true } : x));
+  const extra = [];
+  const modo = ['promedio', 'peor', 'mejor'].includes(c.historico) ? c.historico : null;
+  if (modo) extra.push(...eventosEstimados(base.patron, modo, base.hoy, Math.max(1, Math.min(366, Math.round(Number(base.horizonte) || 60))), c));
+  for (const p of c.puntuales || []) {
+    const m = toC(p.monto);
+    if (valid(p.fecha) && m) extra.push({ fecha: p.fecha, monto: m, concepto: String(p.concepto || (m > 0 ? 'Entrada supuesta' : 'Salida supuesta')).slice(0, 120), tipo: 'simulado' });
+  }
+  let venta = null;
+  if (c.venta && toC(c.venta.precio) > 0) { venta = ventaEventos(base.hoy, c.venta); if (!venta.error) extra.push(...venta.extra); else venta = null; }
+  const p = proyectar({ ...base, cxp, extra, opciones: { vencido: c.vencido === 'hoy' ? 'hoy' : 'excluir', retraso: c.retraso } });
+  p.venta = venta ? { margen: venta.precio - venta.costo - venta.entrega, fecha_cobro: venta.diaCobro, saldo_a_credito: venta.precio - venta.anticipo } : null;
+  p.historico = modo;
+  return p;
+}
+/** Las 8 cifras del simulador, del escenario dado. evalDia: día (desde hoy) para medir la cartera vencida. */
+function indicadores(base, p, evalDia) {
+  const ev = addDays(base.hoy, Math.max(0, Math.min(p.horizonte, Math.round(Number(evalDia) || 0))));
+  const pend = (base.cxc || []).filter((x) => x.pendiente > 0);
+  const obligs = p.eventos.filter((e) => e.tipo === 'pago' || e.tipo === 'fijo');
+  const cxpTotal = (base.cxp || []).reduce((a, x) => a + (x.pendiente || 0), 0);
+  return {
+    efectivo: p.efectivo,
+    cartera: pend.reduce((a, x) => a + x.pendiente, 0),
+    cartera_vencida: pend.filter((x) => String(x.vencimiento).slice(0, 10) < ev).reduce((a, x) => a + x.pendiente, 0),
+    fecha_evaluacion: ev,
+    obligaciones: cxpTotal + p.eventos.filter((e) => e.tipo === 'fijo').reduce((a, e) => a - e.monto, 0),
+    obligaciones_en_horizonte: obligs.reduce((a, e) => a - e.monto, 0),
+    salidas_estimadas: p.eventos.filter((e) => e.tipo === 'estimado' && e.monto < 0).reduce((a, e) => a - e.monto, 0),
+    entradas_estimadas: p.eventos.filter((e) => e.tipo === 'estimado' && e.monto > 0).reduce((a, e) => a + e.monto, 0),
+    final: p.final, hasta: p.hasta, minimo: p.minimo,
+    falta_para_cero: p.falta_para_cero, falta_para_reserva: p.falta_para_reserva, reserva: p.reserva,
+    primero_negativo: p.primero_negativo, primero_bajo_reserva: p.primero_bajo_reserva
   };
 }
 
@@ -212,4 +333,4 @@ function alertas(p, cartera, cxpVencido) {
   return out;
 }
 
-module.exports = { fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };
+module.exports = { patronHistorico, eventosEstimados, escenario, indicadores, ventaEventos, fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };

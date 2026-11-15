@@ -232,7 +232,9 @@ api.use((req, res, next) => (req.user.must_change ? res.status(403).json({ error
 
 const canEdit = (req) => ['owner', 'director', 'capturista'].includes(req.user.role);
 const canAdmin = (req) => ['owner', 'director'].includes(req.user.role);
-api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) ? next() : res.status(403).json({ error: 'read_only' })));
+// Simular no guarda nada: el contador (solo lectura) también puede.
+const SOLO_CALCULO = ['/simulador', '/simular-venta'];
+api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) || (req.method === 'POST' && SOLO_CALCULO.includes(req.path)) ? next() : res.status(403).json({ error: 'read_only' })));
 const adminOnly = (req, res, next) => (canAdmin(req) ? next() : res.status(404).json({ error: 'not_found' }));
 const own = (table, id, t, tx) => one(`SELECT * FROM ${table} WHERE id=:id AND tenant_id=:t`, { id, t }, tx);
 
@@ -404,6 +406,72 @@ api.post('/simular-venta', async (req, res) => {
   const r = E.simularVenta(entradaMotor(st, hoy, o), req.body || {});
   if (r.error) return res.status(400).json(r);
   res.json(r);
+});
+
+
+/* ── Simulador con datos reales ──────────────────────────────────────── */
+/**
+ * Base del simulador: la proyección real + el patrón de los bancos. La cobertura histórica es
+ * el tramo en que TODAS las cuentas que suman al efectivo tienen movimientos (si una empieza en
+ * julio, el patrón empieza en julio): mezclar meses con una cuenta sin datos inventaría un mes flojo.
+ */
+async function baseSimulador(tenant, hoy) {
+  const st = await cargarEstado(tenant, hoy);
+  const cob = await sel(`SELECT c.id, c.fecha_saldo::text AS fs, MIN(m.fecha)::text AS primero, MAX(m.fecha)::text AS ultimo, COUNT(m.id)::int AS n
+    FROM fz_cuentas c LEFT JOIN fz_movimientos m ON m.cuenta_id=c.id AND m.tenant_id=c.tenant_id WHERE c.tenant_id=:t AND c.incluir AND c.active GROUP BY c.id`, { t: tenant });
+  const conDatos = cob.filter((c) => c.n > 0);
+  let cobertura = null, datosHasta = null;
+  if (conDatos.length) {
+    const ini = conDatos.map((c) => (c.fs ? E.addDays(c.fs, 1) : c.primero)).sort().pop();
+    const fin = conDatos.map((c) => c.ultimo).sort()[0];
+    datosHasta = conDatos.map((c) => c.ultimo).sort().pop();
+    if (ini <= fin) cobertura = { desde: ini, hasta: fin };
+  }
+  let patron = null;
+  if (cobertura) {
+    const movs = await sel(`SELECT m.fecha::text AS fecha, m.monto, m.categoria FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id
+      WHERE m.tenant_id=:t AND c.incluir AND c.active AND m.categoria <> 'traspaso' AND m.fecha BETWEEN :d AND :h`, { t: tenant, d: cobertura.desde, h: cobertura.hasta });
+    patron = E.patronHistorico(movs, cobertura);
+  }
+  return { st, patron, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length };
+}
+api.post('/simulador', async (req, res) => {
+  const hoy = hoyMx(), b = req.body || {};
+  const { st, patron, datosHasta, sinCuentasConDatos } = await baseSimulador(req.tenant, hoy);
+  const H = [30, 60, 90, 120, 180].includes(Number(b.horizonte)) ? Number(b.horizonte) : st.cfg.horizonte_dias;
+  const efectivo = b.efectivo === '' || b.efectivo == null ? st.efectivo : (num(b.efectivo) != null && Math.abs(num(b.efectivo)) < 1e10 ? Math.round(num(b.efectivo) * 100) : st.efectivo);
+  const reserva = b.reserva === '' ? null : b.reserva == null ? st.cfg.reserva_minima : moneyIn(b.reserva);
+  const documentos = st.cxc.length + st.cxp.length + st.fijos.length;
+  const historico = ['no', 'promedio', 'peor', 'mejor'].includes(b.historico) ? b.historico : (patron && !documentos ? 'promedio' : 'no');
+  const base = { hoy, horizonte: H, reserva, efectivo, cxc: st.cxc, cxp: st.cxp, fijos: st.fijos, patron };
+  const hasta = E.addDays(hoy, H);
+  const enRango = (f) => date(f) && f >= hoy && f <= hasta;
+  const cambios = {
+    historico, entradas_pct: num(b.entradas_pct) || 0, salidas_pct: num(b.salidas_pct) || 0,
+    retraso: dias(b.retraso) || 0, vencido: b.vencido === 'hoy' ? 'hoy' : 'excluir',
+    // Solo pagos de ESTA empresa: un id ajeno o inventado no mueve nada.
+    mover: (Array.isArray(b.mover) ? b.mover : []).slice(0, 200).filter((m) => m && enRango(m.fecha) && st.cxp.some((x) => String(x.id) === String(m.cxp_id))),
+    venta: b.venta && typeof b.venta === 'object' ? b.venta : null,
+    puntuales: (Array.isArray(b.puntuales) ? b.puntuales : []).slice(0, 30).filter((p) => p && enRango(p.fecha) && num(p.monto))
+      .map((p) => ({ fecha: p.fecha, monto: (p.tipo === 'entrada' ? 1 : -1) * Math.abs(num(p.monto)), concepto: str(p.concepto, 120) }))
+  };
+  const ini = E.escenario(base, { historico, vencido: 'excluir' });
+  const mod = E.escenario(base, cambios);
+  const avisos = [];
+  if (datosHasta && datosHasta < E.addDays(hoy, -3)) avisos.push({ nivel: 'medio', texto: `Los bancos están cargados hasta el ${E.fechaLarga(datosHasta)}: el efectivo de hoy es el de esa fecha. Importa los movimientos más recientes para que el punto de partida sea exacto.` });
+  if (historico !== 'no' && documentos) avisos.push({ nivel: 'info', texto: 'Estás sumando el patrón de los bancos y también documentos reales (por cobrar, por pagar o gastos fijos): un mismo pago puede contarse dos veces. Úsalo como escenario aproximado.' });
+  if (historico === 'no' && !documentos) avisos.push({ nivel: 'info', texto: 'Sin por cobrar, por pagar ni gastos fijos cargados, la proyección queda plana. Usa la base histórica o importa los créditos de SICAR.' });
+  if (sinCuentasConDatos) avisos.push({ nivel: 'info', texto: `${sinCuentasConDatos} cuenta(s) que suman al efectivo no tienen movimientos cargados (por ejemplo Banorte): el patrón no las incluye.` });
+  const lim = (p) => p.eventos.slice(0, 600).map((e) => ({ fecha: e.fecha, concepto: e.concepto, monto: e.monto, tipo: e.tipo, vencido: !!e.vencido }));
+  res.json({
+    hoy, horizonte: H, datos_hasta: datosHasta, historico, documentos,
+    inicial: { serie: ini.serie.map((d) => d.saldo), indicadores: E.indicadores(base, ini, b.eval_dia) },
+    modificado: { serie: mod.serie.map((d) => ({ fecha: d.fecha, saldo: d.saldo })), indicadores: E.indicadores(base, mod, b.eval_dia), eventos: lim(mod), vencido_no_contado: mod.vencido_no_contado.length, venta: mod.venta },
+    patron: patron && { meses: patron.meses, n: patron.n, desde: patron.desde, hasta: patron.hasta, promedio_mes: patron.promedio_mes, peor_mes: patron.peor_mes, mejor_mes: patron.mejor_mes,
+      por_categoria: Object.entries(patron.por_categoria).map(([k, v]) => ({ categoria: k, ...v })).sort((a, z) => (z.entradas + z.salidas) - (a.entradas + a.salidas)) },
+    pagos: st.cxp.filter((x) => x.pendiente > 0).map((x) => ({ id: x.id, proveedor: x.proveedor, folio: x.folio, vencimiento: x.vencimiento, fecha_programada: x.fecha_programada, pendiente: x.pendiente })),
+    avisos
+  });
 });
 
 /* ── documentos (por cobrar / por pagar) ─────────────────────────────── */
