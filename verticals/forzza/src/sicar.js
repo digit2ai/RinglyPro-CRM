@@ -27,7 +27,7 @@ const norm = (s) => String(s == null ? '' : s).toLowerCase().normalize('NFD').re
   .replace(/\s+/g, ' ').replace(/[:]+$/, '').trim();
 const MONEY = /^-?\s*\$?\s*-?\s*[\d,]+(\.\d{1,2})?$/;
 
-/** "$ 14,384.00" / "-$ 1,000.00" / 14384 -> centavos (entero). null si no es un importe. */
+/** "$ 12,000.00" / "-$ 1,000.00" / 12000 -> centavos (entero). null si no es un importe. */
 function cents(v) {
   if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v * 100) : null;
   const s = String(v == null ? '' : v).trim();

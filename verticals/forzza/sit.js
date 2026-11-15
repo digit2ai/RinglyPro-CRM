@@ -117,7 +117,10 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('ningún saldo pendiente se guarda en cxc/cxp: se calcula', ['fz_cxc', 'fz_cxp'].every((n) => tablaDe(n) && !/pendiente|saldo/i.test(tablaDe(n))));
     ok('la página no calcula proyecciones', !/function proyectar|saldo\s*\+=/.test(ui));
     const repo = [code['schema.js'], mig, ui, fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8')].join('\n');
-    ok('ningún número de cuenta real del cliente en el código (repo público)', !/4071119754|0125066018|0166278442|1535679928|3114|3381/.test(repo));
+    // Huellas SHA-256 (no los números): este repositorio es público y el número mismo no debe aparecer ni aquí.
+    const PROHIBIDOS = new Set(["1e8af007ffa5a2ee","02d440aafd58de11","9bc3ca6a4497b84e","dff8718a0fef617e","90e855751509be9e","a1f14c675f8161bc"]);
+    const huella = (x) => require('crypto').createHash('sha256').update(x).digest('hex').slice(0, 16);
+    ok('ningún número de cuenta real del cliente en el código (repo público)', !(repo.match(/\d{4,10}/g) || []).some((n) => PROHIBIDOS.has(huella(n))));
 
     console.log('\nPreparación');
     const hash = await bcrypt.hash('sit-pass-123456', 4);
@@ -280,21 +283,21 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       R([72, 'Caja:'], [95, 'Todas'], [223, 'Usuario:'], [260, 'Todos'], [384, 'Doc.:'], [407, 'Todos'], [508, 'Detalle:'], [542, 'No']),
       R([46, 'Proveedor:'], [95, 'Todos'], [351, 'Estado:'], [385, 'Todos'], [483, 'Orden:'], [514, 'Fecha']),
       R([44, 'Fecha'], [95, 'Doc.'], [163, 'Folio'], [202, 'Proveedor'], [377, 'Caja'], [437, 'Usuario'], [491, 'Est'], [570, 'Total']),
-      R([37, '02/10/2026'], [95, 'COM'], [163, '50514'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 14,384.00']),
-      R([37, '02/10/2026'], [95, 'COM'], [163, '50514'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'X'], [550, '$ 14,384.00']),
-      R([37, '02/10/2026'], [95, 'COM'], [163, '50514'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'X'], [547, '-$ 14,384.00']),
-      R([37, '03/10/2026'], [95, 'GAS'], [149, 'ENERO1SUE'], [202, 'SUELDOS'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 22,030.00']),
-      R([37, '03/10/2026'], [95, 'COM'], [154, '47171COM'], [202, 'GASOLINERA PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [554, '$ 1,000.00'])],
+      R([37, '02/10/2026'], [95, 'COM'], [163, '70001'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 12,000.00']),
+      R([37, '02/10/2026'], [95, 'COM'], [163, '70001'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'X'], [550, '$ 12,000.00']),
+      R([37, '02/10/2026'], [95, 'COM'], [163, '70001'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'X'], [547, '-$ 12,000.00']),
+      R([37, '03/10/2026'], [95, 'GAS'], [149, 'QNA1SUE'], [202, 'SUELDOS'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 20,000.00']),
+      R([37, '03/10/2026'], [95, 'COM'], [154, '90001COM'], [202, 'GASOLINERA PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [554, '$ 1,000.00'])],
       [R([100, 'Reporte General de Compras']), R([44, 'Fecha'], [95, 'Doc.'], [163, 'Folio'], [202, 'Proveedor'], [377, 'Caja'], [437, 'Usuario'], [491, 'Est'], [570, 'Total']),
-      R([37, '04/10/2026'], [95, 'COM'], [161, 'REM44'], [202, 'ARENAS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 17,066.40']),
+      R([37, '04/10/2026'], [95, 'COM'], [161, 'REM90'], [202, 'ARENAS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [550, '$ 15,000.40']),
       R([200, 'Devoluciones']), R([40, 'Devolución'], [95, '05/10/2026'], [163, '68'], [202, 'CEMENTOS PRUEBA'], [375, 'Caja 1'], [443, 'admin'], [495, 'V'], [560, '$ 100.00']),
       R([300, 'Totales por Forma de Pago']), R([420, 'Efectivo'], [560, '$ 0.00']),
-      R([440, 'Total :'], [540, '$ 54,380.40']), R([60, 'Página 2 / 2'], [250, 'Generado por SICAR'])]];
+      R([440, 'Total :'], [540, '$ 47,900.40']), R([60, 'Página 2 / 2'], [250, 'Generado por SICAR'])]];
     const rc = SR.leer(compras);
     ok('compras: reconoce el reporte y su periodo', rc.tipo === 'compras_general' && rc.filtros.desde === '2026-10-01' && rc.filtros.hasta === '2026-10-31');
-    ok('compras: folio y proveedor por POSICIÓN (en el texto plano vienen pegados)', rc.filas.find((f) => f.folio === 'ENERO1SUE').parte === 'SUELDOS' && rc.filas.find((f) => f.folio === '47171COM').parte === 'GASOLINERA PRUEBA');
+    ok('compras: folio y proveedor por POSICIÓN (en el texto plano vienen pegados)', rc.filas.find((f) => f.folio === 'QNA1SUE').parte === 'SUELDOS' && rc.filas.find((f) => f.folio === '90001COM').parte === 'GASOLINERA PRUEBA');
     ok('compras: la devolución se reconoce aunque SICAR ponga la fecha en la columna Doc.', rc.filas.some((f) => f.doc === 'DEV' && f.fecha === '2026-10-05' && f.total === 10000));
-    ok('compras: lo leído cuadra con el Total que imprime SICAR (compras − devoluciones)', rc.cuadra === true && rc.total_leido === 5438040);
+    ok('compras: lo leído cuadra con el Total que imprime SICAR (compras − devoluciones)', rc.cuadra === true && rc.total_leido === 4790040);
     ok('compras: el pie de página y "Totales por Forma de Pago" no son renglones', !rc.filas.some((f) => /efectivo|pagina/i.test(f.parte || '')) && rc.errores.length === 0);
     const malo = JSON.parse(JSON.stringify(compras)); malo[1].splice(2, 1); // falta un renglón: el total ya no cuadra
     ok('si falta un renglón, dice que NO cuadra (no se calla)', SR.leer(malo).cuadra === false);
@@ -385,7 +388,7 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('ventas desde Excel/CSV', vs.status === 200 && vs.json.tipo === 'ventas_general' && vs.json.conteo.nuevo === 2, JSON.stringify(vs.json));
     const rs = (await req('GET', '/sicar/resumen?desde=2026-10-01&hasta=2026-10-31', { cookie: conA.cookie })).json;
     const oct = rs.meses.find((m) => m.mes === '2026-10');
-    ok('resumen: compras = COM vigentes − devoluciones; gastos = GAS; los cancelados no cuentan', oct && oct.compras === 3235040 && oct.gastos === 2203000 && oct.ventas === 121000, JSON.stringify(oct));
+    ok('resumen: compras = COM vigentes − devoluciones; gastos = GAS; los cancelados no cuentan', oct && oct.compras === 2790040 && oct.gastos === 2000000 && oct.ventas === 121000, JSON.stringify(oct));
     ok('resumen: la foto de saldos de SICAR se compara con la app', rs.conciliacion.cxp && rs.conciliacion.cxp.saldo_sicar === 0 && rs.conciliacion.cxp.saldo_app >= 500000, JSON.stringify(rs.conciliacion));
     ok('un archivo que no es de SICAR = 400 con la instrucción', (await subir(capA.cookie, [[R([1, 'Factura'])]], false)).json.error === 'no_es_reporte_sicar');
 

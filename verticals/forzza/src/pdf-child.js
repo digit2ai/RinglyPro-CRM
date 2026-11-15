@@ -5,7 +5,7 @@
  * --disallow-code-generation-from-strings, entorno VACÍO, 256 MB y tiempo límite).
  *
  * SICAR imprime cada celda como un texto aparte. El texto plano las pega sin separador
- * ("50514GRUPO MECASA PLUSCOM"), así que aquí se devuelve cada renglón como una lista de
+ * ("70001PROVEEDOR XCOM"), así que aquí se devuelve cada renglón como una lista de
  * celdas con su posición horizontal x. sicar.js asigna cada celda a su columna por posición.
  */
 const MAX_PAGES = 120;
