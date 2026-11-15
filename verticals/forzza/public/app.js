@@ -143,7 +143,7 @@
   }
 
   const VIEWS = [
-    ['grp', 'Capital'], ['tablero', 'Tablero'], ['simulador', 'Simulador'], ['proyeccion', 'Proyección'], ['simular', 'Simular venta a crédito'],
+    ['grp', 'Capital'], ['tablero', 'Tablero'], ['simulador', 'Simulador'], ['proyeccion', 'Proyección'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
@@ -397,7 +397,7 @@
 
   /* ── simular venta a crédito ── */
   R.simular = async function () {
-    main().innerHTML = `<h1>Simular venta a crédito</h1><p class="sub">Antes de aceptar un pedido grande: qué le pasa a tu punto más bajo. No guarda nada y no aprueba crédito.</p>
+    main().innerHTML = `<h1>¿Tomo este pedido?</h1><p class="sub">Antes de aceptar un pedido grande: qué le pasa a tu punto más bajo. No guarda nada y no aprueba crédito.</p>
       <div class="card"><form id="f" class="form">
         <div><label>Precio de venta</label><input name="precio" inputmode="decimal" required></div>
         <div><label>Costo del material</label><input name="costo" inputmode="decimal"></div>
