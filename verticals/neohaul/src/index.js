@@ -237,7 +237,14 @@ const CAT = {
   trucks: { table: 'nh_trucks', order: "CASE empresa WHEN 'NeoHaul' THEN 0 WHEN 'TTS' THEN 1 WHEN 'SEMAQSA' THEN 2 ELSE 3 END, unidad",
     fields: { empresa: (v) => (EMPRESAS.includes(v) ? v : undefined), unidad: (v) => str(v, 60) || undefined, tipo: (v) => strOrNull(v, 60),
       capacidad_m3: (v) => num(v), placas: (v) => strOrNull(v, 30), chofer_id: (v) => intId(v), notas: (v) => strOrNull(v, 500), active: (v) => !!v },
-    required: ['empresa', 'unidad'], derive: (r) => { if (r.empresa) r.propio = r.empresa === 'NeoHaul'; } },
+    // Un camión de NeoHaul es propio (sus costos cuentan en el tablero). Si se da la placa y un número económico corto,
+    // el nombre queda como los demás: "RG-06-35-B (01)".
+    derive: (o) => {
+      if (o.empresa) o.propio = o.empresa === 'NeoHaul';
+      if (o.placas) o.placas = o.placas.toUpperCase().replace(/\s+/g, '-').replace(/-+/g, '-');
+      if (o.placas && o.unidad && o.unidad.length <= 6 && !D.placaKey(o.unidad).includes(D.placaKey(o.placas))) o.unidad = `${o.placas} (${o.unidad})`;
+    },
+    required: ['empresa', 'unidad'] },
   drivers: { table: 'nh_drivers', order: 'nombre',
     fields: { nombre: (v) => str(v, 160) || undefined, telefono: tel, empresa: (v) => (EMPRESAS.includes(v) ? v : undefined),
       puesto: (v) => (['chofer', 'mecanico'].includes(v) ? v : undefined), salario_semanal: (v) => moneyIn(v), active: (v) => !!v },
@@ -269,6 +276,12 @@ async function refsOk(spec, row, t) {
   if (row.chofer_id != null && !(await own('nh_drivers', row.chofer_id, t))) return false;
   return true;
 }
+/** ¿Otra unidad activa de la empresa ya tiene esa placa? (se compara sin espacios ni guiones). */
+async function placaUsada(tenant, placas, exceptId) {
+  if (!placas) return false;
+  const rows = await sel('SELECT id, placas FROM nh_trucks WHERE tenant_id=:t AND active AND placas IS NOT NULL', { t: tenant });
+  return rows.some((r) => r.id !== exceptId && D.placaKey(r.placas) === D.placaKey(placas));
+}
 // Las tarifas fijan cada importe: solo director/dueño las cambian, y el cambio queda con precio anterior y nuevo.
 api.use(['/tarifas', '/tarifas/:id'], (req, res, next) => (['GET', 'HEAD'].includes(req.method) || canAdmin(req) ? next() : res.status(403).json({ error: 'solo_director' })));
 for (const [name, spec] of Object.entries(CAT)) {
@@ -277,6 +290,7 @@ for (const [name, spec] of Object.entries(CAT)) {
     const { row, error } = pick(spec, req.body, false);
     if (error) return res.status(400).json({ error });
     if (!(await refsOk(spec, row, req.tenant))) return res.status(404).json({ error: 'not_found' });
+    if (name === 'trucks' && (await placaUsada(req.tenant, row.placas))) return res.status(409).json({ error: 'placa_duplicada' });
     const cols = Object.keys(row);
     const [r] = await exec(`INSERT INTO ${spec.table} (tenant_id,${cols.join(',')}) VALUES (:tenant_id,${cols.map((c) => ':' + c).join(',')}) RETURNING *`, { ...row, tenant_id: req.tenant });
     audit(req, name + '_created', r[0].id);
@@ -292,6 +306,7 @@ for (const [name, spec] of Object.entries(CAT)) {
     if (error) return res.status(400).json({ error });
     if (!Object.keys(row).length) return res.status(400).json({ error: 'nothing_to_update' });
     if (!(await refsOk(spec, row, req.tenant))) return res.status(404).json({ error: 'not_found' });
+    if (name === 'trucks' && (await placaUsada(req.tenant, row.placas, id))) return res.status(409).json({ error: 'placa_duplicada' });
     const before = await own(spec.table, id, req.tenant);
     const [r] = await exec(`UPDATE ${spec.table} SET ${Object.keys(row).map((c) => `${c}=:${c}`).join(',')} WHERE id=:id AND tenant_id=:tenant_id RETURNING *`, { ...row, id, tenant_id: req.tenant });
     audit(req, name + '_updated', name === 'tarifas' && 'precio' in row ? `${id} precio ${M.pesos(before.precio)} -> ${M.pesos(row.precio)}` : id);

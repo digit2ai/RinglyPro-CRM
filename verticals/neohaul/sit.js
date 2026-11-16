@@ -503,6 +503,13 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     const apB = await req('POST', '/drivers/importar', { cookie: dirB, body: { texto: lista } });
     ok('en otra empresa son nuevos (no ve los de A)', apB.json.filas.every((f) => f.estado === 'nuevo'));
 
+    console.log('\nAlta de camión');
+    const nt = await req('POST', '/trucks', { cookie: dirA, body: { empresa: 'NeoHaul', unidad: '07', placas: 'rx 01 99 b' } });
+    ok('camión nuevo: nombre con placa y número, y es propio', nt.status === 201 && nt.json.unidad === 'RX-01-99-B (07)' && nt.json.propio === true);
+    ok('la misma placa escrita distinto no se duplica', (await req('POST', '/trucks', { cookie: dirA, body: { empresa: 'NeoHaul', unidad: '08', placas: 'RX0199B' } })).status === 409);
+    ok('otra empresa sí puede tener esa placa', (await req('POST', '/trucks', { cookie: dirB, body: { empresa: 'NeoHaul', unidad: '07', placas: 'RX-01-99-B' } })).status === 201);
+    ok('el contador no da de alta camiones', (await req('POST', '/trucks', { cookie: conA, body: { empresa: 'NeoHaul', unidad: '09' } })).status === 403);
+
     console.log('\nCuentas iniciales');
     const schSrc = fs.readFileSync(path.join(__dirname, 'src', 'schema.js'), 'utf8');
     ok('las cuentas iniciales entran con must_change y solo si el correo no existe', /SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS/.test(schSrc));

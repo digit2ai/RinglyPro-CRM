@@ -16,7 +16,7 @@
   const fmtF = (f) => { if (!f) return ''; const [y, m, d] = String(f).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
   const UN = { tonelada: 't', dia: 'día', viaje: 'viaje' };
   const ERR = {
-    invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.', lista_vacia: 'No encontré ningún nombre con teléfono en la lista.',
+    invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.', placa_duplicada: 'Ya hay un camión activo con esa placa.', lista_vacia: 'No encontré ningún nombre con teléfono en la lista.',
     ticket_duplicado: 'Ese número de ticket ya está registrado con esa tarifa.', en_estimacion: 'Ese viaje ya está en una estimación. Borra la estimación (en borrador) para liberarlo.',
     sin_viajes_confirmados: 'No hay viajes confirmados de esa obra en esas fechas.', estimacion_no_aprobada: 'Primero marca la estimación como aprobada por HTR.',
     ya_tiene_requisicion: 'Esa estimación ya tiene requisición.', falta_folio: 'Escribe el folio de la factura.', truck_busy: 'Ese camión ya está asignado a otro pedido ese día.',
@@ -326,7 +326,7 @@
         ${k('Cuentas por pagar (saldo)', pesos(t.cuentas_por_pagar.saldo), `${t.cuentas_por_pagar.n} facturas de proveedor`)}
         ${k('Taller por cobrar', pesos(t.taller_por_cobrar.total), `${t.taller_por_cobrar.n} servicios a empresas hermanas`)}
       </div>
-      <h2>Cuánto deja cada camión propio</h2>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px"><h2 style="margin:0">Cuánto deja cada camión propio</h2>${canEdit() ? '<button class="btn small" id="nuevoCamion">+ Agregar camión</button>' : ''}</div>
       <div class="card tbl"><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">Costos</th><th class="n">Resultado</th></tr></thead><tbody>
       ${t.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}</td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Ingresos">${pesos(c.ingresos)}</td><td class="n" data-l="Diésel">${Number(c.diesel) ? pesos(c.diesel) + '<div class="muted">' + qty(c.litros) + ' L</div>' : '—'}</td>
         <td class="n" data-l="Costos">${c.sin_costos ? '<span class="pill warn">sin costos capturados</span>' : pesos(c.costos)}</td>
@@ -336,6 +336,7 @@
       <div class="card tbl">${t.pagos_semana.length ? `<table class="cards"><thead><tr><th>Proveedor</th><th>Folio</th><th>Camión</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.pagos_semana.map((g) => `<tr><td data-l="Proveedor">${esc(g.proveedor)}</td><td data-l="Folio">${esc(g.folio || '')}</td><td data-l="Camión">${esc(g.camion || 'General')}</td><td class="n" data-l="Monto">${pesos(g.monto_propuesto)}</td></tr>`).join('')}
         </tbody></table>` : '<p class="muted">Ninguno programado. Prográmalos en Gastos y diésel.</p>'}</div>`;
+    const nc = document.getElementById('nuevoCamion'); if (nc) nc.onclick = () => { S.catTab = 'trucks'; location.hash = 'catalogos'; };
     document.getElementById('wk').onchange = (e) => R.tablero(lunes(e.target.value));
     document.getElementById('prev').onclick = () => R.tablero(dias(t.desde, -7));
     document.getElementById('next').onclick = () => R.tablero(dias(t.desde, 7));
@@ -780,7 +781,7 @@
 
   /* ── catálogos ── */
   const CATS = {
-    trucks: ['Camiones', [['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['unidad', 'Unidad / no. económico'], ['tipo', 'Tipo'], ['capacidad_m3', 'm³'], ['placas', 'Placas'], ['chofer_id', 'Chofer habitual', 'driver'], ['notas', 'Notas'], ['active', 'Activo', 'chk']]],
+    trucks: ['Camiones', [['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['unidad', 'Número económico (ej. 07)'], ['tipo', 'Tipo'], ['capacidad_m3', 'm³'], ['placas', 'Placas'], ['chofer_id', 'Chofer habitual', 'driver'], ['notas', 'Notas'], ['active', 'Activo', 'chk']]],
     drivers: ['Choferes y mecánicos', [['nombre', 'Nombre'], ['telefono', 'WhatsApp (10 dígitos = México; otro país con +lada)'], ['empresa', 'Empresa', 'sel', ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo']], ['puesto', 'Puesto', 'sel', ['chofer', 'mecanico']], ['salario_semanal', 'Salario semanal'], ['active', 'Activo', 'chk']]],
     obras: ['Obras', [['nombre', 'Nombre'], ['clave', 'Clave'], ['client_id', 'Cliente', 'client'], ['ingeniero', 'Ingeniero'], ['ingeniero_tel', 'WhatsApp del ingeniero (10 dígitos = México)'], ['active', 'Activa', 'chk']]],
     tarifas: ['Tarifas', [['nombre', 'Nombre'], ['material', 'Material'], ['origen', 'Origen'], ['destino', 'Destino'], ['unidad', 'Cobro por', 'sel', ['tonelada', 'dia', 'viaje']], ['precio', 'Precio'], ['por_confirmar', 'Por confirmar', 'chk'], ['nota', 'Nota'], ['active', 'Activa', 'chk']]],
