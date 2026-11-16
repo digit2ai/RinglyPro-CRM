@@ -116,6 +116,7 @@
     if (S.me.user.must_change) return renderChangePassword();
     await loadCat(true);
     shell();
+    mountDalia();
     go(location.hash.slice(1) || 'tablero');
   }
 
@@ -135,7 +136,7 @@
     const side = document.getElementById('side'), b = document.getElementById('burger');
     b.onclick = () => { side.classList.toggle('open'); b.setAttribute('aria-expanded', side.classList.contains('open')); };
     side.onclick = (e) => { if (e.target.closest('a')) side.classList.remove('open'); };
-    document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; renderLogin(); };
+    document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; document.body.classList.add('nh-out'); renderLogin(); };
   }
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
@@ -148,13 +149,170 @@
   }
   const R = {};
 
+  /* ── salud de la operación en gráficas (mismo método que Forzza Capital) ── */
+  const INK = '#14213d', VERDE = '#047857', AMBAR = '#b45309', ROJO = '#b91c1c', NARANJA = '#c2410c';
+  const c$ = (c) => pesos(Number(c) / 100);
+  const k$ = (c) => { const v = Number(c) / 100, a = Math.abs(v), s = v < 0 ? '-' : ''; return a >= 1e6 ? `${s}$${(a / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M` : a >= 1e3 ? `${s}$${Math.round(a / 1e3)}k` : `${s}$${Math.round(a)}`; };
+  const pc = (x, d) => (x == null ? '—' : (x * 100).toFixed(d == null ? 0 : d) + '%');
+  const NIVEL = { sana: ['Sana', VERDE], atencion: ['Atención', AMBAR], riesgo: ['En riesgo', ROJO], sin_datos: ['Sin datos', '#64748b'] };
+  const kpi = (l, v, n, cls) => `<div class="card kpi${cls ? ' ' + cls : ''}"><div class="l">${l}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+  function gauge(puntos, nivel) {
+    const W = 260, H = 160, cx = 130, cy = 130, r = 104, w = 22;
+    const pt = (v, rr) => { const a = Math.PI * (1 - v / 100); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)]; };
+    const arc = (a, b, col) => { const [x1, y1] = pt(a, r), [x2, y2] = pt(b, r); return `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} A${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${col}" stroke-width="${w}" fill="none"/>`; };
+    const v = puntos == null ? 0 : puntos, [mx, my] = pt(v, r);
+    return `<svg viewBox="0 0 ${W} ${H}" class="gauge" role="img" aria-label="Calificación ${puntos == null ? 'sin datos' : puntos + ' de 100'}">
+      ${arc(0, 49.5, '#f3c2c2')}${arc(50.5, 74.5, '#f0d7a6')}${arc(75.5, 100, '#b7e2cd')}${puntos == null ? '' : arc(0, Math.max(0.5, v), NIVEL[nivel][1])}
+      ${puntos == null ? '' : `<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="13" fill="#fff" stroke="${INK}" stroke-width="3"/>`}
+      <text x="${cx}" y="${cy - 8}" text-anchor="middle" style="font-size:46px;font-weight:800;fill:${INK}">${puntos == null ? '—' : puntos}</text>
+      <text x="${cx}" y="${cy + 12}" text-anchor="middle" style="font-size:12px;fill:#4b5563">de 100</text>
+      <text x="22" y="${H - 2}" style="font-size:11px;fill:#4b5563">0</text><text x="${W - 22}" y="${H - 2}" text-anchor="end" style="font-size:11px;fill:#4b5563">100</text></svg>`;
+  }
+  function anillo(p, label) {
+    const r = 30, C = 2 * Math.PI * r, v = p == null ? 0 : Math.max(0, Math.min(1, p)), col = p == null ? '#94a3b8' : v >= 0.3 ? ROJO : v >= 0.1 ? AMBAR : VERDE;
+    return `<div class="ring"><svg viewBox="0 0 80 80" width="80" height="80"><circle cx="40" cy="40" r="${r}" stroke="#e2e6ee" stroke-width="9" fill="none"/>
+      <circle cx="40" cy="40" r="${r}" stroke="${col}" stroke-width="9" fill="none" stroke-dasharray="${(C * v).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 40 40)" stroke-linecap="round"/>
+      <text x="40" y="45" text-anchor="middle" style="font-size:16px;font-weight:800;fill:${INK}">${pc(p)}</text></svg><div class="muted" style="font-size:12px">${label}</div></div>`;
+  }
+  function escala(lo, hi) {
+    const raw = (hi - lo) / 5 || 1, pow = Math.pow(10, Math.floor(Math.log10(Math.abs(raw)))), step = [1, 2, 2.5, 5, 10].map((k) => k * pow).find((s) => s >= raw);
+    return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step, step];
+  }
+  function abanico(mc) {
+    const W = 760, H = 280, L = 70, R = 30, T = 14, B = 30, b = mc.bandas;
+    const [lo, hi, step] = escala(Math.min(0, ...b.map((d) => d.p5)), Math.max(0, ...b.map((d) => d.p95)));
+    const x = (i) => L + (i * (W - L - R)) / b.length, y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo || 1);
+    const pts = [[0, 0, 0, 0, 0, 0]].concat(b.map((d, i) => [i + 1, d.p5, d.p25, d.p50, d.p75, d.p95]));
+    const band = (a, c) => 'M' + pts.map((p) => `${x(p[0]).toFixed(1)} ${y(p[a]).toFixed(1)}`).join('L') + 'L' + pts.slice().reverse().map((p) => `${x(p[0]).toFixed(1)} ${y(p[c]).toFixed(1)}`).join('L') + 'Z';
+    const line = (a) => 'M' + pts.map((p) => `${x(p[0]).toFixed(1)} ${y(p[a]).toFixed(1)}`).join('L');
+    const grid = []; for (let v = lo; v <= hi + step / 2; v += step) grid.push(`<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e2e6ee"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${k$(v)}</text>`);
+    const xt = [0, 4, 8, 13].filter((i) => i <= b.length).map((i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${i ? 'semana ' + i : 'hoy'}</text>`).join('');
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Utilidad acumulada posible en ${b.length} semanas">${grid.join('')}
+      ${y(0) > T && y(0) < H - B ? `<rect x="${L}" y="${y(0)}" width="${W - L - R}" height="${H - B - y(0)}" fill="#fdeaea" opacity=".55"/>` : ''}
+      <path d="${band(1, 5)}" fill="${INK}" opacity=".12"/><path d="${band(2, 4)}" fill="${INK}" opacity=".22"/>
+      <path d="${line(3)}" fill="none" stroke="${INK}" stroke-width="2.6"/>
+      <line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" stroke="${ROJO}" stroke-width="1.4"/>${xt}</svg>
+      <div class="legend"><span><i style="background:${INK}"></i>Lo más probable</span><span><i style="background:${INK};opacity:.35;height:8px"></i>Rango normal (50% de los casos)</span><span><i style="background:${INK};opacity:.15;height:8px"></i>Rango amplio (90%)</span><span><i style="background:${ROJO};height:2px"></i>Cero: abajo es pérdida</span></div>`;
+  }
+  function barrasSem(ws) {
+    if (!ws.length) return '<p class="empty">Aún no hay semanas completas con viajes o costos.</p>';
+    const W = 380, H = 210, L = 8, B = 34, T = 18, max = Math.max(...ws.map((w) => Math.max(w.ingresos, w.costos))) || 1;
+    const g = (W - L * 2) / ws.length, bw = Math.max(3, Math.min(14, g / 3)), y = (v) => T + (H - T - B) * (1 - v / max);
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Ingresos y costos por semana">${ws.map((w, i) => {
+      const cx = L + g * i + g / 2, etq = fmtF(w.semana).slice(0, 5);
+      return `<rect x="${cx - bw - 1}" y="${y(w.ingresos)}" width="${bw}" height="${H - B - y(w.ingresos)}" rx="2" fill="${VERDE}"/>
+        <rect x="${cx + 1}" y="${y(w.costos)}" width="${bw}" height="${H - B - y(w.costos)}" rx="2" fill="${ROJO}" opacity=".85"/>
+        ${ws.length <= 8 || i % 2 === ws.length % 2 ? `<text x="${cx}" y="${H - 18}" text-anchor="middle">${esc(etq)}</text>` : ''}
+        <text x="${cx}" y="${H - 4}" text-anchor="middle" style="font-size:${ws.length > 8 ? 8 : 10}px;font-weight:700;fill:${w.neto >= 0 ? VERDE : ROJO}">${ws.length <= 8 || i % 2 === ws.length % 2 ? k$(w.neto) : ''}</text>`;
+    }).join('')}</svg><div class="legend"><span><i style="background:${VERDE}"></i>Ingresos de viajes</span><span><i style="background:${ROJO}"></i>Costos capturados</span><span>abajo: lo que quedó</span></div>`;
+  }
+  function barrasH(items, color) {
+    if (!items.length) return '<p class="empty">Sin datos.</p>';
+    const max = Math.max(...items.map((i) => i.v)) || 1;
+    return items.map((i) => `<div class="hb"><div class="hb-l">${esc(i.l)}</div><div class="hb-t"><i style="width:${Math.max(1, (i.v / max) * 100).toFixed(1)}%;background:${i.c || color}"></i></div><div class="hb-v">${k$(i.v)}${i.n ? ` <span class="muted">${esc(i.n)}</span>` : ''}</div></div>`).join('');
+  }
+  function lorenz(c) {
+    const S = 220, P = 26, z = (v) => P + v * (S - P * 2);
+    const d = 'M' + c.lorenz.map(([a, b]) => `${z(a).toFixed(1)} ${(S - z(b)).toFixed(1)}`).join('L');
+    return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:240px" role="img" aria-label="Curva de Lorenz por obra">
+      <rect x="${P}" y="${P}" width="${S - 2 * P}" height="${S - 2 * P}" fill="#f6f8fc" stroke="#e2e6ee"/>
+      <path d="${d}L${z(1)} ${S - z(0)}Z" fill="${INK}" opacity=".12"/>
+      <line x1="${z(0)}" y1="${S - z(0)}" x2="${z(1)}" y2="${S - z(1)}" stroke="#94a3b8" stroke-dasharray="5 4"/>
+      <path d="${d}" fill="none" stroke="${INK}" stroke-width="2.4"/>
+      <text x="${S / 2}" y="${S - 6}" text-anchor="middle" style="font-size:10px;fill:#4b5563">% de obras →</text>
+      <text x="10" y="${S / 2}" transform="rotate(-90 10 ${S / 2})" text-anchor="middle" style="font-size:10px;fill:#4b5563">% del ingreso →</text></svg>`;
+  }
+  function aging(cart) {
+    const T = [['por_vencer', 'Al corriente', INK], ['d1_30', '1–30 vencido', '#d97706'], ['d31_60', '31–60', AMBAR], ['d61_90', '61–90', NARANJA], ['d90_mas', '+90', ROJO]];
+    if (!cart.total) return '<p class="empty">No hay facturas emitidas sin cobrar.</p>';
+    return `<div class="stack">${T.map(([k, , c]) => (cart[k].monto ? `<i style="width:${(cart[k].monto / cart.total * 100).toFixed(1)}%;background:${c}"></i>` : '')).join('')}</div>
+      <div class="legend">${T.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l}: ${k$(cart[k].monto)}</span>`).join('')}</div>`;
+  }
+  function porDia(arr) {
+    const max = Math.max(...arr.map((d) => d.monto)) || 1, N = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    return `<div class="heat">${arr.map((d, i) => { const a = Math.min(1, d.monto / max);
+      return `<div class="hc" style="background:rgba(20,33,61,${(0.08 + 0.85 * a).toFixed(2)});color:${a > 0.45 ? '#fff' : INK}" title="${N[i]}: ${d.viajes} viajes"><b>${N[i]}</b><span>${d.viajes} viajes</span><span>${k$(d.monto)}</span></div>`; }).join('')}</div>`;
+  }
+  const valParte = (p) => (p.clave === 'ciclo' ? p.valor.toFixed(1) + ' semanas' : pc(p.valor, 1));
+  function saludHtml(s) {
+    const cal = s.calificacion, niv = NIVEL[cal.nivel || 'sin_datos'], mc = s.montecarlo, conc = s.concentracion;
+    const ALN = { riesgo: 'bad', atencion: 'warn' };
+    return `${s.alertas.length ? `<div class="card"><h2 style="margin-top:0">Lo que hay que atender</h2>${s.alertas.map((a) => `<div class="alerta"><span class="pill ${ALN[a.nivel] || ''}">${a.nivel === 'riesgo' ? 'riesgo' : 'atención'}</span> ${esc(a.texto)}</div>`).join('')}</div>` : ''}
+      <div class="card hero">
+        <div class="hero-g">${gauge(cal.puntos, cal.nivel || 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
+          <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Salud de la operación, de 0 a 100</div></div>
+        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación?</h2>
+          ${cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
+            <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
+            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) + ' · ' : ''}${esc(p.regla)}</div></div>`).join('')}
+          ${cal.puntos == null ? '<p class="muted" style="font-size:13px">Aún no hay datos para calificar. Se llena sola al capturar viajes, gastos y facturas.</p>' : cal.peso_calificado < 100 ? '<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás.</p>' : ''}</div>
+      </div>
+      <div class="grid kpis">
+        ${kpi('Ingresos últimas 8 semanas', c$(s.ultimas_8.ingresos), `Costos capturados: ${c$(s.ultimas_8.costos)}`)}
+        ${kpi('Resultado últimas 8 semanas', s.ultimas_8.costos ? c$(s.ultimas_8.neto) : '—', s.ultimas_8.costos ? (s.ultimas_8.ingresos ? 'Margen ' + pc(s.ultimas_8.neto / s.ultimas_8.ingresos, 1) : '') : 'Sin costos capturados', s.ultimas_8.costos && s.ultimas_8.neto < 0 ? 'bad' : '')}
+        ${kpi('Trabajado sin facturar', c$(s.detenido), s.promedio_semanal_ingresos ? `${(s.detenido / s.promedio_semanal_ingresos).toFixed(1)} semanas de ingreso detenidas` : 'Viajes, estimaciones y requisiciones')}
+        ${kpi('Días para cobrar · para pagar', `${s.dso == null ? '—' : s.dso} · ${s.dpo == null ? '—' : s.dpo}`, `Promedio de lo cerrado en 180 días (${s.dso_n} cobradas, ${s.dpo_n} pagadas)`)}
+      </div>
+      <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es ir en pérdida?</h2>
+        <p class="muted" style="margin:0;font-size:13px">${mc ? `${mc.caminos.toLocaleString('es-MX')} futuros posibles armados con ${mc.semanas_historia} semanas reales (del ${fmtF(mc.desde)} al ${fmtF(mc.hasta)}): cada semana futura repite una semana del pasado, con sus viajes y sus costos juntos. Es una estimación.` : 'Se calcula con al menos 4 semanas completas de viajes o costos capturados. Mientras tanto no se inventa.'}</p></div>
+        ${mc ? `<div class="rings">${anillo(mc.prob_perdida_en[4], 'en 4 semanas')}${anillo(mc.prob_perdida_en[8], 'en 8 semanas')}${anillo(mc.prob_perdida_en[13], 'en 13 semanas')}</div>` : ''}</div>
+        ${mc ? abanico(mc) + `<p class="muted" style="font-size:12px;margin:6px 0 0">Utilidad acumulada en 13 semanas: lo más probable ${c$(mc.final.p50)}; en un mal caso (1 de 20) ${c$(mc.final.p5)}; en un buen caso ${c$(mc.final.p95)}.</p>` : ''}</div>
+      <div class="grid two">
+        <div class="card"><h2 style="margin-top:0">Semana por semana</h2>${barrasSem(s.semanas)}</div>
+        <div class="card"><h2 style="margin-top:0">Del viaje al cobro</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Dónde está hoy el dinero que ya se trabajó.</p>
+          ${s.embudo.some((e) => e.monto) ? barrasH(s.embudo.map((e, i) => ({ l: e.nombre, v: e.monto, n: e.n ? String(e.n) : '', c: i < 4 ? AMBAR : i === 4 ? INK : VERDE })), INK) : '<p class="empty">Aún no hay viajes ni facturas.</p>'}</div>
+      </div>
+      <div class="grid two">
+        <div class="card"><h2 style="margin-top:0">Facturas por cobrar</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Antigüedad contra un plazo de ${s.cartera.plazo} días desde la emisión.</p>${aging(s.cartera)}</div>
+        <div class="card"><h2 style="margin-top:0">¿Qué días se trabaja más?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Viajes de las últimas 12 semanas por día.</p>${porDia(s.por_dia)}</div>
+      </div>
+      <div class="card"><h2 style="margin-top:0">¿Dependes de una sola obra?</h2>${conc ? `<div class="conc">
+        <div>${lorenz(conc)}</div>
+        <div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
+          ${kpi('La obra mayor', pc(conc.mayor), 'del ingreso', conc.mayor >= 0.7 ? 'bad' : '')}${kpi('Índice Gini', conc.gini == null ? '—' : conc.gini.toFixed(2), '0 = parejo · 1 = una sola')}${kpi('Obras', String(conc.n), 'con viajes')}</div>
+          ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), INK)}
+          <p class="muted" style="font-size:12px;margin:8px 0 0">Últimas 12 semanas de viajes, antes de IVA. Todas son obras de HTR: el cliente es uno solo.</p></div></div>` : '<p class="empty">Aún no hay viajes en las últimas 12 semanas.</p>'}</div>
+      <div class="card tbl"><h2 style="margin-top:0">Uso de cada camión (4 semanas)</h2><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Días con viaje</th><th>Uso</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">L por viaje</th><th class="n">Diésel / ingreso</th></tr></thead><tbody>
+        ${s.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}<div class="muted">${esc(c.empresa)}${c.ultimo_viaje ? ' · último ' + fmtF(c.ultimo_viaje) : ''}</div></td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Días">${c.dias} de 24</td>
+          <td data-l="Uso"><div class="hb-t" style="min-width:70px"><i style="width:${(c.uso * 100).toFixed(0)}%;background:${c.uso >= 0.7 ? VERDE : c.uso >= 0.4 ? AMBAR : ROJO}"></i></div></td>
+          <td class="n" data-l="Ingresos">${c$(c.ingresos)}</td><td class="n" data-l="Diésel">${c.diesel ? c$(c.diesel) : '—'}</td><td class="n" data-l="L por viaje">${c.litros_por_viaje == null ? '—' : c.litros_por_viaje}</td><td class="n" data-l="Diésel / ingreso">${pc(c.diesel_sobre_ingreso, 1)}</td></tr>`).join('')}
+      </tbody></table></div>
+      ${s.por_pagar.proveedores.length ? `<div class="card"><h2 style="margin-top:0">A quién se le debe más</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Saldo por proveedor: ${c$(s.por_pagar.total)} en ${s.por_pagar.n} facturas.</p>${barrasH(s.por_pagar.proveedores.map((p) => ({ l: p.nombre, v: p.monto, n: String(p.n) })), ROJO)}</div>` : ''}
+      ${s.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}`;
+  }
+
+  /* Dalia: el orbe de Digit2AI. Se escribe la pregunta y responde con los datos de NeoHaul (solo lectura). */
+  function mountDalia() {
+    document.body.classList.remove('nh-out');
+    if (document.getElementById('dalia-orb')) return;
+    const h = document.createElement('div');
+    h.id = 'dalia-orb';
+    h.setAttribute('data-voice-orb', '');
+    h.setAttribute('data-mode', 'reply');
+    h.setAttribute('data-voice-default', 'off');
+    h.setAttribute('data-agent', 'neohaul');
+    h.setAttribute('data-lang', 'es');
+    h.setAttribute('data-label', 'Pregúntale a Dalia');
+    h.setAttribute('data-chat', new URL('api/v1/dalia/chat', location.href).pathname);
+    h.setAttribute('data-chat-header', 'X-NeoHaul: 1');
+    h.setAttribute('data-accent', '#f0a35e');
+    h.setAttribute('data-accent2', '#14213d');
+    document.body.appendChild(h);
+    const sc = document.createElement('script');
+    sc.src = '/embed/voice-orb.js?v=3'; sc.defer = true;
+    document.body.appendChild(sc);
+  }
+
   /* ── tablero ── */
   R.tablero = async function (desde) {
-    const t = await api('tablero?desde=' + (desde || lunes()));
+    const [t, s] = await Promise.all([api('tablero?desde=' + (desde || lunes())), desde && S.salud ? Promise.resolve(S.salud) : api('salud').catch(() => null)]);
+    if (s) S.salud = s;
     const k = (l, v, n) => `<div class="card kpi"><div class="l">${l}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
     const resumen = `Resumen semana ${fmtF(t.desde)} a ${fmtF(t.hasta)}\nViajes: ${t.viajes.n} (${pesos(t.viajes.importe)})\nFacturado: ${pesos(t.facturado.total)}\nCobrado: ${pesos(t.cobrado.total)}\nPor cobrar: ${pesos(t.por_cobrar_total)}\nPagos propuestos esta semana: ${pesos(t.pagos_semana_total)}\n` +
       t.pagos_semana.map((g) => `- ${g.proveedor}${g.folio ? ' ' + g.folio : ''}: ${pesos(g.monto_propuesto)}`).join('\n');
-    main().innerHTML = `<h1>Tablero</h1><p class="sub">Semana del ${fmtF(t.desde)} al ${fmtF(t.hasta)}</p>
+    main().innerHTML = `<h1>Tablero</h1><p class="sub">Salud de la operación de NeoHaul · hoy ${fmtF(hoy())}</p>
+      ${s ? saludHtml(s) : '<div class="note">No se pudo calcular la salud de la operación.</div>'}
+      <h2 style="margin-top:26px">La semana</h2><p class="sub">Semana del ${fmtF(t.desde)} al ${fmtF(t.hasta)}</p>
       <div class="row noprint" style="margin-bottom:12px"><input type="date" id="wk" value="${t.desde}" style="max-width:180px"><button class="btn small" id="prev">Semana anterior</button>
       <button class="btn small" id="next">Siguiente</button><a class="btn small wa" target="_blank" rel="noopener" href="${waLink('', resumen)}">Enviar resumen por WhatsApp</a></div>
       <div class="grid">

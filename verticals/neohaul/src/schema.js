@@ -110,4 +110,4 @@ async function init(db) {
   });
   return tenantId;
 }
-module.exports = { init, confirmarTarifas, FLOTA, OBRAS, TARIFAS };
+module.exports = { init, confirmarTarifas, FLOTA, OBRAS, TARIFAS, CUENTAS_INICIALES };

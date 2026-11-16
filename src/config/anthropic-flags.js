@@ -96,7 +96,7 @@ const REGISTRY = {
   // ENABLED on creation 2026-11-01: owner-only wardrobe. The only model call
   // re-words one outfit's stylist note on request (Haiku); scores are rules.
   neohaul:          { status: 'enabled', names: ['NeoHaul', 'Grupo NeoHaul'], disabled_on: null,
-    sites: ['verticals/neohaul/src/llm.js (lectura de la foto del ticket de planta: propone ticket, fecha y toneladas)'],
+    sites: ['verticals/neohaul/src/llm.js (lectura de la foto del ticket de planta: propone ticket, fecha y toneladas)', 'verticals/neohaul/src/dalia.js (Dalia: preguntas sobre la operación, herramientas de solo lectura)'],
     off_behaviour: 'captura manual del ticket (leido_por: captura_manual)' },
   stylestudio:      { status: 'enabled', names: ["Manuel's Style Studio"], disabled_on: null,
     sites: ['verticals/stylestudio/src/llm.js (POST /style-studio/api/v1/outfits/:id/advice)'],

@@ -87,7 +87,7 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     const narr = eval('(' + deck.slice(deck.indexOf('var NARR = ') + 11, deck.indexOf('];', deck.indexOf('var NARR = ')) + 1) + ')');
     const imgs = [...deck.matchAll(/src="\/neohaul\/(presentacion\/[^"]+)"/g)].map((m) => m[1]);
     ok('guía narrada: una narración por lámina, bajo el tope de la voz, cada captura existe', (deck.match(/class="slide/g) || []).length === narr.length && narr.every((n) => n.length < 2000) && imgs.length > 15 && imgs.every((s) => fs.existsSync(path.join(__dirname, 'public', s))));
-    ok('solo llm.js llega a un modelo', files.filter((f) => /@anthropic-ai\/sdk/.test(code[f])).join() === 'llm.js');
+    ok('solo llm.js (tickets) y dalia.js llegan a un modelo', files.filter((f) => /@anthropic-ai\/sdk/.test(code[f])).sort().join() === 'dalia.js,llm.js');
     ok('ningún transporte de mensajes en el vertical', !files.some((f) => /twilio|sendgrid|nodemailer|graph\.facebook|messages\.create\(\s*\{\s*to/i.test(code[f])));
     ok('el servidor no lee importe/subtotal/total del cuerpo', !/body\.(importe|subtotal|total|iva|retencion|precio_unitario)\b/.test(code['index.js'].replace(/b\.precio_unitario/g, 'PU_SUELTA')) && !/b\.(importe|subtotal|iva|retencion)\b/.test(code['index.js']));
     ok('el tenant nunca sale del cuerpo', !/body\.tenant_id|b\.tenant_id/.test(code['index.js']));
@@ -427,6 +427,70 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('un director no resetea a otro director', (await req('PATCH', '/usuarios/' + dirA2.id, { cookie: dirA, body: { reset: true } })).status === 404);
     ok('B no administra usuarios de A', (await req('PATCH', '/usuarios/' + nu.json.id, { cookie: dirB, body: { active: false } })).status === 404);
     await req('PATCH', '/usuarios/' + nu.json.id, { cookie: dirA, body: { reset: true } });
+
+    console.log('\nSalud de la operación (modelos de Forzza)');
+    const AN = require('./src/analytics');
+    const wk = (s, i, c) => ({ semana: s, ingresos: i, costos: c, neto: i - c });
+    ok('Monte Carlo no corre con 3 semanas', AN.monteCarlo([wk('2026-10-05', 100, 50), wk('2026-10-12', 100, 50), wk('2026-10-19', 100, 50)]) === null);
+    const h6 = [wk('2026-09-07', 500000, 300000), wk('2026-09-14', 400000, 450000), wk('2026-09-21', 600000, 350000), wk('2026-09-28', 300000, 320000), wk('2026-10-05', 550000, 400000), wk('2026-10-12', 0, 120000)];
+    const mc1 = AN.monteCarlo(h6), mc2 = AN.monteCarlo(h6);
+    ok('Monte Carlo es repetible (misma semilla)', JSON.stringify(mc1) === JSON.stringify(mc2));
+    ok('Monte Carlo: 13 semanas, bandas ordenadas', mc1.bandas.length === 13 && mc1.bandas.every((b) => b.p5 <= b.p25 && b.p25 <= b.p50 && b.p50 <= b.p75 && b.p75 <= b.p95));
+    ok('Monte Carlo: probabilidades entre 0 y 1', [4, 8, 13].every((k) => mc1.prob_perdida_en[k] >= 0 && mc1.prob_perdida_en[k] <= 1));
+    const todoGana = AN.monteCarlo([1, 2, 3, 4].map((i) => wk('2026-10-0' + i, 1000, 100)));
+    ok('si todas las semanas ganan, la probabilidad de pérdida es 0', todoGana.prob_perdida_en[13] === 0);
+    const sem = AN.semanas([{ fecha: '2026-11-16', monto: 999 }, { fecha: '2026-11-03', monto: 10 }], [], '2026-11-18');
+    ok('la semana en curso no entra al historial', sem.length === 2 && sem[0].semana === '2026-11-02' && sem[0].ingresos === 1000 && sem[1].semana === '2026-11-09' && sem[1].ingresos === 0);
+    const cal0 = AN.calificacion({});
+    ok('sin datos no hay calificación inventada', cal0.puntos === null && cal0.nivel === 'sin_datos');
+    const cal1 = AN.calificacion({ margen: 0.25 });
+    ok('una sola parte con dato se reescala a 100', cal1.puntos === 100 && cal1.peso_calificado === 25);
+    ok('calificación con todo mal = 0', AN.calificacion({ margen: -0.5, prob_perdida_8: 0.9, vencido_pct: 0.9, semanas_sin_cobrar: 8, mayor_obra: 1, confirmados_pct: 0.2 }).puntos === 0);
+    const cn1 = AN.concentracion([{ nombre: 'Bacheo', monto: 500 }]);
+    ok('una sola obra: pesa 100% y sin Gini', cn1.mayor === 1 && cn1.gini === null);
+    const ag = AN.antiguedad([{ total: 100, fecha_emision: '2026-10-01' }, { total: 50, fecha_emision: '2026-11-10' }], '2026-11-16', 30);
+    ok('antigüedad: vencido después del plazo', ag.vencido === 10000 && ag.d1_30.monto === 10000 && ag.por_vencer.monto === 5000);
+
+    const sA = await req('GET', '/salud', { cookie: dirA });
+    ok('salud responde con 6 partes y embudo', sA.status === 200 && sA.json.calificacion.partes.length === 6 && sA.json.embudo.length === 6);
+    ok('salud de A ve sus viajes por obra', sA.json.concentracion && sA.json.concentracion.n >= 1);
+    const sB = (await req('GET', '/salud', { cookie: dirB })).json;
+    ok('salud de B no ve nada de A', sB.concentracion === null && sB.cartera.total === 0 && sB.embudo.every((e) => e.monto === 0) && sB.camiones.every((c) => c.viajes === 0 && c.unidad.startsWith('B ')));
+    ok('el contador ve la salud', (await req('GET', '/salud', { cookie: conA })).status === 200);
+
+    console.log('\nDalia');
+    const DL = require('./src/dalia');
+    const src = fs.readFileSync(path.join(__dirname, 'src', 'dalia.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    ok('Dalia no escribe (sin INSERT/UPDATE/DELETE)', !/\b(INSERT|UPDATE|DELETE)\b/i.test(src));
+    ok('ninguna herramienta recibe empresa ni usuario', DL.TOOLS.every((t) => !Object.keys(t.input_schema.properties || {}).some((k) => /tenant|empresa|usuario|user/i.test(k))));
+    const chatCon = await req('POST', '/dalia/chat', { cookie: conA, body: { messages: [{ role: 'user', content: '¿Cómo vamos?' }] } });
+    ok('el contador puede preguntarle a Dalia (sin modelo: resumen marcado)', chatCon.status === 200 && chatCon.json.composed_by === 'heuristic');
+    ok('sin el encabezado no se pregunta', (await req('POST', '/dalia/chat', { cookie: conA, header: false, body: { messages: [{ role: 'user', content: 'hola' }] } })).status === 403);
+    const ctxA = { tenant: A, rol: 'contador', D: router._daliaDeps() };
+    ok('la bitácora no es para el contador', !!(await DL._ejecutar('actividad', {}, ctxA)).error);
+    const vjA = await DL._ejecutar('buscar_viajes', { desde: '2000-01-01', tenant_id: B }, ctxA);
+    const vjB = await DL._ejecutar('buscar_viajes', { desde: '2000-01-01' }, { tenant: B, rol: 'director', D: router._daliaDeps() });
+    ok('un tenant_id en los argumentos no cambia la empresa', vjA.viajes > 0 && vjB.viajes === 0);
+    for (const t of DL.TOOLS) {
+      let r; try { r = await DL._ejecutar(t.name, t.name === 'resumen_viajes' ? { agrupar: 'obra' } : t.name === 'catalogo' ? { tipo: 'camiones' } : t.name === 'calcular' ? { expresion: '2+2' } : {}, { tenant: A, rol: 'director', D: router._daliaDeps() }); } catch (e) { r = { error: 'EXC ' + e.message }; }
+      ok('herramienta ' + t.name + ' responde', r && !String(r.error || '').startsWith('EXC'), r && r.error);
+    }
+    // Modelo falso: una cifra que no salió de ninguna herramienta se descarta.
+    const fake = (turnos) => { let i = 0; return { messages: { create: async () => turnos[Math.min(i++, turnos.length - 1)] } }; };
+    const usa = { content: [{ type: 'tool_use', id: 't1', name: 'estado_semana', input: {} }] };
+    DL._setClient(fake([usa, { content: [{ type: 'text', text: 'Esta semana ganaron $987,654.32.' }] }]));
+    const inv = await DL.responder([{ role: 'user', content: '¿cuánto ganamos?' }], { tenant: A, rol: 'director', D: router._daliaDeps() });
+    ok('cifra inventada: se descarta', inv.composed_by === 'discarded');
+    const real = await DL._ejecutar('estado_semana', {}, { tenant: A, rol: 'director', D: router._daliaDeps() });
+    DL._setClient(fake([usa, { content: [{ type: 'text', text: `Por cobrar hay ${real.por_cobrar_total}.` }] }]));
+    const ver = await DL.responder([{ role: 'user', content: '¿cuánto nos deben?' }], { tenant: A, rol: 'director', D: router._daliaDeps() });
+    ok('cifra que sí salió de la herramienta: pasa', ver.composed_by === 'model');
+    DL._setClient(null);
+
+    console.log('\nCuentas iniciales');
+    const schSrc = fs.readFileSync(path.join(__dirname, 'src', 'schema.js'), 'utf8');
+    ok('las cuentas iniciales entran con must_change y solo si el correo no existe', /SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS/.test(schSrc));
+    ok('en el repo solo vive el hash, nunca la contraseña', require('./src/schema').CUENTAS_INICIALES.every((c) => /^\$2[ab]\$12\$/.test(c[3])));
   } catch (e) {
     ok('sin excepciones', false, e && (e.stack || e.message));
   } finally {

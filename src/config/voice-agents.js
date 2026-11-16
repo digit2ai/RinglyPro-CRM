@@ -583,6 +583,21 @@ RULES
       en: 'You are Dalia, the Forzza finance assistant. Answer only from the page.'
     }
   },
+  // NeoHaul (operación de acarreo para HTR). Igual que Forzza: el orbe de /neohaul usa data-chat y
+  // sus respuestas salen de verticals/neohaul/src/dalia.js detrás de la sesión. Aquí solo la presentación.
+  neohaul: {
+    name: { es: 'Dalia', en: 'Dalia' },
+    langs: ['es'], defaultLang: 'es', voice: { es: 'dalia', en: 'dalia' },
+    role: { es: 'Asistente de la operación de NeoHaul', en: 'NeoHaul operations assistant' },
+    greeting: {
+      es: '{saludo}. Soy Dalia, tu asistente de la operación. Pregúntame lo que quieras: viajes, camiones, diésel, estimaciones, facturas, pagos o la salud de la operación.',
+      en: '{saludo}. Soy Dalia, tu asistente de la operación. Pregúntame lo que quieras de NeoHaul.'
+    },
+    persona: {
+      es: 'Eres Dalia, la asistente de la operación de NeoHaul. Responde solo con lo que muestra la página. Si te preguntan una cifra que no aparece, di que no la tienes.',
+      en: 'You are Dalia, the NeoHaul operations assistant. Answer only from the page.'
+    }
+  },
   digit2ai: {
     name: { en: 'Ava', es: 'Lina' },
     langs: ['en', 'es'], defaultLang: 'en', voice: DEFAULT_VOICE,

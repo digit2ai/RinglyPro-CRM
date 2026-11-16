@@ -37,6 +37,7 @@ const schema = require('./schema');
 const M = require('./money');
 const llm = require('./llm');
 const D = require('./docs');
+const A = require('./analytics');
 
 const router = express.Router();
 const OWNER_EMAIL = String(process.env.NEOHAUL_OWNER_EMAIL || 'mstagg@digit2ai.com').toLowerCase();
@@ -222,7 +223,8 @@ api.use((req, res, next) => (req.user.must_change ? res.status(403).json({ error
 
 const canEdit = (req) => ['owner', 'director', 'capturista'].includes(req.user.role);
 const canAdmin = (req) => ['owner', 'director'].includes(req.user.role);
-api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) ? next() : res.status(403).json({ error: 'read_only' })));
+// Preguntar a Dalia es leer: el contador (solo lectura) también puede.
+api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) || req.path === '/dalia/chat' ? next() : res.status(403).json({ error: 'read_only' })));
 const adminOnly = (req, res, next) => (canAdmin(req) ? next() : res.status(404).json({ error: 'not_found' }));
 
 /** Fila del tenant o null. Toda lectura por id pasa por aquí. */
@@ -1177,9 +1179,11 @@ api.patch('/taller/:id', async (req, res) => {
 });
 
 /* ── tablero del jueves ──────────────────────────────────────────────── */
-api.get('/tablero', async (req, res) => {
-  const desde = M.lunes(date(req.query.desde) || hoyMx()), hasta = M.sumarDias(desde, 6);
-  const r = { t: req.tenant, d: desde, h: hasta };
+api.get('/tablero', async (req, res) => res.json(await tableroDe(req.tenant, date(req.query.desde))));
+/** El tablero semanal. Lo usan la pantalla y Dalia (mismos números). */
+async function tableroDe(tenant, fecha) {
+  const desde = M.lunes(fecha || hoyMx()), hasta = M.sumarDias(desde, 6);
+  const r = { t: tenant, d: desde, h: hasta };
   const q1 = async (sql) => (await one(sql, r)) || {};
   const viajes = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(importe),0) AS s, COUNT(*) FILTER (WHERE estado='capturado')::int AS sin_confirmar FROM nh_viajes WHERE tenant_id=:t AND fecha BETWEEN :d AND :h");
   const facturado = await q1("SELECT COALESCE(SUM(total),0) AS s, COUNT(*)::int AS n FROM nh_facturas WHERE tenant_id=:t AND estado IN ('emitida','cobrada') AND fecha_emision BETWEEN :d AND :h");
@@ -1213,7 +1217,7 @@ api.get('/tablero', async (req, res) => {
     c.sin_costos = M.toCents(c.costos) === 0;
     c.margen = c.sin_costos ? null : M.fromCents(M.toCents(c.ingresos) - M.toCents(c.costos));
   });
-  res.json({
+  return {
     desde, hasta,
     viajes: { n: viajes.n, importe: Number(viajes.s), sin_confirmar: viajes.sin_confirmar },
     facturado: { n: facturado.n, total: Number(facturado.s) },
@@ -1228,7 +1232,120 @@ api.get('/tablero', async (req, res) => {
     camiones,
     diesel_sin_asignar: { n: dieselSin.n, total: Number(dieselSin.s) },
     notas: ['Costos por camión = gastos asignados + diésel por carga (o repartido por km) + taller propio de la semana. La nómina y las comisiones aún no se cargan por camión.']
+  };
+}
+
+/* ── salud de la operación: los modelos de Forzza adaptados a una transportista ── */
+api.get('/salud', async (req, res) => res.json(await saludDe(req.tenant)));
+const DIAS_CREDITO = () => { const n = Number(process.env.NEOHAUL_DIAS_CREDITO); return Number.isFinite(n) && n >= 0 && n <= 180 ? Math.round(n) : 30; };
+async function saludDe(tenant) {
+  const hoy = hoyMx(), t = { t: tenant, h: hoy, d26: M.sumarDias(hoy, -26 * 7 - 7) };
+  // Ingresos = importe de los viajes (antes de IVA). Costos = lo capturado: proveedores (sin las facturas de diésel
+  // con cargas, que cuentan por carga), cargas de diésel, nómina de la semana y taller propio.
+  const ingresos = await sel('SELECT fecha, importe AS monto FROM nh_viajes WHERE tenant_id=:t AND fecha BETWEEN :d26 AND :h', t);
+  const costos = (await sel(`SELECT g.fecha, g.total AS monto FROM nh_gastos g WHERE g.tenant_id=:t AND g.fecha BETWEEN :d26 AND :h
+        AND NOT EXISTS (SELECT 1 FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id)
+      UNION ALL SELECT COALESCE(c.fecha,g.fecha), c.total FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+        WHERE c.tenant_id=:t AND COALESCE(c.fecha,g.fecha) BETWEEN :d26 AND :h
+      UNION ALL SELECT semana, total FROM nh_nomina WHERE tenant_id=:t AND semana BETWEEN :d26 AND :h
+      UNION ALL SELECT fecha, total FROM nh_taller WHERE tenant_id=:t AND cliente='NeoHaul' AND fecha BETWEEN :d26 AND :h`, t));
+  const hist = A.semanas(ingresos, costos, hoy);
+  const mc = A.monteCarlo(hist, { horizonte: 13 });
+  const ult8 = hist.slice(-8), ing8 = ult8.reduce((a, w) => a + w.ingresos, 0), cos8 = ult8.reduce((a, w) => a + w.costos, 0);
+  const promIng = hist.length ? Math.round(hist.slice(-8).reduce((a, w) => a + w.ingresos, 0) / Math.min(8, hist.length)) : 0;
+
+  // Del viaje al cobro: dónde está el dinero que ya se trabajó.
+  const q1 = async (sql) => (await one(sql, t)) || {};
+  const sinConfirmar = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(importe),0) AS s, MIN(fecha) AS mas_viejo FROM nh_viajes WHERE tenant_id=:t AND estado='capturado'");
+  const sinEstimar = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(importe),0) AS s FROM nh_viajes WHERE tenant_id=:t AND estado='confirmado' AND estimacion_id IS NULL");
+  const estimado = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(subtotal),0) AS s FROM nh_estimaciones WHERE tenant_id=:t AND estado IN ('borrador','enviada','aprobada')");
+  const requis = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(total),0) AS s, MIN(fecha_requisicion) AS mas_viejo FROM nh_facturas WHERE tenant_id=:t AND estado='requisicion'");
+  const emitidas = await sel("SELECT id, folio, total, fecha_emision, fecha_requisicion FROM nh_facturas WHERE tenant_id=:t AND estado='emitida'", t);
+  const cobrado30 = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(total),0) AS s FROM nh_facturas WHERE tenant_id=:t AND estado='cobrada' AND fecha_cobro > :h::date - 30");
+  const plazo = DIAS_CREDITO(), cart = A.antiguedad(emitidas, hoy, plazo);
+  const embudo = [
+    { clave: 'sin_confirmar', nombre: 'Viajes sin confirmar', n: sinConfirmar.n, monto: A.toC(sinConfirmar.s), nota: 'antes de IVA' },
+    { clave: 'sin_estimar', nombre: 'Confirmados sin estimación', n: sinEstimar.n, monto: A.toC(sinEstimar.s), nota: 'antes de IVA' },
+    { clave: 'estimado', nombre: 'Estimado sin facturar', n: estimado.n, monto: A.toC(estimado.s), nota: 'antes de IVA' },
+    { clave: 'requisicion', nombre: 'Requisición sin folio', n: requis.n, monto: A.toC(requis.s), nota: 'con IVA y retención' },
+    { clave: 'por_cobrar', nombre: 'Facturado por cobrar', n: cart.n, monto: cart.total, nota: 'con IVA y retención' },
+    { clave: 'cobrado', nombre: 'Cobrado (30 días)', n: cobrado30.n, monto: A.toC(cobrado30.s), nota: 'con IVA y retención' }
+  ];
+  const detenido = embudo.slice(0, 4).reduce((a, e) => a + e.monto, 0);
+
+  // Concentración por obra (12 semanas de viajes) y captura con ticket (4 semanas).
+  const porObra = await sel(`SELECT o.nombre, SUM(v.importe) AS s FROM nh_viajes v JOIN nh_obras o ON o.id=v.obra_id AND o.tenant_id=v.tenant_id
+    WHERE v.tenant_id=:t AND v.fecha > :h::date - 84 GROUP BY o.nombre`, t);
+  const conc = A.concentracion(porObra.map((o) => ({ nombre: o.nombre, monto: A.toC(o.s) })));
+  const cap = await q1(`SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE estado='confirmado' AND (ticket_file_id IS NOT NULL OR vale_file_id IS NOT NULL OR ticket_no IS NOT NULL))::int AS ok
+    FROM nh_viajes WHERE tenant_id=:t AND fecha > :h::date - 28`);
+  // Por día de la semana (12 semanas): cuánto se trabaja cada día.
+  const dow = await sel(`SELECT EXTRACT(ISODOW FROM fecha)::int AS d, COUNT(*)::int AS n, SUM(importe) AS s FROM nh_viajes WHERE tenant_id=:t AND fecha > :h::date - 84 GROUP BY 1`, t);
+  const porDia = [1, 2, 3, 4, 5, 6, 7].map((d) => { const x = dow.find((r) => r.d === d); return { dia: d, viajes: x ? x.n : 0, monto: x ? A.toC(x.s) : 0 }; });
+  // Camiones propios (4 semanas): viajes, días con viaje, ingreso, diésel y litros.
+  const camiones = (await sel(`SELECT k.id, k.unidad, k.empresa,
+      COALESCE((SELECT COUNT(*) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id AND v.fecha > :h::date - 28),0)::int AS viajes,
+      COALESCE((SELECT COUNT(DISTINCT fecha) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id AND v.fecha > :h::date - 28),0)::int AS dias,
+      COALESCE((SELECT SUM(importe) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id AND v.fecha > :h::date - 28),0) AS ingresos,
+      COALESCE((SELECT SUM(c.total) FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+        WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) > :h::date - 28),0) AS diesel,
+      COALESCE((SELECT SUM(c.litros) FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
+        WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) > :h::date - 28),0) AS litros,
+      (SELECT MAX(fecha) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id) AS ultimo_viaje
+    FROM nh_trucks k WHERE k.tenant_id=:t AND k.active ORDER BY k.propio DESC, k.unidad`, t)).map((c) => ({
+    ...c, ingresos: A.toC(c.ingresos), diesel: A.toC(c.diesel), litros: Number(c.litros),
+    uso: Math.min(1, c.dias / 24), // 24 días hábiles en 4 semanas (lunes a sábado)
+    litros_por_viaje: c.viajes && Number(c.litros) ? Math.round(Number(c.litros) / c.viajes * 10) / 10 : null,
+    diesel_sobre_ingreso: c.ingresos && Number(c.diesel) ? A.toC(c.diesel) / A.toC(c.ingresos) : null
+  }));
+  // Días de cobro (DSO) y de pago (DPO), de lo que ya se cerró en 180 días.
+  const dso = await q1("SELECT AVG(fecha_cobro - fecha_emision)::float AS d, COUNT(*)::int AS n FROM nh_facturas WHERE tenant_id=:t AND estado='cobrada' AND fecha_cobro IS NOT NULL AND fecha_emision IS NOT NULL AND fecha_cobro > :h::date - 180");
+  const dpo = await q1("SELECT AVG(fecha_pago - fecha)::float AS d, COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND estado='pagado' AND fecha_pago IS NOT NULL AND fecha_pago > :h::date - 180");
+  const porPagar = await q1("SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND estado<>'pagado'");
+  const proveedores = await sel("SELECT proveedor, SUM(saldo) AS s, COUNT(*)::int AS n FROM nh_gastos WHERE tenant_id=:t AND estado<>'pagado' GROUP BY proveedor ORDER BY s DESC LIMIT 8", t);
+
+  // Alertas: hechos de la base, cada una con su número.
+  const alertas = [];
+  const viejo = (f, n) => f && A.diffDays(String(f).slice(0, 10), hoy) > n;
+  if (sinConfirmar.n && viejo(sinConfirmar.mas_viejo, 3)) alertas.push({ nivel: 'atencion', texto: `${sinConfirmar.n} viajes sin confirmar; el más viejo es del ${String(sinConfirmar.mas_viejo).slice(0, 10)}. Sin confirmar no entran a la estimación.` });
+  if (requis.n && viejo(requis.mas_viejo, 5)) alertas.push({ nivel: 'atencion', texto: `${requis.n} requisiciones llevan más de 5 días sin folio de factura.` });
+  if (cart.vencido) alertas.push({ nivel: 'riesgo', texto: `Hay ${M.pesos(cart.vencido / 100)} en facturas con más de ${plazo} días de emitidas.` });
+  const dsa = await q1("SELECT COUNT(*)::int AS n, COALESCE(SUM(total),0) AS s FROM nh_diesel_cargas WHERE tenant_id=:t AND truck_id IS NULL AND fecha > :h::date - 28");
+  if (dsa.n) alertas.push({ nivel: 'atencion', texto: `${dsa.n} cargas de diésel de las últimas 4 semanas sin camión (${M.pesos(dsa.s)}).` });
+  const parados = camiones.filter((c) => c.empresa === 'NeoHaul' && c.viajes === 0);
+  if (parados.length && hist.length) alertas.push({ nivel: 'atencion', texto: parados.length === 1 ? `${parados[0].unidad} no tiene viajes en 4 semanas.` : `${parados.length} camiones propios sin viajes en 4 semanas.` });
+
+  const score = A.calificacion({
+    margen: ing8 > 0 && cos8 > 0 ? (ing8 - cos8) / ing8 : null,
+    prob_perdida_8: mc ? mc.prob_perdida_en[8] : null,
+    vencido_pct: cart.total ? cart.vencido / cart.total : null,
+    semanas_sin_cobrar: promIng > 0 ? detenido / promIng : null,
+    mayor_obra: conc && conc.n >= 2 ? conc.mayor : null,
+    confirmados_pct: cap.n ? cap.ok / cap.n : null
   });
+  return {
+    hoy, calificacion: score, montecarlo: mc, semanas: hist.slice(-12), embudo, detenido, promedio_semanal_ingresos: promIng,
+    ultimas_8: { ingresos: ing8, costos: cos8, neto: ing8 - cos8 }, cartera: cart, concentracion: conc, por_dia: porDia, camiones,
+    dso: dso.n ? Math.round(dso.d * 10) / 10 : null, dso_n: dso.n, dpo: dpo.n ? Math.round(dpo.d * 10) / 10 : null, dpo_n: dpo.n,
+    por_pagar: { total: A.toC(porPagar.s), n: porPagar.n, proveedores: proveedores.map((p) => ({ nombre: p.proveedor, monto: A.toC(p.s), n: p.n })) },
+    captura: { viajes_4s: cap.n, con_ticket_confirmados: cap.ok }, alertas,
+    notas: [`Ingresos = importe de los viajes antes de IVA; costos = lo capturado (proveedores, diésel por carga, nómina y taller propio), como viene en cada factura.`,
+      `El Monte Carlo usa ${hist.filter((w) => w.ingresos || w.costos).length} semanas reales; necesita ${A.MIN_SEMANAS}. Es una estimación, no un dato.`,
+      `Plazo de crédito supuesto: ${plazo} días desde la emisión (NEOHAUL_DIAS_CREDITO).`]
+  };
+}
+
+/* ── Dalia: preguntas sobre la operación (solo lectura, mismos cálculos que el tablero) ── */
+const dalia = require('./dalia');
+const daliaDeps = () => ({ hoyMx, sel, M, A, tableroDe, saludDe, diasCredito: DIAS_CREDITO, lectorConModelo: () => llm.aiEnabled() });
+api.post('/dalia/chat', async (req, res) => {
+  const k = 'dalia|' + req.user.id;
+  if (tooMany(k, 40)) return res.status(429).json({ reply: 'Me hiciste muchas preguntas seguidas. Espera unos minutos y seguimos.', error: 'too_many' });
+  noteAttempt(k);
+  const t = await one('SELECT name FROM nh_tenants WHERE id=:t', { t: req.tenant });
+  const r = await dalia.responder((req.body || {}).messages, { tenant: req.tenant, empresa: t && t.name, usuario: req.user.name || null, rol: req.user.role, D: daliaDeps() });
+  audit(req, 'dalia', (r.composed_by || '') + (r.herramientas && r.herramientas.length ? ': ' + r.herramientas.join(',') : ''));
+  res.json({ reply: r.reply, source: r.source, composed_by: r.composed_by });
 });
 
 /* ── usuarios y actividad ────────────────────────────────────────────── */
@@ -1281,3 +1398,4 @@ module.exports = router;
 module.exports.ready = ready;
 module.exports._verifyOwner = null; // la SIT inyecta aquí la verificación del dueño
 module.exports._db = db;
+module.exports._daliaDeps = daliaDeps;
