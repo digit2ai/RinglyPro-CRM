@@ -60,6 +60,11 @@ async function confirmarTarifas(q, tenantId) {
     { n: 'Escombro (20 t por viaje)', u: 'viaje', p: 4500, nota: NOTA_ESCOMBRO });
 }
 
+const CUENTAS_INICIALES = [
+  ['osbaldo.neohaul@digit2ai.com', 'Osbaldo García', 'director', '$2a$12$7I/wg4d4LAuZ.4RKk1ANle0Eirn3gqGK662Mm3R3Ei9vJ8K9LYD7G'],
+  ['andres.neohaul@digit2ai.com', 'Andrés Cavazos', 'capturista', '$2a$12$Q3zdnSXIjIkOh9SkFZ6bOuWn3aSxRHJnw30MTbEjrTQyccrJlxRqC'],
+];
+
 async function init(db) {
   const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', '20261109_neohaul_tables.sql'), 'utf8');
   let tenantId = null;
@@ -94,6 +99,14 @@ async function init(db) {
       }
     }
     await confirmarTarifas(q, tenantId);
+    // Cuentas iniciales pedidas por el dueño (2026-11-16). Solo se crean si el correo no existe:
+    // nunca se reescribe una contraseña ya cambiada. La temporal (aleatoria, 14 caracteres) se
+    // entregó en persona; aquí solo vive su hash bcrypt, y must_change obliga a cambiarla al entrar.
+    for (const [email, name, role, hash] of CUENTAS_INICIALES) {
+      await q(`INSERT INTO nh_users (tenant_id,email,name,role,password_hash,must_change)
+        SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS (SELECT 1 FROM nh_users WHERE LOWER(email)=LOWER(:e))`,
+        { t: tenantId, e: email, n: name, r: role, h: hash });
+    }
   });
   return tenantId;
 }

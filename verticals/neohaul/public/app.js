@@ -93,7 +93,7 @@
 
   /* ── sesión ── */
   function renderLogin(msg) {
-    $app.innerHTML = `<div class="login"><div class="card"><h1>NeoHaul · Operación</h1><p class="sub">Grupo NeoHaul · plataforma de Digit2AI</p>
+    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="logo.png" alt="NeoHaul" width="160" height="130"><h1>NeoHaul · Operación</h1><p class="sub">Grupo NeoHaul · plataforma de Digit2AI</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Correo</label><input name="email" type="email" autocomplete="username" required></div>
       <div><label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required></div>
       <button class="btn primary">Entrar</button><div class="err">${esc(msg || '')}</div></form></div></div>`;
@@ -103,7 +103,7 @@
     };
   }
   function renderChangePassword() {
-    $app.innerHTML = `<div class="login"><div class="card"><h1>Cambia tu contraseña</h1><p class="sub">Es tu primer ingreso. Elige una contraseña de al menos 10 caracteres.</p>
+    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="logo.png" alt="NeoHaul" width="160" height="130"><h1>Cambia tu contraseña</h1><p class="sub">Es tu primer ingreso. Elige una contraseña de al menos 10 caracteres.</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Contraseña temporal</label><input name="current" type="password" required></div>
       <div><label>Nueva contraseña</label><input name="new" type="password" minlength="10" required></div><button class="btn primary">Guardar</button><div class="err"></div></form></div></div>`;
     $app.querySelector('#f').onsubmit = async (e) => {
@@ -127,7 +127,7 @@
   ];
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Menú" aria-expanded="false">☰</button>
-      <div class="brand">NeoHaul<small>Operación</small></div><div class="sp"></div>
+      <div class="brand"><img src="logo-blanco.png" alt="NeoHaul" width="49" height="40"><small>Operación</small></div><div class="sp"></div>
       <span class="muted" style="color:#cbd5e1;font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
