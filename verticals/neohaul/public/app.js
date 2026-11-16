@@ -16,7 +16,7 @@
   const fmtF = (f) => { if (!f) return ''; const [y, m, d] = String(f).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
   const UN = { tonelada: 't', dia: 'día', viaje: 'viaje' };
   const ERR = {
-    invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.',
+    invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.', lista_vacia: 'No encontré ningún nombre con teléfono en la lista.',
     ticket_duplicado: 'Ese número de ticket ya está registrado con esa tarifa.', en_estimacion: 'Ese viaje ya está en una estimación. Borra la estimación (en borrador) para liberarlo.',
     sin_viajes_confirmados: 'No hay viajes confirmados de esa obra en esas fechas.', estimacion_no_aprobada: 'Primero marca la estimación como aprobada por HTR.',
     ya_tiene_requisicion: 'Esa estimación ya tiene requisición.', falta_folio: 'Escribe el folio de la factura.', truck_busy: 'Ese camión ya está asignado a otro pedido ese día.',
@@ -799,6 +799,9 @@
     const tab = S.catTab || 'trucks', [titulo, fields] = CATS[tab];
     const rows = S.cat[tab];
     main().innerHTML = `<h1>Catálogos</h1><div class="row" style="margin-bottom:12px">${Object.entries(CATS).map(([k, [l]]) => `<button class="btn small${k === tab ? ' primary' : ''}" data-tab="${k}">${l}</button>`).join('')}</div>
+      ${canEdit() && tab === 'drivers' ? `<div class="card"><h2 style="margin-top:0">Pegar una lista de choferes</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Un nombre y su WhatsApp por persona (el número puede ir en la misma línea o abajo). 10 dígitos = México. Primero se revisa; no se duplica a nadie.</p>
+        <textarea id="lst" rows="6" style="width:100%" placeholder="Juan Pérez López 8112345678"></textarea>
+        <div class="row" style="margin-top:8px"><select id="lstEmp">${['NeoHaul', 'TTS', 'SEMAQSA', 'Externo'].map((e) => `<option>${e}</option>`).join('')}</select><button class="btn" id="lstVer">Revisar</button><button class="btn primary" id="lstOk" disabled>Agregar los nuevos</button></div><div id="lstRes"></div></div>` : ''}
       ${canEdit() ? `<div class="card"><h2 style="margin-top:0" id="ftit">Agregar a ${titulo.toLowerCase()}</h2><form id="cf" class="form">${fields.map((f) => field(f)).join('')}
         <div class="row"><button class="btn primary">Guardar</button><button type="button" class="btn" id="limpiar">Nuevo</button></div><div class="err wide"></div></form></div>` : ''}
       <div class="card tbl"><table class="cards"><thead><tr>${fields.map(([, l]) => `<th>${l}</th>`).join('')}<th></th></tr></thead><tbody>
@@ -816,7 +819,18 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       if (e.target.id === 'limpiar') { editing = null; R.catalogos(); }
+      if (e.target.id === 'lstVer' || e.target.id === 'lstOk') lista(e.target.id === 'lstOk');
     };
+    async function lista(aplicar) {
+      const out = document.getElementById('lstRes'), EST = { nuevo: ['ok', 'nuevo'], ya_existe: ['', 'ya existe'], repetido: ['', 'repetido en la lista'], telefono_invalido: ['bad', 'teléfono inválido'] };
+      try {
+        const r = await api('drivers/importar', { method: 'POST', body: { texto: document.getElementById('lst').value, empresa: document.getElementById('lstEmp').value, aplicar } });
+        out.innerHTML = `<table class="cards" style="margin-top:8px"><thead><tr><th>Nombre</th><th>WhatsApp</th><th></th></tr></thead><tbody>${r.filas.map((f) => `<tr><td data-l="Nombre">${esc(f.nombre)}</td><td data-l="WhatsApp">${esc(f.telefono || f.telefono_crudo)}</td><td><span class="pill ${EST[f.estado][0]}">${EST[f.estado][1]}</span></td></tr>`).join('')}</tbody></table>
+          ${r.sin_pareja.length ? `<div class="note">No entendí: ${esc(r.sin_pareja.join(' · '))}</div>` : ''}${aplicar ? `<div class="note">Se agregaron ${r.creados}.</div>` : ''}`;
+        document.getElementById('lstOk').disabled = aplicar || !r.filas.some((f) => f.estado === 'nuevo');
+        if (aplicar) { await loadCat(true); setTimeout(() => R.catalogos(), 1200); }
+      } catch (er) { out.innerHTML = `<div class="err">${errMsg(er)}</div>`; }
+    }
     const f = document.getElementById('cf');
     if (f) f.onsubmit = async (e) => {
       e.preventDefault();

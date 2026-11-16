@@ -263,4 +263,26 @@ function waNumero(tel) {
   return null;
 }
 
-module.exports = { cleanOcr, sugerir, placaKey, fechaMx, peso, dieselFromPdfText, dieselFromXml, cerrarDiesel, parsePps, PPS_COLS, excelDate, categoria, waNumero };
+
+/**
+ * Lista pegada de personas: "Nombre Apellido 8261697318", con el teléfono en la misma línea o en la siguiente.
+ * Devuelve [{nombre, telefono_crudo}]. No inventa: un nombre sin teléfono o un teléfono sin nombre se reporta aparte.
+ */
+function parseListaPersonas(texto) {
+  const t = String(texto || '').slice(0, 20000).replace(/\r/g, '');
+  const out = [], sueltos = [];
+  const rx = /(\+?\d[\d\s().-]{8,18}\d)/g;
+  let last = 0, m;
+  while ((m = rx.exec(t))) {
+    const antes = t.slice(last, m.index).replace(/[\s,;:|·\-–]+/g, ' ').trim();
+    const nombre = antes.replace(/^(tel(éfono|efono)?|cel(ular)?|whatsapp)\b\.?\s*/i, '').replace(/\s+(tel(éfono|efono)?|cel(ular)?|whatsapp)\.?$/i, '').trim();
+    if (nombre && /[A-Za-zÁÉÍÓÚÑáéíóúñü]/.test(nombre)) out.push({ nombre: nombre.slice(0, 160), telefono_crudo: m[1].trim() });
+    else sueltos.push(m[1].trim());
+    last = m.index + m[0].length;
+  }
+  const resto = t.slice(last).replace(/\s+/g, ' ').trim();
+  if (resto) sueltos.push(resto.slice(0, 160));
+  return { personas: out, sin_pareja: sueltos };
+}
+
+module.exports = { cleanOcr, sugerir, placaKey, fechaMx, peso, dieselFromPdfText, dieselFromXml, cerrarDiesel, parsePps, PPS_COLS, excelDate, categoria, waNumero, parseListaPersonas };

@@ -487,6 +487,20 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('cifra que sí salió de la herramienta: pasa', ver.composed_by === 'model');
     DL._setClient(null);
 
+    console.log('\nLista de choferes pegada');
+    const lista = 'Ana Pérez Ruiz  \n8112345678\nBeto Gómez 8119876543\nsolo un nombre';
+    const prev = await req('POST', '/drivers/importar', { cookie: dirA, body: { texto: lista } });
+    ok('revisar no da de alta a nadie', prev.status === 200 && prev.json.filas.length === 2 && prev.json.filas.every((f) => f.estado === 'nuevo') && !prev.json.creados);
+    ok('teléfono de 10 dígitos = México', prev.json.filas[0].telefono === '+528112345678');
+    ok('un nombre sin teléfono se reporta, no se inventa', prev.json.sin_pareja.join(' ').includes('solo un nombre'));
+    const ap = await req('POST', '/drivers/importar', { cookie: dirA, body: { texto: lista, aplicar: true } });
+    ok('aplicar da de alta a los nuevos', ap.json.creados === 2);
+    const ap2 = await req('POST', '/drivers/importar', { cookie: dirA, body: { texto: lista, aplicar: true } });
+    ok('pegarla otra vez no duplica', ap2.json.creados === 0 && ap2.json.filas.every((f) => f.estado === 'ya_existe'));
+    ok('el contador no importa choferes', (await req('POST', '/drivers/importar', { cookie: conA, body: { texto: lista, aplicar: true } })).status === 403);
+    const apB = await req('POST', '/drivers/importar', { cookie: dirB, body: { texto: lista } });
+    ok('en otra empresa son nuevos (no ve los de A)', apB.json.filas.every((f) => f.estado === 'nuevo'));
+
     console.log('\nCuentas iniciales');
     const schSrc = fs.readFileSync(path.join(__dirname, 'src', 'schema.js'), 'utf8');
     ok('las cuentas iniciales entran con must_change y solo si el correo no existe', /SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS/.test(schSrc));

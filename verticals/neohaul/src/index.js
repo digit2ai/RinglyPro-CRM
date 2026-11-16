@@ -1335,6 +1335,36 @@ async function saludDe(tenant) {
   };
 }
 
+/* ── pegar una lista de choferes (nombre + WhatsApp) ── */
+// Sin "aplicar" solo muestra lo que entendió; con "aplicar" da de alta lo nuevo. Un teléfono o un nombre
+// que ya existen en la empresa no se duplican. Ningún dato de personas vive en el repositorio.
+api.post('/drivers/importar', async (req, res) => {
+  const b = req.body || {};
+  const empresa = ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo'].includes(b.empresa) ? b.empresa : 'NeoHaul';
+  const puesto = b.puesto === 'mecanico' ? 'mecanico' : 'chofer';
+  const { personas, sin_pareja } = D.parseListaPersonas(b.texto);
+  if (!personas.length) return res.status(400).json({ error: 'lista_vacia', sin_pareja });
+  const ya = await sel('SELECT id, nombre, telefono FROM nh_drivers WHERE tenant_id=:t', { t: req.tenant });
+  const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const filas = []; const vistos = new Set();
+  for (const p of personas) {
+    const w = D.waNumero(p.telefono_crudo), telefono = w ? '+' + w : null;
+    const dup = ya.find((d) => (telefono && d.telefono === telefono) || norm(d.nombre) === norm(p.nombre));
+    const k = telefono || norm(p.nombre);
+    filas.push({ nombre: p.nombre, telefono, telefono_crudo: p.telefono_crudo,
+      estado: !telefono ? 'telefono_invalido' : dup ? 'ya_existe' : vistos.has(k) ? 'repetido' : 'nuevo' });
+    vistos.add(k);
+  }
+  if (!b.aplicar) return res.json({ empresa, puesto, filas, sin_pareja });
+  let creados = 0;
+  for (const f of filas.filter((x) => x.estado === 'nuevo')) {
+    await exec('INSERT INTO nh_drivers (tenant_id,nombre,telefono,empresa,puesto) VALUES (:t,:n,:tel,:e,:p)', { t: req.tenant, n: f.nombre, tel: f.telefono, e: empresa, p: puesto });
+    creados++;
+  }
+  audit(req, 'drivers_importados', `${creados} de ${filas.length}`);
+  res.json({ empresa, puesto, filas, sin_pareja, creados });
+});
+
 /* ── Dalia: preguntas sobre la operación (solo lectura, mismos cálculos que el tablero) ── */
 const dalia = require('./dalia');
 const daliaDeps = () => ({ hoyMx, sel, M, A, tableroDe, saludDe, diasCredito: DIAS_CREDITO, lectorConModelo: () => llm.aiEnabled() });
