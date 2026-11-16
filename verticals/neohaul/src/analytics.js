@@ -42,8 +42,11 @@ const pct = (arr, q) => { if (!arr.length) return 0; const i = (arr.length - 1) 
  */
 const MIN_SEMANAS = 4;
 function monteCarlo(hist, o = {}) {
-  const ws = (hist || []).filter((w) => w.ingresos || w.costos);
-  if (ws.length < MIN_SEMANAS) return null;
+  // Sin viajes no hay operación que medir: solo costos daría "100% en pérdida", que es un artefacto, no un riesgo.
+  // Se remuestrea desde la primera semana con ingresos, y hacen falta MIN_SEMANAS semanas con ingresos.
+  const h = hist || [], i0 = h.findIndex((w) => w.ingresos > 0);
+  const ws = i0 < 0 ? [] : h.slice(i0);
+  if (ws.filter((w) => w.ingresos > 0).length < MIN_SEMANAS) return null;
   const H = Math.max(4, Math.min(26, Math.round(Number(o.horizonte) || 13)));
   const N = Math.max(200, Math.min(5000, Math.round(Number(o.caminos) || 2000)));
   const r = rng(o.semilla || 20261116);

@@ -439,6 +439,8 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('Monte Carlo: probabilidades entre 0 y 1', [4, 8, 13].every((k) => mc1.prob_perdida_en[k] >= 0 && mc1.prob_perdida_en[k] <= 1));
     const todoGana = AN.monteCarlo([1, 2, 3, 4].map((i) => wk('2026-10-0' + i, 1000, 100)));
     ok('si todas las semanas ganan, la probabilidad de pérdida es 0', todoGana.prob_perdida_en[13] === 0);
+    ok('solo costos (sin viajes): el Monte Carlo no corre', AN.monteCarlo([1, 2, 3, 4, 5, 6].map((i) => wk('2026-10-0' + i, 0, 50000))) === null);
+    ok('cuenta desde la primera semana con viajes', AN.monteCarlo([wk('2026-08-03', 0, 900000), wk('2026-08-10', 0, 900000)].concat([1, 2, 3, 4].map((i) => wk('2026-09-0' + i, 1000, 100)))).prob_perdida_en[13] === 0);
     const sem = AN.semanas([{ fecha: '2026-11-16', monto: 999 }, { fecha: '2026-11-03', monto: 10 }], [], '2026-11-18');
     ok('la semana en curso no entra al historial', sem.length === 2 && sem[0].semana === '2026-11-02' && sem[0].ingresos === 1000 && sem[1].semana === '2026-11-09' && sem[1].ingresos === 0);
     const cal0 = AN.calificacion({});

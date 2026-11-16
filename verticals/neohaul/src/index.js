@@ -1330,7 +1330,7 @@ async function saludDe(tenant) {
     por_pagar: { total: A.toC(porPagar.s), n: porPagar.n, proveedores: proveedores.map((p) => ({ nombre: p.proveedor, monto: A.toC(p.s), n: p.n })) },
     captura: { viajes_4s: cap.n, con_ticket_confirmados: cap.ok }, alertas,
     notas: [`Ingresos = importe de los viajes antes de IVA; costos = lo capturado (proveedores, diésel por carga, nómina y taller propio), como viene en cada factura.`,
-      `El Monte Carlo usa ${hist.filter((w) => w.ingresos || w.costos).length} semanas reales; necesita ${A.MIN_SEMANAS}. Es una estimación, no un dato.`,
+      `El Monte Carlo usa las semanas con viajes: hay ${hist.filter((w) => w.ingresos > 0).length} y necesita ${A.MIN_SEMANAS}. Es una estimación, no un dato.`,
       `Plazo de crédito supuesto: ${plazo} días desde la emisión (NEOHAUL_DIAS_CREDITO).`]
   };
 }
