@@ -192,6 +192,13 @@ body.vert .cover h1{font-size:78px}body.vert .cover .row{justify-content:center}
 
 /* sistemas por industria */
 ul.sys{list-style:none;margin-top:12px}
+ul.sys.sys-dense li{font-size:15.5px;padding:6px 0}
+body.vert ul.sys.sys-dense{grid-template-columns:1fr;margin-top:8px}
+body.vert .sysgrid .card{padding:16px 22px}
+body.vert .sysgrid{gap:14px!important}
+body.vert ul.sys.sys-dense li{font-size:17px;padding:3px 0;border-top:1px solid var(--line)}
+body.vert ul.sys.sys-dense li:nth-child(2){border-top:1px solid var(--line)}
+
 ul.sys li{font-family:var(--fd);font-weight:600;font-size:18px;padding:8px 0;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
 ul.sys li:first-child{border-top:0}
 ul.sys em,.foot em.ag{font-style:normal;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(251,191,36,.45);border-radius:999px;padding:2px 8px}
@@ -379,15 +386,15 @@ body.vert .cta{font-size:24px;padding:18px 26px}body.vert .ctalink{font-size:21p
   <section class="slide" data-t="Se conecta con lo que ya usa">
     <div class="kick">Se conecta con lo que ya usa</div>
     <h2>Retail, transporte y finanzas: <span class="grad">sus sistemas de siempre.</span></h2>
-    <div class="grid g3 sysgrid" style="margin-top:22px">
+    <div class="grid g3 sysgrid" style="margin-top:18px">
       <div class="card stag d1"><span class="n">RETAIL Y COMERCIO</span>
-        <ul class="sys"><li>SAP Retail</li><li>Oracle Retail</li><li>Dynamics 365 Commerce</li><li>Shopify</li><li>VTEX</li><li>Odoo</li></ul></div>
+        <ul class="sys sys-dense"><li>SAP Retail · Oracle Retail</li><li>Dynamics 365 Commerce · Odoo</li><li>Shopify · VTEX</li><li>Mercado Libre · Tiendanube</li><li>PrestaShop · WooCommerce</li><li>ICG · Hiopos · Glop</li><li>SICAR · Eleventa <em>agente</em></li></ul></div>
       <div class="card stag d2"><span class="n">TRANSPORTE Y LOGÍSTICA</span>
-        <ul class="sys"><li>Oracle Transportation Management</li><li>SAP TM</li><li>Blue Yonder</li><li>Manhattan Associates</li><li>McLeod Software</li><li>Samsara</li></ul></div>
+        <ul class="sys sys-dense"><li>Oracle TM · SAP TM</li><li>Blue Yonder · Manhattan</li><li>McLeod Software · Unigis</li><li>Samsara · Geotab</li><li>Wialon · Movildata</li></ul></div>
       <div class="card stag d3"><span class="n">FINANZAS Y ERP</span>
-        <ul class="sys"><li>SAP Business One</li><li>Oracle NetSuite</li><li>QuickBooks · Sage</li><li>Siigo · Alegra</li><li>CONTPAQi · Aspel <em>agente</em></li><li>SAINT · Profit Plus <em>agente</em></li></ul></div>
+        <ul class="sys sys-dense"><li>SAP Business One · NetSuite</li><li>Dynamics 365 Business Central</li><li>QuickBooks · Sage 50 · Sage 200</li><li>a3ERP · a3innuva · Holded</li><li>ContaSol · Ekon · Ahora ERP</li><li>Siigo · Alegra · Bind ERP</li><li>CONTPAQi · Aspel · Microsip <em>agente</em></li><li>SAINT · Profit Plus <em>agente</em></li></ul></div>
     </div>
-    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = sistema local sin API pública: se instala un agente ligero en su servidor. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
+    <p class="foot">Con API, se conecta directo. <em class="ag">agente</em> = sistema local sin API pública: se instala un agente ligero en su servidor. Sistemas de uso común en México, España y Latinoamérica. La conexión exacta se confirma en el diagnóstico. Las marcas pertenecen a sus dueños.</p>
   </section>
 
   <!-- 4 qué es -->
@@ -732,7 +739,7 @@ body.vert .cta{font-size:24px;padding:18px 26px}body.vert .ctalink{font-size:21p
     'Hola, soy Lina, de Digit2AI. En unos minutos le voy a mostrar cómo su empresa puede usar la inteligencia artificial más avanzada del mundo, sin cambiar los sistemas que ya tiene. Imagínelo como una memoria USB: se conecta, y su empresa gana una capacidad nueva.',
     'Su empresa ya tiene sistemas que funcionan, como SAP, Oracle, NetSuite, Dynamics 365, CONTPAQi, Aspel, QuickBooks, Shopify, VTEX o Samsara. Años de datos y de procesos que nadie quiere cambiar. Lo que les falta es inteligencia. Y llevar la inteligencia artificial hasta ellos por cuenta propia suele significar meses de desarrollo, un equipo especializado, y un contrato distinto con cada proveedor.',
     'Digit2AI MCP funciona como un USB para la inteligencia de negocio. Igual que un USB le da a su computadora una capacidad nueva en segundos, el MCP conecta su SAP, su Oracle, su CONTPAQi o su Shopify a la inteligencia artificial de los mejores proveedores del mundo. Se conecta por la API de sus sistemas, como un USB a un puerto. No se reemplaza nada.',
-    'Funciona con los sistemas que ya usa su industria. En retail y comercio: SAP, Oracle Retail, Dynamics, Shopify, Vtex y Odoo. En transporte y logística: Oracle Transportation Management, SAP TM, Blue Yonder, Manhattan, McLeod y Samsara. En finanzas: SAP Business One, NetSuite, QuickBooks, Sage, Siigo, Alegra, CONTPAQi, Aspel, SAINT y Profit. Si su sistema tiene API, se conecta directo. Si es un sistema local sin API pública, se instala un agente ligero en su servidor. La conexión exacta se confirma en el diagnóstico.',
+    'Funciona con los sistemas que ya usa su empresa, en México, en España y en toda Latinoamérica. Por ejemplo: SAP, Oracle NetSuite, Dynamics, CONTPAQi, Aspel, Sage y Shopify, entre muchos otros. Si su sistema tiene API, se conecta directo. Si es un sistema local sin API pública, se instala un agente ligero en su servidor. La conexión exacta se confirma en el diagnóstico.',
     'Dentro hay cuatro piezas. Un cerebro central, que recibe cada solicitud y reparte el trabajo. Más de cien agentes especializados, cada uno con un rol, reglas y entregables. Conectores estándar MCP, un protocolo abierto para conectar la inteligencia artificial con sistemas reales. Y varios proveedores: para cada tarea se usa el servicio que mejor la resuelve.',
     'Así funciona. Una solicitud sale de su empresa y llega al cerebro. El cerebro decide qué agentes la atienden. Cada agente usa el mejor servicio disponible para su tarea. Y el resultado vuelve por el mismo camino, hasta su sistema. Su equipo sigue trabajando igual, ahora con inteligencia artificial.',
     'Detrás del cerebro están los líderes del mercado. Anthropic para razonar y redactar. OpenAI para lenguaje y contenido. Google para modelos multimodales, mapas, calendario y correo. Amazon Web Services para almacenamiento y voz telefónica. Microsoft Azure para voces neuronales. GitHub para el código, y Render para los servidores. Usted no contrata ni configura ninguno por separado. Y si un proveedor falla o sube de precio, se cambia sin que usted lo note.',
