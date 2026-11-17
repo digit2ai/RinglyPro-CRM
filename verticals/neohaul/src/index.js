@@ -128,8 +128,8 @@ router.get('/health', async (req, res) => {
 /* ── pago de las facturas de Digit2AI con Stripe, con la marca de Digit2AI ──
  * Igual que gsm-proposal (Synthex): una Checkout Session por clic con branding_settings (API clover), porque
  * un Payment Link no se puede personalizar por enlace. Los montos viven aquí, nunca en la petición.
- * La mensualidad arranca el día 1 del mes siguiente (hora de Monterrey) sin prorrateo: se guarda la tarjeta hoy
- * y el primer cargo de $497 cae ese día 1, y luego cada día 1. */
+ * La mensualidad cobra $497 el día que se paga y se repite cada mes en esa fecha (el dueño prefirió eso a mostrar
+ * $0 hoy con el primer cargo el día 1: confundía). La factura pide pagarla el 1 de diciembre. */
 const PAGOS = Object.freeze({
   configuracion: { mode: 'payment', cents: 150000, name: 'Digit2AI · NeoHaul - Configuración del entorno (pago único)', factura: 'D2-NH-2026-001' },
   mensualidad: { mode: 'subscription', cents: 49700, name: 'Digit2AI · NeoHaul - Plataforma SaaS (mensual)', factura: 'D2-NH-2026-002' }
@@ -163,7 +163,7 @@ router.get('/pagar/:item', async (req, res) => {
       line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: item.cents, product_data: { name: item.name, images: ['https://aiagent.ringlypro.com/stripe/digit2ai-round.png'] }, ...(item.mode === 'subscription' ? { recurring: { interval: 'month' } } : {}) } }],
       metadata: meta,
       ...(item.mode === 'subscription'
-        ? { subscription_data: { metadata: meta, description: 'Plataforma NeoHaul — cargo el día 1 de cada mes', billing_cycle_anchor: primeroDelMesSiguiente(), proration_behavior: 'none' } }
+        ? { subscription_data: { metadata: meta, description: 'Plataforma NeoHaul — cargo mensual' } }
         : { payment_intent_data: { metadata: meta, statement_descriptor_suffix: 'DIGIT2AI' }, invoice_creation: { enabled: true } }),
       branding_settings: STRIPE_BRAND,
       locale: 'es',
