@@ -118,6 +118,13 @@ router.get('/whoami', requireAuth, (req, res) => {
 // champion sends a message. requireCrmAuth = genuine CRM session only.
 router.post('/owner/subscribe', requireCrmAuth, async (req, res) => {
   try {
+    // Owner pushes carry client names and meeting titles, so only someone the
+    // Projects Hub lets in may register a device for them (not any CRM login).
+    let gate = { ok: false };
+    try { gate = await require('../../../digit2ai-projects/src/middleware/auth').hubGate(req.jwt); } catch (e) { gate = { ok: false }; }
+    if (!gate.ok || (gate.access && gate.access.role && gate.access.role !== 'admin')) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
     const sub = req.body && req.body.subscription;
     if (!sub) return res.status(400).json({ error: 'bad request' });
     const ok = await push.saveOwnerSubscription(sub);

@@ -226,6 +226,42 @@ app.use('/api/v1/contracts', authenticateToken, contractsRoutes);
 // Same login and session as the rest of the Hub; non-owners get 404.
 app.use('/api/salud-financiera', express.json({ limit: '64kb' }), authenticateToken, require('./routes/saludFinanciera'));
 
+// Meeting alerts: private iCalendar feed the owner's iPhone subscribes to
+// (token-gated capability URL, 404 on a wrong token), plus the owner-only
+// endpoints that hand out that URL and send a test push.
+const meetingAlerts = require('./services/meetingAlerts');
+app.get('/cal/:token', meetingAlerts.calendarFeed);
+function ownerOnly(req, res, next) {
+  if (req.userAccess && req.userAccess.role && req.userAccess.role !== 'admin') {
+    return res.status(403).json({ success: false, error: 'Owner only' });
+  }
+  next();
+}
+app.get('/api/v1/meeting-alerts', authenticateToken, ownerOnly, (req, res) => {
+  const tok = meetingAlerts.feedToken();
+  const base = process.env.PUBLIC_BASE_URL || 'https://aiagent.ringlypro.com';
+  let pushOn = false;
+  try { pushOn = require('../../client-builds/voice-to-intake-transcript-direct-pipeli/services/push').isEnabled(); } catch (_) {}
+  res.json({
+    success: true,
+    data: {
+      lead_minutes: meetingAlerts.LEAD_MIN,
+      push_enabled: pushOn,
+      feed_url: tok ? `${base}/projects/cal/${tok}.ics` : null,
+      feed_reason: tok ? null : 'Set PROJECTS_CAL_FEED_SECRET (16+ chars) on Render'
+    }
+  });
+});
+app.post('/api/v1/meeting-alerts/test', authenticateToken, ownerOnly, async (req, res) => {
+  try {
+    const push = require('../../client-builds/voice-to-intake-transcript-direct-pipeli/services/push');
+    if (!push.isEnabled()) return res.status(503).json({ success: false, error: 'Push is not configured on the server' });
+    await push.sendToOwner({ kind: 'meeting', tag: 'meeting-test', url: '/projects/?view=calendar',
+      title: 'Test: meeting in 5 min', body: 'Meeting alerts are working on this device.' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: 'Could not send the test' }); }
+});
+
 // Public contract signoff endpoint (token-gated, no auth header).
 // The Client opens this from their email/magic-link page; they submit
 // their name + email, we mark the contract as signed and the project
@@ -1275,6 +1311,11 @@ app.get('*', (req, res) => {
     try {
       if (require('./services/saludFinanciera/plaidSync').start(require('./models').sequelize)) console.log('[D2AI-Projects] Salud Financiera bank sync poller started');
     } catch (e) { console.log('[D2AI-Projects] bank sync poller boot error:', e.message); }
+
+    // Meeting alerts to the owner's phone (Web Push), production only unless
+    // MEETING_ALERTS=on; MEETING_ALERTS=off stops it. Not an email poller.
+    try { require('./services/meetingAlerts').startPoller(); }
+    catch (e) { console.log('[D2AI-Projects] meeting alerts boot error:', e.message); }
 
     // All four scheduled email pollers are gated by EMAIL_AUTOSEND_DISABLED.
     // User reported SendGrid mail landing in spam; auto-send is off by

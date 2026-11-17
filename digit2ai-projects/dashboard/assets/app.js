@@ -3949,6 +3949,7 @@ async function renderCalendar(container) {
         </div>
         <button class="btn btn-ghost btn-sm" onclick="openZoomMeeting()" title="Open Zoom (info@digit2ai.com) in a new tab" style="color:#2D8CFF;border-color:#2D8CFF">&#127909; Zoom Meeting</button>
         <button class="btn btn-ghost btn-sm" onclick="window.open('https://aiagent.ringlypro.com/quicktask/', '_blank', 'noopener')" title="Open Quick Task in a new tab" style="color:#F59E0B;border-color:#F59E0B">&#9889; Quick Task</button>
+        <button class="btn btn-ghost btn-sm" onclick="openMeetingAlerts()" title="Get a phone alert before every meeting">&#128276; Phone alerts</button>
         <button class="btn btn-primary btn-sm cal-new-event-btn" onclick="openEventModal()">+ New Event</button>
       </div>
     </div>
@@ -8436,6 +8437,64 @@ function openModal(title, bodyHtml, onSave) {
   if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; saveBtn.style.display = ''; }
   modalSaveHandler = onSave;
 }
+
+// Phone alerts: (1) Web Push on this device 5 min before each meeting and when
+// a client books; (2) a private calendar link the iPhone Calendar subscribes to.
+async function openMeetingAlerts() {
+  openModal('Phone alerts', '<p style="color:var(--text-muted)">Loading...</p>', null);
+  const saveBtn = document.getElementById('modal-save'); if (saveBtn) saveBtn.style.display = 'none';
+  document.getElementById('modal-cancel').textContent = 'Close';
+  let d = null;
+  try { const r = await api('/meeting-alerts'); d = r && r.data; } catch (e) { d = null; }
+  if (!d) { document.getElementById('modal-body').innerHTML = '<p>Could not load the alert settings.</p>'; return; }
+  const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const feed = d.feed_url
+    ? `<div style="display:flex;gap:8px;align-items:center;margin:8px 0"><input id="ma-feed" readonly value="${escapeHtml(d.feed_url)}" style="flex:1;min-width:0;font-size:16px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary,transparent);color:inherit"><button class="btn btn-ghost btn-sm" onclick="copyMeetingFeed()">Copy</button></div>
+       <a class="btn btn-ghost btn-sm" href="${escapeHtml(d.feed_url.replace(/^https:/, 'webcal:'))}">Add to Calendar on this device</a>
+       <p style="font-size:13px;color:var(--text-muted);margin-top:8px">On iPhone: Settings &gt; Apps &gt; Calendar &gt; Calendar Accounts &gt; Add Account &gt; Other &gt; Add Subscribed Calendar. Paste the link and turn <b>Remove Alerts</b> OFF. iPhone checks it about every 15 minutes. Keep this link private.</p>`
+    : `<p style="color:var(--text-muted)">Not available: ${escapeHtml(d.feed_reason || 'not configured')}.</p>`;
+  const iosNote = (isIos && !standalone)
+    ? '<p style="font-size:13px;color:#F59E0B">On iPhone, alerts work only from the installed app: tap Share &gt; Add to Home Screen, open the Hub from that icon, then come back here.</p>' : '';
+  document.getElementById('modal-body').innerHTML = `
+    <h4 style="margin:0 0 6px">1. Alerts on this device</h4>
+    <p style="font-size:14px;margin:0 0 8px">A notification ${d.lead_minutes} minutes before every meeting, and one as soon as a client books.</p>
+    ${iosNote}
+    ${d.push_enabled ? '' : '<p style="color:#ef4444">Push is not configured on the server.</p>'}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="enableMeetingPush()">Turn on alerts here</button>
+      <button class="btn btn-ghost btn-sm" onclick="testMeetingPush()">Send a test</button>
+    </div>
+    <p id="ma-status" style="font-size:13px;min-height:18px;margin:8px 0 16px"></p>
+    <h4 style="margin:0 0 6px">2. Meetings in your iPhone Calendar</h4>
+    ${feed}`;
+}
+async function enableMeetingPush() {
+  const st = document.getElementById('ma-status');
+  if (st) st.textContent = 'Turning on...';
+  _hubPushDone = false;
+  await ensureHubPush(true);
+  const ok = ('Notification' in window) && Notification.permission === 'granted' && _hubPushDone;
+  if (st) st.textContent = ok ? 'Alerts are on for this device. Tap "Send a test" to check.'
+    : (('Notification' in window) && Notification.permission === 'denied' ? 'Notifications are blocked for this app in your phone settings.' : 'Could not turn alerts on here.');
+}
+async function testMeetingPush() {
+  const st = document.getElementById('ma-status');
+  try {
+    const r = await api('/meeting-alerts/test', { method: 'POST' });
+    if (st) st.textContent = r && r.success ? 'Test sent. It should arrive in a few seconds.' : ((r && r.error) || 'Test failed');
+  } catch (e) { if (st) st.textContent = 'Test failed'; }
+}
+function copyMeetingFeed() {
+  const el = document.getElementById('ma-feed'); if (!el) return;
+  el.select();
+  try { navigator.clipboard.writeText(el.value); } catch (e) { document.execCommand('copy'); }
+  const st = document.getElementById('ma-status'); if (st) st.textContent = 'Link copied.';
+}
+window.openMeetingAlerts = openMeetingAlerts;
+window.enableMeetingPush = enableMeetingPush;
+window.testMeetingPush = testMeetingPush;
+window.copyMeetingFeed = copyMeetingFeed;
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.add('hidden');

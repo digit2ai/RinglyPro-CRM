@@ -1,4 +1,4 @@
-const CACHE_NAME = 'd2ai-projects-v46';
+const CACHE_NAME = 'd2ai-projects-v47';
 const STATIC_ASSETS = [
   '/projects/',
   '/projects/assets/styles.css?v=33',
@@ -61,6 +61,19 @@ self.addEventListener('message', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = {}; }
+  if (data.kind === 'meeting') {
+    // Meeting reminder / new booking: its own tag per event, no badge change.
+    event.waitUntil(self.registration.showNotification(data.title || 'Meeting', {
+      body: data.body || '',
+      icon: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+      badge: 'https://assets.cdn.filesafe.space/3lSeAHXNU9t09Hhp9oai/media/6a3feadac408020f97ca4060.png',
+      tag: data.tag || 'meeting',
+      renotify: true,
+      requireInteraction: true,
+      data: { url: data.url || '/projects/?view=calendar' }
+    }));
+    return;
+  }
   const unread = typeof data.unread === 'number' ? data.unread : 1;
   const title = data.title || 'Digit2Ai Projects';
   const body = data.body || 'New Intercom message';
