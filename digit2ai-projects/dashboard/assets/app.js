@@ -53,7 +53,7 @@ async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (TOKEN) headers['Authorization'] = `Bearer ${TOKEN}`;
   const res = await fetch(url, { ...opts, headers });
-  if (res.status === 401) { logout(); throw new Error('Unauthorized'); }
+  if (res.status === 401 || (res.status === 403 && path === '/me')) { logout(); throw new Error('Unauthorized'); }
   return res.json();
 }
 
@@ -454,6 +454,10 @@ async function doLogin() {
     });
     const data = await res.json();
     if (data.success && data.token) {
+      // The CRM login accepts every RinglyPro account; the Hub only lets in the
+      // owner and the people allowed in. Ask before opening the app.
+      const me = await fetch(`${API}/me`, { headers: { Authorization: `Bearer ${data.token}` } });
+      if (me.status === 403) { errEl.textContent = 'This account has no access to the Projects Hub'; return; }
       TOKEN = data.token;
       USER = { email: data.user?.email || email, name: data.user?.businessName || email };
       localStorage.setItem('d2ai_token', TOKEN);

@@ -2817,7 +2817,11 @@ async function intakeAuth(req, res, next) {
         role: decoded.role || 'reviewer'
       };
     } else {
-      // admin token (existing CRM auth pattern)
+      // admin token: only someone allowed into the Projects Hub (owner tenant,
+      // PROJECTS_ALLOWED_EMAILS, or a hand-assigned role). Any other token
+      // signed with the shared secret used to be an intake admin here.
+      const gate = await require('../middleware/auth').hubGate(decoded);
+      if (!gate.ok) return res.status(403).json({ success: false, error: 'This account has no access' });
       req.identity = {
         source: 'admin',
         email: decoded.email,

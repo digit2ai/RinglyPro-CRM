@@ -324,7 +324,20 @@ app.post('/api/v1/webhooks/stripe-contract', express.raw({ type: 'application/js
     const secret = process.env.STRIPE_CONTRACT_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
     let event;
     try {
-      event = secret ? stripe.webhooks.constructEvent(req.body, sig, secret) : JSON.parse(req.body.toString('utf8'));
+      if (secret) {
+        event = stripe.webhooks.constructEvent(req.body, sig, secret);
+      } else {
+        // No signing secret: never trust the body. Re-read the session from
+        // Stripe with the server key and act only on what Stripe says.
+        const claimed = JSON.parse(req.body.toString('utf8'));
+        const sid = claimed && claimed.data && claimed.data.object && claimed.data.object.id;
+        if (claimed.type !== 'checkout.session.completed' || typeof sid !== 'string' || !/^cs_[A-Za-z0-9_]+$/.test(sid)) {
+          return res.json({ received: true, ignored: true });
+        }
+        const real = await stripe.checkout.sessions.retrieve(sid);
+        if (!real || real.payment_status !== 'paid') return res.json({ received: true, ignored: true });
+        event = { type: 'checkout.session.completed', data: { object: real } };
+      }
     } catch (verifyErr) {
       console.error('[D2AI-Contracts] webhook verify failed:', verifyErr.message);
       return res.status(400).send('bad signature');
@@ -359,7 +372,7 @@ app.post('/api/v1/webhooks/sendgrid', express.json({ limit: '5mb' }), (req, res,
 app.post('/api/v1/intake-seed/admin', express.json(), async (req, res) => {
   try {
     const secret = req.query.secret || req.body.secret;
-    if (!secret || secret !== (process.env.INTAKE_SEED_SECRET || 'd2ai-larry-ting-2026')) {
+    if (!process.env.INTAKE_SEED_SECRET || process.env.INTAKE_SEED_SECRET.length < 16 || !secret || secret !== process.env.INTAKE_SEED_SECRET) {
       return res.status(401).json({ success: false, error: 'Bad seed secret' });
     }
     const { Company, IntakeBatch, CompanyAccessToken } = require('./models');
@@ -401,7 +414,7 @@ app.post('/api/v1/intake-seed/admin', express.json(), async (req, res) => {
 app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
   try {
     const secret = req.query.secret || req.body.secret;
-    if (!secret || secret !== (process.env.INTAKE_SEED_SECRET || 'd2ai-larry-ting-2026')) {
+    if (!process.env.INTAKE_SEED_SECRET || process.env.INTAKE_SEED_SECRET.length < 16 || !secret || secret !== process.env.INTAKE_SEED_SECRET) {
       return res.status(401).json({ success: false, error: 'Bad seed secret' });
     }
     const seed = require('../scripts/seed-larry');
@@ -414,7 +427,7 @@ app.post('/api/v1/intake-seed/larry-ting', express.json(), async (req, res) => {
     res.json({ success: true, ...out });
   } catch (err) {
     console.error('[D2AI-Projects] seed error:', err);
-    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    res.status(500).json({ success: false, error: 'seed failed' });
   }
 });
 

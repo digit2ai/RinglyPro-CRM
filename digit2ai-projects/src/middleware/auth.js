@@ -3,6 +3,51 @@
 const jwt = require('jsonwebtoken');
 const { UserAccess } = require('../models');
 
+
+// Who may use the Projects Hub (the owner's private command center):
+//   1. the owner tenant: a CRM session token whose clientId is the Digit2AI
+//      client (PROJECTS_OWNER_CLIENT_IDS, default 15), or
+//   2. an email listed in PROJECTS_ALLOWED_EMAILS (default the owner), or
+//   3. an existing access row whose role an operator set by hand to something
+//      other than 'admin' (e.g. 'calendar_only').
+// Only a CRM session token counts: it must carry a numeric userId and no
+// `aud` claim (tokens minted for other products carry other shapes).
+const OWNER_CLIENT_IDS = String(process.env.PROJECTS_OWNER_CLIENT_IDS || '15')
+  .split(',').map(s => parseInt(s.trim(), 10)).filter(Number.isFinite);
+const ALLOWED_EMAILS = String(process.env.PROJECTS_ALLOWED_EMAILS || 'mstagg@digit2ai.com')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+async function hubGate(decoded) {
+  if (!decoded || typeof decoded !== 'object' || decoded.aud) return { ok: false };
+  const userId = parseInt(decoded.userId, 10);
+  const email = String(decoded.email || '').trim().toLowerCase();
+  if (!Number.isFinite(userId) || userId <= 0 || !email) return { ok: false };
+
+  let access = null;
+  try {
+    access = await UserAccess.findOne({ where: { email, workspace_id: 1 } });
+  } catch (_) { access = null; }
+
+  const ownerTenant = OWNER_CLIENT_IDS.includes(parseInt(decoded.clientId, 10));
+  const listed = ALLOWED_EMAILS.includes(email);
+  if (ownerTenant || listed) {
+    if (!access) {
+      try {
+        [access] = await UserAccess.findOrCreate({
+          where: { email, workspace_id: 1 },
+          defaults: { user_id: userId, email, display_name: decoded.businessName || email, role: 'admin', active: true }
+        });
+      } catch (_) { access = null; }
+    }
+    if (access && access.active === false) return { ok: false };
+    return { ok: true, access };
+  }
+  if (access && access.active !== false && access.role && access.role !== 'admin') {
+    return { ok: true, access };
+  }
+  return { ok: false };
+}
+
 // Reuse JWT verification from main CRM
 const authenticateToken = async (req, res, next) => {
   try {
@@ -15,31 +60,25 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key');
 
+    const gate = await hubGate(decoded);
+    if (!gate.ok) {
+      // 403, never a fresh admin row: before 2026-11-17 ANY token signed with
+      // the shared JWT_SECRET (every RinglyPro customer login, and public
+      // signups of other products that sign with the same secret) was
+      // auto-provisioned as an ADMIN of this owner-only hub.
+      return res.status(403).json({ success: false, error: 'This account has no access to the Projects Hub' });
+    }
+
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
       clientId: decoded.clientId,
       businessName: decoded.businessName
     };
-
-    // Auto-provision user access on first visit
-    try {
-      const [access] = await UserAccess.findOrCreate({
-        where: { email: decoded.email, workspace_id: 1 },
-        defaults: {
-          user_id: decoded.userId,
-          email: decoded.email,
-          display_name: decoded.businessName || decoded.email,
-          role: 'admin',
-          active: true
-        }
-      });
-      access.last_login = new Date();
-      await access.save();
-      req.userAccess = access;
-    } catch (accessErr) {
-      // Non-blocking - don't fail auth if access tracking fails
-      console.log('[D2AI] User access tracking skipped:', accessErr.message);
+    req.userAccess = gate.access || null;
+    if (gate.access) {
+      gate.access.last_login = new Date();
+      gate.access.save().catch(() => {});
     }
 
     // Enforce calendar_only role: deny anything that isn't calendar-related.
@@ -76,4 +115,4 @@ const requireRole = (...roles) => {
   };
 };
 
-module.exports = { authenticateToken, requireRole };
+module.exports = { authenticateToken, requireRole, hubGate };
