@@ -2233,6 +2233,10 @@ Browser → /agromercado/api/v1/* (Express Router) → Sequelize → PostgreSQL 
 FX poller (09:00/13:00) → AGROMERCADO_FX_SOURCE_URL → am_fx_rates ← /divisas/convert
 Bid POST → ACID txn (row-lock auction) → recompute P_min (ln formula) → am_bids → SSE broadcast to lot subscribers
 
+## Private client-document links (`/d/:token`)
+
+`src/routes/shared-docs.js` + `scripts/shared-doc.js`. **The repo is public, so a document with client data (RFC, amounts, names) never goes in `public/`**: its HTML lives in `d2_shared_docs` (main CRM DB) and is reached only by a random 32-byte token stored as SHA-256 (the link is printed once by `node scripts/shared-doc.js <file.html> "<title>" [YYYY-MM-DD expiry]`). Bad, unknown, expired or revoked token = the same 404. noindex, no-store, CSP without scripts (logo must be inline `data:`), queries with `logging:false` so client HTML never reaches the logs. Revoke: `UPDATE d2_shared_docs SET revoked_at=NOW() WHERE id=…`. First use: NeoHaul invoice D2-NH-2026-001 (2026-11-17).
+
 ## Build With AI conference kit (`/conference/`) and its sign-up form
 
 Static kit in `public/conference/` (served by `express.static`); how to run it is in `public/conference/README.md`. **Format (owner, 2026-10-06): ONE hour, no teams, one app built live with the room** — ideas recorded with AutoDev + Fieldy, the best one built with `/ringlypro-architect` in VS Code while the talk continues. Slide minutes in `assets/slides.js` must add up to 60; `keynote/` shows a time-left bar (C hides it) and the presenter view adds the per-slide countdown. Slide 12 frames the animated MCP brain (`/ringlypro-architect-factory.html?embed=stage`), loaded only when that slide is shown.
