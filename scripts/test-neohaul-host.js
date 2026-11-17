@@ -17,6 +17,7 @@ let pass = 0, fail = 0; const ok = (n, c) => { c ? pass++ : fail++; console.log(
   r = await get('/neohaul/api/v1/salud', H); ok('/neohaul/* pasa a la app', r.s === 299);
   r = await get('/embed/voice-orb.js', H); ok('el orbe pasa', r.s === 299);
   r = await get('/api/tts/edge', H); ok('la voz pasa', r.s === 299);
+  r = await get('/d/abc', H); ok('los documentos privados (/d/) pasan', r.s === 299);
   r = await get('/login', H); ok('una ruta ajena es el 404 de NeoHaul, no el CRM', r.s === 404 && r.d.includes('NeoHaul'));
   r = await get('/admin', H); ok('/admin tampoco cae al CRM', r.s === 404);
   r = await get('//evil.example/x', H); ok('sin redirección abierta', r.s === 404 || (r.l || '').startsWith('/neohaul'));

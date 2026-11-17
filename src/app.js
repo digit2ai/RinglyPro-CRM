@@ -269,6 +269,7 @@ app.use((req, res, next) => {
   if (path === '/' || path === '') return res.redirect(302, '/neohaul/' + qs);
   if (path === '/neohaul' || path.startsWith('/neohaul/')) return next();
   if (path.startsWith('/embed/') || path.startsWith('/api/voice-agent/') || path.startsWith('/api/tts/')) return next();
+  if (path.startsWith('/d/')) return next(); // facturas y documentos privados de NeoHaul en su propio dominio
   if (path === '/favicon.ico') return res.redirect(302, '/neohaul/logo.png');
   if (path === '/presentacion' || path === '/guia') return res.redirect(302, '/neohaul' + path);
   return neohaul404(res);
