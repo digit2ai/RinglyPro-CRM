@@ -2133,6 +2133,7 @@ console.log('✅ OrderGoPro routes mounted at /api/ordergopro');
 
 // Core CRM API routes
 app.use('/api/contacts', contactsRoutes);
+app.use('/d', require('./routes/shared-docs')); // enlaces privados a documentos de clientes (facturas): el HTML vive en la base, no en el repo
 app.use('/api/conference', require('./routes/conference-signup')); // Build With AI: public sign-up form -> contacts (client 15)
 app.use('/api/mcp-checkout', require('./routes/mcp-checkout')); // Digit2AI MCP Neural: $700 setup + $397/mo Stripe checkout for /mcp
 app.use('/api/gsm-proposal', require('./routes/gsm-proposal')); // Global System Monitor proposal (Synthex SAI): 30/70 PoC + monthly hypercare Stripe checkout
