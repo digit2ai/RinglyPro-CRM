@@ -124,6 +124,60 @@ router.get('/health', async (req, res) => {
   res.json({ service: 'forzza', ok: dbOk && !!SECRET, database: dbOk, signing_secret: !!SECRET });
 });
 router.use(express.static(path.join(__dirname, '..', 'public'), { index: false, redirect: false }));
+/* ── pago de las facturas de Digit2AI con Stripe (igual que NeoHaul) ──
+ * Una Checkout Session por clic con la marca de Digit2AI. Los montos viven aquí, nunca en la petición.
+ * La mensualidad cobra el día que se paga y se repite cada mes en esa fecha. Sin IVA (Digit2AI LLC, EE. UU.). */
+const PAGOS = Object.freeze({
+  onboarding: { mode: 'payment', cents: 99000, name: 'Digit2AI · Forzza Capital - Onboarding y consolidación de datos (pago único)', factura: 'D2-FZ-2026-001' },
+  mensualidad: { mode: 'subscription', cents: 65000, name: 'Digit2AI · Forzza Capital - Plataforma SaaS (mensual)', factura: 'D2-FZ-2026-002' }
+});
+const STRIPE_BRAND = {
+  display_name: 'Digit2AI',
+  logo: { type: 'url', url: 'https://aiagent.ringlypro.com/stripe/digit2ai-wordmark-white.png' },
+  icon: { type: 'url', url: 'https://aiagent.ringlypro.com/stripe/digit2ai-icon.png' },
+  background_color: '#0B1630', button_color: '#0057F0', border_style: 'rounded', font_family: 'inter'
+};
+const pagoHits = new Map();
+router.get('/pagar/:item', async (req, res) => {
+  const item = Object.prototype.hasOwnProperty.call(PAGOS, req.params.item) ? PAGOS[req.params.item] : null;
+  if (!item) return res.status(404).send('No existe.');
+  const ip = req.ip || ''; const now = Date.now();
+  const l = (pagoHits.get(ip) || []).filter((t) => now - t < 600000); l.push(now); pagoHits.set(ip, l);
+  if (pagoHits.size > 5000) pagoHits.clear();
+  if (l.length > 20) return res.status(429).send('Demasiados intentos. Espera unos minutos.');
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return res.status(503).send('Pagos no configurados.');
+  try {
+    const stripe = module.exports._stripe || require('stripe')(key);
+    const back = PUBLIC_URL + '/pago';
+    const meta = { cliente: 'Materiales Forzza', factura: item.factura, item: req.params.item };
+    const session = await stripe.checkout.sessions.create({
+      mode: item.mode,
+      line_items: [{ quantity: 1, price_data: { currency: 'usd', unit_amount: item.cents, product_data: { name: item.name, images: ['https://aiagent.ringlypro.com/stripe/digit2ai-round.png'] }, ...(item.mode === 'subscription' ? { recurring: { interval: 'month' } } : {}) } }],
+      metadata: meta,
+      ...(item.mode === 'subscription'
+        ? { subscription_data: { metadata: meta, description: 'Plataforma Forzza Capital — cargo mensual' } }
+        : { payment_intent_data: { metadata: meta, statement_descriptor_suffix: 'DIGIT2AI' }, invoice_creation: { enabled: true } }),
+      branding_settings: STRIPE_BRAND,
+      locale: 'es',
+      success_url: back + '?estado=ok&f=' + item.factura,
+      cancel_url: back + '?estado=cancelado'
+    }, { apiVersion: '2025-09-30.clover' });
+    res.redirect(303, session.url);
+  } catch (e) {
+    console.error('[forzza] pagar:', e.message);
+    res.status(502).send('No se pudo abrir el pago. Inténtalo de nuevo o usa la transferencia.');
+  }
+});
+router.get('/pago', (req, res) => {
+  const ok = req.query.estado === 'ok';
+  res.set({ 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' }).type('html').send('<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Digit2AI · Pago</title>' +
+    '<body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,-apple-system,sans-serif;background:#0b1630;color:#fff;text-align:center"><div style="max-width:440px;padding:24px">' +
+    '<img src="https://aiagent.ringlypro.com/stripe/digit2ai-wordmark-white.png" alt="Digit2AI" style="height:44px;margin-bottom:22px">' +
+    (ok ? '<h1 style="font-size:24px">Gracias</h1><p style="opacity:.8">Stripe está confirmando tu pago y te enviará el recibo por correo.</p>'
+      : '<h1 style="font-size:24px">Pago no completado</h1><p style="opacity:.8">No se hizo ningún cargo. Puedes volver a la factura e intentarlo de nuevo, o pagar por transferencia.</p>') +
+    '<a href="' + BASE + '/" style="display:inline-block;margin-top:14px;padding:12px 20px;border-radius:10px;background:#0057F0;color:#fff;text-decoration:none;font-weight:700">Ir a Forzza Capital</a></div></body></html>');
+});
 router.get('/', (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, '..', 'public', 'app.html')); });
 
 /* ── api ─────────────────────────────────────────────────────────────── */

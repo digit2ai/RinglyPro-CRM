@@ -534,6 +534,19 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       ok('la bitácora guarda qué herramientas usó, nunca la pregunta', act[0] && !/Cuánto/.test(act[0].detail || ''));
     }
 
+    console.log('\nPago de facturas (Stripe)');
+    {
+      const keyBak = process.env.STRIPE_SECRET_KEY; process.env.STRIPE_SECRET_KEY = 'sk_test_sit';
+      const vistos = [];
+      router._stripe = { checkout: { sessions: { create: async (p) => { vistos.push(p); return { url: 'https://checkout.stripe.test/s' }; } } } };
+      const raw = (p) => new Promise((ok) => http.get(base + '/forzza/app' + p, (r) => { r.resume(); ok({ status: r.statusCode, loc: r.headers.location }); }));
+      const on = await raw('/pagar/onboarding'), me = await raw('/pagar/mensualidad?cents=1');
+      ok('onboarding: pago único de $990 sin sesión del cliente', on.status === 303 && vistos[0].mode === 'payment' && vistos[0].line_items[0].price_data.unit_amount === 99000);
+      ok('mensualidad: suscripción de $650 al mes; el monto no viene de la petición', me.status === 303 && vistos[1].mode === 'subscription' && vistos[1].line_items[0].price_data.unit_amount === 65000 && vistos[1].line_items[0].price_data.recurring.interval === 'month');
+      ok('un concepto que no existe es 404', (await raw('/pagar/otro')).status === 404);
+      router._stripe = null; if (keyBak) process.env.STRIPE_SECRET_KEY = keyBak; else delete process.env.STRIPE_SECRET_KEY;
+    }
+
     console.log('\nUsuarios');
     const nu = await req('POST', '/usuarios', { cookie: dirA.cookie, body: { email: `sit-fz-new-${STAMP}@example.test`, role: 'capturista' } });
     ok('alta con contraseña temporal mostrada una vez', nu.status === 201 && nu.json.password_temporal.length === 14);
