@@ -240,6 +240,40 @@ app.use((req, res, next) => {
   return autodev404(res);
 });
 
+// OWN DOMAIN: neohaul.digit2ai.com is the NeoHaul operation platform (verticals/neohaul).
+// DNS for digit2ai.com lives in GoHighLevel: a CNAME neohaul -> ringlypro-crm.onrender.com, plus the
+// custom domain on Render. The root REDIRECTS to /neohaul/ (it does not rewrite): the session cookie is
+// Path=/neohaul and the guide uses absolute /neohaul/ paths. The voice orb's paths pass through. Any other
+// path is NeoHaul's own 404, never the CRM.
+const NEOHAUL_HOSTS = new Set(['neohaul.digit2ai.com', 'www.neohaul.digit2ai.com']);
+function neohaul404(res) {
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+    '<meta name="robots" content="noindex, nofollow"><title>NeoHaul - no encontrado</title>' +
+    '<style>body{margin:0;min-height:100vh;display:grid;place-items:center;text-align:center;' +
+    'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff;background:#14213d}' +
+    'h1{font-size:3rem;margin:0}p{opacity:.75;margin:.5rem 0 1.5rem}' +
+    'a{display:inline-block;padding:.7rem 1.4rem;border-radius:.5rem;background:#c2410c;' +
+    'color:#fff;text-decoration:none;font-weight:700}</style></head><body><div>' +
+    '<h1>404</h1><p>Esta página no existe en NeoHaul.</p>' +
+    '<a href="/neohaul/">Abrir NeoHaul</a></div></body></html>');
+}
+app.use((req, res, next) => {
+  const host = (req.get('host') || '').toLowerCase().split(':')[0];
+  if (!NEOHAUL_HOSTS.has(host)) return next();
+  if (host.startsWith('www.')) return res.redirect(301, 'https://neohaul.digit2ai.com' + req.originalUrl);
+  const cut = req.url.indexOf('?');
+  const path = cut === -1 ? req.url : req.url.slice(0, cut);
+  const qs = cut === -1 ? '' : req.url.slice(cut);
+  if (path === '/robots.txt') return res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+  if (path === '/' || path === '') return res.redirect(302, '/neohaul/' + qs);
+  if (path === '/neohaul' || path.startsWith('/neohaul/')) return next();
+  if (path.startsWith('/embed/') || path.startsWith('/api/voice-agent/') || path.startsWith('/api/tts/')) return next();
+  if (path === '/favicon.ico') return res.redirect(302, '/neohaul/logo.png');
+  if (path === '/presentacion' || path === '/guia') return res.redirect(302, '/neohaul' + path);
+  return neohaul404(res);
+});
+
 // ═════════════════════════════════════════════════════════════════════════
 // DOMINIO PROPIO: hispanotec.digit2ai.com sirve el recorrido narrado de la
 // cámara Hispanotec (cv-105) en su RAÍZ.
