@@ -336,7 +336,7 @@
         <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación?</h2>
           ${cal ? cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
             <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
-            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) + ' · ' : ''}${esc(p.regla)}</div></div>`).join('') : '<p class="muted">Sin datos de bancos todavía.</p>'}
+            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) : 'Sin dato'}</div></div>`).join('') : '<p class="muted">Sin datos de bancos todavía.</p>'}
           ${cal && cal.peso_calificado < 100 ? `<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás. Se completan al importar los créditos de SICAR.</p>` : ''}</div>
       </div>
       <div class="grid kpis">
