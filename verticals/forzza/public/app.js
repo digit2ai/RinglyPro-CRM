@@ -328,10 +328,13 @@
           ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), NAVY)}
           <p class="muted" style="font-size:12px;margin:8px 0 0">Últimos 6 meses. Solo los depósitos que traen el nombre del cliente (${pc(conc.cobertura)} de lo cobrado); los depósitos sin nombre no entran. Con los créditos de SICAR queda exacto.</p></div></div>`
         : '<p class="empty">Aún no hay depósitos con nombre de cliente.</p>'}</div>
-      <div class="card"><h2 style="margin-top:0">Lo que te deben y lo que debes</h2>${t.cartera.total || (s && s.por_pagar) ? `
-        <div class="grid" style="margin-bottom:10px">${kpi('Te deben', c$(t.cartera.total), 'vencido ' + c$(t.cartera.vencido), t.cartera.vencido ? 'bad' : '')}${kpi('Debes', c$(t.por_pagar_total), c$(t.por_pagar_30) + ' en 30 días')}
+      <div class="card"><h2 style="margin-top:0">Lo que te deben y lo que debes</h2>${t.cartera.total || (s && (s.por_pagar || s.cartera_sicar)) ? `
+        <div class="grid" style="margin-bottom:10px">${t.cartera.total ? kpi('Te deben', c$(t.cartera.total), 'vencido ' + c$(t.cartera.vencido), t.cartera.vencido ? 'bad' : '')
+          : kpi('Te deben (según SICAR)', c$(s.cartera_sicar.total), `vencido <b>${c$(s.cartera_sicar.vencido)}</b> (${pc(s.cartera_sicar.vencido / s.cartera_sicar.total)}) · ${s.cartera_sicar.personas} clientes, ${s.cartera_sicar.personas_vencidas || 0} con vencido`, s.cartera_sicar.vencido ? 'bad' : '')}
+          ${(s && s.financiamientos || []).map((f) => kpi(esc(f.concepto), c$(f.monto) + ' al mes', 'se paga el día ' + f.dia + (f.hasta ? ' · último pago ' + fmtF(f.hasta) : '') + ' · <a href="#fijos">Gastos fijos</a>')).join('')}
+          ${t.por_pagar_total || !s.cartera_sicar ? kpi('Debes', c$(t.por_pagar_total), c$(t.por_pagar_30) + ' en 30 días') : kpi('Debes', '—', 'falta el reporte de Créditos de Proveedores de SICAR')}
           ${kpi('Días para cobrar (DSO)', s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO)', s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
-        ${t.cartera.total ? aging(t.cartera) : ''}`
+        ${t.cartera.total ? aging(t.cartera) : s.cartera_sicar ? '<p class="muted" style="font-size:12px;margin:6px 0 0">El reporte de SICAR trae el saldo de cada cliente, no sus facturas: por eso todavía no hay antigüedad por días ni fechas de cobro en la proyección. Con el reporte "Tipo: Sí" se completa.</p>' : ''}`
         : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#sicar">Importar de SICAR</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
       <h2>Próximos 14 días</h2>
       <div class="card tbl">${t.proximos.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="n">Monto</th></tr></thead><tbody>
@@ -918,16 +921,19 @@
   function catalogo(key, titulo, cli) {
     return async function () {
       await loadCat();
-      const rows = S.cat[key];
+      const conS = S.cat[key].some((x) => x.saldo_sicar != null);
+      const rows = conS ? S.cat[key].slice().sort((a, b) => (b.saldo_sicar || 0) - (a.saldo_sicar || 0)) : S.cat[key];
+      const totS = rows.reduce((a, x) => a + (x.saldo_sicar || 0), 0), totV = rows.reduce((a, x) => a + (x.vencido_sicar || 0), 0);
       const form = (x) => { x = x || {}; return `<div class="form"><div class="wide"><label>Nombre</label><input name="nombre" value="${esc(x.nombre || '')}"></div>
         <div><label>RFC</label><input name="rfc" value="${esc(x.rfc || '')}"></div><div><label>WhatsApp / teléfono</label><input name="telefono" value="${esc(x.telefono || '')}" placeholder="10 dígitos"></div>
         <div><label>Días de crédito</label><input name="dias_credito" type="number" min="0" value="${esc(x.dias_credito == null ? '' : x.dias_credito)}"></div>
         ${cli ? `<div><label>Límite de crédito</label><input name="limite_credito" inputmode="decimal" value="${esc(x.limite_credito || '')}"></div>` : ''}
         <div class="wide"><label>Notas</label><input name="notas" value="${esc(x.notas || '')}"></div>${x.id ? `<div><label><input type="checkbox" name="active" style="width:auto"${x.active ? ' checked' : ''}> Activo</label></div>` : ''}</div>`; };
-      main().innerHTML = `<h1>${titulo}</h1>${canEdit() ? `<div class="card row"><button class="btn primary" id="nuevo">Agregar</button></div>` : ''}
-        <div class="card tbl">${rows.length ? `<table class="cards"><thead><tr><th>Nombre</th><th>RFC</th><th>Teléfono</th><th class="n">Días de crédito</th>${cli ? '<th class="n">Límite</th>' : ''}<th></th></tr></thead><tbody>
+      main().innerHTML = `<h1>${titulo}</h1>${conS ? `<p class="sub">${rows.filter((x) => x.saldo_sicar).length} con saldo según SICAR: <b>${c$(totS)}</b> · vencido <b>${c$(totV)}</b>. Ordenados de mayor a menor saldo.</p>` : ''}${canEdit() ? `<div class="card row"><button class="btn primary" id="nuevo">Agregar</button></div>` : ''}
+        <div class="card tbl">${rows.length ? `<table class="cards"><thead><tr><th>Nombre</th><th>RFC</th><th>Teléfono</th><th class="n">Días de crédito</th>${cli ? '<th class="n">Límite</th>' : ''}${conS ? '<th class="n">Saldo SICAR</th><th class="n">Vencido</th>' : ''}<th></th></tr></thead><tbody>
         ${rows.map((x) => `<tr><td data-l="Nombre">${esc(x.nombre)}${x.active ? '' : ' <span class="pill">inactivo</span>'}</td><td data-l="RFC">${esc(x.rfc || '—')}</td><td data-l="Teléfono">${esc(x.telefono || '—')}</td>
           <td class="n" data-l="Días">${x.dias_credito == null ? '—' : x.dias_credito}</td>${cli ? `<td class="n" data-l="Límite">${x.limite_credito ? p$(x.limite_credito) : '—'}</td>` : ''}
+          ${conS ? `<td class="n" data-l="Saldo SICAR">${x.saldo_sicar != null ? c$(x.saldo_sicar) : '—'}</td><td class="n" data-l="Vencido"${x.vencido_sicar ? ' style="color:var(--bad)"' : ''}>${x.vencido_sicar != null ? c$(x.vencido_sicar) : '—'}</td>` : ''}
           <td data-l="" class="right">${canEdit() ? `<button class="btn small" data-ed="${x.id}">Editar</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Vacío. También se crean solos al capturar o importar documentos.</p>'}</div>`;
       const reload = () => go(S.view);
       const nuevo = document.getElementById('nuevo');

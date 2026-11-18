@@ -55,6 +55,7 @@ async function aplicar(ctx, rep, meta, t) {
       FROM ${T.doc} x JOIN ${T.partes} p ON p.id=x.${T.parte} AND p.tenant_id=x.tenant_id WHERE x.tenant_id=:t AND x.estado NOT IN ('pagada','cancelada') GROUP BY LOWER(p.nombre)`);
     const mapa = new Map(app.map((r) => [r.n, Math.round(Number(r.s) * 100)]));
     for (const p of rep.partes || []) {
+      await parteId(p.parte, p.num, p.celular || p.telefono); // el cliente/proveedor queda en el catálogo (sin facturas)
       await run(`INSERT INTO fz_sicar_saldos (tenant_id,import_id,lado,parte,num,saldo,vista) VALUES (:t,:i,:l,:p,:n,:s,:v)`,
         { i: importId, l: lado, p: p.parte, n: p.num || null, s: pesos(p.saldo || 0), v: rep.vista });
       cuenta('saldo_guardado');

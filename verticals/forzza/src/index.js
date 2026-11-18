@@ -332,7 +332,17 @@ function pick(spec, body, partial) {
   return { row: out };
 }
 for (const [name, spec] of Object.entries(CAT)) {
-  api.get('/' + name, async (req, res) => res.json(await sel(`SELECT * FROM ${spec.table} WHERE tenant_id=:t ORDER BY ${spec.order}`, { t: req.tenant })));
+  api.get('/' + name, async (req, res) => {
+    const rows = await sel(`SELECT * FROM ${spec.table} WHERE tenant_id=:t ORDER BY ${spec.order}`, { t: req.tenant });
+    if (name === 'clientes' || name === 'proveedores') {
+      // Saldo y vencido según la última foto de SICAR (por nombre), para verlos en el catálogo.
+      const f = await fotoSicar(req.tenant, name === 'clientes' ? 'cxc' : 'cxp');
+      const mapa = async (id) => new Map(id ? (await sel('SELECT LOWER(parte) AS n, saldo FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i', { t: req.tenant, i: id })).map((x) => [x.n, E.toC(x.saldo)]) : []);
+      const [ms, mv] = f ? await Promise.all([mapa(f.import_id), mapa(f.vencidos_import_id)]) : [new Map(), new Map()];
+      for (const r of rows) { const k = String(r.nombre).toLowerCase(); r.saldo_sicar = ms.has(k) ? ms.get(k) : null; r.vencido_sicar = mv.has(k) ? mv.get(k) : (f && f.vencidos_import_id && ms.has(k) ? 0 : null); }
+    }
+    res.json(rows);
+  });
   api.post('/' + name, async (req, res) => {
     if (spec.admin && !canAdmin(req)) return res.status(403).json({ error: 'solo_director' });
     const { row, error } = pick(spec, req.body, false);
@@ -497,6 +507,19 @@ async function baseSimulador(tenant, hoy) {
  * concentración de clientes (Gini), meses, mapa de calor y a dónde se va el dinero. Solo lectura.
  * Todo sale de los bancos y documentos reales; lo que es estimación lo dice.
  */
+// Un reporte filtrado a "Vencidos" no es el saldo total: el total sale del último que no lo es,
+// y lo vencido del último de vencidos.
+async function fotoSicar(tenant, lado) {
+  const req = { tenant };
+  const ult = (cond) => one(`SELECT i.id, i.tipo, i.created_at, i.hasta::text AS hasta FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.lado=:l AND s.tenant_id=i.tenant_id AND ${cond}) ORDER BY i.id DESC LIMIT 1`, { t: req.tenant, l: lado });
+  const [i, iv] = await Promise.all([ult("COALESCE(s.vista,'') <> 'vencidos'"), ult("s.vista = 'vencidos'")]);
+  if (!i && !iv) return null;
+  const suma = async (x) => (await sel('SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: req.tenant, i: x.id, l: lado }))[0];
+  const s = i ? await suma(i) : null, v = iv ? await suma(iv) : null;
+  return { import_id: i ? i.id : null, tipo: i ? i.tipo : iv.tipo, fecha: (i || iv).created_at, corte: i ? i.hasta : null,
+    saldo_sicar: s ? E.toC(s.s) : null, personas: s ? s.n : null,
+    vencido_sicar: v ? E.toC(v.s) : null, personas_vencidas: v ? v.n : null, fecha_vencidos: iv ? iv.created_at : null, vencidos_import_id: iv ? iv.id : null };
+}
 const OPERATIVA_FUERA = ['traspaso', 'prestamo', 'aportacion_socios'];
 async function saludDe(tenant) {
   const req = { tenant };
@@ -521,11 +544,18 @@ async function saludDe(tenant) {
   const conc = E.concentracion(dep.map((r) => ({ nombre: r.nombre, monto: E.toC(r.monto) })));
   if (conc) conc.cobertura = E.toC(tot.m) ? conc.total / E.toC(tot.m) : null;
   const cxpTotal = st.cxp.reduce((a, x) => a + x.pendiente, 0);
+  // Mientras la app no tenga las facturas de clientes, la cartera sale de la foto de saldos de SICAR
+  // (total "Por Pagar" y lo "Vencido"). No entra a la proyección: no trae fechas de vencimiento.
+  const fotoCxc = await fotoSicar(req.tenant, 'cxc');
+  const carteraSicar = !cartera.total && fotoCxc && fotoCxc.saldo_sicar ? { total: fotoCxc.saldo_sicar, vencido: fotoCxc.vencido_sicar || 0,
+    personas: fotoCxc.personas, personas_vencidas: fotoCxc.personas_vencidas, importado: fotoCxc.fecha, fuente: 'sicar' } : null;
+  const cartTot = cartera.total || (carteraSicar ? carteraSicar.total : 0);
+  const cartVen = cartera.total ? cartera.vencido : (carteraSicar && fotoCxc.vencido_sicar != null ? carteraSicar.vencido : null);
   const diasEf = pm && pm.salidas ? st.efectivo / (pm.salidas / 30.4) : null;
   const cal = E.calificacion({
     dias_efectivo: diasEf, prob_negativo_60: mc ? mc.prob_negativo_en[60] : null,
     margen_flujo: pm && pm.salidas ? (pm.entradas - pm.salidas) / pm.salidas : null,
-    vencido_pct: cartera.total ? cartera.vencido / cartera.total : null, top5: conc && conc.n >= 5 ? conc.top5 : null
+    vencido_pct: cartTot && cartVen != null ? cartVen / cartTot : null, top5: conc && conc.n >= 5 ? conc.top5 : null
   });
   return ({
     hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura,
@@ -536,8 +566,9 @@ async function saludDe(tenant) {
     calor: patron ? Array.from({ length: 31 }, (_, i) => patron.dias.promedio.ent[i + 1] - patron.dias.promedio.sal[i + 1]) : [],
     categorias: Object.entries(cats).map(([k, v]) => ({ categoria: k, ...v })).sort((a, b) => (b.entradas + b.salidas) - (a.entradas + a.salidas)),
     concentracion: conc,
-    cartera,
-    dso: cartera.total && entOp ? cartera.total / (entOp / 30.4) : null,
+    cartera, cartera_sicar: carteraSicar,
+    financiamientos: st.fijos.filter((f) => f.categoria === 'financiamiento').map((f) => ({ concepto: f.concepto, monto: E.toC(f.monto), frecuencia: f.frecuencia, dia: f.dia, hasta: f.hasta })),
+    dso: cartTot && entOp ? cartTot / (entOp / 30.4) : null,
     dpo: cxpTotal && salOp ? cxpTotal / (salOp / 30.4) : null,
     por_pagar: cxpTotal
   });
@@ -1158,20 +1189,8 @@ async function sicarResumenDe(tenant, query) {
     GROUP BY parte ORDER BY 2 DESC LIMIT 15`, { t: req.tenant, ti: tipo, d: desde, h: hasta });
   const [proveedores, gastos, clientes] = await Promise.all([top('compra', "AND (doc<>'GAS' OR doc IS NULL)"), top('compra', "AND doc='GAS'"), top('venta')]);
   // La última foto de saldos de SICAR contra lo que dice la app.
-  // Un reporte filtrado a "Vencidos" no es el saldo total: el total sale del último que no lo es,
-  // y lo vencido del último de vencidos.
-  const foto = async (lado) => {
-    const ult = (cond) => one(`SELECT i.id, i.tipo, i.created_at, i.hasta::text AS hasta FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.lado=:l AND s.tenant_id=i.tenant_id AND ${cond}) ORDER BY i.id DESC LIMIT 1`, { t: req.tenant, l: lado });
-    const [i, iv] = await Promise.all([ult("COALESCE(s.vista,'') <> 'vencidos'"), ult("s.vista = 'vencidos'")]);
-    if (!i && !iv) return null;
-    const suma = async (x) => (await sel('SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: req.tenant, i: x.id, l: lado }))[0];
-    const s = i ? await suma(i) : null, v = iv ? await suma(iv) : null;
-    return { import_id: i ? i.id : null, tipo: i ? i.tipo : iv.tipo, fecha: (i || iv).created_at, corte: i ? i.hasta : null,
-      saldo_sicar: s ? E.toC(s.s) : null, personas: s ? s.n : null,
-      vencido_sicar: v ? E.toC(v.s) : null, personas_vencidas: v ? v.n : null, fecha_vencidos: iv ? iv.created_at : null };
-  };
   const st = await cargarEstado(req.tenant, hoy);
-  const [fc, fp] = await Promise.all([foto('cxc'), foto('cxp')]);
+  const [fc, fp] = await Promise.all([fotoSicar(req.tenant, 'cxc'), fotoSicar(req.tenant, 'cxp')]);
   if (fc) fc.saldo_app = st.cxc.reduce((a, x) => a + x.pendiente, 0);
   if (fp) fp.saldo_app = st.cxp.reduce((a, x) => a + x.pendiente, 0);
   const c = (rows, keys) => rows.map((r) => { const o = { ...r }; for (const k of keys) o[k] = E.toC(r[k]); return o; });

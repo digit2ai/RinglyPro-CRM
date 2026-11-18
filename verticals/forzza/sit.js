@@ -407,6 +407,9 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('resumen: el total sale de "Por Pagar" aunque "Vencidos" se haya importado después; lo vencido aparte', rs2 && rs2.saldo_sicar === 125050 && rs2.vencido_sicar === 40000 && rs2.personas_vencidas === 1, JSON.stringify(rs2));
     const dz = await require('./src/dalia.js')._ejecutar('saldos_sicar', { lado: 'cobrar' }, { tenant: A, rol: 'director', D: router._daliaDeps() });
     ok('Dalia: saldo total y vencido por cliente, sin inventar antigüedad por días', dz.saldo_total && dz.vencido_total && !dz.antiguedad_total && dz.renglones.some((x) => x.nombre === 'CLIENTE DOS' && x.vencido), JSON.stringify(dz).slice(0, 300));
+    const cl = (await req('GET', '/clientes', { cookie: conA.cookie })).json;
+    const c1 = cl.find((x) => x.nombre === 'CLIENTE UNO'), c2 = cl.find((x) => x.nombre === 'CLIENTE DOS');
+    ok('saldos sin detalle: los clientes quedan en el catálogo con su saldo y su vencido de SICAR', c1 && c1.saldo_sicar === 100050 && c1.vencido_sicar === 40000 && c2 && c2.vencido_sicar === 0, JSON.stringify([c1, c2]));
     ok('B no ve los saldos de A', !(await req('GET', '/sicar/resumen', { cookie: dirB.cookie })).json.conciliacion.cxc);
     ok('un archivo que no es de SICAR = 400 con la instrucción', (await subir(capA.cookie, [[R([1, 'Factura'])]], false)).json.error === 'no_es_reporte_sicar');
 
