@@ -386,6 +386,38 @@
   }
   const SIM0 = () => ({ horizonte: 60, efectivo: '', reserva: undefined, eval_dia: 15, historico: undefined, entradas_pct: 0, salidas_pct: 0, retraso: 0, vencido: 'excluir', mover: {}, venta: null, puntuales: [] });
   const ORIGEN = { cobro: ['Por cobrar', 'ok'], pago: ['Por pagar', 'bad'], fijo: ['Gasto fijo', 'warn'], estimado: ['Estimado', ''], simulado: ['Supuesto', 'acc'] };
+  /** Cómo se movió el dinero: barras por mes (entró / salió / neto) y por categoría, con montos cortos. */
+  const corto = (c) => { const v = Math.abs(Number(c) / 100); const sg = Number(c) < 0 ? '−' : '';
+    return sg + (v >= 1e6 ? '$' + (v / 1e6).toFixed(2) + ' M' : v >= 1e3 ? '$' + Math.round(v / 1e3).toLocaleString('es-MX') + ' mil' : '$' + Math.round(v)); };
+  function movimientoDinero(p) {
+    const maxM = Math.max(1, ...p.meses.map((m) => Math.max(m.entradas, m.salidas)));
+    const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const nomMes = (k) => { const [y, m] = String(k).split('-'); return (MES[Number(m) - 1] || k) + ' ' + y; };
+    const bar = (v, max, color) => `<div style="height:12px;border-radius:6px;background:${color};width:${Math.max(1, 100 * v / max).toFixed(1)}%"></div>`;
+    const meses = p.meses.map((m) => `<div style="display:grid;grid-template-columns:78px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)">
+        <div><b>${esc(nomMes(m.mes))}</b>${m.mes === p.peor_mes ? '<div><span class="pill bad">peor</span></div>' : m.mes === p.mejor_mes ? '<div><span class="pill ok">mejor</span></div>' : ''}</div>
+        <div style="display:grid;gap:4px" title="Entró ${c$(m.entradas)} · Salió ${c$(m.salidas)}">${bar(m.entradas, maxM, VERDE)}${bar(m.salidas, maxM, ROJO)}
+          <div class="muted" style="font-size:12px">entró ${corto(m.entradas)} · salió ${corto(m.salidas)}</div></div>
+        <div style="text-align:right;min-width:86px"><div class="muted" style="font-size:11px">neto</div><b style="color:${m.neto >= 0 ? 'var(--ok)' : 'var(--bad)'}">${m.neto >= 0 ? '+' : ''}${corto(m.neto)}</b></div></div>`).join('');
+    const cats = p.por_categoria.filter((c) => c.entradas || c.salidas);
+    const maxC = Math.max(1, ...cats.map((c) => Math.max(c.entradas, c.salidas)));
+    const lado = (c, k, color) => (c[k] ? `<div style="display:flex;align-items:center;gap:8px"><div style="flex:1">${bar(c[k], maxC, color)}</div><span style="font-size:12px;min-width:70px;text-align:right">${corto(c[k])}</span></div>` : '');
+    const catEnt = cats.filter((c) => c.entradas).sort((a, b) => b.entradas - a.entradas);
+    const catSal = cats.filter((c) => c.salidas).sort((a, b) => b.salidas - a.salidas);
+    const lista = (rows, k, color) => rows.map((c) => `<div style="padding:7px 0;border-top:1px solid var(--line)" title="${esc(CAT_LBL[c.categoria] || c.categoria)}: ${c$(c[k])} al mes">
+        <div style="font-size:13px;margin-bottom:3px">${esc(CAT_LBL[c.categoria] || c.categoria)}</div>${lado(c, k, color)}</div>`).join('') || '<p class="empty">Sin datos.</p>';
+    const sinCat = cats.find((c) => c.categoria === 'sin_categoria');
+    const totE = cats.reduce((a, c) => a + c.entradas, 0), totS = cats.reduce((a, c) => a + c.salidas, 0);
+    return `<h2>Así se ha movido el dinero (bancos, ${p.n} meses)</h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+        <div class="card"><h3 style="margin:0 0 4px">Mes por mes</h3>
+          <div style="display:flex;gap:16px;font-size:12px;color:var(--mut);margin-bottom:4px"><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;background:${VERDE}"></i>Entró</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;background:${ROJO}"></i>Salió</span></div>${meses}</div>
+        <div class="card"><h3 style="margin:0 0 4px">Promedio al mes, por categoría</h3>
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:16px">
+            <div><div style="font-weight:600;color:var(--ok)">Entra ${corto(totE)}</div>${lista(catEnt, 'entradas', VERDE)}</div>
+            <div><div style="font-weight:600;color:var(--bad)">Sale ${corto(totS)}</div>${lista(catSal, 'salidas', ROJO)}</div></div>
+          ${sinCat && (sinCat.entradas + sinCat.salidas) > 0.3 * (totE + totS) ? `<div class="note" style="margin-top:10px">${Math.round(100 * (sinCat.entradas + sinCat.salidas) / (totE + totS))}% de los movimientos está "Sin categoría". Clasifícalos en <a href="#bancos">Bancos</a> para que este cuadro diga más.</div>` : ''}</div></div>`;
+  }
   R.proyeccion = async function () {
     S.sim = S.sim || SIM0();
     const s = S.sim;
@@ -484,12 +516,7 @@
         ${fechas.map((f) => porDia[f].map((e, i) => `<tr><td data-l="Fecha">${i ? '' : fmtF(f)}</td><td data-l="Movimiento">${esc(e.concepto)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td>
           <td data-l="Origen"><span class="pill ${(ORIGEN[e.tipo] || ['', ''])[1]}">${esc((ORIGEN[e.tipo] || [e.tipo])[0])}</span></td><td class="n" data-l="Monto">${sentido(e.monto)}</td>
           <td class="n" data-l="Saldo">${i === porDia[f].length - 1 ? c$(saldoDe[f]) : ''}</td></tr>`).join('')).join('')}</tbody></table>` : '<p class="empty">Sin movimientos en el periodo.</p>'}</div>
-        ${r.patron ? `<h2>Así se ha movido el dinero (bancos, ${r.patron.n} meses)</h2><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-          <div class="card tbl"><table class="cards"><thead><tr><th>Mes</th><th class="n">Entró</th><th class="n">Salió</th><th class="n">Neto</th></tr></thead><tbody>
-          ${r.patron.meses.map((m) => `<tr><td data-l="Mes">${esc(m.mes)}${m.mes === r.patron.peor_mes ? ' <span class="pill bad">peor</span>' : m.mes === r.patron.mejor_mes ? ' <span class="pill ok">mejor</span>' : ''}</td><td class="n" data-l="Entró">${c$(m.entradas)}</td><td class="n" data-l="Salió">${c$(m.salidas)}</td><td class="n" data-l="Neto">${sentido(m.neto)}</td></tr>`).join('')}</tbody></table></div>
-          <div class="card tbl"><table class="cards"><thead><tr><th>Categoría (promedio al mes)</th><th class="n">Entra</th><th class="n">Sale</th></tr></thead><tbody>
-          ${r.patron.por_categoria.map((c) => `<tr><td data-l="Categoría">${esc(CAT_LBL[c.categoria] || c.categoria)}</td><td class="n" data-l="Entra">${c.entradas ? c$(c.entradas) : '—'}</td><td class="n" data-l="Sale">${c.salidas ? c$(c.salidas) : '—'}</td></tr>`).join('')}</tbody></table>
-          <p class="muted" style="font-size:12px">Ajusta las categorías en Bancos para que este cuadro diga más.</p></div></div>` : ''}
+        ${r.patron ? movimientoDinero(r.patron) : ''}
         ${r.modificado.vencido_no_contado.length ? `<h2>Cobros vencidos que no se cuentan</h2><div class="card tbl"><table class="cards"><tbody>${r.modificado.vencido_no_contado.map((e) =>
           `<tr><td data-l="Cliente">${esc(e.concepto)}</td><td data-l="Venció">${fmtF(e.vencimiento)} · ${e.dias_vencido} días</td><td class="n" data-l="Pendiente">${c$(e.monto)}</td></tr>`).join('')}</tbody></table>
           <p class="muted" style="font-size:13px">Pon una fecha de compromiso en Por cobrar y entran a la proyección ese día, o elige "Contarlos hoy".</p></div>` : ''}
