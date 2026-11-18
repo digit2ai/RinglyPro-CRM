@@ -167,12 +167,12 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
-    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['url:guia-puente.html', 'Guía del puente'],
+    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['sicar_web', 'Ingresa a SICAR'], ['url:guia-puente.html', 'Guía del puente'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
   function shell() {
-    $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Menú" aria-expanded="false">☰</button>
+    $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
       <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
       <span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
@@ -180,16 +180,34 @@
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
     const side = document.getElementById('side'), b = document.getElementById('burger');
-    b.onclick = () => { side.classList.toggle('open'); b.setAttribute('aria-expanded', side.classList.contains('open')); };
+    const movil = () => window.matchMedia('(max-width:820px)').matches;
+    b.onclick = () => {
+      if (movil()) { side.classList.toggle('open'); b.setAttribute('aria-expanded', side.classList.contains('open')); return; }
+      const off = !document.body.classList.contains('side-off');
+      setSide(off); try { localStorage.setItem('fz_side', off ? 'off' : 'on'); } catch (e) {}
+    };
+    let pref = null; try { pref = localStorage.getItem('fz_side'); } catch (e) {}
+    setSide(pref === 'off');
     side.onclick = (e) => { if (e.target.closest('a')) { side.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); } };
     document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; document.body.classList.add('fz-out'); renderLogin(); };
+  }
+  // Panel izquierdo plegable en escritorio (en el teléfono sigue siendo el cajón).
+  function setSide(off) {
+    document.body.classList.toggle('side-off', !!off);
+    const b = document.getElementById('burger'); if (!b) return;
+    b.querySelector('.bd').textContent = off ? '»' : '«';
+    b.setAttribute('aria-label', off ? 'Mostrar el menú' : 'Ocultar el menú');
+    if (!window.matchMedia('(max-width:820px)').matches) b.setAttribute('aria-expanded', String(!off));
   }
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
   async function go(v) {
     v = ALIAS[v] || v;
     if (!R[v]) v = 'tablero';
-    S.view = v;
+    const antes = S.view; S.view = v;
+    document.body.classList.toggle('vista-llena', v === 'sicar_web');
+    if (v === 'sicar_web' && antes !== 'sicar_web') setSide(true); // SICAR usa toda la pantalla
+    else if (antes === 'sicar_web' && v !== 'sicar_web') { let p = null; try { p = localStorage.getItem('fz_side'); } catch (e) {} setSide(p === 'off'); }
     document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
     main().innerHTML = '<p class="muted">Cargando…</p>';
     main().onclick = null; main().oninput = null; main().onchange = null;
@@ -281,6 +299,28 @@
     return `<div class="stack">${T.map(([k, , c]) => (cart[k].monto ? `<i style="width:${(cart[k].monto / tot * 100).toFixed(1)}%;background:${c}"></i>` : '')).join('')}</div>
       <div class="legend">${T.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l}: ${k$(cart[k].monto)}</span>`).join('')}</div>`;
   }
+  // Neural Findings: hallazgo -> diagnóstico -> prescripción. Reglas fijas del servidor (src/hallazgos.js).
+  function hallazgosHtml(list) {
+    if (!list) return '';
+    const SEVL = { critico: ['bad', 'Crítico'], atencion: ['warn', 'Atención'], oportunidad: ['acc', 'Oportunidad'] };
+    const n = (k) => list.filter((h) => h.severidad === k).length;
+    return `<div class="card nf"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Neural Findings · Diagnóstico y prescripción</h2>
+      <span class="muted" style="font-size:13px">${list.length ? `${n('critico')} críticos · ${n('atencion')} de atención · ${n('oportunidad')} oportunidades` : ''}</span></div>
+      ${list.length ? list.map((h) => { const [c, l] = SEVL[h.severidad] || ['', h.severidad]; return `<div class="nf-item nf-${esc(h.severidad)}">
+        <div class="row" style="justify-content:space-between"><div><span class="pill ${c}">${l}</span> <b>${esc(h.titulo)}</b></div>${h.impacto ? `<span class="nf-imp">${c$(h.impacto)}</span>` : ''}</div>
+        <p><span class="nf-k">Diagnóstico</span>${esc(h.diagnostico)}</p>
+        <p><span class="nf-k">Prescripción</span>${esc(h.prescripcion)}</p>
+        <p class="muted" style="font-size:12px;margin:0">Dato: ${esc(h.evidencia)}${h.enlace ? ` · <a href="${esc(h.enlace.href)}">${esc(h.enlace.label)}</a>` : ''}</p></div>`; }).join('')
+      : '<p class="empty">Sin hallazgos: con los datos cargados no hay nada que corregir.</p>'}
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Cada hallazgo sale de reglas fijas sobre tus bancos, SICAR y la simulación. No lo escribe un modelo.</p></div>`;
+  }
+  R.sicar_web = async function () {
+    const URL_SICAR = 'https://login.nubesicar.mx/';
+    main().innerHTML = `<div class="sw-bar row" style="justify-content:space-between"><div><b>SICAR en la nube</b> <span class="muted" style="font-size:13px">Inicia sesión con tu usuario de Nube SICAR.</span></div>
+      <a class="btn" href="${URL_SICAR}" target="_blank" rel="noopener">Abrir en otra pestaña</a></div>
+      <iframe class="sw-frame" src="${URL_SICAR}" title="SICAR" referrerpolicy="no-referrer"></iframe>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Si no entra o se queda en blanco, usa "Abrir en otra pestaña" (algunos navegadores bloquean el inicio de sesión dentro de otra página). El programa SICAR de escritorio no se puede abrir aquí: solo Nube SICAR.</p>`;
+  };
   R.tablero = async function () {
     const [t, s] = await Promise.all([api('tablero'), api('salud').catch(() => null)]);
     const mc = s && s.monte_carlo, cal = s && s.calificacion, niv = NIVEL[(cal && cal.nivel) || 'sin_datos'];
@@ -328,6 +368,7 @@
           ${kpi('Días para cobrar (DSO)', s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO)', s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
         ${t.cartera.total ? aging(t.cartera) : s.cartera_sicar ? '<p class="muted" style="font-size:12px;margin:6px 0 0">El reporte de SICAR trae el saldo de cada cliente, no sus facturas: por eso todavía no hay antigüedad por días ni fechas de cobro en la proyección. Con el reporte "Tipo: Sí" se completa.</p>' : ''}`
         : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#sicar">Importar de SICAR</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
+      ${hallazgosHtml(s && s.hallazgos)}
       <h2>Próximos 14 días</h2>
       <div class="card tbl">${t.proximos.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.proximos.map((e) => `<tr><td data-l="Fecha">${fmtF(e.fecha)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td><td data-l="Concepto">${esc(e.concepto)}</td>

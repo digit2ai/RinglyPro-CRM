@@ -74,6 +74,22 @@ header.top .muted{color:#dbe4f5!important}
 .drop.ok{border-color:var(--ok);color:var(--ok);background:#f2fbf6}
 .right{text-align:right}
 [hidden]{display:none!important}
+.burger .bd{display:none}
+@media (min-width:821px){
+  .burger{display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+  .burger .bi{display:none}.burger .bd{display:inline}
+  body.side-off nav.side{display:none}
+}
+body.vista-llena main{max-width:none;display:flex;flex-direction:column}
+.sw-bar{margin-bottom:8px}
+.sw-frame{flex:1;width:100%;min-height:calc(100vh - 150px);border:1px solid var(--line);border-radius:10px;background:#fff}
+.nf-item{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:#fff}
+.nf-item.nf-critico{border-left-color:var(--bad)}.nf-item.nf-atencion{border-left-color:var(--warn)}.nf-item.nf-oportunidad{border-left-color:var(--acc)}
+.nf-item p{margin:6px 0;font-size:14px}
+.nf-k{display:inline-block;min-width:118px;margin-right:6px;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--navy);letter-spacing:.3px}
+.nf-imp{font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:820px){.nf-k{display:block}.sw-frame{min-height:calc(100vh - 190px)}}
+
 @media (max-width:820px){
   .burger{display:inline-flex;align-items:center;justify-content:center}
   nav.side{position:fixed;top:60px;left:0;bottom:0;z-index:30;transform:translateX(-105%);transition:transform .2s;box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:auto}
@@ -123,6 +139,6 @@ header.top .muted{color:#dbe4f5!important}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=15" defer></script>
+<script src="app.js?v=16" defer></script>
 </body>
 </html>

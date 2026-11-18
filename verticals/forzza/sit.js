@@ -496,6 +496,25 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('instalador: trae una llave NUEVA ya puesta, solo ASCII y con fin de línea de Windows', ins.status === 201 && llaveEmb && !/[^\x00-\x7f]/.test(cmd) && /\r\n/.test(cmd) && /Register-ScheduledTask/.test(cmd) && /MyDocuments/.test(psEmb), JSON.stringify(ins.json && ins.json.archivo));
     ok('instalador: esa llave sube reportes (y es de este tenant)', (await ingest(llaveEmb)).status === 200);
     ok('instalador: la llave queda listada y se puede revocar', (await req('GET', '/llaves', { cookie: dirA.cookie })).json.some((k) => k.nombre === 'Puente SICAR (instalador)' && k.prefijo === ins.json.prefijo));
+    {
+      const H = require('./src/hallazgos');
+      const hs = H.hallazgos({ hoy: '2026-11-18', efectivo: 3000000, dias_efectivo: 5, salida_diaria: 600000, prob60: 0.42, prob90: 0.5, minimo_p50: -5000,
+        cartera: { total: 1000000, vencido: 400000, fuente: 'sicar' }, top_vencidos: [{ parte: 'CLIENTE A', saldo: 300000 }], meses: [{ mes: '2026-07', neto: -100 }, { mes: '2026-08', neto: 200 }],
+        datos_hasta: '2026-10-30', cuentas_sin_datos: ['Banorte'], por_pagar: 0, hay_cxp_sicar: false, reserva: null, sin_categoria_pct: 0.7 });
+      const cods = hs.map((h) => h.codigo);
+      ok('hallazgos: cada uno trae diagnóstico, prescripción y evidencia', hs.length >= 8 && hs.every((h) => h.diagnostico && h.prescripcion && h.evidencia));
+      ok('hallazgos: los críticos van primero', hs[0].severidad === 'critico' && hs.findIndex((h) => h.severidad !== 'critico') > 0 && hs.slice(hs.findIndex((h) => h.severidad === 'oportunidad')).every((h) => h.severidad === 'oportunidad'));
+      ok('hallazgos: nombra al cliente vencido y la cuenta sin datos', cods.includes('FZ-VENCIDO') && /CLIENTE A/.test(hs.find((h) => h.codigo === 'FZ-VENCIDO').prescripcion) && cods.includes('FZ-CUENTA-SIN-DATOS'));
+      ok('hallazgos: sin datos no se inventa ninguno de dinero', !H.hallazgos({}).some((h) => /LIQUIDEZ|NEGATIVO|VENCIDO|FLUJO|CONCENTRACION/.test(h.codigo)));
+      ok('hallazgos: sin modelo (archivo puro, sin red ni base de datos)', !/require\(['"](\.\.\/|\.\/)?(db|llm|dalia)|anthropic|fetch\(/.test(require('fs').readFileSync(require('path').join(__dirname, 'src', 'hallazgos.js'), 'utf8')));
+      const sal = await req('GET', '/salud', { cookie: dirA.cookie });
+      ok('GET /salud trae hallazgos', sal.status === 200 && Array.isArray(sal.json.hallazgos));
+      const appjs = require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8');
+      const ti = appjs.indexOf("Lo que te deben y lo que debes"), tn = appjs.indexOf('${hallazgosHtml('), tp = appjs.indexOf('<h2>Próximos 14 días</h2>');
+      ok('tablero: Neural Findings va entre "Lo que te deben" y "Próximos 14 días"', ti > 0 && tn > ti && tp > tn);
+      ok('menú: "Ingresa a SICAR" bajo SICAR abre Nube SICAR con salida a otra pestaña', /\['sicar_web', 'Ingresa a SICAR'\]/.test(appjs) && /login\.nubesicar\.mx/.test(appjs) && /target="_blank"/.test(appjs) && appjs.indexOf("'sicar_web'") > appjs.indexOf("['grp', 'SICAR']") && appjs.indexOf("'sicar_web'") < appjs.indexOf("['grp', 'Catálogos']"));
+      ok('panel izquierdo plegable: se recuerda y se pliega solo en SICAR', /fz_side/.test(appjs) && /side-off/.test(appjs) && /v === 'sicar_web' && antes !== 'sicar_web'\) setSide\(true\)/.test(appjs));
+    }
     const guia = require('fs').readFileSync(require('path').join(__dirname, 'public', 'guia-puente.html'), 'utf8');
     const imgs = [...guia.matchAll(/src="(guia\/[^"]+)"/g)].map((m) => m[1]);
     ok('guía del puente: existe, está en el menú bajo SICAR y todas sus imágenes existen', imgs.length >= 6 && imgs.every((f) => require('fs').existsSync(require('path').join(__dirname, 'public', f))) && /\['url:guia-puente\.html'/.test(require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8')));

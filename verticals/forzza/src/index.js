@@ -33,6 +33,7 @@ const schema = require('./schema');
 const E = require('./engine');
 const S = require('./sicar');
 const SI = require('./sicar-import');
+const H = require('./hallazgos');
 
 const router = express.Router();
 const BASE = '/forzza/app';
@@ -483,7 +484,7 @@ api.post('/simular-venta', async (req, res) => {
  */
 async function baseSimulador(tenant, hoy) {
   const st = await cargarEstado(tenant, hoy);
-  const cob = await sel(`SELECT c.id, c.fecha_saldo::text AS fs, MIN(m.fecha)::text AS primero, MAX(m.fecha)::text AS ultimo, COUNT(m.id)::int AS n
+  const cob = await sel(`SELECT c.id, c.nombre, c.fecha_saldo::text AS fs, MIN(m.fecha)::text AS primero, MAX(m.fecha)::text AS ultimo, COUNT(m.id)::int AS n
     FROM fz_cuentas c LEFT JOIN fz_movimientos m ON m.cuenta_id=c.id AND m.tenant_id=c.tenant_id WHERE c.tenant_id=:t AND c.incluir AND c.active GROUP BY c.id`, { t: tenant });
   const conDatos = cob.filter((c) => c.n > 0);
   let cobertura = null, datosHasta = null;
@@ -500,7 +501,7 @@ async function baseSimulador(tenant, hoy) {
     patron = E.patronHistorico(movs, cobertura);
     if (patron) historia = E.historiaDiaria(movs, patron.meses.map((m) => m.mes));
   }
-  return { st, patron, historia, cobertura, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length };
+  return { st, patron, historia, cobertura, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length, cuentasSinDatos: cob.filter((c) => !c.n).map((c) => c.nombre) };
 }
 /**
  * Salud financiera para el tablero: calificación 0–100, Monte Carlo a 90 días, días de efectivo,
@@ -524,7 +525,7 @@ const OPERATIVA_FUERA = ['traspaso', 'prestamo', 'aportacion_socios'];
 async function saludDe(tenant) {
   const req = { tenant };
   const hoy = hoyMx();
-  const { st, patron, historia, cobertura, datosHasta } = await baseSimulador(req.tenant, hoy);
+  const { st, patron, historia, cobertura, datosHasta, cuentasSinDatos } = await baseSimulador(req.tenant, hoy);
   const base = entradaMotor(st, hoy, { horizonte: 90, opciones: { vencido: 'excluir', retraso: 0 } });
   const p = E.proyectar(base);
   const cartera = E.antiguedad(st.cxc, hoy);
@@ -557,8 +558,20 @@ async function saludDe(tenant) {
     margen_flujo: pm && pm.salidas ? (pm.entradas - pm.salidas) / pm.salidas : null,
     vencido_pct: cartTot && cartVen != null ? cartVen / cartTot : null, top5: conc && conc.n >= 5 ? conc.top5 : null
   });
+  // Neural Findings: reglas fijas sobre las mismas cifras de esta pantalla (src/hallazgos.js).
+  let topVencidos = [];
+  if (fotoCxc && fotoCxc.vencidos_import_id) topVencidos = (await sel('SELECT parte, saldo FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i ORDER BY saldo DESC LIMIT 5', { t: req.tenant, i: fotoCxc.vencidos_import_id })).map((x) => ({ parte: x.parte, saldo: E.toC(x.saldo) }));
+  else if (cartera.total) topVencidos = Object.values(st.cxc.filter((x) => x.vencimiento < hoy).reduce((a, x) => { const k = x.parte || x.cliente || '—'; (a[k] = a[k] || { parte: k, saldo: 0 }).saldo += x.pendiente; return a; }, {})).sort((a, b) => b.saldo - a.saldo).slice(0, 5);
+  const fotoCxp = await fotoSicar(req.tenant, 'cxp');
+  const totCat = Object.values(cats).reduce((a, v) => a + v.entradas + v.salidas, 0);
+  const sinCat = cats.sin_categoria ? cats.sin_categoria.entradas + cats.sin_categoria.salidas : 0;
+  const hallazgos = H.hallazgos({ hoy, efectivo: st.efectivo, dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
+    prob60: mc ? mc.prob_negativo_en[60] : null, prob90: mc ? mc.prob_negativo_en[90] : null, minimo_p50: mc ? mc.minimo.p50 : null, reserva,
+    cartera: cartTot ? { total: cartTot, vencido: cartVen, fuente: cartera.total ? 'app' : 'sicar' } : null, top_vencidos: topVencidos,
+    top5: conc ? conc.top5 : null, clientes_n: conc ? conc.n : 0, sin_categoria_pct: totCat ? sinCat / totCat : null,
+    meses: patron ? patron.meses : [], datos_hasta: datosHasta, cuentas_sin_datos: cuentasSinDatos || [], por_pagar: cxpTotal, hay_cxp_sicar: !!(fotoCxp && fotoCxp.saldo_sicar) });
   return ({
-    hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura,
+    hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura, hallazgos,
     calificacion: cal, monte_carlo: mc,
     dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
     promedio_mes: pm, entradas_operativas_mes: entOp, salidas_operativas_mes: salOp,
