@@ -129,8 +129,8 @@ router.use(express.static(path.join(__dirname, '..', 'public'), { index: false, 
  * Una Checkout Session por clic con la marca de Digit2AI. Los montos viven aquí, nunca en la petición.
  * La mensualidad cobra el día que se paga y se repite cada mes en esa fecha. Sin IVA (Digit2AI LLC, EE. UU.). */
 const PAGOS = Object.freeze({
-  onboarding: { mode: 'payment', cents: 99400, name: 'Digit2AI · Forzza Capital - Onboarding y consolidación de datos (pago único)', factura: 'D2-FZ-2026-001' },
-  mensualidad: { mode: 'subscription', cents: 49700, name: 'Digit2AI · Forzza Capital - Plataforma SaaS (mensual)', factura: 'D2-FZ-2026-002' }
+  onboarding: { mode: 'payment', cents: 70000, name: 'Digit2AI · Forzza Capital - Onboarding y consolidación de datos (pago único)', factura: 'D2-FZ-2026-001' },
+  mensualidad: { mode: 'subscription', cents: 39700, name: 'Digit2AI · Forzza Capital - Plataforma SaaS (mensual)', factura: 'D2-FZ-2026-002' }
 });
 const STRIPE_BRAND = {
   display_name: 'Digit2AI',
