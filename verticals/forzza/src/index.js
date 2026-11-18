@@ -1218,17 +1218,16 @@ api.delete('/llaves/:id', adminOnly, async (req, res) => {
   audit(req, 'llave_revocada', id);
   res.json({ ok: true });
 });
-/** Script para Windows: sube cada reporte que SICAR guarde en una carpeta. La llave NO va adentro: se pega. */
-api.get('/sicar/puente.ps1', adminOnly, (req, res) => {
-  const ps = [
+/** Script del puente (Windows): sube cada reporte que SICAR guarde en Documentos\SICAR-Forzza. */
+function puenteScript(llave) {
+  return [
     '# Puente SICAR -> Forzza Capital',
-    '# 1) Pega abajo la llave que te dio la app (Importar de SICAR > Puente).',
-    '# 2) En SICAR guarda los reportes en Excel o PDF dentro de la carpeta Documentos\\SICAR-Forzza.',
-    '# 3) Prográmalo cada 15 minutos (PowerShell como administrador):',
-    '#    schtasks /Create /SC MINUTE /MO 15 /TN "Puente SICAR Forzza" /TR "powershell -NoProfile -ExecutionPolicy Bypass -File %USERPROFILE%\\Documents\\puente-sicar.ps1"',
-    '$Llave = "PEGA_AQUI_LA_LLAVE"',
+    '# Sube cada reporte de SICAR (Excel o PDF) que se guarde en la carpeta Documentos\\SICAR-Forzza.',
+    '# Lo normal es instalarlo con el instalador de la app (Importar de SICAR > Puente); no hay que editar nada.',
+    `$Llave = "${llave || 'PEGA_AQUI_LA_LLAVE'}"`,
     `$Url = "${PUBLIC_URL}/api/v1/ingest/sicar"`,
-    '$Carpeta = Join-Path $env:USERPROFILE "Documents\\SICAR-Forzza"',
+    '$Docs = [Environment]::GetFolderPath("MyDocuments")', // también cuando Documentos está en OneDrive
+    '$Carpeta = Join-Path $Docs "SICAR-Forzza"',
     '$Enviados = Join-Path $Carpeta "enviados"',
     '$Bitacora = Join-Path $Carpeta "bitacora.txt"',
     'New-Item -ItemType Directory -Force -Path $Carpeta, $Enviados | Out-Null',
@@ -1245,8 +1244,53 @@ api.get('/sicar/puente.ps1', adminOnly, (req, res) => {
     '}',
     ''
   ].join('\r\n');
+}
+/** Instalador de un clic (.cmd): escribe el script con la llave, crea la carpeta y programa la tarea cada 15 min
+ *  para el usuario actual (no pide permisos de administrador). Solo ASCII para que la consola no se descomponga. */
+function puenteInstalador(llave) {
+  const b64 = Buffer.from(puenteScript(llave), 'utf8').toString('base64');
+  return [
+    '@echo off',
+    'echo Instalando el puente SICAR - Forzza Capital...',
+    'powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText(\'%~f0\'); $i=$s.IndexOf(\'#\'+\'PSSTART\'); iex $s.Substring($i)"',
+    'echo.',
+    'pause',
+    'exit /b',
+    '#PSSTART',
+    'try {',
+    '  $docs = [Environment]::GetFolderPath("MyDocuments")',
+    '  $ps = Join-Path $docs "puente-sicar.ps1"',
+    `  $b64 = "${b64}"`,
+    '  [IO.File]::WriteAllText($ps, [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64)), (New-Object Text.UTF8Encoding $true))',
+    '  $carpeta = Join-Path $docs "SICAR-Forzza"',
+    '  New-Item -ItemType Directory -Force -Path $carpeta, (Join-Path $carpeta "enviados") | Out-Null',
+    '  $a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument (\'-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "\' + $ps + \'"\')',
+    '  $t = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15) -RepetitionDuration (New-TimeSpan -Days 3650)',
+    '  Register-ScheduledTask -TaskName "Puente SICAR Forzza" -Action $a -Trigger $t -Force -ErrorAction Stop | Out-Null',
+    '  Write-Host ""',
+    '  Write-Host "LISTO. El puente quedo instalado."',
+    '  Write-Host ("Guarda los reportes de SICAR en esta carpeta: " + $carpeta)',
+    '  Write-Host "Cada 15 minutos se suben solos a Forzza Capital."',
+    '  Start-Process explorer.exe $carpeta',
+    '} catch {',
+    '  Write-Host ""',
+    '  Write-Host ("NO se pudo instalar: " + $_.Exception.Message)',
+    '  Write-Host "Toma una foto de esta ventana y mandala a Digit2AI."',
+    '}',
+    ''
+  ].join('\r\n');
+}
+api.get('/sicar/puente.ps1', adminOnly, (req, res) => {
   res.set({ 'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': 'attachment; filename="puente-sicar.ps1"' });
-  res.send(ps);
+  res.send(puenteScript(null));
+});
+/** Crea una llave NUEVA y la entrega dentro del instalador. Es la única vez que se ve (igual que "Crear llave"). */
+api.post('/sicar/instalador', adminOnly, async (req, res) => {
+  const llave = 'fzk_' + crypto.randomBytes(24).toString('base64url');
+  const [r] = await exec(`INSERT INTO fz_api_keys (tenant_id,nombre,prefijo,hash,created_by) VALUES (:t,'Puente SICAR (instalador)',:p,:h,:u) RETURNING id, prefijo`,
+    { t: req.tenant, p: llave.slice(0, 10), h: hashKey(llave), u: req.user.id });
+  audit(req, 'llave_creada', `${r[0].id} instalador`);
+  res.status(201).json({ archivo: 'instalar-puente-sicar.cmd', contenido: puenteInstalador(llave), prefijo: r[0].prefijo });
 });
 
 /* ── usuarios ────────────────────────────────────────────────────────── */
@@ -1307,4 +1351,5 @@ module.exports._db = db;
 module.exports._waNumero = waNumero;
 module.exports._excelDate = excelDate;
 module.exports._pdfRows = null;
+module.exports._puente = { puenteScript, puenteInstalador };
 module.exports._daliaDeps = daliaDeps; // la SIT puede inyectar aquí un lector de PDF

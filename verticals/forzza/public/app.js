@@ -167,7 +167,7 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
-    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'],
+    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['url:guia-puente.html', 'Guía del puente'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
@@ -176,6 +176,7 @@
       <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
       <span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
+        : k.startsWith('url:') ? `<a href="${k.slice(4)}" target="_blank" rel="noopener">${l}</a>`
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
     const side = document.getElementById('side'), b = document.getElementById('burger');
@@ -861,9 +862,14 @@
         ${imps.map((i) => `<tr><td data-l="Fecha">${fmtF(String(i.created_at).slice(0, 10))}</td><td data-l="Reporte">${esc(i.tipo.replace(/_/g, ' '))}</td><td data-l="Archivo">${esc(i.archivo || '')}</td>
           <td data-l="Origen">${i.origen === 'puente' ? 'Puente' : esc(i.por || '')}</td><td data-l="Resultado">${esc(Object.entries((i.resumen && i.resumen.conteo) || {}).map(([k, n]) => `${RES_LBL[k] || k}: ${n}`).join(' · '))}</td>
           <td data-l="Cuadra">${i.cuadra === true ? '<span class="pill ok">sí</span>' : i.cuadra === false ? '<span class="pill bad">no</span>' : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no se importa nada.</p>'}</div>
-      ${canAdmin() ? `<h2>Puente automático (computadora de Forzza)</h2><div class="card" id="puente"><p>Un pequeño programa en la computadora donde está SICAR sube cada reporte que se guarde en la carpeta <b>Documentos\\SICAR-Forzza</b>. Así no hay que entrar a la app para importar.</p>
-        <ol style="margin:0 0 10px 18px;padding:0"><li>Crea una llave aquí abajo y cópiala (se muestra una sola vez).</li><li>Descarga el script, pega la llave donde dice PEGA_AQUI_LA_LLAVE y guárdalo en Documentos.</li><li>Prográmalo cada 15 minutos (la instrucción viene dentro del script).</li></ol>
-        <div class="row"><button class="btn primary" id="nk">Crear llave</button><a class="btn" href="api/v1/sicar/puente.ps1">Descargar script (Windows)</a></div><div id="kres"></div><div id="klist" class="tbl" style="margin-top:10px"></div></div>` : ''}`;
+      ${canAdmin() ? `<h2>Puente automático</h2><div class="card" id="puente"><p>Sube solos los reportes de SICAR desde la computadora donde está SICAR. Se instala <b>una sola vez</b>, en 3 pasos:</p>
+        <ol style="margin:0 0 12px 18px;padding:0;line-height:1.6"><li>En la computadora donde está SICAR, abre esta página y toca <b>Descargar instalador</b>.</li>
+          <li>Abre el archivo descargado (<b>instalar-puente-sicar</b>). Si Windows muestra un aviso azul, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.</li>
+          <li>Cuando la ventana diga <b>LISTO</b>, guarda tus reportes de SICAR en la carpeta <b>Documentos\\SICAR-Forzza</b>. Cada 15 minutos se suben solos.</li></ol>
+        <div class="row"><button class="btn primary" id="inst">Descargar instalador</button><a class="btn" href="guia-puente.html" target="_blank" rel="noopener">Ver la guía paso a paso</a></div><div id="kres"></div>
+        <details style="margin-top:12px"><summary class="muted">Opciones avanzadas (solo si te lo pide soporte)</summary>
+          <div class="row" style="margin-top:8px"><button class="btn" id="nk">Crear llave suelta</button><a class="btn" href="api/v1/sicar/puente.ps1">Descargar script sin llave</a></div></details>
+        <div id="klist" class="tbl" style="margin-top:10px"></div></div>` : ''}`;
     if (canAdmin()) {
       const pintarLlaves = async () => {
         const ks = await api('llaves');
@@ -875,6 +881,17 @@
       document.getElementById('nk').onclick = async () => {
         try { const k = await api('llaves', { method: 'POST', body: { nombre: 'Puente SICAR' } });
           document.getElementById('kres').innerHTML = `<div class="note">Tu llave (se muestra una sola vez): <code style="word-break:break-all">${esc(k.llave)}</code></div>`; pintarLlaves(); } catch (er) { alert(errMsg(er)); }
+      };
+      document.getElementById('inst').onclick = async (ev) => {
+        const btn = ev.currentTarget; btn.disabled = true;
+        try {
+          const r = await api('sicar/instalador', { method: 'POST', body: {} });
+          const url = URL.createObjectURL(new Blob([r.contenido], { type: 'application/octet-stream' }));
+          const a = document.createElement('a'); a.href = url; a.download = r.archivo; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          document.getElementById('kres').innerHTML = `<div class="note" style="margin-top:10px">Listo: se descargó <b>${esc(r.archivo)}</b> (llave que empieza con <code>${esc(r.prefijo)}…</code>). Ábrelo en esta computadora. Si lo descargas otra vez se crea una llave nueva; puedes revocar la anterior abajo.</div>`;
+          pintarLlaves();
+        } catch (er) { alert(errMsg(er)); } finally { btn.disabled = false; }
       };
       document.getElementById('puente').onclick = async (e) => {
         const b = e.target.closest('[data-rev]'); if (!b) return;

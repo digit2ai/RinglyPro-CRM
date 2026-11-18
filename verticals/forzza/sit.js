@@ -488,6 +488,17 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     const ps = await req('GET', '/sicar/puente.ps1', { cookie: dirA.cookie });
     ok('el script del puente no lleva ninguna llave adentro', ps.status === 200 && /PEGA_AQUI_LA_LLAVE/.test(ps.buf.toString()) && !/fzk_[A-Za-z0-9]/.test(ps.buf.toString()));
     ok('capturista no descarga el script (404)', (await req('GET', '/sicar/puente.ps1', { cookie: capA.cookie })).status === 404);
+    ok('capturista no descarga el instalador (404)', (await req('POST', '/sicar/instalador', { cookie: capA.cookie, body: {} })).status === 404);
+    const ins = await req('POST', '/sicar/instalador', { cookie: dirA.cookie, body: {} });
+    const cmd = ins.json && ins.json.contenido || '';
+    const psEmb = Buffer.from(((cmd.match(/\$b64 = "([^"]+)"/) || [])[1] || ''), 'base64').toString();
+    const llaveEmb = (psEmb.match(/\$Llave = "(fzk_[A-Za-z0-9_-]+)"/) || [])[1];
+    ok('instalador: trae una llave NUEVA ya puesta, solo ASCII y con fin de línea de Windows', ins.status === 201 && llaveEmb && !/[^\x00-\x7f]/.test(cmd) && /\r\n/.test(cmd) && /Register-ScheduledTask/.test(cmd) && /MyDocuments/.test(psEmb), JSON.stringify(ins.json && ins.json.archivo));
+    ok('instalador: esa llave sube reportes (y es de este tenant)', (await ingest(llaveEmb)).status === 200);
+    ok('instalador: la llave queda listada y se puede revocar', (await req('GET', '/llaves', { cookie: dirA.cookie })).json.some((k) => k.nombre === 'Puente SICAR (instalador)' && k.prefijo === ins.json.prefijo));
+    const guia = require('fs').readFileSync(require('path').join(__dirname, 'public', 'guia-puente.html'), 'utf8');
+    const imgs = [...guia.matchAll(/src="(guia\/[^"]+)"/g)].map((m) => m[1]);
+    ok('guía del puente: existe, está en el menú bajo SICAR y todas sus imágenes existen', imgs.length >= 6 && imgs.every((f) => require('fs').existsSync(require('path').join(__dirname, 'public', f))) && /\['url:guia-puente\.html'/.test(require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8')));
     router._pdfRows = null;
     if (deferReal) {
       const real = fs.readFileSync(process.env.FORZZA_SICAR_MUESTRA);
