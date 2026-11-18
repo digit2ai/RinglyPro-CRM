@@ -165,7 +165,7 @@
   }
 
   const VIEWS = [
-    ['grp', 'Capital'], ['tablero', 'Tablero'], ['proyeccion', 'Proyección'], ['simular', '¿Tomo este pedido?'],
+    ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
@@ -286,7 +286,7 @@
     const de = s && s.dias_efectivo, deCol = de == null ? '#94a3b8' : de >= 30 ? VERDE : de >= 15 ? AMBAR : ROJO;
     const cats = (s && s.categorias) || [];
     const conc = s && s.concentracion;
-    main().innerHTML = `<h1>Tablero</h1><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
+    main().innerHTML = `<h1>Tablero <span class="muted" style="font-weight:600">(Actual)</span></h1><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
       ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza por <a href="#bancos">Bancos</a>, luego <a href="#sicar">Importar de SICAR</a>.</div>` : ''}
       ${alertasHtml(t.alertas)}
       <div class="card hero">
@@ -310,17 +310,8 @@
         <p class="muted" style="margin:0;font-size:13px">${mc.caminos.toLocaleString('es-MX')} futuros posibles, armados con lo que de verdad pasó en los bancos (${esc(mc.desde)} a ${esc(mc.hasta)}, ${mc.meses_historia} meses). Es una estimación: con pocos meses de historia el rango real puede ser más amplio.</p></div>
         <div class="rings">${anillo(mc.prob_negativo_en[30], 'en 30 días')}${anillo(mc.prob_negativo_en[60], 'en 60 días')}${anillo(mc.prob_negativo_en[90], 'en 90 días')}</div></div>
         ${abanico(mc, t.efectivo, s.reserva)}</div>` : ''}
-      <div class="grid two">
-        <div class="card"><h2 style="margin-top:0">Mes por mes</h2>${barrasMes((s && s.meses) || [])}</div>
-        <div class="card"><h2 style="margin-top:0">¿Qué días del mes aprietan?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio de lo que entra menos lo que sale, por día del mes.</p>${calor((s && s.calor) || [])}</div>
-      </div>
-      <div class="grid two">
-        <div class="card"><h2 style="margin-top:0">A dónde se va el dinero</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio al mes, sin traspasos entre tus cuentas.</p>
-          ${barrasH(cats.filter((c) => c.salidas > 0 && c.categoria !== 'traspaso').sort((a, b) => b.salidas - a.salidas).slice(0, 8).map((c) => ({ l: CAT_LBL[c.categoria] || c.categoria, v: c.salidas })), ROJO)}</div>
-        <div class="card"><h2 style="margin-top:0">De dónde viene</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio al mes. Préstamos y aportaciones no son venta.</p>
-          ${barrasH(cats.filter((c) => c.entradas > 0 && c.categoria !== 'traspaso').sort((a, b) => b.entradas - a.entradas).slice(0, 8).map((c) => ({ l: CAT_LBL[c.categoria] || c.categoria, v: c.entradas })), VERDE)}
-          <p class="muted" style="font-size:12px;margin:8px 0 0">"Sin categoría" es grande: categorízalo en <a href="#bancos">Bancos</a> y estos cuadros dicen más.</p></div>
-      </div>
+      ${s && (s.meses || []).length ? movimientoDinero({ n: s.meses_n || s.meses.length, peor_mes: s.peor_mes, mejor_mes: s.mejor_mes, meses: s.meses, por_categoria: cats }) : ''}
+      <div class="card"><h2 style="margin-top:0">¿Qué días del mes aprietan?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio de lo que entra menos lo que sale, por día del mes.</p>${calor((s && s.calor) || [])}</div>
       <div class="card"><h2 style="margin-top:0">¿Dependes de pocos clientes?</h2>${conc ? `<div class="conc">
         <div>${lorenz(conc)}</div>
         <div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
@@ -399,7 +390,7 @@
         <div style="display:grid;gap:4px" title="Entró ${c$(m.entradas)} · Salió ${c$(m.salidas)}">${bar(m.entradas, maxM, VERDE)}${bar(m.salidas, maxM, ROJO)}
           <div class="muted" style="font-size:12px">entró ${corto(m.entradas)} · salió ${corto(m.salidas)}</div></div>
         <div style="text-align:right;min-width:86px"><div class="muted" style="font-size:11px">neto</div><b style="color:${m.neto >= 0 ? 'var(--ok)' : 'var(--bad)'}">${m.neto >= 0 ? '+' : ''}${corto(m.neto)}</b></div></div>`).join('');
-    const cats = p.por_categoria.filter((c) => c.entradas || c.salidas);
+    const cats = p.por_categoria.filter((c) => (c.entradas || c.salidas) && c.categoria !== 'traspaso');
     const maxC = Math.max(1, ...cats.map((c) => Math.max(c.entradas, c.salidas)));
     const lado = (c, k, color) => (c[k] ? `<div style="display:flex;align-items:center;gap:8px"><div style="flex:1">${bar(c[k], maxC, color)}</div><span style="font-size:12px;min-width:70px;text-align:right">${corto(c[k])}</span></div>` : '');
     const catEnt = cats.filter((c) => c.entradas).sort((a, b) => b.entradas - a.entradas);
@@ -421,7 +412,7 @@
   R.proyeccion = async function () {
     S.sim = S.sim || SIM0();
     const s = S.sim;
-    main().innerHTML = `<h1>Proyección</h1><p class="sub">El saldo de cada día con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Abajo puedes cambiar el escenario y ver qué pasa. <b>Los cambios no se guardan.</b></p>
+    main().innerHTML = `<h1>Proyección <span class="muted" style="font-weight:600">(Futuro)</span></h1><p class="sub">El saldo de cada día con el dinero real de Forzza: bancos, lo que te deben, lo que debes y cómo se ha movido el dinero. Abajo puedes cambiar el escenario y ver qué pasa. <b>Los cambios no se guardan.</b></p>
       <div class="card"><div class="form">
         <div><label>Efectivo real hoy</label><input id="s_ef" inputmode="decimal" placeholder="el de los bancos" value="${esc(s.efectivo)}"><div class="muted" id="s_efn" style="font-size:12px;margin-top:3px"></div></div>
         <div><label>Reserva mínima</label><input id="s_res" inputmode="decimal" placeholder="la de Ajustes" value="${s.reserva == null ? '' : esc(s.reserva)}"></div>
@@ -516,7 +507,6 @@
         ${fechas.map((f) => porDia[f].map((e, i) => `<tr><td data-l="Fecha">${i ? '' : fmtF(f)}</td><td data-l="Movimiento">${esc(e.concepto)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td>
           <td data-l="Origen"><span class="pill ${(ORIGEN[e.tipo] || ['', ''])[1]}">${esc((ORIGEN[e.tipo] || [e.tipo])[0])}</span></td><td class="n" data-l="Monto">${sentido(e.monto)}</td>
           <td class="n" data-l="Saldo">${i === porDia[f].length - 1 ? c$(saldoDe[f]) : ''}</td></tr>`).join('')).join('')}</tbody></table>` : '<p class="empty">Sin movimientos en el periodo.</p>'}</div>
-        ${r.patron ? movimientoDinero(r.patron) : ''}
         ${r.modificado.vencido_no_contado.length ? `<h2>Cobros vencidos que no se cuentan</h2><div class="card tbl"><table class="cards"><tbody>${r.modificado.vencido_no_contado.map((e) =>
           `<tr><td data-l="Cliente">${esc(e.concepto)}</td><td data-l="Venció">${fmtF(e.vencimiento)} · ${e.dias_vencido} días</td><td class="n" data-l="Pendiente">${c$(e.monto)}</td></tr>`).join('')}</tbody></table>
           <p class="muted" style="font-size:13px">Pon una fecha de compromiso en Por cobrar y entran a la proyección ese día, o elige "Contarlos hoy".</p></div>` : ''}

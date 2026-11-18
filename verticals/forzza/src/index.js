@@ -562,7 +562,7 @@ async function saludDe(tenant) {
     calificacion: cal, monte_carlo: mc,
     dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
     promedio_mes: pm, entradas_operativas_mes: entOp, salidas_operativas_mes: salOp,
-    meses: patron ? patron.meses : [],
+    meses: patron ? patron.meses : [], meses_n: patron ? patron.n : 0, peor_mes: patron ? patron.peor_mes : null, mejor_mes: patron ? patron.mejor_mes : null,
     calor: patron ? Array.from({ length: 31 }, (_, i) => patron.dias.promedio.ent[i + 1] - patron.dias.promedio.sal[i + 1]) : [],
     categorias: Object.entries(cats).map(([k, v]) => ({ categoria: k, ...v })).sort((a, b) => (b.entradas + b.salidas) - (a.entradas + a.salidas)),
     concentracion: conc,
