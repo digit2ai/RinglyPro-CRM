@@ -18,7 +18,7 @@
 
 const URL_ = 'https://citi.wd5.myworkdayjobs.com/wday/cxs/citi/2/jobs';
 const APPLY = 'https://citi.wd5.myworkdayjobs.com/2';
-const PAGE = 20, MAX_PER_TERM = 200, PACE_MS = 700;
+const PAGE = 20, MAX_PER_TERM = 200, PACE_MS = 1500;
 
 const args = process.argv.slice(2);
 const flags = Object.fromEntries(args.filter(a => a.startsWith('--')).map(a => {
