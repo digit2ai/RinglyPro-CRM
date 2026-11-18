@@ -84,6 +84,50 @@
     document.body.appendChild(m); return m;
   }
   const kpi = (l, v, n, cls) => `<div class="card kpi ${cls || ''}"><div class="l">${l}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
+  // Notas del Tablero: al pasar el mouse (o tocar en el teléfono) sobre la "i" se abre la explicación.
+  const TIPS = {
+    calif: ['Calificación de salud financiera', 'Un número de 0 a 100 que resume cinco cosas: cuántos días aguanta la caja, qué tan probable es quedar en negativo, si entra más de lo que sale, cuánto está vencido y si dependes de pocos clientes. 75 o más es sana, de 50 a 74 pide atención y menos de 50 está en riesgo. Se calcula con reglas fijas, no con un modelo.', 'Sube la calificación cobrando lo vencido y juntando más días de efectivo.'],
+    liquidez: ['Días de efectivo (hasta 25 puntos)', 'Cuántos días podrías pagar todo con el dinero que hay hoy en los bancos, si no entrara nada. Mientras más días, más puntos; con 30 días o más se obtienen los 25.', ''],
+    riesgo: ['Probabilidad de quedar en negativo (hasta 25 puntos)', 'De 2,000 futuros simulados con lo que de verdad pasó en tus bancos, en cuántos el saldo baja de cero antes de 60 días. Mientras más baja, más puntos.', ''],
+    flujo: ['Flujo neto de los meses (hasta 20 puntos)', 'Compara lo que entró con lo que salió en los meses completos de los bancos, sin contar traspasos entre tus cuentas. Si entra más de lo que sale, da puntos; si sale más, los quita.', ''],
+    cartera: ['Cartera vencida (hasta 15 puntos)', 'Qué parte de lo que te deben los clientes ya pasó su fecha de pago, según SICAR. Mientras menos vencido, más puntos.', ''],
+    concentracion: ['Dependencia de pocos clientes (hasta 15 puntos)', 'Qué parte de lo cobrado viene de tus 5 clientes más grandes. Si pocos clientes pesan mucho, un atraso de uno se siente en la caja. Mientras más repartido, más puntos.', ''],
+    efectivo: ['Efectivo hoy', 'La suma de lo que hay hoy en las cuentas de banco que cuentan como efectivo (las marcadas "incluir"). Una cuenta sin movimientos cargados aparece en $0.', 'Sube los estados de cuenta en Bancos para que esté al día.'],
+    dias: ['Días de efectivo', 'El efectivo de hoy dividido entre lo que sale en promedio cada día. Responde: si nadie te paga, ¿cuántos días aguantas? Menos de 15 es poco; 30 o más es cómodo.', ''],
+    p90: ['Saldo más probable en 90 días', 'El punto medio de 2,000 futuros simulados: la mitad termina arriba y la mitad abajo. El rango de abajo es donde cae 9 de cada 10 casos. Es una estimación, no una promesa.', ''],
+    minimo: ['Punto más bajo probable', 'El saldo más bajo al que llega el banco en los próximos 90 días en el caso típico. El "mal caso" es lo que pasa en 1 de cada 20 futuros.', 'Si es negativo, programa los pagos grandes después de los días de cobro.'],
+    montecarlo: ['Probabilidad de quedarse sin dinero', 'Se arman 2,000 futuros posibles tomando semanas reales de tu historia de bancos al azar. Los anillos dicen en qué parte de esos futuros el banco queda en negativo a 30, 60 y 90 días. La gráfica muestra el rango: la línea del centro es lo más probable y la banda clara los casos extremos.', 'Con pocos meses de historia el rango real puede ser más amplio.'],
+    meses: ['Mes por mes', 'Cuánto entró (verde) y cuánto salió (rojo) en cada mes completo de los bancos, sin traspasos entre tus propias cuentas.', 'Revisa los meses donde salió más: ahí suele haber pagos grandes juntos.'],
+    categorias: ['Promedio al mes, por categoría', 'De dónde viene y a dónde se va el dinero en un mes normal, según la categoría de cada movimiento de banco.', 'Clasifica en Bancos lo que está "sin categoría" para que este cuadro sea más preciso.'],
+    calor: ['Qué días del mes aprietan', 'Para cada día del mes, el promedio de lo que entra menos lo que sale. Los días rojos son los que más dinero se va (nómina, proveedores); los verdes, los que más entra.', 'Procura no programar pagos grandes en los días rojos.'],
+    conc: ['Dependes de pocos clientes', 'Qué tanto de lo cobrado viene de pocos clientes, con los depósitos del banco que traen el nombre del cliente. El índice Gini va de 0 (todos pagan parecido) a 1 (uno solo paga todo). La curva muestra lo mismo en dibujo.', 'Pon límite de crédito a los más grandes y busca más clientes medianos.'],
+    deben: ['Lo que te deben y lo que debes', 'Te deben: el saldo de los clientes según SICAR, y cuánto de eso ya está vencido. Debes: las facturas de proveedores por pagar. También aparecen los préstamos que se pagan cada mes.', 'Importa "Créditos de Proveedores" de SICAR para ver lo que debes.'],
+    dso: ['Días para cobrar (DSO)', 'En promedio, cuántos días tarda un cliente en pagarte: lo que te deben dividido entre lo que cobras al día.', 'Menos días es mejor: el dinero llega antes.'],
+    dpo: ['Días para pagar (DPO)', 'En promedio, cuántos días tardas en pagar a tus proveedores. Necesita las facturas de proveedores.', 'Si cobras más lento de lo que pagas, la caja se aprieta.'],
+    hallazgos: ['Neural Findings', 'Cada hallazgo sale de reglas fijas sobre tus bancos, SICAR y la simulación. Diagnóstico: qué está pasando y con qué cifras. Prescripción: qué hacer. Crítico va primero, luego Atención y luego Oportunidad.', ''],
+    proximos: ['Próximos 14 días', 'Cobros, pagos a proveedores y gastos fijos que vencen en las próximas dos semanas, con lo vencido marcado.', '']
+  };
+  const tip = (k) => TIPS[k] ? `<button type="button" class="tip noprint" data-tip="${k}" aria-label="Qué significa">i</button>` : '';
+  (function () {
+    let box = null, cur = null;
+    const hide = () => { if (box) box.style.display = 'none'; cur = null; };
+    const show = (b) => {
+      const t = TIPS[b.dataset.tip]; if (!t) return;
+      if (!box) { box = document.createElement('div'); box.className = 'tipbox'; box.setAttribute('role', 'tooltip'); document.body.appendChild(box); }
+      box.innerHTML = `<b>${t[0]}</b><p>${t[1]}</p>${t[2] ? `<p class="tip-do">${t[2]}</p>` : ''}`;
+      box.style.display = 'block'; cur = b;
+      const r = b.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+      let x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+      let y = r.bottom + 8; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
+      box.style.left = x + 'px'; box.style.top = y + 'px';
+    };
+    document.addEventListener('mouseover', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) show(b); });
+    document.addEventListener('mouseout', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b && !b.contains(e.relatedTarget)) hide(); });
+    document.addEventListener('focusin', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) show(b); });
+    document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) { e.preventDefault(); show(b); } else if (!(box && box.contains(e.target))) hide(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+    addEventListener('scroll', hide, true); addEventListener('hashchange', hide);
+  })();
 
   /** Gráfica del saldo proyectado: línea, cero, reserva y punto más bajo. Valores en centavos. */
   function chart(serie, reserva, extra) {
@@ -304,7 +348,7 @@
     if (!list) return '';
     const SEVL = { critico: ['bad', 'Crítico'], atencion: ['warn', 'Atención'], oportunidad: ['acc', 'Oportunidad'] };
     const n = (k) => list.filter((h) => h.severidad === k).length;
-    return `<div class="card nf"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Neural Findings · Diagnóstico y prescripción</h2>
+    return `<div class="card nf"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Neural Findings · Diagnóstico y prescripción ${tip('hallazgos')}</h2>
       <span class="muted" style="font-size:13px">${list.length ? `${n('critico')} críticos · ${n('atencion')} de atención · ${n('oportunidad')} oportunidades` : ''}</span></div>
       ${list.length ? list.map((h) => { const [c, l] = SEVL[h.severidad] || ['', h.severidad]; return `<div class="nf-item nf-${esc(h.severidad)}">
         <div class="row" style="justify-content:space-between"><div><span class="pill ${c}">${l}</span> <b>${esc(h.titulo)}</b></div>${h.impacto ? `<span class="nf-imp">${c$(h.impacto)}</span>` : ''}</div>
@@ -327,54 +371,55 @@
     const de = s && s.dias_efectivo, deCol = de == null ? '#94a3b8' : de >= 30 ? VERDE : de >= 15 ? AMBAR : ROJO;
     const cats = (s && s.categorias) || [];
     const conc = s && s.concentracion;
-    main().innerHTML = `<h1>Tablero <span class="muted" style="font-weight:600">(Actual)</span></h1><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
+    main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">Tablero <span class="muted" style="font-weight:600">(Actual)</span></h1><button class="btn noprint" id="imprimir">Imprimir resultados</button></div><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
       ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza por <a href="#bancos">Bancos</a>, luego <a href="#sicar">Importar de SICAR</a>.</div>` : ''}
       ${alertasHtml(t.alertas)}
       <div class="card hero">
         <div class="hero-g">${gauge(cal && cal.puntos, cal ? cal.nivel : 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
           <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Calificación de salud financiera, de 0 a 100</div></div>
-        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación?</h2>
-          ${cal ? cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
+        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación? ${tip('calif')}</h2>
+          ${cal ? cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)} ${tip(p.clave)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
             <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
             <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) : 'Sin dato'}</div></div>`).join('') : '<p class="muted">Sin datos de bancos todavía.</p>'}
           ${cal && cal.peso_calificado < 100 ? `<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás. Se completan al importar los créditos de SICAR.</p>` : ''}</div>
       </div>
       <div class="grid kpis">
-        ${kpi('Efectivo hoy', c$(t.efectivo), t.cuentas.filter((c) => c.incluir).map((c) => `${esc(c.nombre)}: ${k$(c.saldo)}`).join(' · '))}
-        <div class="card kpi"><div class="l">Días de efectivo</div><div class="v" style="color:${deCol}">${de == null ? '—' : de.toFixed(1)}</div>
+        ${kpi('Efectivo hoy ' + tip('efectivo'), c$(t.efectivo), t.cuentas.filter((c) => c.incluir).map((c) => `${esc(c.nombre)}: ${k$(c.saldo)}`).join(' · '))}
+        <div class="card kpi"><div class="l">Días de efectivo ${tip('dias')}</div><div class="v" style="color:${deCol}">${de == null ? '—' : de.toFixed(1)}</div>
           <div class="thermo"><i style="width:${de == null ? 0 : Math.min(100, de / 60 * 100).toFixed(0)}%;background:${deCol}"></i><b style="left:25%"></b><b style="left:50%"></b></div>
           <div class="n">Cuánto aguantas sin cobrar nada${s && s.salida_diaria ? ` (salen ${k$(s.salida_diaria)} al día)` : ''}. Marcas: 15 y 30 días.</div></div>
-        ${kpi('Saldo más probable en 90 días', mc ? c$(mc.final.p50) : '—', mc ? `Entre ${k$(mc.final.p5)} y ${k$(mc.final.p95)} en 9 de cada 10 casos` : 'Sin historia de bancos', mc && mc.final.p50 < 0 ? 'bad' : '')}
-        ${kpi('Punto más bajo probable', mc ? c$(mc.minimo.p50) : '—', mc ? `En un mal caso (1 de 20): ${k$(mc.minimo.p5)}` : '', mc && mc.minimo.p50 < 0 ? 'bad' : '')}
+        ${kpi('Saldo más probable en 90 días ' + tip('p90'), mc ? c$(mc.final.p50) : '—', mc ? `Entre ${k$(mc.final.p5)} y ${k$(mc.final.p95)} en 9 de cada 10 casos` : 'Sin historia de bancos', mc && mc.final.p50 < 0 ? 'bad' : '')}
+        ${kpi('Punto más bajo probable ' + tip('minimo'), mc ? c$(mc.minimo.p50) : '—', mc ? `En un mal caso (1 de 20): ${k$(mc.minimo.p5)}` : '', mc && mc.minimo.p50 < 0 ? 'bad' : '')}
       </div>
-      ${mc ? `<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es quedarse sin dinero?</h2>
+      ${mc ? `<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es quedarse sin dinero? ${tip('montecarlo')}</h2>
         <p class="muted" style="margin:0;font-size:13px">${mc.caminos.toLocaleString('es-MX')} futuros posibles, armados con lo que de verdad pasó en los bancos (${esc(mc.desde)} a ${esc(mc.hasta)}, ${mc.meses_historia} meses). Es una estimación: con pocos meses de historia el rango real puede ser más amplio.</p></div>
         <div class="rings">${anillo(mc.prob_negativo_en[30], 'en 30 días')}${anillo(mc.prob_negativo_en[60], 'en 60 días')}${anillo(mc.prob_negativo_en[90], 'en 90 días')}</div></div>
         ${abanico(mc, t.efectivo, s.reserva)}</div>` : ''}
       ${s && (s.meses || []).length ? movimientoDinero({ n: s.meses_n || s.meses.length, peor_mes: s.peor_mes, mejor_mes: s.mejor_mes, meses: s.meses, por_categoria: cats }) : ''}
-      <div class="card"><h2 style="margin-top:0">¿Qué días del mes aprietan?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio de lo que entra menos lo que sale, por día del mes.</p>${calor((s && s.calor) || [])}</div>
-      <div class="card"><h2 style="margin-top:0">¿Dependes de pocos clientes?</h2>${conc ? `<div class="conc">
+      <div class="card"><h2 style="margin-top:0">¿Qué días del mes aprietan? ${tip('calor')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Promedio de lo que entra menos lo que sale, por día del mes.</p>${calor((s && s.calor) || [])}</div>
+      <div class="card"><h2 style="margin-top:0">¿Dependes de pocos clientes? ${tip('conc')}</h2>${conc ? `<div class="conc">
         <div>${lorenz(conc)}</div>
         <div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
             ${kpi('Los 5 mayores', pc(conc.top5), 'de lo cobrado', conc.top5 >= 0.6 ? 'bad' : '')}${kpi('Índice Gini', conc.gini.toFixed(2), '0 = parejo · 1 = uno solo')}${kpi('Clientes', String(conc.n), 'con nombre en el banco')}</div>
           ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), NAVY)}
           <p class="muted" style="font-size:12px;margin:8px 0 0">Últimos 6 meses. Solo los depósitos que traen el nombre del cliente (${pc(conc.cobertura)} de lo cobrado); los depósitos sin nombre no entran. Con los créditos de SICAR queda exacto.</p></div></div>`
         : '<p class="empty">Aún no hay depósitos con nombre de cliente.</p>'}</div>
-      <div class="card"><h2 style="margin-top:0">Lo que te deben y lo que debes</h2>${t.cartera.total || (s && (s.por_pagar || s.cartera_sicar)) ? `
+      <div class="card"><h2 style="margin-top:0">Lo que te deben y lo que debes ${tip('deben')}</h2>${t.cartera.total || (s && (s.por_pagar || s.cartera_sicar)) ? `
         <div class="grid" style="margin-bottom:10px">${t.cartera.total ? kpi('Te deben', c$(t.cartera.total), 'vencido ' + c$(t.cartera.vencido), t.cartera.vencido ? 'bad' : '')
           : kpi('Te deben (según SICAR)', c$(s.cartera_sicar.total), `vencido <b>${c$(s.cartera_sicar.vencido)}</b> (${pc(s.cartera_sicar.vencido / s.cartera_sicar.total)}) · ${s.cartera_sicar.personas} clientes, ${s.cartera_sicar.personas_vencidas || 0} con vencido`, s.cartera_sicar.vencido ? 'bad' : '')}
           ${(s && s.financiamientos || []).map((f) => kpi(esc(f.concepto), c$(f.monto) + ' al mes', 'se paga el día ' + f.dia + (f.hasta ? ' · último pago ' + fmtF(f.hasta) : '') + ' · <a href="#fijos">Gastos fijos</a>')).join('')}
           ${t.por_pagar_total || !s.cartera_sicar ? kpi('Debes', c$(t.por_pagar_total), c$(t.por_pagar_30) + ' en 30 días') : kpi('Debes', '—', 'falta el reporte de Créditos de Proveedores de SICAR')}
-          ${kpi('Días para cobrar (DSO)', s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO)', s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
+          ${kpi('Días para cobrar (DSO) ' + tip('dso'), s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO) ' + tip('dpo'), s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
         ${t.cartera.total ? aging(t.cartera) : s.cartera_sicar ? '<p class="muted" style="font-size:12px;margin:6px 0 0">El reporte de SICAR trae el saldo de cada cliente, no sus facturas: por eso todavía no hay antigüedad por días ni fechas de cobro en la proyección. Con el reporte "Tipo: Sí" se completa.</p>' : ''}`
         : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#sicar">Importar de SICAR</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
       ${hallazgosHtml(s && s.hallazgos)}
-      <h2>Próximos 14 días</h2>
+      <h2>Próximos 14 días ${tip('proximos')}</h2>
       <div class="card tbl">${t.proximos.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.proximos.map((e) => `<tr><td data-l="Fecha">${fmtF(e.fecha)}${e.vencido ? ' <span class="pill bad">vencido</span>' : ''}</td><td data-l="Concepto">${esc(e.concepto)}</td>
           <td data-l="Tipo">${{ cobro: 'Cobro', pago: 'Pago a proveedor', fijo: 'Gasto fijo' }[e.tipo] || esc(e.tipo)}</td><td class="n" data-l="Monto">${sentido(e.monto)}</td></tr>`).join('')}
         </tbody></table>` : '<p class="empty">Nada registrado en los próximos 14 días.</p>'}</div>
       <p class="muted" style="font-size:12px">Reserva mínima: ${t.reserva == null ? '<a href="#ajustes">sin definir</a>' : c$(t.reserva)} · SICAR: ${t.sicar_ultima ? 'importado el ' + fmtF(String(t.sicar_ultima).slice(0, 10)) : 'sin importar'} · <a href="#proyeccion">Ver la proyección y simular escenarios</a></p>`;
+    document.getElementById('imprimir').onclick = () => { const t0 = document.title; document.title = 'Tablero Forzza ' + t.hoy; print(); document.title = t0; };
   };
   function valParte(p) {
     if (p.clave === 'liquidez') return p.valor.toFixed(1) + ' días';
@@ -443,9 +488,9 @@
     const totE = cats.reduce((a, c) => a + c.entradas, 0), totS = cats.reduce((a, c) => a + c.salidas, 0);
     return `<h2>Así se ha movido el dinero (bancos, ${p.n} meses)</h2>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
-        <div class="card"><h3 style="margin:0 0 4px">Mes por mes</h3>
+        <div class="card"><h3 style="margin:0 0 4px">Mes por mes ${tip('meses')}</h3>
           <div style="display:flex;gap:16px;font-size:12px;color:var(--mut);margin-bottom:4px"><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;background:${VERDE}"></i>Entró</span><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;background:${ROJO}"></i>Salió</span></div>${meses}</div>
-        <div class="card"><h3 style="margin:0 0 4px">Promedio al mes, por categoría</h3>
+        <div class="card"><h3 style="margin:0 0 4px">Promedio al mes, por categoría ${tip('categorias')}</h3>
           <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:16px">
             <div><div style="font-weight:600;color:var(--ok)">Entra ${corto(totE)}</div>${lista(catEnt, 'entradas', VERDE)}</div>
             <div><div style="font-weight:600;color:var(--bad)">Sale ${corto(totS)}</div>${lista(catSal, 'salidas', ROJO)}</div></div>

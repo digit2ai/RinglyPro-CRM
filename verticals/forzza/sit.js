@@ -510,9 +510,12 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const sal = await req('GET', '/salud', { cookie: dirA.cookie });
       ok('GET /salud trae hallazgos', sal.status === 200 && Array.isArray(sal.json.hallazgos));
       const appjs = require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8');
-      const ti = appjs.indexOf("Lo que te deben y lo que debes"), tn = appjs.indexOf('${hallazgosHtml('), tp = appjs.indexOf('<h2>Próximos 14 días</h2>');
+      const ti = appjs.indexOf("Lo que te deben y lo que debes"), tn = appjs.indexOf('${hallazgosHtml('), tp = appjs.indexOf('<h2>Próximos 14 días');
       ok('tablero: Neural Findings va entre "Lo que te deben" y "Próximos 14 días"', ti > 0 && tn > ti && tp > tn);
       ok('menú: "Ingresa a SICAR" bajo SICAR abre Nube SICAR con salida a otra pestaña', /\['sicar_web', 'Ingresa a SICAR'\]/.test(appjs) && /login\.nubesicar\.mx/.test(appjs) && /target="_blank"/.test(appjs) && appjs.indexOf("'sicar_web'") > appjs.indexOf("['grp', 'SICAR']") && appjs.indexOf("'sicar_web'") < appjs.indexOf("['grp', 'Catálogos']"));
+      { const keys = ['calif', 'liquidez', 'riesgo', 'flujo', 'cartera', 'concentracion', 'efectivo', 'dias', 'p90', 'minimo', 'montecarlo', 'meses', 'categorias', 'calor', 'conc', 'deben', 'dso', 'dpo', 'hallazgos', 'proximos'];
+        ok('tablero: cada indicador tiene su nota explicativa y hay botón de imprimir', keys.every((k) => new RegExp('\\b' + k + ": \\['").test(appjs) && (appjs.includes("tip('" + k + "')") || (['liquidez', 'riesgo', 'flujo', 'cartera', 'concentracion'].includes(k) && appjs.includes('tip(p.clave)')))) && /id="imprimir"/.test(appjs) && /print\(\)/.test(appjs));
+        ok('tablero: la parte de la calificación ya no muestra la regla', !/esc\(p\.regla\)/.test(appjs)); }
       ok('panel izquierdo plegable: se recuerda y se pliega solo en SICAR', /fz_side/.test(appjs) && /side-off/.test(appjs) && /v === 'sicar_web' && antes !== 'sicar_web'\) setSide\(true\)/.test(appjs));
     }
     const guia = require('fs').readFileSync(require('path').join(__dirname, 'public', 'guia-puente.html'), 'utf8');

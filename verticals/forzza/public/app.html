@@ -101,7 +101,14 @@ body.vista-llena main{max-width:none;display:flex;flex-direction:column}
   table.cards td::before{content:attr(data-l);color:var(--mut);font-size:12px;text-align:left}
   table.cards td.n{white-space:normal}
 }
-@media print{header.top,nav.side,.noprint{display:none!important}main{padding:0}.card{border:0}}
+.tip{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--acc,#012a72);background:#fff;color:var(--acc,#012a72);font:700 12px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:2px;padding:0;margin-left:4px;position:relative}
+.tip::after{content:'';position:absolute;inset:-12px}
+.tip:hover,.tip:focus-visible{background:var(--acc,#012a72);color:#fff;outline:none}
+.tipbox{position:fixed;z-index:200;display:none;max-width:min(340px,calc(100vw - 16px));background:#0b1630;color:#eef2f9;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:400;line-height:1.5;box-shadow:0 12px 30px rgba(0,0,0,.28);text-transform:none;letter-spacing:0}
+.tipbox b{display:block;font-size:14px;margin-bottom:4px;color:#fff}
+.tipbox p{margin:0 0 6px}.tipbox p:last-child{margin:0}
+.tipbox .tip-do{color:#ffd77a}
+@media print{header.top,nav.side,.noprint,.tipbox,.d2orb-root{display:none!important}main{padding:0;max-width:none}.card{border:1px solid #ddd;break-inside:avoid}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .fz-out .d2orb-root{display:none!important}
 </style>
 <style>
@@ -139,6 +146,6 @@ body.vista-llena main{max-width:none;display:flex;flex-direction:column}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=17" defer></script>
+<script src="app.js?v=18" defer></script>
 </body>
 </html>
