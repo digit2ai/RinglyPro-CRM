@@ -322,7 +322,15 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('créditos: folio "-" se guarda como sin folio', rk.filas[1].folio === null && rk.filas[1].parte === 'ACEROS PRUEBA');
     ok('créditos: cuadra con el Total y con el saldo de cada proveedor', rk.cuadra === true && rk.partes_que_no_cuadran.length === 0 && rk.filtros.estado === 'Por Pagar');
     const resumido = [[R([175, 'Reporte de Créditos a Clientes']), R([52, 'No. Cli'], [138, 'Nombre'], [623, 'Teléfono'], [793, 'Celular'], [1060, 'Saldo']), R([88, '2'], [138, 'Cliente X'], [623, '1'], [1030, '$ 1.00'])]];
-    ok('créditos sin detalle (Tipo: No) se rechaza con la instrucción', SR.leer(resumido).error === 'sin_detalle');
+    const rres = SR.leer(resumido);
+    ok('créditos sin detalle (Tipo: No): se lee como foto de saldos, sin ningún documento', !rres.error && rres.solo_saldos === true && rres.filas.length === 0 && rres.partes.length === 1 && rres.partes[0].saldo === 100);
+    ok('créditos sin detalle y sin personas: se rechaza con la instrucción', SR.leer([[R([175, 'Reporte de Créditos a Clientes']), R([52, 'No. Cli'], [138, 'Nombre'], [623, 'Teléfono'], [793, 'Celular'], [1060, 'Saldo'])]]).error === 'sin_detalle');
+    const resHoja = (estado) => SR.leer(SR.desdeHoja([['Reporte de Créditos a Clientes'], [], ['Documento:', null, ' Todos', null, null, 'Caja:', ' Todas', null, 'Usuario:', null, null, null, ' Todos', null, null, null, 'Tipo:', null, ' No'],
+      ['Cliente:', null, ' Todos', null, null, null, null, null, 'Estado:', null, null, null, ' ' + estado], ['  No. Cli', 'Nombre', null, null, null, null, null, null, 'Teléfono', null, null, null, null, 'Celular', null, null, null, 'Saldo  '],
+      ['99', 'CLIENTE UNO', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '$ 1,000.50'], [], ['7', 'CLIENTE DOS', null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, '$ 250.00'],
+      [], [null, null, null, null, null, null, null, null, 'Total :', null, null, null, null, '$ 1,250.50'], ['Página 1', null, null, ' / 1', null, null, null, 'Generado por SICAR']]));
+    const hv = resHoja('Vencidos'), hp = resHoja('Por Pagar');
+    ok('Excel de SICAR sin detalle: cuadra con su Total y sabe si es "Vencidos" o "Por Pagar"', hv.cuadra === true && hv.total_leido === 125050 && hv.vista === 'vencidos' && hp.vista === 'por_pagar' && hp.partes.length === 2);
     const per = SR.leer([[R([415, 'Reporte de Créditos a Clientes por Periodo de Tiempo en Días']),
       R([52, 'No. Cli'], [138, 'Nombre'], [663, '0-30 Dias'], [795, '31-60 Dias'], [936, '61-90 Dias'], [1067, '91-120 Dias'], [1222, '> 121 Dias'], [1435, 'TOTAL']),
       R([88, '2'], [138, 'Cliente Uno'], [653, '$ 1,474.60'], [830, '$ 0.00'], [970, '$ 0.00'], [1112, '$ 0.00'], [1258, '$ 0.00'], [1378, '$ 1,474.60']),
@@ -391,6 +399,15 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     const oct = rs.meses.find((m) => m.mes === '2026-10');
     ok('resumen: compras = COM vigentes − devoluciones; gastos = GAS; los cancelados no cuentan', oct && oct.compras === 2790040 && oct.gastos === 2000000 && oct.ventas === 121000, JSON.stringify(oct));
     ok('resumen: la foto de saldos de SICAR se compara con la app', rs.conciliacion.cxp && rs.conciliacion.cxp.saldo_sicar === 0 && rs.conciliacion.cxp.saldo_app >= 500000, JSON.stringify(rs.conciliacion));
+    const cxcAntes = await cuenta('fz_cxc', A);
+    const soloPP = await req('POST', '/sicar/importar', { cookie: capA.cookie, raw: multipart({ aplicar: '1' }, { name: 'pp.csv', data: ['Reporte de Créditos a Clientes', 'Tipo:,No,Estado:,Por Pagar', 'No. Cli,Nombre,Teléfono,Celular,Saldo', '99,CLIENTE UNO,,,"$ 1,000.50"', '7,CLIENTE DOS,,,"$ 250.00"', ',Total :,,,"$ 1,250.50"'].join('\n') }) });
+    const soloV = await req('POST', '/sicar/importar', { cookie: capA.cookie, raw: multipart({ aplicar: '1' }, { name: 'v.csv', data: ['Reporte de Créditos a Clientes', 'Tipo:,No,Estado:,Vencidos', 'No. Cli,Nombre,Teléfono,Celular,Saldo', '99,CLIENTE UNO,,,"$ 400.00"', ',Total :,,,"$ 400.00"'].join('\n') }) });
+    ok('saldos sin detalle: se guardan por persona y NO crean ni pagan facturas', soloPP.status === 200 && soloPP.json.solo_saldos === true && soloPP.json.conteo.saldo_guardado === 2 && soloV.json.conteo.saldo_guardado === 1 && await cuenta('fz_cxc', A) === cxcAntes, JSON.stringify(soloPP.json));
+    const rs2 = (await req('GET', '/sicar/resumen', { cookie: conA.cookie })).json.conciliacion.cxc;
+    ok('resumen: el total sale de "Por Pagar" aunque "Vencidos" se haya importado después; lo vencido aparte', rs2 && rs2.saldo_sicar === 125050 && rs2.vencido_sicar === 40000 && rs2.personas_vencidas === 1, JSON.stringify(rs2));
+    const dz = await require('./src/dalia.js')._ejecutar('saldos_sicar', { lado: 'cobrar' }, { tenant: A, rol: 'director', D: router._daliaDeps() });
+    ok('Dalia: saldo total y vencido por cliente, sin inventar antigüedad por días', dz.saldo_total && dz.vencido_total && !dz.antiguedad_total && dz.renglones.some((x) => x.nombre === 'CLIENTE DOS' && x.vencido), JSON.stringify(dz).slice(0, 300));
+    ok('B no ve los saldos de A', !(await req('GET', '/sicar/resumen', { cookie: dirB.cookie })).json.conciliacion.cxc);
     ok('un archivo que no es de SICAR = 400 con la instrucción', (await subir(capA.cookie, [[R([1, 'Factura'])]], false)).json.error === 'no_es_reporte_sicar');
 
     console.log('\nSimulador (patrón histórico y escenarios)');

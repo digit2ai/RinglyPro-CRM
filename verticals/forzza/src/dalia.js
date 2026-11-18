@@ -349,15 +349,28 @@ async function ejecutar(nombre, input, ctx) {
     }
     case 'saldos_sicar': {
       const lado = a.lado === 'pagar' ? 'cxp' : 'cxc';
-      const i = await D.one('SELECT i.id, i.tipo, i.hasta::text AS corte, i.created_at::text AS importado FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.tenant_id=i.tenant_id AND s.lado=:l) ORDER BY i.id DESC LIMIT 1', { t: tenant, l: lado });
-      if (!i) return { aviso: 'Aún no se ha importado un reporte de créditos de SICAR para ' + (lado === 'cxc' ? 'clientes' : 'proveedores') + '.' };
-      const r = { t: tenant, i: i.id, l: lado }; let w = '';
+      // El saldo total sale del último reporte que no está filtrado a "Vencidos"; lo vencido, del último de vencidos.
+      const ult = (cond) => D.one(`SELECT i.id, i.tipo, i.hasta::text AS corte, i.created_at::text AS importado FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.tenant_id=i.tenant_id AND s.lado=:l AND ${cond}) ORDER BY i.id DESC LIMIT 1`, { t: tenant, l: lado });
+      const i = await ult("COALESCE(s.vista,'') <> 'vencidos'"), iv = await ult("s.vista = 'vencidos'");
+      if (!i && !iv) return { aviso: 'Aún no se ha importado un reporte de créditos de SICAR para ' + (lado === 'cxc' ? 'clientes' : 'proveedores') + '.' };
+      const base = i || iv;
+      const r = { t: tenant, i: base.id, l: lado }; let w = '';
       if (a.nombre) { w = ` AND ${SA('parte')} LIKE ${SA(':n')}`; r.n = like(a.nombre); }
       const rows = await D.sel(`SELECT parte, saldo, d0, d31, d61, d91, d121 FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l${w} ORDER BY saldo DESC LIMIT 40`, r);
-      const tot = await D.one('SELECT COUNT(*)::int AS n, COALESCE(SUM(saldo),0) AS s, COALESCE(SUM(d0),0) a0, COALESCE(SUM(d31),0) a31, COALESCE(SUM(d61),0) a61, COALESCE(SUM(d91),0) a91, COALESCE(SUM(d121),0) a121 FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: tenant, i: i.id, l: lado });
-      return { reporte: i.tipo, corte: i.corte, importado: i.importado, personas: tot.n, saldo_total: mp(tot.s),
-        antiguedad_total: { d0_30: mp(tot.a0), d31_60: mp(tot.a31), d61_90: mp(tot.a61), d91_120: mp(tot.a91), mas_de_120: mp(tot.a121) },
-        renglones: rows.map((x) => ({ nombre: x.parte, saldo: mp(x.saldo), d0_30: mp(x.d0), d31_60: mp(x.d31), d61_90: mp(x.d61), d91_120: mp(x.d91), mas_de_120: mp(x.d121) })) };
+      const tot = await D.one('SELECT COUNT(*)::int AS n, COALESCE(SUM(saldo),0) AS s, COALESCE(SUM(d0),0) a0, COALESCE(SUM(d31),0) a31, COALESCE(SUM(d61),0) a61, COALESCE(SUM(d91),0) a91, COALESCE(SUM(d121),0) a121 FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: tenant, i: base.id, l: lado });
+      let venc = null, vmap = new Map();
+      if (iv) {
+        venc = await D.one('SELECT COUNT(*)::int AS n, COALESCE(SUM(saldo),0) AS s FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: tenant, i: iv.id, l: lado });
+        for (const x of await D.sel('SELECT parte, saldo FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: tenant, i: iv.id, l: lado })) vmap.set(String(x.parte).toLowerCase(), x.saldo);
+      }
+      const conAntig = Number(tot.a0) + Number(tot.a31) + Number(tot.a61) + Number(tot.a91) + Number(tot.a121) > 0;
+      return { reporte: base.tipo, corte: base.corte, importado: base.importado, personas: tot.n,
+        saldo_total: i ? mp(tot.s) : null, solo_hay_reporte_de_vencidos: !i,
+        vencido_total: venc ? mp(venc.s) : null, personas_con_vencido: venc ? venc.n : null, vencidos_importado: iv ? iv.importado : null,
+        nota: conAntig ? undefined : 'Estos reportes de SICAR no traen facturas ni antigüedad por días: solo el saldo de cada persona (y cuánto está vencido).',
+        antiguedad_total: conAntig ? { d0_30: mp(tot.a0), d31_60: mp(tot.a31), d61_90: mp(tot.a61), d91_120: mp(tot.a91), mas_de_120: mp(tot.a121) } : undefined,
+        renglones: rows.map((x) => ({ nombre: x.parte, saldo: mp(x.saldo), vencido: vmap.has(String(x.parte).toLowerCase()) ? mp(vmap.get(String(x.parte).toLowerCase())) : (iv ? mp(0) : null),
+          ...(conAntig ? { d0_30: mp(x.d0), d31_60: mp(x.d31), d61_90: mp(x.d61), d91_120: mp(x.d91), mas_de_120: mp(x.d121) } : {}) })) };
     }
     case 'actividad': {
       if (!['owner', 'director'].includes(ctx.rol)) return { error: 'La bitácora solo la puede consultar un director.' };

@@ -285,7 +285,10 @@ function leer(pages) {
   const f = filtros(rows);
   const r = def.credito ? leerCreditos(rows, def) : def.etiqueta ? leerAbonos(rows, def) : leerTabla(rows, def, tipo);
   if (!r.columnas) return { error: 'sin_columnas', tipo };
-  if (def.credito && !r.con_detalle) return { error: 'sin_detalle', tipo, ayuda: 'En SICAR genera el reporte con "Tipo: Sí" (detalle de documentos) para importar folio por folio.' };
+  // Sin detalle ("Tipo: No") el reporte solo trae el saldo de cada persona: se guarda como foto de saldos,
+  // nunca como facturas (no trae folio, fecha ni vencimiento, y no se inventan).
+  const soloSaldos = !!(def.credito && !r.con_detalle);
+  if (soloSaldos && !(r.partes || []).length) return { error: 'sin_detalle', tipo, ayuda: 'En SICAR genera el reporte con "Tipo: Sí" (detalle de documentos) para importar folio por folio.' };
   const impreso = totalImpreso(rows);
   let leido = null;
   // SICAR imprime Total = documentos (vigentes y cancelados con su reverso) menos devoluciones.
@@ -295,13 +298,23 @@ function leer(pages) {
   else leido = r.filas.reduce((s, x) => s + x.total, 0);
   // Créditos: además, el saldo de cada persona debe ser la suma del saldo de sus documentos.
   let partesQueNoCuadran = [];
-  if (def.credito) partesQueNoCuadran = r.partes.filter((p) => p.saldo != null && r.filas.filter((x) => x.parte === p.parte && x.num === p.num).reduce((s, x) => s + x.saldo, 0) !== p.saldo).map((p) => p.parte);
+  if (def.credito && !soloSaldos) partesQueNoCuadran = r.partes.filter((p) => p.saldo != null && r.filas.filter((x) => x.parte === p.parte && x.num === p.num).reduce((s, x) => s + x.saldo, 0) !== p.saldo).map((p) => p.parte);
   return {
-    tipo, nombre: NOMBRES[tipo], parte: def.parte, filtros: f, filas: r.filas, partes: r.partes || [], errores: r.errores,
+    tipo, nombre: NOMBRES[tipo], parte: def.parte, filtros: f, solo_saldos: soloSaldos, vista: vistaDe(f.estado), filas: r.filas, partes: r.partes || [], errores: r.errores,
     total_impreso: impreso, total_leido: leido,
     cuadra: impreso == null ? null : impreso === leido,
     partes_que_no_cuadran: partesQueNoCuadran
   };
+}
+/** El filtro Estado de un reporte de créditos: 'Vencidos', 'Por Pagar', 'Pagados', 'Todos'. */
+function vistaDe(estado) {
+  const n = norm(estado || '');
+  if (!n) return null;
+  if (/vencid/.test(n)) return 'vencidos';
+  if (/por pagar|pendiente/.test(n)) return 'por_pagar';
+  if (/pagad/.test(n)) return 'pagados';
+  if (/todo/.test(n)) return 'todos';
+  return n.slice(0, 30);
 }
 /** Una hoja de Excel (arreglo de arreglos) al mismo formato de celdas: x = número de columna. */
 function desdeHoja(rows) {

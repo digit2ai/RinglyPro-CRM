@@ -49,8 +49,25 @@ async function aplicar(ctx, rep, meta, t) {
     return p.id;
   }
 
+  /* ── créditos SIN detalle ("Tipo: No"): solo foto de saldos por persona; no crea ni paga nada ── */
+  if (rep.solo_saldos) {
+    const app = await q(`SELECT LOWER(p.nombre) AS n, SUM(x.total - COALESCE((SELECT SUM(a.monto) FROM ${T.pagos} a WHERE a.${T.fk}=x.id AND a.tenant_id=x.tenant_id),0)) AS s
+      FROM ${T.doc} x JOIN ${T.partes} p ON p.id=x.${T.parte} AND p.tenant_id=x.tenant_id WHERE x.tenant_id=:t AND x.estado NOT IN ('pagada','cancelada') GROUP BY LOWER(p.nombre)`);
+    const mapa = new Map(app.map((r) => [r.n, Math.round(Number(r.s) * 100)]));
+    for (const p of rep.partes || []) {
+      await run(`INSERT INTO fz_sicar_saldos (tenant_id,import_id,lado,parte,num,saldo,vista) VALUES (:t,:i,:l,:p,:n,:s,:v)`,
+        { i: importId, l: lado, p: p.parte, n: p.num || null, s: pesos(p.saldo || 0), v: rep.vista });
+      cuenta('saldo_guardado');
+      if (rep.vista === 'vencidos') continue; // un reporte de vencidos no es el saldo total: no se compara
+      const nuestro = mapa.has(p.parte.toLowerCase()) ? mapa.get(p.parte.toLowerCase()) : null;
+      if (nuestro != null && nuestro !== p.saldo) nota({ parte: p.parte, saldo_sicar: p.saldo, saldo_app: nuestro, resultado: 'diferencia' });
+    }
+    res.solo_saldos = true;
+    res.aviso = 'Reporte sin detalle de documentos: se guardó el saldo de cada persona. Para cargar factura por factura (folio, fecha y vencimiento), genéralo en SICAR con "Tipo: Sí".';
+  }
+
   /* ── créditos con detalle: sincroniza saldos ── */
-  if (rep.tipo === 'creditos_proveedores' || rep.tipo === 'creditos_clientes') {
+  if (!rep.solo_saldos && (rep.tipo === 'creditos_proveedores' || rep.tipo === 'creditos_clientes')) {
     const cfg = await config(tenant);
     const vistos = new Set();
     const corte = rep.filtros.hasta || meta.hoy;
@@ -96,7 +113,7 @@ async function aplicar(ctx, rep, meta, t) {
       for (const a of abiertos) if (!vistos.has(a.id)) { cuenta('ya_no_aparece'); nota({ parte: a.nombre, folio: a.folio || '(sin folio)', resultado: 'ya_no_aparece' }); }
     }
     for (const p of rep.partes || []) {
-      await run(`INSERT INTO fz_sicar_saldos (tenant_id,import_id,lado,parte,num,saldo) VALUES (:t,:i,:l,:p,:n,:s)`, { i: importId, l: lado, p: p.parte, n: p.num, s: pesos(p.saldo || 0) });
+      await run(`INSERT INTO fz_sicar_saldos (tenant_id,import_id,lado,parte,num,saldo,vista) VALUES (:t,:i,:l,:p,:n,:s,:v)`, { i: importId, l: lado, p: p.parte, n: p.num, s: pesos(p.saldo || 0), v: rep.vista || null });
     }
   }
 
@@ -134,7 +151,7 @@ async function aplicar(ctx, rep, meta, t) {
     }
   }
 
-  await run('UPDATE fz_sicar_imports SET resumen=:r WHERE id=:i AND tenant_id=:t', { i: importId, r: JSON.stringify({ conteo: res.conteo, cuadra: res.cuadra, n_errores: res.n_errores }) });
+  await run('UPDATE fz_sicar_imports SET resumen=:r WHERE id=:i AND tenant_id=:t', { i: importId, r: JSON.stringify({ conteo: res.conteo, cuadra: res.cuadra, n_errores: res.n_errores, vista: rep.vista || null, solo_saldos: !!rep.solo_saldos }) });
   return res;
 }
 

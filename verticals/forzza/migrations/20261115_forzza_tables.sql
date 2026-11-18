@@ -257,6 +257,8 @@ CREATE TABLE IF NOT EXISTS fz_sicar_saldos (
   d0 NUMERIC(16,2), d31 NUMERIC(16,2), d61 NUMERIC(16,2), d91 NUMERIC(16,2), d121 NUMERIC(16,2)
 );
 CREATE INDEX IF NOT EXISTS ix_fz_sicar_saldos ON fz_sicar_saldos (tenant_id, import_id);
+-- vista = el filtro Estado del reporte (por_pagar, vencidos, todos...): un reporte de vencidos no es el saldo total.
+ALTER TABLE fz_sicar_saldos ADD COLUMN IF NOT EXISTS vista TEXT;
 
 -- Llaves del puente SICAR (la computadora de Forzza sube los reportes de una carpeta).
 -- Solo se guarda el SHA-256; la llave se muestra una vez.

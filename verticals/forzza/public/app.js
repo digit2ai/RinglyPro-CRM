@@ -808,7 +808,7 @@
     ['General de Ventas', 'Reportes → Ventas → General.', 'Ventas por mes y por cliente.'],
     ['Abonos de Clientes / a Proveedor', 'Reportes → Clientes (Créditos) → Abonos.', 'Historial de cobranza por mes (no mueve saldos).']
   ];
-  const RES_LBL = { nuevo: 'Nuevos', actualizado: 'Actualizados con abonos de SICAR', sin_cambio: 'Sin cambio', diferencia: 'SICAR dice más que la app (revisar)', pagado_en_sicar: 'Ya pagados en SICAR (no se crean)',
+  const RES_LBL = { saldo_guardado: 'Saldos por persona guardados', nuevo: 'Nuevos', actualizado: 'Actualizados con abonos de SICAR', sin_cambio: 'Sin cambio', diferencia: 'SICAR dice más que la app (revisar)', pagado_en_sicar: 'Ya pagados en SICAR (no se crean)',
     ya_no_aparece: 'Abiertos en la app que SICAR ya no trae (revisar)', cancelado_en_app: 'Cancelados en la app', ya_estaba: 'Ya estaban', coincide: 'Coinciden', no_esta_en_app: 'No están en la app' };
   const DET_LBL = { nuevo: 'Nuevo', abono: 'Abono de SICAR', pagado: 'Pagado en SICAR', sicar_mayor: 'SICAR dice más', ya_no_aparece: 'Ya no aparece en SICAR', total_distinto: 'Total distinto',
     cancelado_en_app: 'Cancelado en la app', diferencia: 'Diferencia', no_esta_en_app: 'No está en la app' };
@@ -821,7 +821,7 @@
     return `<div class="card"><h2 style="margin-top:0">${esc(r.nombre)} ${r.aplicado ? '<span class="pill ok">aplicado</span>' : '<span class="pill warn">vista previa, aún no se guarda</span>'}</h2>
       <p class="muted">${r.filtros && r.filtros.desde ? `Periodo ${fmtF(r.filtros.desde)} a ${fmtF(r.filtros.hasta)} · ` : ''}${r.filtros && r.filtros.estado ? 'Estado: ' + esc(r.filtros.estado) + ' · ' : ''}${r.n_errores ? `<b>${r.n_errores}</b> renglones no se pudieron leer` : 'todos los renglones se leyeron'}</p>
       ${r.archivo_ya_importado ? `<div class="note">Este mismo archivo ya se importó el ${fmtF(String(r.archivo_ya_importado).slice(0, 10))}. Volver a aplicarlo no duplica nada.</div>` : ''}
-      ${cuadra}${porDoc ? `<p>${porDoc}${r.cancelados ? ` · ${r.cancelados} renglones cancelados (X) no cuentan` : ''}</p>` : ''}
+      ${cuadra}${r.aviso ? `<div class="note">${esc(r.aviso)}</div>` : ''}${porDoc ? `<p>${porDoc}${r.cancelados ? ` · ${r.cancelados} renglones cancelados (X) no cuentan` : ''}</p>` : ''}
       ${(r.partes_que_no_cuadran || []).length ? `<div class="note">En SICAR, el saldo de ${r.partes_que_no_cuadran.map(esc).join(', ')} no es la suma de sus documentos (puede haber devoluciones).</div>` : ''}
       ${conteo ? `<table class="cards"><tbody>${conteo}</tbody></table>` : ''}
       ${det.length ? `<details style="margin-top:10px"${r.aplicado ? '' : ' open'}><summary><b>Detalle (${det.length})</b></summary><div class="tbl"><table class="cards"><thead><tr><th>Persona</th><th>Folio</th><th>Resultado</th><th class="n">Saldo SICAR</th><th class="n">Saldo app</th></tr></thead><tbody>
@@ -893,8 +893,13 @@
       <div title="Ventas ${c$(m.ventas)}" style="height:9px;border-radius:3px;background:var(--lime);width:${(100 * m.ventas / max).toFixed(1)}%"></div>
       <div title="Compras y gastos ${c$(m.compras + m.gastos)}" style="height:9px;border-radius:3px;background:var(--acc);margin-top:2px;width:${(100 * (m.compras + m.gastos) / max).toFixed(1)}%"></div></div></div>`).join('');
     const lista = (rows) => rows.length ? `<table class="cards"><tbody>${rows.map((x) => `<tr><td data-l="Nombre">${esc(x.parte || '—')}</td><td class="n" data-l="Documentos">${x.n}</td><td class="n" data-l="Total">${c$(x.total)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Sin datos.</p>';
-    const conc = (lbl, f) => (f ? kpi(lbl + ' según SICAR', c$(f.saldo_sicar), `corte ${fmtF(f.corte || String(f.fecha).slice(0, 10))} · en la app: ${c$(f.saldo_app)}${f.saldo_app !== f.saldo_sicar ? ' · diferencia ' + c$(f.saldo_app - f.saldo_sicar) : ' · coinciden'}`, f.saldo_app === f.saldo_sicar ? 'ok' : 'bad')
-      : kpi(lbl + ' según SICAR', '—', 'importa el reporte de créditos'));
+    const conc = (lbl, f) => {
+      if (!f) return kpi(lbl + ' según SICAR', '—', 'importa el reporte de créditos');
+      const venc = f.vencido_sicar != null ? `vencido: <b>${c$(f.vencido_sicar)}</b> (${f.personas_vencidas} personas) · ` : '';
+      if (f.saldo_sicar == null) return kpi(lbl + ' vencido según SICAR', c$(f.vencido_sicar), 'falta el reporte "Por Pagar" para el saldo total', 'bad');
+      const app = !f.saldo_app ? 'la app aún no tiene sus facturas' : 'en la app: ' + c$(f.saldo_app) + (f.saldo_app !== f.saldo_sicar ? ' · diferencia ' + c$(f.saldo_app - f.saldo_sicar) : ' · coinciden');
+      return kpi(lbl + ' según SICAR', c$(f.saldo_sicar), `${venc}${f.personas} personas · importado ${fmtF(f.corte || String(f.fecha).slice(0, 10))} · ${app}`, f.saldo_app === f.saldo_sicar ? 'ok' : (f.vencido_sicar ? 'bad' : ''));
+    };
     main().innerHTML = `<h1>Compras y ventas (SICAR)</h1><p class="sub">Lo importado de SICAR del ${fmtF(r.desde)} al ${fmtF(r.hasta)}. Solo documentos vigentes; las devoluciones restan.${r.ultima_importacion ? ' Última importación: ' + fmtF(String(r.ultima_importacion).slice(0, 10)) + '.' : ''}</p>
       ${!r.meses.length && !r.conciliacion.cxc && !r.conciliacion.cxp ? '<div class="note">Aún no hay reportes importados. Ve a <a href="#sicar">Importar de SICAR</a>.</div>' : ''}
       <div class="grid">${kpi('Ventas', c$(tot('ventas')), 'promedio ' + c$(Math.round(tot('ventas') / n)) + ' al mes')}${kpi('Compras de material', c$(tot('compras')), 'promedio ' + c$(Math.round(tot('compras') / n)) + ' al mes')}

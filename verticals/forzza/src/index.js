@@ -1158,11 +1158,17 @@ async function sicarResumenDe(tenant, query) {
     GROUP BY parte ORDER BY 2 DESC LIMIT 15`, { t: req.tenant, ti: tipo, d: desde, h: hasta });
   const [proveedores, gastos, clientes] = await Promise.all([top('compra', "AND (doc<>'GAS' OR doc IS NULL)"), top('compra', "AND doc='GAS'"), top('venta')]);
   // La última foto de saldos de SICAR contra lo que dice la app.
+  // Un reporte filtrado a "Vencidos" no es el saldo total: el total sale del último que no lo es,
+  // y lo vencido del último de vencidos.
   const foto = async (lado) => {
-    const i = await one(`SELECT i.id, i.tipo, i.created_at, i.hasta::text AS hasta FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.lado=:l AND s.tenant_id=i.tenant_id) ORDER BY i.id DESC LIMIT 1`, { t: req.tenant, l: lado });
-    if (!i) return null;
-    const [s] = await sel('SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: req.tenant, i: i.id, l: lado });
-    return { import_id: i.id, tipo: i.tipo, fecha: i.created_at, corte: i.hasta, saldo_sicar: E.toC(s.s), personas: s.n };
+    const ult = (cond) => one(`SELECT i.id, i.tipo, i.created_at, i.hasta::text AS hasta FROM fz_sicar_imports i WHERE i.tenant_id=:t AND EXISTS (SELECT 1 FROM fz_sicar_saldos s WHERE s.import_id=i.id AND s.lado=:l AND s.tenant_id=i.tenant_id AND ${cond}) ORDER BY i.id DESC LIMIT 1`, { t: req.tenant, l: lado });
+    const [i, iv] = await Promise.all([ult("COALESCE(s.vista,'') <> 'vencidos'"), ult("s.vista = 'vencidos'")]);
+    if (!i && !iv) return null;
+    const suma = async (x) => (await sel('SELECT COALESCE(SUM(saldo),0) AS s, COUNT(*)::int AS n FROM fz_sicar_saldos WHERE tenant_id=:t AND import_id=:i AND lado=:l', { t: req.tenant, i: x.id, l: lado }))[0];
+    const s = i ? await suma(i) : null, v = iv ? await suma(iv) : null;
+    return { import_id: i ? i.id : null, tipo: i ? i.tipo : iv.tipo, fecha: (i || iv).created_at, corte: i ? i.hasta : null,
+      saldo_sicar: s ? E.toC(s.s) : null, personas: s ? s.n : null,
+      vencido_sicar: v ? E.toC(v.s) : null, personas_vencidas: v ? v.n : null, fecha_vencidos: iv ? iv.created_at : null };
   };
   const st = await cargarEstado(req.tenant, hoy);
   const [fc, fp] = await Promise.all([foto('cxc'), foto('cxp')]);
