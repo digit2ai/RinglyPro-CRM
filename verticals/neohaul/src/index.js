@@ -134,7 +134,7 @@ router.get('/health', async (req, res) => {
  * La mensualidad cobra $497 el día que se paga y se repite cada mes en esa fecha (el dueño prefirió eso a mostrar
  * $0 hoy con el primer cargo el día 1: confundía). La factura pide pagarla el 1 de diciembre. */
 const PAGOS = Object.freeze({
-  configuracion: { mode: 'payment', cents: 150000, name: 'Digit2AI · NeoHaul - Configuración del entorno (pago único)', factura: 'D2-NH-2026-001' },
+  configuracion: { mode: 'payment', cents: 140000, name: 'Digit2AI · NeoHaul - Configuración del entorno (pago único)', factura: 'D2-NH-2026-001' },
   mensualidad: { mode: 'subscription', cents: 49700, name: 'Digit2AI · NeoHaul - Plataforma SaaS (mensual)', factura: 'D2-NH-2026-002' }
 });
 const STRIPE_BRAND = {
