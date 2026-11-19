@@ -67,7 +67,14 @@ async function ejecutar(nombre, input, ctx) {
   const sel = (sql, r) => D.sel(sql, { ...T, ...(r || {}) });
   const rango = (dd) => ({ d: f(a.desde, D.M.sumarDias(hoy, -(dd || 30))), h: f(a.hasta, hoy) });
   switch (nombre) {
-    case 'manual_de_uso': return MAN.buscar(a.tema);
+    case 'manual_de_uso': {
+      const r = MAN.buscar(a.tema), rl = ctx.rol;
+      // Lo que ESTE usuario puede hacer, con las mismas reglas que valida el servidor.
+      r.tu_permiso = { rol: rl, puede_capturar_agregar_y_modificar: ['owner', 'soporte', 'director', 'administrador', 'capturista'].includes(rl),
+        puede_borrar_y_cancelar: ['owner', 'soporte', 'director', 'capturista'].includes(rl), puede_tarifas_y_parametros: ['owner', 'soporte', 'director', 'administrador'].includes(rl),
+        puede_usuarios: ['owner', 'soporte', 'director'].includes(rl) };
+      return r;
+    }
     case 'parametros_nomina': return D.nominaCfg ? await D.nominaCfg(tenant) : { error: 'Sin parámetros.' };
     case 'estado_semana': {
       const t = await D.tableroDe(tenant, f(a.fecha, null));
@@ -311,7 +318,7 @@ CÓMO FUNCIONA LA OPERACIÓN:
 
 PANTALLAS (menú izquierdo): Semana: Tablero, Pedidos, Viajes. Cobro: Estimaciones, Facturas. Costos: Gastos y diésel, Nómina, Taller. Ajustes: Choferes y nómina, Catálogos, Usuarios, Mi cuenta, Guía de usuario. Roles: Captura (capturista), Administrador (agrega y modifica, no borra), Solo lectura (contador), Director, Super administrador (soporte, todo) y Digit2AI (desarrollador).
 
-ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y solo si su rol (${ctx.rol}) NO tiene permiso según "permisos" del manual, dilo y di qué rol sí; "normalmente" es quién suele hacerlo, no un permiso (un director, administrador o super administrador también puede capturar). Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
+ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y usa "tu_permiso" del resultado: si el permiso que hace falta es true, NO digas que no puede ni que pida a otro rol, solo dile cómo; si es false, dilo y di qué rol sí puede. "normalmente" es quién suele hacerlo, nunca una restricción. Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
 
 CÓMO RESPONDES:
 - Para cualquier dato usa las herramientas antes de responder. Nunca adivines una cifra.
