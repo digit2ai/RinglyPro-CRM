@@ -667,6 +667,7 @@ api.post('/viajes/importar', importUpload.single('archivo'), async (req, res) =>
   for (let i = hi + 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || r.every((c) => String(c).trim() === '')) continue;
+    if (r.some((c) => /^\s*(gran\s+)?total(es)?\s*:?\s*$/i.test(String(c)))) continue; // renglón de totales de la planta, no es un viaje
     const fecha = excelDate(r[cF]), ticket = strOrNull(r[cT], 60), q = num(r[cQ]);
     if (!fecha || q == null || q <= 0 || q > 10000) { resultados.push({ renglon: i + 1, ok: false, motivo: !fecha ? 'fecha' : 'cantidad' }); continue; }
     if (ticket && vistos.has(ticket)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'ticket_duplicado', ticket }); continue; }
