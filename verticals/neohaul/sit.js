@@ -200,6 +200,14 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('el duplicado se nombra como tal', im.json.resultados.some((r) => r.motivo === 'ticket_duplicado'));
     ok('fecha 05/11/2026 se lee como 5 de noviembre (día/mes)', (await sel("SELECT to_char(fecha,'YYYY-MM-DD') AS f FROM nh_viajes WHERE tenant_id=:t AND ticket_no='T-200'", { t: A }))[0].f === '2026-11-05');
 
+    await db.query("UPDATE nh_trucks SET placas='SX-01-00-A' WHERE id=:id AND tenant_id=:t", { replacements: { id: t1.id, t: A } });
+    const csvP = 'Fecha,Ticket,Placas,Toneladas\n07/11/2026,T-300,sx 01 00 a,9\n07/11/2026,T-301,ZZ-99-99-Z,8\nTotal,,,17\n';
+    const imP = await req('POST', '/viajes/importar', { cookie: capA, raw: multipart({ obra_id: obra.id, tarifa_id: tar22.id }, 'archivo', { name: 'pl.csv', type: 'text/csv', data: Buffer.from(csvP) }) });
+    const vP = await sel("SELECT ticket_no, truck_id, driver_id FROM nh_viajes WHERE tenant_id=:t AND ticket_no IN ('T-300','T-301') ORDER BY ticket_no", { t: A });
+    ok('con columna Placas cada viaje va a su camión y su chofer; el renglón Total se ignora', imP.json.creados === 2 && imP.json.rechazados === 0 && vP[0].truck_id === t1.id && vP[0].driver_id === drv.id, JSON.stringify(imP.json));
+    ok('una placa que no es de la empresa no se adivina: sin camión y con aviso', vP[1].truck_id === null && imP.json.resultados.some((r) => r.aviso === 'placa_desconocida'));
+    const imB = await req('POST', '/viajes/importar', { cookie: dirB, raw: multipart({ obra_id: obra.id, tarifa_id: tar22.id }, 'archivo', { name: 'pl.csv', type: 'text/csv', data: Buffer.from(csvP) }) });
+    ok('otra empresa no puede importar a la obra de A', imB.status === 404);
     const xls = Buffer.concat([Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]), Buffer.alloc(64)]);
     ok('un .xls binario se rechaza (solo .xlsx o CSV)', (await req('POST', '/viajes/importar', { cookie: capA, raw: multipart({ obra_id: obra.id, tarifa_id: tar22.id }, 'archivo', { name: 'a.xls', type: 'application/vnd.ms-excel', data: xls }) })).json.error === 'usa_excel_o_csv');
     ok('el parser corre en un hilo aparte', /new Worker\(/.test(fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8')) && !/require\('xlsx'\)\.read|XLSX\.read/.test(fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8').split('/estimaciones/:id/excel')[0]));

@@ -659,8 +659,14 @@ api.post('/viajes/importar', importUpload.single('archivo'), async (req, res) =>
   if (hi < 0) return res.status(400).json({ error: 'sin_encabezados', ayuda: 'El archivo debe tener columnas Fecha, Ticket y Toneladas.' });
   const head = rows[hi].map(norm);
   const col = (re) => head.findIndex((h) => re.test(h));
-  const cF = col(/fecha/), cT = col(/ticket|boleta|folio/), cQ = col(/tonelada|^ton|peso|neto|cantidad/);
+  const cF = col(/fecha/), cT = col(/ticket|boleta|folio/), cQ = col(/tonelada|^ton|peso|neto|cantidad/), cP = col(/placa/);
   if (cQ < 0) return res.status(400).json({ error: 'sin_columna_toneladas' });
+  // Si el Excel trae placas, cada viaje va a su camión (y a su chofer). Una placa que no es de un camión activo
+  // de esta empresa no se adivina: se usa el camión elegido en la pantalla (o ninguno) y se avisa en el renglón.
+  const porPlaca = new Map();
+  if (cP >= 0) for (const k of await sel('SELECT id, placas, chofer_id FROM nh_trucks WHERE tenant_id=:t AND active AND placas IS NOT NULL', { t: req.tenant })) {
+    const key = D.placaKey(k.placas); porPlaca.set(key, porPlaca.has(key) ? null : k);
+  }
   const resultados = []; let creados = 0;
   const vistos = new Set((await sel('SELECT ticket_no FROM nh_viajes WHERE tenant_id=:t AND tarifa_id=:ta AND ticket_no IS NOT NULL', { t: req.tenant, ta: tarifa.id })).map((x) => x.ticket_no));
   const nuevos = [];
@@ -673,15 +679,16 @@ api.post('/viajes/importar', importUpload.single('archivo'), async (req, res) =>
     if (ticket && vistos.has(ticket)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'ticket_duplicado', ticket }); continue; }
     if (ticket) vistos.add(ticket);
     const importe = M.importe(q, tarifa.precio);
-    nuevos.push({ f: fecha, n: ticket, q, imp: importe });
-    creados++; resultados.push({ renglon: i + 1, ok: true, ticket, importe });
+    const placa = cP >= 0 ? strOrNull(r[cP], 30) : null, kp = placa ? porPlaca.get(D.placaKey(placa)) : null;
+    nuevos.push({ f: fecha, n: ticket, q, imp: importe, k: kp ? kp.id : truck, d: kp ? kp.chofer_id || null : null });
+    creados++; resultados.push({ renglon: i + 1, ok: true, ticket, importe, ...(placa && !kp ? { aviso: 'placa_desconocida', placa } : {}) });
   }
   // Todo o nada: un corte a la mitad no deja una importación parcial.
   await db.transaction(async (tx) => {
     for (const r of nuevos) {
-      await exec(`INSERT INTO nh_viajes (tenant_id,fecha,obra_id,tarifa_id,truck_id,ticket_no,cantidad,unidad,precio_unitario,importe,estado,notas,created_by)
-        VALUES (:t,:f,:o,:ta,:k,:n,:q,:un,:p,:imp,'capturado','Importado de Excel',:u)`,
-        { t: req.tenant, o: obra, ta: tarifa.id, k: truck, un: tarifa.unidad, p: tarifa.precio, u: req.user.id, ...r }, tx);
+      await exec(`INSERT INTO nh_viajes (tenant_id,fecha,obra_id,tarifa_id,truck_id,driver_id,ticket_no,cantidad,unidad,precio_unitario,importe,estado,notas,created_by)
+        VALUES (:t,:f,:o,:ta,:k,:d,:n,:q,:un,:p,:imp,'capturado','Importado de Excel',:u)`,
+        { t: req.tenant, o: obra, ta: tarifa.id, un: tarifa.unidad, p: tarifa.precio, u: req.user.id, ...r }, tx);
     }
   });
   audit(req, 'viajes_importados', creados);

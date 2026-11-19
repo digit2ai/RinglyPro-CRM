@@ -549,7 +549,7 @@
         <div class="form"><div class="wide">${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel o CSV de planta, o toca para elegirlo')}</div>
         <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, '', 'Elige')}</select></div>
         <div><label>Tarifa</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, '', 'Elige')}</select></div>
-        <div><label>Camión (opcional)</label><select name="truck_id">${opts(activos('trucks'), truckLbl, '', 'Sin camión')}</select></div>
+        <div><label>Camión (si el Excel no trae placas)</label><select name="truck_id">${opts(activos('trucks'), truckLbl, '', 'Sin camión')}</select></div>
         <div class="row wide"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err wide"></div><div class="wide" id="res"></div></div>`);
       m.querySelector('#go').onclick = async () => {
         const fd = new FormData(); const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
@@ -557,7 +557,8 @@
         try {
           const r = await api('viajes/importar', { method: 'POST', body: fd });
           m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creados} viajes creados, ${r.rechazados} rechazados.</div>` +
-            r.resultados.filter((x) => !x.ok).map((x) => `<div class="muted">Renglón ${x.renglon}: ${esc(x.motivo)}${x.ticket ? ' (' + esc(x.ticket) + ')' : ''}</div>`).join('');
+            r.resultados.filter((x) => !x.ok).map((x) => `<div class="muted">Renglón ${x.renglon}: ${esc(x.motivo)}${x.ticket ? ' (' + esc(x.ticket) + ')' : ''}</div>`).join('') +
+            r.resultados.filter((x) => x.aviso === 'placa_desconocida').map((x) => `<div class="muted">Renglón ${x.renglon}: la placa ${esc(x.placa)} no es de un camión activo; quedó con el camión elegido arriba.</div>`).join('');
         } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
       };
       m.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) R.viajes(); });
