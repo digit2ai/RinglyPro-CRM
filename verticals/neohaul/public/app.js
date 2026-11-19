@@ -1079,7 +1079,8 @@
   R.guia = async function () {
     await loadCat();
     const mio = miRolG();
-    const ir = (h, t) => `<a class="btn small" href="#${h}">${t}</a>`;
+    // Los botones que llevan a otra pantalla abren una pestaña nueva: la guía se queda abierta para seguir el paso a paso.
+    const ir = (h, t) => `<a class="btn small" href="#${h}" target="_blank" rel="noopener">${t} ↗</a>`;
     const PASOS = [
       { id: 'pedido', roles: ['captura', 'director'], t: 'Anotar el pedido del día y avisar a los choferes', img: 'pedidos',
         para: 'Cuando el ingeniero de HTR pide camiones (por teléfono o WhatsApp), se anota aquí para saber qué camión va a qué obra.',
@@ -1136,7 +1137,7 @@
     const visibles = PASOS.filter((p) => filtro === 'todos' || p.roles.includes(filtro));
     const pill = (r) => `<span class="grol" style="background:${ROLG[r][1]}">${ROLG[r][0]}</span>`;
     main().innerHTML = `<h1>Guía de usuario</h1>
-      <p class="sub">Cómo se usa NeoHaul de principio a fin, paso a paso. Cada paso dice qué rol lo hace, y trae el botón para hacerlo aquí mismo.</p>
+      <p class="sub">Cómo se usa NeoHaul de principio a fin, paso a paso. Cada paso dice qué rol lo hace, y trae el botón para hacerlo aquí mismo. Los botones con ↗ abren la pantalla en otra pestaña, así la guía se queda abierta.</p>
       <div class="card"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><b style="margin-right:4px">Tu rol: ${pill(mio)}</b>
         <span class="muted" style="font-size:13px">Ver pasos de:</span>
         ${[['todos', 'Todos'], ...Object.entries(ROLG).map(([k, v]) => [k, v[0]])].map(([k, l]) => `<button class="btn small${filtro === k ? ' primary' : ''}" data-gf="${k}">${l}</button>`).join('')}</div></div>
@@ -1162,7 +1163,7 @@
       ev.preventDefault();
       if (!fe.obra_id.value) { fe.querySelector('.err').textContent = 'Elige la obra.'; return; }
       try { const r = await api('estimaciones', { method: 'POST', body: formData(fe) });
-        fe.closest('.ghacer').querySelector('.gres').innerHTML = `<div class="okmsg">Estimación armada: ${r.viajes} viajes, ${pesos(r.subtotal)} antes de IVA. Sigue en <a href="#estimaciones">Estimaciones</a> para descargarla y enviarla.</div>`; }
+        fe.closest('.ghacer').querySelector('.gres').innerHTML = `<div class="okmsg">Estimación armada: ${r.viajes} viajes, ${pesos(r.subtotal)} antes de IVA. Sigue en <a href="#estimaciones" target="_blank" rel="noopener">Estimaciones ↗</a> (se abre en otra pestaña) para descargarla y enviarla.</div>`; }
       catch (er) { fe.querySelector('.err').textContent = errMsg(er) + (er.capturados_sin_confirmar ? ` Hay ${er.capturados_sin_confirmar} viajes capturados sin confirmar en Viajes.` : ''); }
     };
   };
