@@ -408,6 +408,26 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     await req('POST', '/nomina/cerrar', { cookie: capA, body: { semana: '2026-11-02' } });
     ok('semana cerrada no se edita', (await req('PUT', '/nomina', { cookie: capA, body: { driver_id: drv.id, semana: '2026-11-02', bonos: 1 } })).status === 409);
 
+    console.log('\nParámetros de nómina y altas/bajas');
+    ok('solo director/dueño cambian los parámetros', (await req('PUT', '/nomina/config', { cookie: capA, body: { comision_pct: 9, comision_min: 8, comision_max: 10, bono_puntualidad: 0, dias_base: 7 } })).status === 403);
+    ok('rango imposible = 400', (await req('PUT', '/nomina/config', { cookie: dirA, body: { comision_pct: 12, comision_min: 8, comision_max: 10, bono_puntualidad: 0, dias_base: 7 } })).status === 400);
+    const cfgP = await req('PUT', '/nomina/config', { cookie: dirA, body: { comision_pct: 9, comision_min: 7, comision_max: 11, bono_puntualidad: 300, descontar_faltas: true, dias_base: 6 } });
+    ok('el director guarda los parámetros', cfgP.status === 200 && cfgP.json.config.comision_pct === 9 && cfgP.json.config.dias_base === 6);
+    ok('los parámetros de A no tocan a B', (await req('GET', '/nomina/config', { cookie: dirB })).json.config.comision_pct === 8);
+    const sv2 = (await req('PUT', '/nomina', { cookie: capA, body: { driver_id: drv.id, semana: '2026-11-16', salario: 3000, bonos: 0, dias: { lun: 'asistio', mar: 'falto' } } })).json;
+    ok('una falta descuenta salario/6 y quita la puntualidad; comisión normal 9%', near(sv2.descuento, 500) && near(sv2.bono_puntualidad, 0) && Number(sv2.comision_pct) === 9 && near(sv2.total, 3000 - 500 + Number(sv2.comision)), JSON.stringify(sv2));
+    const sv3 = (await req('PUT', '/nomina', { cookie: capA, body: { driver_id: drv.id, semana: '2026-11-23', salario: 3000, bonos: 0, comision_pct: 11, dias: { lun: 'asistio' } } })).json;
+    ok('sin faltas: bono de puntualidad y comisión dentro del nuevo rango (11%)', near(sv3.bono_puntualidad, 300) && near(sv3.descuento, 0) && Number(sv3.comision_pct) === 11);
+    const nd = (await req('POST', '/drivers', { cookie: dirA, body: { nombre: 'Chofer SIT Nuevo', puesto: 'chofer', empresa: 'NeoHaul', salario_semanal: 3500, comision_pct: 10, fecha_ingreso: '2026-12-01' } })).json;
+    ok('alta con su propio porcentaje y fecha de ingreso', nd.id && Number(nd.comision_pct) === 10);
+    ok('antes de su ingreso no aparece en la nómina', !(await req('GET', '/nomina?semana=2026-11-23', { cookie: capA })).json.filas.some((f) => f.driver_id === nd.id));
+    ok('desde su ingreso aparece, con su porcentaje', ((await req('GET', '/nomina?semana=2026-11-30', { cookie: capA })).json.filas.find((f) => f.driver_id === nd.id) || {}).comision_pct === 10);
+    await req('PATCH', '/drivers/' + nd.id, { cookie: dirA, body: { active: false, fecha_baja: '2026-12-09' } });
+    ok('dado de baja: sigue en la semana en que salió', (await req('GET', '/nomina?semana=2026-12-07', { cookie: capA })).json.filas.some((f) => f.driver_id === nd.id));
+    ok('y ya no aparece la semana siguiente', !(await req('GET', '/nomina?semana=2026-12-14', { cookie: capA })).json.filas.some((f) => f.driver_id === nd.id));
+    ok('otra empresa no edita a ese chofer', (await req('PATCH', '/drivers/' + nd.id, { cookie: dirB, body: { nombre: 'X' } })).status === 404);
+
+
     console.log('\nTaller y tablero');
     const ts = (await req('POST', '/taller', { cookie: capA, body: { fecha: '2026-11-10', cliente: 'Inova Vial', unidad_externa: 'Pipa HPA 03', trabajos: 'Engrasado', refacciones: 120, mano_obra: 380, total: 1 } })).json;
     ok('servicio a empresa hermana queda por cobrar con total calculado', ts.estado === 'por_cobrar' && near(ts.total, 500));

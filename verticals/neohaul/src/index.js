@@ -308,7 +308,9 @@ const CAT = {
     required: ['empresa', 'unidad'] },
   drivers: { table: 'nh_drivers', order: 'nombre',
     fields: { nombre: (v) => str(v, 160) || undefined, telefono: tel, empresa: (v) => (EMPRESAS.includes(v) ? v : undefined),
-      puesto: (v) => (['chofer', 'mecanico'].includes(v) ? v : undefined), salario_semanal: (v) => moneyIn(v), active: (v) => !!v },
+      puesto: (v) => (['chofer', 'mecanico'].includes(v) ? v : undefined), salario_semanal: (v) => moneyIn(v), active: (v) => !!v,
+      comision_pct: (v) => (v === '' || v == null ? null : num(v) != null && num(v) >= 0 && num(v) <= 15 ? num(v) : undefined),
+      fecha_ingreso: (v) => (v ? date(v) || undefined : null), fecha_baja: (v) => (v ? date(v) || undefined : null), notas: (v) => strOrNull(v, 300) },
     required: ['nombre'] },
   clients: { table: 'nh_clients', order: 'nombre', fields: { nombre: (v) => str(v, 200) || undefined, rfc: (v) => strOrNull(v, 20), active: (v) => !!v }, required: ['nombre'] },
   obras: { table: 'nh_obras', order: 'nombre',
@@ -1164,9 +1166,41 @@ api.get('/gastos/pps.xlsx', async (req, res) => {
 });
 
 /* ── nómina semanal ──────────────────────────────────────────────────── */
+// Parámetros de la nómina por empresa (Ajustes > Choferes y nómina). Sin configurar = las reglas que dio NeoHaul.
+const NOMINA_DEF = Object.freeze({ comision_pct: 8, comision_min: 8, comision_max: 10, bono_puntualidad: 0, descontar_faltas: false, dias_base: 7 });
+function nominaCfg(raw) {
+  const c = { ...NOMINA_DEF, ...(raw && typeof raw === 'object' ? raw : {}) };
+  const n = (v, d, lo, hi) => { const x = Number(v); return Number.isFinite(x) && x >= lo && x <= hi ? x : d; };
+  c.comision_min = n(c.comision_min, 8, 0, 15); c.comision_max = n(c.comision_max, 10, c.comision_min, 15);
+  c.comision_pct = Math.min(c.comision_max, Math.max(c.comision_min, n(c.comision_pct, 8, 0, 15)));
+  c.bono_puntualidad = n(c.bono_puntualidad, 0, 0, 20000); c.dias_base = n(c.dias_base, 7, 5, 7); c.descontar_faltas = !!c.descontar_faltas;
+  return c;
+}
+async function nominaCfgDe(tenant) { const t = await one('SELECT nomina FROM nh_tenants WHERE id=:t', { t: tenant }); return nominaCfg(t && t.nomina); }
+/** Descuento por faltas y bono de puntualidad, en pesos, con las reglas de la empresa. */
+function ajustesNomina(cfg, dias, salario) {
+  const faltas = Object.values(dias || {}).filter((v) => v === 'falto').length;
+  const descuento = cfg.descontar_faltas && salario ? M.fromCents(Math.round((M.toCents(salario) / cfg.dias_base) * faltas)) : 0;
+  const bono = cfg.bono_puntualidad && !faltas ? cfg.bono_puntualidad : 0;
+  return { faltas, descuento, bono_puntualidad: bono };
+}
+api.get('/nomina/config', async (req, res) => res.json({ config: await nominaCfgDe(req.tenant), defaults: NOMINA_DEF }));
+api.put('/nomina/config', async (req, res) => {
+  if (!canAdmin(req)) return res.status(403).json({ error: 'solo_director' });
+  const b = req.body || {};
+  const mn = num(b.comision_min), mx = num(b.comision_max), pc = num(b.comision_pct), bp = b.bono_puntualidad === '' ? 0 : num(b.bono_puntualidad), db = num(b.dias_base);
+  if ([mn, mx, pc].some((x) => x == null || x < 0 || x > 15) || mn > mx || pc < mn || pc > mx) return res.status(400).json({ error: 'comision_fuera_de_rango' });
+  if (bp == null || bp < 0 || bp > 20000 || ![5, 6, 7].includes(db)) return res.status(400).json({ error: 'monto_fuera_de_rango' });
+  const cfg = nominaCfg({ comision_min: mn, comision_max: mx, comision_pct: pc, bono_puntualidad: bp, descontar_faltas: !!b.descontar_faltas, dias_base: db });
+  await exec('UPDATE nh_tenants SET nomina=:c WHERE id=:t', { c: JSON.stringify(cfg), t: req.tenant });
+  audit(req, 'nomina_config', `comisión ${cfg.comision_pct}% (${cfg.comision_min}-${cfg.comision_max}) · puntualidad ${M.pesos(cfg.bono_puntualidad)} · faltas ${cfg.descontar_faltas ? 'sí, /' + cfg.dias_base : 'no'}`);
+  res.json({ config: cfg });
+});
 async function nominaSemana(req, semana) {
-  const hasta = M.sumarDias(semana, 6);
-  const staff = await sel("SELECT * FROM nh_drivers WHERE tenant_id=:t AND active AND empresa='NeoHaul' ORDER BY puesto, nombre", { t: req.tenant });
+  const hasta = M.sumarDias(semana, 6), cfg = await nominaCfgDe(req.tenant);
+  // Personal de NeoHaul que trabajó en algún día de la semana: dado de alta antes del domingo y sin baja antes del lunes.
+  const staff = await sel(`SELECT * FROM nh_drivers WHERE tenant_id=:t AND empresa='NeoHaul'
+    AND (active OR fecha_baja >= :s) AND (fecha_ingreso IS NULL OR fecha_ingreso <= :h) AND (fecha_baja IS NULL OR fecha_baja >= :s) ORDER BY puesto, nombre`, { t: req.tenant, s: semana, h: hasta });
   const rows = await sel('SELECT * FROM nh_nomina WHERE tenant_id=:t AND semana=:s', { t: req.tenant, s: semana });
   const bases = await sel(`SELECT driver_id, SUM(importe) AS base, COUNT(*)::int AS viajes FROM nh_viajes WHERE tenant_id=:t AND estado='confirmado'
     AND fecha BETWEEN :d AND :h AND driver_id IS NOT NULL GROUP BY driver_id`, { t: req.tenant, d: semana, h: hasta });
@@ -1174,15 +1208,17 @@ async function nominaSemana(req, semana) {
     const r = rows.find((x) => x.driver_id === d.id);
     const b = bases.find((x) => x.driver_id === d.id);
     const base = b ? Number(b.base) : 0;
-    if (r) return { ...r, nombre: d.nombre, puesto: d.puesto, viajes: b ? b.viajes : 0, base_actual: base };
-    return { driver_id: d.id, nombre: d.nombre, puesto: d.puesto, semana, dias: {}, salario: d.salario_semanal, bonos: 0, comision_pct: 8,
-      base_comision: base, comision: d.puesto === 'chofer' ? M.comision(base, 8) : 0, viajes: b ? b.viajes : 0, base_actual: base, cerrada: false, nuevo: true,
-      total: M.sum([d.salario_semanal || 0, d.puesto === 'chofer' ? M.comision(base, 8) : 0]) };
+    if (r) return { ...r, nombre: d.nombre, puesto: d.puesto, viajes: b ? b.viajes : 0, base_actual: base, fecha_baja: d.fecha_baja };
+    const pct = d.comision_pct != null ? Number(d.comision_pct) : cfg.comision_pct;
+    const com = d.puesto === 'chofer' ? M.comision(base, pct) : 0, aj = ajustesNomina(cfg, {}, d.salario_semanal);
+    return { driver_id: d.id, nombre: d.nombre, puesto: d.puesto, semana, dias: {}, salario: d.salario_semanal, bonos: 0, comision_pct: pct,
+      base_comision: base, comision: com, viajes: b ? b.viajes : 0, base_actual: base, cerrada: false, nuevo: true, fecha_baja: d.fecha_baja,
+      descuento: aj.descuento, bono_puntualidad: aj.bono_puntualidad, total: M.fromCents(M.toCents(M.sum([d.salario_semanal || 0, com, aj.bono_puntualidad])) - M.toCents(aj.descuento)) };
   });
 }
 api.get('/nomina', async (req, res) => {
   const semana = M.lunes(date(req.query.semana) || hoyMx());
-  res.json({ semana, hasta: M.sumarDias(semana, 6), filas: await nominaSemana(req, semana) });
+  res.json({ semana, hasta: M.sumarDias(semana, 6), config: await nominaCfgDe(req.tenant), filas: await nominaSemana(req, semana) });
 });
 api.put('/nomina', async (req, res) => {
   const b = req.body || {};
@@ -1193,21 +1229,25 @@ api.put('/nomina', async (req, res) => {
   if (prev && prev.cerrada) return res.status(409).json({ error: 'semana_cerrada' });
   const dias = {};
   for (const k of DIAS) if (b.dias && INCIDENCIAS.includes(b.dias[k])) dias[k] = b.dias[k];
-  const pct = num(b.comision_pct) == null ? 8 : num(b.comision_pct);
-  if (pct < 8 || pct > 10) return res.status(400).json({ error: 'comision_fuera_de_rango' }); // regla de NeoHaul: 8% a 10%
+  const cfg = await nominaCfgDe(req.tenant);
+  const pct = num(b.comision_pct) == null ? (d.comision_pct != null ? Number(d.comision_pct) : cfg.comision_pct) : num(b.comision_pct);
+  if (pct < cfg.comision_min || pct > cfg.comision_max) return res.status(400).json({ error: 'comision_fuera_de_rango' }); // rango de Ajustes (NeoHaul: 8% a 10%)
   const salario = b.salario === '' || b.salario == null ? null : moneyIn(b.salario);
   const bonos = moneyIn(b.bonos) || 0;
   if (bonos > 50000 || (salario != null && salario > 100000)) return res.status(400).json({ error: 'monto_fuera_de_rango' });
   const [[base]] = await exec(`SELECT COALESCE(SUM(importe),0) AS s FROM nh_viajes WHERE tenant_id=:t AND driver_id=:d AND estado='confirmado' AND fecha BETWEEN :a AND :z`,
     { t: req.tenant, d: driver, a: semana, z: M.sumarDias(semana, 6) });
   const comision = d.puesto === 'chofer' ? M.comision(base.s, pct) : 0;
-  const total = M.sum([salario || 0, bonos, comision]);
-  const [r] = await exec(`INSERT INTO nh_nomina (tenant_id,driver_id,semana,dias,salario,bonos,bonos_nota,comision_pct,base_comision,comision,total)
-    VALUES (:t,:d,:s,:dias,:sal,:bon,:bn,:pct,:base,:com,:tot)
+  const aj = ajustesNomina(cfg, dias, salario);
+  const total = M.fromCents(M.toCents(M.sum([salario || 0, bonos, comision, aj.bono_puntualidad])) - M.toCents(aj.descuento));
+  const [r] = await exec(`INSERT INTO nh_nomina (tenant_id,driver_id,semana,dias,salario,bonos,bonos_nota,comision_pct,base_comision,comision,descuento,bono_puntualidad,total)
+    VALUES (:t,:d,:s,:dias,:sal,:bon,:bn,:pct,:base,:com,:desc,:bp,:tot)
     ON CONFLICT (tenant_id,driver_id,semana) DO UPDATE SET dias=EXCLUDED.dias, salario=EXCLUDED.salario, bonos=EXCLUDED.bonos, bonos_nota=EXCLUDED.bonos_nota,
-      comision_pct=EXCLUDED.comision_pct, base_comision=EXCLUDED.base_comision, comision=EXCLUDED.comision, total=EXCLUDED.total RETURNING *`,
-    { t: req.tenant, d: driver, s: semana, dias: JSON.stringify(dias), sal: salario, bon: bonos, bn: strOrNull(b.bonos_nota, 200), pct, base: Number(base.s), com: comision, tot: total });
-  audit(req, 'nomina_guardada', `${d.nombre} ${semana} salario ${M.pesos(salario || 0)} bonos ${M.pesos(bonos)} comision ${pct}% total ${M.pesos(total)}`);
+      comision_pct=EXCLUDED.comision_pct, base_comision=EXCLUDED.base_comision, comision=EXCLUDED.comision, descuento=EXCLUDED.descuento,
+      bono_puntualidad=EXCLUDED.bono_puntualidad, total=EXCLUDED.total RETURNING *`,
+    { t: req.tenant, d: driver, s: semana, dias: JSON.stringify(dias), sal: salario, bon: bonos, bn: strOrNull(b.bonos_nota, 200), pct, base: Number(base.s), com: comision,
+      desc: aj.descuento, bp: aj.bono_puntualidad, tot: total });
+  audit(req, 'nomina_guardada', `${d.nombre} ${semana} salario ${M.pesos(salario || 0)} bonos ${M.pesos(bonos)} comision ${pct}% faltas ${aj.faltas} descuento ${M.pesos(aj.descuento)} total ${M.pesos(total)}`);
   res.json(r[0]);
 });
 api.post('/nomina/cerrar', async (req, res) => {

@@ -124,7 +124,7 @@
     ['grp', 'Semana'], ['tablero', 'Tablero'], ['pedidos', 'Pedidos'], ['viajes', 'Viajes'],
     ['grp', 'Cobro'], ['estimaciones', 'Estimaciones'], ['facturas', 'Facturas'],
     ['grp', 'Costos'], ['gastos', 'Gastos y diésel'], ['nomina', 'Nómina'], ['taller', 'Taller'],
-    ['grp', 'Ajustes'], ['catalogos', 'Catálogos'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta'], ['guia', 'Guía de usuario']
+    ['grp', 'Ajustes'], ['personal', 'Choferes y nómina'], ['catalogos', 'Catálogos'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta'], ['guia', 'Guía de usuario']
   ];
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Menú" aria-expanded="false">☰</button>
@@ -140,6 +140,59 @@
   }
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
+  /* Ordenar y filtrar CUALQUIER tabla de la app: clic en el encabezado ordena (otra vez = al revés) y arriba hay
+     una caja para filtrar, por todas las columnas o por una. Se aplica sola a cada tabla que se dibuja, y recuerda
+     el orden y el filtro de cada pantalla mientras no se recargue la página. */
+  const TBL = {};
+  const fold = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+  function clave(td) {
+    const t = (td ? td.innerText || td.textContent : '').trim();
+    const f = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/); if (f) return { n: Number(f[3] + f[2] + f[1]) };
+    const n = t.replace(/^-?\$/, (x) => (x[0] === '-' ? '-' : '')).replace(/[$,%]/g, '').match(/^(-?\d+(?:\.\d+)?)(\s*(t|L|km|días?|de \d+))?\b/);
+    if (n && /^[-$\d]/.test(t)) return { n: Number(n[1]) };
+    return { s: fold(t) };
+  }
+  function mejorarTablas() {
+    const root = main(); if (!root) return;
+    root.querySelectorAll('table.cards').forEach((tb, idx) => {
+      if (tb.dataset.enh || !tb.tHead || !tb.tBodies[0]) return;
+      const rows = [...tb.tBodies[0].rows].filter((r) => r.cells.length > 1);
+      if (rows.length < 2) return;
+      tb.dataset.enh = '1';
+      const ths = [...tb.tHead.rows[0].cells], cols = ths.map((th, i) => ({ i, l: th.textContent.trim() })).filter((c) => c.l);
+      const k = (S.view || '') + '#' + idx, st = TBL[k] || (TBL[k] = { q: '', col: '', sort: null, dir: 1 });
+      const bar = document.createElement('div'); bar.className = 'tblbar noprint';
+      bar.innerHTML = `<input type="search" placeholder="Filtrar…" value="${esc(st.q)}" aria-label="Filtrar la tabla">
+        <select aria-label="Columna del filtro"><option value="">en todas las columnas</option>${cols.map((c) => `<option value="${c.i}"${String(st.col) === String(c.i) ? ' selected' : ''}>en ${esc(c.l)}</option>`).join('')}</select>
+        <select aria-label="Ordenar por"><option value="">Ordenar por…</option>${cols.map((c) => `<option value="${c.i}"${String(st.sort) === String(c.i) ? ' selected' : ''}>${esc(c.l)}</option>`).join('')}</select>
+        <button type="button" class="btn small" aria-label="Cambiar dirección">${st.dir > 0 ? '↑ menor a mayor' : '↓ mayor a menor'}</button><span class="muted"></span>`;
+      tb.parentNode.insertBefore(bar, tb);
+      const [qi, ci, si, di, cnt] = [bar.querySelector('input'), bar.querySelectorAll('select')[0], bar.querySelectorAll('select')[1], bar.querySelector('button'), bar.querySelector('span')];
+      const aplicar = () => {
+        const q = fold(st.q), body = tb.tBodies[0];
+        let vis = 0;
+        rows.forEach((r) => { const txt = st.col === '' ? r.innerText || r.textContent : (r.cells[st.col] ? r.cells[st.col].innerText || r.cells[st.col].textContent : '');
+          const ok = !q || fold(txt).includes(q); r.style.display = ok ? '' : 'none'; if (ok) vis++; });
+        if (st.sort !== null && st.sort !== '') {
+          const c = Number(st.sort);
+          rows.slice().sort((a, b) => { const x = clave(a.cells[c]), y = clave(b.cells[c]);
+            const v = x.n != null && y.n != null ? x.n - y.n : x.n != null ? -1 : y.n != null ? 1 : (x.s || '').localeCompare(y.s || '', 'es'); return v * st.dir; })
+            .forEach((r) => body.appendChild(r));
+        }
+        ths.forEach((th, i) => { th.classList.toggle('sorted', String(i) === String(st.sort)); th.dataset.dir = String(i) === String(st.sort) ? (st.dir > 0 ? '▲' : '▼') : ''; });
+        cnt.textContent = q ? `${vis} de ${rows.length}` : `${rows.length} renglones`;
+      };
+      qi.oninput = () => { st.q = qi.value; aplicar(); };
+      ci.onchange = () => { st.col = ci.value; aplicar(); };
+      si.onchange = () => { st.sort = si.value === '' ? null : si.value; aplicar(); };
+      di.onclick = () => { st.dir = -st.dir; di.textContent = st.dir > 0 ? '↑ menor a mayor' : '↓ mayor a menor'; aplicar(); };
+      cols.forEach((c) => { const th = ths[c.i]; th.classList.add('sortable'); th.title = 'Ordenar por ' + c.l;
+        th.onclick = () => { if (String(st.sort) === String(c.i)) st.dir = -st.dir; else { st.sort = c.i; st.dir = 1; } si.value = c.i; di.textContent = st.dir > 0 ? '↑ menor a mayor' : '↓ mayor a menor'; aplicar(); }; });
+      aplicar();
+    });
+  }
+  let tblTimer = null;
+  new MutationObserver(() => { clearTimeout(tblTimer); tblTimer = setTimeout(mejorarTablas, 30); }).observe(document.body, { childList: true, subtree: true });
   async function go(v) {
     if (!R[v]) v = 'tablero';
     S.view = v;
@@ -798,7 +851,7 @@
   R.nomina = async function () {
     const n = await api('nomina?semana=' + (S.nSemana || lunes()));
     main().innerHTML = `<h1>Nómina</h1><p class="sub">Semana del ${fmtF(n.semana)} al ${fmtF(n.hasta)}. La comisión sale de los viajes confirmados de cada chofer.</p>
-      <div class="note">La regla exacta del 8% al 10% (según cuántos viajes hace el chofer ese día en esa obra) está por confirmar con NeoHaul. Por ahora el porcentaje se elige por chofer.</div>
+      <div class="note">Comisión normal ${n.config.comision_pct}% (rango ${n.config.comision_min}% a ${n.config.comision_max}%)${n.config.bono_puntualidad ? ` · bono de puntualidad ${pesos(n.config.bono_puntualidad)} si no falta` : ''}${n.config.descontar_faltas ? ` · cada falta descuenta el salario / ${n.config.dias_base}` : ''}. Se cambia en Ajustes &gt; <a href="#personal">Choferes y nómina</a>.</div>
       <div class="row" style="margin-bottom:10px"><input type="date" id="wk" value="${n.semana}" style="max-width:180px">${canEdit() ? '<button class="btn" id="cerrar">Cerrar semana</button>' : ''}</div>
       ${n.filas.length ? n.filas.map((r) => `<div class="card" data-row="${r.driver_id}"><div class="row" style="justify-content:space-between"><b>${esc(r.nombre)}</b><span class="muted">${r.puesto} · ${r.viajes} viajes · base ${pesos(r.base_actual)}</span>
         ${r.cerrada ? '<span class="pill ok">cerrada</span>' : r.nuevo ? '<span class="pill warn">sin guardar</span>' : ''}</div>
@@ -806,11 +859,13 @@
           <div><label>Salario semanal</label><input name="salario" inputmode="decimal" value="${r.salario == null ? '' : Number(r.salario)}" ${r.cerrada ? 'disabled' : ''}></div>
           <div><label>Bonos</label><input name="bonos" inputmode="decimal" value="${Number(r.bonos || 0)}" ${r.cerrada ? 'disabled' : ''}></div>
           <div><label>Nota del bono</label><input name="bonos_nota" value="${esc(r.bonos_nota || '')}" placeholder="foráneo, transporte…" ${r.cerrada ? 'disabled' : ''}></div>
-          ${r.puesto === 'chofer' ? `<div><label>Comisión %</label><select name="comision_pct" ${r.cerrada ? 'disabled' : ''}>${[8, 9, 10].map((p) => `<option${Number(r.comision_pct) === p ? ' selected' : ''}>${p}</option>`).join('')}</select></div>
+          ${r.puesto === 'chofer' ? `<div><label>Comisión %</label><select name="comision_pct" ${r.cerrada ? 'disabled' : ''}>${(() => { const o = []; for (let p = n.config.comision_min; p <= n.config.comision_max + 1e-9; p += 0.5) o.push(Math.round(p * 10) / 10); if (!o.includes(Number(r.comision_pct))) o.push(Number(r.comision_pct)); return o.sort((a, b) => a - b); })().map((p) => `<option${Number(r.comision_pct) === p ? ' selected' : ''}>${p}</option>`).join('')}</select></div>
           <div><label>Comisión</label><div class="kpi"><div class="v">${pesos(r.comision)}</div></div></div>` : ''}
+          ${Number(r.bono_puntualidad) ? `<div><label>Puntualidad</label><div class="kpi"><div class="v">${pesos(r.bono_puntualidad)}</div></div></div>` : ''}
+          ${Number(r.descuento) ? `<div><label>Descuento por faltas</label><div class="kpi"><div class="v" style="color:var(--bad)">-${pesos(r.descuento)}</div></div></div>` : ''}
           <div><label>Total</label><div class="kpi"><div class="v">${pesos(r.total)}</div></div></div>
           ${canEdit() && !r.cerrada ? '<div><button class="btn primary" data-save>Guardar</button></div>' : ''}</div></div>`).join('')
-      : '<p class="muted">No hay personal de NeoHaul en Catálogos > Choferes.</p>'}`;
+      : '<p class="muted">No hay personal de NeoHaul. Agrégalo en Ajustes &gt; <a href="#personal">Choferes y nómina</a>.</p>'}`;
     document.getElementById('wk').onchange = (e) => { S.nSemana = lunes(e.target.value); R.nomina(); };
     const c = document.getElementById('cerrar');
     if (c) c.onclick = async () => { if (!confirm('¿Cerrar la semana? Ya no se podrá editar.')) return; await api('nomina/cerrar', { method: 'POST', body: { semana: n.semana } }); R.nomina(); };
@@ -820,6 +875,65 @@
       DIAS.forEach((d) => { body.dias[d] = val(card, 'd_' + d); });
       ['salario', 'bonos', 'bonos_nota', 'comision_pct'].forEach((k) => { const v = val(card, k); if (v !== undefined) body[k] = v; });
       try { await api('nomina', { method: 'PUT', body }); R.nomina(); } catch (er) { alert(errMsg(er)); }
+    };
+  };
+
+  /* ── choferes y nómina (Ajustes) ── */
+  R.personal = async function () {
+    const [{ config: c }] = await Promise.all([api('nomina/config'), loadCat(true)]);
+    const gente = (S.cat.drivers || []).slice().sort((a, b) => (b.active - a.active) || a.puesto.localeCompare(b.puesto) || a.nombre.localeCompare(b.nombre));
+    const ed = canAdmin();
+    main().innerHTML = `<h1>Choferes y nómina</h1><p class="sub">Altas, bajas y cambios del personal, y las reglas con que se calcula la nómina cada semana.</p>
+      <div class="card"><h2 style="margin-top:0">Parámetros de la nómina</h2>
+        <form id="cfg" class="form">
+          <div><label>Comisión normal %</label><input name="comision_pct" inputmode="decimal" value="${c.comision_pct}" ${ed ? '' : 'disabled'}></div>
+          <div><label>Comisión mínima %</label><input name="comision_min" inputmode="decimal" value="${c.comision_min}" ${ed ? '' : 'disabled'}></div>
+          <div><label>Comisión máxima %</label><input name="comision_max" inputmode="decimal" value="${c.comision_max}" ${ed ? '' : 'disabled'}></div>
+          <div><label>Bono de puntualidad (semana sin faltas)</label><input name="bono_puntualidad" inputmode="decimal" value="${c.bono_puntualidad}" ${ed ? '' : 'disabled'}></div>
+          <div><label><input type="checkbox" name="descontar_faltas" style="width:auto"${c.descontar_faltas ? ' checked' : ''} ${ed ? '' : 'disabled'}> Descontar cada falta del salario</label></div>
+          <div><label>El salario semanal cubre</label><select name="dias_base" ${ed ? '' : 'disabled'}>${[7, 6, 5].map((d) => `<option value="${d}"${c.dias_base === d ? ' selected' : ''}>${d} días</option>`).join('')}</select></div>
+          ${ed ? '<div><button class="btn primary">Guardar parámetros</button></div>' : ''}<div class="err wide"></div></form>
+        <p class="muted" style="font-size:13px;margin:8px 0 0">La comisión es el porcentaje de los viajes confirmados del chofer en la semana. Cada chofer puede tener su propio porcentaje (dentro del rango). Con "descontar faltas", cada falta resta el salario semanal dividido entre los días que cubre. Los cambios valen para las semanas que no estén cerradas.</p></div>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px"><h2 style="margin:0">Personal</h2>${canEdit() ? '<button class="btn primary" id="alta">+ Agregar persona</button>' : ''}</div>
+      <div class="card tbl"><table class="cards"><thead><tr><th>Nombre</th><th>Puesto</th><th>Empresa</th><th>WhatsApp</th><th class="n">Salario semanal</th><th class="n">Comisión</th><th>Ingreso</th><th>Estado</th><th></th></tr></thead><tbody>
+        ${gente.map((d) => `<tr><td data-l="Nombre"><b>${esc(d.nombre)}</b>${d.notas ? `<div class="muted">${esc(d.notas)}</div>` : ''}</td><td data-l="Puesto">${d.puesto === 'mecanico' ? 'Mecánico' : 'Chofer'}</td><td data-l="Empresa">${esc(d.empresa)}</td>
+          <td data-l="WhatsApp">${esc(d.telefono || '—')}</td><td class="n" data-l="Salario">${d.salario_semanal == null ? '—' : pesos(d.salario_semanal)}</td>
+          <td class="n" data-l="Comisión">${d.puesto === 'chofer' ? (d.comision_pct != null ? Number(d.comision_pct) + '%' : c.comision_pct + '% (normal)') : '—'}</td>
+          <td data-l="Ingreso">${d.fecha_ingreso ? fmtF(d.fecha_ingreso) : '—'}</td>
+          <td data-l="Estado">${d.active ? '<span class="pill ok">activo</span>' : `<span class="pill">baja${d.fecha_baja ? ' ' + fmtF(d.fecha_baja) : ''}</span>`}</td>
+          <td>${canEdit() ? `<button class="btn small" data-ed="${d.id}">Editar</button> ${d.active ? `<button class="btn small danger" data-baja="${d.id}">Dar de baja</button>` : `<button class="btn small" data-alta="${d.id}">Reactivar</button>`}` : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="muted">Sin personal todavía.</td></tr>'}
+      </tbody></table></div>
+      <p class="muted" style="font-size:13px">Dar de baja no borra a la persona: su historial de viajes y nóminas se queda, y sigue apareciendo en la nómina de la semana en que salió. También puedes pegar una lista de choferes en Catálogos &gt; Choferes.</p>`;
+    const f = document.getElementById('cfg');
+    if (f && ed) f.onsubmit = async (ev) => { ev.preventDefault(); try { await api('nomina/config', { method: 'PUT', body: formData(f) }); R.personal(); } catch (er) { f.querySelector('.err').textContent = errMsg(er); } };
+    const editar = (d) => {
+      const m = modal(`<h2 style="margin-top:0">${d ? 'Editar a ' + esc(d.nombre) : 'Agregar persona'}</h2><form class="form" id="pf">
+        <div class="wide"><label>Nombre completo</label><input name="nombre" value="${esc(d ? d.nombre : '')}" required></div>
+        <div><label>Puesto</label><select name="puesto">${[['chofer', 'Chofer'], ['mecanico', 'Mecánico']].map(([k, l]) => `<option value="${k}"${d && d.puesto === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div><label>Empresa</label><select name="empresa">${['NeoHaul', 'TTS', 'SEMAQSA', 'Externo'].map((e) => `<option${(d ? d.empresa : 'NeoHaul') === e ? ' selected' : ''}>${e}</option>`).join('')}</select></div>
+        <div><label>WhatsApp (10 dígitos = México)</label><input name="telefono" value="${esc(d && d.telefono ? d.telefono : '')}"></div>
+        <div><label>Salario semanal</label><input name="salario_semanal" inputmode="decimal" value="${d && d.salario_semanal != null ? Number(d.salario_semanal) : ''}"></div>
+        <div><label>Comisión % (vacío = la normal, ${c.comision_pct}%)</label><input name="comision_pct" inputmode="decimal" value="${d && d.comision_pct != null ? Number(d.comision_pct) : ''}"></div>
+        <div><label>Fecha de ingreso</label><input type="date" name="fecha_ingreso" value="${d && d.fecha_ingreso ? String(d.fecha_ingreso).slice(0, 10) : ''}"></div>
+        <div class="wide"><label>Notas</label><input name="notas" value="${esc(d && d.notas ? d.notas : '')}" placeholder="licencia, camión habitual, etc."></div>
+        <div class="row"><button class="btn primary">Guardar</button><button class="btn" type="button" data-close>Cancelar</button></div><div class="err wide"></div></form>`);
+      const pf = m.querySelector('#pf');
+      pf.onsubmit = async (ev) => {
+        ev.preventDefault(); const body = formData(pf);
+        const pc = body.comision_pct === '' ? null : Number(body.comision_pct);
+        if (pc != null && (!(pc >= c.comision_min) || !(pc <= c.comision_max))) { pf.querySelector('.err').textContent = `La comisión debe estar entre ${c.comision_min}% y ${c.comision_max}%.`; return; }
+        try { await api(d ? 'drivers/' + d.id : 'drivers', { method: d ? 'PATCH' : 'POST', body }); m.remove(); R.personal(); } catch (er) { pf.querySelector('.err').textContent = errMsg(er); }
+      };
+    };
+    const al = document.getElementById('alta'); if (al) al.onclick = () => editar(null);
+    main().onclick = async (e) => {
+      const byId = (id) => gente.find((x) => String(x.id) === String(id));
+      const ed1 = e.target.closest('[data-ed]'); if (ed1) return editar(byId(ed1.dataset.ed));
+      const b = e.target.closest('[data-baja]');
+      if (b) { const d = byId(b.dataset.baja); const fecha = prompt(`Fecha de baja de ${d.nombre} (AAAA-MM-DD)`, hoy()); if (!fecha) return;
+        try { await api('drivers/' + d.id, { method: 'PATCH', body: { active: false, fecha_baja: fecha } }); R.personal(); } catch (er) { alert(errMsg(er)); } return; }
+      const a = e.target.closest('[data-alta]');
+      if (a) { try { await api('drivers/' + a.dataset.alta, { method: 'PATCH', body: { active: true, fecha_baja: '' } }); R.personal(); } catch (er) { alert(errMsg(er)); } }
     };
   };
 

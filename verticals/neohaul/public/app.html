@@ -96,6 +96,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:820px){.nf-k{display:block}}
 .guia ol{margin:0;padding-left:22px}.guia li{margin:8px 0;line-height:1.5}
 .gnum{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-size:14px;margin-right:10px;vertical-align:2px}
+.tblbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.tblbar input{flex:1 1 200px;max-width:320px}.tblbar select{max-width:220px}.tblbar .muted{font-size:12px}
+th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:var(--acc-d)}th.sortable::after{content:attr(data-dir);margin-left:4px;font-size:10px}
 </style>
 <style>
 .hero{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:center}
@@ -122,6 +125,6 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=11" defer></script>
+<script src="app.js?v=13" defer></script>
 </body>
 </html>

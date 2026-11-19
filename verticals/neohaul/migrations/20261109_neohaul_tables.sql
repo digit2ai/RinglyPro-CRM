@@ -323,3 +323,12 @@ ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS explicacion VARCHAR(300);
 ALTER TABLE nh_gastos ADD COLUMN IF NOT EXISTS orden_pps INTEGER;
 CREATE UNIQUE INDEX IF NOT EXISTS nh_gastos_uuid_ux ON nh_gastos (tenant_id, uuid) WHERE uuid IS NOT NULL;
 CREATE INDEX IF NOT EXISTS nh_gastos_folio_ix ON nh_gastos (tenant_id, folio);
+
+-- 2026-11-19: parámetros de nómina por empresa y datos de alta/baja por persona.
+ALTER TABLE nh_tenants ADD COLUMN IF NOT EXISTS nomina JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE nh_drivers ADD COLUMN IF NOT EXISTS comision_pct NUMERIC(5,2);
+ALTER TABLE nh_drivers ADD COLUMN IF NOT EXISTS fecha_ingreso DATE;
+ALTER TABLE nh_drivers ADD COLUMN IF NOT EXISTS fecha_baja DATE;
+ALTER TABLE nh_drivers ADD COLUMN IF NOT EXISTS notas VARCHAR(300);
+ALTER TABLE nh_nomina ADD COLUMN IF NOT EXISTS descuento NUMERIC(14,2) NOT NULL DEFAULT 0;
+ALTER TABLE nh_nomina ADD COLUMN IF NOT EXISTS bono_puntualidad NUMERIC(14,2) NOT NULL DEFAULT 0;
