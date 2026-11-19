@@ -311,7 +311,7 @@ CÓMO FUNCIONA LA OPERACIÓN:
 
 PANTALLAS (menú izquierdo): Semana: Tablero, Pedidos, Viajes. Cobro: Estimaciones, Facturas. Costos: Gastos y diésel, Nómina, Taller. Ajustes: Choferes y nómina, Catálogos, Usuarios, Mi cuenta, Guía de usuario. Roles: Captura (capturista), Administrador (agrega y modifica, no borra), Solo lectura (contador), Director, Super administrador (soporte, todo) y Digit2AI (desarrollador).
 
-ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y si su rol (${ctx.rol}) no puede hacerlo, dilo y di qué rol sí. Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
+ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y solo si su rol (${ctx.rol}) NO tiene permiso según "permisos" del manual, dilo y di qué rol sí; "normalmente" es quién suele hacerlo, no un permiso (un director, administrador o super administrador también puede capturar). Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
 
 CÓMO RESPONDES:
 - Para cualquier dato usa las herramientas antes de responder. Nunca adivines una cifra.
@@ -341,7 +341,7 @@ async function heuristica(ctx, motivo) {
   const ultima = ctx.ultimaPregunta || '';
   if (ultima && /c[oó]mo|d[oó]nde|quiero|necesito|subir|cargar|registrar|crear|dar de alta|agregar|armar|hago|se hace/i.test(ultima)) {
     const r = MAN.buscar(ultima); const temas = Object.values(r).filter((x) => x && x.pasos);
-    if (temas.length) return { reply: temas.slice(0, 2).map((t) => `${t.titulo} (lo hace: ${t.roles}). ${t.pasos.join(' ')}`).join(' ') + ' También lo tienes paso a paso en Ajustes, Guía de usuario.', source: 'heuristic', composed_by: 'manual', is_simulated: false, motivo };
+    if (temas.length) return { reply: temas.slice(0, 2).map((t) => `${t.titulo} (normalmente lo hace: ${t.normalmente}). ${t.pasos.join(' ')}`).join(' ') + ' También lo tienes paso a paso en Ajustes, Guía de usuario.', source: 'heuristic', composed_by: 'manual', is_simulated: false, motivo };
   }
   try {
     const r = await ejecutar('estado_semana', {}, ctx);
