@@ -270,7 +270,8 @@ app.use((req, res, next) => {
   if (path === '/neohaul' || path.startsWith('/neohaul/')) return next();
   if (path.startsWith('/embed/') || path.startsWith('/api/voice-agent/') || path.startsWith('/api/tts/')) return next();
   if (path.startsWith('/d/')) return next(); // facturas y documentos privados de NeoHaul en su propio dominio
-  if (path === '/favicon.ico') return res.redirect(302, '/neohaul/logo.png');
+  if (path === '/favicon.ico') return res.redirect(302, '/neohaul/favicon-32.png');
+  if (path === '/apple-touch-icon.png' || path === '/apple-touch-icon-precomposed.png') return res.redirect(302, '/neohaul/apple-touch-icon.png'); // iOS lo pide en la raíz
   if (path === '/presentacion' || path === '/guia') return res.redirect(302, '/neohaul' + path);
   return neohaul404(res);
 });
