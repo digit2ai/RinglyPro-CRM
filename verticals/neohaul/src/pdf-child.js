@@ -10,6 +10,6 @@ process.once('message', (m) => {
   try {
     require('pdf-parse/lib/pdf-parse.js')(Buffer.from(m.buf, 'base64'), { max: 40 })
       .then((d) => process.send({ text: String(d.text || '').slice(0, 2e6) }, () => process.exit(0)))
-      .catch(() => process.send({ error: 'pdf_ilegible' }, () => process.exit(0)));
-  } catch (_) { process.send({ error: 'pdf_ilegible' }, () => process.exit(0)); }
+      .catch((e) => process.send({ error: 'pdf_ilegible', detalle: String(e && e.message || e).slice(0, 160) }, () => process.exit(0)));
+  } catch (e) { process.send({ error: 'pdf_ilegible', detalle: String(e && e.message || e).slice(0, 160) }, () => process.exit(0)); }
 });

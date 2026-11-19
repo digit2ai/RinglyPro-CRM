@@ -611,13 +611,14 @@ const importUpload = multer({ storage: multer.memoryStorage(), limits: { fileSiz
 function parsePdf(buf) {
   return new Promise((resolve) => {
     const { fork } = require('child_process');
-    const c = fork(path.join(__dirname, 'pdf-child.js'), [], { env: {}, execArgv: ['--disallow-code-generation-from-strings', '--max-old-space-size=256'], stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
-    let fin = false;
-    const done = (r) => { if (fin) return; fin = true; clearTimeout(timer); try { c.kill('SIGKILL'); } catch (_) {} resolve(r); };
+    const c = fork(path.join(__dirname, 'pdf-child.js'), [], { env: {}, execArgv: ['--disallow-code-generation-from-strings', '--max-old-space-size=256'], stdio: ['ignore', 'ignore', 'pipe', 'ipc'] });
+    let fin = false, err = '';
+    if (c.stderr) c.stderr.on('data', (d) => { if (err.length < 400) err += String(d); });
+    const done = (r) => { if (fin) return; fin = true; clearTimeout(timer); try { c.kill('SIGKILL'); } catch (_) {} if (r.error) console.error('[neohaul] pdf:', r.error, r.detalle || '', err.slice(0, 300)); resolve(r); };
     const timer = setTimeout(() => done({ error: 'archivo_muy_lento' }), 10000);
-    c.once('message', (m) => done(m && typeof m.text === 'string' ? { text: m.text } : { error: (m && m.error) || 'pdf_ilegible' }));
-    c.once('error', () => done({ error: 'pdf_ilegible' }));
-    c.once('exit', () => done({ error: 'pdf_ilegible' }));
+    c.once('message', (m) => done(m && typeof m.text === 'string' ? { text: m.text } : { error: (m && m.error) || 'pdf_ilegible', detalle: m && m.detalle }));
+    c.once('error', (e) => done({ error: 'pdf_ilegible', detalle: 'fork: ' + (e && e.code) }));
+    c.once('exit', (code, sig) => setTimeout(() => done({ error: 'pdf_ilegible', detalle: `exit ${code} ${sig || ''} ${err.replace(/\s+/g, ' ').slice(0, 200)}` }), 50));
     c.send({ buf: buf.toString('base64') });
   });
 }
@@ -948,7 +949,7 @@ api.post('/diesel/importar', docUpload.single('archivo'), async (req, res) => {
   let doc;
   if (type === 'application/pdf') {
     const p = await parsePdf(buf);
-    if (p.error || typeof p.text !== 'string') return res.status(415).json({ error: p.error || 'pdf_ilegible' });
+    if (p.error || typeof p.text !== 'string') return res.status(415).json({ error: p.error || 'pdf_ilegible', ...(canAdmin(req) && p.detalle ? { detalle: String(p.detalle).slice(0, 220) } : {}) });
     doc = D.dieselFromPdfText(p.text);
   } else if (!type && !buf.slice(0, 4096).includes(0) && /<\s*(\w+:)?Comprobante\b/.test(buf.slice(0, 20000).toString('utf8'))) {
     if (/<!DOCTYPE|<!ENTITY/i.test(buf.toString('utf8'))) return res.status(415).json({ error: 'xml_con_doctype' }); // un CFDI nunca trae DOCTYPE
