@@ -463,7 +463,7 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('el director puede dar acceso de super administrador', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `sup-${STAMP}@example.test`, role: 'soporte' } })).status === 201);
     ok('soporte crea un director', (await req('POST', '/usuarios', { cookie: supA, body: { email: `dir2-${STAMP}@example.test`, role: 'director' } })).status === 201);
     ok('soporte puede borrar (pasa el filtro; el viaje no existe = 404)', (await req('DELETE', '/viajes/999999999', { cookie: supA })).status === 404);
-    const supRow = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'soporte');
+    const supRow = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'soporte' && u.email.startsWith('sup-'));
     ok('el director puede quitar a un super administrador (resetear/desactivar)', (await req('PATCH', '/usuarios/' + supRow.id, { cookie: dirA, body: { reset: true } })).status === 200);
     const dir2 = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'director' && u.email.startsWith('dir2-'));
     ok('pero no toca la cuenta de otro director', (await req('PATCH', '/usuarios/' + dir2.id, { cookie: dirA, body: { reset: true } })).status === 404);
