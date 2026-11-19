@@ -559,6 +559,65 @@
       ${(p.avisos || []).map((a) => `<div class="note">${esc(AVISO[a] || a)}</div>`).join('')}
       ${p.placas && !tk ? '<div class="note">Ningún camión tiene esas placas en Catálogos: agrégalas y la próxima vez se elige solo.</div>' : ''}</details>`;
   }
+  /* Ventanas reutilizables: las usan sus pantallas y también la Guía de usuario (que sirve para enseñar y para hacer). */
+  async function leerTicket(file) {
+      if (!file) return;
+      const fd = new FormData(); fd.append('foto', file);
+      const m = modal('<p>Leyendo el ticket…</p>');
+      try { const r = await api('viajes/leer-ticket', { method: 'POST', body: fd }); m.remove(); abrirViaje(null, r.propuesta || {}, r.file_id, r.leido_por, r.sugerencias); }
+      catch (er) { m.querySelector('.box').innerHTML = `<div class="err">${errMsg(er)}</div><button class="btn" data-close>Cerrar</button>`; }
+  }
+  function importarModal(after) {
+      const m = modal(`<h2 style="margin-top:0">Importar tickets de Excel</h2><p class="muted">El archivo debe tener columnas <b>Fecha</b>, <b>Ticket</b> y <b>Toneladas</b> (como el Excel «PLANTA SANT»). Todos quedan sin confirmar.</p>
+        <div class="form"><div class="wide">${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel o CSV de planta, o toca para elegirlo')}</div>
+        <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, '', 'Elige')}</select></div>
+        <div><label>Tarifa</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, '', 'Elige')}</select></div>
+        <div><label>Camión (si el Excel no trae placas)</label><select name="truck_id">${opts(activos('trucks'), truckLbl, '', 'Sin camión')}</select></div>
+        <div class="row wide"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err wide"></div><div class="wide" id="res"></div></div>`);
+      m.querySelector('#go').onclick = async () => {
+        const fd = new FormData(); const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
+        fd.append('archivo', f); ['obra_id', 'tarifa_id', 'truck_id'].forEach((k) => fd.append(k, val(m, k)));
+        try {
+          const r = await api('viajes/importar', { method: 'POST', body: fd });
+          m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creados} viajes creados, ${r.rechazados} rechazados.</div>` +
+            r.resultados.filter((x) => !x.ok).map((x) => `<div class="muted">Renglón ${x.renglon}: ${esc(x.motivo)}${x.ticket ? ' (' + esc(x.ticket) + ')' : ''}</div>`).join('') +
+            r.resultados.filter((x) => x.aviso === 'placa_desconocida').map((x) => `<div class="muted">Renglón ${x.renglon}: la placa ${esc(x.placa)} no es de un camión activo; quedó con el camión elegido arriba.</div>`).join('');
+        } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
+      };
+      m.addEventListener('click', (e) => { if (e.target.closest('[data-close]') && after) after(); });
+  }
+  function dieselModal(after) {
+      const m = modal(`<h2 style="margin-top:0">Factura de la gasolinera</h2><p class="muted">El PDF o XML del CFDI (como el de Estación de Servicio J6). Cada carga entra con su folio de despacho, fecha, hora y litros. Si la factura ya está en el PPS, se le agregan las cargas en vez de duplicarla.</p>
+        ${dropBox('archivo', '.pdf,.xml,application/pdf,text/xml', 'Arrastra aquí el PDF o XML, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
+      m.querySelector('#go').onclick = () => busy(null, async () => {
+        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
+        const fd = new FormData(); fd.append('archivo', f);
+        try {
+          const r = await api('diesel/importar', { method: 'POST', body: fd });
+          m.querySelector('#res').innerHTML = `<div class="okmsg">${esc(r.proveedor || '')} ${esc(r.folio || '')}: ${r.cargas} cargas, ${qty(r.litros)} L, ${pesos(r.total)}. Cuadra con el total de la factura.</div>
+            ${r.adjuntado_a_existente ? '<div class="note">Se agregó a la factura que ya estaba en cuentas por pagar.</div>' : ''}${r.reparto_km_reemplazado ? '<div class="note">Reemplazó el reparto por km que tenía.</div>' : ''}
+            ${!r.placas_tarjeta ? `<div class="note">La factura no dice qué camión hizo cada carga${r.tarjeta ? ' (tarjeta ' + esc(r.tarjeta) + ' es de toda la empresa)' : ''}. Asígnalas ahora.</div>` : ''}
+            <button class="btn primary" data-car="${r.gasto_id}">Asignar cargas a camiones</button>`;
+        } catch (er) { m.querySelector('.err').textContent = errMsg(er) + (er && er.calculado ? ` Factura ${pesos(er.factura.total)}, cargas ${pesos(er.calculado.total)}.` : ''); }
+      });
+      m.addEventListener('click', (ev) => { const c = ev.target.closest('[data-car]'); if (c) { m.remove(); abrirCargas(Number(c.dataset.car)); } else if (ev.target.closest('[data-close]') && after) after(); });
+  }
+  function ppsModal(after) {
+      const m = modal(`<h2 style="margin-top:0">Cargar la propuesta de pagos (PPS)</h2><p class="muted">El Excel de la semana con sus 16 columnas (ORDEN … PROPUESTA). Las facturas nuevas se agregan, las que ya están se actualizan con su saldo. Lo que ya asignaste a un camión u obra no se toca.</p>
+        ${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel del PPS, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Cargar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
+      m.querySelector('#go').onclick = () => busy(null, async () => {
+        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
+        const fd = new FormData(); fd.append('archivo', f);
+        try {
+          const r = await api('gastos/importar-pps', { method: 'POST', body: fd });
+          m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creadas} nuevas, ${r.actualizadas} actualizadas. Saldo: ${pesos(r.resumen.saldo)} en ${r.resumen.facturas} facturas.</div>
+            ${r.control ? (r.control.cuadra ? '<div class="okmsg">Cuadra con el renglón de totales de su hoja.</div>' : `<div class="err">No cuadra con su renglón de totales (${pesos(r.control.saldo)}).</div>`) : ''}
+            ${r.rechazadas.map((x) => `<div class="muted">Renglón ${x.renglon} (${esc(x.folio || '')}): ${esc(x.motivo)}</div>`).join('')}
+            ${r.no_vienen.length ? `<div class="note">${r.no_vienen.length} facturas del PPS anterior ya no vienen (¿pagadas?): ${r.no_vienen.slice(0, 12).map((x) => esc(x.proveedor + ' ' + (x.folio || ''))).join(', ')}. Márcalas tú; no se cambian solas.</div>` : ''}`;
+        } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
+      });
+      m.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]') && after) after(); });
+  }
   async function abrirViaje(v, prop, fileId, leido, sug) {
     const m = modal(`<h2 style="margin-top:0">${v ? 'Editar viaje' : 'Registrar viaje'}</h2>
       ${fileId ? `<img class="ticket-img" src="api/v1/files/${fileId}" alt="Foto del ticket">` : ''}
@@ -603,32 +662,8 @@
     document.getElementById('ob').onchange = (e) => { S.vObra = e.target.value; R.viajes(); };
     if (!canEdit()) return;
     document.getElementById('manual').onclick = () => abrirViaje(null, null, null, null);
-    document.getElementById('foto').onchange = async (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      const fd = new FormData(); fd.append('foto', file);
-      const m = modal('<p>Leyendo el ticket…</p>');
-      try { const r = await api('viajes/leer-ticket', { method: 'POST', body: fd }); m.remove(); abrirViaje(null, r.propuesta || {}, r.file_id, r.leido_por, r.sugerencias); }
-      catch (er) { m.querySelector('.box').innerHTML = `<div class="err">${errMsg(er)}</div><button class="btn" data-close>Cerrar</button>`; }
-    };
-    document.getElementById('imp').onclick = () => {
-      const m = modal(`<h2 style="margin-top:0">Importar tickets de Excel</h2><p class="muted">El archivo debe tener columnas <b>Fecha</b>, <b>Ticket</b> y <b>Toneladas</b> (como el Excel «PLANTA SANT»). Todos quedan sin confirmar.</p>
-        <div class="form"><div class="wide">${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel o CSV de planta, o toca para elegirlo')}</div>
-        <div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, '', 'Elige')}</select></div>
-        <div><label>Tarifa</label><select name="tarifa_id">${opts(activos('tarifas'), tarifaLbl, '', 'Elige')}</select></div>
-        <div><label>Camión (si el Excel no trae placas)</label><select name="truck_id">${opts(activos('trucks'), truckLbl, '', 'Sin camión')}</select></div>
-        <div class="row wide"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err wide"></div><div class="wide" id="res"></div></div>`);
-      m.querySelector('#go').onclick = async () => {
-        const fd = new FormData(); const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
-        fd.append('archivo', f); ['obra_id', 'tarifa_id', 'truck_id'].forEach((k) => fd.append(k, val(m, k)));
-        try {
-          const r = await api('viajes/importar', { method: 'POST', body: fd });
-          m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creados} viajes creados, ${r.rechazados} rechazados.</div>` +
-            r.resultados.filter((x) => !x.ok).map((x) => `<div class="muted">Renglón ${x.renglon}: ${esc(x.motivo)}${x.ticket ? ' (' + esc(x.ticket) + ')' : ''}</div>`).join('') +
-            r.resultados.filter((x) => x.aviso === 'placa_desconocida').map((x) => `<div class="muted">Renglón ${x.renglon}: la placa ${esc(x.placa)} no es de un camión activo; quedó con el camión elegido arriba.</div>`).join('');
-        } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
-      };
-      m.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) R.viajes(); });
-    };
+    document.getElementById('foto').onchange = (e) => leerTicket(e.target.files[0]);
+    document.getElementById('imp').onclick = () => importarModal(() => R.viajes());
     document.getElementById('conf').onclick = async () => {
       const ids = [...main().querySelectorAll('[data-sel]:checked')].map((c) => c.dataset.sel); if (!ids.length) return;
       await api('viajes/confirmar', { method: 'POST', body: { ids } }); R.viajes();
@@ -799,38 +834,8 @@
       } catch (er) { f.querySelector('.err').textContent = errMsg(er); }
     };
     const gd = document.getElementById('gdiesel'), gp = document.getElementById('gpps');
-    if (gd) gd.onclick = () => {
-      const m = modal(`<h2 style="margin-top:0">Factura de la gasolinera</h2><p class="muted">El PDF o XML del CFDI (como el de Estación de Servicio J6). Cada carga entra con su folio de despacho, fecha, hora y litros. Si la factura ya está en el PPS, se le agregan las cargas en vez de duplicarla.</p>
-        ${dropBox('archivo', '.pdf,.xml,application/pdf,text/xml', 'Arrastra aquí el PDF o XML, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
-      m.querySelector('#go').onclick = () => busy(null, async () => {
-        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
-        const fd = new FormData(); fd.append('archivo', f);
-        try {
-          const r = await api('diesel/importar', { method: 'POST', body: fd });
-          m.querySelector('#res').innerHTML = `<div class="okmsg">${esc(r.proveedor || '')} ${esc(r.folio || '')}: ${r.cargas} cargas, ${qty(r.litros)} L, ${pesos(r.total)}. Cuadra con el total de la factura.</div>
-            ${r.adjuntado_a_existente ? '<div class="note">Se agregó a la factura que ya estaba en cuentas por pagar.</div>' : ''}${r.reparto_km_reemplazado ? '<div class="note">Reemplazó el reparto por km que tenía.</div>' : ''}
-            ${!r.placas_tarjeta ? `<div class="note">La factura no dice qué camión hizo cada carga${r.tarjeta ? ' (tarjeta ' + esc(r.tarjeta) + ' es de toda la empresa)' : ''}. Asígnalas ahora.</div>` : ''}
-            <button class="btn primary" data-car="${r.gasto_id}">Asignar cargas a camiones</button>`;
-        } catch (er) { m.querySelector('.err').textContent = errMsg(er) + (er && er.calculado ? ` Factura ${pesos(er.factura.total)}, cargas ${pesos(er.calculado.total)}.` : ''); }
-      });
-      m.addEventListener('click', (ev) => { const c = ev.target.closest('[data-car]'); if (c) { m.remove(); abrirCargas(Number(c.dataset.car)); } else if (ev.target.closest('[data-close]')) R.gastos(); });
-    };
-    if (gp) gp.onclick = () => {
-      const m = modal(`<h2 style="margin-top:0">Cargar la propuesta de pagos (PPS)</h2><p class="muted">El Excel de la semana con sus 16 columnas (ORDEN … PROPUESTA). Las facturas nuevas se agregan, las que ya están se actualizan con su saldo. Lo que ya asignaste a un camión u obra no se toca.</p>
-        ${dropBox('archivo', '.xlsx,.csv', 'Arrastra aquí el Excel del PPS, o toca para elegirlo')}<div class="row" style="margin-top:10px"><button class="btn primary" id="go">Cargar</button><button class="btn" data-close>Cerrar</button></div><div class="err"></div><div id="res"></div>`);
-      m.querySelector('#go').onclick = () => busy(null, async () => {
-        const f = m.querySelector('[name=archivo]').files[0]; if (!f) return;
-        const fd = new FormData(); fd.append('archivo', f);
-        try {
-          const r = await api('gastos/importar-pps', { method: 'POST', body: fd });
-          m.querySelector('#res').innerHTML = `<div class="okmsg">${r.creadas} nuevas, ${r.actualizadas} actualizadas. Saldo: ${pesos(r.resumen.saldo)} en ${r.resumen.facturas} facturas.</div>
-            ${r.control ? (r.control.cuadra ? '<div class="okmsg">Cuadra con el renglón de totales de su hoja.</div>' : `<div class="err">No cuadra con su renglón de totales (${pesos(r.control.saldo)}).</div>`) : ''}
-            ${r.rechazadas.map((x) => `<div class="muted">Renglón ${x.renglon} (${esc(x.folio || '')}): ${esc(x.motivo)}</div>`).join('')}
-            ${r.no_vienen.length ? `<div class="note">${r.no_vienen.length} facturas del PPS anterior ya no vienen (¿pagadas?): ${r.no_vienen.slice(0, 12).map((x) => esc(x.proveedor + ' ' + (x.folio || ''))).join(', ')}. Márcalas tú; no se cambian solas.</div>` : ''}`;
-        } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
-      });
-      m.addEventListener('click', (ev) => { if (ev.target.closest('[data-close]')) R.gastos(); });
-    };
+    if (gd) gd.onclick = () => dieselModal(() => R.gastos());
+    if (gp) gp.onclick = () => ppsModal(() => R.gastos());
     main().onclick = async (e) => {
       const car = e.target.closest('[data-car]'); if (car) return abrirCargas(Number(car.dataset.car));
       const b = e.target.closest('[data-rep],[data-prog],[data-pag]'); if (!b) return;
@@ -1063,54 +1068,103 @@
       if (a) { const [id, on] = a.dataset.act.split(':'); await api('usuarios/' + id, { method: 'PATCH', body: { active: on === '1' } }); R.usuarios(); }
     };
   };
-  /* ── guía de usuario y simulacro ── */
+  /* ── guía de usuario: enseña y ejecuta ── */
+  // Cada paso dice QUIÉN lo hace (por rol, nunca por nombre), para qué sirve, cómo se hace, con la captura de la
+  // pantalla real, y trae el botón para hacerlo ahí mismo. Lo que tu rol no puede hacer se ve, pero no se ejecuta.
+  const ROLG = {
+    captura: ['Captura', '#0e7490'], director: ['Director', '#14213d'], administrador: ['Administrador', '#7c3aed'],
+    lectura: ['Solo lectura', '#64748b'], super: ['Super administrador', '#b45309']
+  };
+  const miRolG = () => ({ capturista: 'captura', director: 'director', administrador: 'administrador', contador: 'lectura', soporte: 'super', owner: 'super' }[rol()] || 'lectura');
   R.guia = async function () {
-    const f = (n, t) => `<a class="btn small" href="simulacro/${n}" download>${t}</a>`;
-    const paso = (n, t, items) => `<div class="card guia"><h2 style="margin-top:0"><span class="gnum">${n}</span>${t}</h2><ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol></div>`;
+    await loadCat();
+    const mio = miRolG();
+    const ir = (h, t) => `<a class="btn small" href="#${h}">${t}</a>`;
+    const PASOS = [
+      { id: 'pedido', roles: ['captura', 'director'], t: 'Anotar el pedido del día y avisar a los choferes', img: 'pedidos',
+        para: 'Cuando el ingeniero de HTR pide camiones (por teléfono o WhatsApp), se anota aquí para saber qué camión va a qué obra.',
+        como: ['Abre <b>Pedidos</b> y llena "Nuevo pedido": fecha, obra, tarifa o ruta, cuántos camiones y quién pide.', 'Presiona <b>Asignar camión</b>: salen primero los camiones propios libres ese día.', 'Presiona el botón de WhatsApp del chofer: se abre su chat con el mensaje ya escrito; tú lo envías.'],
+        hacer: () => ir('pedidos', 'Ir a Pedidos') },
+      { id: 'ticket', roles: ['captura'], t: 'Registrar cada viaje con la foto del ticket', img: 'viaje-captura',
+        para: 'Cada viaje se captura una sola vez. La app lee el ticket de báscula: número, folio, fecha, peso neto, placas y chofer.',
+        como: ['Desde el teléfono, toma la foto del ticket (abajo o en <b>Viajes</b> → <b>Subir foto del ticket</b>).', 'Revisa lo que leyó contra el papel y corrige lo que haga falta (sobre todo lo escrito a mano).', 'Elige la obra y presiona <b>Guardar y confirmar</b>. Sin ticket, usa <b>Capturar sin foto</b>.'],
+        hacer: () => canEdit() ? `<label class="btn primary" style="margin:0">Tomar o subir foto del ticket<input type="file" accept="image/*" capture="environment" hidden data-g="ticket"></label> ${ir('viajes', 'Ir a Viajes')}` : '' },
+      { id: 'excel', roles: ['captura'], t: 'Cargar los viajes del Excel de la planta', img: 'viajes-importar',
+        para: 'Si la planta manda su Excel con los tickets de la semana, se cargan todos de una vez en lugar de uno por uno.',
+        como: ['El Excel necesita columnas <b>Fecha</b>, <b>Ticket</b> y <b>Toneladas</b>; si trae <b>Placas</b>, cada viaje va solo a su camión y chofer.', 'Elige la obra y la tarifa, y sube el archivo. Un ticket repetido se rechaza solo.', 'Los viajes entran sin confirmar: revísalos en Viajes, márcalos y presiona <b>Confirmar seleccionados</b>.'],
+        hacer: () => canEdit() ? `<button class="btn primary" data-g="excel">Cargar Excel de planta</button> ${ir('viajes', 'Confirmar viajes')}` : '' },
+      { id: 'estimacion', roles: ['captura', 'director'], t: 'Armar la estimación semanal de cada obra', img: 'estimaciones',
+        para: 'La estimación es el cobro de la semana a HTR por obra. Se arma sola con los viajes confirmados, sin sumar a mano.',
+        como: ['Elige la obra y la semana (de lunes a domingo) y presiona <b>Armar estimación</b>.', 'Presiona <b>Excel</b> para descargarla y <b>Enviar por WhatsApp</b> para mandarla al ingeniero de la obra.', 'Cuando HTR responda, presiona <b>HTR aprobó</b>.'],
+        hacer: () => canEdit() ? `<form class="form" data-g="estimacion"><div><label>Obra</label><select name="obra_id">${opts(activos('obras'), (o) => o.nombre, '', 'Elige la obra')}</select></div>
+          <div><label>Desde</label><input type="date" name="desde" value="${dias(lunes(), -7)}"></div><div><label>Hasta</label><input type="date" name="hasta" value="${dias(lunes(), -1)}"></div>
+          <div><button class="btn primary">Armar estimación</button></div><div class="err wide"></div></form>` : '' },
+      { id: 'factura', roles: ['administrador', 'director'], t: 'Pedir la factura, anotar el folio y marcar el cobro', img: 'facturas',
+        para: 'Con la estimación aprobada sale la requisición con IVA 16% y retención 4% ya calculados; de ahí se sigue la factura hasta que HTR paga.',
+        como: ['En <b>Estimaciones</b>, presiona <b>Pedir factura</b> en la estimación aprobada.', 'En <b>Facturas</b>, presiona <b>Requisición</b> para ver el formato y mándalo a la auxiliar de HTR.', 'Cuando emitan el CFDI, presiona <b>Anotar folio</b>; cuando paguen, <b>Cobrada</b>.'],
+        hacer: () => `${ir('estimaciones', 'Ir a Estimaciones')} ${ir('facturas', 'Ir a Facturas')}` },
+      { id: 'diesel', roles: ['administrador'], t: 'Subir la factura de diésel y asignar cada carga a su camión', img: 'diesel-cargas',
+        para: 'La gasolinera manda una sola factura por semana. La app la lee completa y cada carga se asigna a su camión, para saber cuánto gasta cada uno.',
+        como: ['Sube el PDF o XML de la factura (aquí abajo o en <b>Gastos y diésel</b>). Debe cuadrar al centavo con su total.', 'Presiona <b>Asignar cargas a camiones</b> y elige el camión de cada carga (marca varias y usa "Aplicar a las marcadas").', 'La gasolina premium de camionetas se puede dejar sin camión: cuenta como gasto general.'],
+        hacer: () => canEdit() ? `<button class="btn primary" data-g="diesel">Subir factura de diésel</button> ${ir('gastos', 'Ir a Gastos y diésel')}` : '' },
+      { id: 'pps', roles: ['administrador', 'director'], t: 'Cargar el PPS y programar los pagos de la semana', img: 'gastos',
+        para: 'El PPS es la propuesta de pagos semanal. Se sube tal cual y la app la compara con su renglón de totales; el jueves se decide qué se paga.',
+        como: ['Sube el Excel del PPS (aquí abajo o en <b>Gastos y diésel</b> → <b>Cargar PPS</b>).', 'En cada factura, presiona <b>Programar pago</b> y, cuando se pague, <b>Pagado</b>.', 'Presiona <b>Descargar PPS de esta semana</b> para tenerlo de vuelta en el mismo formato.'],
+        hacer: () => `${canEdit() ? '<button class="btn primary" data-g="pps">Cargar PPS</button> ' : ''}<a class="btn small" href="api/v1/gastos/pps.xlsx?semana=${lunes()}">Descargar PPS de esta semana</a>` },
+      { id: 'nomina', roles: ['administrador', 'director'], t: 'Pagar la nómina semanal', img: 'nomina',
+        para: 'Cada semana sale la nómina de cada persona: salario, bonos y la comisión de cada chofer calculada con sus viajes confirmados.',
+        como: ['En <b>Nómina</b>, elige la semana y marca la asistencia de cada día.', 'Revisa salario y bonos; la comisión, la puntualidad y el descuento por faltas se calculan solos.', 'Presiona <b>Guardar</b> en cada persona y, al final, <b>Cerrar semana</b>.'],
+        hacer: () => ir('nomina', 'Ir a Nómina') },
+      { id: 'taller', roles: ['captura', 'administrador'], t: 'Registrar el taller', img: null,
+        para: 'Cada servicio del taller queda en su camión con horas, refacciones y mano de obra. Si es de una empresa hermana, queda por cobrar.',
+        como: ['En <b>Taller</b>, abre "Nuevo servicio" y llena camión, trabajos, refacciones y mano de obra.', 'Si el cliente no es NeoHaul, queda "por cobrar"; cuando paguen, presiona <b>Cobrado</b>.'],
+        hacer: () => ir('taller', 'Ir a Taller') },
+      { id: 'personal', roles: ['director', 'super'], t: 'Dar de alta choferes, camiones y reglas de la nómina', img: 'personal',
+        para: 'Cuando entra o sale un chofer, o cambia una regla de pago, se ajusta aquí una sola vez y vale para las siguientes semanas.',
+        como: ['En <b>Choferes y nómina</b>: <b>Agregar persona</b>, <b>Editar</b> o <b>Dar de baja</b> (la baja no borra su historial).', 'Ahí mismo, en "Parámetros de la nómina", fija la comisión normal y su rango, el bono de puntualidad y el descuento por faltas.', 'En <b>Catálogos</b> se dan de alta camiones (por placa), obras con su ingeniero y tarifas.'],
+        hacer: () => `${ir('personal', 'Ir a Choferes y nómina')} ${ir('catalogos', 'Ir a Catálogos')}` },
+      { id: 'tablero', roles: ['director', 'lectura', 'super'], t: 'Revisar cómo va la operación', img: 'tablero-hallazgos',
+        para: 'El Tablero junta todo: ganancia de cada camión, dinero trabajado sin facturar, facturas vencidas, riesgo de pérdida y hallazgos con qué hacer.',
+        como: ['Abre <b>Tablero</b>: arriba está lo que hay que atender y la calificación de 0 a 100.', 'Pasa el mouse (o toca) cada "i" para saber qué significa cada indicador.', 'Abre <b>Pregúntale a Dalia</b> y pregunta en tus palabras, por ejemplo "¿qué camión dejó menos esta semana?".'],
+        hacer: () => ir('tablero', 'Ir al Tablero') },
+      { id: 'usuarios', roles: ['director', 'super'], t: 'Dar acceso al equipo', img: 'usuarios',
+        para: 'Cada persona entra con su propia cuenta y su rol decide qué puede hacer.',
+        como: ['En <b>Usuarios</b>, escribe correo, nombre y rol, y presiona <b>Crear cuenta</b>.', 'Entrega la contraseña temporal en persona o por WhatsApp; al entrar, la persona la cambia.', 'Abre "Qué puede hacer cada rol" para ver la tabla de permisos.'],
+        hacer: () => canUsers() ? ir('usuarios', 'Ir a Usuarios') : '' }
+    ];
+    const filtro = S.guiaRol || 'todos';
+    const visibles = PASOS.filter((p) => filtro === 'todos' || p.roles.includes(filtro));
+    const pill = (r) => `<span class="grol" style="background:${ROLG[r][1]}">${ROLG[r][0]}</span>`;
     main().innerHTML = `<h1>Guía de usuario</h1>
-      <p class="sub">Cómo se usa NeoHaul de principio a fin. Sirve también como simulacro: con los archivos de prueba de abajo se recorre todo el flujo en unos 30 minutos.</p>
-      <div class="card"><h2 style="margin-top:0">Archivos de prueba</h2>
-        <p class="muted" style="margin-top:0">Datos ficticios. Úsalos en la empresa de demostración; en la empresa real se usan los documentos de verdad.</p>
-        <div class="row" style="flex-wrap:wrap;gap:8px">${f('ticket-prueba.jpg', 'Ticket de báscula (foto)')}${f('viajes-semana.xlsx', 'Viajes de la semana (Excel)')}${f('factura-diesel.pdf', 'Factura de diésel (PDF)')}${f('PPS-S47.xlsx', 'PPS de la semana (Excel)')}${f('nomina-semana.xlsx', 'Nómina de la semana (Excel)')}</div>
-        <p class="muted" style="font-size:13px;margin-bottom:0">El paso 2 se hace desde el teléfono; lo demás, desde la computadora. La obra <b>Simulacro · Libramiento Santiago</b> está vacía para esta prueba.</p></div>
-      ${paso(1, 'Pedido y aviso al chofer', [
-        '<b>Pedidos</b>. En "Nuevo pedido" pon: fecha de hoy, obra <i>Simulacro · Libramiento Santiago</i>, tarifa <i>Carpeta asfáltica · Planta Santiago</i>, 3 camiones y quién pide. Presiona <b>Guardar pedido</b>.',
-        'En el pedido, presiona <b>Asignar camión</b> y elige <i>DM-03-00-A (03)</i> con su chofer. Presiona <b>Asignar</b>.',
-        'Presiona el botón de WhatsApp del chofer: se abre el mensaje ya escrito (en la demo no lo envíes; el número es ficticio).'])}
-      ${paso(2, 'Ticket con foto (desde el teléfono)', [
-        'Abre en la computadora la foto del ticket de prueba (abajo).',
-        'En el teléfono entra a NeoHaul, ve a <b>Viajes</b> y presiona <b>Subir foto del ticket</b>. Tómale la foto a la pantalla.',
-        'Espera "Leyendo el ticket…". Revisa lo que leyó: vale 52417, folio B-60318, fecha 19/11/2026, 18.62 t, camión DM-03-00-A y chofer Carlos.',
-        'Cambia la <b>obra a Simulacro</b> (la app sugiere SICT N18) y corrige el pedido si lo leyó mal (el escrito a mano es P-2291). Presiona <b>Guardar y confirmar</b>.'])}
-      <div class="card" style="text-align:center"><img src="simulacro/ticket-prueba.jpg" alt="Ticket de báscula de prueba" style="max-width:100%;width:520px;border-radius:8px"></div>
-      ${paso(3, 'Importar los viajes de la semana', [
-        '<b>Viajes</b> → <b>Importar Excel de planta</b>.',
-        'Elige la obra <i>Simulacro</i>, la tarifa <i>Carpeta asfáltica · Planta Santiago</i> y el archivo <i>Viajes de la semana</i>. Presiona <b>Importar</b>.',
-        'Deben entrar 14 viajes. Si lo importas dos veces, rechaza los tickets repetidos.',
-        'Filtra la lista por la obra Simulacro, marca los 14 viajes y presiona <b>Confirmar seleccionados</b>.'])}
-      ${paso(4, 'Estimación semanal', [
-        '<b>Estimaciones</b>: obra <i>Simulacro</i>, del 16/11/2026 al 22/11/2026. Presiona <b>Armar estimación</b>.',
-        'Compara con la hoja "Resultado esperado" del Excel: 14 viajes y $47,095.10. Si confirmaste el ticket del paso 2 en esta obra, serán 15 viajes y $50,260.50.',
-        'Presiona <b>Excel</b> para descargarla y <b>Enviar por WhatsApp</b>: el mensaje va al ingeniero de la obra.',
-        'Presiona <b>Marcar enviada</b> y luego <b>HTR aprobó</b>.'])}
-      ${paso(5, 'Requisición y factura', [
-        'En la estimación presiona <b>Pedir factura</b>. Se crea la requisición con IVA 16% y retención 4% (total $52,746.52 para 14 viajes).',
-        '<b>Facturas</b>: en esa requisición presiona <b>Anotar folio</b> y escribe, por ejemplo, A-9001.',
-        'Cuando HTR pague, presiona <b>Cobrada</b>.'])}
-      ${paso(6, 'Gastos: PPS y diésel', [
-        '<b>Gastos y diésel</b> → <b>Cargar PPS (Excel)</b> → archivo <i>PPS de la semana</i>. Deben entrar 12 facturas por $791,496.46 y el control debe decir que cuadra.',
-        '<b>Subir factura de diésel (PDF o XML)</b> → archivo <i>Factura de diésel</i>. Debe leer 12 cargas, 1,251.85 L y $36,143.21. Como la factura CC-17701 ya venía en el PPS, no se duplica: las cargas se le agregan.',
-        'En esa factura presiona <b>Asignar cargas a camiones</b> y asigna cada carga a su camión. La carga PREMIUM puede quedar como general.',
-        'Presiona <b>Descargar PPS de esta semana</b>: sale el Excel en el mismo formato, con lo propuesto para pagar.'])}
-      ${paso(7, 'Nómina', [
-        '<b>Nómina</b>, semana del 16 al 22 de noviembre.',
-        'Captura los datos del archivo <i>Nómina de la semana</i>: asistencia, salario y bonos. La comisión la calcula la app con el 8% de los viajes confirmados de cada chofer.',
-        'Compara el total con el Excel ($32,634.48). Si no cuadra exacto es normal: la app cuenta solo los viajes confirmados de cada chofer, y los del ticket del paso 2 se suman a Carlos. Presiona <b>Guardar</b> en cada persona y al final <b>Cerrar semana</b>.'])}
-      ${paso(8, 'Revisar el resultado', [
-        '<b>Tablero</b>: ahí ves cómo cambió todo con lo que capturaste. Busca los viajes nuevos en "Del viaje al cobro", el cobro, el diésel por camión en "Uso de cada camión", los proveedores del PPS en "A quién se le debe más" y los Neural Findings recalculados.',
-        'Pasa el mouse (o toca en el teléfono) sobre cada "i" para ver qué significa cada indicador.',
-        'Abre <b>Pregúntale a Dalia</b> y pregunta, por ejemplo, "¿cuánto se facturó esta semana en la obra Simulacro?" o "¿qué camión gastó más diésel?".'])}
-      <div class="note">Para repetir el simulacro desde cero, pide a Digit2AI que regenere la empresa de demostración.</div>`;
+      <p class="sub">Cómo se usa NeoHaul de principio a fin, paso a paso. Cada paso dice qué rol lo hace, y trae el botón para hacerlo aquí mismo.</p>
+      <div class="card"><div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><b style="margin-right:4px">Tu rol: ${pill(mio)}</b>
+        <span class="muted" style="font-size:13px">Ver pasos de:</span>
+        ${[['todos', 'Todos'], ...Object.entries(ROLG).map(([k, v]) => [k, v[0]])].map(([k, l]) => `<button class="btn small${filtro === k ? ' primary' : ''}" data-gf="${k}">${l}</button>`).join('')}</div></div>
+      ${visibles.map((p) => { const n = PASOS.indexOf(p) + 1, mine = p.roles.includes(mio) || mio === 'super';
+        const acc = p.hacer(); return `<div class="card guia${mine ? ' gmio' : ''}" id="g-${p.id}">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px"><h2 style="margin:0"><span class="gnum">${n}</span>${p.t}</h2><div class="row" style="gap:6px;flex-wrap:wrap">${p.roles.map(pill).join('')}</div></div>
+        <p style="margin:10px 0 6px">${p.para}</p>
+        <div class="gcols"><ol>${p.como.map((c) => `<li>${c}</li>`).join('')}</ol>${p.img ? `<a href="guia/${p.img}.jpg" target="_blank" rel="noopener"><img class="gimg" src="guia/${p.img}.jpg" alt="Pantalla: ${esc(p.t)}" loading="lazy"></a>` : ''}</div>
+        <div class="ghacer"><b>Hazlo aquí:</b> ${acc || '<span class="muted">Tu rol puede ver este paso, pero no hacerlo.</span>'}<div class="gres"></div></div></div>`; }).join('')}
+      <div class="card"><h2 style="margin-top:0">Archivos de ejemplo</h2><p class="muted" style="margin-top:0">Para practicar en la empresa de demostración (datos ficticios).</p>
+        <div class="row" style="flex-wrap:wrap;gap:8px">${[['ticket-prueba.jpg', 'Ticket de báscula'], ['viajes-semana.xlsx', 'Excel de planta'], ['factura-diesel.pdf', 'Factura de diésel'], ['PPS-S47.xlsx', 'PPS'], ['nomina-semana.xlsx', 'Nómina']].map(([f, t]) => `<a class="btn small" href="simulacro/${f}" download>${t}</a>`).join('')}</div></div>`;
+    main().onclick = (e) => {
+      const f = e.target.closest('[data-gf]'); if (f) { S.guiaRol = f.dataset.gf; return R.guia(); }
+      const b = e.target.closest('button[data-g]'); if (!b) return;
+      const after = () => R.guia();
+      if (b.dataset.g === 'excel') importarModal(after);
+      if (b.dataset.g === 'diesel') dieselModal(after);
+      if (b.dataset.g === 'pps') ppsModal(after);
+    };
+    main().onchange = (e) => { const i = e.target.closest('input[data-g="ticket"]'); if (i) leerTicket(i.files[0]); };
+    const fe = main().querySelector('form[data-g="estimacion"]');
+    if (fe) fe.onsubmit = async (ev) => {
+      ev.preventDefault();
+      if (!fe.obra_id.value) { fe.querySelector('.err').textContent = 'Elige la obra.'; return; }
+      try { const r = await api('estimaciones', { method: 'POST', body: formData(fe) });
+        fe.closest('.ghacer').querySelector('.gres').innerHTML = `<div class="okmsg">Estimación armada: ${r.viajes} viajes, ${pesos(r.subtotal)} antes de IVA. Sigue en <a href="#estimaciones">Estimaciones</a> para descargarla y enviarla.</div>`; }
+      catch (er) { fe.querySelector('.err').textContent = errMsg(er) + (er.capturados_sin_confirmar ? ` Hay ${er.capturados_sin_confirmar} viajes capturados sin confirmar en Viajes.` : ''); }
+    };
   };
   R.cuenta = async function () {
     main().innerHTML = `<h1>Mi cuenta</h1><div class="card"><p><b>${esc(S.me.user.name || '')}</b> · ${esc(S.me.user.email)} · ${esc(S.me.user.role)}</p>

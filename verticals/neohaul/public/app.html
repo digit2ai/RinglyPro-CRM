@@ -103,6 +103,11 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tblbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
 .tblbar input{flex:1 1 200px;max-width:320px}.tblbar select{max-width:220px}.tblbar .muted{font-size:12px}
 th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:var(--acc-d)}th.sortable::after{content:attr(data-dir);margin-left:4px;font-size:10px}
+.grol{display:inline-block;color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.guia.gmio{border-left:4px solid var(--acc)}
+.gcols{display:grid;grid-template-columns:1fr minmax(0,420px);gap:16px;align-items:start}.gimg{width:100%;border:1px solid var(--line);border-radius:8px;display:block}
+.ghacer{margin-top:12px;padding:10px 12px;background:var(--soft);border-radius:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.ghacer .form{width:100%}.ghacer .gres{width:100%}
+@media (max-width:820px){.gcols{grid-template-columns:1fr}}
 </style>
 <style>
 .hero{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:center}
@@ -129,6 +134,6 @@ th.sortable{cursor:pointer;user-select:none}th.sortable:hover{color:var(--acc-d)
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=18" defer></script>
+<script src="app.js?v=19" defer></script>
 </body>
 </html>
