@@ -123,7 +123,12 @@
     await loadCat(true);
     shell();
     mountDalia();
-    go(location.hash.slice(1) || 'tablero');
+    // La app siempre abre en el Tablero. Solo un enlace de la Guía (…?ir=viajes) abre directo otra pantalla.
+    const ir = new URLSearchParams(location.search).get('ir');
+    const inicio = ir && R[ir] ? ir : 'tablero';
+    if (ir) history.replaceState(null, '', location.pathname + '#' + inicio);
+    if (location.hash !== '#' + inicio) history.replaceState(null, '', location.pathname + '#' + inicio);
+    go(inicio);
   }
 
   const VIEWS = [
@@ -1080,7 +1085,7 @@
     await loadCat();
     const mio = miRolG();
     // Los botones que llevan a otra pantalla abren una pestaña nueva: la guía se queda abierta para seguir el paso a paso.
-    const ir = (h, t) => `<a class="btn small" href="#${h}" target="_blank" rel="noopener">${t} ↗</a>`;
+    const ir = (h, t) => `<a class="btn small" href="?ir=${h}" target="_blank" rel="noopener">${t} ↗</a>`;
     const PASOS = [
       { id: 'pedido', roles: ['captura', 'director'], t: 'Anotar el pedido del día y avisar a los choferes', img: 'pedidos',
         para: 'Cuando el ingeniero de HTR pide camiones (por teléfono o WhatsApp), se anota aquí para saber qué camión va a qué obra.',
@@ -1148,7 +1153,7 @@
         <div class="gcols"><ol>${p.como.map((c) => `<li>${c}</li>`).join('')}</ol>${p.img ? `<a href="guia/${p.img}.jpg" target="_blank" rel="noopener"><img class="gimg" src="guia/${p.img}.jpg" alt="Pantalla: ${esc(p.t)}" loading="lazy"></a>` : ''}</div>
         <div class="ghacer"><b>Hazlo aquí:</b> ${acc || '<span class="muted">Tu rol puede ver este paso, pero no hacerlo.</span>'}<div class="gres"></div></div></div>`; }).join('')}
       <div class="card"><h2 style="margin-top:0">Archivos de ejemplo</h2><p class="muted" style="margin-top:0">Para practicar en la empresa de demostración (datos ficticios).</p>
-        <div class="row" style="flex-wrap:wrap;gap:8px">${[['ticket-prueba.jpg', 'Ticket de báscula'], ['viajes-semana.xlsx', 'Excel de planta'], ['factura-diesel.pdf', 'Factura de diésel'], ['PPS-S47.xlsx', 'PPS'], ['nomina-semana.xlsx', 'Nómina']].map(([f, t]) => `<a class="btn small" href="simulacro/${f}" download>${t}</a>`).join('')}</div></div>`;
+        ${[['Juego 2 (nuevo · obra Demo · Periférico Monterrey)', '-2'], ['Juego 1 (obra Simulacro · Libramiento Santiago)', '']].map(([tt, k]) => `<p style="margin:10px 0 6px"><b>${tt}</b></p><div class="row" style="flex-wrap:wrap;gap:8px">${[['ticket-prueba' + k + '.jpg', 'Ticket de báscula'], ['viajes-semana' + k + '.xlsx', 'Excel de planta'], ['factura-diesel' + k + '.pdf', 'Factura de diésel'], ['PPS-S47' + k + '.xlsx', 'PPS'], ['nomina-semana' + k + '.xlsx', 'Nómina']].map(([f, t]) => `<a class="btn small" href="simulacro/${f}" download>${t}</a>`).join('')}</div>`).join('')}</div>`;
     main().onclick = (e) => {
       const f = e.target.closest('[data-gf]'); if (f) { S.guiaRol = f.dataset.gf; return R.guia(); }
       const b = e.target.closest('button[data-g]'); if (!b) return;
@@ -1163,7 +1168,7 @@
       ev.preventDefault();
       if (!fe.obra_id.value) { fe.querySelector('.err').textContent = 'Elige la obra.'; return; }
       try { const r = await api('estimaciones', { method: 'POST', body: formData(fe) });
-        fe.closest('.ghacer').querySelector('.gres').innerHTML = `<div class="okmsg">Estimación armada: ${r.viajes} viajes, ${pesos(r.subtotal)} antes de IVA. Sigue en <a href="#estimaciones" target="_blank" rel="noopener">Estimaciones ↗</a> (se abre en otra pestaña) para descargarla y enviarla.</div>`; }
+        fe.closest('.ghacer').querySelector('.gres').innerHTML = `<div class="okmsg">Estimación armada: ${r.viajes} viajes, ${pesos(r.subtotal)} antes de IVA. Sigue en <a href="?ir=estimaciones" target="_blank" rel="noopener">Estimaciones ↗</a> (se abre en otra pestaña) para descargarla y enviarla.</div>`; }
       catch (er) { fe.querySelector('.err').textContent = errMsg(er) + (er.capturados_sin_confirmar ? ` Hay ${er.capturados_sin_confirmar} viajes capturados sin confirmar en Viajes.` : ''); }
     };
   };
