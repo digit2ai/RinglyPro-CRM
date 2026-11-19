@@ -48,9 +48,21 @@ async function bulk(table, cols, rows) {
   const pwArg = (process.argv.find((a) => a.startsWith('--password=')) || '').slice(11);
   let ten = await one('SELECT id FROM nh_tenants WHERE slug=:s', { s: SLUG });
   if (ten && !reset) { console.log('Ya existe la empresa de demostración (id ' + ten.id + '). Usa --reset para volver a sembrarla.'); process.exit(0); }
-  if (ten) { for (const t of TABLAS) await q(`DELETE FROM ${t} WHERE tenant_id=:t`, { t: ten.id }); await q('DELETE FROM nh_tenants WHERE id=:t', { t: ten.id }); }
-  ten = await one('INSERT INTO nh_tenants (name,slug) VALUES (:n,:s) RETURNING id', { n: NAME, s: SLUG });
+  // Las cuentas reales del equipo que estén en la demo (Osbaldo, Andrés, el dueño, super administradores…) NO se borran:
+  // pasan a la empresa nueva. Solo se borran las cuentas que crea este script.
+  const DEMO_USERS = "(LOWER(email)='demo.neohaul@digit2ai.com' OR email LIKE '%@neohaul.invalid')";
+  let conservar = [];
+  if (ten) {
+    conservar = (await q(`SELECT id FROM nh_users WHERE tenant_id=:t AND NOT ${DEMO_USERS}`, { t: ten.id }))[0].map((r) => r.id);
+    for (const t of TABLAS) await q(t === 'nh_users' ? `DELETE FROM nh_users WHERE tenant_id=:t AND ${DEMO_USERS}` : `DELETE FROM ${t} WHERE tenant_id=:t`, { t: ten.id });
+  }
+  const nombre = ten ? (await one('SELECT name FROM nh_tenants WHERE id=:t', { t: ten.id })).name : NAME;
+  if (ten) await q("UPDATE nh_tenants SET slug=slug||'-old-'||id WHERE id=:t", { t: ten.id });
+  const viejo = ten;
+  ten = await one('INSERT INTO nh_tenants (name,slug) VALUES (:n,:s) RETURNING id', { n: nombre, s: SLUG });
   const T = ten.id;
+  if (conservar.length) await q('UPDATE nh_users SET tenant_id=:t WHERE id IN (:ids)', { t: T, ids: conservar });
+  if (viejo) await q('DELETE FROM nh_tenants WHERE id=:t', { t: viejo.id });
 
   // Cuenta demo (director) — la contraseña se imprime una sola vez.
   const pw = pwArg || crypto.randomBytes(9).toString('base64url');
