@@ -594,6 +594,7 @@
     const f = document.getElementById('ne');
     if (f) f.onsubmit = async (ev) => {
       ev.preventDefault();
+      if (!f.obra_id.value) { f.querySelector('.err').textContent = 'Elige la obra.'; return; }
       try { await api('estimaciones', { method: 'POST', body: formData(f) }); R.estimaciones(); }
       catch (er) { f.querySelector('.err').textContent = errMsg(er) + (er.capturados_sin_confirmar ? ` Hay ${er.capturados_sin_confirmar} viajes capturados sin confirmar en Viajes.` : ''); }
     };
