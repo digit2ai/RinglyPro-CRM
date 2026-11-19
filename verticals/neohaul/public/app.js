@@ -1038,14 +1038,14 @@
     if (!canUsers()) return go('tablero');
     const us = await api('usuarios');
     const RL = { owner: 'Digit2AI (dueño)', soporte: 'Soporte técnico (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
-    const opRol = [['capturista', 'Captura (como Andrés): captura viajes, pedidos y gastos'], ['administrador', 'Administrador: lee, agrega y modifica, no borra'], ['contador', 'Solo lectura: ve todo, no cambia nada'],
-      ...(isSuper() ? [['director', 'Director (como Osbaldo): todo lo de la empresa'], ['soporte', 'Soporte técnico: absolutamente todo']] : [])];
+    const opRol = [['capturista', 'Captura: captura viajes, pedidos y gastos'], ['administrador', 'Administrador: lee, agrega y modifica, no borra'], ['contador', 'Solo lectura: ve todo, no cambia nada'],
+      ...(isSuper() ? [['director', 'Director: todo lo de la empresa'], ['soporte', 'Soporte técnico: absolutamente todo']] : [])];
     main().innerHTML = `<h1>Usuarios</h1><p class="sub">Cada persona entra con su propia cuenta. La contraseña temporal se muestra una sola vez.</p>
       <details class="card"><summary><b>Qué puede hacer cada rol</b></summary><table style="margin-top:8px"><thead><tr><th>Rol</th><th>Ver</th><th>Agregar y modificar</th><th>Borrar y cancelar</th><th>Tarifas y parámetros</th><th>Cuentas de usuario</th></tr></thead><tbody>
         <tr><td><b>Soporte técnico</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Todas, incluidas director y soporte</td></tr>
-        <tr><td><b>Director</b> (Osbaldo)</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Captura, administrador y solo lectura</td></tr>
+        <tr><td><b>Director</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Captura, administrador y solo lectura</td></tr>
         <tr><td><b>Administrador</b></td><td>Sí</td><td>Sí</td><td>No</td><td>Sí</td><td>No</td></tr>
-        <tr><td><b>Captura</b> (Andrés)</td><td>Sí</td><td>Sí</td><td>Sí, lo que capturó</td><td>No</td><td>No</td></tr>
+        <tr><td><b>Captura</b></td><td>Sí</td><td>Sí</td><td>Sí, lo que capturó</td><td>No</td><td>No</td></tr>
         <tr><td><b>Solo lectura</b></td><td>Sí</td><td>No</td><td>No</td><td>No</td><td>No</td></tr></tbody></table></details>
       <div class="card"><form id="nu" class="form"><div><label>Correo</label><input name="email" type="email" required></div><div><label>Nombre</label><input name="name"></div>
         <div><label>WhatsApp</label><input name="phone"></div><div><label>Rol</label><select name="role">${opRol.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
