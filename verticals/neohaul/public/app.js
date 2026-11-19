@@ -155,6 +155,69 @@
   const k$ = (c) => { const v = Number(c) / 100, a = Math.abs(v), s = v < 0 ? '-' : ''; return a >= 1e6 ? `${s}$${(a / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M` : a >= 1e3 ? `${s}$${Math.round(a / 1e3)}k` : `${s}$${Math.round(a)}`; };
   const pc = (x, d) => (x == null ? '—' : (x * 100).toFixed(d == null ? 0 : d) + '%');
   const NIVEL = { sana: ['Sana', VERDE], atencion: ['Atención', AMBAR], riesgo: ['En riesgo', ROJO], sin_datos: ['Sin datos', '#64748b'] };
+  // Notas del Tablero: al pasar el mouse (o tocar en el teléfono) sobre la "i" se abre la explicación.
+  const TIPS = {
+    alertas: ['Lo que hay que atender', 'Avisos que salen de la base de datos con reglas fijas: viajes viejos sin confirmar, requisiciones sin folio, facturas vencidas, diésel sin camión y camiones parados. Cada aviso trae su número.', 'Atiende primero los marcados "riesgo".'],
+    calif: ['Calificación de la operación', 'Un número de 0 a 100 que resume seis cosas: el margen, la probabilidad de ir en pérdida, las facturas vencidas, el trabajo hecho sin facturar, la dependencia de una sola obra y los viajes confirmados con ticket. 75 o más es sana, de 50 a 74 pide atención y menos de 50 está en riesgo. Se calcula con reglas fijas, no con un modelo.', 'Una parte sin dato no cuenta y su peso se reparte entre las demás.'],
+    p_margen: ['Margen (hasta 25 puntos)', 'Lo que queda de cada peso que entra, en las últimas 8 semanas: ingresos de viajes menos todos los costos capturados. Perder 10% da 0 puntos; ganar 25% o más da los 25.', ''],
+    p_riesgo: ['Probabilidad de ir en pérdida (hasta 20 puntos)', 'De 2,000 futuros simulados con tus semanas reales, en cuántos la operación acumula pérdida en 8 semanas. 0% da los 20 puntos; 50% o más da 0.', ''],
+    p_cartera: ['Facturas vencidas (hasta 20 puntos)', 'Qué parte de las facturas emitidas a HTR ya pasó los días de crédito. Nada vencido da los 20 puntos.', ''],
+    p_ciclo: ['Trabajo hecho sin facturar (hasta 15 puntos)', 'Cuántas semanas de ingreso están detenidas entre el viaje y la factura (viajes sin confirmar, sin estimación o requisiciones sin folio). Una semana o menos da los 15.', ''],
+    p_concentracion: ['Dependencia de una obra (hasta 10 puntos)', 'Qué parte del ingreso viene de la obra más grande. Si una obra pesa 90% o más, da 0; si pesa 40% o menos, da los 10.', ''],
+    p_captura: ['Viajes confirmados con ticket (hasta 10 puntos)', 'De los viajes de las últimas 4 semanas, cuántos ya están confirmados y tienen ticket o vale. Sin ticket, HTR puede rechazar el viaje en la estimación.', ''],
+    ingresos8: ['Ingresos últimas 8 semanas', 'La suma del importe de los viajes de las últimas 8 semanas completas, antes de IVA (cantidad por tarifa).', ''],
+    resultado8: ['Resultado últimas 8 semanas', 'Ingresos de viajes menos todos los costos capturados en esas semanas: proveedores, diésel por carga, nómina y taller propio. Si falta capturar costos, el resultado se ve mejor de lo real.', ''],
+    detenido: ['Trabajado sin facturar', 'Dinero de viajes ya hechos que todavía no tiene factura: viajes sin confirmar, confirmados sin estimación, estimaciones sin facturar y requisiciones sin folio. Se compara contra el ingreso de una semana normal.', 'Mientras más rápido pase de viaje a factura, antes se cobra.'],
+    dsodpo: ['Días para cobrar · para pagar', 'Primero: cuántos días tarda HTR en pagar una factura desde que se emite. Segundo: cuántos días tarda NeoHaul en pagar a sus proveedores. Si cobras más lento de lo que pagas, la caja se aprieta.', ''],
+    montecarlo: ['¿Qué tan probable es ir en pérdida?', 'Se arman 2,000 futuros posibles: cada semana futura repite al azar una semana real del pasado, con sus viajes y sus costos juntos. Los anillos dicen en qué parte de esos futuros la utilidad acumulada queda en negativo a 4, 8 y 13 semanas. La línea es lo más probable; las bandas, el rango normal (50%) y el amplio (90%).', 'Con pocas semanas de historia el rango real puede ser más amplio. Es una estimación, no un dato.'],
+    semanas: ['Semana por semana', 'Ingresos de viajes (verde) contra costos capturados (rojo) de cada semana, y abajo lo que quedó. Las semanas con resultado negativo suelen ser semanas con pocos viajes o con un pago grande.', ''],
+    embudo: ['Del viaje al cobro', 'Dónde está hoy el dinero que ya se trabajó: viajes sin confirmar, confirmados sin estimación, estimado sin facturar, requisición sin folio, facturado por cobrar y lo cobrado en 30 días.', 'Lo que se atora arriba tarda más en llegar al banco.'],
+    cartera: ['Facturas por cobrar', 'Las facturas emitidas que HTR no ha pagado, agrupadas por días de atraso contra el plazo de crédito.', 'Lo vencido se cobra primero.'],
+    pordia: ['¿Qué días se trabaja más?', 'Viajes e ingreso por día de la semana en las últimas 12 semanas. Un día flojo puede ser el día para mantenimiento.', ''],
+    conc: ['¿Dependes de una sola obra?', 'Qué tanto del ingreso viene de pocas obras. El índice Gini va de 0 (todas pesan parecido) a 1 (una sola lo es todo). La curva muestra lo mismo en dibujo.', 'Cuando la obra mayor termina, el ingreso cae: pide a HTR su calendario de obras.'],
+    camiones: ['Uso de cada camión', 'Por unidad, en las últimas 4 semanas: viajes, días con viaje (de 24 hábiles), ingreso, diésel cargado, litros por viaje y qué parte del ingreso se va en diésel.', 'Un camión con pocos días o mucho diésel por viaje merece revisión.'],
+    proveedores: ['A quién se le debe más', 'Saldo por pagar de cada proveedor, de las facturas capturadas o importadas del PPS.', ''],
+    hallazgos: ['Neural Findings', 'Cada hallazgo sale de reglas fijas sobre los viajes, facturas, gastos, diésel y la simulación. Diagnóstico: qué está pasando y con qué cifras. Prescripción: qué hacer. Crítico va primero, luego Atención y luego Oportunidad.', 'No lo escribe un modelo: si falta un dato, el hallazgo lo pide.'],
+    semana: ['La semana', 'Las cifras de la semana elegida: viajes, facturado, cobrado, lo que falta facturar y los pagos propuestos. Cambia la semana con las flechas.', ''],
+    porcamion: ['Cuánto deja cada camión propio', 'Por camión en la semana: ingreso de sus viajes menos su diésel, sus gastos asignados y el taller propio. La nómina todavía no se carga por camión.', ''],
+    pagos: ['Pagos propuestos esta semana', 'Los gastos programados para pagarse esta semana, con el monto propuesto.', 'Se programan en Gastos y diésel.']
+  };
+  const tip = (k) => TIPS[k] ? `<button type="button" class="tip noprint" data-tip="${k}" aria-label="Qué significa">i</button>` : '';
+  (function () {
+    let box = null;
+    const hide = () => { if (box) box.style.display = 'none'; };
+    const show = (b) => {
+      const t = TIPS[b.dataset.tip]; if (!t) return;
+      if (!box) { box = document.createElement('div'); box.className = 'tipbox'; box.setAttribute('role', 'tooltip'); document.body.appendChild(box); }
+      box.innerHTML = `<b>${t[0]}</b><p>${t[1]}</p>${t[2] ? `<p class="tip-do">${t[2]}</p>` : ''}`;
+      box.style.display = 'block';
+      const r = b.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+      const x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+      let y = r.bottom + 8; if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 8);
+      box.style.left = x + 'px'; box.style.top = y + 'px';
+    };
+    document.addEventListener('mouseover', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) show(b); });
+    document.addEventListener('mouseout', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b && !b.contains(e.relatedTarget)) hide(); });
+    document.addEventListener('focusin', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) show(b); });
+    document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.tip'); if (b) { e.preventDefault(); show(b); } else if (!(box && box.contains(e.target))) hide(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+    addEventListener('scroll', hide, true); addEventListener('hashchange', hide);
+  })();
+  // Neural Findings: hallazgo -> diagnóstico -> prescripción. Reglas fijas del servidor (src/hallazgos.js).
+  function hallazgosHtml(list) {
+    if (!list) return '';
+    const SEVL = { critico: ['bad', 'Crítico'], atencion: ['warn', 'Atención'], oportunidad: ['acc', 'Oportunidad'] };
+    const n = (k) => list.filter((h) => h.severidad === k).length;
+    return `<div class="card nf"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Neural Findings · Diagnóstico y prescripción ${tip('hallazgos')}</h2>
+      <span class="muted" style="font-size:13px">${list.length ? `${n('critico')} críticos · ${n('atencion')} de atención · ${n('oportunidad')} oportunidades` : ''}</span></div>
+      ${list.length ? list.map((h) => { const [c, l] = SEVL[h.severidad] || ['', h.severidad]; return `<div class="nf-item nf-${esc(h.severidad)}">
+        <div class="row" style="justify-content:space-between"><div><span class="pill ${c}">${l}</span> <b>${esc(h.titulo)}</b></div>${h.impacto ? `<span class="nf-imp">${c$(h.impacto)}</span>` : ''}</div>
+        <p><span class="nf-k">Diagnóstico</span>${esc(h.diagnostico)}</p>
+        <p><span class="nf-k">Prescripción</span>${esc(h.prescripcion)}</p>
+        <p class="muted" style="font-size:12px;margin:0">Dato: ${esc(h.evidencia)}${h.enlace ? ` · <a href="${esc(h.enlace.href)}">${esc(h.enlace.label)}</a>` : ''}</p></div>`; }).join('')
+      : '<p class="empty">Sin hallazgos: con los datos cargados no hay nada que corregir.</p>'}
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Cada hallazgo sale de reglas fijas sobre los datos de NeoHaul. No lo escribe un modelo.</p></div>`;
+  }
   const kpi = (l, v, n, cls) => `<div class="card kpi${cls ? ' ' + cls : ''}"><div class="l">${l}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
   function gauge(puntos, nivel) {
     const W = 260, H = 160, cx = 130, cy = 130, r = 104, w = 22;
@@ -237,47 +300,48 @@
   function saludHtml(s) {
     const cal = s.calificacion, niv = NIVEL[cal.nivel || 'sin_datos'], mc = s.montecarlo, conc = s.concentracion;
     const ALN = { riesgo: 'bad', atencion: 'warn' };
-    return `${s.alertas.length ? `<div class="card"><h2 style="margin-top:0">Lo que hay que atender</h2>${s.alertas.map((a) => `<div class="alerta"><span class="pill ${ALN[a.nivel] || ''}">${a.nivel === 'riesgo' ? 'riesgo' : 'atención'}</span> ${esc(a.texto)}</div>`).join('')}</div>` : ''}
+    return `${s.alertas.length ? `<div class="card"><h2 style="margin-top:0">Lo que hay que atender ${tip('alertas')}</h2>${s.alertas.map((a) => `<div class="alerta"><span class="pill ${ALN[a.nivel] || ''}">${a.nivel === 'riesgo' ? 'riesgo' : 'atención'}</span> ${esc(a.texto)}</div>`).join('')}</div>` : ''}
       <div class="card hero">
         <div class="hero-g">${gauge(cal.puntos, cal.nivel || 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
           <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Salud de la operación, de 0 a 100</div></div>
-        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación?</h2>
-          ${cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
+        <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación? ${tip('calif')}</h2>
+          ${cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)} ${tip('p_' + p.clave)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
             <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
             <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) + ' · ' : ''}${esc(p.regla)}</div></div>`).join('')}
           ${cal.puntos == null ? '<p class="muted" style="font-size:13px">Aún no hay datos para calificar. Se llena sola al capturar viajes, gastos y facturas.</p>' : cal.peso_calificado < 100 ? '<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás.</p>' : ''}</div>
       </div>
       <div class="grid kpis">
-        ${kpi('Ingresos últimas 8 semanas', c$(s.ultimas_8.ingresos), `Costos capturados: ${c$(s.ultimas_8.costos)}`)}
-        ${kpi('Resultado últimas 8 semanas', s.ultimas_8.costos ? c$(s.ultimas_8.neto) : '—', s.ultimas_8.costos ? (s.ultimas_8.ingresos ? 'Margen ' + pc(s.ultimas_8.neto / s.ultimas_8.ingresos, 1) : '') : 'Sin costos capturados', s.ultimas_8.costos && s.ultimas_8.neto < 0 ? 'bad' : '')}
-        ${kpi('Trabajado sin facturar', c$(s.detenido), s.promedio_semanal_ingresos ? `${(s.detenido / s.promedio_semanal_ingresos).toFixed(1)} semanas de ingreso detenidas` : 'Viajes, estimaciones y requisiciones')}
-        ${kpi('Días para cobrar · para pagar', `${s.dso == null ? '—' : s.dso} · ${s.dpo == null ? '—' : s.dpo}`, `Promedio de lo cerrado en 180 días (${s.dso_n} cobradas, ${s.dpo_n} pagadas)`)}
+        ${kpi('Ingresos últimas 8 semanas ' + tip('ingresos8'), c$(s.ultimas_8.ingresos), `Costos capturados: ${c$(s.ultimas_8.costos)}`)}
+        ${kpi('Resultado últimas 8 semanas ' + tip('resultado8'), s.ultimas_8.costos ? c$(s.ultimas_8.neto) : '—', s.ultimas_8.costos ? (s.ultimas_8.ingresos ? 'Margen ' + pc(s.ultimas_8.neto / s.ultimas_8.ingresos, 1) : '') : 'Sin costos capturados', s.ultimas_8.costos && s.ultimas_8.neto < 0 ? 'bad' : '')}
+        ${kpi('Trabajado sin facturar ' + tip('detenido'), c$(s.detenido), s.promedio_semanal_ingresos ? `${(s.detenido / s.promedio_semanal_ingresos).toFixed(1)} semanas de ingreso detenidas` : 'Viajes, estimaciones y requisiciones')}
+        ${kpi('Días para cobrar · para pagar ' + tip('dsodpo'), `${s.dso == null ? '—' : s.dso} · ${s.dpo == null ? '—' : s.dpo}`, `Promedio de lo cerrado en 180 días (${s.dso_n} cobradas, ${s.dpo_n} pagadas)`)}
       </div>
-      <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es ir en pérdida?</h2>
+      ${hallazgosHtml(s.hallazgos)}
+      <div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2 style="margin-top:0">¿Qué tan probable es ir en pérdida? ${tip('montecarlo')}</h2>
         <p class="muted" style="margin:0;font-size:13px">${mc ? `${mc.caminos.toLocaleString('es-MX')} futuros posibles armados con ${mc.semanas_historia} semanas reales (del ${fmtF(mc.desde)} al ${fmtF(mc.hasta)}): cada semana futura repite una semana del pasado, con sus viajes y sus costos juntos. Es una estimación.` : 'Se calcula con al menos 4 semanas completas con viajes capturados (y sus costos). Con solo costos no se calcula: daría pérdida segura sin serlo.'}</p></div>
         ${mc ? `<div class="rings">${anillo(mc.prob_perdida_en[4], 'en 4 semanas')}${anillo(mc.prob_perdida_en[8], 'en 8 semanas')}${anillo(mc.prob_perdida_en[13], 'en 13 semanas')}</div>` : ''}</div>
         ${mc ? abanico(mc) + `<p class="muted" style="font-size:12px;margin:6px 0 0">Utilidad acumulada en 13 semanas: lo más probable ${c$(mc.final.p50)}; en un mal caso (1 de 20) ${c$(mc.final.p5)}; en un buen caso ${c$(mc.final.p95)}.</p>` : ''}</div>
       <div class="grid two">
-        <div class="card"><h2 style="margin-top:0">Semana por semana</h2>${barrasSem(s.semanas)}</div>
-        <div class="card"><h2 style="margin-top:0">Del viaje al cobro</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Dónde está hoy el dinero que ya se trabajó.</p>
+        <div class="card"><h2 style="margin-top:0">Semana por semana ${tip('semanas')}</h2>${barrasSem(s.semanas)}</div>
+        <div class="card"><h2 style="margin-top:0">Del viaje al cobro ${tip('embudo')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Dónde está hoy el dinero que ya se trabajó.</p>
           ${s.embudo.some((e) => e.monto) ? barrasH(s.embudo.map((e, i) => ({ l: e.nombre, v: e.monto, n: e.n ? String(e.n) : '', c: i < 4 ? AMBAR : i === 4 ? INK : VERDE })), INK) : '<p class="empty">Aún no hay viajes ni facturas.</p>'}</div>
       </div>
       <div class="grid two">
-        <div class="card"><h2 style="margin-top:0">Facturas por cobrar</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Antigüedad contra un plazo de ${s.cartera.plazo} días desde la emisión.</p>${aging(s.cartera)}</div>
-        <div class="card"><h2 style="margin-top:0">¿Qué días se trabaja más?</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Viajes de las últimas 12 semanas por día.</p>${porDia(s.por_dia)}</div>
+        <div class="card"><h2 style="margin-top:0">Facturas por cobrar ${tip('cartera')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Antigüedad contra un plazo de ${s.cartera.plazo} días desde la emisión.</p>${aging(s.cartera)}</div>
+        <div class="card"><h2 style="margin-top:0">¿Qué días se trabaja más? ${tip('pordia')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Viajes de las últimas 12 semanas por día.</p>${porDia(s.por_dia)}</div>
       </div>
-      <div class="card"><h2 style="margin-top:0">¿Dependes de una sola obra?</h2>${conc ? `<div class="conc">
+      <div class="card"><h2 style="margin-top:0">¿Dependes de una sola obra? ${tip('conc')}</h2>${conc ? `<div class="conc">
         <div>${lorenz(conc)}</div>
         <div><div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px">
           ${kpi('La obra mayor', pc(conc.mayor), 'del ingreso', conc.mayor >= 0.7 ? 'bad' : '')}${kpi('Índice Gini', conc.gini == null ? '—' : conc.gini.toFixed(2), '0 = parejo · 1 = una sola')}${kpi('Obras', String(conc.n), 'con viajes')}</div>
           ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), INK)}
           <p class="muted" style="font-size:12px;margin:8px 0 0">Últimas 12 semanas de viajes, antes de IVA. Todas son obras de HTR: el cliente es uno solo.</p></div></div>` : '<p class="empty">Aún no hay viajes en las últimas 12 semanas.</p>'}</div>
-      <div class="card tbl"><h2 style="margin-top:0">Uso de cada camión (4 semanas)</h2><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Días con viaje</th><th>Uso</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">L por viaje</th><th class="n">Diésel / ingreso</th></tr></thead><tbody>
+      <div class="card tbl"><h2 style="margin-top:0">Uso de cada camión (4 semanas) ${tip('camiones')}</h2><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Días con viaje</th><th>Uso</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">L por viaje</th><th class="n">Diésel / ingreso</th></tr></thead><tbody>
         ${s.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}<div class="muted">${esc(c.empresa)}${c.ultimo_viaje ? ' · último ' + fmtF(c.ultimo_viaje) : ''}</div></td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Días">${c.dias} de 24</td>
           <td data-l="Uso"><div class="hb-t" style="min-width:70px"><i style="width:${(c.uso * 100).toFixed(0)}%;background:${c.uso >= 0.7 ? VERDE : c.uso >= 0.4 ? AMBAR : ROJO}"></i></div></td>
           <td class="n" data-l="Ingresos">${c$(c.ingresos)}</td><td class="n" data-l="Diésel">${c.diesel ? c$(c.diesel) : '—'}</td><td class="n" data-l="L por viaje">${c.litros_por_viaje == null ? '—' : c.litros_por_viaje}</td><td class="n" data-l="Diésel / ingreso">${pc(c.diesel_sobre_ingreso, 1)}</td></tr>`).join('')}
       </tbody></table></div>
-      ${s.por_pagar.proveedores.length ? `<div class="card"><h2 style="margin-top:0">A quién se le debe más</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Saldo por proveedor: ${c$(s.por_pagar.total)} en ${s.por_pagar.n} facturas.</p>${barrasH(s.por_pagar.proveedores.map((p) => ({ l: p.nombre, v: p.monto, n: String(p.n) })), ROJO)}</div>` : ''}
+      ${s.por_pagar.proveedores.length ? `<div class="card"><h2 style="margin-top:0">A quién se le debe más ${tip('proveedores')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Saldo por proveedor: ${c$(s.por_pagar.total)} en ${s.por_pagar.n} facturas.</p>${barrasH(s.por_pagar.proveedores.map((p) => ({ l: p.nombre, v: p.monto, n: String(p.n) })), ROJO)}</div>` : ''}
       ${s.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}`;
   }
 
@@ -312,7 +376,7 @@
       t.pagos_semana.map((g) => `- ${g.proveedor}${g.folio ? ' ' + g.folio : ''}: ${pesos(g.monto_propuesto)}`).join('\n');
     main().innerHTML = `<h1>Tablero</h1><p class="sub">Salud de la operación de NeoHaul · hoy ${fmtF(hoy())}</p>
       ${s ? saludHtml(s) : '<div class="note">No se pudo calcular la salud de la operación.</div>'}
-      <h2 style="margin-top:26px">La semana</h2><p class="sub">Semana del ${fmtF(t.desde)} al ${fmtF(t.hasta)}</p>
+      <h2 style="margin-top:26px">La semana ${tip('semana')}</h2><p class="sub">Semana del ${fmtF(t.desde)} al ${fmtF(t.hasta)}</p>
       <div class="row noprint" style="margin-bottom:12px"><input type="date" id="wk" value="${t.desde}" style="max-width:180px"><button class="btn small" id="prev">Semana anterior</button>
       <button class="btn small" id="next">Siguiente</button><a class="btn small wa" target="_blank" rel="noopener" href="${waLink('', resumen)}">Enviar resumen por WhatsApp</a></div>
       <div class="grid">
@@ -326,13 +390,13 @@
         ${k('Cuentas por pagar (saldo)', pesos(t.cuentas_por_pagar.saldo), `${t.cuentas_por_pagar.n} facturas de proveedor`)}
         ${k('Taller por cobrar', pesos(t.taller_por_cobrar.total), `${t.taller_por_cobrar.n} servicios a empresas hermanas`)}
       </div>
-      <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px"><h2 style="margin:0">Cuánto deja cada camión propio</h2>${canEdit() ? '<button class="btn small" id="nuevoCamion">+ Agregar camión</button>' : ''}</div>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:18px"><h2 style="margin:0">Cuánto deja cada camión propio ${tip('porcamion')}</h2>${canEdit() ? '<button class="btn small" id="nuevoCamion">+ Agregar camión</button>' : ''}</div>
       <div class="card tbl"><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">Costos</th><th class="n">Resultado</th></tr></thead><tbody>
       ${t.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}</td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Ingresos">${pesos(c.ingresos)}</td><td class="n" data-l="Diésel">${Number(c.diesel) ? pesos(c.diesel) + '<div class="muted">' + qty(c.litros) + ' L</div>' : '—'}</td>
         <td class="n" data-l="Costos">${c.sin_costos ? '<span class="pill warn">sin costos capturados</span>' : pesos(c.costos)}</td>
         <td class="n" data-l="Resultado">${c.margen == null ? '—' : `<span class="pill ${c.margen < 0 ? 'bad' : 'ok'}">${pesos(c.margen)}</span>`}</td></tr>`).join('')}
       </tbody></table>${t.diesel_sin_asignar && t.diesel_sin_asignar.n ? `<div class="note"><b>${t.diesel_sin_asignar.n} cargas de diésel</b> de esta semana (${pesos(t.diesel_sin_asignar.total)}) aún no tienen camión. Asígnalas en Gastos y diésel.</div>` : ''}${t.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}</div>
-      <h2>Pagos propuestos esta semana</h2>
+      <h2>Pagos propuestos esta semana ${tip('pagos')}</h2>
       <div class="card tbl">${t.pagos_semana.length ? `<table class="cards"><thead><tr><th>Proveedor</th><th>Folio</th><th>Camión</th><th class="n">Monto</th></tr></thead><tbody>
         ${t.pagos_semana.map((g) => `<tr><td data-l="Proveedor">${esc(g.proveedor)}</td><td data-l="Folio">${esc(g.folio || '')}</td><td data-l="Camión">${esc(g.camion || 'General')}</td><td class="n" data-l="Monto">${pesos(g.monto_propuesto)}</td></tr>`).join('')}
         </tbody></table>` : '<p class="muted">Ninguno programado. Prográmalos en Gastos y diésel.</p>'}</div>`;

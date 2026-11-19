@@ -38,6 +38,7 @@ const M = require('./money');
 const llm = require('./llm');
 const D = require('./docs');
 const A = require('./analytics');
+const H = require('./hallazgos');
 
 const router = express.Router();
 const OWNER_EMAIL = String(process.env.NEOHAUL_OWNER_EMAIL || 'mstagg@digit2ai.com').toLowerCase();
@@ -1398,7 +1399,10 @@ async function saludDe(tenant) {
     mayor_obra: conc && conc.n >= 2 ? conc.mayor : null,
     confirmados_pct: cap.n ? cap.ok / cap.n : null
   });
-  return {
+  const ex = (await one(`SELECT (SELECT COUNT(DISTINCT o.client_id) FROM nh_obras o WHERE o.tenant_id=:t AND o.active)::int AS clientes_n,
+      (SELECT COUNT(*) FROM nh_nomina WHERE tenant_id=:t AND semana > :h::date - 35)::int AS nominas_4s`, t)) || {};
+  ex.obras_sin_ingeniero = (await sel("SELECT nombre FROM nh_obras WHERE tenant_id=:t AND active AND (ingeniero IS NULL OR ingeniero_tel IS NULL) ORDER BY nombre", t)).map((o) => o.nombre);
+  const out = {
     hoy, calificacion: score, montecarlo: mc, semanas: hist.slice(-12), embudo, detenido, promedio_semanal_ingresos: promIng,
     ultimas_8: { ingresos: ing8, costos: cos8, neto: ing8 - cos8 }, cartera: cart, concentracion: conc, por_dia: porDia, camiones,
     dso: dso.n ? Math.round(dso.d * 10) / 10 : null, dso_n: dso.n, dpo: dpo.n ? Math.round(dpo.d * 10) / 10 : null, dpo_n: dpo.n,
@@ -1408,6 +1412,8 @@ async function saludDe(tenant) {
       `El Monte Carlo usa las semanas con viajes: hay ${hist.filter((w) => w.ingresos > 0).length} y necesita ${A.MIN_SEMANAS}. Es una estimación, no un dato.`,
       `Plazo de crédito supuesto: ${plazo} días desde la emisión (NEOHAUL_DIAS_CREDITO).`]
   };
+  out.hallazgos = H.hallazgos(out, ex);
+  return out;
 }
 
 /* ── pegar una lista de choferes (nombre + WhatsApp) ── */

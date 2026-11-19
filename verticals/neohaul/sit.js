@@ -514,6 +514,24 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     const schSrc = fs.readFileSync(path.join(__dirname, 'src', 'schema.js'), 'utf8');
     ok('las cuentas iniciales entran con must_change y solo si el correo no existe', /SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS/.test(schSrc));
     ok('en el repo solo vive el hash, nunca la contraseña', require('./src/schema').CUENTAS_INICIALES.every((c) => /^\$2[ab]\$12\$/.test(c[3])));
+
+    console.log('\nNeural Findings');
+    const HZ = require('./src/hallazgos');
+    const hz0 = HZ.hallazgos({ semanas: [], alertas: [] }, {});
+    ok('sin viajes: pide el dato y no inventa riesgos', hz0.length === 1 && hz0[0].codigo === 'NH-SIN-VIAJES');
+    const semR = [1, 2, 3, 4, 5].map((i) => ({ semana: '2026-10-0' + i, ingresos: 100000, costos: i === 3 ? 300000 : 80000, neto: i === 3 ? -200000 : 20000 }));
+    const hz1 = HZ.hallazgos({ semanas: semR, ultimas_8: { ingresos: 500000, costos: 620000, neto: -120000 }, cartera: { total: 100000, vencido: 40000, plazo: 30 },
+      montecarlo: { caminos: 2000, semanas_historia: 5, prob_perdida_en: { 4: 0.5, 8: 0.4, 13: 0.3 }, final: { p5: -90000 } }, alertas: [], camiones: [], embudo: [] }, { clientes_n: 1, nominas_4s: 0 });
+    const cod = hz1.map((h) => h.codigo);
+    ok('margen negativo, riesgo alto y cartera vencida salen como críticos', ['NH-MARGEN', 'NH-PERDIDA', 'NH-VENCIDO'].every((c) => hz1.find((h) => h.codigo === c && h.severidad === 'critico')));
+    ok('la peor semana se nombra con su cifra real', (hz1.find((h) => h.codigo === 'NH-SEMANAS-ROJAS') || {}).impacto === 200000);
+    ok('falta de nómina y un solo cliente se piden como oportunidad', cod.includes('NH-SIN-NOMINA') && cod.includes('NH-UN-CLIENTE'));
+    ok('ordenados: críticos primero', hz1.findIndex((h) => h.severidad !== 'critico') > 0 && hz1.slice(hz1.findIndex((h) => h.severidad !== 'critico')).every((h) => h.severidad !== 'critico'));
+    const hz2 = HZ.hallazgos({ semanas: semR.map((w) => ({ ...w, costos: 50000, neto: 50000 })), ultimas_8: { ingresos: 500000, costos: 250000, neto: 250000 }, cartera: { total: 0, vencido: 0 },
+      montecarlo: { caminos: 2000, prob_perdida_en: { 4: 0, 8: 0, 13: 0 }, final: { p5: 100000 } }, alertas: [], camiones: [], embudo: [] }, { clientes_n: 3, nominas_4s: 4 });
+    ok('operación sana: no hay hallazgos inventados', hz2.length === 0, JSON.stringify(hz2.map((h) => h.codigo)));
+    ok('el archivo de hallazgos no llega a un modelo ni a la base', !/require\(['"](\.\/(llm|db)|@anthropic)/.test(fs.readFileSync(path.join(__dirname, 'src', 'hallazgos.js'), 'utf8')));
+    ok('el tablero devuelve hallazgos', Array.isArray((await req('GET', '/salud', { cookie: dirA })).json.hallazgos));
   } catch (e) {
     ok('sin excepciones', false, e && (e.stack || e.message));
   } finally {

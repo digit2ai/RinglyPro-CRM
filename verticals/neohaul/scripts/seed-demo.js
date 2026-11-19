@@ -100,6 +100,9 @@ async function bulk(table, cols, rows) {
   const lunesHoy = M.lunes(hoy), ini = M.sumarDias(lunesHoy, -7 * (SEMANAS - 1));
   const dias = []; for (let d = ini; d <= hoy; d = M.sumarDias(d, 1)) { if (new Date(d + 'T00:00:00Z').getUTCDay() !== 0) dias.push(d); }
 
+  // Riesgo realista: dos semanas de lluvia (casi no se trabaja) y una reparación mayor.
+  const semanaDe = (f) => Math.round((new Date(M.lunes(f)) - new Date(ini)) / (7 * 864e5)); // 0..9
+  const LLUVIA = [2, 7], REPARACION = 5;
   // Viajes y pedidos
   const viajes = [], pedidos = [];
   let ticket = 41000, vale = 87000;
@@ -108,16 +111,16 @@ async function bulk(table, cols, rows) {
   for (const f of dias) {
     const recientes = M.sumarDias(hoy, -2);
     const estado = f >= recientes ? 'capturado' : 'confirmado';
-    const usados = {};
+    const usados = {}, llueve = LLUVIA.includes(semanaDe(f));
     for (const k of propios) {
-      if (rnd() < 0.06) continue; // día sin trabajo (taller, descanso)
+      if (rnd() < (llueve ? 0.4 : 0.06)) continue; // día sin trabajo (lluvia, taller, descanso)
       const obra = k.idx < 2 ? 'E18' : k.idx < 4 ? 'N18' : k.idx === 4 ? (rnd() < 0.6 ? 'N16' : 'REA4') : (rnd() < 0.5 ? 'N18' : 'N16');
       const nv = entre(2, 4);
       for (let j = 0; j < nv; j++) { const t = pick(trabajo[obra]); viajes.push({ fecha: f, obra, t, truck: k.id, driver: k.chofer, cant: cantidad(t), estado }); }
       (usados[obra] = usados[obra] || []).push(k.id);
     }
     for (const k of externos) {
-      if (rnd() < 0.35) continue;
+      if (rnd() < (llueve ? 0.85 : 0.35)) continue;
       const obra = pick(['N18', 'N16', 'E18']); const t = pick(trabajo[obra]);
       for (let j = 0; j < entre(1, 3); j++) viajes.push({ fecha: f, obra, t, truck: k.id, driver: null, cant: cantidad(t), estado });
       (usados[obra] = usados[obra] || []).push(k.id);
@@ -129,7 +132,6 @@ async function bulk(table, cols, rows) {
   for (const v of viajes) { v.precio = tar[v.t].precio; v.importe = M.importe(v.cant, v.precio); v.ticket = 'B-' + (ticket++); v.vale = String(vale++); }
 
   // Estimaciones semanales por obra: viejas facturadas, -2 aprobada, -1 enviada, semana actual sin estimar.
-  const semanaDe = (f) => Math.round((new Date(M.lunes(f)) - new Date(ini)) / (7 * 864e5)); // 0..9
   const grupos = {};
   for (const v of viajes) { if (v.estado !== 'confirmado') continue; const w = semanaDe(v.fecha); if (w >= SEMANAS - 1) continue; (grupos[w + '|' + v.obra] = grupos[w + '|' + v.obra] || []).push(v); }
   const facturas = [];
@@ -203,12 +205,12 @@ async function bulk(table, cols, rows) {
       await bulk('nh_diesel_cargas', { tenant_id: 'int', gasto_id: 'int', folio_despacho: 'text', fecha: 'date', hora: 'text', producto: 'text', litros: 'numeric', precio: 'numeric', importe: 'numeric', iva: 'numeric', total: 'numeric', truck_id: 'int' },
         cargas.map((c) => ({ tenant_id: T, gasto_id: g.id, folio_despacho: c.folio, fecha: c.fecha, hora: c.hora, producto: 'Diésel', litros: c.litros, precio: precioL, importe: c.imp, iva: c.iva, total: c.total, truck_id: c.truck })));
     }
-    // Aliados: lo que TTS / SEMAQSA cobran por sus viajes (85% del importe).
+    // Aliados: lo que TTS / SEMAQSA cobran por sus viajes (86% del importe).
     for (const emp of ['TTS', 'SEMAQSA']) {
       const ids = externos.filter((k) => k.empresa === emp).map((k) => k.id);
       const base = M.sum(viajes.filter((v) => ids.includes(v.truck) && M.lunes(v.fecha) === lun).map((v) => v.importe));
       if (!base) continue;
-      const tot = M.facturaTotals(r2(base * 0.85), false).total;
+      const tot = M.facturaTotals(r2(base * 0.86), false).total;
       await q(`INSERT INTO nh_gastos (tenant_id,fecha,proveedor,folio,concepto,categoria,total,saldo,estado,fecha_pago,origen,empresa,cc,created_by)
         VALUES (:t,:f,:p,:fo,'Fletes de unidades aliadas','otros',:tot,:sal,:e,:fp,'manual','NeoHaul','Fletes',:u)`,
       { t: T, f: sab > hoy ? hoy : sab, p: emp === 'TTS' ? 'Transportes Aliados TTS (demo)' : 'Maquinaria SEMAQSA (demo)', fo: emp + '-' + (500 + w), tot, sal: atras >= 3 ? 0 : tot, e: atras >= 3 ? 'pagado' : 'pendiente', fp: atras >= 3 ? M.sumarDias(sab, 14) : null, u: usr.id });
@@ -217,12 +219,20 @@ async function bulk(table, cols, rows) {
       ['Autopistas del Noreste (demo)', 'casetas', entre(3200, 5600), 'Casetas de la semana']];
     if (w % 3 === 1) otros.push(['Llantas y Servicios Apodaca (demo)', 'llantas', entre(28000, 41000), 'Juego de llantas de tracción']);
     if (w % 4 === 2) otros.push(['Diésel y Motores del Norte (demo)', 'taller', entre(14000, 30000), 'Reparación de inyectores']);
-    for (const [prov, cat, monto, con] of otros) {
-      const truck = cat === 'casetas' ? null : pick(propios).id;
+    if (w === REPARACION) otros.push(['Diésel y Motores del Norte (demo)', 'taller', 186000, 'Reparación mayor de motor (ajuste completo)']);
+    otros.push(['Sueldos de oficina y supervisión (demo)', 'nomina', 32000, 'Administración, supervisor de patio y auxiliar']);
+    // Pagos fijos del mes: financiamiento de las 6 unidades (día 5) y seguro de la flota (día 15).
+    for (let d = 0; d < 7; d++) {
+      const f = M.sumarDias(lun, d); if (f > hoy) continue;
+      if (f.slice(8) === '05') for (const k of propios) otros.push(['Financiera de Unidades del Norte (demo)', 'otros', 52000, `Mensualidad de financiamiento ${f.slice(0, 7)}`, f, k.id]);
+      if (f.slice(8) === '15') otros.push(['Seguros Flota Norte (demo)', 'otros', 52000, `Seguro de la flota ${f.slice(0, 7)}`, f, null]);
+    }
+    for (const [prov, cat, monto, con, fechaFija, truckFijo] of otros) {
+      const truck = truckFijo !== undefined ? truckFijo : (cat === 'casetas' || cat === 'nomina') ? null : pick(propios).id;
       const st = pagado ? 'pagado' : atras === 1 ? 'programado' : 'pendiente';
       await q(`INSERT INTO nh_gastos (tenant_id,fecha,proveedor,folio,concepto,categoria,total,saldo,truck_id,obra_id,prioridad,semana_pago,monto_propuesto,estado,fecha_pago,origen,empresa,cc,created_by)
         VALUES (:t,:f,:p,:fo,:c,:cat,:tot,:sal,:k,:o,:pr,:sp,:mp,:e,:fp,'manual','NeoHaul',:cc,:u)`,
-      { t: T, f: M.sumarDias(lun, entre(0, 4)) > hoy ? hoy : M.sumarDias(lun, entre(0, 4)), p: prov, fo: 'F-' + entre(1000, 9999), c: con, cat, tot: monto, sal: pagado ? 0 : monto, k: truck,
+      { t: T, f: fechaFija || (M.sumarDias(lun, entre(0, 4)) > hoy ? hoy : M.sumarDias(lun, entre(0, 4))), p: prov, fo: 'F-' + entre(1000, 9999), c: con, cat, tot: monto, sal: pagado ? 0 : monto, k: truck,
         o: cat === 'casetas' ? obras.N18 : null, pr: st === 'programado' ? 'alta' : null, sp: st === 'programado' ? lunesHoy : null, mp: st === 'programado' ? monto : null,
         e: st, fp: pagado ? M.sumarDias(lun, entre(10, 16)) : null, cc: cat === 'casetas' ? 'N18' : 'Flota', u: usr.id });
     }
