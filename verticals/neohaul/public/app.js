@@ -16,7 +16,7 @@
   const fmtF = (f) => { if (!f) return ''; const [y, m, d] = String(f).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
   const UN = { tonelada: 't', dia: 'día', viaje: 'viaje' };
   const ERR = {
-    solo_dueno: 'Solo Digit2AI o soporte técnico pueden crear o cambiar cuentas de director y de soporte.', sin_permiso_borrar: 'Tu cuenta de administrador puede agregar y modificar, pero no borrar ni cancelar.',
+    solo_dueno: 'Solo Digit2AI o un super administrador pueden crear cuentas de director o cambiar cuentas de director y super administrador.', sin_permiso_borrar: 'Tu cuenta de administrador puede agregar y modificar, pero no borrar ni cancelar.',
     reservado: 'Ese correo es de la cuenta de Digit2AI; usa otro.', ya_existe: 'Ya hay una cuenta con ese correo.', solo_director: 'Esto lo cambia el director, un administrador o soporte.',
     invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.', placa_duplicada: 'Ya hay un camión activo con esa placa.', lista_vacia: 'No encontré ningún nombre con teléfono en la lista.',
     ticket_duplicado: 'Ese número de ticket ya está registrado con esa tarifa.', en_estimacion: 'Ese viaje ya está en una estimación. Borra la estimación (en borrador) para liberarlo.',
@@ -1037,13 +1037,13 @@
   R.usuarios = async function () {
     if (!canUsers()) return go('tablero');
     const us = await api('usuarios');
-    const RL = { owner: 'Digit2AI (dueño)', soporte: 'Soporte técnico (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
+    const RL = { owner: 'Digit2AI (dueño)', soporte: 'Super administrador (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
     const opRol = [['capturista', 'Captura: captura viajes, pedidos y gastos'], ['administrador', 'Administrador: lee, agrega y modifica, no borra'], ['contador', 'Solo lectura: ve todo, no cambia nada'],
-      ...(isSuper() ? [['director', 'Director: todo lo de la empresa'], ['soporte', 'Soporte técnico: absolutamente todo']] : [])];
+      ['soporte', 'Super administrador: acceso y cambios a absolutamente todo'], ...(isSuper() ? [['director', 'Director: todo lo de la empresa']] : [])];
     main().innerHTML = `<h1>Usuarios</h1><p class="sub">Cada persona entra con su propia cuenta. La contraseña temporal se muestra una sola vez.</p>
       <details class="card"><summary><b>Qué puede hacer cada rol</b></summary><table style="margin-top:8px"><thead><tr><th>Rol</th><th>Ver</th><th>Agregar y modificar</th><th>Borrar y cancelar</th><th>Tarifas y parámetros</th><th>Cuentas de usuario</th></tr></thead><tbody>
-        <tr><td><b>Soporte técnico</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Todas, incluidas director y soporte</td></tr>
-        <tr><td><b>Director</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Captura, administrador y solo lectura</td></tr>
+        <tr><td><b>Super administrador</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Todas, incluidas las de director</td></tr>
+        <tr><td><b>Director</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Captura, administrador, solo lectura y super administrador</td></tr>
         <tr><td><b>Administrador</b></td><td>Sí</td><td>Sí</td><td>No</td><td>Sí</td><td>No</td></tr>
         <tr><td><b>Captura</b></td><td>Sí</td><td>Sí</td><td>Sí, lo que capturó</td><td>No</td><td>No</td></tr>
         <tr><td><b>Solo lectura</b></td><td>Sí</td><td>No</td><td>No</td><td>No</td><td>No</td></tr></tbody></table></details>
@@ -1053,7 +1053,7 @@
       <div class="card tbl"><table class="cards"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Último ingreso</th><th></th></tr></thead><tbody>
       ${us.map((u) => `<tr><td data-l="Nombre">${esc(u.name || '')}</td><td data-l="Correo">${esc(u.email)}</td><td data-l="Rol">${RL[u.role] || esc(u.role)}${u.active ? '' : ' <span class="pill bad">inactivo</span>'}</td>
         <td data-l="Último ingreso">${u.last_login ? new Date(u.last_login).toLocaleString('es-MX') : '—'}</td>
-        <td data-l="">${u.role !== 'owner' && u.id !== S.me.user.id && (isSuper() || !['director', 'soporte'].includes(u.role)) ? `<button class="btn small" data-reset="${u.id}">Nueva contraseña</button> <button class="btn small danger" data-act="${u.id}:${u.active ? 0 : 1}">${u.active ? 'Desactivar' : 'Activar'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+        <td data-l="">${u.role !== 'owner' && u.id !== S.me.user.id && (isSuper() || u.role !== 'director') ? `<button class="btn small" data-reset="${u.id}">Nueva contraseña</button> <button class="btn small danger" data-act="${u.id}:${u.active ? 0 : 1}">${u.active ? 'Desactivar' : 'Activar'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
     const f = document.getElementById('nu');
     const showPw = (email, pw) => { document.getElementById('pw').innerHTML = `<div class="note">Contraseña temporal de <b>${esc(email)}</b>: <code style="font-size:16px">${esc(pw)}</code>. Dásela en persona o por WhatsApp; al entrar tendrá que cambiarla. No se vuelve a mostrar.</div>`; };
     f.onsubmit = async (e) => { e.preventDefault(); try { const r = await api('usuarios', { method: 'POST', body: formData(f) }); await R.usuarios(); showPw(r.email, r.password_temporal); } catch (er) { f.querySelector('.err').textContent = errMsg(er); } };

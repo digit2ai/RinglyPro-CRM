@@ -22,7 +22,7 @@
  *  - El tablero solo muestra cifras de filas reales; un camión sin costos
  *    capturados dice "sin costos capturados", nunca una ganancia.
  *
- * ROLES: owner (Digit2AI, contraseña del CRM) · soporte (soporte técnico: todo, como el dueño) ·
+ * ROLES: owner (Digit2AI, contraseña del CRM) · soporte = SUPER ADMINISTRADOR (todo, como el dueño; lo da el director o el dueño) ·
  * director (Osbaldo) · administrador (lee, agrega y modifica, NUNCA borra ni cancela) ·
  * capturista (Andrés) · contador (solo lectura).
  */
@@ -1540,7 +1540,8 @@ api.post('/usuarios', usersOnly, async (req, res) => {
   const email = str(b.email, 200).toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'email_invalido' });
   if (!ROLES.includes(b.role)) return res.status(400).json({ error: 'rol_invalido' });
-  if (['director', 'soporte'].includes(b.role) && !isSuper(req)) return res.status(403).json({ error: 'solo_dueno' });
+  // El director puede dar acceso de super administrador (a quien él decida); crear otro director sigue siendo solo del dueño o un super administrador.
+  if (b.role === 'director' && !isSuper(req)) return res.status(403).json({ error: 'solo_dueno' });
   if (email === OWNER_EMAIL) return res.status(409).json({ error: 'reservado' });
   const pw = tempPassword();
   const [r] = await exec(`INSERT INTO nh_users (tenant_id,email,name,phone,role,password_hash,must_change) VALUES (:t,:e,:n,:p,:r,:h,TRUE)
@@ -1552,7 +1553,7 @@ api.post('/usuarios', usersOnly, async (req, res) => {
 api.patch('/usuarios/:id', usersOnly, async (req, res) => {
   const id = intId(req.params.id), u = id && (await own('nh_users', id, req.tenant));
   if (!u || u.role === 'owner' || u.id === req.user.id) return res.status(404).json({ error: 'not_found' });
-  if (['director', 'soporte'].includes(u.role) && !isSuper(req)) return res.status(404).json({ error: 'not_found' }); // un director no toma la cuenta de otro ni la de soporte
+  if (u.role === 'director' && !isSuper(req)) return res.status(404).json({ error: 'not_found' }); // un director no toma la cuenta de otro director
   const b = req.body || {};
   if (b.reset) {
     const pw = tempPassword();
@@ -1560,7 +1561,7 @@ api.patch('/usuarios/:id', usersOnly, async (req, res) => {
     audit(req, 'usuario_reset', u.email);
     return res.json({ ok: true, password_temporal: pw });
   }
-  const role = ROLES.includes(b.role) && (!['director', 'soporte'].includes(b.role) || isSuper(req)) ? b.role : u.role;
+  const role = ROLES.includes(b.role) && (b.role !== 'director' || isSuper(req)) ? b.role : u.role;
   const active = b.active === undefined ? u.active : !!b.active;
   await exec('UPDATE nh_users SET role=:r, active=:a WHERE id=:id AND tenant_id=:t', { r: role, a: active, id, t: req.tenant });
   audit(req, 'usuario_updated', u.email);

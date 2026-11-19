@@ -460,11 +460,13 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('el administrador NO cancela una factura', (await req('PATCH', '/facturas/1', { cookie: admA, body: { estado: 'cancelada' } })).json.error === 'sin_permiso_borrar');
     ok('el administrador no administra cuentas', (await req('GET', '/usuarios', { cookie: admA })).status === 404);
     ok('el director crea un administrador', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `adm-${STAMP}@example.test`, role: 'administrador' } })).status === 201);
-    ok('el director no crea soporte técnico', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `sup-${STAMP}@example.test`, role: 'soporte' } })).status === 403);
+    ok('el director puede dar acceso de super administrador', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `sup-${STAMP}@example.test`, role: 'soporte' } })).status === 201);
     ok('soporte crea un director', (await req('POST', '/usuarios', { cookie: supA, body: { email: `dir2-${STAMP}@example.test`, role: 'director' } })).status === 201);
     ok('soporte puede borrar (pasa el filtro; el viaje no existe = 404)', (await req('DELETE', '/viajes/999999999', { cookie: supA })).status === 404);
     const supRow = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'soporte');
-    ok('un director no toca la cuenta de soporte', (await req('PATCH', '/usuarios/' + supRow.id, { cookie: dirA, body: { reset: true } })).status === 404);
+    ok('el director puede quitar a un super administrador (resetear/desactivar)', (await req('PATCH', '/usuarios/' + supRow.id, { cookie: dirA, body: { reset: true } })).status === 200);
+    const dir2 = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'director' && u.email.startsWith('dir2-'));
+    ok('pero no toca la cuenta de otro director', (await req('PATCH', '/usuarios/' + dir2.id, { cookie: dirA, body: { reset: true } })).status === 404);
     ok('soporte de A no ve los usuarios de B', !(await req('GET', '/usuarios', { cookie: supA })).json.some((u) => u.email.includes(`-${B}-`)));
 
     const [[dirA2]] = await db.query("INSERT INTO nh_users (tenant_id,email,role,password_hash,must_change) VALUES (:t,:e,'director',:h,FALSE) RETURNING id", { replacements: { t: A, e: `sit-nh-dir2-${STAMP}@example.test`, h: hash } });
