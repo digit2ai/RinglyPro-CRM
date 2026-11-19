@@ -124,7 +124,7 @@
     ['grp', 'Semana'], ['tablero', 'Tablero'], ['pedidos', 'Pedidos'], ['viajes', 'Viajes'],
     ['grp', 'Cobro'], ['estimaciones', 'Estimaciones'], ['facturas', 'Facturas'],
     ['grp', 'Costos'], ['gastos', 'Gastos y diésel'], ['nomina', 'Nómina'], ['taller', 'Taller'],
-    ['grp', 'Ajustes'], ['catalogos', 'Catálogos'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
+    ['grp', 'Ajustes'], ['catalogos', 'Catálogos'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta'], ['guia', 'Guía de usuario']
   ];
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Menú" aria-expanded="false">☰</button>
@@ -925,6 +925,55 @@
       if (r) { const res = await api('usuarios/' + r.dataset.reset, { method: 'PATCH', body: { reset: true } }); const u = us.find((x) => String(x.id) === r.dataset.reset); showPw(u.email, res.password_temporal); }
       if (a) { const [id, on] = a.dataset.act.split(':'); await api('usuarios/' + id, { method: 'PATCH', body: { active: on === '1' } }); R.usuarios(); }
     };
+  };
+  /* ── guía de usuario y simulacro ── */
+  R.guia = async function () {
+    const f = (n, t) => `<a class="btn small" href="simulacro/${n}" download>${t}</a>`;
+    const paso = (n, t, items) => `<div class="card guia"><h2 style="margin-top:0"><span class="gnum">${n}</span>${t}</h2><ol>${items.map((i) => `<li>${i}</li>`).join('')}</ol></div>`;
+    main().innerHTML = `<h1>Guía de usuario</h1>
+      <p class="sub">Cómo se usa NeoHaul de principio a fin. Sirve también como simulacro: con los archivos de prueba de abajo se recorre todo el flujo en unos 30 minutos.</p>
+      <div class="card"><h2 style="margin-top:0">Archivos de prueba</h2>
+        <p class="muted" style="margin-top:0">Datos ficticios. Úsalos en la empresa de demostración; en la empresa real se usan los documentos de verdad.</p>
+        <div class="row" style="flex-wrap:wrap;gap:8px">${f('ticket-prueba.jpg', 'Ticket de báscula (foto)')}${f('viajes-semana.xlsx', 'Viajes de la semana (Excel)')}${f('factura-diesel.pdf', 'Factura de diésel (PDF)')}${f('PPS-S47.xlsx', 'PPS de la semana (Excel)')}${f('nomina-semana.xlsx', 'Nómina de la semana (Excel)')}</div>
+        <p class="muted" style="font-size:13px;margin-bottom:0">El paso 2 se hace desde el teléfono; lo demás, desde la computadora. La obra <b>Simulacro · Libramiento Santiago</b> está vacía para esta prueba.</p></div>
+      ${paso(1, 'Pedido y aviso al chofer', [
+        '<b>Pedidos</b>. En "Nuevo pedido" pon: fecha de hoy, obra <i>Simulacro · Libramiento Santiago</i>, tarifa <i>Carpeta asfáltica · Planta Santiago</i>, 3 camiones y quién pide. Presiona <b>Guardar pedido</b>.',
+        'En el pedido, presiona <b>Asignar camión</b> y elige <i>DM-03-00-A (03)</i> con su chofer. Presiona <b>Asignar</b>.',
+        'Presiona el botón de WhatsApp del chofer: se abre el mensaje ya escrito (en la demo no lo envíes; el número es ficticio).'])}
+      ${paso(2, 'Ticket con foto (desde el teléfono)', [
+        'Abre en la computadora la foto del ticket de prueba (abajo).',
+        'En el teléfono entra a NeoHaul, ve a <b>Viajes</b> y presiona <b>Subir foto del ticket</b>. Tómale la foto a la pantalla.',
+        'Espera "Leyendo el ticket…". Revisa lo que leyó: vale 52417, folio B-60318, fecha 19/11/2026, 18.62 t, camión DM-03-00-A y chofer Carlos.',
+        'Cambia la <b>obra a Simulacro</b> (la app sugiere SICT N18) y corrige el pedido si lo leyó mal (el escrito a mano es P-2291). Presiona <b>Guardar y confirmar</b>.'])}
+      <div class="card" style="text-align:center"><img src="simulacro/ticket-prueba.jpg" alt="Ticket de báscula de prueba" style="max-width:100%;width:520px;border-radius:8px"></div>
+      ${paso(3, 'Importar los viajes de la semana', [
+        '<b>Viajes</b> → <b>Importar Excel de planta</b>.',
+        'Elige la obra <i>Simulacro</i>, la tarifa <i>Carpeta asfáltica · Planta Santiago</i> y el archivo <i>Viajes de la semana</i>. Presiona <b>Importar</b>.',
+        'Deben entrar 14 viajes. Si lo importas dos veces, rechaza los tickets repetidos.',
+        'Filtra la lista por la obra Simulacro, marca los 14 viajes y presiona <b>Confirmar seleccionados</b>.'])}
+      ${paso(4, 'Estimación semanal', [
+        '<b>Estimaciones</b>: obra <i>Simulacro</i>, del 16/11/2026 al 22/11/2026. Presiona <b>Armar estimación</b>.',
+        'Compara con la hoja "Resultado esperado" del Excel: 14 viajes y $47,095.10. Si confirmaste el ticket del paso 2 en esta obra, serán 15 viajes y $50,260.50.',
+        'Presiona <b>Excel</b> para descargarla y <b>Enviar por WhatsApp</b>: el mensaje va al ingeniero de la obra.',
+        'Presiona <b>Marcar enviada</b> y luego <b>HTR aprobó</b>.'])}
+      ${paso(5, 'Requisición y factura', [
+        'En la estimación presiona <b>Pedir factura</b>. Se crea la requisición con IVA 16% y retención 4% (total $52,746.52 para 14 viajes).',
+        '<b>Facturas</b>: en esa requisición presiona <b>Anotar folio</b> y escribe, por ejemplo, A-9001.',
+        'Cuando HTR pague, presiona <b>Cobrada</b>.'])}
+      ${paso(6, 'Gastos: PPS y diésel', [
+        '<b>Gastos y diésel</b> → <b>Cargar PPS (Excel)</b> → archivo <i>PPS de la semana</i>. Deben entrar 12 facturas por $791,496.46 y el control debe decir que cuadra.',
+        '<b>Subir factura de diésel (PDF o XML)</b> → archivo <i>Factura de diésel</i>. Debe leer 12 cargas, 1,251.85 L y $36,143.21. Como la factura CC-17701 ya venía en el PPS, no se duplica: las cargas se le agregan.',
+        'En esa factura presiona <b>Asignar cargas a camiones</b> y asigna cada carga a su camión. La carga PREMIUM puede quedar como general.',
+        'Presiona <b>Descargar PPS de esta semana</b>: sale el Excel en el mismo formato, con lo propuesto para pagar.'])}
+      ${paso(7, 'Nómina', [
+        '<b>Nómina</b>, semana del 16 al 22 de noviembre.',
+        'Captura los datos del archivo <i>Nómina de la semana</i>: asistencia, salario y bonos. La comisión la calcula la app con el 8% de los viajes confirmados de cada chofer.',
+        'Compara el total con el Excel ($32,634.48). Si no cuadra exacto es normal: la app cuenta solo los viajes confirmados de cada chofer, y los del ticket del paso 2 se suman a Carlos. Presiona <b>Guardar</b> en cada persona y al final <b>Cerrar semana</b>.'])}
+      ${paso(8, 'Revisar el resultado', [
+        '<b>Tablero</b>: ahí ves cómo cambió todo con lo que capturaste. Busca los viajes nuevos en "Del viaje al cobro", el cobro, el diésel por camión en "Uso de cada camión", los proveedores del PPS en "A quién se le debe más" y los Neural Findings recalculados.',
+        'Pasa el mouse (o toca en el teléfono) sobre cada "i" para ver qué significa cada indicador.',
+        'Abre <b>Pregúntale a Dalia</b> y pregunta, por ejemplo, "¿cuánto se facturó esta semana en la obra Simulacro?" o "¿qué camión gastó más diésel?".'])}
+      <div class="note">Para repetir el simulacro desde cero, pide a Digit2AI que regenere la empresa de demostración.</div>`;
   };
   R.cuenta = async function () {
     main().innerHTML = `<h1>Mi cuenta</h1><div class="card"><p><b>${esc(S.me.user.name || '')}</b> · ${esc(S.me.user.email)} · ${esc(S.me.user.role)}</p>
