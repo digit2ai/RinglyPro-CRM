@@ -70,7 +70,6 @@ async function bulk(table, cols, rows) {
   if (prev && prev.tenant_id !== T) await q('DELETE FROM nh_users WHERE id=:id', { id: prev.id });
   const [[usr]] = await q("INSERT INTO nh_users (tenant_id,email,name,role,password_hash,must_change) VALUES (:t,:e,'Director (demo)','director',:h,FALSE) RETURNING id",
     { t: T, e: DEMO_EMAIL, h: bcrypt.hashSync(pw, 12) });
-  await q("INSERT INTO nh_users (tenant_id,email,name,role,password_hash,must_change,active) VALUES (:t,'capturista.demo@neohaul.invalid','Capturista (demo)','capturista',NULL,FALSE,TRUE),(:t,'contador.demo@neohaul.invalid','Contador (demo)','contador',NULL,FALSE,TRUE)", { t: T });
 
   // Catálogos
   const [[cli]] = await q("INSERT INTO nh_clients (tenant_id,nombre,rfc) VALUES (:t,'HTR Infraestructura (demo)','DEMO010101AAA') RETURNING id", { t: T });

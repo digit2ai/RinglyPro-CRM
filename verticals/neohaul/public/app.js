@@ -1042,7 +1042,7 @@
   R.usuarios = async function () {
     if (!canUsers()) return go('tablero');
     const us = await api('usuarios');
-    const RL = { owner: 'Digit2AI (dueño)', soporte: 'Super administrador (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
+    const RL = { owner: 'Digit2AI (desarrollador)', soporte: 'Super administrador (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
     const opRol = [['capturista', 'Captura: captura viajes, pedidos y gastos'], ['administrador', 'Administrador: lee, agrega y modifica, no borra'], ['contador', 'Solo lectura: ve todo, no cambia nada'],
       ['soporte', 'Super administrador: acceso y cambios a absolutamente todo'], ...(isSuper() ? [['director', 'Director: todo lo de la empresa']] : [])];
     main().innerHTML = `<h1>Usuarios</h1><p class="sub">Cada persona entra con su propia cuenta. La contraseña temporal se muestra una sola vez.</p>
