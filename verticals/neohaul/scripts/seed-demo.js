@@ -92,11 +92,10 @@ async function bulk(table, cols, rows) {
     const pl = `DM-0${i + 1}-00-A`;
     trucks.push({ id: (await one("INSERT INTO nh_trucks (tenant_id,empresa,unidad,tipo,capacidad_m3,placas,chofer_id,propio) VALUES (:t,'NeoHaul',:u,'Torton',14,:p,:c,TRUE) RETURNING id", { t: T, u: `${pl} (0${i + 1})`, p: pl, c: choferes[i] })).id, propio: true, chofer: choferes[i], idx: i });
   }
-  for (const [emp, n, tipo, cap] of [['TTS', 4, 'Torton', 14], ['TTS', 2, 'Tolva', 30], ['SEMAQSA', 2, 'Torton', 14]]) {
-    for (let i = 0; i < n; i++) trucks.push({ id: (await one('INSERT INTO nh_trucks (tenant_id,empresa,unidad,tipo,capacidad_m3,placas,propio) VALUES (:t,:e,:u,:ti,:c,:p,FALSE) RETURNING id',
-      { t: T, e: emp, u: `${emp} ${tipo} ${trucks.length + 1} (demo)`, ti: tipo, c: cap, p: `DX-${String(trucks.length + 1).padStart(2, '0')}-00-B` })).id, propio: false, empresa: emp });
-  }
-  const propios = trucks.filter((k) => k.propio), externos = trucks.filter((k) => !k.propio);
+  // Unidades aliadas (TTS / SEMAQSA): NO se dan de alta como camiones (owner 2026-11-19). Sus viajes entran sin
+  // camión, marcados con la empresa aliada, y se pagan con la factura semanal del aliado.
+  const propios = trucks.filter((k) => k.propio);
+  const externos = [['TTS', 6], ['SEMAQSA', 2]].flatMap(([emp, n]) => Array.from({ length: n }, (_, i) => ({ id: null, aliado: emp + '-' + i, empresa: emp })));
 
   // Fechas: 10 semanas, lunes a sábado, hasta hoy.
   const lunesHoy = M.lunes(hoy), ini = M.sumarDias(lunesHoy, -7 * (SEMANAS - 1));
@@ -124,8 +123,7 @@ async function bulk(table, cols, rows) {
     for (const k of externos) {
       if (rnd() < (llueve ? 0.85 : 0.35)) continue;
       const obra = pick(['N18', 'N16', 'E18']); const t = pick(trabajo[obra]);
-      for (let j = 0; j < entre(1, 3); j++) viajes.push({ fecha: f, obra, t, truck: k.id, driver: null, cant: cantidad(t), estado });
-      (usados[obra] = usados[obra] || []).push(k.id);
+      for (let j = 0; j < entre(1, 3); j++) viajes.push({ fecha: f, obra, t, truck: null, aliado: k.empresa, driver: null, cant: cantidad(t), estado });
     }
     viajes.push({ fecha: f, obra: 'INT', t: 'interno', truck: propios[5].id, driver: propios[5].chofer, cant: r2(entre(19500, 23500) / 100), estado });
     if (new Date(f + 'T00:00:00Z').getUTCDay() === 3) viajes.push({ fecha: f, obra: 'E18', t: 'renta', truck: propios[0].id, driver: propios[0].chofer, cant: 1, estado });
@@ -172,7 +170,7 @@ async function bulk(table, cols, rows) {
     cantidad: 'numeric', unidad: 'text', precio_unitario: 'numeric', importe: 'numeric', estado: 'text', estimacion_id: 'int', created_by: 'int', confirmed_by: 'int', confirmed_at: 'timestamptz', notas: 'text' },
   viajes.map((v) => ({ tenant_id: T, fecha: v.fecha, obra_id: obras[v.obra], tarifa_id: tar[v.t].id, truck_id: v.truck, driver_id: v.driver, ticket_no: v.ticket, vale_no: v.vale,
     cantidad: v.cant, unidad: tar[v.t].unidad, precio_unitario: v.precio, importe: v.importe, estado: v.estado, estimacion_id: v.est || null, created_by: usr.id,
-    confirmed_by: v.estado === 'confirmado' ? usr.id : null, confirmed_at: v.estado === 'confirmado' ? v.fecha + 'T23:00:00Z' : null, notas: 'Dato de demostración' })));
+    confirmed_by: v.estado === 'confirmado' ? usr.id : null, confirmed_at: v.estado === 'confirmado' ? v.fecha + 'T23:00:00Z' : null, notas: v.aliado ? 'Unidad aliada ' + v.aliado + ' (demo)' : 'Dato de demostración' })));
 
   for (const p of pedidos) {
     const ped = await one(`INSERT INTO nh_pedidos (tenant_id,fecha,obra_id,material,camiones,solicitante,estado,created_by) VALUES (:t,:f,:o,:m,:n,'Ing. de obra (demo)',:e,:u) RETURNING id`,
@@ -209,8 +207,7 @@ async function bulk(table, cols, rows) {
     }
     // Aliados: lo que TTS / SEMAQSA cobran por sus viajes (86% del importe).
     for (const emp of ['TTS', 'SEMAQSA']) {
-      const ids = externos.filter((k) => k.empresa === emp).map((k) => k.id);
-      const base = M.sum(viajes.filter((v) => ids.includes(v.truck) && M.lunes(v.fecha) === lun).map((v) => v.importe));
+      const base = M.sum(viajes.filter((v) => v.aliado === emp && M.lunes(v.fecha) === lun).map((v) => v.importe));
       if (!base) continue;
       const tot = M.facturaTotals(r2(base * 0.86), false).total;
       await q(`INSERT INTO nh_gastos (tenant_id,fecha,proveedor,folio,concepto,categoria,total,saldo,estado,fecha_pago,origen,empresa,cc,created_by)
