@@ -451,6 +451,22 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     const lst = (await req('GET', '/usuarios', { cookie: dirA })).json;
     ok('la lista no expone el hash', lst.every((u) => !('password_hash' in u)));
     ok('un director no crea otro director', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `d2-${STAMP}@example.test`, role: 'director' } })).status === 403);
+
+    console.log('\nRoles: administrador (sin borrar) y soporte técnico (todo)');
+    const admA = await mkUser(A, 'administrador'), supA = await mkUser(A, 'soporte');
+    ok('el administrador agrega (gasto nuevo)', (await req('POST', '/gastos', { cookie: admA, body: { fecha: '2026-11-11', proveedor: 'Admin SIT', categoria: 'otros', total: 50 } })).status === 201);
+    ok('el administrador modifica tarifas', (await req('PATCH', '/tarifas/' + tar22.id, { cookie: admA, body: { nota: 'cambio admin' } })).status === 200);
+    ok('el administrador NO borra un viaje', (await req('DELETE', '/viajes/1', { cookie: admA })).json.error === 'sin_permiso_borrar');
+    ok('el administrador NO cancela una factura', (await req('PATCH', '/facturas/1', { cookie: admA, body: { estado: 'cancelada' } })).json.error === 'sin_permiso_borrar');
+    ok('el administrador no administra cuentas', (await req('GET', '/usuarios', { cookie: admA })).status === 404);
+    ok('el director crea un administrador', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `adm-${STAMP}@example.test`, role: 'administrador' } })).status === 201);
+    ok('el director no crea soporte técnico', (await req('POST', '/usuarios', { cookie: dirA, body: { email: `sup-${STAMP}@example.test`, role: 'soporte' } })).status === 403);
+    ok('soporte crea un director', (await req('POST', '/usuarios', { cookie: supA, body: { email: `dir2-${STAMP}@example.test`, role: 'director' } })).status === 201);
+    ok('soporte puede borrar (pasa el filtro; el viaje no existe = 404)', (await req('DELETE', '/viajes/999999999', { cookie: supA })).status === 404);
+    const supRow = (await req('GET', '/usuarios', { cookie: supA })).json.find((u) => u.role === 'soporte');
+    ok('un director no toca la cuenta de soporte', (await req('PATCH', '/usuarios/' + supRow.id, { cookie: dirA, body: { reset: true } })).status === 404);
+    ok('soporte de A no ve los usuarios de B', !(await req('GET', '/usuarios', { cookie: supA })).json.some((u) => u.email.includes(`-${B}-`)));
+
     const [[dirA2]] = await db.query("INSERT INTO nh_users (tenant_id,email,role,password_hash,must_change) VALUES (:t,:e,'director',:h,FALSE) RETURNING id", { replacements: { t: A, e: `sit-nh-dir2-${STAMP}@example.test`, h: hash } });
     ok('un director no resetea a otro director', (await req('PATCH', '/usuarios/' + dirA2.id, { cookie: dirA, body: { reset: true } })).status === 404);
     ok('B no administra usuarios de A', (await req('PATCH', '/usuarios/' + nu.json.id, { cookie: dirB, body: { active: false } })).status === 404);

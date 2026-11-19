@@ -22,7 +22,8 @@
  *  - El tablero solo muestra cifras de filas reales; un camión sin costos
  *    capturados dice "sin costos capturados", nunca una ganancia.
  *
- * ROLES: owner (Digit2AI, contraseña del CRM) · director (Osbaldo) ·
+ * ROLES: owner (Digit2AI, contraseña del CRM) · soporte (soporte técnico: todo, como el dueño) ·
+ * director (Osbaldo) · administrador (lee, agrega y modifica, NUNCA borra ni cancela) ·
  * capturista (Andrés) · contador (solo lectura).
  */
 const express = require('express');
@@ -46,7 +47,8 @@ const SECRET = process.env.NEOHAUL_JWT_SECRET || process.env.JWT_SECRET || '';
 const COOKIE = 'nh_token';
 const AUD = 'neohaul';
 const MAX_FILE = Number(process.env.NEOHAUL_MAX_FILE_MB || 10) * 1024 * 1024;
-const ROLES = ['director', 'capturista', 'contador'];
+const ROLES = ['soporte', 'director', 'administrador', 'capturista', 'contador'];
+const SUPER = ['owner', 'soporte']; // hacen absolutamente todo, incluido crear directores y soporte
 const EMPRESAS = ['NeoHaul', 'TTS', 'SEMAQSA', 'Externo'];
 const UNIDADES = ['tonelada', 'dia', 'viaje'];
 const CATEG_GASTO = ['diesel', 'refacciones', 'taller', 'llantas', 'casetas', 'nomina', 'otros'];
@@ -282,11 +284,22 @@ api.post('/auth/password', async (req, res) => {
 });
 api.use((req, res, next) => (req.user.must_change ? res.status(403).json({ error: 'must_change_password' }) : next()));
 
-const canEdit = (req) => ['owner', 'director', 'capturista'].includes(req.user.role);
-const canAdmin = (req) => ['owner', 'director'].includes(req.user.role);
+const isSuper = (req) => SUPER.includes(req.user.role);
+const canEdit = (req) => ['owner', 'soporte', 'director', 'administrador', 'capturista'].includes(req.user.role);
+const canAdmin = (req) => ['owner', 'soporte', 'director', 'administrador'].includes(req.user.role); // tarifas y parámetros
+const canUsers = (req) => ['owner', 'soporte', 'director'].includes(req.user.role); // cuentas de usuario
 // Preguntar a Dalia es leer: el contador (solo lectura) también puede.
 api.use((req, res, next) => (['GET', 'HEAD'].includes(req.method) || canEdit(req) || req.path === '/dalia/chat' ? next() : res.status(403).json({ error: 'read_only' })));
 const adminOnly = (req, res, next) => (canAdmin(req) ? next() : res.status(404).json({ error: 'not_found' }));
+const usersOnly = (req, res, next) => (canUsers(req) ? next() : res.status(404).json({ error: 'not_found' }));
+// El administrador agrega y modifica, pero no borra: ningún DELETE, ni cancelar una factura, ni desactivar una cuenta.
+api.use((req, res, next) => {
+  if (req.user.role !== 'administrador') return next();
+  const b = req.body || {};
+  const borra = req.method === 'DELETE' || (req.method === 'PATCH' && /^\/facturas\/\d+$/.test(req.path) && b.estado === 'cancelada')
+    || (req.method === 'PATCH' && /^\/usuarios\/\d+$/.test(req.path) && b.active === false);
+  return borra ? res.status(403).json({ error: 'sin_permiso_borrar' }) : next();
+});
 
 /** Fila del tenant o null. Toda lectura por id pasa por aquí. */
 const own = (table, id, t) => one(`SELECT * FROM ${table} WHERE id=:id AND tenant_id=:t`, { id, t: t }, undefined);
@@ -1509,15 +1522,15 @@ api.post('/dalia/chat', async (req, res) => {
 });
 
 /* ── usuarios y actividad ────────────────────────────────────────────── */
-api.get('/usuarios', adminOnly, async (req, res) => {
+api.get('/usuarios', usersOnly, async (req, res) => {
   res.json(await sel('SELECT id,email,name,phone,role,must_change,active,last_login,created_at FROM nh_users WHERE tenant_id=:t ORDER BY role,name', { t: req.tenant }));
 });
-api.post('/usuarios', adminOnly, async (req, res) => {
+api.post('/usuarios', usersOnly, async (req, res) => {
   const b = req.body || {};
   const email = str(b.email, 200).toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'email_invalido' });
   if (!ROLES.includes(b.role)) return res.status(400).json({ error: 'rol_invalido' });
-  if (b.role === 'director' && req.user.role !== 'owner') return res.status(403).json({ error: 'solo_dueno' });
+  if (['director', 'soporte'].includes(b.role) && !isSuper(req)) return res.status(403).json({ error: 'solo_dueno' });
   if (email === OWNER_EMAIL) return res.status(409).json({ error: 'reservado' });
   const pw = tempPassword();
   const [r] = await exec(`INSERT INTO nh_users (tenant_id,email,name,phone,role,password_hash,must_change) VALUES (:t,:e,:n,:p,:r,:h,TRUE)
@@ -1526,10 +1539,10 @@ api.post('/usuarios', adminOnly, async (req, res) => {
   audit(req, 'usuario_created', email);
   res.status(201).json({ ...r[0], password_temporal: pw });
 });
-api.patch('/usuarios/:id', adminOnly, async (req, res) => {
+api.patch('/usuarios/:id', usersOnly, async (req, res) => {
   const id = intId(req.params.id), u = id && (await own('nh_users', id, req.tenant));
   if (!u || u.role === 'owner' || u.id === req.user.id) return res.status(404).json({ error: 'not_found' });
-  if (u.role === 'director' && req.user.role !== 'owner') return res.status(404).json({ error: 'not_found' }); // un director no toma la cuenta de otro
+  if (['director', 'soporte'].includes(u.role) && !isSuper(req)) return res.status(404).json({ error: 'not_found' }); // un director no toma la cuenta de otro ni la de soporte
   const b = req.body || {};
   if (b.reset) {
     const pw = tempPassword();
@@ -1537,13 +1550,13 @@ api.patch('/usuarios/:id', adminOnly, async (req, res) => {
     audit(req, 'usuario_reset', u.email);
     return res.json({ ok: true, password_temporal: pw });
   }
-  const role = ROLES.includes(b.role) && (b.role !== 'director' || req.user.role === 'owner') ? b.role : u.role;
+  const role = ROLES.includes(b.role) && (!['director', 'soporte'].includes(b.role) || isSuper(req)) ? b.role : u.role;
   const active = b.active === undefined ? u.active : !!b.active;
   await exec('UPDATE nh_users SET role=:r, active=:a WHERE id=:id AND tenant_id=:t', { r: role, a: active, id, t: req.tenant });
   audit(req, 'usuario_updated', u.email);
   res.json({ ok: true });
 });
-api.get('/actividad', adminOnly, async (req, res) => {
+api.get('/actividad', usersOnly, async (req, res) => {
   res.json(await sel('SELECT action,detail,user_email,created_at FROM nh_activity WHERE tenant_id=:t ORDER BY id DESC LIMIT 200', { t: req.tenant }));
 });
 

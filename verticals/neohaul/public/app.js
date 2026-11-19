@@ -16,6 +16,8 @@
   const fmtF = (f) => { if (!f) return ''; const [y, m, d] = String(f).slice(0, 10).split('-'); return `${d}/${m}/${y}`; };
   const UN = { tonelada: 't', dia: 'día', viaje: 'viaje' };
   const ERR = {
+    solo_dueno: 'Solo Digit2AI o soporte técnico pueden crear o cambiar cuentas de director y de soporte.', sin_permiso_borrar: 'Tu cuenta de administrador puede agregar y modificar, pero no borrar ni cancelar.',
+    reservado: 'Ese correo es de la cuenta de Digit2AI; usa otro.', ya_existe: 'Ya hay una cuenta con ese correo.', solo_director: 'Esto lo cambia el director, un administrador o soporte.',
     invalid_credentials: 'Correo o contraseña incorrectos.', too_many_attempts: 'Demasiados intentos. Espera 15 minutos.', read_only: 'Tu cuenta es de solo lectura.', placa_duplicada: 'Ya hay un camión activo con esa placa.', lista_vacia: 'No encontré ningún nombre con teléfono en la lista.',
     ticket_duplicado: 'Ese número de ticket ya está registrado con esa tarifa.', en_estimacion: 'Ese viaje ya está en una estimación. Borra la estimación (en borrador) para liberarlo.',
     sin_viajes_confirmados: 'No hay viajes confirmados de esa obra en esas fechas.', estimacion_no_aprobada: 'Primero marca la estimación como aprobada por HTR.',
@@ -58,8 +60,12 @@
     if (!r.ok) throw j || { error: 'http_' + r.status };
     return j;
   }
-  const canEdit = () => S.me && ['owner', 'director', 'capturista'].includes(S.me.user.role);
-  const canAdmin = () => S.me && ['owner', 'director'].includes(S.me.user.role);
+  const rol = () => (S.me ? S.me.user.role : '');
+  const isSuper = () => ['owner', 'soporte'].includes(rol());
+  const canEdit = () => ['owner', 'soporte', 'director', 'administrador', 'capturista'].includes(rol());
+  const canAdmin = () => ['owner', 'soporte', 'director', 'administrador'].includes(rol());
+  const canUsers = () => ['owner', 'soporte', 'director'].includes(rol());
+  const canDel = () => canEdit() && rol() !== 'administrador'; // el administrador agrega y modifica, no borra
   async function loadCat(force) {
     if (!force && S.cat.trucks) return;
     const [trucks, drivers, clients, obras, tarifas] = await Promise.all(['trucks', 'drivers', 'clients', 'obras', 'tarifas'].map((c) => api(c)));
@@ -131,7 +137,7 @@
       <div class="brand"><img src="logo-blanco.png" alt="NeoHaul" width="49" height="40"><small>Operación</small></div><div class="sp"></div>
       <span class="muted" style="color:#cbd5e1;font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
-        : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
+        : (k === 'usuarios' && !canUsers() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
     const side = document.getElementById('side'), b = document.getElementById('burger');
     b.onclick = () => { side.classList.toggle('open'); b.setAttribute('aria-expanded', side.classList.contains('open')); };
@@ -484,7 +490,7 @@
           const txt = `Hola ${a.chofer || ''}. Viaje para ${p.obra} el ${fmtF(p.fecha)}${p.material ? ', material: ' + p.material : ''}. Camión ${a.unidad}. Al terminar mándame la foto del ticket y del vale. Gracias.`;
           return `<tr><td>${esc(a.unidad)} <span class="muted">${esc(a.empresa)}</span></td><td>${esc(a.chofer || 'sin chofer')}</td>
             <td class="right">${a.telefono ? `<a class="btn small wa" target="_blank" rel="noopener" data-avisar="${p.id}:${a.truck_id}" href="${waLink(a.telefono, txt)}">${a.avisado_at ? 'Avisado' : 'Avisar'}</a>` : '<span class="muted">sin teléfono</span>'}
-            ${canEdit() ? `<button class="btn small danger" data-quitar="${p.id}:${a.truck_id}">Quitar</button>` : ''}</td></tr>`;
+            ${canDel() ? `<button class="btn small danger" data-quitar="${p.id}:${a.truck_id}">Quitar</button>` : ''}</td></tr>`;
         }).join('')}</tbody></table>` : ''}</div>`;
     }).join('') : '<p class="muted">Sin pedidos en las últimas dos semanas.</p>';
     main().onclick = async (e) => {
@@ -584,7 +590,7 @@
         <td data-l="Ticket">${esc(v.ticket_no || '—')}${v.ticket_file_id ? ` <a href="api/v1/files/${v.ticket_file_id}" target="_blank" rel="noopener">foto</a>` : ''}</td>
         <td class="n" data-l="Cantidad">${qty(v.cantidad)} ${UN[v.unidad]}</td><td class="n" data-l="Importe">${pesos(v.importe)}</td>
         <td data-l="Estado"><span class="pill ${v.estado === 'confirmado' ? 'ok' : 'warn'}">${v.estado}</span>${v.estimacion_id ? ' <span class="pill acc">en estimación</span>' : ''}</td>
-        <td data-l="">${canEdit() && !v.estimacion_id ? `<button class="btn small" data-ed="${v.id}">Editar</button> <button class="btn small danger" data-del="${v.id}">Borrar</button>` : ''}</td></tr>`).join('')
+        <td data-l="">${canEdit() && !v.estimacion_id ? `<button class="btn small" data-ed="${v.id}">Editar</button>${canDel() ? ` <button class="btn small danger" data-del="${v.id}">Borrar</button>` : ''}` : ''}</td></tr>`).join('')
       || '<tr><td colspan="10" class="muted">Sin viajes esta semana.</td></tr>'}</tbody></table></div>`;
     document.getElementById('wk').onchange = (e) => { S.vDesde = lunes(e.target.value); R.viajes(); };
     document.getElementById('ob').onchange = (e) => { S.vObra = e.target.value; R.viajes(); };
@@ -641,7 +647,7 @@
         return `<tr><td data-l="Obra">${esc(e.obra)}</td><td data-l="Periodo">${fmtF(e.desde)} a ${fmtF(e.hasta)}</td><td class="n" data-l="Viajes">${e.viajes}</td><td class="n" data-l="Subtotal">${pesos(e.subtotal)}</td>
         <td data-l="Estado"><span class="pill ${{ borrador: 'warn', enviada: 'acc', aprobada: 'ok', facturada: '' }[e.estado]}">${e.estado}</span></td>
         <td data-l=""><div class="row"><button class="btn small" data-ver="${e.id}">Ver</button><a class="btn small" href="api/v1/estimaciones/${e.id}/excel">Excel</a>
-          ${canEdit() && e.estado === 'borrador' ? `${e.ingeniero_tel ? `<a class="btn small wa" target="_blank" rel="noopener" data-env="${e.id}" href="${waLink(e.ingeniero_tel, txt)}">Enviar por WhatsApp</a>` : `<button class="btn small" data-env="${e.id}">Marcar enviada</button>`}<button class="btn small danger" data-del="${e.id}">Borrar</button>` : ''}
+          ${canEdit() && e.estado === 'borrador' ? `${e.ingeniero_tel ? `<a class="btn small wa" target="_blank" rel="noopener" data-env="${e.id}" href="${waLink(e.ingeniero_tel, txt)}">Enviar por WhatsApp</a>` : `<button class="btn small" data-env="${e.id}">Marcar enviada</button>`}${canDel() ? `<button class="btn small danger" data-del="${e.id}">Borrar</button>` : ''}` : ''}
           ${canEdit() && e.estado === 'enviada' ? `<button class="btn small" data-apr="${e.id}">HTR aprobó</button>` : ''}
           ${canEdit() && e.estado === 'aprobada' && !e.factura_id ? `<button class="btn small primary" data-req="${e.id}">Pedir factura</button>` : ''}</div></td></tr>`;
       }).join('') || '<tr><td colspan="6" class="muted">Sin estimaciones.</td></tr>'}</tbody></table></div>`;
@@ -703,7 +709,7 @@
         <td data-l=""><div class="row"><button class="btn small" data-req="${f.id}">Requisición</button>
           ${canEdit() && f.estado === 'requisicion' ? `<button class="btn small primary" data-folio="${f.id}">Anotar folio</button>` : ''}
           ${canEdit() && f.estado === 'emitida' ? `<button class="btn small primary" data-cob="${f.id}">Cobrada</button>` : ''}
-          ${canEdit() && ['requisicion', 'emitida'].includes(f.estado) ? `<button class="btn small danger" data-can="${f.id}">Cancelar</button>` : ''}</div></td></tr>`).join('')
+          ${canDel() && ['requisicion', 'emitida'].includes(f.estado) ? `<button class="btn small danger" data-can="${f.id}">Cancelar</button>` : ''}</div></td></tr>`).join('')
       || '<tr><td colspan="8" class="muted">Sin facturas.</td></tr>'}</tbody></table></div>`;
     const f = document.getElementById('nf');
     if (f) f.onsubmit = async (e) => { e.preventDefault(); try { await api('facturas', { method: 'POST', body: formData(f) }); R.facturas(); } catch (er) { f.querySelector('.err').textContent = errMsg(er); } };
@@ -1022,17 +1028,25 @@
 
   /* ── usuarios y cuenta ── */
   R.usuarios = async function () {
-    if (!canAdmin()) return go('tablero');
+    if (!canUsers()) return go('tablero');
     const us = await api('usuarios');
-    const RL = { owner: 'Digit2AI', director: 'Director', capturista: 'Captura', contador: 'Contador (solo lectura)' };
+    const RL = { owner: 'Digit2AI (dueño)', soporte: 'Soporte técnico (todo)', director: 'Director', administrador: 'Administrador (sin borrar)', capturista: 'Captura', contador: 'Solo lectura' };
+    const opRol = [['capturista', 'Captura (como Andrés): captura viajes, pedidos y gastos'], ['administrador', 'Administrador: lee, agrega y modifica, no borra'], ['contador', 'Solo lectura: ve todo, no cambia nada'],
+      ...(isSuper() ? [['director', 'Director (como Osbaldo): todo lo de la empresa'], ['soporte', 'Soporte técnico: absolutamente todo']] : [])];
     main().innerHTML = `<h1>Usuarios</h1><p class="sub">Cada persona entra con su propia cuenta. La contraseña temporal se muestra una sola vez.</p>
+      <details class="card"><summary><b>Qué puede hacer cada rol</b></summary><table style="margin-top:8px"><thead><tr><th>Rol</th><th>Ver</th><th>Agregar y modificar</th><th>Borrar y cancelar</th><th>Tarifas y parámetros</th><th>Cuentas de usuario</th></tr></thead><tbody>
+        <tr><td><b>Soporte técnico</b></td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Todas, incluidas director y soporte</td></tr>
+        <tr><td><b>Director</b> (Osbaldo)</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Sí</td><td>Captura, administrador y solo lectura</td></tr>
+        <tr><td><b>Administrador</b></td><td>Sí</td><td>Sí</td><td>No</td><td>Sí</td><td>No</td></tr>
+        <tr><td><b>Captura</b> (Andrés)</td><td>Sí</td><td>Sí</td><td>Sí, lo que capturó</td><td>No</td><td>No</td></tr>
+        <tr><td><b>Solo lectura</b></td><td>Sí</td><td>No</td><td>No</td><td>No</td><td>No</td></tr></tbody></table></details>
       <div class="card"><form id="nu" class="form"><div><label>Correo</label><input name="email" type="email" required></div><div><label>Nombre</label><input name="name"></div>
-        <div><label>WhatsApp</label><input name="phone"></div><div><label>Rol</label><select name="role"><option value="capturista">Captura (Andrés)</option><option value="director">Director (Osbaldo)</option><option value="contador">Contador (solo lectura)</option></select></div>
+        <div><label>WhatsApp</label><input name="phone"></div><div><label>Rol</label><select name="role">${opRol.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
         <div><button class="btn primary">Crear cuenta</button></div><div class="err wide"></div><div class="wide" id="pw"></div></form></div>
       <div class="card tbl"><table class="cards"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Último ingreso</th><th></th></tr></thead><tbody>
-      ${us.map((u) => `<tr><td data-l="Nombre">${esc(u.name || '')}</td><td data-l="Correo">${esc(u.email)}</td><td data-l="Rol">${RL[u.role]}${u.active ? '' : ' <span class="pill bad">inactivo</span>'}</td>
+      ${us.map((u) => `<tr><td data-l="Nombre">${esc(u.name || '')}</td><td data-l="Correo">${esc(u.email)}</td><td data-l="Rol">${RL[u.role] || esc(u.role)}${u.active ? '' : ' <span class="pill bad">inactivo</span>'}</td>
         <td data-l="Último ingreso">${u.last_login ? new Date(u.last_login).toLocaleString('es-MX') : '—'}</td>
-        <td data-l="">${u.role !== 'owner' && u.id !== S.me.user.id ? `<button class="btn small" data-reset="${u.id}">Nueva contraseña</button> <button class="btn small danger" data-act="${u.id}:${u.active ? 0 : 1}">${u.active ? 'Desactivar' : 'Activar'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+        <td data-l="">${u.role !== 'owner' && u.id !== S.me.user.id && (isSuper() || !['director', 'soporte'].includes(u.role)) ? `<button class="btn small" data-reset="${u.id}">Nueva contraseña</button> <button class="btn small danger" data-act="${u.id}:${u.active ? 0 : 1}">${u.active ? 'Desactivar' : 'Activar'}</button>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
     const f = document.getElementById('nu');
     const showPw = (email, pw) => { document.getElementById('pw').innerHTML = `<div class="note">Contraseña temporal de <b>${esc(email)}</b>: <code style="font-size:16px">${esc(pw)}</code>. Dásela en persona o por WhatsApp; al entrar tendrá que cambiarla. No se vuelve a mostrar.</div>`; };
     f.onsubmit = async (e) => { e.preventDefault(); try { const r = await api('usuarios', { method: 'POST', body: formData(f) }); await R.usuarios(); showPw(r.email, r.password_temporal); } catch (er) { f.querySelector('.err').textContent = errMsg(er); } };

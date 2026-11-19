@@ -217,7 +217,7 @@ async function ejecutar(nombre, input, ctx) {
       };
     }
     case 'actividad': {
-      if (!['owner', 'director'].includes(ctx.rol)) return { error: 'La bitácora solo la ven el director o el dueño.' };
+      if (!['owner', 'soporte', 'director'].includes(ctx.rol)) return { error: 'La bitácora solo la ven el director, soporte o el dueño.' };
       const p = { d: f(a.desde, D.M.sumarDias(hoy, -14)) }; let w = '';
       if (a.texto) { w = ' AND (action ILIKE :tx OR detail ILIKE :tx OR user_email ILIKE :tx)'; p.tx = like(a.texto); }
       const rows = await sel(`SELECT created_at, user_email, action, detail FROM nh_activity WHERE tenant_id=:t AND created_at >= :d::date${w} ORDER BY created_at DESC LIMIT 100`, p);
