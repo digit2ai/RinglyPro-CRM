@@ -66,7 +66,9 @@ async function bulk(table, cols, rows) {
   for (const [clave, nombre, ing, tel] of [
     ['E18', 'Bacheo E18', 'Ing. Laura Treviño (demo)', '+528100000101'], ['N18', 'SICT N18', 'Ing. Ricardo Salinas (demo)', '+528100000102'],
     ['N16', 'SICT N16', 'Ing. Mónica Garza (demo)', '+528100000103'], ['INT', 'Viajes internos de plantas', 'Ing. Jorge Cantú (demo)', '+528100000104'],
-    ['REA4', 'REA4', 'Ing. Patricia Leal (demo)', '+528100000105']]) {
+    ['REA4', 'REA4', 'Ing. Patricia Leal (demo)', '+528100000105'],
+    // Obra vacía para el simulacro: sin viajes, para importar el Excel de prueba. El WhatsApp es el del dueño.
+    ['SIM', 'Simulacro · Libramiento Santiago', 'Ing. Simulacro (tu número)', '+18136414177']]) {
     obras[clave] = (await one('INSERT INTO nh_obras (tenant_id,client_id,nombre,clave,ingeniero,ingeniero_tel) VALUES (:t,:c,:n,:k,:i,:tel) RETURNING id', { t: T, c: cli.id, n: nombre, k: clave, i: ing, tel })).id;
   }
   const tar = {};
