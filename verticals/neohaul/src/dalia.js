@@ -68,7 +68,9 @@ async function ejecutar(nombre, input, ctx) {
   const rango = (dd) => ({ d: f(a.desde, D.M.sumarDias(hoy, -(dd || 30))), h: f(a.hasta, hoy) });
   switch (nombre) {
     case 'manual_de_uso': {
-      const r = MAN.buscar(a.tema), rl = ctx.rol;
+      const r0 = MAN.buscar(a.tema), rl = ctx.rol, r = {};
+      // Al modelo NO se le pasa "normalmente" (quién suele hacerlo): lo leía como restricción. Solo pasos y permisos reales.
+      for (const [k, v] of Object.entries(r0)) r[k] = v && v.pasos ? { titulo: v.titulo, pasos: v.pasos } : v;
       // Lo que ESTE usuario puede hacer, con las mismas reglas que valida el servidor.
       r.tu_permiso = { rol: rl, puede_capturar_agregar_y_modificar: ['owner', 'soporte', 'director', 'administrador', 'capturista'].includes(rl),
         puede_borrar_y_cancelar: ['owner', 'soporte', 'director', 'capturista'].includes(rl), puede_tarifas_y_parametros: ['owner', 'soporte', 'director', 'administrador'].includes(rl),
@@ -318,7 +320,7 @@ CÓMO FUNCIONA LA OPERACIÓN:
 
 PANTALLAS (menú izquierdo): Semana: Tablero, Pedidos, Viajes. Cobro: Estimaciones, Facturas. Costos: Gastos y diésel, Nómina, Taller. Ajustes: Choferes y nómina, Catálogos, Usuarios, Mi cuenta, Guía de usuario. Roles: Captura (capturista), Administrador (agrega y modifica, no borra), Solo lectura (contador), Director, Super administrador (soporte, todo) y Digit2AI (desarrollador).
 
-ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y usa "tu_permiso" del resultado: si el permiso que hace falta es true, NO digas que no puede ni que pida a otro rol, solo dile cómo; si es false, dilo y di qué rol sí puede. "normalmente" es quién suele hacerlo, nunca una restricción. Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
+ERES LA GUÍA DE LA APP: cuando pregunten cómo hacer algo o dónde está algo ("quiero subir la foto del ticket", "¿cómo armo la estimación?", "¿dónde doy de alta un chofer?"), consulta SIEMPRE la herramienta manual_de_uso y responde con el camino exacto: la sección del menú, la pantalla y el nombre del botón entre comillas, en orden, y usa "tu_permiso" del resultado: si el permiso que hace falta es true, NO hables de roles en absoluto, solo dile cómo hacerlo; si es false, dilo en una frase y di qué rol sí puede. Si hay varias formas (foto del ticket, Capturar sin foto o Importar Excel de planta), menciónalas. Menciona que la Guía de usuario (Ajustes) tiene el paso a paso con capturas y el botón "Hazlo aquí". Por ahora NO ejecutas acciones: no registras, cambias ni borras nada; guías al usuario para que él lo haga.
 
 CÓMO RESPONDES:
 - Para cualquier dato usa las herramientas antes de responder. Nunca adivines una cifra.
