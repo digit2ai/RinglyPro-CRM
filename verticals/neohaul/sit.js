@@ -561,6 +561,18 @@ const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.005;
     ok('las cuentas iniciales entran con must_change y solo si el correo no existe', /SELECT :t,:e,:n,:r,:h,TRUE WHERE NOT EXISTS/.test(schSrc));
     ok('en el repo solo vive el hash, nunca la contraseña', require('./src/schema').CUENTAS_INICIALES.every((c) => /^\$2[ab]\$12\$/.test(c[3])));
 
+    console.log('\nDalia como guía de la app');
+    const MAN = require('./src/manual'), appSrcM = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+    const botones = [].concat(...Object.values(MAN.MANUAL).map((t) => t.pasos.join(' ').match(/"([^"]+)"/g) || [])).map((x) => x.slice(1, -1)).filter((x) => x.length >= 3);
+    const faltan = [...new Set(botones)].filter((b) => !appSrcM.includes(b));
+    ok('cada botón que nombra el manual existe en la app (no se desfasa)', !faltan.length, faltan.join(' | '));
+    ok('el manual encuentra "subir foto del ticket"', Object.keys(MAN.buscar('quiero subir una foto del ticket')).includes('viaje_foto'));
+    ok('el manual encuentra PPS, choferes y estimación', ['pps', 'choferes', 'estimaciones'].every((k, i) => Object.keys(MAN.buscar(['cómo cargo el PPS', 'dar de alta un chofer nuevo', 'cómo armo la estimación'][i])).includes(k)));
+    const sinModelo = await require('./src/dalia').responder([{ role: 'user', content: '¿Cómo subo la foto del ticket?' }], { tenant: A, empresa: 'X', rol: 'capturista', D: router._daliaDeps() });
+    ok('sin modelo, "cómo hago" se responde con el manual (botón exacto)', /Subir foto del ticket/.test(sinModelo.reply) && sinModelo.composed_by === 'manual', sinModelo.reply.slice(0, 120));
+    ok('manual.js no llega a ningún modelo', !/anthropic|require\(['"]\.\/llm/.test(fs.readFileSync(path.join(__dirname, 'src', 'manual.js'), 'utf8')));
+    ok('la herramienta manual_de_uso no recibe tenant', !JSON.stringify(require('./src/dalia').TOOLS.find((t) => t.name === 'manual_de_uso').input_schema).includes('tenant'));
+
     console.log('\nNeural Findings');
     const HZ = require('./src/hallazgos');
     const hz0 = HZ.hallazgos({ semanas: [], alertas: [] }, {});

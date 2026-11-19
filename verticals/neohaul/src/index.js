@@ -1520,7 +1520,7 @@ api.post('/drivers/importar', async (req, res) => {
 
 /* ── Dalia: preguntas sobre la operación (solo lectura, mismos cálculos que el tablero) ── */
 const dalia = require('./dalia');
-const daliaDeps = () => ({ hoyMx, sel, M, A, tableroDe, saludDe, diasCredito: DIAS_CREDITO, lectorConModelo: () => llm.aiEnabled() });
+const daliaDeps = () => ({ hoyMx, sel, M, A, tableroDe, saludDe, nominaCfg: nominaCfgDe, diasCredito: DIAS_CREDITO, lectorConModelo: () => llm.aiEnabled() });
 api.post('/dalia/chat', async (req, res) => {
   const k = 'dalia|' + req.user.id;
   if (tooMany(k, 40)) return res.status(429).json({ reply: 'Me hiciste muchas preguntas seguidas. Espera unos minutos y seguimos.', error: 'too_many' });
