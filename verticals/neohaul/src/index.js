@@ -1429,9 +1429,19 @@ async function saludDe(tenant) {
         WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) > :h::date - 28),0) AS diesel,
       COALESCE((SELECT SUM(c.litros) FROM nh_diesel_cargas c JOIN nh_gastos g ON g.id=c.gasto_id AND g.tenant_id=c.tenant_id
         WHERE c.tenant_id=:t AND c.truck_id=k.id AND COALESCE(c.fecha,g.fecha) > :h::date - 28),0) AS litros,
-      (SELECT MAX(fecha) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id) AS ultimo_viaje
+      (SELECT MAX(fecha) FROM nh_viajes v WHERE v.tenant_id=:t AND v.truck_id=k.id) AS ultimo_viaje,
+      -- Gastos asignados al camión (refacciones, llantas, taller externo…), sin las facturas de diésel que traen cargas.
+      COALESCE((SELECT SUM(g.total) FROM nh_gastos g WHERE g.tenant_id=:t AND g.truck_id=k.id AND g.fecha > :h::date - 28
+        AND NOT EXISTS (SELECT 1 FROM nh_diesel_cargas c WHERE c.tenant_id=g.tenant_id AND c.gasto_id=g.id)),0)
+      + COALESCE((SELECT SUM(r.monto) FROM nh_gasto_reparto r JOIN nh_gastos g ON g.id=r.gasto_id AND g.tenant_id=r.tenant_id
+        WHERE r.tenant_id=:t AND r.truck_id=k.id AND g.fecha > :h::date - 28),0)
+      + COALESCE((SELECT SUM(s.total) FROM nh_taller s WHERE s.tenant_id=:t AND s.truck_id=k.id AND s.cliente='NeoHaul' AND s.fecha > :h::date - 28),0) AS mantenimiento,
+      -- Lo que se le pagó al chofer habitual del camión (salario, bonos y comisión) en esas semanas.
+      COALESCE((SELECT SUM(n.total) FROM nh_nomina n WHERE n.tenant_id=:t AND n.driver_id=k.chofer_id AND n.semana > :h::date - 28),0) AS chofer
     FROM nh_trucks k WHERE k.tenant_id=:t AND k.active ORDER BY k.propio DESC, k.unidad`, t)).map((c) => ({
-    ...c, ingresos: A.toC(c.ingresos), diesel: A.toC(c.diesel), litros: Number(c.litros),
+    ...c, ingresos: A.toC(c.ingresos), diesel: A.toC(c.diesel), litros: Number(c.litros), mantenimiento: A.toC(c.mantenimiento), chofer: A.toC(c.chofer),
+    ganancia: A.toC(c.ingresos) - A.toC(c.diesel) - A.toC(c.mantenimiento) - A.toC(c.chofer),
+    margen: A.toC(c.ingresos) ? (A.toC(c.ingresos) - A.toC(c.diesel) - A.toC(c.mantenimiento) - A.toC(c.chofer)) / A.toC(c.ingresos) : null,
     uso: Math.min(1, c.dias / 24), // 24 días hábiles en 4 semanas (lunes a sábado)
     litros_por_viaje: c.viajes && Number(c.litros) ? Math.round(Number(c.litros) / c.viajes * 10) / 10 : null,
     diesel_sobre_ingreso: c.ingresos && Number(c.diesel) ? A.toC(c.diesel) / A.toC(c.ingresos) : null

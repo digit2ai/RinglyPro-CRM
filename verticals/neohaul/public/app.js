@@ -234,7 +234,7 @@
     cartera: ['Facturas por cobrar', 'Las facturas emitidas que HTR no ha pagado, agrupadas por días de atraso contra el plazo de crédito.', 'Lo vencido se cobra primero.'],
     pordia: ['¿Qué días se trabaja más?', 'Viajes e ingreso por día de la semana en las últimas 12 semanas. Un día flojo puede ser el día para mantenimiento.', ''],
     conc: ['¿Dependes de una sola obra?', 'Qué tanto del ingreso viene de pocas obras. El índice Gini va de 0 (todas pesan parecido) a 1 (una sola lo es todo). La curva muestra lo mismo en dibujo.', 'Cuando la obra mayor termina, el ingreso cae: pide a HTR su calendario de obras.'],
-    camiones: ['Uso de cada camión', 'Por unidad, en las últimas 4 semanas: viajes, días con viaje (de 24 hábiles), ingreso, diésel cargado, litros por viaje y qué parte del ingreso se va en diésel.', 'Un camión con pocos días o mucho diésel por viaje merece revisión.'],
+    camiones: ['Ganancia de cada camión', 'Por camión propio, en las últimas 4 semanas: lo que cobró por sus viajes (antes de IVA) menos su diésel, lo pagado a su chofer habitual y sus otros costos (mensualidad, refacciones, llantas y taller). Verde deja 20% o más, amarillo de 5% a 20%, rojo menos de 5% o pierde.', 'Un camión en rojo: revisa sus días parados, su diésel por viaje y sus reparaciones.'],
     proveedores: ['A quién se le debe más', 'Saldo por pagar de cada proveedor, de las facturas capturadas o importadas del PPS.', ''],
     hallazgos: ['Neural Findings', 'Cada hallazgo sale de reglas fijas sobre los viajes, facturas, gastos, diésel y la simulación. Diagnóstico: qué está pasando y con qué cifras. Prescripción: qué hacer. Crítico va primero, luego Atención y luego Oportunidad.', 'No lo escribe un modelo: si falta un dato, el hallazgo lo pide.'],
     semana: ['La semana', 'Las cifras de la semana elegida: viajes, facturado, cobrado, lo que falta facturar y los pagos propuestos. Cambia la semana con las flechas.', ''],
@@ -366,7 +366,7 @@
         <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación? ${tip('calif')}</h2>
           ${cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)} ${tip('p_' + p.clave)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
             <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
-            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) + ' · ' : ''}${esc(p.regla)}</div></div>`).join('')}
+            <div class="muted" style="font-size:12px">${p.calificada ? 'Hoy: ' + esc(valParte(p)) : 'Sin dato todavía'}</div></div>`).join('')}
           ${cal.puntos == null ? '<p class="muted" style="font-size:13px">Aún no hay datos para calificar. Se llena sola al capturar viajes, gastos y facturas.</p>' : cal.peso_calificado < 100 ? '<p class="muted" style="font-size:12px;margin:6px 0 0">Las partes "sin dato" no cuentan; su peso se reparte entre las demás.</p>' : ''}</div>
       </div>
       <div class="grid kpis">
@@ -395,11 +395,18 @@
           ${kpi('La obra mayor', pc(conc.mayor), 'del ingreso', conc.mayor >= 0.7 ? 'bad' : '')}${kpi('Índice Gini', conc.gini == null ? '—' : conc.gini.toFixed(2), '0 = parejo · 1 = una sola')}${kpi('Obras', String(conc.n), 'con viajes')}</div>
           ${barrasH(conc.mayores.map((m) => ({ l: m.nombre, v: m.monto, n: pc(m.parte) })), INK)}
           <p class="muted" style="font-size:12px;margin:8px 0 0">Últimas 12 semanas de viajes, antes de IVA. Todas son obras de HTR: el cliente es uno solo.</p></div></div>` : '<p class="empty">Aún no hay viajes en las últimas 12 semanas.</p>'}</div>
-      <div class="card tbl"><h2 style="margin-top:0">Uso de cada camión (4 semanas) ${tip('camiones')}</h2><table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Días con viaje</th><th>Uso</th><th class="n">Ingresos</th><th class="n">Diésel</th><th class="n">L por viaje</th><th class="n">Diésel / ingreso</th></tr></thead><tbody>
-        ${s.camiones.map((c) => `<tr><td data-l="Camión">${esc(c.unidad)}<div class="muted">${esc(c.empresa)}${c.ultimo_viaje ? ' · último ' + fmtF(c.ultimo_viaje) : ''}</div></td><td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Días">${c.dias} de 24</td>
-          <td data-l="Uso"><div class="hb-t" style="min-width:70px"><i style="width:${(c.uso * 100).toFixed(0)}%;background:${c.uso >= 0.7 ? VERDE : c.uso >= 0.4 ? AMBAR : ROJO}"></i></div></td>
-          <td class="n" data-l="Ingresos">${c$(c.ingresos)}</td><td class="n" data-l="Diésel">${c.diesel ? c$(c.diesel) : '—'}</td><td class="n" data-l="L por viaje">${c.litros_por_viaje == null ? '—' : c.litros_por_viaje}</td><td class="n" data-l="Diésel / ingreso">${pc(c.diesel_sobre_ingreso, 1)}</td></tr>`).join('')}
-      </tbody></table></div>
+      <div class="card tbl"><h2 style="margin-top:0">Ganancia de cada camión (4 semanas) ${tip('camiones')}</h2>
+        <p class="muted" style="margin:0 0 8px;font-size:13px">Lo que cobró cada camión menos lo que costó: diésel, su chofer y sus otros costos (mensualidad, refacciones, llantas, taller). <span class="pill ok">verde</span> deja 20% o más · <span class="pill warn">amarillo</span> de 5% a 20% · <span class="pill bad">rojo</span> menos de 5% o pierde.</p>
+        <table class="cards"><thead><tr><th>Camión</th><th class="n">Viajes</th><th class="n">Días trabajados</th><th class="n">Cobró</th><th class="n">Diésel</th><th class="n">Chofer</th><th class="n">Otros costos del camión</th><th class="n">Ganancia</th><th class="n">Margen</th></tr></thead><tbody>
+        ${s.camiones.filter((c) => c.empresa === 'NeoHaul').map((c) => { const sem = c.margen == null ? '' : c.margen >= 0.2 ? 'ok' : c.margen >= 0.05 ? 'warn' : 'bad';
+          return `<tr><td data-l="Camión"><b>${esc(c.unidad)}</b><div class="muted">${c.ultimo_viaje ? 'último viaje ' + fmtF(c.ultimo_viaje) : 'sin viajes'}${c.litros ? ' · ' + qty(c.litros) + ' L' + (c.litros_por_viaje ? ' (' + c.litros_por_viaje + ' L por viaje)' : '') : ''}</div></td>
+          <td class="n" data-l="Viajes">${c.viajes}</td><td class="n" data-l="Días trabajados">${c.dias} de 24</td><td class="n" data-l="Cobró">${c$(c.ingresos)}</td>
+          <td class="n" data-l="Diésel">${c.diesel ? c$(c.diesel) : '<span class="muted">sin cargas</span>'}</td><td class="n" data-l="Chofer">${c.chofer ? c$(c.chofer) : '<span class="muted">sin nómina</span>'}</td>
+          <td class="n" data-l="Otros costos">${c$(c.mantenimiento)}</td>
+          <td class="n" data-l="Ganancia"><span class="pill ${sem}" style="font-size:13px">${c.ingresos || c.diesel ? c$(c.ganancia) : '—'}</span></td>
+          <td class="n" data-l="Margen">${c.margen == null ? '—' : `<span class="pill ${sem}">${pc(c.margen, 0)}</span>`}</td></tr>`; }).join('') || '<tr><td colspan="9" class="muted">Sin camiones propios.</td></tr>'}
+      </tbody></table>
+      <p class="muted" style="font-size:12px;margin:6px 0 0">Chofer = lo pagado en nómina a su chofer habitual. Otros costos = todo gasto asignado a ese camión (mensualidad del financiamiento, refacciones, llantas, taller externo) y el taller propio. Si falta capturar un costo, la ganancia se ve más alta de lo real.</p></div>
       ${s.por_pagar.proveedores.length ? `<div class="card"><h2 style="margin-top:0">A quién se le debe más ${tip('proveedores')}</h2><p class="muted" style="margin:0 0 8px;font-size:13px">Saldo por proveedor: ${c$(s.por_pagar.total)} en ${s.por_pagar.n} facturas.</p>${barrasH(s.por_pagar.proveedores.map((p) => ({ l: p.nombre, v: p.monto, n: String(p.n) })), ROJO)}</div>` : ''}
       ${s.notas.map((n) => `<div class="note">${esc(n)}</div>`).join('')}`;
   }
