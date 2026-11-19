@@ -99,7 +99,7 @@
 
   /* ── sesión ── */
   function renderLogin(msg) {
-    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="logo.png" alt="NeoHaul" width="160" height="130"><h1>NeoHaul · Operación</h1><p class="sub">Grupo NeoHaul · plataforma de Digit2AI</p>
+    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="apple-touch-icon.png" alt="NeoHaul" width="140" height="140"><h1>NeoHaul · Operación</h1><p class="sub">Grupo NeoHaul · plataforma de Digit2AI</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Correo</label><input name="email" type="email" autocomplete="username" required></div>
       <div><label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required></div>
       <button class="btn primary">Entrar</button><div class="err">${esc(msg || '')}</div></form></div></div>`;
@@ -109,7 +109,7 @@
     };
   }
   function renderChangePassword() {
-    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="logo.png" alt="NeoHaul" width="160" height="130"><h1>Cambia tu contraseña</h1><p class="sub">Es tu primer ingreso. Elige una contraseña de al menos 10 caracteres.</p>
+    $app.innerHTML = `<div class="login"><div class="card"><img class="logo-login" src="apple-touch-icon.png" alt="NeoHaul" width="140" height="140"><h1>Cambia tu contraseña</h1><p class="sub">Es tu primer ingreso. Elige una contraseña de al menos 10 caracteres.</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Contraseña temporal</label><input name="current" type="password" required></div>
       <div><label>Nueva contraseña</label><input name="new" type="password" minlength="10" required></div><button class="btn primary">Guardar</button><div class="err"></div></form></div></div>`;
     $app.querySelector('#f').onsubmit = async (e) => {
