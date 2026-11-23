@@ -473,6 +473,86 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('cargar.js no toca base de datos ni red', !/require\(|sequelize|fetch\(/.test(srcCg));
 
     }
+    {
+    console.log('\nEstados de cuenta en PDF (BBVA, HSBC) y más reportes de SICAR (utilidades, inventario)');
+    const BP = require('./src/bancos-pdf');
+    const S2 = require('./src/sicar');
+    const R = (...c) => c.map(([x, t]) => ({ x, t }));
+    // HSBC escribe en EBCDIC: el inverso de la tabla del lector, para armar la prueba.
+    const INV = {}; for (let c = 0x40; c <= 0xff; c++) { const ch = BP.ebcdic('Á' + String.fromCharCode(c)); if (ch.length === 2 && ch[0] === 'A') INV[ch[1]] = String.fromCharCode(c); }
+    const enc = (t) => [...t].map((ch) => INV[ch] || ch).join('');
+    const bbva = (quita) => [[
+      R([497, 'Estado de Cuenta']), R([481, 'MAESTRA PYME BBVA']), R([310, 'Periodo'], [481, 'DEL 01/10/2026 AL 31/10/2026']), R([309, 'No. de Cuenta'], [550, '0125067788']),
+      R([316, 'Saldo de Operaci'], [380, 'ó'], [384, 'n Inicial'], [559, '1,000.00']),
+      R([316, 'Dep'], [331, 'ó'], [336, 'sitos / Abonos (+)'], [451, '1'], [552, '500.00']), R([317, 'Retiros / Cargos (-)'], [451, '2'], [552, '250.50']),
+      R([316, 'Saldo de Operaci'], [380, 'ó'], [384, 'n Final'], [559, '1,249.50']),
+      R([18, 'OPER'], [51, 'LIQ'], [83, 'COD. DESCRIPCI'], [153, 'Ó'], [160, 'N'], [230, 'REFERENCIA'], [377, 'CARGOS'], [434, 'ABONOS'], [485, 'OPERACI'], [548, 'LIQUIDACI']),
+      R([10, '01/OCT'], [52, '01/OCT'], [83, 'T20 SPEI RECIBIDOBANORTE'], [432, '500.00']), R([83, '0021026PAGO DE FACTURA Ref. 0163095971 072']), R([83, '00072580001513414766']), R([83, '8846APR1202610025842430206']), R([83, 'CLIENTE PRUEBA SA DE CV']),
+      R([10, '02/OCT'], [52, '02/OCT'], [83, 'A15 OXXO GAS'], [376, '200.00']), R([83, 'RFC: SGM 950714DC2 07:43 AUT: 272629 Ref. ******3114']),
+      ...(quita ? [] : [R([10, '03/OCT'], [52, '03/OCT'], [83, 'S39 SERV BANCA INTERNET'], [383, '50.50'], [493, '1,249.50'], [561, '1,249.50']), R([83, 'Ref. OPS SERV BCA IN'])]),
+      R([9, 'BBVA MEXICO, S.A., INSTITUCION DE BANCA MULTIPLE, GRUPO FINANCIERO BBVA MEXICO'])
+    ]];
+    const e = bbva(false), eb = BP.leer(e);
+    ok('BBVA PDF: cuadra con saldo final, número y total de cargos y abonos', eb.banco === 'bbva' && eb.cuadra === true && eb.movimientos.length === 3 && eb.terminacion === '7788', JSON.stringify(eb.problemas));
+    ok('BBVA PDF: abono positivo, cargo negativo (por su columna)', eb.movimientos[0].monto === 50000 && eb.movimientos[1].monto === -20000 && eb.movimientos[2].monto === -5050);
+    ok('BBVA PDF: concepto = renglón 1 · renglón 2; referencia solo dígitos; contraparte = nombre', eb.movimientos[0].concepto === 'T20 SPEI RECIBIDOBANORTE · 0021026PAGO DE FACTURA Ref. 0163095971 072' && eb.movimientos[0].referencia === '0163095971' && eb.movimientos[0].contraparte === 'CLIENTE PRUEBA SA DE CV' && eb.movimientos[1].referencia === null);
+    ok('BBVA PDF: una "ó" suelta no se traduce como EBCDIC', eb.saldo_inicial === 100000);
+    const ebm = BP.leer(bbva(true));
+    ok('BBVA PDF al que le falta un movimiento: NO cuadra y lo dice', ebm.cuadra === false && ebm.problemas.length > 0);
+    const hsbc = [[
+      R([246, 'CUENTA DE CHEQUES']), R([372, 'Saldo Inicial del'], [514, '$ 100.00']), R([372, 'Saldo Final del'], [514, '$ 130.50']), R([468, '01/10/2026 al 31/10/2026']),
+      R([41, enc('DETALLE MOVIMIENTOS CUENTA DE CHEQUES No.  4071119754')]),
+      R([42, enc('Día')], [141, 'xx'], [349, 'Retiro/Cargo'], [421, 'ÄÎ¢'], [528, 'Saldo']),
+      R([43, enc('02')], [61, enc('1388                             0000044')], [300, enc('08045211')], [435, enc('$ 50.00')], [526, enc(' $ 150.00')]), R([309, enc('662773')]),
+      R([43, enc('05')], [61, enc('CGO SPEI 19557K2010EZ')], [300, enc('08045209')], [377, enc('$ 19.50')], [541, enc(' $ 130.50')]),
+      R([24, 'Emitido por: HSBC México S.A. Institución de Banca Múltiple'])
+    ]];
+    const eh = BP.leer(hsbc);
+    ok('HSBC PDF en EBCDIC: se traduce, cuadra y toma la referencia de su columna', eh.banco === 'hsbc' && eh.cuadra === true && eh.movimientos.length === 2 && eh.movimientos[0].concepto === '1388 0000044' && eh.movimientos[0].referencia === '08045211' && eh.movimientos[1].monto === -1950, JSON.stringify(eh.movimientos));
+    ok('un PDF que no es estado de cuenta no se lee como tal', BP.leer([[R([1, 'Minuta de reunión'])]]).error === 'no_es_estado_de_cuenta');
+    // Subirlos juntos: van a su cuenta por el banco (o los dígitos) y la huella es la del importador normal.
+    const [[cBb]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,incluir) VALUES (:t,'PDF BBVA','BBVA',FALSE) RETURNING id", { replacements: { t: B } });
+    const [[cHs]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,incluir) VALUES (:t,'PDF HSBC','HSBC',FALSE) RETURNING id", { replacements: { t: B } });
+    const pdfFile = (name, pages) => ({ name, type: 'application/pdf', data: '%PDF-' + JSON.stringify(pages) });
+    const cargarB = (files) => req('POST', '/cargar', { cookie: dirB.cookie, raw: multipartMulti({}, files) });
+    const up = await cargarB([pdfFile('BBVA OCTUBRE.pdf', e), pdfFile('HSBC OCTUBRE.pdf', hsbc), pdfFile('BBVA INCOMPLETO.pdf', bbva(true).map((p) => p.concat([R([1, 'x'])])))]);
+    const ub = (n) => up.json.archivos.find((a) => a.archivo === n) || {};
+    ok('PDF de BBVA y de HSBC en una sola carga: cada uno a su cuenta', ub('BBVA OCTUBRE.pdf').estado === 'cargado' && ub('BBVA OCTUBRE.pdf').cuenta_id === cBb.id && ub('HSBC OCTUBRE.pdf').estado === 'cargado' && ub('HSBC OCTUBRE.pdf').cuenta_id === cHs.id, JSON.stringify(up.json));
+    ok('un estado de cuenta que no cuadra no se carga solo', ub('BBVA INCOMPLETO.pdf').estado === 'revisar' && /no cuadra/.test(ub('BBVA INCOMPLETO.pdf').motivo));
+    const mv = await q("SELECT concepto, referencia, contraparte, monto FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c ORDER BY fecha", { t: B, c: cBb.id });
+    ok('movimientos del PDF guardados con contraparte', mv.length === 3 && mv[0].contraparte === 'CLIENTE PRUEBA SA DE CV' && Number(mv[1].monto) === -200);
+    const cs = (await q('SELECT saldo_inicial, fecha_saldo::text AS f FROM fz_cuentas WHERE id=:id', { id: cBb.id }))[0];
+    ok('el saldo de la cuenta queda en el saldo final del banco', Number(cs.saldo_inicial) === 1249.5 && cs.f === '2026-10-03');
+    const up2 = await cargarB([pdfFile('BBVA OCTUBRE (1).pdf', bbva(false).map((p) => p.concat([R([2, 'y'])])))]);
+    ok('el mismo mes otra vez (otro archivo): nada se duplica', up2.json.archivos[0].resultado.creados === 0 && up2.json.archivos[0].resultado.duplicados === 3);
+    const hashOk = require('crypto').createHash('sha256').update(['2026-10-02', 'A15 OXXO GAS · RFC: SGM 950714DC2 07:43 AUT: 272629 Ref. ******3114', '', '-200.00'].join('|') + '|0').digest('hex').slice(0, 32);
+    ok('la huella del movimiento es la del importador de siempre (fecha|concepto|referencia|monto)', (await q('SELECT 1 FROM fz_movimientos WHERE tenant_id=:t AND hash=:h', { t: B, h: hashOk })).length === 1);
+
+    const F = require('./test-fixtures-sicar');
+    const uv = S2.leer(F.utilVentas), ua = S2.leer(F.utilArt), iv = S2.leer(F.inventario), iu = S2.leer(F.invUtil);
+    ok('Utilidades por Ventas (manual): venta y utilidad cuadran con TOTALES; la nota de crédito resta', uv.tipo === 'utilidades_ventas' && uv.cuadra === true && uv.total_leido === 215084 && uv.utilidad_leida === 98038 && uv.filas.some((x) => x.doc === 'NC'));
+    ok('Utilidades por Artículos (manual): cuadra; cantidades con coma decimal; pérdida negativa', ua.tipo === 'utilidades_articulos' && ua.cuadra === true && ua.filas[2].utilidad === -74 && ua.filas.reduce((a, x) => a + x.cantidad, 0) === 32);
+    ok('Inventario (manual): cuadra con el "Total :" y lee la base de precio', iv.tipo === 'inventario' && iv.cuadra === true && iv.total_leido === 389520 && iv.filtros.precio === 'Precio de Venta' && iv.filas[0].existencia === 6);
+    ok('Inventario/Utilidad (manual): se distingue del Inventario', iu.tipo === 'inventario_utilidad' && iu.filas.length === 3 && iu.filas[2].utilidad === 84600);
+    const mal = JSON.parse(JSON.stringify(F.utilVentas)); mal[0][3][8].t = '$ 70.00';
+    ok('una utilidad que no suma lo impreso: no cuadra', S2.leer(mal).cuadra === false);
+    const subirB = (name, pages) => req('POST', '/sicar/importar', { cookie: dirB.cookie, raw: multipart({ aplicar: '1' }, { name, type: 'application/pdf', data: '%PDF-' + JSON.stringify(pages) }) });
+    await subirB('util.pdf', F.utilVentas); await subirB('art.pdf', F.utilArt); await subirB('inv.pdf', F.inventario);
+    const rsB = (await req('GET', '/sicar/resumen?desde=2020-01-01', { cookie: dirB.cookie })).json;
+    ok('resumen: margen bruto = utilidad / venta neta', rsB.margen && rsB.margen.venta === 215084 && rsB.margen.utilidad === 98038 && rsB.margen.pct === 45.6, JSON.stringify(rsB.margen));
+    ok('resumen: valor del inventario y su base', rsB.inventario && rsB.inventario.valor === 389520 && rsB.inventario.base === 'Precio de Venta' && rsB.inventario.top[0].valor === 240000, JSON.stringify(rsB.inventario));
+    ok('resumen: utilidad por artículo sumada por clave (una venta con pérdida no hace perdedor al artículo)', rsB.articulos && rsB.articulos.mejores[0].clave === '8HH00R2055104' && rsB.articulos.mejores[0].utilidad === 86274 && rsB.articulos.perdida.length === 0, JSON.stringify(rsB.articulos));
+    ok('A no ve el margen ni el inventario de B', !(await req('GET', '/sicar/resumen?desde=2020-01-01', { cookie: dirA.cookie })).json.inventario);
+    const srcBp = strip(fs.readFileSync(path.join(__dirname, 'src', 'bancos-pdf.js'), 'utf8'));
+    ok('bancos-pdf.js no toca base de datos ni red', !/require\(|sequelize|fetch\(/.test(srcBp));
+    const real = process.env.FORZZA_MUESTRAS_DIR;
+    if (real && fs.existsSync(real)) {
+      const pdfs = fs.readdirSync(real).filter((f) => /^(BBVA|HSBC).*\.pdf$/i.test(f));
+      const saved = router._pdfRows; router._pdfRows = null;
+      for (const f of pdfs) { const r = await router._clasificarArchivo(fs.readFileSync(path.join(real, f)), f, [{ id: 1, banco: 'BBVA', nombre: 'b', active: true }, { id: 2, banco: 'HSBC', nombre: 'h', active: true }]); ok('real: ' + f + ' se reconoce y cuadra', r.estado === 'auto', r.motivo); }
+      router._pdfRows = saved;
+    } else console.log('  (sin FORZZA_MUESTRAS_DIR: no se probaron los PDF reales de los bancos)');
+    }
     console.log('\nSimulador (patrón histórico y escenarios)');
     const hm = [];
     for (const mes of ['2026-07', '2026-08']) { hm.push({ fecha: mes + '-05', monto: '10000', categoria: 'cliente' }, { fecha: mes + '-15', monto: '-4000', categoria: 'nomina' }, { fecha: mes + '-31', monto: '-1000', categoria: 'renta' }); }

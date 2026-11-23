@@ -978,6 +978,7 @@ function excelDate(v) {
   return E.valid(f) ? f : null;
 }
 const CG = require('./cargar');
+const BP = require('./bancos-pdf');
 const { encabezados, BANCO_CAMPOS, BANCO_REQ, DOC_CAMPOS, DOC_REQ } = CG;
 async function recibirArchivo(req, res) {
   if (!req.file) { res.status(400).json({ error: 'falta_archivo' }); return null; }
@@ -1023,7 +1024,7 @@ async function importarBanco(req, c, rows, opts, t) {
     const hash = crypto.createHash('sha256').update(base + '|' + k).digest('hex').slice(0, 32);
     const saldo = num(cell(r, 'saldo'));
     if (saldo != null && (!ultimoSaldo || fecha >= ultimoSaldo.fecha)) ultimoSaldo = { fecha, saldo };
-    nuevos.push({ renglon: i + 1, fecha, concepto: concepto || '(sin concepto)', referencia, monto: Math.round(monto * 100) / 100, hash });
+    nuevos.push({ renglon: i + 1, fecha, concepto: concepto || '(sin concepto)', referencia, contraparte: strOrNull(cell(r, 'contraparte'), 200), monto: Math.round(monto * 100) / 100, hash });
   }
   let creados = 0, duplicados = 0, conciliados = 0;
   await exec('SELECT id FROM fz_cuentas WHERE id=:c AND tenant_id=:t FOR UPDATE', { c: c.id, t: req.tenant }, t);
@@ -1041,8 +1042,8 @@ async function importarBanco(req, c, rows, opts, t) {
       conciliados++; resultados.push({ renglon: n.renglon, ok: true, conciliado: true, monto: n.monto });
       continue;
     }
-    await exec(`INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,referencia,monto,origen,conciliado,hash,created_by)
-      VALUES (:t,:c,:f,:co,:re,:m,'importado',TRUE,:h,:u)`, { t: req.tenant, c: c.id, f: n.fecha, co: n.concepto, re: n.referencia, m: n.monto, h: n.hash, u: req.user.id }, t);
+    await exec(`INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,referencia,contraparte,monto,origen,conciliado,hash,created_by)
+      VALUES (:t,:c,:f,:co,:re,:cp,:m,'importado',TRUE,:h,:u)`, { t: req.tenant, c: c.id, f: n.fecha, co: n.concepto, re: n.referencia, cp: n.contraparte, m: n.monto, h: n.hash, u: req.user.id }, t);
     creados++; resultados.push({ renglon: n.renglon, ok: true, monto: n.monto });
   }
   let actualizar = !!(opts && opts.actualizar);
@@ -1211,8 +1212,37 @@ async function sicarResumenDe(tenant, query) {
   if (fp) fp.saldo_app = st.cxp.reduce((a, x) => a + x.pendiente, 0);
   const c = (rows, keys) => rows.map((r) => { const o = { ...r }; for (const k of keys) o[k] = E.toC(r[k]); return o; });
   const [ult] = await sel('SELECT MAX(created_at) AS u FROM fz_sicar_imports WHERE tenant_id=:t', { t: req.tenant });
+  // Margen (Utilidades por Ventas): las notas de crédito restan venta y utilidad.
+  const sg = (k) => `SUM(CASE WHEN doc='NC' THEN -${k} ELSE ${k} END)`;
+  const margenMes = await sel(`SELECT to_char(fecha,'YYYY-MM') AS mes, ${sg('total')} AS venta, ${sg('costo')} AS costo, ${sg('utilidad')} AS utilidad
+    FROM fz_sicar_docs WHERE tenant_id=:t AND tipo='utilidad' AND fecha BETWEEN :d AND :h GROUP BY 1 ORDER BY 1`, { t: req.tenant, d: desde, h: hasta });
+  const margenCli = await sel(`SELECT parte, ${sg('total')} AS venta, ${sg('utilidad')} AS utilidad FROM fz_sicar_docs WHERE tenant_id=:t AND tipo='utilidad' AND fecha BETWEEN :d AND :h
+    GROUP BY parte ORDER BY 3 DESC LIMIT 15`, { t: req.tenant, d: desde, h: hasta });
+  const foto = async (tipo) => one(`SELECT id, created_at, desde::text AS desde, hasta::text AS hasta, cuadra, resumen FROM fz_sicar_imports WHERE tenant_id=:t AND tipo=:ti ORDER BY id DESC LIMIT 1`, { t: req.tenant, ti: tipo });
+  const [fi, fu, fa] = await Promise.all([foto('inventario'), foto('inventario_utilidad'), foto('utilidades_articulos')]);
+  let inventario = null, articulos = null;
+  if (fi || fu) {
+    const ultInv = fi && (!fu || fi.id > fu.id) ? fi : fu;
+    const [tot] = await sel(`SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE existencia > 0)::int AS con_existencia, COALESCE(SUM(total),0) AS valor,
+      COALESCE(SUM(existencia * precio_c),0) AS costo, COALESCE(SUM(utilidad),0) AS utilidad FROM fz_sicar_articulos WHERE tenant_id=:t AND import_id=:i`, { t: req.tenant, i: ultInv.id });
+    const top = await sel(`SELECT clave, descripcion, existencia, COALESCE(total, existencia * precio_c) AS valor FROM fz_sicar_articulos WHERE tenant_id=:t AND import_id=:i
+      ORDER BY 4 DESC NULLS LAST LIMIT 10`, { t: req.tenant, i: ultInv.id });
+    inventario = { tipo: ultInv === fi ? 'inventario' : 'inventario_utilidad', fecha: ultInv.created_at, articulos: tot.n, con_existencia: tot.con_existencia,
+      valor: ultInv === fi ? E.toC(tot.valor) : E.toC(tot.costo), utilidad_potencial: ultInv === fu ? E.toC(tot.utilidad) : null,
+      base: ultInv === fi ? ((fi.resumen && fi.resumen.base) || null) : 'precio de compra', top: c(top, ['valor']) };
+  }
+  if (fa) {
+    const art = await sel(`SELECT clave, MAX(descripcion) AS descripcion, SUM(cantidad) AS cantidad, SUM(venta) AS venta, SUM(utilidad) AS utilidad FROM fz_sicar_articulos
+      WHERE tenant_id=:t AND import_id=:i GROUP BY clave ORDER BY 5 DESC`, { t: req.tenant, i: fa.id });
+    articulos = { fecha: fa.created_at, desde: fa.desde, hasta: fa.hasta, total: art.length, mejores: c(art.slice(0, 10), ['venta', 'utilidad']),
+      perdida: c(art.filter((x) => Number(x.utilidad) < 0).slice(-10).reverse(), ['venta', 'utilidad']) };
+  }
+  const margenTot = margenMes.reduce((a, m) => ({ venta: a.venta + E.toC(m.venta), utilidad: a.utilidad + E.toC(m.utilidad) }), { venta: 0, utilidad: 0 });
   return ({ desde, hasta, meses: c(meses, ['compras', 'gastos', 'ventas', 'cobrado']), proveedores: c(proveedores, ['total']), gastos: c(gastos, ['total']), clientes: c(clientes, ['total']),
-    conciliacion: { cxc: fc, cxp: fp }, ultima_importacion: ult.u });
+    conciliacion: { cxc: fc, cxp: fp }, ultima_importacion: ult.u,
+    margen: margenMes.length ? { venta: margenTot.venta, utilidad: margenTot.utilidad, pct: margenTot.venta ? Math.round((margenTot.utilidad / margenTot.venta) * 1000) / 10 : null,
+      meses: c(margenMes, ['venta', 'costo', 'utilidad']), clientes: c(margenCli, ['venta', 'utilidad']) } : null,
+    inventario, articulos });
 }
 api.get('/sicar/resumen', async (req, res) => res.json(await sicarResumenDe(req.tenant, req.query)));
 
@@ -1225,6 +1255,34 @@ async function enTransaccion(aplicar, fn) {
   try {
     return await db.transaction(async (t) => { const r = await fn(t); if (!aplicar && !r.error) throw Object.assign(new Error('previa'), { [PREVIA_CARGA]: r }); return r; });
   } catch (e) { if (e && e[PREVIA_CARGA]) return e[PREVIA_CARGA]; throw e; }
+}
+/** Qué es este archivo (sin tocar la base). PDF/Excel de SICAR primero; luego estado de cuenta o lista. */
+async function clasificarArchivo(buf, nombre, cuentas) {
+  const leido = await leerArchivoSicar(buf);
+  if (leido.error) return { estado: 'rechazado', motivo: SICAR_AYUDA[leido.error] || ERR_CARGA[leido.error] || 'No se pudo leer el archivo.' };
+  if (!(leido.pages || []).some((p) => (p || []).length)) return { estado: 'rechazado', motivo: 'El PDF no tiene texto (parece escaneado o una foto). Descarga el reporte original desde SICAR o desde la banca en línea.' };
+  const rep = S.leer(leido.pages);
+  if (!rep.error) return { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: rep.nombre, estado: 'auto', por_que: ['título y columnas de SICAR: ' + rep.nombre], _rep: rep, _buf: buf };
+  if (rep.error !== 'no_es_reporte_sicar') return { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: S.NOMBRES[rep.tipo] || 'Reporte de SICAR', estado: 'rechazado', motivo: SICAR_AYUDA[rep.error] || rep.ayuda || 'No se pudo leer.' };
+  if (buf.slice(0, 5).toString() === '%PDF-') {
+    // Estado de cuenta en PDF (BBVA, HSBC), tal como lo entrega el banco.
+    const ec = BP.leer(leido.pages);
+    if (ec.error) return { estado: 'rechazado', motivo: 'Este PDF no es un reporte de SICAR ni un estado de cuenta que sepamos leer (por ahora BBVA y HSBC). Para otro banco, descárgalo en Excel o CSV desde la banca en línea.' };
+    const rows = BP.aRenglones(ec);
+    const c = CG.elegirCuenta(`${nombre} cuenta ${ec.cuenta || ''} ${ec.banco}`, [], cuentas);
+    const por_que = [`${ec.nombre} del ${ec.desde} al ${ec.hasta}`, `${ec.movimientos.length} movimientos`];
+    if (ec.cuadra) por_que.push('cuadra con el saldo final del banco');
+    if (c.por_que) por_que.push('la cuenta ' + c.por_que);
+    const motivo = !ec.cuadra ? 'El estado de cuenta no cuadra (' + ec.problemas.join('; ') + '). Revisa que el PDF esté completo antes de cargarlo.'
+      : !c.cuenta_id ? 'Es un estado de cuenta, pero no hay ninguna cuenta de banco dada de alta. Agrégala en Bancos.'
+      : !c.seguro ? 'Es un estado de cuenta: confirma a qué cuenta pertenece (no se adivina).' : null;
+    return { tipo: 'banco', nombre: ec.nombre, estado: ec.cuadra && c.seguro ? 'auto' : 'revisar', motivo, por_que, cuenta_id: c.cuenta_id || null, candidatas: c.candidatas || [], _rows: rows,
+      estado_cuenta: { banco: ec.banco, cuenta: ec.cuenta ? '··' + ec.terminacion : null, desde: ec.desde, hasta: ec.hasta, saldo_inicial: ec.saldo_inicial, saldo_final: ec.saldo_final, cuadra: ec.cuadra, problemas: ec.problemas } };
+  }
+  const p = await parseSheet(buf);
+  if (p.error) return { estado: 'rechazado', motivo: ERR_CARGA[p.error] || 'No se pudo leer el archivo.' };
+  const c = CG.clasificarTabla(p.rows, nombre, cuentas);
+  return { tipo: c.tipo, nombre: TIPO_LBL[c.tipo] || null, estado: c.estado, motivo: c.motivo, por_que: c.por_que || [], cuenta_id: c.cuenta_id || null, candidatas: c.candidatas || [], _rows: p.rows };
 }
 api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, res, (e) => (e ? res.status(413).json({ error: e.code === 'LIMIT_FILE_SIZE' ? 'archivo_muy_grande' : 'demasiados_archivos' }) : next())), async (req, res) => {
   const files = req.files || [];
@@ -1243,18 +1301,8 @@ api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, 
     vistos.add(h);
     const dec = decisiones[String(i)] && typeof decisiones[String(i)] === 'object' ? decisiones[String(i)] : null;
     if (dec && dec.omitir) { Object.assign(it, { estado: 'omitido' }); continue; }
-    // 1) ¿Es un reporte de SICAR? (PDF o Excel, todas las hojas)
-    const leido = await leerArchivoSicar(f.buffer);
-    if (leido.error) { Object.assign(it, { estado: 'rechazado', motivo: SICAR_AYUDA[leido.error] || ERR_CARGA[leido.error] || 'No se pudo leer el archivo.' }); continue; }
-    const rep = S.leer(leido.pages);
-    if (!rep.error) { Object.assign(it, { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: rep.nombre, estado: 'auto', por_que: ['título y columnas de SICAR: ' + rep.nombre], _rep: rep, _buf: f.buffer }); continue; }
-    if (rep.error !== 'no_es_reporte_sicar') { Object.assign(it, { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: S.NOMBRES[rep.tipo] || 'Reporte de SICAR', estado: 'rechazado', motivo: SICAR_AYUDA[rep.error] || rep.ayuda || 'No se pudo leer.' }); continue; }
-    if (f.buffer.slice(0, 5).toString() === '%PDF-') { Object.assign(it, { estado: 'rechazado', motivo: 'Este PDF no es un reporte de SICAR. Los estados de cuenta en PDF no se leen: descárgalo en Excel o CSV desde la banca en línea.' }); continue; }
-    // 2) Estado de cuenta o lista de cuentas por cobrar/pagar (primera hoja)
-    const p = await parseSheet(f.buffer);
-    if (p.error) { Object.assign(it, { estado: 'rechazado', motivo: ERR_CARGA[p.error] || 'No se pudo leer el archivo.' }); continue; }
-    const c = CG.clasificarTabla(p.rows, nombre, cuentas);
-    Object.assign(it, { tipo: c.tipo, nombre: TIPO_LBL[c.tipo] || null, estado: c.estado, motivo: c.motivo, por_que: c.por_que || [], cuenta_id: c.cuenta_id || null, candidatas: c.candidatas || [], _rows: p.rows });
+    Object.assign(it, await clasificarArchivo(f.buffer, nombre, cuentas));
+    if (it.estado === 'rechazado') continue;
     if (dec && ['banco', 'cxc', 'cxp'].includes(dec.tipo)) {
       if (dec.tipo === 'banco' && !(cuentas.some((x) => x.id === intId(dec.cuenta_id)))) { Object.assign(it, { estado: 'revisar', motivo: 'Elige la cuenta.' }); continue; }
       Object.assign(it, { tipo: dec.tipo, nombre: TIPO_LBL[dec.tipo], estado: 'auto', motivo: null, cuenta_id: dec.tipo === 'banco' ? intId(dec.cuenta_id) : null, por_que: (it.por_que || []).concat('confirmado por ti') });
@@ -1448,5 +1496,6 @@ module.exports._db = db;
 module.exports._waNumero = waNumero;
 module.exports._excelDate = excelDate;
 module.exports._pdfRows = null;
+module.exports._clasificarArchivo = (...a) => clasificarArchivo(...a);
 module.exports._puente = { puenteScript, puenteInstalador };
 module.exports._daliaDeps = daliaDeps; // la SIT puede inyectar aquí un lector de PDF

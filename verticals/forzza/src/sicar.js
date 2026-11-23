@@ -14,6 +14,10 @@
  *   Reporte de Créditos a Clientes ........ igual, con No. Cli
  *   Créditos ... por Periodo de Tiempo .... No., Nombre, 0-30, 31-60, 61-90, 91-120, > 121 Días, TOTAL
  *   Reporte de Abonos de Clientes / a Proveedor .. Fecha, Caja, Usuario, Doc Ori, Folio, Fecha Doc, FP, Referencia, Total
+ *   Reporte de Utilidades por Ventas ....... Documento, Fecha, Folio, Cliente, Caja, Usuario, Folio F., Total Ven., Total Com., Utilidad
+ *   Reporte de Utilidades por Artículos .... Clave, Descripción, Departamento, Categoría, Cant, Total Com., Total Ven., Util.%, Utilidad
+ *   Reporte de Inventario .................. Clave, Descripción, Precio U., Exis, Total
+ *   Reporte de Inventario/Utilidad ......... Clave, Descripción, Precio V., Precio C., Margen %, Utilidad Uni., Exis, Utilidad Total
  *
  * Entrada: renglones de celdas {x, t} (x = posición en el PDF, o número de columna en Excel).
  * Cada celda se asigna a la columna cuyo encabezado está más cerca: así no se adivina dónde
@@ -79,13 +83,23 @@ const REPORTES = {
     detalle: { folio: C.folio, fecha: C.fecha_cred, vencimiento: C.vencimiento, est: C.est, total: C.total, abonos: C.abonos, saldo: C.saldo } },
   abonos_clientes: { titulo: /reporte de abonos de clientes/, parte: 'cliente', etiqueta: /^cliente$/,
     tabla: { fecha: C.fecha, caja: C.caja, usuario: C.usuario, doc_ori: C.doc_ori, folio: C.folio, fecha_doc: C.fecha_doc, fp: C.fp, referencia: C.referencia, total: C.total } },
+  utilidades_ventas: { titulo: /reporte de utilidades por ventas/, parte: 'cliente', especial: 'utilidades',
+    tabla: { doc: C.doc, fecha: C.fecha, folio: C.folio, cliente: /^cliente$/, caja: C.caja, usuario: C.usuario, folio_f: C.folio_f, venta: /^total ven/, costo: /^total com/, utilidad: /^utilidad$/ } },
+  utilidades_articulos: { titulo: /reporte de utilidades por articulos/, especial: 'articulos',
+    tabla: { clave: /^clave$/, descripcion: /^descripcion$/, departamento: /^departamento$/, categoria: /^categoria$/, cant: /^cant\.?$/, costo: /^total com/, venta: /^total ven/, util_pct: /^util\.? ?%/, utilidad: /^utilidad$/ } },
+  inventario_utilidad: { titulo: /reporte de inventario ?\/ ?utilidad/, especial: 'articulos',
+    tabla: { clave: /^clave$/, descripcion: /^descripcion$/, precio: /^precio v/, precio_c: /^precio c/, margen: /^margen/, util_uni: /^utilidad uni/, exis: /^exis/, utilidad: /^utilidad total/ } },
+  inventario: { titulo: /reporte de inventario(?! ?\/)/, especial: 'articulos',
+    tabla: { clave: /^clave$/, descripcion: /^descripcion$/, precio: /^precio( u)?\.?$/, exis: /^exis/, total: /^total$/ } },
   abonos_proveedores: { titulo: /reporte de abonos (a|de) proveedor/, parte: 'proveedor', etiqueta: /^proveedor$/,
     tabla: { fecha: C.fecha, caja: C.caja, usuario: C.usuario, doc_ori: C.doc_ori, folio: C.folio, fecha_doc: C.fecha_doc, fp: C.fp, referencia: C.referencia, total: C.total } }
 };
 const NOMBRES = {
   compras_general: 'Reporte General de Compras', ventas_general: 'Reporte General de Ventas', periodo_clientes: 'Créditos a Clientes por Periodo',
   periodo_proveedores: 'Créditos de Proveedores por Periodo', creditos_clientes: 'Reporte de Créditos a Clientes', creditos_proveedores: 'Reporte de Créditos de Proveedores',
-  abonos_clientes: 'Reporte de Abonos de Clientes', abonos_proveedores: 'Reporte de Abonos a Proveedor'
+  abonos_clientes: 'Reporte de Abonos de Clientes', abonos_proveedores: 'Reporte de Abonos a Proveedor',
+  utilidades_ventas: 'Reporte de Utilidades por Ventas', utilidades_articulos: 'Reporte de Utilidades por Artículos',
+  inventario: 'Reporte de Inventario', inventario_utilidad: 'Reporte de Inventario/Utilidad'
 };
 
 /** Cuántas celdas de un renglón son encabezados de esta tabla, y dónde está cada columna. */
@@ -110,7 +124,7 @@ function asignar(row, cols) {
 }
 
 const CHROME = /^(pagina \d|generado por sicar|codigo de colores)/;
-const FILTRO = /^(caja|usuario|doc|documento|detalle|proveedor|cliente|estado|orden|periodo|tipo|grupo|vendedor|f\. de pago)$/;
+const FILTRO = /^(caja|usuario|doc|documento|detalle|proveedor|cliente|estado|orden|periodo|tipo|grupo|vendedor|f\. de pago|precio|departamento|categoria|depto)$/;
 
 /** Renglones de todas las páginas, en orden, sin el pie de página. */
 function renglones(pages) {
@@ -126,7 +140,11 @@ function renglones(pages) {
 /** Etiquetas de filtro "Estado: Por Pagar" del encabezado del reporte (celda-etiqueta y la siguiente). */
 function filtros(rows) {
   const f = {};
-  for (const r of rows.slice(0, 40)) {
+  for (let r of rows.slice(0, 40)) {
+    // Algunos PDF traen varios filtros en una celda: "Cliente: Todos | Estado: Vencidos | Orden: Cliente".
+    const celdas = [];
+    for (const c of r) { const parts = String(c.t).split(/\s+\|\s+/); if (parts.length > 1) parts.forEach((t) => celdas.push({ x: c.x, t })); else celdas.push(c); }
+    r = celdas;
     for (let i = 0; i < r.length; i++) {
       const raw = String(r[i].t);
       const n = norm(raw);
@@ -151,7 +169,7 @@ function detectar(rows) {
   for (const [k, d] of Object.entries(REPORTES)) if (d.titulo.test(titulo)) return k;
   // Sin título (alguien borró renglones del Excel): por las columnas.
   for (const r of rows.slice(0, 40)) {
-    for (const k of ['creditos_proveedores', 'creditos_clientes', 'periodo_clientes', 'periodo_proveedores', 'compras_general', 'ventas_general', 'abonos_clientes']) {
+    for (const k of ['creditos_proveedores', 'creditos_clientes', 'periodo_clientes', 'periodo_proveedores', 'utilidades_ventas', 'utilidades_articulos', 'inventario_utilidad', 'inventario', 'compras_general', 'ventas_general', 'abonos_clientes']) {
       const cols = encabezado(r, REPORTES[k].tabla);
       if (cols && cols.length >= Object.keys(REPORTES[k].tabla).length - 1) return k;
     }
@@ -273,6 +291,76 @@ function leerAbonos(rows, def) {
   return { filas: filas.map(({ renglon, ...x }) => x), errores, columnas: !!cols };
 }
 
+
+/** Cantidad como la imprime SICAR: "6,0" o "1,00" (coma decimal), o 1.5 / 1,234.00. null si no es número. */
+function cantidad(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  let t = String(v == null ? '' : v).trim().replace(/\s/g, '');
+  if (!/^-?[\d.,]+$/.test(t) || !/\d/.test(t)) return null;
+  if (t.includes(',') && t.includes('.')) t = t.lastIndexOf(',') > t.lastIndexOf('.') ? t.replace(/\./g, '').replace(',', '.') : t.replace(/,/g, '');
+  else if (t.includes(',')) t = /,\d{1,2}$/.test(t) && (t.match(/,/g) || []).length === 1 ? t.replace(',', '.') : t.replace(/,/g, '');
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}
+/** Utilidades por Ventas: un renglón por documento (venta, costo, utilidad); la sección Notas de Crédito resta. */
+function leerUtilidades(rows, def) {
+  const filas = [], errores = [];
+  let cols = null, seccion = 'venta', imp = { ventas: null, notas: null, neto: null }, esperaTotales = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const h = encabezado(r, def.tabla);
+    if (h) { cols = h; continue; }
+    const txt = norm(r.map((c) => c.t).join(' '));
+    const m = r.map((c) => cents(c.t)).filter((v) => v != null);
+    if (/^totales$/.test(txt)) { esperaTotales = 1; continue; }
+    if (esperaTotales === 1 && /ventas/.test(txt) && /utilidad/.test(txt) && !m.length) { esperaTotales = 2; continue; }
+    if (esperaTotales === 2 && m.length >= 3) { imp.neto = { venta: m[0], costo: m[1], utilidad: m[2] }; esperaTotales = 0; continue; }
+    if (/^total ventas/.test(txt)) { if (m.length >= 3) imp.ventas = { venta: m[0], costo: m[1], utilidad: m[2] }; continue; }
+    if (/^total notas de credito/.test(txt)) { if (m.length >= 3) imp.notas = { venta: m[0], costo: m[1], utilidad: m[2] }; continue; }
+    if (/^notas de credito$/.test(txt)) { seccion = 'nota'; continue; }
+    if (!cols) continue;
+    const a = asignar(r, cols);
+    const f = fecha(a.fecha);
+    const venta = cents(a.venta), costo = cents(a.costo), utilidad = cents(a.utilidad);
+    if (!f && venta == null) continue;
+    if (!f || venta == null || costo == null || utilidad == null) { errores.push({ renglon: i + 1, motivo: !f ? 'fecha' : 'importe', texto: r.map((c) => c.t).join(' ').slice(0, 120) }); continue; }
+    const nota = seccion === 'nota' || /^notas? de credito/.test(norm(a.doc));
+    filas.push({ fecha: f, doc: nota ? 'NC' : (String(a.doc || '').trim() || null), folio: a.folio != null ? String(a.folio).trim() : null, parte: String(a.cliente || '').trim(),
+      caja: a.caja || null, usuario: a.usuario || null, folio_f: a.folio_f || null, est: null, total: venta, costo, utilidad });
+  }
+  return { filas, errores, columnas: !!cols, impresos: imp };
+}
+/** Reportes por artículo (Utilidades por Artículos, Inventario, Inventario/Utilidad): un renglón por clave. */
+function leerArticulos(rows, def, tipo) {
+  const filas = [], errores = [];
+  let cols = null, esperaTotales = 0, totales = null;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const h = encabezado(r, def.tabla);
+    if (h) { cols = h; continue; }
+    const txt = norm(r.map((c) => c.t).join(' '));
+    if (/^totales$/.test(txt)) { esperaTotales = 1; continue; }
+    if (esperaTotales === 1 && /cant/.test(txt) && /utilidad/.test(txt)) { esperaTotales = 2; continue; }
+    if (esperaTotales === 2) { const n = r.map((c) => c.t); totales = { cant: cantidad(n[0]), costo: cents(n[1]), venta: cents(n[2]), utilidad: cents(n[3]) }; esperaTotales = 0; continue; }
+    if (!cols || /^total/.test(txt)) continue;
+    const a = asignar(r, cols);
+    const clave = String(a.clave == null ? '' : a.clave).trim(), desc = String(a.descripcion || '').trim();
+    if (!clave && !desc) continue;
+    let fila;
+    if (tipo === 'utilidades_articulos') {
+      fila = { clave, descripcion: desc, departamento: a.departamento || null, categoria: a.categoria || null, cantidad: cantidad(a.cant), costo: cents(a.costo), venta: cents(a.venta), utilidad: cents(a.utilidad) };
+      if (fila.cantidad == null || fila.costo == null || fila.venta == null || fila.utilidad == null) { errores.push({ renglon: i + 1, motivo: 'renglon_incompleto', texto: r.map((c) => c.t).join(' ').slice(0, 120) }); continue; }
+    } else if (tipo === 'inventario') {
+      fila = { clave, descripcion: desc, precio: cents(a.precio), existencia: cantidad(a.exis), total: cents(a.total) };
+      if (fila.precio == null || fila.existencia == null || fila.total == null) { errores.push({ renglon: i + 1, motivo: 'renglon_incompleto', texto: r.map((c) => c.t).join(' ').slice(0, 120) }); continue; }
+    } else {
+      fila = { clave, descripcion: desc, precio: cents(a.precio), precio_c: cents(a.precio_c), existencia: cantidad(a.exis), utilidad: cents(a.utilidad) };
+      if (fila.precio == null || fila.precio_c == null || fila.existencia == null || fila.utilidad == null) { errores.push({ renglon: i + 1, motivo: 'renglon_incompleto', texto: r.map((c) => c.t).join(' ').slice(0, 120) }); continue; }
+    }
+    filas.push(fila);
+  }
+  return { filas, errores, columnas: !!cols, totales };
+}
 /**
  * Lee un reporte. pages = [[ [ {x,t}, ... ] /renglón ] /página ]. Devuelve el tipo, los filtros,
  * los renglones leídos, los que no se pudieron leer, y si la suma cuadra con el total de SICAR.
@@ -283,14 +371,35 @@ function leer(pages) {
   if (!tipo) return { error: 'no_es_reporte_sicar' };
   const def = REPORTES[tipo];
   const f = filtros(rows);
-  const r = def.credito ? leerCreditos(rows, def) : def.etiqueta ? leerAbonos(rows, def) : leerTabla(rows, def, tipo);
+  const r = def.especial === 'utilidades' ? leerUtilidades(rows, def) : def.especial === 'articulos' ? leerArticulos(rows, def, tipo)
+    : def.credito ? leerCreditos(rows, def) : def.etiqueta ? leerAbonos(rows, def) : leerTabla(rows, def, tipo);
   if (!r.columnas) return { error: 'sin_columnas', tipo };
   // Sin detalle ("Tipo: No") el reporte solo trae el saldo de cada persona: se guarda como foto de saldos,
   // nunca como facturas (no trae folio, fecha ni vencimiento, y no se inventan).
   const soloSaldos = !!(def.credito && !r.con_detalle);
   if (soloSaldos && !(r.partes || []).length) return { error: 'sin_detalle', tipo, ayuda: 'En SICAR genera el reporte con "Tipo: Sí" (detalle de documentos) para importar folio por folio.' };
-  const impreso = totalImpreso(rows);
+  let impreso = totalImpreso(rows);
   let leido = null;
+  if (tipo === 'utilidades_ventas') {
+    // TOTALES (neto de notas de crédito) si viene; si no, "Total Ventas". Venta y utilidad deben cuadrar las dos.
+    const v = r.filas.filter((x) => x.doc !== 'NC'), n = r.filas.filter((x) => x.doc === 'NC');
+    const suma = (a, k) => a.reduce((t, x) => t + x[k], 0);
+    const ref = r.impresos.neto || (r.impresos.ventas && !n.length ? r.impresos.ventas : null);
+    const lv = suma(v, 'total') - suma(n, 'total'), lu = suma(v, 'utilidad') - suma(n, 'utilidad');
+    impreso = ref ? ref.venta : null; leido = lv;
+    const cuadra = ref ? ref.venta === lv && ref.utilidad === lu : null;
+    return { tipo, nombre: NOMBRES[tipo], parte: def.parte, filtros: f, solo_saldos: false, vista: null, filas: r.filas, partes: [], errores: r.errores,
+      total_impreso: impreso, total_leido: leido, cuadra, utilidad_impresa: ref ? ref.utilidad : null, utilidad_leida: lu, partes_que_no_cuadran: [] };
+  }
+  if (def.especial === 'articulos') {
+    const suma = (k) => r.filas.reduce((t, x) => t + (x[k] || 0), 0);
+    if (tipo === 'utilidades_articulos') { impreso = r.totales ? r.totales.venta : null; leido = suma('venta'); }
+    else if (tipo === 'inventario') { leido = suma('total'); }
+    else { impreso = null; leido = suma('utilidad'); }
+    const cuadra = impreso == null ? null : impreso === leido && (tipo !== 'utilidades_articulos' || r.totales.utilidad === suma('utilidad'));
+    return { tipo, nombre: NOMBRES[tipo], parte: null, filtros: f, solo_saldos: false, vista: null, filas: r.filas, partes: [], errores: r.errores,
+      total_impreso: impreso, total_leido: leido, cuadra, partes_que_no_cuadran: [] };
+  }
   // SICAR imprime Total = documentos (vigentes y cancelados con su reverso) menos devoluciones.
   if (tipo === 'compras_general' || tipo === 'ventas_general') leido = r.filas.reduce((s, x) => s + (x.doc === 'DEV' ? -x.total : x.total), 0);
   else if (def.credito) leido = (r.partes || []).reduce((s, p) => s + (p.saldo || 0), 0);

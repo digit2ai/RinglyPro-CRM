@@ -152,7 +152,36 @@ async function aplicar(ctx, rep, meta, t) {
     }
   }
 
-  await run('UPDATE fz_sicar_imports SET resumen=:r WHERE id=:i AND tenant_id=:t', { i: importId, r: JSON.stringify({ conteo: res.conteo, cuadra: res.cuadra, n_errores: res.n_errores, vista: rep.vista || null, solo_saldos: !!rep.solo_saldos }) });
+  /* ── utilidades por ventas: venta, costo y utilidad por documento (para el margen) ── */
+  if (rep.tipo === 'utilidades_ventas') {
+    const vistos = new Map();
+    for (const f of rep.filas) {
+      const base = ['utilidad', f.doc || '', f.folio || '', f.fecha, (f.parte || '').toLowerCase(), f.total, f.costo, f.caja || ''].join('|');
+      const k = vistos.get(base) || 0; vistos.set(base, k + 1);
+      const [r] = await run(`INSERT INTO fz_sicar_docs (tenant_id,tipo,doc,folio,fecha,parte,caja,est,total,costo,utilidad,clave,import_id)
+        VALUES (:t,'utilidad',:d,:f,:fe,:p,:c,NULL,:to,:co,:u,:k,:i) ON CONFLICT DO NOTHING RETURNING id`,
+        { d: f.doc, f: f.folio, fe: f.fecha, p: f.parte || null, c: f.caja, to: pesos(f.total), co: pesos(f.costo), u: pesos(f.utilidad), k: sha(base + '|' + k), i: importId });
+      cuenta(r.length ? 'nuevo' : 'ya_estaba');
+    }
+    const v = rep.filas.filter((x) => x.doc !== 'NC'), n = rep.filas.filter((x) => x.doc === 'NC');
+    const venta = v.reduce((a, x) => a + x.total, 0) - n.reduce((a, x) => a + x.total, 0), util = v.reduce((a, x) => a + x.utilidad, 0) - n.reduce((a, x) => a + x.utilidad, 0);
+    res.margen = { venta, utilidad: util, pct: venta ? Math.round((util / venta) * 1000) / 10 : null };
+  }
+
+  /* ── reportes por artículo: una foto por importación ── */
+  if (rep.tipo === 'utilidades_articulos' || rep.tipo === 'inventario' || rep.tipo === 'inventario_utilidad') {
+    for (const f of rep.filas) {
+      await run(`INSERT INTO fz_sicar_articulos (tenant_id,import_id,tipo,clave,descripcion,departamento,categoria,cantidad,existencia,precio,precio_c,costo,venta,utilidad,total)
+        VALUES (:t,:i,:ti,:cl,:de,:dp,:ca,:cn,:ex,:pr,:pc,:co,:ve,:ut,:to)`,
+        { i: importId, ti: rep.tipo, cl: f.clave || null, de: f.descripcion || null, dp: f.departamento || null, ca: f.categoria || null, cn: f.cantidad == null ? null : f.cantidad,
+          ex: f.existencia == null ? null : f.existencia, pr: f.precio == null ? null : pesos(f.precio), pc: f.precio_c == null ? null : pesos(f.precio_c), co: f.costo == null ? null : pesos(f.costo),
+          ve: f.venta == null ? null : pesos(f.venta), ut: f.utilidad == null ? null : pesos(f.utilidad), to: f.total == null ? null : pesos(f.total) });
+    }
+    res.conteo.articulos = rep.filas.length;
+    if (rep.tipo === 'inventario') res.inventario = { valor: rep.filas.reduce((a, x) => a + x.total, 0), base: rep.filtros.precio || null, con_existencia: rep.filas.filter((x) => x.existencia > 0).length };
+  }
+
+  await run('UPDATE fz_sicar_imports SET resumen=:r WHERE id=:i AND tenant_id=:t', { i: importId, r: JSON.stringify({ conteo: res.conteo, cuadra: res.cuadra, n_errores: res.n_errores, vista: rep.vista || null, solo_saldos: !!rep.solo_saldos, base: rep.filtros.precio || null }) });
   return res;
 }
 

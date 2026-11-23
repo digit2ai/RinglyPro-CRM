@@ -283,3 +283,34 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_fz_cxc_abonos_ref ON fz_cxc_abonos (tenant_
 CREATE UNIQUE INDEX IF NOT EXISTS uq_fz_cxp_pagos_ref ON fz_cxp_pagos (tenant_id, ref_externa) WHERE ref_externa IS NOT NULL;
 ALTER TABLE fz_clientes ADD COLUMN IF NOT EXISTS sicar_num TEXT;
 ALTER TABLE fz_proveedores ADD COLUMN IF NOT EXISTS sicar_num TEXT;
+
+-- ── Más reportes de SICAR (23-nov-2026): utilidades e inventario ─────────
+-- Utilidades por Ventas: cada documento con su venta, su costo y su utilidad (doc 'NC' = nota de crédito, resta).
+ALTER TABLE fz_sicar_docs ADD COLUMN IF NOT EXISTS costo NUMERIC(16,2);
+ALTER TABLE fz_sicar_docs ADD COLUMN IF NOT EXISTS utilidad NUMERIC(16,2);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fz_sicar_docs_tipo_check' AND pg_get_constraintdef(oid) LIKE '%utilidad%') THEN
+    ALTER TABLE fz_sicar_docs DROP CONSTRAINT IF EXISTS fz_sicar_docs_tipo_check;
+    ALTER TABLE fz_sicar_docs ADD CONSTRAINT fz_sicar_docs_tipo_check CHECK (tipo IN ('compra','venta','abono_cliente','abono_proveedor','utilidad'));
+  END IF;
+END $$;
+-- Reportes por artículo (Utilidades por Artículos, Inventario, Inventario/Utilidad): una foto por importación.
+CREATE TABLE IF NOT EXISTS fz_sicar_articulos (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES fz_tenants(id),
+  import_id INTEGER NOT NULL REFERENCES fz_sicar_imports(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL CHECK (tipo IN ('utilidades_articulos','inventario','inventario_utilidad')),
+  clave TEXT,
+  descripcion TEXT,
+  departamento TEXT,
+  categoria TEXT,
+  cantidad NUMERIC(16,3),
+  existencia NUMERIC(16,3),
+  precio NUMERIC(16,2),
+  precio_c NUMERIC(16,2),
+  costo NUMERIC(16,2),
+  venta NUMERIC(16,2),
+  utilidad NUMERIC(16,2),
+  total NUMERIC(16,2)
+);
+CREATE INDEX IF NOT EXISTS ix_fz_sicar_articulos ON fz_sicar_articulos (tenant_id, import_id);

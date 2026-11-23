@@ -915,9 +915,12 @@
     ['compras_general', 'General de Compras', 'Reportes → Compras → General. Estado: Todos (incluye Gastos).', 'Cada semana', 'Compras (COM) y gastos (GAS) por mes y por proveedor.'],
     ['abonos_clientes', 'Abonos de Clientes', 'Reportes → Clientes (Créditos) → Abonos.', 'Cada semana', 'Cobranza real por mes.'],
     ['abonos_proveedores', 'Abonos a Proveedor', 'Reportes → Proveedores (Créditos) → Abonos.', 'Cada mes', 'Pagos a proveedores por mes.'],
-    ['periodo_clientes', 'Créditos Clientes por Periodo', 'Reportes → Clientes (Créditos) → Créditos por Periodo.', 'Cada mes', 'Antigüedad 0-30, 31-60, 61-90, 91-120 y más; compara saldos con la app.']
+    ['periodo_clientes', 'Créditos Clientes por Periodo', 'Reportes → Clientes (Créditos) → Créditos por Periodo.', 'Cada mes', 'Antigüedad 0-30, 31-60, 61-90, 91-120 y más; compara saldos con la app.'],
+    ['utilidades_ventas', 'Utilidades por Ventas', 'Reportes → Utilidades → Ventas. Periodo: el mes.', 'Cada semana', 'Margen bruto por mes y por cliente (venta, costo, utilidad).'],
+    ['utilidades_articulos', 'Utilidades por Artículos', 'Reportes → Utilidades → Artículos. Periodo: el mes.', 'Cada mes', 'Qué artículos dejan más utilidad y cuáles se venden con pérdida.'],
+    ['inventario', 'Inventario', 'Reportes → Artículos → Inventario. Precios de Compra Promedio.', 'Cada mes', 'Cuánto dinero hay en bodega y en qué artículos.']
   ];
-  const PRONTO = ['Utilidades / Ventas (margen)', 'Inventario a costo promedio (valor del inventario)', 'Corte de Caja Extendido', 'Reporte de Movimientos de caja'];
+  const PRONTO = ['Corte de Caja Extendido', 'Reporte de Movimientos de caja'];
   const ESTADO_LBL = { cargado: ['ok', 'Cargado'], listo: ['ok', 'Listo'], revisar: ['warn', 'Revisar'], rechazado: ['bad', 'No se cargó'], repetido: ['', 'Repetido'], omitido: ['', 'Omitido'], error: ['bad', 'Error'] };
   function resumenCarga(it) {
     const r = it.resultado || {};
@@ -926,7 +929,7 @@
       const cu = r.cuadra === true ? ' · cuadra con el total de SICAR' : r.cuadra === false ? ` · <b style="color:var(--bad)">no cuadra</b> (leído ${c$(r.total_leido)}, SICAR ${c$(r.total_impreso)})` : '';
       return c + cu + (r.n_errores ? ` · ${r.n_errores} renglones no se leyeron` : '') + (r.archivo_ya_importado ? ' · ya se había subido (no duplica)' : '');
     }
-    if (it.tipo === 'banco') return `${esc(it.cuenta || '')}: ${r.creados || 0} nuevos · ${r.conciliados || 0} conciliados · ${r.duplicados || 0} ya estaban${r.no_leidos ? ` · ${r.no_leidos} sin leer` : ''}${r.saldo_actualizado ? ` · saldo ${c$(Math.round(r.saldo_actualizado.saldo * 100))} al ${fmtF(r.saldo_actualizado.fecha)}` : ''}`;
+    if (it.tipo === 'banco') return `${esc(it.cuenta || '')}${it.estado_cuenta ? ` (${fmtF(it.estado_cuenta.desde)} a ${fmtF(it.estado_cuenta.hasta)}, saldo final ${c$(it.estado_cuenta.saldo_final)})` : ''}: ${r.creados || 0} nuevos · ${r.conciliados || 0} conciliados · ${r.duplicados || 0} ya estaban${r.no_leidos ? ` · ${r.no_leidos} sin leer` : ''}${r.saldo_actualizado ? ` · saldo ${c$(Math.round(r.saldo_actualizado.saldo * 100))} al ${fmtF(r.saldo_actualizado.fecha)}` : ''}`;
     return `${r.creados || 0} documentos creados${r.no_leidos ? ` · ${r.no_leidos} renglones no se cargaron (folio repetido, total en cero o ya pagado)` : ''}`;
   }
   R.cargar = async function () {
@@ -934,15 +937,15 @@
     const ult = Object.fromEntries((st.sicar || []).map((x) => [x.tipo, x]));
     const dias = (f) => (f ? Math.round((new Date(st.hoy) - new Date(String(f).slice(0, 10))) / 86400000) : null);
     const frescura = (f, max) => { const d = dias(f); return d == null ? '<span class="pill">nunca</span>' : `<span class="pill ${d > max ? 'warn' : 'ok'}">${fmtF(String(f).slice(0, 10))}</span>`; };
-    main().innerHTML = `<h1>Subir archivos</h1><p class="sub">Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (Excel o CSV). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
+    main().innerHTML = `<h1>Subir archivos</h1><p class="sub">Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (PDF de BBVA o HSBC tal como lo descargas, o Excel/CSV de cualquier banco). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
       ${canEdit() ? `<div class="card"><label class="drop" id="multi"><input type="file" multiple accept=".pdf,.xls,.xlsx,.csv"><span>Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos</span></label><div class="err"></div></div><div id="cres"></div>` : '<div class="note">Tu usuario es de solo lectura: no puede subir archivos.</div>'}
       <h2>Qué descargar de SICAR</h2><div class="card tbl"><table class="cards"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Cada cuánto</th><th>Para qué</th><th>Último</th></tr></thead><tbody>
         ${DESCARGAS.map(([k, n, d, c, p]) => `<tr><td data-l="Reporte"><b>${esc(n)}</b></td><td data-l="Dónde">${esc(d)}</td><td data-l="Cada cuánto">${esc(c)}</td><td data-l="Para qué">${esc(p)}</td><td data-l="Último">${frescura(ult[k] && ult[k].ultima, c === 'Cada semana' ? 8 : 35)}</td></tr>`).join('')}</tbody></table>
         <p class="muted" style="font-size:13px">En cada reporte: <b>Previa (F3)</b> y luego guardar en Excel o PDF. Puedes subir varios a la vez. Si instalas el <a href="#sicar">puente automático</a>, los que guardes en la carpeta SICAR-Forzza se suben solos.</p></div>
       <h2>Estados de cuenta</h2><div class="card tbl">${(st.bancos || []).length ? `<table class="cards"><thead><tr><th>Cuenta</th><th>Movimientos hasta</th></tr></thead><tbody>
         ${st.bancos.map((b) => `<tr><td data-l="Cuenta">${esc(b.nombre)}${b.terminacion ? ' ··' + esc(b.terminacion) : ''}</td><td data-l="Hasta">${frescura(b.hasta, 8)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no hay cuentas. Agrégalas en <a href="#bancos">Bancos</a>.</p>'}
-        <p class="muted" style="font-size:13px">Descárgalo en Excel o CSV desde la banca en línea (no PDF). La cuenta se reconoce por sus últimos 4 dígitos o por el nombre del banco en el archivo; ponlos en el nombre del archivo si no aparecen (por ejemplo <code>BBVA 1234 octubre.xlsx</code>).</p></div>
-      <h2>Próximamente</h2><div class="card"><p class="muted" style="margin:0">Estos reportes de SICAR no tienen un formato público que podamos leer con certeza. Para agregarlos necesitamos un ejemplo real de cada uno (Previa → Excel): ${PRONTO.map(esc).join(' · ')}.</p></div>`;
+        <p class="muted" style="font-size:13px">BBVA y HSBC: sube el PDF tal como lo descargas; se revisa que sume exactamente el saldo final del banco. Otros bancos: descárgalo en Excel o CSV. La cuenta se reconoce por sus últimos 4 dígitos o por el nombre del banco en el archivo; ponlos en el nombre del archivo si no aparecen (por ejemplo <code>BBVA 1234 octubre.xlsx</code>).</p></div>
+      <h2>Próximamente</h2><div class="card"><p class="muted" style="margin:0">Estos reportes de SICAR todavía no se leen: ${PRONTO.map(esc).join(' · ')}. El efectivo de la caja ya se ve en los estados de cuenta cuando se deposita; si los necesitas, mándanos un ejemplo real de cada uno (Previa → Excel).</p></div>`;
     if (!canEdit()) return;
     const zone = document.getElementById('multi'), inp = zone.querySelector('input');
     let lote = [];
@@ -966,9 +969,17 @@
             <select data-cuenta${a.tipo === 'banco' ? '' : ' hidden'}>${opts(activos('cuentas'), (c) => c.nombre + (c.terminacion ? ' ··' + c.terminacion : ''), a.cuenta_id || '')}</select>
             <button class="btn small primary" data-cargar>Cargar</button><button class="btn small" data-omitir>Omitir</button></div>` : ''}</div>`; }).join('')}</div>`;
     };
+    // En grupos de 4: doce PDF de banco en una sola petición pueden pasar el límite de ~100 s del proxy.
     const correr = async (files) => {
-      lote = files.slice(); const r = await enviar(lote, {}); if (!r) return;
-      pintar(r.archivos); S.ultLote = r.archivos; await loadCat();
+      if (files.length > 12) { main().querySelector('.err').textContent = 'Máximo 12 archivos por vez.'; return; }
+      lote = files.slice(); const todos = [];
+      for (let k = 0; k < lote.length; k += 4) {
+        const r = await enviar(lote.slice(k, k + 4), {});
+        if (!r) break;
+        r.archivos.forEach((a) => todos.push({ ...a, i: a.i + k }));
+        pintar(todos);
+      }
+      S.ultLote = todos; await loadCat();
     };
     inp.addEventListener('change', () => { if (inp.files.length) correr(Array.from(inp.files)); inp.value = ''; });
     zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) correr(Array.from(e.dataTransfer.files)); }, true);
@@ -976,12 +987,12 @@
     document.getElementById('cres').onclick = async (e) => {
       const b = e.target.closest('[data-cargar],[data-omitir]'); if (!b) return;
       const box = b.closest('.carga'), i = Number(box.dataset.i), f = lote[i]; if (!f) return;
-      if (b.dataset.omitir != null) { S.ultLote[i] = { ...S.ultLote[i], estado: 'omitido', motivo: null }; pintar(S.ultLote); return; }
+      if (b.dataset.omitir != null) { const j = S.ultLote.findIndex((x) => x.i === i); S.ultLote[j] = { ...S.ultLote[j], estado: 'omitido', motivo: null }; pintar(S.ultLote); return; }
       const tipo = box.querySelector('[data-tipo]').value, cuenta_id = box.querySelector('[data-cuenta]').value;
       if (tipo === 'banco' && !cuenta_id) { alert('Elige la cuenta.'); return; }
       b.disabled = true;
       const r = await enviar([f], { 0: { tipo, cuenta_id } }); b.disabled = false; if (!r) return;
-      S.ultLote[i] = { ...r.archivos[0], i }; pintar(S.ultLote); await loadCat();
+      const j = S.ultLote.findIndex((x) => x.i === i); S.ultLote[j] = { ...r.archivos[0], i }; pintar(S.ultLote); await loadCat();
     };
   };
 
@@ -1113,7 +1124,21 @@
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
         <div class="card"><h2 style="margin-top:0">Proveedores (compras)</h2>${lista(r.proveedores)}</div>
         <div class="card"><h2 style="margin-top:0">Gastos (GAS)</h2>${lista(r.gastos)}</div>
-        <div class="card"><h2 style="margin-top:0">Clientes (ventas)</h2>${lista(r.clientes)}</div></div>`;
+        <div class="card"><h2 style="margin-top:0">Clientes (ventas)</h2>${lista(r.clientes)}</div></div>
+      <h2>Margen e inventario</h2>
+      <div class="grid">${r.margen ? kpi('Margen bruto', (r.margen.pct == null ? '—' : r.margen.pct.toFixed(1).replace('.', ',') + '%'), `utilidad ${c$(r.margen.utilidad)} sobre ventas de ${c$(r.margen.venta)} (Utilidades por Ventas)`, r.margen.pct != null && r.margen.pct < 10 ? 'bad' : 'ok')
+          : kpi('Margen bruto', '—', 'sube el reporte Utilidades por Ventas')}
+        ${r.inventario ? kpi('Inventario', c$(r.inventario.valor), `${r.inventario.con_existencia} de ${r.inventario.articulos} artículos con existencia · ${r.inventario.base ? 'a ' + esc(String(r.inventario.base).toLowerCase()) : 'precio sin indicar'} · ${fmtF(String(r.inventario.fecha).slice(0, 10))}`)
+          : kpi('Inventario', '—', 'sube el reporte de Inventario (Precios de Compra Promedio)')}
+        ${r.inventario && r.inventario.utilidad_potencial != null ? kpi('Utilidad en inventario', c$(r.inventario.utilidad_potencial), 'si se vende todo a precio de venta') : ''}</div>
+      ${r.inventario && r.inventario.base && /venta/i.test(r.inventario.base) ? '<div class="note">Este inventario está valuado a precio de venta: incluye la utilidad. Para saber cuánto dinero está parado en bodega, genéralo en SICAR con "Precios de Compra Promedio".</div>' : ''}
+      ${r.margen ? `<div class="card tbl"><table class="cards"><thead><tr><th>Mes</th><th class="n">Ventas</th><th class="n">Costo</th><th class="n">Utilidad</th><th class="n">Margen</th></tr></thead><tbody>
+        ${r.margen.meses.map((m) => `<tr><td data-l="Mes">${esc(m.mes)}</td><td class="n" data-l="Ventas">${c$(m.venta)}</td><td class="n" data-l="Costo">${c$(m.costo)}</td><td class="n" data-l="Utilidad">${c$(m.utilidad)}</td><td class="n" data-l="Margen">${m.venta ? (100 * m.utilidad / m.venta).toFixed(1).replace('.', ',') + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>` : ''}
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+        ${r.margen ? `<div class="card"><h2 style="margin-top:0">Clientes que más utilidad dejan</h2><table class="cards"><tbody>${r.margen.clientes.map((x) => `<tr><td data-l="Cliente">${esc(x.parte || '—')}</td><td class="n" data-l="Utilidad">${c$(x.utilidad)}</td><td class="n" data-l="Margen">${x.venta ? (100 * x.utilidad / x.venta).toFixed(1).replace('.', ',') + '%' : '—'}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${r.articulos ? `<div class="card"><h2 style="margin-top:0">Artículos que más utilidad dejan</h2><table class="cards"><tbody>${r.articulos.mejores.map((x) => `<tr><td data-l="Artículo">${esc(x.descripcion || x.clave)}</td><td class="n" data-l="Utilidad">${c$(x.utilidad)}</td></tr>`).join('')}</tbody></table>
+          ${r.articulos.perdida.length ? `<h3>Se venden con pérdida</h3><table class="cards"><tbody>${r.articulos.perdida.map((x) => `<tr><td data-l="Artículo">${esc(x.descripcion || x.clave)}</td><td class="n" data-l="Utilidad" style="color:var(--bad)">${c$(x.utilidad)}</td></tr>`).join('')}</tbody></table>` : ''}</div>` : ''}
+        ${r.inventario ? `<div class="card"><h2 style="margin-top:0">Dónde está el dinero del inventario</h2><table class="cards"><tbody>${r.inventario.top.map((x) => `<tr><td data-l="Artículo">${esc(x.descripcion || x.clave)}</td><td class="n" data-l="Existencia">${esc(String(Number(x.existencia)))}</td><td class="n" data-l="Valor">${c$(x.valor)}</td></tr>`).join('')}</tbody></table></div>` : ''}</div>`;
   };
 
   /* ── catálogos ── */

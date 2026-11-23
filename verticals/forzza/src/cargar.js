@@ -30,7 +30,8 @@ function encabezados(rows, campos, requeridos) {
 
 const BANCO_CAMPOS = {
   fecha: /^fecha|^fechaoper|^dia$/, concepto: /concepto|descripcion|detalle|movimiento/, referencia: /referencia|^ref|folio|autorizacion/,
-  cargo: /cargo|retiro|debito|salida/, abono: /abono|deposito|credito|entrada/, monto: /^monto|^importe/, saldo: /^saldo/
+  cargo: /cargo|retiro|debito|salida/, abono: /abono|deposito|credito|entrada/, monto: /^monto|^importe/, saldo: /^saldo/,
+  contraparte: /^contraparte|^beneficiario|^ordenante/
 };
 const BANCO_REQ = [['fecha'], ['concepto'], ['cargo', 'abono', 'monto']];
 const DOC_CAMPOS = (key) => ({
