@@ -215,13 +215,33 @@
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
+  // Menú por categorías que se pliegan y despliegan; se recuerda en este equipo. La categoría de la pantalla abierta siempre se ve.
+  function grpCerrados() { try { return JSON.parse(localStorage.getItem('fz_grp_cerrados') || '[]'); } catch (e) { return []; } }
+  function menuHtml() {
+    const cerr = grpCerrados(); let out = '', abierto = false;
+    for (const [k, l] of VIEWS) {
+      if (k === 'grp') {
+        if (abierto) out += '</div>';
+        const open = !cerr.includes(l);
+        out += `<button type="button" class="grp" data-g="${esc(l)}" aria-expanded="${open}"><span>${l}</span><span class="chev" aria-hidden="true">▾</span></button><div class="gitems" data-g="${esc(l)}"${open ? '' : ' hidden'}>`;
+        abierto = true; continue;
+      }
+      out += k.startsWith('url:') ? `<a href="${k.slice(4)}" target="_blank" rel="noopener">${l}</a>`
+        : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`);
+    }
+    return out + (abierto ? '</div>' : '');
+  }
+  function abrirGrupo(g, abrir, recordar) {
+    const btn = document.querySelector(`nav.side button.grp[data-g="${CSS.escape(g)}"]`), box = document.querySelector(`nav.side .gitems[data-g="${CSS.escape(g)}"]`);
+    if (!btn || !box) return;
+    btn.setAttribute('aria-expanded', String(!!abrir)); box.hidden = !abrir;
+    if (recordar) { const c = grpCerrados().filter((x) => x !== g); if (!abrir) c.push(g); try { localStorage.setItem('fz_grp_cerrados', JSON.stringify(c)); } catch (e) {} }
+  }
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
       <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
       ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Importar archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
-      <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
-        : k.startsWith('url:') ? `<a href="${k.slice(4)}" target="_blank" rel="noopener">${l}</a>`
-        : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
+      <div class="layout"><nav class="side" id="side">${menuHtml()}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
     const side = document.getElementById('side'), b = document.getElementById('burger');
     const movil = () => window.matchMedia('(max-width:820px)').matches;
@@ -232,7 +252,11 @@
     };
     let pref = null; try { pref = localStorage.getItem('fz_side'); } catch (e) {}
     setSide(pref === 'off');
-    side.onclick = (e) => { if (e.target.closest('a')) { side.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); } };
+    side.onclick = (e) => {
+      const g = e.target.closest('button.grp');
+      if (g) { abrirGrupo(g.dataset.g, g.getAttribute('aria-expanded') !== 'true', true); return; }
+      if (e.target.closest('a')) { side.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }
+    };
     document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; document.body.classList.add('fz-out'); renderLogin(); };
   }
   // Panel izquierdo plegable en escritorio (en el teléfono sigue siendo el cajón).
@@ -253,6 +277,7 @@
     if (v === 'sicar_web' && antes !== 'sicar_web') setSide(true); // SICAR usa toda la pantalla
     else if (antes === 'sicar_web' && v !== 'sicar_web') { let p = null; try { p = localStorage.getItem('fz_side'); } catch (e) {} setSide(p === 'off'); }
     document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
+    { const a = document.querySelector(`nav.side a[data-v="${v}"]`), box = a && a.closest('.gitems'); if (box && box.hidden) abrirGrupo(box.dataset.g, true, false); }
     main().innerHTML = '<p class="muted">Cargando…</p>';
     main().onclick = null; main().oninput = null; main().onchange = null;
     try { await R[v](); } catch (e) { if (e && e.error !== 'not_signed_in') main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }
