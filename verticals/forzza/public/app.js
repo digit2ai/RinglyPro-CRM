@@ -211,8 +211,8 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
-    ['grp', 'Datos'], ['cargar', 'Subir archivos'], ['url:guia-carga.html', 'Guía para subir archivos'],
-    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['sicar_web', 'Ingresa a SICAR'], ['url:guia-puente.html', 'Guía del puente'],
+    ['grp', 'Datos'], ['cargar', 'Subir archivos'],
+    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['url:guia-carga.html', 'Guía para subir archivos'], ['url:guia-puente.html', 'Guía del puente'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
