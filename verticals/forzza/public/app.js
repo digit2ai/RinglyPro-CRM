@@ -211,7 +211,7 @@
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'Datos'], ['cargar', 'Importar archivos'], ['url:guia-carga.html', 'Guía para importar archivos'],
-    ['grp', 'SICAR'], ['sicar_resumen', 'Compras y ventas'],
+    ['grp', 'Operación'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
@@ -239,7 +239,7 @@
   }
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
-      <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
+      <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><div class="sp"></div>
       ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Importar archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${menuHtml()}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
@@ -1014,7 +1014,7 @@
       const app = !f.saldo_app ? 'la app aún no tiene sus facturas' : 'en la app: ' + c$(f.saldo_app) + (f.saldo_app !== f.saldo_sicar ? ' · diferencia ' + c$(f.saldo_app - f.saldo_sicar) : ' · coinciden');
       return kpi(lbl + ' según SICAR', c$(f.saldo_sicar), `${venc}${f.personas} personas · importado ${fmtF(f.corte || String(f.fecha).slice(0, 10))} · ${app}`, f.saldo_app === f.saldo_sicar ? 'ok' : (f.vencido_sicar ? 'bad' : ''));
     };
-    main().innerHTML = `<h1>Compras y ventas (SICAR)</h1><p class="sub">Lo importado de SICAR del ${fmtF(r.desde)} al ${fmtF(r.hasta)}. Solo documentos vigentes; las devoluciones restan.${r.ultima_importacion ? ' Última importación: ' + fmtF(String(r.ultima_importacion).slice(0, 10)) + '.' : ''}</p>
+    main().innerHTML = `<h1>Compras y ventas</h1><p class="sub">Lo importado de tu sistema de ventas (SICAR u otro) del ${fmtF(r.desde)} al ${fmtF(r.hasta)}. Solo documentos vigentes; las devoluciones restan.${r.ultima_importacion ? ' Última importación: ' + fmtF(String(r.ultima_importacion).slice(0, 10)) + '.' : ''}</p>
       ${!r.meses.length && !r.conciliacion.cxc && !r.conciliacion.cxp ? '<div class="note">Aún no hay reportes importados. Ve a <a href="#cargar">Importar archivos</a>.</div>' : ''}
       <div class="grid">${kpi('Ventas', c$(tot('ventas')), 'promedio ' + c$(Math.round(tot('ventas') / n)) + ' al mes')}${kpi('Compras de material', c$(tot('compras')), 'promedio ' + c$(Math.round(tot('compras') / n)) + ' al mes')}
         ${kpi('Gastos (GAS)', c$(tot('gastos')), 'promedio ' + c$(Math.round(tot('gastos') / n)) + ' al mes')}${kpi('Cobrado (abonos)', c$(tot('cobrado')), 'según el reporte de abonos')}
