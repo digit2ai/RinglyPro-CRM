@@ -87,7 +87,8 @@ const bancoSinPista = ['Fecha,Concepto,Referencia,Cargo,Abono,Saldo', `${dmy(2)}
     await page.goto(base + '#cargar', { waitUntil: 'networkidle0' }); await page.reload({ waitUntil: 'networkidle0' }); await limpio();
     await page.waitForSelector('#multi', { timeout: 8000 }).catch(async () => { await page.screenshot({ path: path.join(TMP, '..', 'guia-debug.png') }); console.log(await page.evaluate(() => document.body.innerText.slice(0, 400))); throw new Error('sin #multi'); });
     const shot = async (sel, name, pad) => { const el = await page.$(sel); await el.screenshot({ path: path.join(OUT, name), type: 'jpeg', quality: 82 }); console.log('  ' + name); };
-    await shot('nav.side', '01-menu.jpg');
+    { const nb = await page.evaluate(() => { const n = document.querySelector('nav.side').getBoundingClientRect(); const l = document.getElementById('salir').getBoundingClientRect(); return { x: n.left, y: n.top, w: n.width, h: l.bottom - n.top + 16 }; });
+      await page.screenshot({ path: path.join(OUT, '01-menu.jpg'), type: 'jpeg', quality: 82, clip: { x: nb.x, y: nb.y, width: nb.w, height: nb.h } }); console.log('  01-menu.jpg'); }
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: path.join(OUT, '02-pantalla.jpg'), type: 'jpeg', quality: 82, clip: { x: 0, y: 0, width: 1280, height: 640 } }); console.log('  02-pantalla.jpg');
     await shot('main .card.tbl', '03-que-descargar.jpg');

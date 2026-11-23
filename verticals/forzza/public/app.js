@@ -77,7 +77,6 @@
     inp.dispatchEvent(new Event('change', { bubbles: true }));
   });
   document.addEventListener('change', (e) => { const z = e.target.closest && e.target.closest('.drop'); if (z && e.target.files && e.target.files[0]) { z.classList.add('ok'); z.querySelector('span').textContent = e.target.files[0].name; } });
-  const dropBox = (name, texto) => `<label class="drop"><input type="file" name="${name}" accept=".xlsx,.csv"><span>${texto}</span></label>`;
   function modal(html) {
     const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="box">${html}</div>`;
     m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.remove(); });
@@ -211,15 +210,15 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
-    ['grp', 'Datos'], ['cargar', 'Subir archivos'],
-    ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['url:guia-carga.html', 'Guía para subir archivos'], ['url:guia-puente.html', 'Guía del puente'],
+    ['grp', 'Datos'], ['cargar', 'Importar archivos'], ['url:guia-carga.html', 'Guía para importar archivos'],
+    ['grp', 'SICAR'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
       <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
-      ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Subir archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
+      ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Importar archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
         : k.startsWith('url:') ? `<a href="${k.slice(4)}" target="_blank" rel="noopener">${l}</a>`
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
@@ -373,7 +372,7 @@
     const cats = (s && s.categorias) || [];
     const conc = s && s.concentracion;
     main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">Tablero <span class="muted" style="font-weight:600">(Actual)</span></h1><button class="btn noprint" id="imprimir">Imprimir resultados</button></div><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
-      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza en <a href="#cargar">Subir archivos</a>: suelta juntos tus reportes de SICAR y tus estados de cuenta.</div>` : ''}
+      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza en <a href="#cargar">Importar archivos</a>: suelta juntos tus reportes de SICAR y tus estados de cuenta.</div>` : ''}
       ${alertasHtml(t.alertas)}
       <div class="card hero">
         <div class="hero-g">${gauge(cal && cal.puntos, cal ? cal.nivel : 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
@@ -412,7 +411,7 @@
           ${t.por_pagar_total || !s.cartera_sicar ? kpi('Debes', c$(t.por_pagar_total), c$(t.por_pagar_30) + ' en 30 días') : kpi('Debes', '—', 'falta el reporte de Créditos de Proveedores de SICAR')}
           ${kpi('Días para cobrar (DSO) ' + tip('dso'), s && s.dso != null ? s.dso.toFixed(0) : '—', 'promedio, según lo que entra al mes')}${kpi('Días para pagar (DPO) ' + tip('dpo'), s && s.dpo != null ? s.dpo.toFixed(0) : '—', 'promedio, según lo que sale al mes')}</div>
         ${t.cartera.total ? aging(t.cartera) : s.cartera_sicar ? '<p class="muted" style="font-size:12px;margin:6px 0 0">El reporte de SICAR trae el saldo de cada cliente, no sus facturas: por eso todavía no hay antigüedad por días ni fechas de cobro en la proyección. Con el reporte "Tipo: Sí" se completa.</p>' : ''}`
-        : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#sicar">Importar de SICAR</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
+        : '<div class="note">Falta el dato: importa los reportes de Créditos a Clientes y Créditos de Proveedores de SICAR (<a href="#cargar">Importar archivos</a>). Aquí aparecerán la antigüedad de la cartera, los días para cobrar y para pagar, y la parte de "cartera vencida" de la calificación.</div>'}</div>
       ${hallazgosHtml(s && s.hallazgos)}
       <h2>Próximos 14 días ${tip('proximos')}</h2>
       <div class="card tbl">${t.proximos.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th class="n">Monto</th></tr></thead><tbody>
@@ -677,28 +676,6 @@
       try { await api(`${key}/${x.id}/pagos`, { method: 'POST', body: formData(m.querySelector('.box')) }); m.remove(); after(); } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
     };
   }
-  function importModal(path, titulo, ayuda, extra, after) {
-    const m = modal(`<h2 style="margin-top:0">${titulo}</h2><p class="muted">${ayuda}</p><div class="form">${extra || ''}
-      <div class="wide">${dropBox('archivo', 'Arrastra aquí el Excel o CSV, o toca para elegirlo')}</div>
-      <div class="row wide"><button class="btn primary" id="go">Importar</button><button class="btn" data-close>Cerrar</button></div><div class="err wide"></div><div class="wide" id="res"></div></div>`);
-    m.querySelector('#go').onclick = async () => {
-      const box = m.querySelector('.box'), fd = new FormData();
-      const file = box.querySelector('input[type=file]').files[0];
-      if (!file) { m.querySelector('.err').textContent = 'Elige un archivo.'; return; }
-      fd.append('archivo', file);
-      box.querySelectorAll('[name]').forEach((el) => { if (el.type !== 'file') fd.append(el.name, el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value); });
-      m.querySelector('#go').disabled = true; m.querySelector('.err').textContent = '';
-      try {
-        const r = await api(path, { method: 'POST', body: fd });
-        const malos = r.resultados.filter((x) => !x.ok);
-        m.querySelector('#res').innerHTML = `<div class="okmsg">Listo: ${r.creados} nuevos${r.conciliados != null ? `, ${r.conciliados} conciliados con lo capturado, ${r.duplicados} ya estaban` : ''}.
-          ${r.saldo_actualizado ? ` Saldo de la cuenta actualizado a ${p$(r.saldo_actualizado.saldo)} al ${fmtF(r.saldo_actualizado.fecha)}.` : ''}</div>
-          ${malos.length ? `<div class="note">${malos.length} renglones no entraron:<br>${malos.slice(0, 40).map((x) => `Renglón ${x.renglon}: ${esc({ fecha: 'fecha ilegible', monto: 'sin monto', total: 'sin total', saldo: 'saldo inválido', ya_pagado: 'ya está pagado', ya_estaba: 'ya estaba importado', folio_duplicado: 'folio repetido' }[x.motivo] || x.motivo)}`).join('<br>')}</div>` : ''}`;
-        after();
-      } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
-      m.querySelector('#go').disabled = false;
-    };
-  }
   async function vistaDocs(key) {
     const cli = key === 'cxc';
     S[key + 'Est'] = S[key + 'Est'] || 'abiertas';
@@ -707,7 +684,7 @@
     const aprueba = S.me.puede_aprobar;
     main().innerHTML = `<h1>${cli ? 'Por cobrar' : 'Por pagar'}</h1><p class="sub">${cli ? 'Ventas a crédito: quién te debe, cuánto y desde cuándo.' : 'Facturas de proveedores. Se programan, se aprueban y se pagan.'}</p>
       ${canEdit() ? `<div class="card row"><button class="btn primary" id="nuevo">${cli ? 'Nueva venta a crédito' : 'Nueva factura de proveedor'}</button>
-        <button class="btn" id="imp">Importar de Excel (SICAR)</button></div>` : ''}
+        <a class="btn" href="#cargar">Importar archivos</a></div>` : ''}
       <div class="tabs">${[['abiertas', 'Pendientes'], ['cerradas', 'Pagadas y canceladas'], ['todas', 'Todas']].map(([k, l]) => `<button class="btn small${S[key + 'Est'] === k ? ' on' : ''}" data-est="${k}">${l}</button>`).join('')}
         <span class="muted" style="align-self:center">Pendiente <b>${c$(tot)}</b> · vencido <b class="${venc ? 'amt-out' : ''}">${c$(venc)}</b></span></div>
       <div class="card tbl">${rows.length ? `<table class="cards"><thead><tr><th>${cli ? 'Cliente' : 'Proveedor'}</th><th>Folio</th><th>Fecha</th><th>Vence</th><th class="n">Total</th><th class="n">Pendiente</th><th>Estado</th><th></th></tr></thead><tbody>
@@ -737,10 +714,6 @@
         try { await api(key, { method: 'POST', body: formData(m.querySelector('.box')) }); m.remove(); await loadCat(); reload(); } catch (er) { m.querySelector('.err').textContent = errMsg(er); }
       };
     };
-    const imp = document.getElementById('imp');
-    if (imp) imp.onclick = () => importModal(key + '/importar', cli ? 'Importar cuentas por cobrar' : 'Importar cuentas por pagar',
-      `Columnas: <b>${cli ? 'Cliente' : 'Proveedor'}</b>, <b>Total</b> y, de preferencia, <b>Folio</b>, <b>Fecha</b>, <b>Vencimiento</b> (o Días de crédito) y <b>Saldo</b>. Quien no exista se crea. Un folio repetido se salta.`,
-      '', async () => { await loadCat(); });
     main().onclick = async (e) => {
       const b = e.target.closest('[data-pago],[data-prog],[data-aprob],[data-comp],[data-ver]'); if (!b) return;
       const x = rows.find((r) => String(r.id) === (b.dataset.pago || b.dataset.prog || b.dataset.aprob || b.dataset.comp || b.dataset.ver));
@@ -800,7 +773,7 @@
       <div class="grid">${t.cuentas.map((c) => `<div class="card kpi"><div class="l">${esc(c.nombre)}${c.terminacion ? ' ··' + esc(c.terminacion) : ''} ${c.incluir ? '' : '<span class="pill">fuera</span>'}</div>
         <div class="v">${c.fecha_saldo ? c$(c.saldo) : '—'}</div><div class="n">${c.fecha_saldo ? 'corte ' + fmtF(c.fecha_saldo) + ' + movimientos' : 'Saldo por capturar'}</div>
         ${canEdit() ? `<div class="row" style="margin-top:6px"><button class="btn small" data-saldo="${c.id}">Actualizar saldo</button>${canAdmin() ? `<button class="btn small" data-editc="${c.id}">Editar</button>` : ''}</div>` : ''}</div>`).join('')}</div>
-      ${canEdit() ? `<div class="card row"><button class="btn primary" id="imp">Importar estado de cuenta (Excel/CSV)</button><button class="btn" id="man">Anotar movimiento</button>
+      ${canEdit() ? `<div class="card row"><a class="btn primary" href="#cargar">Importar estado de cuenta</a><button class="btn" id="man">Anotar movimiento</button>
         ${canAdmin() ? '<button class="btn" id="nc">Agregar cuenta</button>' : ''}</div>` : ''}
       <div class="row noprint" style="margin-bottom:10px"><input type="date" id="bd" value="${S.bDesde}" style="max-width:170px"><span class="muted">a hoy</span>
         <select id="bc" style="max-width:220px">${opts(S.cat.cuentas, (c) => c.nombre, S.bCuenta || '', 'Todas las cuentas')}</select>
@@ -844,10 +817,6 @@
       try { await api('movimientos/' + m.id, { method: 'PATCH', body: { categoria: s.value, aplicar_a_todos: !!todos } }); if (todos) reload(); } catch (er) { alert(errMsg(er)); }
     };
     if (!canEdit()) return;
-    document.getElementById('imp').onclick = () => importModal('movimientos/importar', 'Importar estado de cuenta',
-      'Exporta el estado de cuenta en Excel o CSV desde la banca en línea. Columnas: <b>Fecha</b>, <b>Concepto</b>, <b>Cargo</b> y <b>Abono</b> (o un <b>Monto</b> con signo) y, si viene, <b>Saldo</b>. Importar dos veces el mismo archivo no duplica nada.',
-      `<div class="wide"><label>Cuenta</label><select name="cuenta_id">${opts(activos('cuentas'), (c) => c.nombre)}</select></div>
-       <div class="wide"><label><input type="checkbox" name="actualizar_saldo" style="width:auto" checked> Tomar el saldo del último renglón como saldo de la cuenta</label></div>`, async () => { await loadCat(); });
     document.getElementById('man').onclick = () => {
       const m = modal(`<h2 style="margin-top:0">Anotar movimiento</h2><div class="form">
         <div><label>Cuenta</label><select name="cuenta_id">${opts(activos('cuentas'), (c) => c.nombre)}</select></div>
@@ -907,7 +876,7 @@
     };
   };
 
-  /* ── Subir archivos: todos juntos, cada uno se reconoce solo ── */
+  /* ── Importar archivos: el ÚNICO lugar para cargar información; todos juntos, cada uno se reconoce solo ── */
   const DESCARGAS = [
     ['creditos_clientes', 'Créditos a Clientes', 'Reportes → Clientes (Créditos) → Créditos Clientes. Estado: Por Pagar · Tipo: Sí (con detalle).', 'Cada semana', 'Lo que te deben, folio por folio: cartera vencida, días para cobrar y la proyección.'],
     ['creditos_proveedores', 'Créditos de Proveedores', 'Reportes → Proveedores (Créditos) → Créditos Proveedores. Estado: Por Pagar · Tipo: Sí.', 'Cada semana', 'Lo que debes, con vencimientos: pagos programados y la proyección.'],
@@ -933,19 +902,23 @@
     return `${r.creados || 0} documentos creados${r.no_leidos ? ` · ${r.no_leidos} renglones no se cargaron (folio repetido, total en cero o ya pagado)` : ''}`;
   }
   R.cargar = async function () {
-    const st = await api('cargar/estado');
+    const [st, imps] = await Promise.all([api('cargar/estado'), api('sicar/importaciones')]);
     const ult = Object.fromEntries((st.sicar || []).map((x) => [x.tipo, x]));
     const dias = (f) => (f ? Math.round((new Date(st.hoy) - new Date(String(f).slice(0, 10))) / 86400000) : null);
     const frescura = (f, max) => { const d = dias(f); return d == null ? '<span class="pill">nunca</span>' : `<span class="pill ${d > max ? 'warn' : 'ok'}">${fmtF(String(f).slice(0, 10))}</span>`; };
-    main().innerHTML = `<h1>Subir archivos</h1><p class="sub"><a href="guia-carga.html" target="_blank" rel="noopener">Ver la guía paso a paso</a> · Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (PDF de BBVA o HSBC tal como lo descargas, o Excel/CSV de cualquier banco). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
+    main().innerHTML = `<h1>Importar archivos</h1><p class="sub"><a href="guia-carga.html" target="_blank" rel="noopener">Ver la guía paso a paso</a> · Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (PDF de BBVA o HSBC tal como lo descargas, o Excel/CSV de cualquier banco). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
       ${canEdit() ? `<div class="card"><label class="drop" id="multi"><input type="file" multiple accept=".pdf,.xls,.xlsx,.csv"><span>Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos</span></label><div class="err"></div></div><div id="cres"></div>` : '<div class="note">Tu usuario es de solo lectura: no puede subir archivos.</div>'}
       <h2>Qué descargar de SICAR</h2><div class="card tbl"><table class="cards"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Cada cuánto</th><th>Para qué</th><th>Último</th></tr></thead><tbody>
         ${DESCARGAS.map(([k, n, d, c, p]) => `<tr><td data-l="Reporte"><b>${esc(n)}</b></td><td data-l="Dónde">${esc(d)}</td><td data-l="Cada cuánto">${esc(c)}</td><td data-l="Para qué">${esc(p)}</td><td data-l="Último">${frescura(ult[k] && ult[k].ultima, c === 'Cada semana' ? 8 : 35)}</td></tr>`).join('')}</tbody></table>
-        <p class="muted" style="font-size:13px">En cada reporte: <b>Previa (F3)</b> y luego guardar en Excel o PDF. Puedes subir varios a la vez. Si instalas el <a href="#sicar">puente automático</a>, los que guardes en la carpeta SICAR-Forzza se suben solos.</p></div>
+        <p class="muted" style="font-size:13px">En cada reporte: <b>Previa (F3)</b> y luego guardar en Excel o PDF. Puedes subir varios a la vez.</p></div>
       <h2>Estados de cuenta</h2><div class="card tbl">${(st.bancos || []).length ? `<table class="cards"><thead><tr><th>Cuenta</th><th>Movimientos hasta</th></tr></thead><tbody>
         ${st.bancos.map((b) => `<tr><td data-l="Cuenta">${esc(b.nombre)}${b.terminacion ? ' ··' + esc(b.terminacion) : ''}</td><td data-l="Hasta">${frescura(b.hasta, 8)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no hay cuentas. Agrégalas en <a href="#bancos">Bancos</a>.</p>'}
         <p class="muted" style="font-size:13px">BBVA y HSBC: sube el PDF tal como lo descargas; se revisa que sume exactamente el saldo final del banco. Otros bancos: descárgalo en Excel o CSV. La cuenta se reconoce por sus últimos 4 dígitos o por el nombre del banco en el archivo; ponlos en el nombre del archivo si no aparecen (por ejemplo <code>BBVA 1234 octubre.xlsx</code>).</p></div>
-      <h2>Próximamente</h2><div class="card"><p class="muted" style="margin:0">Estos reportes de SICAR todavía no se leen: ${PRONTO.map(esc).join(' · ')}. El efectivo de la caja ya se ve en los estados de cuenta cuando se deposita; si los necesitas, mándanos un ejemplo real de cada uno (Previa → Excel).</p></div>`;
+      <h2>Próximamente</h2><div class="card"><p class="muted" style="margin:0">Estos reportes de SICAR todavía no se leen: ${PRONTO.map(esc).join(' · ')}. El efectivo de la caja ya se ve en los estados de cuenta cuando se deposita; si los necesitas, mándanos un ejemplo real de cada uno (Previa → Excel).</p></div>
+      <h2>Reportes de SICAR importados</h2><div class="card tbl">${imps.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Reporte</th><th>Archivo</th><th>Quién</th><th>Resultado</th><th>Cuadra</th></tr></thead><tbody>
+        ${imps.slice(0, 30).map((i) => `<tr><td data-l="Fecha">${fmtF(String(i.created_at).slice(0, 10))}</td><td data-l="Reporte">${esc(i.tipo.replace(/_/g, ' '))}</td><td data-l="Archivo">${esc(i.archivo || '')}</td>
+          <td data-l="Quién">${esc(i.por || '')}</td><td data-l="Resultado">${esc(Object.entries((i.resumen && i.resumen.conteo) || {}).map(([k, n]) => `${RES_LBL[k] || k}: ${n}`).join(' · '))}</td>
+          <td data-l="Cuadra">${i.cuadra === true ? '<span class="pill ok">sí</span>' : i.cuadra === false ? '<span class="pill bad">no</span>' : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no se importa nada.</p>'}</div>`;
     if (!canEdit()) return;
     const zone = document.getElementById('multi'), inp = zone.querySelector('input');
     let lote = [];
@@ -997,105 +970,9 @@
   };
 
   /* ── SICAR ── */
-  const SICAR_REPORTES = [
-    ['Créditos de Proveedores', 'Reportes → Proveedores (Créditos) → Créditos Proveedores. Estado: Por Pagar · Tipo: Sí (con detalle).', 'Sincroniza lo que debes, folio por folio, con vencimiento.'],
-    ['Créditos a Clientes', 'Reportes → Clientes (Créditos) → Créditos Clientes. Estado: Por Pagar · Tipo: Sí (con detalle).', 'Sincroniza lo que te deben, folio por folio.'],
-    ['Créditos por Periodo', 'Reportes → Clientes (o Proveedores) → Créditos por Periodo.', 'Compara los saldos de SICAR con los de la app, por persona.'],
-    ['General de Compras', 'Reportes → Compras → General. Estado: Todos.', 'Compras (COM) y gastos (GAS) por mes y por proveedor.'],
-    ['General de Ventas', 'Reportes → Ventas → General.', 'Ventas por mes y por cliente.'],
-    ['Abonos de Clientes / a Proveedor', 'Reportes → Clientes (Créditos) → Abonos.', 'Historial de cobranza por mes (no mueve saldos).']
-  ];
   const RES_LBL = { articulos: 'Artículos leídos', saldo_guardado: 'Saldos por persona guardados', nuevo: 'Nuevos', actualizado: 'Actualizados con abonos de SICAR', sin_cambio: 'Sin cambio', diferencia: 'SICAR dice más que la app (revisar)', pagado_en_sicar: 'Ya pagados en SICAR (no se crean)',
     ya_no_aparece: 'Abiertos en la app que SICAR ya no trae (revisar)', cancelado_en_app: 'Cancelados en la app', ya_estaba: 'Ya estaban', coincide: 'Coinciden', no_esta_en_app: 'No están en la app' };
-  const DET_LBL = { nuevo: 'Nuevo', abono: 'Abono de SICAR', pagado: 'Pagado en SICAR', sicar_mayor: 'SICAR dice más', ya_no_aparece: 'Ya no aparece en SICAR', total_distinto: 'Total distinto',
-    cancelado_en_app: 'Cancelado en la app', diferencia: 'Diferencia', no_esta_en_app: 'No está en la app' };
-  function sicarResultado(r) {
-    const cuadra = r.cuadra === true ? `<div class="al info">La suma leída (${c$(r.total_leido)}) es igual al total que imprimió SICAR. El archivo se leyó completo.</div>`
-      : r.cuadra === false ? `<div class="al alto">Ojo: lo leído suma ${c$(r.total_leido)} y SICAR imprimió ${c$(r.total_impreso)}. Revisa antes de aplicar; puede faltar una página.</div>` : '';
-    const conteo = Object.entries(r.conteo || {}).map(([k, n]) => `<tr><td data-l="Resultado">${esc(RES_LBL[k] || k)}</td><td class="n" data-l="Cuántos">${n}</td></tr>`).join('');
-    const det = (r.detalle || []).filter((d) => d.resultado !== 'nuevo' || r.detalle.length < 60);
-    const porDoc = r.por_documento ? Object.entries(r.por_documento).map(([k, v]) => `${esc({ COM: 'Compras (COM)', GAS: 'Gastos (GAS)', DEV: 'Devoluciones (DEV)' }[k] || k)}: <b>${c$(v)}</b>`).join(' · ') : '';
-    return `<div class="card"><h2 style="margin-top:0">${esc(r.nombre)} ${r.aplicado ? '<span class="pill ok">aplicado</span>' : '<span class="pill warn">vista previa, aún no se guarda</span>'}</h2>
-      <p class="muted">${r.filtros && r.filtros.desde ? `Periodo ${fmtF(r.filtros.desde)} a ${fmtF(r.filtros.hasta)} · ` : ''}${r.filtros && r.filtros.estado ? 'Estado: ' + esc(r.filtros.estado) + ' · ' : ''}${r.n_errores ? `<b>${r.n_errores}</b> renglones no se pudieron leer` : 'todos los renglones se leyeron'}</p>
-      ${r.archivo_ya_importado ? `<div class="note">Este mismo archivo ya se importó el ${fmtF(String(r.archivo_ya_importado).slice(0, 10))}. Volver a aplicarlo no duplica nada.</div>` : ''}
-      ${cuadra}${r.aviso ? `<div class="note">${esc(r.aviso)}</div>` : ''}${porDoc ? `<p>${porDoc}${r.cancelados ? ` · ${r.cancelados} renglones cancelados (X) no cuentan` : ''}</p>` : ''}
-      ${(r.partes_que_no_cuadran || []).length ? `<div class="note">En SICAR, el saldo de ${r.partes_que_no_cuadran.map(esc).join(', ')} no es la suma de sus documentos (puede haber devoluciones).</div>` : ''}
-      ${conteo ? `<table class="cards"><tbody>${conteo}</tbody></table>` : ''}
-      ${det.length ? `<details style="margin-top:10px"${r.aplicado ? '' : ' open'}><summary><b>Detalle (${det.length})</b></summary><div class="tbl"><table class="cards"><thead><tr><th>Persona</th><th>Folio</th><th>Resultado</th><th class="n">Saldo SICAR</th><th class="n">Saldo app</th></tr></thead><tbody>
-        ${det.map((d) => `<tr><td data-l="Persona">${esc(d.parte)}</td><td data-l="Folio">${esc(d.folio || '')}</td><td data-l="Resultado">${esc(DET_LBL[d.resultado] || d.resultado)}</td>
-          <td class="n" data-l="Saldo SICAR">${d.saldo_sicar != null ? c$(d.saldo_sicar) : '—'}</td><td class="n" data-l="Saldo app">${d.saldo_app != null ? c$(d.saldo_app) : '—'}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
-      ${(r.errores || []).length ? `<details style="margin-top:8px"><summary>Renglones que no se leyeron</summary>${r.errores.map((e) => `<div class="muted" style="font-size:13px">${esc(e.motivo)}: ${esc(e.texto || '')}</div>`).join('')}</details>` : ''}</div>`;
-  }
-  R.sicar = async function () {
-    const imps = await api('sicar/importaciones');
-    main().innerHTML = `<h1>Importar de SICAR</h1><p class="sub">SICAR no tiene conexión directa (API). Guarda el reporte en SICAR en PDF o Excel y súbelo aquí: la app lo reconoce, te muestra qué va a cambiar y lo aplica sin duplicar nada.</p>
-      ${canEdit() ? `<div class="card"><div class="form"><div class="wide">${dropBox('archivo', 'Arrastra aquí el reporte de SICAR (PDF o Excel), o toca para elegirlo').replace('accept=".xlsx,.csv"', 'accept=".pdf,.xls,.xlsx,.csv"')}</div>
-        <div class="row wide"><button class="btn primary" id="rev">Revisar</button><button class="btn" id="apl" disabled>Aplicar</button><span class="muted" id="st"></span></div><div class="err wide"></div></div></div><div id="res"></div>` : ''}
-      <h2>Qué reportes de SICAR sirven</h2><div class="card tbl"><table class="cards"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Para qué sirve aquí</th></tr></thead><tbody>
-        ${SICAR_REPORTES.map(([n, d, p]) => `<tr><td data-l="Reporte"><b>${esc(n)}</b></td><td data-l="Dónde">${esc(d)}</td><td data-l="Para qué">${esc(p)}</td></tr>`).join('')}</tbody></table>
-        <p class="muted" style="font-size:13px">En cada reporte: "Previa (F3)" y luego guardar en Excel o PDF. Los saldos los manda SICAR: si SICAR registra un abono, aquí se refleja; si SICAR dice que se debe más que en la app, no se toca y se avisa.</p></div>
-      <h2>Importaciones</h2><div class="card tbl">${imps.length ? `<table class="cards"><thead><tr><th>Fecha</th><th>Reporte</th><th>Archivo</th><th>Origen</th><th>Resultado</th><th>Cuadra</th></tr></thead><tbody>
-        ${imps.map((i) => `<tr><td data-l="Fecha">${fmtF(String(i.created_at).slice(0, 10))}</td><td data-l="Reporte">${esc(i.tipo.replace(/_/g, ' '))}</td><td data-l="Archivo">${esc(i.archivo || '')}</td>
-          <td data-l="Origen">${i.origen === 'puente' ? 'Puente' : esc(i.por || '')}</td><td data-l="Resultado">${esc(Object.entries((i.resumen && i.resumen.conteo) || {}).map(([k, n]) => `${RES_LBL[k] || k}: ${n}`).join(' · '))}</td>
-          <td data-l="Cuadra">${i.cuadra === true ? '<span class="pill ok">sí</span>' : i.cuadra === false ? '<span class="pill bad">no</span>' : '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no se importa nada.</p>'}</div>
-      ${canAdmin() ? `<h2>Puente automático</h2><div class="card" id="puente"><p>Sube solos los reportes de SICAR desde la computadora donde está SICAR. Se instala <b>una sola vez</b>, en 3 pasos:</p>
-        <ol style="margin:0 0 12px 18px;padding:0;line-height:1.6"><li>En la computadora donde está SICAR, abre esta página y toca <b>Descargar instalador</b>.</li>
-          <li>Abre el archivo descargado (<b>instalar-puente-sicar</b>). Si Windows muestra un aviso azul, toca <b>Más información</b> y luego <b>Ejecutar de todas formas</b>.</li>
-          <li>Cuando la ventana diga <b>LISTO</b>, guarda tus reportes de SICAR en la carpeta <b>Documentos\\SICAR-Forzza</b>. Cada 15 minutos se suben solos.</li></ol>
-        <div class="row"><button class="btn primary" id="inst">Descargar instalador</button><a class="btn" href="guia-puente.html" target="_blank" rel="noopener">Ver la guía paso a paso</a></div><div id="kres"></div>
-        <details style="margin-top:12px"><summary class="muted">Opciones avanzadas (solo si te lo pide soporte)</summary>
-          <div class="row" style="margin-top:8px"><button class="btn" id="nk">Crear llave suelta</button><a class="btn" href="api/v1/sicar/puente.ps1">Descargar script sin llave</a></div></details>
-        <div id="klist" class="tbl" style="margin-top:10px"></div></div>` : ''}`;
-    if (canAdmin()) {
-      const pintarLlaves = async () => {
-        const ks = await api('llaves');
-        document.getElementById('klist').innerHTML = ks.length ? `<table class="cards"><thead><tr><th>Nombre</th><th>Empieza con</th><th>Último uso</th><th></th></tr></thead><tbody>${ks.map((k) => `<tr>
-          <td data-l="Nombre">${esc(k.nombre)}</td><td data-l="Llave"><code>${esc(k.prefijo)}…</code></td><td data-l="Último uso">${k.revoked_at ? '<span class="pill">revocada</span>' : k.last_used_at ? fmtF(String(k.last_used_at).slice(0, 10)) : 'nunca'}</td>
-          <td data-l="" class="right">${k.revoked_at ? '' : `<button class="btn small danger" data-rev="${k.id}">Revocar</button>`}</td></tr>`).join('')}</tbody></table>` : '';
-      };
-      pintarLlaves();
-      document.getElementById('nk').onclick = async () => {
-        try { const k = await api('llaves', { method: 'POST', body: { nombre: 'Puente SICAR' } });
-          document.getElementById('kres').innerHTML = `<div class="note">Tu llave (se muestra una sola vez): <code style="word-break:break-all">${esc(k.llave)}</code></div>`; pintarLlaves(); } catch (er) { alert(errMsg(er)); }
-      };
-      document.getElementById('inst').onclick = async (ev) => {
-        const btn = ev.currentTarget; btn.disabled = true;
-        try {
-          const r = await api('sicar/instalador', { method: 'POST', body: {} });
-          const url = URL.createObjectURL(new Blob([r.contenido], { type: 'application/octet-stream' }));
-          const a = document.createElement('a'); a.href = url; a.download = r.archivo; document.body.appendChild(a); a.click(); a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 5000);
-          document.getElementById('kres').innerHTML = `<div class="note" style="margin-top:10px">Listo: se descargó <b>${esc(r.archivo)}</b> (llave que empieza con <code>${esc(r.prefijo)}…</code>). Ábrelo en esta computadora. Si lo descargas otra vez se crea una llave nueva; puedes revocar la anterior abajo.</div>`;
-          pintarLlaves();
-        } catch (er) { alert(errMsg(er)); } finally { btn.disabled = false; }
-      };
-      document.getElementById('puente').onclick = async (e) => {
-        const b = e.target.closest('[data-rev]'); if (!b) return;
-        if (!confirm('¿Revocar esta llave? El puente que la use dejará de subir reportes.')) return;
-        await api('llaves/' + b.dataset.rev, { method: 'DELETE' }); pintarLlaves();
-      };
-    }
-    if (!canEdit()) return;
-    let archivo = null;
-    const inp = main().querySelector('input[type=file]');
-    inp.addEventListener('change', () => { archivo = inp.files[0] || null; document.getElementById('apl').disabled = true; document.getElementById('res').innerHTML = ''; });
-    const enviar = async (aplicar) => {
-      const err = main().querySelector('.err'); err.textContent = '';
-      if (!archivo) { err.textContent = 'Elige el reporte de SICAR.'; return; }
-      const fd = new FormData(); fd.append('archivo', archivo); fd.append('aplicar', aplicar ? '1' : '0');
-      const st = document.getElementById('st'); st.textContent = aplicar ? 'Aplicando…' : 'Leyendo el reporte…';
-      document.getElementById('rev').disabled = true; document.getElementById('apl').disabled = true;
-      try {
-        const r = await api('sicar/importar', { method: 'POST', body: fd });
-        document.getElementById('res').innerHTML = sicarResultado(r);
-        document.getElementById('apl').disabled = !!r.aplicado;
-        if (r.aplicado) { await loadCat(); setTimeout(() => R.sicar().then(() => { document.getElementById('res').innerHTML = sicarResultado(r); }), 50); }
-      } catch (er) { err.textContent = errMsg(er); }
-      st.textContent = ''; document.getElementById('rev').disabled = false;
-    };
-    document.getElementById('rev').onclick = () => enviar(false);
-    document.getElementById('apl').onclick = () => { if (confirm('¿Aplicar este reporte de SICAR?')) enviar(true); };
-  };
+  R.sicar = () => { location.hash = '#cargar'; }; // la pantalla vieja: todo se importa en «Importar archivos»
   R.sicar_resumen = async function () {
     const r = await api('sicar/resumen');
     const tot = (k) => r.meses.reduce((a, m) => a + m[k], 0);
@@ -1114,7 +991,7 @@
       return kpi(lbl + ' según SICAR', c$(f.saldo_sicar), `${venc}${f.personas} personas · importado ${fmtF(f.corte || String(f.fecha).slice(0, 10))} · ${app}`, f.saldo_app === f.saldo_sicar ? 'ok' : (f.vencido_sicar ? 'bad' : ''));
     };
     main().innerHTML = `<h1>Compras y ventas (SICAR)</h1><p class="sub">Lo importado de SICAR del ${fmtF(r.desde)} al ${fmtF(r.hasta)}. Solo documentos vigentes; las devoluciones restan.${r.ultima_importacion ? ' Última importación: ' + fmtF(String(r.ultima_importacion).slice(0, 10)) + '.' : ''}</p>
-      ${!r.meses.length && !r.conciliacion.cxc && !r.conciliacion.cxp ? '<div class="note">Aún no hay reportes importados. Ve a <a href="#sicar">Importar de SICAR</a>.</div>' : ''}
+      ${!r.meses.length && !r.conciliacion.cxc && !r.conciliacion.cxp ? '<div class="note">Aún no hay reportes importados. Ve a <a href="#cargar">Importar archivos</a>.</div>' : ''}
       <div class="grid">${kpi('Ventas', c$(tot('ventas')), 'promedio ' + c$(Math.round(tot('ventas') / n)) + ' al mes')}${kpi('Compras de material', c$(tot('compras')), 'promedio ' + c$(Math.round(tot('compras') / n)) + ' al mes')}
         ${kpi('Gastos (GAS)', c$(tot('gastos')), 'promedio ' + c$(Math.round(tot('gastos') / n)) + ' al mes')}${kpi('Cobrado (abonos)', c$(tot('cobrado')), 'según el reporte de abonos')}
         ${conc('Te deben', r.conciliacion.cxc)}${conc('Debes', r.conciliacion.cxp)}</div>

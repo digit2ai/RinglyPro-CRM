@@ -90,7 +90,7 @@ function hallazgos(f) {
   if (!f.por_pagar && !f.hay_cxp_sicar) {
     add({ codigo: 'FZ-SIN-CXP', severidad: 'oportunidad', titulo: 'No sabemos cuánto debes a proveedores',
       diagnostico: 'No hay facturas de proveedores cargadas, así que la proyección no ve esos pagos.',
-      prescripcion: 'En SICAR genera "Créditos de Proveedores" con Tipo: Sí y súbelo (o déjalo en la carpeta del puente).', evidencia: 'Por pagar vacío.', impacto: null, enlace: { href: '#sicar', label: 'Importar de SICAR' } });
+      prescripcion: 'En SICAR genera "Créditos de Proveedores" con Tipo: Sí y súbelo en Importar archivos.', evidencia: 'Por pagar vacío.', impacto: null, enlace: { href: '#cargar', label: 'Importar archivos' } });
   }
   if (f.reserva == null) {
     add({ codigo: 'FZ-SIN-RESERVA', severidad: 'oportunidad', titulo: 'No hay reserva mínima definida',

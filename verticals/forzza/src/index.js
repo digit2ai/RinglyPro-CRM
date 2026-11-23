@@ -193,20 +193,6 @@ router.use('/api/v1', api);
 // El parser global de src/app.js corre antes que este; el tope real es este chequeo.
 api.use((req, res, next) => (/json/.test(req.get('content-type') || '') && Number(req.get('content-length') || 0) > 300 * 1024 ? res.status(413).json({ error: 'archivo_muy_grande' }) : next()));
 api.use(express.json({ limit: '300kb' }));
-/* ── puente SICAR: la computadora de Forzza sube reportes con una llave (sin sesión, sin cabecera de navegador) ── */
-api.post('/ingest/sicar', (req, res, next) => sicarUpload.single('archivo')(req, res, next), async (req, res) => {
-  if (!SECRET) return res.status(503).json({ error: 'not_configured' });
-  try { await ready; } catch (_) { return res.status(503).json({ error: 'database_unavailable' }); }
-  const m = String(req.get('authorization') || '').match(/^Bearer\s+(fzk_[A-Za-z0-9_-]{20,80})$/);
-  if (!m) return res.status(401).json({ error: 'llave_invalida' });
-  const k = await one('SELECT id, tenant_id FROM fz_api_keys WHERE hash=:h AND revoked_at IS NULL AND scope=\'sicar\'', { h: hashKey(m[1]) });
-  if (!k) return res.status(401).json({ error: 'llave_invalida' });
-  if (tooMany('key|' + k.id, 120)) return res.status(429).json({ error: 'too_many_attempts' });
-  noteAttempt('key|' + k.id);
-  exec('UPDATE fz_api_keys SET last_used_at=NOW() WHERE id=:id', { id: k.id }).catch(() => {});
-  req.tenant = k.tenant_id; req.user = { id: null, email: 'puente-sicar#' + k.id, role: 'capturista' };
-  return importarSicar(req, res, { aplicar: true, origen: 'puente' });
-});
 api.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 api.use(async (req, res, next) => {
   if (!SECRET) return res.status(503).json({ error: 'not_configured' });
@@ -1115,10 +1101,9 @@ for (const key of Object.keys(DOC)) {
 }
 
 
-/* ── SICAR: importar sus reportes (PDF o Excel), historial, análisis y puente ── */
+/* ── SICAR: importar sus reportes (PDF o Excel), historial y análisis ── */
 const sicarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
 const PUBLIC_URL = String(process.env.FORZZA_PUBLIC_URL || 'https://aiagent.ringlypro.com/forzza/app').replace(/\/+$/, '');
-function hashKey(k) { return crypto.createHash('sha256').update(String(k)).digest('hex'); }
 /** PDF en un proceso aparte (ver pdf-child.js): renglones de celdas con su posición. */
 function parsePdfRows(buf) {
   if (module.exports._pdfRows) return module.exports._pdfRows(buf);
@@ -1345,100 +1330,6 @@ api.get('/cargar/estado', async (req, res) => {
     WHERE c.tenant_id=:t AND c.active GROUP BY c.id, c.nombre, c.terminacion ORDER BY c.nombre`, { t: req.tenant });
   res.json({ sicar, bancos, hoy: hoyMx() });
 });
-/* Llaves del puente SICAR (solo director/dueño). */
-api.get('/llaves', adminOnly, async (req, res) => {
-  res.json(await sel('SELECT id, nombre, prefijo, created_at, last_used_at, revoked_at FROM fz_api_keys WHERE tenant_id=:t ORDER BY id DESC', { t: req.tenant }));
-});
-api.post('/llaves', adminOnly, async (req, res) => {
-  const nombre = str(req.body && req.body.nombre, 80) || 'Puente SICAR';
-  const llave = 'fzk_' + crypto.randomBytes(24).toString('base64url');
-  const [r] = await exec(`INSERT INTO fz_api_keys (tenant_id,nombre,prefijo,hash,created_by) VALUES (:t,:n,:p,:h,:u) RETURNING id, nombre, prefijo, created_at`,
-    { t: req.tenant, n: nombre, p: llave.slice(0, 10), h: hashKey(llave), u: req.user.id });
-  audit(req, 'llave_creada', `${r[0].id} ${nombre}`);
-  res.status(201).json({ ...r[0], llave }); // se muestra UNA vez
-});
-api.delete('/llaves/:id', adminOnly, async (req, res) => {
-  const id = intId(req.params.id);
-  const [r] = await exec('UPDATE fz_api_keys SET revoked_at=NOW() WHERE id=:id AND tenant_id=:t AND revoked_at IS NULL RETURNING id', { id: id || 0, t: req.tenant });
-  if (!r.length) return res.status(404).json({ error: 'not_found' });
-  audit(req, 'llave_revocada', id);
-  res.json({ ok: true });
-});
-/** Script del puente (Windows): sube cada reporte que SICAR guarde en Documentos\SICAR-Forzza. */
-function puenteScript(llave) {
-  return [
-    '# Puente SICAR -> Forzza Capital',
-    '# Sube cada reporte de SICAR (Excel o PDF) que se guarde en la carpeta Documentos\\SICAR-Forzza.',
-    '# Lo normal es instalarlo con el instalador de la app (Importar de SICAR > Puente); no hay que editar nada.',
-    `$Llave = "${llave || 'PEGA_AQUI_LA_LLAVE'}"`,
-    `$Url = "${PUBLIC_URL}/api/v1/ingest/sicar"`,
-    '$Docs = [Environment]::GetFolderPath("MyDocuments")', // también cuando Documentos está en OneDrive
-    '$Carpeta = Join-Path $Docs "SICAR-Forzza"',
-    '$Enviados = Join-Path $Carpeta "enviados"',
-    '$Bitacora = Join-Path $Carpeta "bitacora.txt"',
-    'New-Item -ItemType Directory -Force -Path $Carpeta, $Enviados | Out-Null',
-    'if ($Llave -eq "PEGA_AQUI_LA_LLAVE") { Add-Content $Bitacora "$(Get-Date -Format s) Falta pegar la llave en el script"; exit 1 }',
-    'Get-ChildItem $Carpeta -File | Where-Object { @(".pdf", ".xls", ".xlsx", ".csv") -contains $_.Extension.ToLower() } | ForEach-Object {',
-    '  $salida = & curl.exe -s -w "`n%{http_code}" -H "Authorization: Bearer $Llave" -F "archivo=@$($_.FullName)" $Url',
-    '  $codigo = ($salida -split "`n")[-1]',
-    '  if ($codigo -eq "200") {',
-    '    Move-Item -Force $_.FullName (Join-Path $Enviados ("{0:yyyyMMdd-HHmmss}-{1}" -f (Get-Date), $_.Name))',
-    '    Add-Content $Bitacora "$(Get-Date -Format s) OK $($_.Name)"',
-    '  } else {',
-    '    Add-Content $Bitacora "$(Get-Date -Format s) ERROR $codigo $($_.Name) $salida"',
-    '  }',
-    '}',
-    ''
-  ].join('\r\n');
-}
-/** Instalador de un clic (.cmd): escribe el script con la llave, crea la carpeta y programa la tarea cada 15 min
- *  para el usuario actual (no pide permisos de administrador). Solo ASCII para que la consola no se descomponga. */
-function puenteInstalador(llave) {
-  const b64 = Buffer.from(puenteScript(llave), 'utf8').toString('base64');
-  return [
-    '@echo off',
-    'echo Instalando el puente SICAR - Forzza Capital...',
-    'powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText(\'%~f0\'); $i=$s.IndexOf(\'#\'+\'PSSTART\'); iex $s.Substring($i)"',
-    'echo.',
-    'pause',
-    'exit /b',
-    '#PSSTART',
-    'try {',
-    '  $docs = [Environment]::GetFolderPath("MyDocuments")',
-    '  $ps = Join-Path $docs "puente-sicar.ps1"',
-    `  $b64 = "${b64}"`,
-    '  [IO.File]::WriteAllText($ps, [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($b64)), (New-Object Text.UTF8Encoding $true))',
-    '  $carpeta = Join-Path $docs "SICAR-Forzza"',
-    '  New-Item -ItemType Directory -Force -Path $carpeta, (Join-Path $carpeta "enviados") | Out-Null',
-    '  $a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument (\'-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "\' + $ps + \'"\')',
-    '  $t = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15) -RepetitionDuration (New-TimeSpan -Days 3650)',
-    '  Register-ScheduledTask -TaskName "Puente SICAR Forzza" -Action $a -Trigger $t -Force -ErrorAction Stop | Out-Null',
-    '  Write-Host ""',
-    '  Write-Host "LISTO. El puente quedo instalado."',
-    '  Write-Host ("Guarda los reportes de SICAR en esta carpeta: " + $carpeta)',
-    '  Write-Host "Cada 15 minutos se suben solos a Forzza Capital."',
-    '  Start-Process explorer.exe $carpeta',
-    '} catch {',
-    '  Write-Host ""',
-    '  Write-Host ("NO se pudo instalar: " + $_.Exception.Message)',
-    '  Write-Host "Toma una foto de esta ventana y mandala a Digit2AI."',
-    '}',
-    ''
-  ].join('\r\n');
-}
-api.get('/sicar/puente.ps1', adminOnly, (req, res) => {
-  res.set({ 'Content-Type': 'text/plain; charset=utf-8', 'Content-Disposition': 'attachment; filename="puente-sicar.ps1"' });
-  res.send(puenteScript(null));
-});
-/** Crea una llave NUEVA y la entrega dentro del instalador. Es la única vez que se ve (igual que "Crear llave"). */
-api.post('/sicar/instalador', adminOnly, async (req, res) => {
-  const llave = 'fzk_' + crypto.randomBytes(24).toString('base64url');
-  const [r] = await exec(`INSERT INTO fz_api_keys (tenant_id,nombre,prefijo,hash,created_by) VALUES (:t,'Puente SICAR (instalador)',:p,:h,:u) RETURNING id, prefijo`,
-    { t: req.tenant, p: llave.slice(0, 10), h: hashKey(llave), u: req.user.id });
-  audit(req, 'llave_creada', `${r[0].id} instalador`);
-  res.status(201).json({ archivo: 'instalar-puente-sicar.cmd', contenido: puenteInstalador(llave), prefijo: r[0].prefijo });
-});
-
 /* ── usuarios ────────────────────────────────────────────────────────── */
 api.get('/usuarios', async (req, res) => {
   // Todos ven la lista (para elegir aprobador en Ajustes); solo admin la edita.
@@ -1474,8 +1365,6 @@ api.patch('/usuarios/:id', adminOnly, async (req, res) => {
   await exec('UPDATE fz_users SET role=:r, active=:a WHERE id=:id AND tenant_id=:t', { r: role, a: active, id, t: req.tenant });
   // Quien deja de poder aprobar deja de ser el aprobador.
   if (!active || role === 'contador') await exec('UPDATE fz_config SET aprobador_user_id=NULL WHERE tenant_id=:t AND aprobador_user_id=:id', { t: req.tenant, id });
-  // Quien sale ya no deja llaves del puente vivas.
-  if (!active || role === 'contador') await exec('UPDATE fz_api_keys SET revoked_at=NOW() WHERE tenant_id=:t AND created_by=:id AND revoked_at IS NULL', { t: req.tenant, id });
   audit(req, 'usuario_updated', u.email);
   res.json({ ok: true });
 });
@@ -1498,5 +1387,4 @@ module.exports._waNumero = waNumero;
 module.exports._excelDate = excelDate;
 module.exports._pdfRows = null;
 module.exports._clasificarArchivo = (...a) => clasificarArchivo(...a);
-module.exports._puente = { puenteScript, puenteInstalador };
 module.exports._daliaDeps = daliaDeps; // la SIT puede inyectar aquí un lector de PDF

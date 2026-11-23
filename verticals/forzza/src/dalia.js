@@ -66,7 +66,7 @@ const TOOLS = [
   { name: 'historial_cobros_pagos', description: 'Abonos recibidos de clientes o pagos hechos a proveedores registrados en la app, por periodo y nombre, con totales.', input_schema: { type: 'object', properties: {
     lado: { type: 'string', enum: ['cobros', 'pagos'] }, nombre: { type: 'string' }, desde: { type: 'string' }, hasta: { type: 'string' } }, required: ['lado'] } },
   { name: 'catalogo', description: 'Clientes o proveedores registrados: días de crédito, límite de crédito, RFC, teléfono, notas, si está activo, y cuánto debe o se le debe hoy.', input_schema: { type: 'object', properties: { tipo: { type: 'string', enum: ['clientes', 'proveedores'] }, buscar: { type: 'string' } }, required: ['tipo'] } },
-  { name: 'configuracion_y_equipo', description: 'Ajustes de la empresa (reserva mínima, quién aprueba pagos, días de crédito por omisión, horizonte), las cuentas bancarias y su configuración, los usuarios y sus roles, las categorías válidas y el estado del puente automático de SICAR.', input_schema: { type: 'object', properties: {} } },
+  { name: 'configuracion_y_equipo', description: 'Ajustes de la empresa (reserva mínima, quién aprueba pagos, días de crédito por omisión, horizonte), las cuentas bancarias y su configuración, los usuarios y sus roles, y las categorías válidas.', input_schema: { type: 'object', properties: {} } },
   { name: 'cobertura_de_datos', description: 'Qué información está cargada y hasta qué fecha: movimientos por cuenta (primero, último, cantidad), importaciones de SICAR, documentos de SICAR por tipo y cuántos clientes, proveedores, documentos y gastos fijos hay.', input_schema: { type: 'object', properties: {} } },
   { name: 'buscar_sicar', description: 'Busca documentos importados de SICAR (compras, gastos GAS, ventas, abonos de clientes, abonos a proveedores) por nombre, folio y fechas. Devuelve totales y renglones. Solo vigentes salvo que se pida lo contrario; las devoluciones restan.', input_schema: { type: 'object', properties: {
     tipo: { type: 'string', enum: ['compra', 'gasto', 'venta', 'abono_cliente', 'abono_proveedor', 'todos'] }, texto: { type: 'string' }, desde: { type: 'string' }, hasta: { type: 'string' },
@@ -315,13 +315,12 @@ async function ejecutar(nombre, input, ctx) {
       const cfg = await D.config(tenant);
       const us = await D.sel('SELECT id, name, email, role, active, last_login::text AS last_login FROM fz_users WHERE tenant_id=:t ORDER BY active DESC, role, email', { t: tenant });
       const cs = await D.sel('SELECT nombre, banco, terminacion, tipo, uso, incluir, active, saldo_inicial, fecha_saldo::text AS fecha_saldo, notas FROM fz_cuentas WHERE tenant_id=:t ORDER BY incluir DESC, nombre', { t: tenant });
-      const ks = await D.sel('SELECT nombre, prefijo, created_at::text AS creada, last_used_at::text AS ultimo_uso, revoked_at IS NOT NULL AS revocada FROM fz_api_keys WHERE tenant_id=:t ORDER BY id DESC', { t: tenant });
       const ap = cfg.aprobador_user_id && us.find((u) => u.id === cfg.aprobador_user_id);
       return { reserva_minima: cfg.reserva_minima == null ? 'sin definir' : mp(cfg.reserva_minima), aprueba_pagos: ap ? (ap.name || ap.email) : 'cualquier director (no hay aprobador elegido)',
         dias_credito_clientes_por_omision: cfg.dias_credito_clientes, dias_credito_proveedores_por_omision: cfg.dias_credito_proveedores, horizonte_dias: cfg.horizonte_dias,
         usuarios: us.map((u) => ({ nombre: u.name, correo: u.email, rol: u.role, activo: u.active, ultimo_ingreso: u.last_login })),
         cuentas: cs.map((c) => ({ nombre: c.nombre, banco: c.banco, terminacion: c.terminacion, tipo: c.tipo, uso: c.uso, suma_al_efectivo: c.incluir, activa: c.active, saldo_de_corte: mp(c.saldo_inicial), fecha_de_corte: c.fecha_saldo, notas: c.notas })),
-        categorias_de_movimientos: D.CATEGORIAS, puente_sicar: ks.length ? ks : 'no hay llaves del puente creadas' };
+        categorias_de_movimientos: D.CATEGORIAS };
     }
     case 'cobertura_de_datos': {
       const cs = await D.sel(`SELECT c.nombre, c.incluir, c.fecha_saldo::text AS fecha_saldo, COUNT(m.id)::int AS n, MIN(m.fecha)::text AS primero, MAX(m.fecha)::text AS ultimo
@@ -465,9 +464,9 @@ PANTALLAS DE LA APP (para explicar cómo se hace algo):
 - Proyección: saldo día por día con documentos reales y/o el patrón de los bancos; se cambian supuestos (atraso de cobranza, % de entradas o salidas, mover un pago a proveedor, movimientos puntuales). Nada se guarda.
 - ¿Tomo este pedido?: simula una venta a crédito y muestra cómo cambia el punto más bajo. No aprueba crédito.
 - Por cobrar / Por pagar: documentos con abonos y pagos; los pagos a proveedores se PROGRAMAN (fecha), los APRUEBA el aprobador (Ajustes; si no hay, un director) y luego se pagan; cambiar fecha o monto de uno aprobado lo regresa a "programada". Un abono nunca puede pasar del saldo. Cancelar no borra.
-- Bancos: saldo de corte de cada cuenta, movimientos, importar estado de cuenta (Excel o CSV); se puede cambiar la categoría de un movimiento o de todos los de una misma contraparte.
+- Bancos: saldo de corte de cada cuenta y movimientos; se puede cambiar la categoría de un movimiento o de todos los de una misma contraparte.
 - Gastos fijos: nómina, IMSS, renta, financiamientos; se marcan pagados por fecha.
-- Importar de SICAR: se sube el reporte (PDF o Excel); se revisa antes de aplicar; los reportes de créditos son la fuente de los saldos. Hay un puente automático que sube los reportes desde la computadora de SICAR.
+- Importar archivos (menú Datos): el ÚNICO lugar para cargar información. Se sueltan juntos (hasta 12) los reportes de SICAR (PDF o Excel), los estados de cuenta (PDF de BBVA o HSBC, Excel/CSV de otros bancos) y listas de cuentas por cobrar o por pagar; cada archivo se reconoce solo, nada se duplica, y lo que no queda claro (por ejemplo a qué cuenta va un estado de cuenta) se pregunta. Los reportes de créditos de SICAR son la fuente de los saldos. Guía: «Guía para importar archivos».
 - Compras y ventas (SICAR), Clientes, Proveedores, Reserva y aprobación, Usuarios, Mi cuenta.
 - Roles: director (todo), capturista (captura e importa), contador (solo lectura; puede simular y preguntarte).
 - Tú solo consultas: no puedes registrar, cambiar ni borrar nada. Si te piden hacerlo, explica en qué pantalla y cómo se hace.

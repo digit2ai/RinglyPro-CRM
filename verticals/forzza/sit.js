@@ -611,31 +611,19 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     const srcIdx = strip(fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8'));
     ok('el patrón excluye los traspasos entre cuentas propias', /categoria <> 'traspaso'/.test(srcIdx));
 
-    console.log('\nPuente SICAR (llaves)');
-    ok('capturista no crea llaves (404)', (await req('POST', '/llaves', { cookie: capA.cookie, body: {} })).status === 404);
-    const lk = await req('POST', '/llaves', { cookie: dirA.cookie, body: { nombre: 'PC de caja' } });
-    ok('la llave se muestra una vez', lk.status === 201 && /^fzk_[A-Za-z0-9_-]{30,}$/.test(lk.json.llave));
-    const lks = (await req('GET', '/llaves', { cookie: dirA.cookie })).json;
-    ok('la lista no expone la llave ni su hash', JSON.stringify(lks).indexOf(lk.json.llave) < 0 && lks.every((k) => !('hash' in k)));
-    const ingest = (llave) => req('POST', '/ingest/sicar', { header: false, headers: llave ? { Authorization: 'Bearer ' + llave } : {}, raw: multipart({}, { name: 'r.pdf', type: 'application/pdf', data: '%PDF-' + JSON.stringify(cred) }) });
-    ok('puente sin llave = 401', (await ingest(null)).status === 401);
-    ok('puente con llave inventada = 401', (await ingest('fzk_' + 'x'.repeat(32))).status === 401);
-    const ig = await ingest(lk.json.llave);
-    ok('puente con llave: aplica en SU empresa y queda como origen "puente"', ig.status === 200 && ig.json.aplicado === true && (await q("SELECT tenant_id FROM fz_sicar_imports WHERE origen='puente' ORDER BY id DESC LIMIT 1"))[0].tenant_id === A);
-    await req('DELETE', '/llaves/' + lk.json.id, { cookie: dirA.cookie });
-    ok('llave revocada = 401', (await ingest(lk.json.llave)).status === 401);
-    ok('B no revoca llaves de A', (await req('DELETE', '/llaves/' + lk.json.id, { cookie: dirB.cookie })).status === 404);
-    const ps = await req('GET', '/sicar/puente.ps1', { cookie: dirA.cookie });
-    ok('el script del puente no lleva ninguna llave adentro', ps.status === 200 && /PEGA_AQUI_LA_LLAVE/.test(ps.buf.toString()) && !/fzk_[A-Za-z0-9]/.test(ps.buf.toString()));
-    ok('capturista no descarga el script (404)', (await req('GET', '/sicar/puente.ps1', { cookie: capA.cookie })).status === 404);
-    ok('capturista no descarga el instalador (404)', (await req('POST', '/sicar/instalador', { cookie: capA.cookie, body: {} })).status === 404);
-    const ins = await req('POST', '/sicar/instalador', { cookie: dirA.cookie, body: {} });
-    const cmd = ins.json && ins.json.contenido || '';
-    const psEmb = Buffer.from(((cmd.match(/\$b64 = "([^"]+)"/) || [])[1] || ''), 'base64').toString();
-    const llaveEmb = (psEmb.match(/\$Llave = "(fzk_[A-Za-z0-9_-]+)"/) || [])[1];
-    ok('instalador: trae una llave NUEVA ya puesta, solo ASCII y con fin de línea de Windows', ins.status === 201 && llaveEmb && !/[^\x00-\x7f]/.test(cmd) && /\r\n/.test(cmd) && /Register-ScheduledTask/.test(cmd) && /MyDocuments/.test(psEmb), JSON.stringify(ins.json && ins.json.archivo));
-    ok('instalador: esa llave sube reportes (y es de este tenant)', (await ingest(llaveEmb)).status === 200);
-    ok('instalador: la llave queda listada y se puede revocar', (await req('GET', '/llaves', { cookie: dirA.cookie })).json.some((k) => k.nombre === 'Puente SICAR (instalador)' && k.prefijo === ins.json.prefijo));
+    console.log('\nImportar archivos: un solo lugar; el puente automático se quitó (dueño 2026-11-23)');
+    ok('las rutas del puente ya no existen', [401, 403, 404].includes((await req('POST', '/ingest/sicar', { header: false, headers: { Authorization: 'Bearer fzk_' + 'x'.repeat(32) } })).status) && (await req('POST', '/ingest/sicar', { cookie: dirA.cookie })).status === 404
+      && (await req('GET', '/llaves', { cookie: dirA.cookie })).status === 404 && (await req('POST', '/sicar/instalador', { cookie: dirA.cookie, body: {} })).status === 404
+      && (await req('GET', '/sicar/puente.ps1', { cookie: dirA.cookie })).status === 404);
+    {
+      const ap = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+      const menu = ap.slice(ap.indexOf('const VIEWS = ['), ap.indexOf('];', ap.indexOf('const VIEWS = [')));
+      ok('menú: un solo lugar para importar ("Importar archivos") y sin puente ni "Importar de SICAR"', /\['cargar', 'Importar archivos'\]/.test(menu) && !/Importar de SICAR|guia-puente|'sicar',/.test(menu));
+      ok('ninguna otra pantalla importa: no queda importModal y Bancos/Por cobrar/Por pagar llevan a #cargar', !/importModal|movimientos\/importar|\/importar'/.test(ap) && (ap.match(/href="#cargar"/g) || []).length >= 3);
+      ok('sin rastros del puente en la app ni en el servidor', !/puente|llaves/.test(ap) && !/puenteScript|\/ingest\/sicar|'\/llaves'/.test(fs.readFileSync(path.join(__dirname, 'src', 'index.js'), 'utf8')) && !fs.existsSync(path.join(__dirname, 'public', 'guia-puente.html')));
+      const gc = fs.readFileSync(path.join(__dirname, 'public', 'guia-carga.html'), 'utf8');
+      ok('guía para importar: menciona "Importar archivos", no el puente, y todas sus imágenes existen', /Importar archivos/.test(gc) && !/puente/i.test(gc) && [...gc.matchAll(/src="(guia-carga\/[^"]+)"/g)].every((m) => fs.existsSync(path.join(__dirname, 'public', m[1]))));
+    }
     {
       const H = require('./src/hallazgos');
       const hs = H.hallazgos({ hoy: '2026-11-18', efectivo: 3000000, dias_efectivo: 5, salida_diaria: 600000, prob60: 0.42, prob90: 0.5, minimo_p50: -5000,
@@ -652,15 +640,12 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const appjs = require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8');
       const ti = appjs.indexOf("Lo que te deben y lo que debes"), tn = appjs.indexOf('${hallazgosHtml('), tp = appjs.indexOf('<h2>Próximos 14 días');
       ok('tablero: Neural Findings va entre "Lo que te deben" y "Próximos 14 días"', ti > 0 && tn > ti && tp > tn);
-      ok('menú: "Ingresa a SICAR" quitado; la guía para subir archivos está bajo SICAR (dueño 2026-11-23)', !/\['sicar_web', 'Ingresa a SICAR'\]/.test(appjs) && appjs.indexOf("'url:guia-carga.html'") > appjs.indexOf("['grp', 'SICAR']") && appjs.indexOf("'url:guia-carga.html'") < appjs.indexOf("['grp', 'Catálogos']"));
+      ok('menú: "Ingresa a SICAR" quitado; la guía para importar está junto a "Importar archivos"', !/\['sicar_web', 'Ingresa a SICAR'\]/.test(appjs) && appjs.indexOf("'url:guia-carga.html'") > appjs.indexOf("['cargar',") && appjs.indexOf("'url:guia-carga.html'") < appjs.indexOf("['grp', 'SICAR']"));
       { const keys = ['calif', 'liquidez', 'riesgo', 'flujo', 'cartera', 'concentracion', 'efectivo', 'dias', 'p90', 'minimo', 'montecarlo', 'meses', 'categorias', 'calor', 'conc', 'deben', 'dso', 'dpo', 'hallazgos', 'proximos'];
         ok('tablero: cada indicador tiene su nota explicativa y hay botón de imprimir', keys.every((k) => new RegExp('\\b' + k + ": \\['").test(appjs) && (appjs.includes("tip('" + k + "')") || (['liquidez', 'riesgo', 'flujo', 'cartera', 'concentracion'].includes(k) && appjs.includes('tip(p.clave)')))) && /id="imprimir"/.test(appjs) && /print\(\)/.test(appjs));
         ok('tablero: la parte de la calificación ya no muestra la regla', !/esc\(p\.regla\)/.test(appjs)); }
       ok('panel izquierdo plegable: se recuerda y se pliega solo en SICAR', /fz_side/.test(appjs) && /side-off/.test(appjs) && /v === 'sicar_web' && antes !== 'sicar_web'\) setSide\(true\)/.test(appjs));
     }
-    const guia = require('fs').readFileSync(require('path').join(__dirname, 'public', 'guia-puente.html'), 'utf8');
-    const imgs = [...guia.matchAll(/src="(guia\/[^"]+)"/g)].map((m) => m[1]);
-    ok('guía del puente: existe, está en el menú bajo SICAR y todas sus imágenes existen', imgs.length >= 6 && imgs.every((f) => require('fs').existsSync(require('path').join(__dirname, 'public', f))) && /\['url:guia-puente\.html'/.test(require('fs').readFileSync(require('path').join(__dirname, 'public', 'app.js'), 'utf8')));
     router._pdfRows = null;
     if (deferReal) {
       const real = fs.readFileSync(process.env.FORZZA_SICAR_MUESTRA);
