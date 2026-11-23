@@ -708,8 +708,7 @@
     const tot = rows.reduce((a, x) => a + x.pendiente, 0), venc = rows.filter((x) => x.dias_vencido > 0).reduce((a, x) => a + x.pendiente, 0);
     const aprueba = S.me.puede_aprobar;
     main().innerHTML = `<h1>${cli ? 'Por cobrar' : 'Por pagar'}</h1><p class="sub">${cli ? 'Ventas a crédito: quién te debe, cuánto y desde cuándo.' : 'Facturas de proveedores. Se programan, se aprueban y se pagan.'}</p>
-      ${canEdit() ? `<div class="card row"><button class="btn primary" id="nuevo">${cli ? 'Nueva venta a crédito' : 'Nueva factura de proveedor'}</button>
-        <a class="btn" href="#cargar">Importar archivos</a></div>` : ''}
+      ${canEdit() ? `<div class="card row"><button class="btn primary" id="nuevo">${cli ? 'Nueva venta a crédito' : 'Nueva factura de proveedor'}</button></div>` : ''}
       <div class="tabs">${[['abiertas', 'Pendientes'], ['cerradas', 'Pagadas y canceladas'], ['todas', 'Todas']].map(([k, l]) => `<button class="btn small${S[key + 'Est'] === k ? ' on' : ''}" data-est="${k}">${l}</button>`).join('')}
         <span class="muted" style="align-self:center">Pendiente <b>${c$(tot)}</b> · vencido <b class="${venc ? 'amt-out' : ''}">${c$(venc)}</b></span></div>
       <div class="card tbl">${rows.length ? `<table class="cards"><thead><tr><th>${cli ? 'Cliente' : 'Proveedor'}</th><th>Folio</th><th>Fecha</th><th>Vence</th><th class="n">Total</th><th class="n">Pendiente</th><th>Estado</th><th></th></tr></thead><tbody>
