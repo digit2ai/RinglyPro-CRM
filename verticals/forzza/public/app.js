@@ -211,7 +211,7 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
-    ['grp', 'Datos'], ['cargar', 'Subir archivos'],
+    ['grp', 'Datos'], ['cargar', 'Subir archivos'], ['url:guia-carga.html', 'Guía para subir archivos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['sicar_web', 'Ingresa a SICAR'], ['url:guia-puente.html', 'Guía del puente'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
@@ -937,7 +937,7 @@
     const ult = Object.fromEntries((st.sicar || []).map((x) => [x.tipo, x]));
     const dias = (f) => (f ? Math.round((new Date(st.hoy) - new Date(String(f).slice(0, 10))) / 86400000) : null);
     const frescura = (f, max) => { const d = dias(f); return d == null ? '<span class="pill">nunca</span>' : `<span class="pill ${d > max ? 'warn' : 'ok'}">${fmtF(String(f).slice(0, 10))}</span>`; };
-    main().innerHTML = `<h1>Subir archivos</h1><p class="sub">Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (PDF de BBVA o HSBC tal como lo descargas, o Excel/CSV de cualquier banco). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
+    main().innerHTML = `<h1>Subir archivos</h1><p class="sub"><a href="guia-carga.html" target="_blank" rel="noopener">Ver la guía paso a paso</a> · Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (PDF de BBVA o HSBC tal como lo descargas, o Excel/CSV de cualquier banco). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
       ${canEdit() ? `<div class="card"><label class="drop" id="multi"><input type="file" multiple accept=".pdf,.xls,.xlsx,.csv"><span>Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos</span></label><div class="err"></div></div><div id="cres"></div>` : '<div class="note">Tu usuario es de solo lectura: no puede subir archivos.</div>'}
       <h2>Qué descargar de SICAR</h2><div class="card tbl"><table class="cards"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Cada cuánto</th><th>Para qué</th><th>Último</th></tr></thead><tbody>
         ${DESCARGAS.map(([k, n, d, c, p]) => `<tr><td data-l="Reporte"><b>${esc(n)}</b></td><td data-l="Dónde">${esc(d)}</td><td data-l="Cada cuánto">${esc(c)}</td><td data-l="Para qué">${esc(p)}</td><td data-l="Último">${frescura(ult[k] && ult[k].ultima, c === 'Cada semana' ? 8 : 35)}</td></tr>`).join('')}</tbody></table>
@@ -1005,7 +1005,7 @@
     ['General de Ventas', 'Reportes → Ventas → General.', 'Ventas por mes y por cliente.'],
     ['Abonos de Clientes / a Proveedor', 'Reportes → Clientes (Créditos) → Abonos.', 'Historial de cobranza por mes (no mueve saldos).']
   ];
-  const RES_LBL = { saldo_guardado: 'Saldos por persona guardados', nuevo: 'Nuevos', actualizado: 'Actualizados con abonos de SICAR', sin_cambio: 'Sin cambio', diferencia: 'SICAR dice más que la app (revisar)', pagado_en_sicar: 'Ya pagados en SICAR (no se crean)',
+  const RES_LBL = { articulos: 'Artículos leídos', saldo_guardado: 'Saldos por persona guardados', nuevo: 'Nuevos', actualizado: 'Actualizados con abonos de SICAR', sin_cambio: 'Sin cambio', diferencia: 'SICAR dice más que la app (revisar)', pagado_en_sicar: 'Ya pagados en SICAR (no se crean)',
     ya_no_aparece: 'Abiertos en la app que SICAR ya no trae (revisar)', cancelado_en_app: 'Cancelados en la app', ya_estaba: 'Ya estaban', coincide: 'Coinciden', no_esta_en_app: 'No están en la app' };
   const DET_LBL = { nuevo: 'Nuevo', abono: 'Abono de SICAR', pagado: 'Pagado en SICAR', sicar_mayor: 'SICAR dice más', ya_no_aparece: 'Ya no aparece en SICAR', total_distinto: 'Total distinto',
     cancelado_en_app: 'Cancelado en la app', diferencia: 'Diferencia', no_esta_en_app: 'No está en la app' };

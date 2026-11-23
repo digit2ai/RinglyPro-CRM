@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Guía para subir archivos</title>
+<link rel="icon" href="favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#012a72;--ink:#0b1630;--txt:#1f2937;--mut:#4b5563;--line:#e2e6ee;--bg:#f3f5f9;--ok:#047857;--warn:#b45309;--soft:#e8eef9}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Montserrat,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+header img{height:30px}
+header small{opacity:.8;border-left:1px solid rgba(255,255,255,.4);padding-left:10px}
+main{max-width:860px;margin:0 auto;padding:24px 16px 60px}
+h1{color:var(--ink);font-size:30px;line-height:1.25;margin:10px 0 6px}
+.lead{font-size:19px;color:var(--mut);margin:0 0 22px}
+.box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:0 0 18px}
+.need{background:var(--soft);border-color:#cdd9f0}
+.need ul{margin:6px 0 0;padding-left:22px}
+.step{display:flex;gap:16px;align-items:flex-start}
+.num{flex:0 0 46px;height:46px;border-radius:50%;background:var(--navy);color:#fff;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center}
+.step h2{margin:6px 0 6px;font-size:21px;color:var(--ink)}
+.step p{margin:0 0 10px}
+.body{flex:1;min-width:0}
+figure{margin:12px 0 0}
+figure img{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block;background:#fff}
+figcaption{font-size:13px;color:var(--mut);margin-top:6px}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:6px;background:#fdf3e2;color:var(--warn);margin-right:6px}
+.tag.real{background:#e6f6ef;color:var(--ok)}
+.body{overflow-wrap:break-word}b.k{background:#fff7d6;border:1px solid #f1df9a;border-radius:5px;padding:0 6px}
+.faq h2{font-size:21px;margin:0 0 10px;color:var(--ink)}
+.faq h3{font-size:17px;margin:16px 0 4px;color:var(--ink)}
+.faq p{margin:0}
+.btn{display:inline-block;background:var(--navy);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px;min-height:44px}
+.done{background:#e6f6ef;border-color:#bfe6d3}
+table.t{width:100%;border-collapse:collapse;font-size:15px;margin-top:10px}
+table.t th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:600}
+table.t td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+.est{display:inline-block;font-weight:700;font-size:13px;padding:2px 10px;border-radius:99px}
+.est.ok{background:#e6f6ef;color:var(--ok)}.est.rev{background:#fdf3e2;color:var(--warn)}.est.no{background:#fdeaea;color:#b91c1c}.est.rep{background:#eef1f5;color:var(--mut)}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;background:#f6f7f9;border:1px solid var(--line);border-radius:10px;padding:10px}
+.toolbar span{background:#fff;border:1px solid #d5dae3;border-radius:6px;padding:6px 12px;font-size:14px}
+.toolbar span.hi{background:#fff7d6;border-color:#f1df9a;font-weight:700}
+.tip{background:#eef4fb;border:1px solid #cfe0f3;border-radius:10px;padding:10px 14px;margin-top:12px;font-size:15px}
+@media (max-width:600px){table.t{font-size:14px}table.t thead{display:none}table.t tr{display:block;border-bottom:1px solid var(--line);padding:6px 0}table.t td{display:block;border:0;padding:2px 4px}}
+@media (max-width:600px){h1{font-size:25px}.num{flex-basis:38px;height:38px;font-size:18px}.step{gap:12px}.box{padding:16px}}
+@media print{header{background:#fff;color:#000}header img{filter:invert(1)}.btn{display:none}}
+</style></head><body>
+<header><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></header>
+<main>
+<h1>Cómo subir tus archivos a Forzza Capital</h1>
+<p class="lead">Descargas tus reportes de SICAR y tus estados de cuenta, los arrastras todos juntos a Forzza Capital y la app los reconoce sola. Toma unos 10 minutos a la semana.</p>
+
+<div class="box need"><b>Antes de empezar necesitas:</b>
+<ul><li>Entrar a <b>SICAR</b> en la computadora de la tienda (o a Nube SICAR).</li>
+<li>Entrar a la <b>banca en línea</b> de BBVA y de HSBC.</li>
+<li>Una cuenta de Forzza Capital de <b>director</b> o <b>capturista</b>. El contador solo puede ver, no subir.</li></ul></div>
+
+<div class="box step"><div class="num">1</div><div class="body">
+<h2>Descarga los reportes de SICAR</h2>
+<p>En SICAR abre el menú <b>Reportes</b>, entra al reporte, elige el periodo y los filtros de la tabla, y toca <b class="k">Previa (F3)</b>. En la vista previa toca <b class="k">Excel (Alt+X)</b> o <b class="k">PDF (Alt+P)</b> y guárdalo en una carpeta fácil de encontrar, por ejemplo <b>Documentos → Forzza</b>.</p>
+<div class="toolbar" aria-label="Barra de botones de la vista previa de SICAR"><span class="hi">Previa (F3)</span><span class="hi">Excel (Alt+X)</span><span>PDF (Alt+P)</span><span>eMail (F11)</span><span>Imp (Ctrl+P)</span></div>
+<p class="muted" style="font-size:13px;color:var(--mut);margin-top:6px"><span class="tag">Ilustración</span>Los botones de SICAR. Excel o PDF sirven igual.</p>
+<table class="t"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Filtros</th><th>Cada cuánto</th></tr></thead><tbody>
+<tr><td><b>Créditos a Clientes</b></td><td>Reportes → Clientes (Créditos) → Créditos Clientes</td><td>Estado: Por Pagar · Tipo: Sí</td><td>Cada semana</td></tr>
+<tr><td><b>Créditos de Proveedores</b></td><td>Reportes → Proveedores (Créditos) → Créditos Proveedores</td><td>Estado: Por Pagar · Tipo: Sí</td><td>Cada semana</td></tr>
+<tr><td><b>General de Ventas</b></td><td>Reportes → Ventas → General</td><td>Estado: Todos · del 1 de enero a hoy</td><td>Cada semana</td></tr>
+<tr><td><b>General de Compras</b></td><td>Reportes → Compras → General</td><td>Estado: Todos (incluye Gastos)</td><td>Cada semana</td></tr>
+<tr><td><b>Abonos de Clientes</b></td><td>Reportes → Clientes (Créditos) → Abonos</td><td>Periodo: la semana o el mes</td><td>Cada semana</td></tr>
+<tr><td><b>Utilidades por Ventas</b></td><td>Reportes → Utilidades → Ventas</td><td>Periodo: el mes</td><td>Cada semana</td></tr>
+<tr><td><b>Inventario</b></td><td>Reportes → Artículos → Inventario</td><td>Precios de Compra Promedio</td><td>Cada mes</td></tr>
+<tr><td>Abonos a Proveedor</td><td>Reportes → Proveedores (Créditos) → Abonos</td><td>Periodo: el mes</td><td>Cada mes</td></tr>
+<tr><td>Utilidades por Artículos</td><td>Reportes → Utilidades → Artículos</td><td>Periodo: el mes</td><td>Cada mes</td></tr>
+<tr><td>Créditos Clientes por Periodo</td><td>Reportes → Clientes (Créditos) → Créditos por Periodo</td><td>—</td><td>Cada mes</td></tr>
+</tbody></table>
+<div class="tip"><b>Lo más importante:</b> los dos reportes de <b>Créditos</b> con <b>«Tipo: Sí»</b>. Así llegan factura por factura, con su vencimiento, y la app puede decirte quién te debe, cuánto está vencido y qué días te falta dinero. El <b>Inventario</b> genéralo con <b>Precios de Compra Promedio</b>: con precio de venta el valor incluye la utilidad.</div>
+</div></div>
+
+<div class="box step"><div class="num">2</div><div class="body">
+<h2>Descarga los estados de cuenta del banco</h2>
+<p>Entra a la banca en línea y descarga el estado de cuenta <b>del mes completo</b>.</p>
+<ul><li><b>BBVA y HSBC:</b> descarga el <b>PDF</b> tal como lo da el banco. No hace falta convertirlo.</li>
+<li><b>Otro banco</b> (Banorte, Santander…): descárgalo en <b>Excel o CSV</b>, con las columnas Fecha, Concepto, Cargo y Abono.</li></ul>
+<div class="tip">Antes de cargarlo, la app revisa que el saldo inicial más los movimientos dé exactamente el saldo final que imprime el banco. Si falta una página, no lo carga y te avisa.</div>
+</div></div>
+
+<div class="box step"><div class="num">3</div><div class="body">
+<h2>Entra a «Subir archivos»</h2>
+<p>Abre Forzza Capital (<b style="overflow-wrap:anywhere">aiagent.ringlypro.com/forzza/app</b>). En el menú de la izquierda, bajo <b>Datos</b>, toca <b>Subir archivos</b>. También está el botón blanco <b>Subir archivos</b> arriba a la derecha.</p>
+<figure><img src="guia-carga/01-menu.jpg" alt="Menú de la izquierda con Datos, Subir archivos" style="max-width:260px"><figcaption><span class="tag real">Pantalla de la app</span>El menú. «Subir archivos» está bajo Datos.</figcaption></figure>
+<figure><img src="guia-carga/02-pantalla.jpg" alt="Pantalla Subir archivos con el recuadro para arrastrar"><figcaption><span class="tag real">Pantalla de la app</span>La pantalla «Subir archivos». El recuadro punteado es donde se sueltan los archivos.</figcaption></figure>
+</div></div>
+
+<div class="box step"><div class="num">4</div><div class="body">
+<h2>Arrastra todos los archivos juntos</h2>
+<p>Abre la carpeta donde guardaste todo, <b>selecciónalos todos</b> (Ctrl+A en Windows, Cmd+A en Mac) y <b>arrástralos</b> al recuadro punteado. Puedes subir hasta <b>12 archivos</b> a la vez.</p>
+<p>¿Prefieres no arrastrar? Toca el recuadro, se abre la ventana para elegir archivos; ahí también puedes seleccionar varios.</p>
+<div class="tip">No importa el orden ni el nombre de los archivos: la app lee el título y las columnas de cada uno. Si subes el mismo archivo dos veces, no se duplica nada.</div>
+</div></div>
+
+<div class="box step"><div class="num">5</div><div class="body">
+<h2>Revisa el resultado</h2>
+<p>En unos segundos aparece una lista con lo que pasó con cada archivo:</p>
+<table class="t"><tbody>
+<tr><td><span class="est ok">Cargado</span></td><td>Se reconoció y ya está en la app. Dice qué reporte es y si cuadra con el total que imprime SICAR o el banco.</td></tr>
+<tr><td><span class="est rev">Revisar</span></td><td>La app no está segura de algo (por ejemplo, a qué cuenta va un estado de cuenta). No se carga hasta que tú lo confirmes (paso 6).</td></tr>
+<tr><td><span class="est no">No se cargó</span></td><td>No es un reporte que la app sepa leer. El mensaje dice qué hacer.</td></tr>
+<tr><td><span class="est rep">Repetido</span></td><td>Subiste el mismo archivo dos veces en esa carga; se leyó una sola vez.</td></tr>
+</tbody></table>
+<figure><img src="guia-carga/04-resultado.jpg" alt="Resultado de la carga con archivos cargados, uno por revisar y uno que no se cargó"><figcaption><span class="tag real">Pantalla de la app</span>Ejemplo con datos inventados: 5 cargados, 1 por revisar y 1 que no se cargó.</figcaption></figure>
+</div></div>
+
+<div class="box step"><div class="num">6</div><div class="body">
+<h2>Si alguno dice «Revisar», confírmalo</h2>
+<p>Lee el aviso amarillo. Elige qué es el archivo y, si es un estado de cuenta, <b>a qué cuenta pertenece</b>. Luego toca <b class="k">Cargar</b>. Si no quieres subirlo, toca <b>Omitir</b>.</p>
+<figure><img src="guia-carga/05-revisar.jpg" alt="Archivo por revisar con la lista para elegir la cuenta"><figcaption><span class="tag real">Pantalla de la app</span>La app no adivina la cuenta: te pregunta.</figcaption></figure>
+<figure><img src="guia-carga/06-revisado.jpg" alt="El mismo archivo ya cargado en la cuenta elegida"><figcaption><span class="tag real">Pantalla de la app</span>Después de tocar «Cargar».</figcaption></figure>
+<div class="tip">Para que no te pregunte, pon el banco o los últimos 4 dígitos de la cuenta en el nombre del archivo, por ejemplo <b>BBVA 1234 noviembre.xlsx</b>. Los PDF de BBVA y HSBC ya traen el número de cuenta.</div>
+</div></div>
+
+<div class="box step done"><div class="num" style="background:var(--ok)">7</div><div class="body">
+<h2>Listo: mira tus indicadores</h2>
+<p>Con los archivos cargados se actualizan el <b>Tablero</b>, la <b>Proyección</b>, <b>Por cobrar</b>, <b>Por pagar</b> y <b>Bancos</b>. En <b>SICAR → Compras y ventas</b> verás el margen bruto, el valor del inventario y qué clientes y artículos dejan más utilidad.</p>
+<figure><img src="guia-carga/07-margen.jpg" alt="Margen bruto, valor del inventario y clientes que más utilidad dejan"><figcaption><span class="tag real">Pantalla de la app</span>«Compras y ventas», con datos inventados.</figcaption></figure>
+<p style="margin-top:12px">En «Subir archivos», la columna <b>Último</b> dice cuándo subiste cada reporte. Si sale en amarillo o dice «nunca», ya toca subirlo.</p>
+<figure><img src="guia-carga/03-que-descargar.jpg" alt="Lista de reportes con la fecha de la última carga"><figcaption><span class="tag real">Pantalla de la app</span>La lista «Qué descargar de SICAR».</figcaption></figure>
+<figure><img src="guia-carga/08-estados.jpg" alt="Cuentas de banco con la fecha del último movimiento cargado"><figcaption><span class="tag real">Pantalla de la app</span>Hasta qué fecha hay movimientos de cada banco.</figcaption></figure>
+</div></div>
+
+<div class="box"><h2 style="margin:0 0 8px;font-size:21px;color:var(--ink)">Tu rutina de cada semana</h2>
+<ol style="margin:0;padding-left:22px"><li>En SICAR: Créditos a Clientes, Créditos de Proveedores, General de Ventas, General de Compras, Abonos de Clientes y Utilidades por Ventas.</li>
+<li>En el banco: el estado de cuenta (o los movimientos de la semana en Excel).</li>
+<li>En Forzza Capital: «Subir archivos» y arrastra todo junto.</li></ol>
+<p style="margin:10px 0 0">Una vez al mes agrega el <b>Inventario</b>, <b>Utilidades por Artículos</b>, <b>Abonos a Proveedor</b> y <b>Créditos por Periodo</b>.</p></div>
+
+<div class="box faq"><h2>Preguntas comunes</h2>
+<h3>¿Se duplica algo si subo el mismo reporte otra vez?</h3><p>No. Cada factura, abono y movimiento del banco se reconoce, y lo que ya estaba no se vuelve a sumar. Puedes subir el mes completo aunque ya hayas subido parte.</p>
+<h3>Un archivo dice «no cuadra».</h3><p>Lo que se leyó no da el total que imprimió SICAR o el banco. Casi siempre falta una página. Vuelve a descargarlo completo y súbelo otra vez.</p>
+<h3>Dice que el PDF no tiene texto.</h3><p>Es una foto o un escaneo. Descarga el reporte original desde SICAR o desde la banca en línea; una foto no se puede leer con certeza.</p>
+<h3>Mi banco no es BBVA ni HSBC.</h3><p>Descarga los movimientos en Excel o CSV desde la banca en línea. La app los lee si traen Fecha, Concepto y Cargo/Abono (o Monto).</p>
+<h3>¿Puedo hacerlo desde el celular?</h3><p>Sí: toca el recuadro y elige los archivos. Es más cómodo en la computadora porque ahí descargas de SICAR.</p>
+<h3>¿Hay una forma automática?</h3><p>Sí, para SICAR: el <a href="guia-puente.html">puente automático</a> sube solos los reportes que guardes en una carpeta. Los estados de cuenta se siguen subiendo aquí.</p>
+</div>
+
+<p style="text-align:center;margin-top:24px"><a class="btn" href="./#cargar">Ir a Subir archivos</a></p>
+</main></body></html>

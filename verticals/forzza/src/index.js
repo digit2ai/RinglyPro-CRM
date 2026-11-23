@@ -1270,7 +1270,8 @@ async function clasificarArchivo(buf, nombre, cuentas) {
     if (ec.error) return { estado: 'rechazado', motivo: 'Este PDF no es un reporte de SICAR ni un estado de cuenta que sepamos leer (por ahora BBVA y HSBC). Para otro banco, descárgalo en Excel o CSV desde la banca en línea.' };
     const rows = BP.aRenglones(ec);
     const c = CG.elegirCuenta(`${nombre} cuenta ${ec.cuenta || ''} ${ec.banco}`, [], cuentas);
-    const por_que = [`${ec.nombre} del ${ec.desde} al ${ec.hasta}`, `${ec.movimientos.length} movimientos`];
+    const dmy = (f) => f.split('-').reverse().join('/');
+    const por_que = [`del ${dmy(ec.desde)} al ${dmy(ec.hasta)}`, `${ec.movimientos.length} movimientos`];
     if (ec.cuadra) por_que.push('cuadra con el saldo final del banco');
     if (c.por_que) por_que.push('la cuenta ' + c.por_que);
     const motivo = !ec.cuadra ? 'El estado de cuenta no cuadra (' + ec.problemas.join('; ') + '). Revisa que el PDF esté completo antes de cargarlo.'
