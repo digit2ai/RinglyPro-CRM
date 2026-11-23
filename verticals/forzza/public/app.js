@@ -215,14 +215,15 @@
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
-  // Menú por categorías que se pliegan y despliegan; se recuerda en este equipo. La categoría de la pantalla abierta siempre se ve.
-  function grpCerrados() { try { return JSON.parse(localStorage.getItem('fz_grp_cerrados') || '[]'); } catch (e) { return []; } }
+  // Menú por categorías: TODAS plegadas por omisión (dueño 2026-11-23); se recuerda en este equipo cuáles abrió la persona.
+  // La categoría de la pantalla abierta siempre se ve.
+  function grpAbiertos() { try { return JSON.parse(localStorage.getItem('fz_grp_abiertos') || '[]'); } catch (e) { return []; } }
   function menuHtml() {
-    const cerr = grpCerrados(); let out = '', abierto = false;
+    const abiertos = grpAbiertos(); let out = '', abierto = false;
     for (const [k, l] of VIEWS) {
       if (k === 'grp') {
         if (abierto) out += '</div>';
-        const open = !cerr.includes(l);
+        const open = abiertos.includes(l);
         out += `<button type="button" class="grp" data-g="${esc(l)}" aria-expanded="${open}"><span>${l}</span><span class="chev" aria-hidden="true">▾</span></button><div class="gitems" data-g="${esc(l)}"${open ? '' : ' hidden'}>`;
         abierto = true; continue;
       }
@@ -235,7 +236,7 @@
     const btn = document.querySelector(`nav.side button.grp[data-g="${CSS.escape(g)}"]`), box = document.querySelector(`nav.side .gitems[data-g="${CSS.escape(g)}"]`);
     if (!btn || !box) return;
     btn.setAttribute('aria-expanded', String(!!abrir)); box.hidden = !abrir;
-    if (recordar) { const c = grpCerrados().filter((x) => x !== g); if (!abrir) c.push(g); try { localStorage.setItem('fz_grp_cerrados', JSON.stringify(c)); } catch (e) {} }
+    if (recordar) { const c = grpAbiertos().filter((x) => x !== g); if (abrir) c.push(g); try { localStorage.setItem('fz_grp_abiertos', JSON.stringify(c)); } catch (e) {} }
   }
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
