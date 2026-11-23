@@ -797,7 +797,7 @@
       <div class="grid">${t.cuentas.map((c) => `<div class="card kpi"><div class="l">${esc(c.nombre)}${c.terminacion ? ' ··' + esc(c.terminacion) : ''} ${c.incluir ? '' : '<span class="pill">fuera</span>'}</div>
         <div class="v">${c.fecha_saldo ? c$(c.saldo) : '—'}</div><div class="n">${c.fecha_saldo ? 'corte ' + fmtF(c.fecha_saldo) + ' + movimientos' : 'Saldo por capturar'}</div>
         ${canEdit() ? `<div class="row" style="margin-top:6px"><button class="btn small" data-saldo="${c.id}">Actualizar saldo</button>${canAdmin() ? `<button class="btn small" data-editc="${c.id}">Editar</button>` : ''}</div>` : ''}</div>`).join('')}</div>
-      ${canEdit() ? `<div class="card row"><a class="btn primary" href="#cargar">Importar estado de cuenta</a><button class="btn" id="man">Anotar movimiento</button>
+      ${canEdit() ? `<div class="card row"><button class="btn primary" id="man">Anotar movimiento</button>
         ${canAdmin() ? '<button class="btn" id="nc">Agregar cuenta</button>' : ''}</div>` : ''}
       <div class="row noprint" style="margin-bottom:10px"><input type="date" id="bd" value="${S.bDesde}" style="max-width:170px"><span class="muted">a hoy</span>
         <select id="bc" style="max-width:220px">${opts(S.cat.cuentas, (c) => c.nombre, S.bCuenta || '', 'Todas las cuentas')}</select>
