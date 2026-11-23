@@ -977,16 +977,8 @@ function excelDate(v) {
   const f = `${m[3].length === 2 ? '20' + m[3] : m[3]}-${String(m[2]).padStart(2, '0')}-${String(m[1]).padStart(2, '0')}`;
   return E.valid(f) ? f : null;
 }
-const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
-/** Busca el renglón de encabezados (entre los primeros 30) que tenga las columnas requeridas. */
-function encabezados(rows, campos, requeridos) {
-  for (let i = 0; i < Math.min(rows.length, 30); i++) {
-    const head = (rows[i] || []).map(norm), map = {};
-    for (const [k, re] of Object.entries(campos)) { const j = head.findIndex((h) => h && re.test(h)); if (j >= 0 && !Object.values(map).includes(j)) map[k] = j; }
-    if (requeridos.every((grupo) => grupo.some((k) => map[k] != null))) return { fila: i, map };
-  }
-  return null;
-}
+const CG = require('./cargar');
+const { encabezados, BANCO_CAMPOS, BANCO_REQ, DOC_CAMPOS, DOC_REQ } = CG;
 async function recibirArchivo(req, res) {
   if (!req.file) { res.status(400).json({ error: 'falta_archivo' }); return null; }
   const b = req.file.buffer;
@@ -1005,15 +997,10 @@ async function recibirArchivo(req, res) {
  * Duplicado (mismo archivo otra vez, o un estado que se traslapa) = se salta.
  * Coincide con un cobro/pago capturado en la app (misma cuenta, mismo monto, ±3 días) = lo concilia.
  */
-api.post('/movimientos/importar', importUpload.single('archivo'), async (req, res) => {
-  const c = await own('fz_cuentas', intId(req.body && req.body.cuenta_id) || 0, req.tenant);
-  if (!c) return res.status(404).json({ error: 'cuenta_not_found' });
-  const rows = await recibirArchivo(req, res); if (!rows) return;
-  const H = encabezados(rows, {
-    fecha: /^fecha|^fechaoper|^dia$/, concepto: /concepto|descripcion|detalle|movimiento/, referencia: /referencia|^ref|folio|autorizacion/,
-    cargo: /cargo|retiro|debito|salida/, abono: /abono|deposito|credito|entrada/, monto: /^monto|^importe/, saldo: /^saldo/
-  }, [['fecha'], ['concepto'], ['cargo', 'abono', 'monto']]);
-  if (!H) return res.status(400).json({ error: 'sin_encabezados', ayuda: 'El archivo debe tener columnas Fecha, Concepto y Cargo/Abono (o Monto).' });
+/** Aplica un estado de cuenta (renglones de Excel/CSV) a una cuenta. Corre dentro de la transacción t. */
+async function importarBanco(req, c, rows, opts, t) {
+  const H = encabezados(rows, BANCO_CAMPOS, BANCO_REQ);
+  if (!H) return { error: 'sin_encabezados', ayuda: 'El archivo debe tener columnas Fecha, Concepto y Cargo/Abono (o Monto).' };
   const { fila, map } = H, cell = (r, k) => (map[k] != null ? r[map[k]] : '');
   const resultados = [], nuevos = [], vistos = new Map();
   let ultimoSaldo = null;
@@ -1038,32 +1025,44 @@ api.post('/movimientos/importar', importUpload.single('archivo'), async (req, re
     if (saldo != null && (!ultimoSaldo || fecha >= ultimoSaldo.fecha)) ultimoSaldo = { fecha, saldo };
     nuevos.push({ renglon: i + 1, fecha, concepto: concepto || '(sin concepto)', referencia, monto: Math.round(monto * 100) / 100, hash });
   }
-  const actualizar = req.body.actualizar_saldo === '1' || req.body.actualizar_saldo === 'true';
   let creados = 0, duplicados = 0, conciliados = 0;
-  await db.transaction(async (t) => {
-    await exec('SELECT id FROM fz_cuentas WHERE id=:c AND tenant_id=:t FOR UPDATE', { c: c.id, t: req.tenant }, t);
-    const ya = new Set((await sel('SELECT hash FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND hash IS NOT NULL', { t: req.tenant, c: c.id }, t)).map((x) => x.hash));
-    const app = await sel(`SELECT id, fecha::text AS fecha, monto FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND NOT conciliado AND hash IS NULL AND origen IN ('manual','cobro','pago','fijo')`, { t: req.tenant, c: c.id }, t);
-    for (const n of nuevos) {
-      if (ya.has(n.hash)) { duplicados++; resultados.push({ renglon: n.renglon, ok: false, motivo: 'ya_estaba' }); continue; }
-      ya.add(n.hash);
-      const cand = app.filter((a) => !a.usado && E.toC(a.monto) === E.toC(n.monto) && Math.abs(E.diffDays(a.fecha, n.fecha)) <= 3)
-        .sort((a, b) => Math.abs(E.diffDays(a.fecha, n.fecha)) - Math.abs(E.diffDays(b.fecha, n.fecha)))[0];
-      if (cand) {
-        cand.usado = true;
-        await exec('UPDATE fz_movimientos SET fecha=:f, concepto=:co, referencia=:re, hash=:h, conciliado=TRUE WHERE id=:id AND tenant_id=:t',
-          { f: n.fecha, co: n.concepto, re: n.referencia, h: n.hash, id: cand.id, t: req.tenant }, t);
-        conciliados++; resultados.push({ renglon: n.renglon, ok: true, conciliado: true, monto: n.monto });
-        continue;
-      }
-      await exec(`INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,referencia,monto,origen,conciliado,hash,created_by)
-        VALUES (:t,:c,:f,:co,:re,:m,'importado',TRUE,:h,:u)`, { t: req.tenant, c: c.id, f: n.fecha, co: n.concepto, re: n.referencia, m: n.monto, h: n.hash, u: req.user.id }, t);
-      creados++; resultados.push({ renglon: n.renglon, ok: true, monto: n.monto });
+  await exec('SELECT id FROM fz_cuentas WHERE id=:c AND tenant_id=:t FOR UPDATE', { c: c.id, t: req.tenant }, t);
+  const ya = new Set((await sel('SELECT hash FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND hash IS NOT NULL', { t: req.tenant, c: c.id }, t)).map((x) => x.hash));
+  const app = await sel(`SELECT id, fecha::text AS fecha, monto FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND NOT conciliado AND hash IS NULL AND origen IN ('manual','cobro','pago','fijo')`, { t: req.tenant, c: c.id }, t);
+  for (const n of nuevos) {
+    if (ya.has(n.hash)) { duplicados++; resultados.push({ renglon: n.renglon, ok: false, motivo: 'ya_estaba' }); continue; }
+    ya.add(n.hash);
+    const cand = app.filter((a) => !a.usado && E.toC(a.monto) === E.toC(n.monto) && Math.abs(E.diffDays(a.fecha, n.fecha)) <= 3)
+      .sort((a, b) => Math.abs(E.diffDays(a.fecha, n.fecha)) - Math.abs(E.diffDays(b.fecha, n.fecha)))[0];
+    if (cand) {
+      cand.usado = true;
+      await exec('UPDATE fz_movimientos SET fecha=:f, concepto=:co, referencia=:re, hash=:h, conciliado=TRUE WHERE id=:id AND tenant_id=:t',
+        { f: n.fecha, co: n.concepto, re: n.referencia, h: n.hash, id: cand.id, t: req.tenant }, t);
+      conciliados++; resultados.push({ renglon: n.renglon, ok: true, conciliado: true, monto: n.monto });
+      continue;
     }
-    if (actualizar && ultimoSaldo) await exec('UPDATE fz_cuentas SET saldo_inicial=:s, fecha_saldo=:f WHERE id=:c AND tenant_id=:t', { s: ultimoSaldo.saldo, f: ultimoSaldo.fecha, c: c.id, t: req.tenant }, t);
-  });
-  audit(req, 'movimientos_importados', `${c.nombre}: ${creados} nuevos, ${conciliados} conciliados, ${duplicados} repetidos`);
-  res.json({ creados, conciliados, duplicados, saldo_actualizado: actualizar && ultimoSaldo ? ultimoSaldo : null, resultados: resultados.sort((a, b) => a.renglon - b.renglon) });
+    await exec(`INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,referencia,monto,origen,conciliado,hash,created_by)
+      VALUES (:t,:c,:f,:co,:re,:m,'importado',TRUE,:h,:u)`, { t: req.tenant, c: c.id, f: n.fecha, co: n.concepto, re: n.referencia, m: n.monto, h: n.hash, u: req.user.id }, t);
+    creados++; resultados.push({ renglon: n.renglon, ok: true, monto: n.monto });
+  }
+  let actualizar = !!(opts && opts.actualizar);
+  // En la carga de varios archivos, un estado de cuenta más viejo no pisa el saldo de uno más nuevo.
+  if (actualizar && ultimoSaldo && opts.soloSiMasNuevo) {
+    const cur = await one('SELECT fecha_saldo::text AS f FROM fz_cuentas WHERE id=:c AND tenant_id=:t', { c: c.id, t: req.tenant }, t);
+    if (cur && cur.f && ultimoSaldo.fecha < cur.f) actualizar = false;
+  }
+  if (actualizar && ultimoSaldo) await exec('UPDATE fz_cuentas SET saldo_inicial=:s, fecha_saldo=:f WHERE id=:c AND tenant_id=:t', { s: ultimoSaldo.saldo, f: ultimoSaldo.fecha, c: c.id, t: req.tenant }, t);
+  return { creados, conciliados, duplicados, saldo_actualizado: actualizar && ultimoSaldo ? ultimoSaldo : null, resultados: resultados.sort((a, b) => a.renglon - b.renglon) };
+}
+api.post('/movimientos/importar', importUpload.single('archivo'), async (req, res) => {
+  const c = await own('fz_cuentas', intId(req.body && req.body.cuenta_id) || 0, req.tenant);
+  if (!c) return res.status(404).json({ error: 'cuenta_not_found' });
+  const rows = await recibirArchivo(req, res); if (!rows) return;
+  const actualizar = req.body.actualizar_saldo === '1' || req.body.actualizar_saldo === 'true';
+  const out = await db.transaction((t) => importarBanco(req, c, rows, { actualizar }, t));
+  if (out.error) return res.status(400).json(out);
+  audit(req, 'movimientos_importados', `${c.nombre}: ${out.creados} nuevos, ${out.conciliados} conciliados, ${out.duplicados} repetidos`);
+  res.json(out);
 });
 
 /**
@@ -1072,44 +1071,45 @@ api.post('/movimientos/importar', importUpload.single('archivo'), async (req, re
  * Quien no existe se crea por nombre. Un folio repetido para la misma persona se salta.
  * Si el Saldo es menor que el Total, la diferencia entra como abono "saldo inicial".
  */
-for (const [key, d] of Object.entries(DOC)) {
+/** Cuentas por cobrar o por pagar desde renglones de Excel/CSV. Corre dentro de la transacción t. */
+async function importarDocs(key, req, rows, t) {
+  const d = DOC[key];
+  const H = encabezados(rows, DOC_CAMPOS(key), DOC_REQ);
+  if (!H) return { error: 'sin_encabezados', ayuda: `El archivo debe tener columnas ${d.nombre === 'cliente' ? 'Cliente' : 'Proveedor'} y Total (y de preferencia Folio, Fecha y Vencimiento).` };
+  const { fila, map } = H, cell = (r, k) => (map[k] != null ? r[map[k]] : '');
+  const resultados = []; let creados = 0;
+  const hoy = hoyMx();
+  for (let i = fila + 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || r.every((x) => String(x).trim() === '')) continue;
+    const nombre = str(cell(r, 'parte'), 200);
+    if (!nombre || /^total/i.test(nombre)) continue;
+    let total = num(cell(r, 'total')), saldo = map.saldo != null ? num(cell(r, 'saldo')) : null;
+    if (total == null && saldo != null) total = saldo;
+    if (!(total > 0)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'total' }); continue; }
+    if (saldo != null && (saldo < 0 || saldo > total)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'saldo' }); continue; }
+    if (saldo === 0) { resultados.push({ renglon: i + 1, ok: false, motivo: 'ya_pagado' }); continue; }
+    const fecha = excelDate(cell(r, 'fecha')) || hoy;
+    const body = { [d.nombre]: nombre, folio: cell(r, 'folio') === '' ? null : String(cell(r, 'folio')), fecha, total,
+      vencimiento: excelDate(cell(r, 'vencimiento')) || undefined, dias_credito: map.dias != null && cell(r, 'dias') !== '' ? cell(r, 'dias') : undefined };
+    await exec('SAVEPOINT fila', {}, t);
+    const out = await crearDoc(d, req, body, t, 'importado').catch((e) => ({ status: 400, error: 'renglon_invalido', detalle: e.message }));
+    if (out.error) { await exec('ROLLBACK TO SAVEPOINT fila', {}, t); resultados.push({ renglon: i + 1, ok: false, motivo: out.error }); continue; }
+    if (saldo != null && saldo < total) {
+      await exec(`INSERT INTO ${d.pagos} (tenant_id,${d.fk},fecha,monto,nota,created_by) VALUES (:t,:id,:f,:m,'Saldo inicial importado',:u)`,
+        { t: req.tenant, id: out.row.id, f: fecha, m: Math.round((total - saldo) * 100) / 100, u: req.user.id }, t);
+    }
+    creados++; resultados.push({ renglon: i + 1, ok: true, [d.nombre]: nombre, folio: out.row.folio, pendiente: saldo != null ? saldo : total });
+  }
+  return { creados, resultados };
+}
+for (const key of Object.keys(DOC)) {
   api.post('/' + key + '/importar', importUpload.single('archivo'), async (req, res) => {
     const rows = await recibirArchivo(req, res); if (!rows) return;
-    const parte = key === 'cxc' ? /^cliente|nombre|razonsocial/ : /^proveedor|nombre|razonsocial/;
-    const H = encabezados(rows, {
-      parte, folio: /folio|factura|documento|^doc|remision|^num/, fecha: /^fecha(?!.*venc)|^emision|^fechadoc/, vencimiento: /venc/,
-      dias: /^dias|credito|plazo/, total: /^total|^importe|^monto/, saldo: /^saldo|pendiente|porpagar|porcobrar|adeudo/
-    }, [['parte'], ['total', 'saldo']]);
-    if (!H) return res.status(400).json({ error: 'sin_encabezados', ayuda: `El archivo debe tener columnas ${d.nombre === 'cliente' ? 'Cliente' : 'Proveedor'} y Total (y de preferencia Folio, Fecha y Vencimiento).` });
-    const { fila, map } = H, cell = (r, k) => (map[k] != null ? r[map[k]] : '');
-    const resultados = []; let creados = 0;
-    const hoy = hoyMx();
-    await db.transaction(async (t) => {
-      for (let i = fila + 1; i < rows.length; i++) {
-        const r = rows[i];
-        if (!r || r.every((x) => String(x).trim() === '')) continue;
-        const nombre = str(cell(r, 'parte'), 200);
-        if (!nombre || /^total/i.test(nombre)) continue;
-        let total = num(cell(r, 'total')), saldo = map.saldo != null ? num(cell(r, 'saldo')) : null;
-        if (total == null && saldo != null) total = saldo;
-        if (!(total > 0)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'total' }); continue; }
-        if (saldo != null && (saldo < 0 || saldo > total)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'saldo' }); continue; }
-        if (saldo === 0) { resultados.push({ renglon: i + 1, ok: false, motivo: 'ya_pagado' }); continue; }
-        const fecha = excelDate(cell(r, 'fecha')) || hoy;
-        const body = { [d.nombre]: nombre, folio: cell(r, 'folio') === '' ? null : String(cell(r, 'folio')), fecha, total,
-          vencimiento: excelDate(cell(r, 'vencimiento')) || undefined, dias_credito: map.dias != null && cell(r, 'dias') !== '' ? cell(r, 'dias') : undefined };
-        await exec('SAVEPOINT fila', {}, t);
-        const out = await crearDoc(d, req, body, t, 'importado').catch((e) => ({ status: 400, error: 'renglon_invalido', detalle: e.message }));
-        if (out.error) { await exec('ROLLBACK TO SAVEPOINT fila', {}, t); resultados.push({ renglon: i + 1, ok: false, motivo: out.error }); continue; }
-        if (saldo != null && saldo < total) {
-          await exec(`INSERT INTO ${d.pagos} (tenant_id,${d.fk},fecha,monto,nota,created_by) VALUES (:t,:id,:f,:m,'Saldo inicial importado',:u)`,
-            { t: req.tenant, id: out.row.id, f: fecha, m: Math.round((total - saldo) * 100) / 100, u: req.user.id }, t);
-        }
-        creados++; resultados.push({ renglon: i + 1, ok: true, [d.nombre]: nombre, folio: out.row.folio, pendiente: saldo != null ? saldo : total });
-      }
-    });
-    audit(req, key + '_importadas', `${creados} de ${resultados.length}`);
-    res.json({ creados, resultados });
+    const out = await db.transaction((t) => importarDocs(key, req, rows, t));
+    if (out.error) return res.status(400).json(out);
+    audit(req, key + '_importadas', `${out.creados} de ${out.resultados.length}`);
+    res.json(out);
   });
 }
 
@@ -1153,13 +1153,8 @@ const SICAR_AYUDA = {
   demasiados_renglones: 'El reporte es muy grande. Genéralo por periodos más cortos (por ejemplo, un trimestre).'
 };
 /** Un solo camino para revisar y aplicar: la revisión corre lo mismo y se deshace al final. */
-async function importarSicar(req, res, { aplicar, origen }) {
-  if (!req.file) return res.status(400).json({ error: 'falta_archivo' });
-  const leido = await leerArchivoSicar(req.file.buffer);
-  if (leido.error) return res.status(415).json({ error: leido.error, ayuda: SICAR_AYUDA[leido.error] });
-  const rep = S.leer(leido.pages);
-  if (rep.error) return res.status(400).json({ error: rep.error, tipo: rep.tipo || null, ayuda: SICAR_AYUDA[rep.error] || rep.ayuda });
-  const meta = { archivo: str(req.file.originalname, 200) || null, sha256: crypto.createHash('sha256').update(req.file.buffer).digest('hex'), origen, hoy: hoyMx() };
+async function correrSicar(req, rep, buf, nombre, { aplicar, origen }) {
+  const meta = { archivo: str(nombre, 200) || null, sha256: crypto.createHash('sha256').update(buf).digest('hex'), origen, hoy: hoyMx() };
   const ctx = { exec, sel, one, tenant: req.tenant, user: req.user, waNumero, config };
   const ya = await one('SELECT id, created_at FROM fz_sicar_imports WHERE tenant_id=:t AND sha256=:h ORDER BY id DESC LIMIT 1', { t: req.tenant, h: meta.sha256 });
   const PREVIA = Symbol('previa');
@@ -1175,7 +1170,15 @@ async function importarSicar(req, res, { aplicar, origen }) {
   out.aplicado = !!aplicar;
   out.archivo_ya_importado = ya ? ya.created_at : null;
   if (aplicar) audit(req, 'sicar_importado', `${rep.tipo} ${meta.archivo || ''} ${JSON.stringify(out.conteo)}`);
-  res.json(out);
+  return out;
+}
+async function importarSicar(req, res, { aplicar, origen }) {
+  if (!req.file) return res.status(400).json({ error: 'falta_archivo' });
+  const leido = await leerArchivoSicar(req.file.buffer);
+  if (leido.error) return res.status(415).json({ error: leido.error, ayuda: SICAR_AYUDA[leido.error] });
+  const rep = S.leer(leido.pages);
+  if (rep.error) return res.status(400).json({ error: rep.error, tipo: rep.tipo || null, ayuda: SICAR_AYUDA[rep.error] || rep.ayuda });
+  res.json(await correrSicar(req, rep, req.file.buffer, req.file.originalname, { aplicar, origen }));
 }
 api.post('/sicar/importar', (req, res, next) => sicarUpload.single('archivo')(req, res, next), async (req, res) => {
   const aplicar = req.body && (req.body.aplicar === '1' || req.body.aplicar === 'true');
@@ -1212,6 +1215,87 @@ async function sicarResumenDe(tenant, query) {
     conciliacion: { cxc: fc, cxp: fp }, ultima_importacion: ult.u });
 }
 api.get('/sicar/resumen', async (req, res) => res.json(await sicarResumenDe(req.tenant, req.query)));
+
+/* ── Subir archivos: todos juntos, cada uno se reconoce solo (como app.synthexsai.com) ── */
+const cargarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 12 } });
+const TIPO_LBL = { banco: 'Estado de cuenta', cxc: 'Cuentas por cobrar', cxp: 'Cuentas por pagar' };
+const PREVIA_CARGA = Symbol('previa_carga');
+/** Corre fn(t) en una transacción; en vista previa la deshace al final y devuelve lo mismo. */
+async function enTransaccion(aplicar, fn) {
+  try {
+    return await db.transaction(async (t) => { const r = await fn(t); if (!aplicar && !r.error) throw Object.assign(new Error('previa'), { [PREVIA_CARGA]: r }); return r; });
+  } catch (e) { if (e && e[PREVIA_CARGA]) return e[PREVIA_CARGA]; throw e; }
+}
+api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, res, (e) => (e ? res.status(413).json({ error: e.code === 'LIMIT_FILE_SIZE' ? 'archivo_muy_grande' : 'demasiados_archivos' }) : next())), async (req, res) => {
+  const files = req.files || [];
+  if (!files.length) return res.status(400).json({ error: 'falta_archivo' });
+  const aplicar = !(req.body && req.body.aplicar === '0');
+  let decisiones = {};
+  try { decisiones = JSON.parse((req.body && req.body.decisiones) || '{}') || {}; } catch (_) { decisiones = {}; }
+  const cuentas = await sel('SELECT id, nombre, banco, terminacion, active FROM fz_cuentas WHERE tenant_id=:t ORDER BY incluir DESC, nombre', { t: req.tenant });
+  const items = [], vistos = new Set();
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i], nombre = str(f.originalname, 200) || 'archivo';
+    const it = { i, archivo: nombre };
+    items.push(it);
+    const h = crypto.createHash('sha256').update(f.buffer).digest('hex');
+    if (vistos.has(h)) { Object.assign(it, { estado: 'repetido', motivo: 'Es el mismo archivo que otro de esta carga: se lee una sola vez.' }); continue; }
+    vistos.add(h);
+    const dec = decisiones[String(i)] && typeof decisiones[String(i)] === 'object' ? decisiones[String(i)] : null;
+    if (dec && dec.omitir) { Object.assign(it, { estado: 'omitido' }); continue; }
+    // 1) ¿Es un reporte de SICAR? (PDF o Excel, todas las hojas)
+    const leido = await leerArchivoSicar(f.buffer);
+    if (leido.error) { Object.assign(it, { estado: 'rechazado', motivo: SICAR_AYUDA[leido.error] || ERR_CARGA[leido.error] || 'No se pudo leer el archivo.' }); continue; }
+    const rep = S.leer(leido.pages);
+    if (!rep.error) { Object.assign(it, { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: rep.nombre, estado: 'auto', por_que: ['título y columnas de SICAR: ' + rep.nombre], _rep: rep, _buf: f.buffer }); continue; }
+    if (rep.error !== 'no_es_reporte_sicar') { Object.assign(it, { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: S.NOMBRES[rep.tipo] || 'Reporte de SICAR', estado: 'rechazado', motivo: SICAR_AYUDA[rep.error] || rep.ayuda || 'No se pudo leer.' }); continue; }
+    if (f.buffer.slice(0, 5).toString() === '%PDF-') { Object.assign(it, { estado: 'rechazado', motivo: 'Este PDF no es un reporte de SICAR. Los estados de cuenta en PDF no se leen: descárgalo en Excel o CSV desde la banca en línea.' }); continue; }
+    // 2) Estado de cuenta o lista de cuentas por cobrar/pagar (primera hoja)
+    const p = await parseSheet(f.buffer);
+    if (p.error) { Object.assign(it, { estado: 'rechazado', motivo: ERR_CARGA[p.error] || 'No se pudo leer el archivo.' }); continue; }
+    const c = CG.clasificarTabla(p.rows, nombre, cuentas);
+    Object.assign(it, { tipo: c.tipo, nombre: TIPO_LBL[c.tipo] || null, estado: c.estado, motivo: c.motivo, por_que: c.por_que || [], cuenta_id: c.cuenta_id || null, candidatas: c.candidatas || [], _rows: p.rows });
+    if (dec && ['banco', 'cxc', 'cxp'].includes(dec.tipo)) {
+      if (dec.tipo === 'banco' && !(cuentas.some((x) => x.id === intId(dec.cuenta_id)))) { Object.assign(it, { estado: 'revisar', motivo: 'Elige la cuenta.' }); continue; }
+      Object.assign(it, { tipo: dec.tipo, nombre: TIPO_LBL[dec.tipo], estado: 'auto', motivo: null, cuenta_id: dec.tipo === 'banco' ? intId(dec.cuenta_id) : null, por_que: (it.por_que || []).concat('confirmado por ti') });
+    }
+  }
+  // Aplicar lo claro, en orden: saldos de SICAR, historial, listas, bancos.
+  for (const it of items.filter((x) => x.estado === 'auto').sort((a, b) => CG.orden(a) - CG.orden(b) || a.i - b.i)) {
+    try {
+      if (it.tipo === 'sicar') {
+        const r = await correrSicar(req, it._rep, it._buf, it.archivo, { aplicar, origen: 'manual' });
+        it.resultado = { conteo: r.conteo, cuadra: r.cuadra, total_impreso: r.total_impreso, total_leido: r.total_leido, n_errores: r.n_errores, filtros: r.filtros, archivo_ya_importado: r.archivo_ya_importado };
+      } else if (it.tipo === 'banco') {
+        const cta = cuentas.find((x) => x.id === it.cuenta_id);
+        const r = await enTransaccion(aplicar, (t) => importarBanco(req, cta, it._rows, { actualizar: true, soloSiMasNuevo: true }, t));
+        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda }); continue; }
+        it.cuenta = cta.nombre;
+        it.resultado = { creados: r.creados, conciliados: r.conciliados, duplicados: r.duplicados, no_leidos: r.resultados.filter((x) => !x.ok && x.motivo !== 'ya_estaba').length, saldo_actualizado: r.saldo_actualizado };
+        if (aplicar) audit(req, 'movimientos_importados', `${cta.nombre}: ${r.creados} nuevos, ${r.conciliados} conciliados, ${r.duplicados} repetidos (carga)`);
+      } else {
+        const r = await enTransaccion(aplicar, (t) => importarDocs(it.tipo, req, it._rows, t));
+        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda }); continue; }
+        it.resultado = { creados: r.creados, no_leidos: r.resultados.filter((x) => !x.ok).length };
+        if (aplicar) audit(req, it.tipo + '_importadas', `${r.creados} de ${r.resultados.length} (carga)`);
+      }
+      it.estado = aplicar ? 'cargado' : 'listo';
+    } catch (e) {
+      console.error('[forzza] cargar', it.archivo, e && e.message);
+      Object.assign(it, { estado: 'error', motivo: 'No se pudo guardar este archivo. Los demás no se afectan.' });
+    }
+  }
+  res.json({ aplicado: aplicar, archivos: items.map(({ _rep, _buf, _rows, ...x }) => x) });
+});
+const ERR_CARGA = { archivo_ilegible: 'No se pudo leer el archivo. Sube Excel (.xlsx/.xls), CSV o el PDF de SICAR.', archivo_muy_lento: 'El archivo tardó demasiado en leerse. Divídelo por periodos.',
+  formato_no_soportado: 'Formato no soportado. Sube Excel (.xlsx/.xls), CSV o el PDF de SICAR.', archivo_vacio: 'El archivo está vacío.', pdf_ilegible: 'No se pudo leer el PDF.', demasiados_renglones: 'El archivo es muy grande. Genéralo por periodos más cortos.' };
+/** Qué se ha cargado y cuándo, para la lista "Qué descargar". */
+api.get('/cargar/estado', async (req, res) => {
+  const sicar = await sel('SELECT tipo, MAX(created_at) AS ultima, MAX(hasta)::text AS hasta FROM fz_sicar_imports WHERE tenant_id=:t GROUP BY tipo', { t: req.tenant });
+  const bancos = await sel(`SELECT c.id, c.nombre, c.terminacion, MAX(m.fecha)::text AS hasta FROM fz_cuentas c LEFT JOIN fz_movimientos m ON m.cuenta_id=c.id AND m.tenant_id=c.tenant_id AND m.origen='importado'
+    WHERE c.tenant_id=:t AND c.active GROUP BY c.id, c.nombre, c.terminacion ORDER BY c.nombre`, { t: req.tenant });
+  res.json({ sicar, bancos, hoy: hoyMx() });
+});
 /* Llaves del puente SICAR (solo director/dueño). */
 api.get('/llaves', adminOnly, async (req, res) => {
   res.json(await sel('SELECT id, nombre, prefijo, created_at, last_used_at, revoked_at FROM fz_api_keys WHERE tenant_id=:t ORDER BY id DESC', { t: req.tenant }));

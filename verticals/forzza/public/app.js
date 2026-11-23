@@ -211,6 +211,7 @@
   const VIEWS = [
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
+    ['grp', 'Datos'], ['cargar', 'Subir archivos'],
     ['grp', 'SICAR'], ['sicar', 'Importar de SICAR'], ['sicar_resumen', 'Compras y ventas'], ['sicar_web', 'Ingresa a SICAR'], ['url:guia-puente.html', 'Guía del puente'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
@@ -218,7 +219,7 @@
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
       <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><span class="sicar-badge">Compatible con SICAR</span><div class="sp"></div>
-      <span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
+      ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Subir archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${VIEWS.map(([k, l]) => (k === 'grp' ? `<div class="grp">${l}</div>`
         : k.startsWith('url:') ? `<a href="${k.slice(4)}" target="_blank" rel="noopener">${l}</a>`
         : (k === 'usuarios' && !canAdmin() ? '' : `<a href="#${k}" data-v="${k}">${l}</a>`))).join('')}
@@ -372,7 +373,7 @@
     const cats = (s && s.categorias) || [];
     const conc = s && s.concentracion;
     main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">Tablero <span class="muted" style="font-weight:600">(Actual)</span></h1><button class="btn noprint" id="imprimir">Imprimir resultados</button></div><p class="sub">Salud financiera de Forzza · hoy ${fmtF(t.hoy)}${s && s.datos_hasta ? ` · bancos cargados hasta el ${fmtF(s.datos_hasta)}` : ''}</p>
-      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza por <a href="#bancos">Bancos</a>, luego <a href="#sicar">Importar de SICAR</a>.</div>` : ''}
+      ${t.sin_datos ? `<div class="note">Aún no hay datos cargados. Empieza en <a href="#cargar">Subir archivos</a>: suelta juntos tus reportes de SICAR y tus estados de cuenta.</div>` : ''}
       ${alertasHtml(t.alertas)}
       <div class="card hero">
         <div class="hero-g">${gauge(cal && cal.puntos, cal ? cal.nivel : 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
@@ -903,6 +904,84 @@
       const m = modal(`<h2 style="margin-top:0">Editar gasto fijo</h2>${form(f)}<div class="form"><div><label><input type="checkbox" name="active" style="width:auto"${f.active ? ' checked' : ''}> Activo</label></div></div>
         <div class="row" style="margin-top:12px"><button class="btn primary" id="ok">Guardar</button><button class="btn" data-close>Cancelar</button></div><div class="err"></div>`);
       m.querySelector('#ok').onclick = async () => { try { await api('fijos/' + f.id, { method: 'PATCH', body: formData(m.querySelector('.box')) }); m.remove(); reload(); } catch (er) { m.querySelector('.err').textContent = errMsg(er); } };
+    };
+  };
+
+  /* ── Subir archivos: todos juntos, cada uno se reconoce solo ── */
+  const DESCARGAS = [
+    ['creditos_clientes', 'Créditos a Clientes', 'Reportes → Clientes (Créditos) → Créditos Clientes. Estado: Por Pagar · Tipo: Sí (con detalle).', 'Cada semana', 'Lo que te deben, folio por folio: cartera vencida, días para cobrar y la proyección.'],
+    ['creditos_proveedores', 'Créditos de Proveedores', 'Reportes → Proveedores (Créditos) → Créditos Proveedores. Estado: Por Pagar · Tipo: Sí.', 'Cada semana', 'Lo que debes, con vencimientos: pagos programados y la proyección.'],
+    ['ventas_general', 'General de Ventas', 'Reportes → Ventas → General. Estado: Todos. Periodo: del 1 de enero a hoy.', 'Cada semana', 'Ventas por mes y por cliente; concentración de clientes.'],
+    ['compras_general', 'General de Compras', 'Reportes → Compras → General. Estado: Todos (incluye Gastos).', 'Cada semana', 'Compras (COM) y gastos (GAS) por mes y por proveedor.'],
+    ['abonos_clientes', 'Abonos de Clientes', 'Reportes → Clientes (Créditos) → Abonos.', 'Cada semana', 'Cobranza real por mes.'],
+    ['abonos_proveedores', 'Abonos a Proveedor', 'Reportes → Proveedores (Créditos) → Abonos.', 'Cada mes', 'Pagos a proveedores por mes.'],
+    ['periodo_clientes', 'Créditos Clientes por Periodo', 'Reportes → Clientes (Créditos) → Créditos por Periodo.', 'Cada mes', 'Antigüedad 0-30, 31-60, 61-90, 91-120 y más; compara saldos con la app.']
+  ];
+  const PRONTO = ['Utilidades / Ventas (margen)', 'Inventario a costo promedio (valor del inventario)', 'Corte de Caja Extendido', 'Reporte de Movimientos de caja'];
+  const ESTADO_LBL = { cargado: ['ok', 'Cargado'], listo: ['ok', 'Listo'], revisar: ['warn', 'Revisar'], rechazado: ['bad', 'No se cargó'], repetido: ['', 'Repetido'], omitido: ['', 'Omitido'], error: ['bad', 'Error'] };
+  function resumenCarga(it) {
+    const r = it.resultado || {};
+    if (it.tipo === 'sicar') {
+      const c = Object.entries(r.conteo || {}).map(([k, n]) => `${esc(RES_LBL[k] || k)}: ${n}`).join(' · ');
+      const cu = r.cuadra === true ? ' · cuadra con el total de SICAR' : r.cuadra === false ? ` · <b style="color:var(--bad)">no cuadra</b> (leído ${c$(r.total_leido)}, SICAR ${c$(r.total_impreso)})` : '';
+      return c + cu + (r.n_errores ? ` · ${r.n_errores} renglones no se leyeron` : '') + (r.archivo_ya_importado ? ' · ya se había subido (no duplica)' : '');
+    }
+    if (it.tipo === 'banco') return `${esc(it.cuenta || '')}: ${r.creados || 0} nuevos · ${r.conciliados || 0} conciliados · ${r.duplicados || 0} ya estaban${r.no_leidos ? ` · ${r.no_leidos} sin leer` : ''}${r.saldo_actualizado ? ` · saldo ${c$(Math.round(r.saldo_actualizado.saldo * 100))} al ${fmtF(r.saldo_actualizado.fecha)}` : ''}`;
+    return `${r.creados || 0} documentos creados${r.no_leidos ? ` · ${r.no_leidos} renglones no se cargaron (folio repetido, total en cero o ya pagado)` : ''}`;
+  }
+  R.cargar = async function () {
+    const st = await api('cargar/estado');
+    const ult = Object.fromEntries((st.sicar || []).map((x) => [x.tipo, x]));
+    const dias = (f) => (f ? Math.round((new Date(st.hoy) - new Date(String(f).slice(0, 10))) / 86400000) : null);
+    const frescura = (f, max) => { const d = dias(f); return d == null ? '<span class="pill">nunca</span>' : `<span class="pill ${d > max ? 'warn' : 'ok'}">${fmtF(String(f).slice(0, 10))}</span>`; };
+    main().innerHTML = `<h1>Subir archivos</h1><p class="sub">Suelta juntos tus reportes de SICAR (PDF o Excel) y los estados de cuenta de tus bancos (Excel o CSV). Cada archivo se reconoce solo y se carga sin duplicar nada. Lo que no quede claro te lo preguntamos.</p>
+      ${canEdit() ? `<div class="card"><label class="drop" id="multi"><input type="file" multiple accept=".pdf,.xls,.xlsx,.csv"><span>Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos</span></label><div class="err"></div></div><div id="cres"></div>` : '<div class="note">Tu usuario es de solo lectura: no puede subir archivos.</div>'}
+      <h2>Qué descargar de SICAR</h2><div class="card tbl"><table class="cards"><thead><tr><th>Reporte</th><th>Dónde está en SICAR</th><th>Cada cuánto</th><th>Para qué</th><th>Último</th></tr></thead><tbody>
+        ${DESCARGAS.map(([k, n, d, c, p]) => `<tr><td data-l="Reporte"><b>${esc(n)}</b></td><td data-l="Dónde">${esc(d)}</td><td data-l="Cada cuánto">${esc(c)}</td><td data-l="Para qué">${esc(p)}</td><td data-l="Último">${frescura(ult[k] && ult[k].ultima, c === 'Cada semana' ? 8 : 35)}</td></tr>`).join('')}</tbody></table>
+        <p class="muted" style="font-size:13px">En cada reporte: <b>Previa (F3)</b> y luego guardar en Excel o PDF. Puedes subir varios a la vez. Si instalas el <a href="#sicar">puente automático</a>, los que guardes en la carpeta SICAR-Forzza se suben solos.</p></div>
+      <h2>Estados de cuenta</h2><div class="card tbl">${(st.bancos || []).length ? `<table class="cards"><thead><tr><th>Cuenta</th><th>Movimientos hasta</th></tr></thead><tbody>
+        ${st.bancos.map((b) => `<tr><td data-l="Cuenta">${esc(b.nombre)}${b.terminacion ? ' ··' + esc(b.terminacion) : ''}</td><td data-l="Hasta">${frescura(b.hasta, 8)}</td></tr>`).join('')}</tbody></table>` : '<p class="empty">Aún no hay cuentas. Agrégalas en <a href="#bancos">Bancos</a>.</p>'}
+        <p class="muted" style="font-size:13px">Descárgalo en Excel o CSV desde la banca en línea (no PDF). La cuenta se reconoce por sus últimos 4 dígitos o por el nombre del banco en el archivo; ponlos en el nombre del archivo si no aparecen (por ejemplo <code>BBVA 1234 octubre.xlsx</code>).</p></div>
+      <h2>Próximamente</h2><div class="card"><p class="muted" style="margin:0">Estos reportes de SICAR no tienen un formato público que podamos leer con certeza. Para agregarlos necesitamos un ejemplo real de cada uno (Previa → Excel): ${PRONTO.map(esc).join(' · ')}.</p></div>`;
+    if (!canEdit()) return;
+    const zone = document.getElementById('multi'), inp = zone.querySelector('input');
+    let lote = [];
+    const enviar = async (files, decisiones) => {
+      const err = main().querySelector('.err'); err.textContent = '';
+      if (files.length > 12) { err.textContent = 'Máximo 12 archivos por vez.'; return null; }
+      const fd = new FormData(); files.forEach((f) => fd.append('archivos', f)); fd.append('aplicar', '1'); fd.append('decisiones', JSON.stringify(decisiones || {}));
+      zone.querySelector('span').textContent = `Leyendo ${files.length} archivo${files.length > 1 ? 's' : ''}…`;
+      try { return await api('cargar', { method: 'POST', body: fd }); } catch (er) { err.textContent = errMsg(er); return null; }
+      finally { zone.querySelector('span').textContent = 'Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos'; }
+    };
+    const pintar = (archivos) => {
+      const n = (e) => archivos.filter((a) => a.estado === e).length;
+      document.getElementById('cres').innerHTML = `<div class="card"><h2 style="margin-top:0">Resultado</h2><p class="muted">${n('cargado')} cargados · ${n('revisar')} por revisar · ${n('rechazado') + n('error')} sin cargar</p>
+        ${archivos.map((a) => { const [cls, lbl] = ESTADO_LBL[a.estado] || ['', a.estado];
+          return `<div class="carga" data-i="${a.i}"><div class="row" style="justify-content:space-between"><b>${esc(a.archivo)}</b><span class="pill ${cls}">${lbl}</span></div>
+          <div class="muted" style="font-size:13px">${a.nombre ? esc(a.nombre) : ''}${(a.por_que || []).length ? ' · ' + a.por_que.map(esc).join(', ') : ''}</div>
+          ${a.resultado ? `<div style="font-size:13px;margin-top:4px">${resumenCarga(a)}</div>` : ''}
+          ${a.motivo ? `<div class="${a.estado === 'revisar' ? 'note' : 'muted'}" style="font-size:13px">${esc(a.motivo)}</div>` : ''}
+          ${a.estado === 'revisar' ? `<div class="row" style="margin-top:6px"><select data-tipo><option value="banco"${a.tipo === 'banco' ? ' selected' : ''}>Estado de cuenta</option><option value="cxc"${a.tipo === 'cxc' ? ' selected' : ''}>Cuentas por cobrar</option><option value="cxp"${a.tipo === 'cxp' ? ' selected' : ''}>Cuentas por pagar</option></select>
+            <select data-cuenta${a.tipo === 'banco' ? '' : ' hidden'}>${opts(activos('cuentas'), (c) => c.nombre + (c.terminacion ? ' ··' + c.terminacion : ''), a.cuenta_id || '')}</select>
+            <button class="btn small primary" data-cargar>Cargar</button><button class="btn small" data-omitir>Omitir</button></div>` : ''}</div>`; }).join('')}</div>`;
+    };
+    const correr = async (files) => {
+      lote = files.slice(); const r = await enviar(lote, {}); if (!r) return;
+      pintar(r.archivos); S.ultLote = r.archivos; await loadCat();
+    };
+    inp.addEventListener('change', () => { if (inp.files.length) correr(Array.from(inp.files)); inp.value = ''; });
+    zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) correr(Array.from(e.dataTransfer.files)); }, true);
+    document.getElementById('cres').onchange = (e) => { const s = e.target.closest('[data-tipo]'); if (s) s.parentNode.querySelector('[data-cuenta]').hidden = s.value !== 'banco'; };
+    document.getElementById('cres').onclick = async (e) => {
+      const b = e.target.closest('[data-cargar],[data-omitir]'); if (!b) return;
+      const box = b.closest('.carga'), i = Number(box.dataset.i), f = lote[i]; if (!f) return;
+      if (b.dataset.omitir != null) { S.ultLote[i] = { ...S.ultLote[i], estado: 'omitido', motivo: null }; pintar(S.ultLote); return; }
+      const tipo = box.querySelector('[data-tipo]').value, cuenta_id = box.querySelector('[data-cuenta]').value;
+      if (tipo === 'banco' && !cuenta_id) { alert('Elige la cuenta.'); return; }
+      b.disabled = true;
+      const r = await enviar([f], { 0: { tipo, cuenta_id } }); b.disabled = false; if (!r) return;
+      S.ultLote[i] = { ...r.archivos[0], i }; pintar(S.ultLote); await loadCat();
     };
   };
 

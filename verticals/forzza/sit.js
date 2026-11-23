@@ -52,6 +52,13 @@ function multipart(fields, file) {
   parts.push(Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="archivo"; filename="${file.name}"\r\nContent-Type: ${file.type || 'text/csv'}\r\n\r\n`), Buffer.from(file.data), Buffer.from(`\r\n--${b}--\r\n`));
   return { body: Buffer.concat(parts), type: 'multipart/form-data; boundary=' + b };
 }
+function multipartMulti(fields, files) {
+  const b = '----sitm' + Date.now(); const parts = [];
+  for (const [k, v] of Object.entries(fields)) parts.push(Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${v}\r\n`));
+  for (const f of files) parts.push(Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="archivos"; filename="${f.name}"\r\nContent-Type: ${f.type || 'text/csv'}\r\n\r\n`), Buffer.from(f.data), Buffer.from('\r\n'));
+  parts.push(Buffer.from(`--${b}--\r\n`));
+  return { body: Buffer.concat(parts), type: 'multipart/form-data; boundary=' + b };
+}
 const q = (sql, r) => db.query(sql, { replacements: r || {}, type: db.QueryTypes.SELECT });
 const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0, 10);
 
@@ -413,6 +420,59 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('B no ve los saldos de A', !(await req('GET', '/sicar/resumen', { cookie: dirB.cookie })).json.conciliacion.cxc);
     ok('un archivo que no es de SICAR = 400 con la instrucción', (await subir(capA.cookie, [[R([1, 'Factura'])]], false)).json.error === 'no_es_reporte_sicar');
 
+    {
+    console.log('\nSubir archivos: varios juntos, cada uno se reconoce solo (cargar.js + /cargar)');
+    const CG = require('./src/cargar');
+    const ctas = [{ id: 1, nombre: 'Cobranza', banco: 'BBVA', terminacion: '7788', active: true }, { id: 2, nombre: 'Operación', banco: 'HSBC', terminacion: '4321', active: true }];
+    const filasBanco = [['Fecha', 'Concepto', 'Cargo', 'Abono', 'Saldo'], ['05/11/2026', 'SPEI', '', '100', '100']];
+    ok('banco: los últimos 4 dígitos en el nombre eligen la cuenta', (() => { const c = CG.clasificarTabla(filasBanco, 'edo cta 7788.csv', ctas); return c.tipo === 'banco' && c.estado === 'auto' && c.cuenta_id === 1; })());
+    ok('banco: el nombre del banco elige la cuenta', CG.clasificarTabla(filasBanco, 'HSBC noviembre.xlsx', ctas).cuenta_id === 2);
+    ok('banco: dos cuentas posibles = revisar, nunca se adivina', CG.clasificarTabla(filasBanco, 'estado.csv', ctas).estado === 'revisar');
+    ok('banco: una fecha no se confunde con los últimos 4 dígitos', CG.clasificarTabla([['Cuenta del 01/01/7788'], ...filasBanco], 'estado.csv', ctas).estado === 'revisar');
+    ok('banco: el número de cuenta completo que termina en los dígitos sí cuenta', CG.clasificarTabla([['Cuenta: 0123457788'], ...filasBanco], 'estado.csv', ctas).cuenta_id === 1);
+    ok('una sola cuenta: va a esa', CG.clasificarTabla(filasBanco, 'x.csv', [ctas[0]]).estado === 'auto');
+    ok('lista con columna Cliente = por cobrar', (() => { const c = CG.clasificarTabla([['Cliente', 'Folio', 'Total'], ['A', '1', '10']], 'x.csv', ctas); return c.tipo === 'cxc' && c.estado === 'auto'; })());
+    ok('lista con columna Proveedor = por pagar', CG.clasificarTabla([['Proveedor', 'Folio', 'Saldo'], ['A', '1', '10']], 'x.csv', ctas).tipo === 'cxp');
+    ok('lista que solo dice Nombre = revisar', CG.clasificarTabla([['Nombre', 'Total'], ['A', '10']], 'x.csv', ctas).estado === 'revisar');
+    ok('columna Cliente pero archivo "proveedores" = revisar', CG.clasificarTabla([['Cliente', 'Total'], ['A', '10']], 'proveedores.csv', ctas).estado === 'revisar');
+    ok('un archivo sin columnas conocidas se rechaza con el motivo', CG.clasificarTabla([['a', 'b'], ['1', '2']], 'x.csv', ctas).estado === 'rechazado');
+    ok('orden: saldos de SICAR antes que bancos', CG.orden({ sicar_tipo: 'creditos_clientes' }) < CG.orden({ tipo: 'banco' }) && CG.orden({ sicar_tipo: 'ventas_general' }) < CG.orden({ tipo: 'cxc' }));
+    // Cuentas fuera del efectivo (incluir=FALSE): las pruebas de después no cambian.
+    const [[cuC1]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,terminacion,incluir) VALUES (:t,'Carga BBVA','BBVA','7788',FALSE) RETURNING id", { replacements: { t: A } });
+    const [[cuC2]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,terminacion,incluir) VALUES (:t,'Carga HSBC','HSBC','4321',FALSE) RETURNING id", { replacements: { t: A } });
+    const fBanco = ['Fecha,Concepto,Referencia,Cargo,Abono,Saldo', `${hoy.slice(8)}/${hoy.slice(5, 7)}/${hoy.slice(0, 4)},DEPOSITO CARGA,CG1,,"1,234.00","9,999.00"`].join('\n');
+    const fVentas = ['Reporte General de Ventas', 'Documento,Fecha,Folio,Cliente,Caja,Usuario,Folio F.,Est,Total', 'Ticket,02/11/2026,9001,Cliente Carga,Caja 1,admin,,V,"$ 500.00"'].join('\n');
+    const fCxp = ['Proveedor,Folio,Fecha,Total', 'PROVEEDOR CARGA,PC-1,01/11/2026,"3,000.00"'].join('\n');
+    const lote = [{ name: 'BBVA 7788 nov.csv', data: fBanco }, { name: 'ventas.csv', data: fVentas }, { name: 'cxp.csv', data: fCxp }, { name: 'basura.csv', data: 'a,b\n1,2' },
+      { name: 'copia.csv', data: fBanco }, { name: 'estado sin pista.csv', data: fBanco.replace('CG1', 'CG2') }, { name: 'otro.pdf', type: 'application/pdf', data: '%PDF-' + JSON.stringify([[R([1, 'Factura'])]]) }];
+    const cargar = (cookie, files, fields) => req('POST', '/cargar', { cookie, raw: multipartMulti(fields || {}, files) });
+    const nMov = async () => (await q("SELECT COUNT(*)::int AS n FROM fz_movimientos WHERE tenant_id=:t AND referencia LIKE 'CG%'", { t: A }))[0].n;
+    const pv = await cargar(capA.cookie, lote, { aplicar: '0' });
+    ok('vista previa de la carga: reconoce todo y NO guarda nada', pv.status === 200 && pv.json.aplicado === false && pv.json.archivos[0].estado === 'listo' && await nMov() === 0 && !(await q("SELECT 1 FROM fz_cxp WHERE tenant_id=:t AND folio='PC-1'", { t: A })).length, JSON.stringify(pv.json));
+    ok('contador no sube archivos', (await cargar(conA.cookie, lote)).status === 403);
+    const cg = await cargar(capA.cookie, lote);
+    const by = (n) => cg.json.archivos.find((a) => a.archivo === n) || {};
+    ok('estado de cuenta: a la cuenta por sus 4 dígitos, cargado', by('BBVA 7788 nov.csv').estado === 'cargado' && by('BBVA 7788 nov.csv').cuenta_id === cuC1.id && by('BBVA 7788 nov.csv').resultado.creados === 1, JSON.stringify(by('BBVA 7788 nov.csv')));
+    ok('reporte de SICAR dentro del lote: reconocido y cargado', by('ventas.csv').tipo === 'sicar' && by('ventas.csv').sicar_tipo === 'ventas_general' && by('ventas.csv').estado === 'cargado');
+    ok('lista de proveedores: cuentas por pagar creadas', by('cxp.csv').tipo === 'cxp' && by('cxp.csv').estado === 'cargado' && (await q("SELECT 1 FROM fz_cxp WHERE tenant_id=:t AND folio='PC-1'", { t: A })).length === 1);
+    ok('archivo sin sentido: rechazado con motivo, no tumba los demás', by('basura.csv').estado === 'rechazado' && by('basura.csv').motivo);
+    ok('el mismo archivo dos veces en el lote se lee una vez', by('copia.csv').estado === 'repetido' && await nMov() === 1);
+    ok('estado de cuenta sin pista de cuenta (2 cuentas): revisar, no se carga', by('estado sin pista.csv').estado === 'revisar' && (by('estado sin pista.csv').candidatas || []).length >= 2);
+    ok('un PDF que no es de SICAR: rechazado con la instrucción', by('otro.pdf').estado === 'rechazado' && /Excel o CSV/.test(by('otro.pdf').motivo));
+    ok('subir el lote otra vez no duplica', (await cargar(capA.cookie, lote)).status === 200 && await nMov() === 1 && (await q("SELECT COUNT(*)::int AS n FROM fz_cxp WHERE tenant_id=:t AND folio='PC-1'", { t: A }))[0].n === 1);
+    const dec = await cargar(capA.cookie, [{ name: 'estado sin pista.csv', data: fBanco.replace('CG1', 'CG2') }], { decisiones: JSON.stringify({ 0: { tipo: 'banco', cuenta_id: cuC2.id } }) });
+    ok('la persona confirma la cuenta y se carga ahí', dec.json.archivos[0].estado === 'cargado' && (await q("SELECT cuenta_id FROM fz_movimientos WHERE tenant_id=:t AND referencia='CG2'", { t: A }))[0].cuenta_id === cuC2.id);
+    const [[cuBx]] = await db.query("SELECT id FROM fz_cuentas WHERE tenant_id=:t LIMIT 1", { replacements: { t: B } });
+    const dx = await cargar(capA.cookie, [{ name: 'e.csv', data: fBanco.replace('CG1', 'CG3') }], { decisiones: JSON.stringify({ 0: { tipo: 'banco', cuenta_id: cuBx.id } }) });
+    ok('elegir una cuenta de otra empresa no carga nada', dx.json.archivos[0].estado === 'revisar' && !(await q("SELECT 1 FROM fz_movimientos WHERE referencia='CG3'")).length);
+    ok('más de 12 archivos = 413', (await cargar(capA.cookie, Array.from({ length: 13 }, (_, i) => ({ name: i + '.csv', data: 'a' })))).status === 413);
+    const est = (await req('GET', '/cargar/estado', { cookie: conA.cookie })).json;
+    ok('estado: qué reporte se subió y hasta cuándo hay banco', est.sicar.some((x) => x.tipo === 'ventas_general') && est.bancos.some((b) => b.id === cuC1.id && b.hasta === hoy));
+    ok('B no ve el estado de A', !(await req('GET', '/cargar/estado', { cookie: dirB.cookie })).json.sicar.some((x) => x.tipo === 'ventas_general'));
+    const srcCg = strip(fs.readFileSync(path.join(__dirname, 'src', 'cargar.js'), 'utf8'));
+    ok('cargar.js no toca base de datos ni red', !/require\(|sequelize|fetch\(/.test(srcCg));
+
+    }
     console.log('\nSimulador (patrón histórico y escenarios)');
     const hm = [];
     for (const mes of ['2026-07', '2026-08']) { hm.push({ fecha: mes + '-05', monto: '10000', categoria: 'cliente' }, { fecha: mes + '-15', monto: '-4000', categoria: 'nomina' }, { fecha: mes + '-31', monto: '-1000', categoria: 'renta' }); }
@@ -594,8 +654,8 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       router._stripe = { checkout: { sessions: { create: async (p) => { vistos.push(p); return { url: 'https://checkout.stripe.test/s' }; } } } };
       const raw = (p) => new Promise((ok) => http.get(base + '/forzza/app' + p, (r) => { r.resume(); ok({ status: r.statusCode, loc: r.headers.location }); }));
       const on = await raw('/pagar/onboarding'), me = await raw('/pagar/mensualidad?cents=1');
-      ok('onboarding: pago único de $990 sin sesión del cliente', on.status === 303 && vistos[0].mode === 'payment' && vistos[0].line_items[0].price_data.unit_amount === 99000);
-      ok('mensualidad: suscripción de $650 al mes; el monto no viene de la petición', me.status === 303 && vistos[1].mode === 'subscription' && vistos[1].line_items[0].price_data.unit_amount === 65000 && vistos[1].line_items[0].price_data.recurring.interval === 'month');
+      ok('onboarding: pago único de $700 sin sesión del cliente', on.status === 303 && vistos[0].mode === 'payment' && vistos[0].line_items[0].price_data.unit_amount === 70000);
+      ok('mensualidad: suscripción de $397 al mes; el monto no viene de la petición', me.status === 303 && vistos[1].mode === 'subscription' && vistos[1].line_items[0].price_data.unit_amount === 39700 && vistos[1].line_items[0].price_data.recurring.interval === 'month');
       ok('un concepto que no existe es 404', (await raw('/pagar/otro')).status === 404);
       router._stripe = null; if (keyBak) process.env.STRIPE_SECRET_KEY = keyBak; else delete process.env.STRIPE_SECRET_KEY;
     }
