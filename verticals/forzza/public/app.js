@@ -230,7 +230,7 @@
     ['grp', 'Operación'], ['sicar_resumen', 'Compras y ventas'],
     ['grp', 'Reportes'], ['reportes', 'Mis reportes'], ['reporte_nuevo', 'Nuevo reporte'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
-    ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
+    ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta'], ['url:guia-conexion-sicar.pdf', 'Guía: conexión directa con SICAR']
   ];
   // Menú por categorías: TODAS plegadas por omisión (dueño 2026-11-23); se recuerda en este equipo cuáles abrió la persona.
   // La categoría de la pantalla abierta siempre se ve.
