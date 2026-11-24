@@ -952,8 +952,8 @@
       const cu = r.cuadra === true ? ' · cuadra con el total de SICAR' : r.cuadra === false ? ` · <b style="color:var(--bad)">no cuadra</b> (leído ${c$(r.total_leido)}, SICAR ${c$(r.total_impreso)})` : '';
       return c + cu + (r.n_errores ? ` · ${r.n_errores} renglones no se leyeron` : '') + (r.archivo_ya_importado ? ' · ya se había subido (no duplica)' : '');
     }
-    if (it.tipo === 'banco') return `${esc(it.cuenta || '')}${it.estado_cuenta ? ` (${fmtF(it.estado_cuenta.desde)} a ${fmtF(it.estado_cuenta.hasta)}, saldo final ${c$(it.estado_cuenta.saldo_final)})` : ''}: ${r.creados || 0} nuevos · ${r.conciliados || 0} conciliados · ${r.duplicados || 0} ya estaban${r.no_leidos ? ` · ${r.no_leidos} sin leer` : ''}${r.saldo_actualizado ? ` · saldo ${c$(Math.round(r.saldo_actualizado.saldo * 100))} al ${fmtF(r.saldo_actualizado.fecha)}` : ''}`;
-    return `${r.creados || 0} documentos creados${r.no_leidos ? ` · ${r.no_leidos} renglones no se cargaron (folio repetido, total en cero o ya pagado)` : ''}`;
+    if (it.tipo === 'banco') return `${esc(it.cuenta || '')}${it.estado_cuenta ? ` (${fmtF(it.estado_cuenta.desde)} a ${fmtF(it.estado_cuenta.hasta)}, saldo final ${c$(it.estado_cuenta.saldo_final)})` : ''}: ${r.creados || 0} nuevos · ${r.conciliados || 0} conciliados · ${r.duplicados || 0} ya estaban${r.otro_formato ? ` (${r.otro_formato} ya estaban de otro archivo del mismo periodo, por fecha y monto)` : ''}${r.no_leidos ? ` · ${r.no_leidos} sin leer` : ''}${r.saldo_actualizado ? ` · saldo ${c$(Math.round(r.saldo_actualizado.saldo * 100))} al ${fmtF(r.saldo_actualizado.fecha)}` : ''}`;
+    return `${r.creados || 0} documentos nuevos${r.actualizados ? ` · ${r.actualizados} actualizados (el archivo trae menos saldo: se registró el abono)` : ''}${r.ya_estaban ? ` · ${r.ya_estaban} ya estaban (no se duplican)` : ''}${r.diferencias ? ` · <b>${r.diferencias} con más saldo que la app</b> (no se tocaron; revísalos)` : ''}${r.no_leidos ? ` · ${r.no_leidos} renglones no se cargaron (total en cero o ya pagado)` : ''}`;
   }
   R.cargar = async function () {
     const [st, imps] = await Promise.all([api('cargar/estado'), api('sicar/importaciones')]);
@@ -1193,7 +1193,7 @@
       zone.querySelector('span').textContent = `Leyendo ${files.length} archivo${files.length > 1 ? 's' : ''}…`;
       try {
         const r = await api('reportes/archivos', { method: 'POST', body: fd });
-        box.innerHTML += r.archivos.map((a) => `<div class="carga"><div class="row" style="justify-content:space-between"><b>${esc(a.archivo)}</b>${a.ok ? '<span class="pill ok">Leído</span>' : '<span class="pill bad">No se cargó</span>'}</div>
+        box.innerHTML += r.archivos.map((a) => `<div class="carga"><div class="row" style="justify-content:space-between"><b>${esc(a.archivo)}</b>${!a.ok ? '<span class="pill bad">No se cargó</span>' : a.ya_estaba ? '<span class="pill">Ya estaba</span>' : a.actualizado ? '<span class="pill ok">Actualizado</span>' : '<span class="pill ok">Leído</span>'}</div>
           ${a.ok ? `<div class="muted" style="font-size:13px">${a.renglones.toLocaleString('en-US')} renglones · columnas: ${a.columnas.map((c) => esc(c.nombre)).join(', ')}</div>${(a.notas || []).map((n) => `<div class="note" style="font-size:13px">${esc(n)}</div>`).join('')}
             <label class="rep-arch"><input type="checkbox" value="${a.id}" checked data-nuevo> Usar en este reporte</label>` : `<div class="muted" style="font-size:13px">${esc(a.motivo)}</div>`}</div>`).join('');
       } catch (e) { err.textContent = errMsg(e); }

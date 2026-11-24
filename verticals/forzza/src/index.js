@@ -1024,10 +1024,20 @@ async function importarBanco(req, c, rows, opts, t) {
   }
   let creados = 0, duplicados = 0, conciliados = 0;
   await exec('SELECT id FROM fz_cuentas WHERE id=:c AND tenant_id=:t FOR UPDATE', { c: c.id, t: req.tenant }, t);
-  const ya = new Set((await sel('SELECT hash FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND hash IS NOT NULL', { t: req.tenant, c: c.id }, t)).map((x) => x.hash));
+  const exist = await sel('SELECT hash, fecha::text AS fecha, monto FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND hash IS NOT NULL', { t: req.tenant, c: c.id }, t);
+  const ya = new Set(exist.map((x) => x.hash));
+  // Anti-duplicados inteligente: el MISMO mes subido en otro formato (PDF del banco y luego su Excel) cambia el texto
+  // del concepto y por eso la huella, pero no la fecha ni el monto. Un estado de cuenta es el registro completo de esos
+  // días: si la cuenta ya tiene N movimientos de esa fecha y ese monto, del archivo nuevo solo entra lo que pase de N.
+  const kFM = (f, mo) => f + '|' + E.toC(mo);
+  const pool = new Map();
+  for (const x of exist) pool.set(kFM(x.fecha, x.monto), (pool.get(kFM(x.fecha, x.monto)) || 0) + 1);
+  for (const n of nuevos) if (ya.has(n.hash)) { const k = kFM(n.fecha, n.monto); pool.set(k, (pool.get(k) || 0) - 1); }
+  let otroFormato = 0;
   const app = await sel(`SELECT id, fecha::text AS fecha, monto FROM fz_movimientos WHERE tenant_id=:t AND cuenta_id=:c AND NOT conciliado AND hash IS NULL AND origen IN ('manual','cobro','pago','fijo')`, { t: req.tenant, c: c.id }, t);
   for (const n of nuevos) {
     if (ya.has(n.hash)) { duplicados++; resultados.push({ renglon: n.renglon, ok: false, motivo: 'ya_estaba' }); continue; }
+    { const k = kFM(n.fecha, n.monto); if ((pool.get(k) || 0) > 0) { pool.set(k, pool.get(k) - 1); duplicados++; otroFormato++; resultados.push({ renglon: n.renglon, ok: false, motivo: 'ya_estaba' }); continue; } }
     ya.add(n.hash);
     const cand = app.filter((a) => !a.usado && E.toC(a.monto) === E.toC(n.monto) && Math.abs(E.diffDays(a.fecha, n.fecha)) <= 3)
       .sort((a, b) => Math.abs(E.diffDays(a.fecha, n.fecha)) - Math.abs(E.diffDays(b.fecha, n.fecha)))[0];
@@ -1049,7 +1059,7 @@ async function importarBanco(req, c, rows, opts, t) {
     if (cur && cur.f && ultimoSaldo.fecha < cur.f) actualizar = false;
   }
   if (actualizar && ultimoSaldo) await exec('UPDATE fz_cuentas SET saldo_inicial=:s, fecha_saldo=:f WHERE id=:c AND tenant_id=:t', { s: ultimoSaldo.saldo, f: ultimoSaldo.fecha, c: c.id, t: req.tenant }, t);
-  return { creados, conciliados, duplicados, saldo_actualizado: actualizar && ultimoSaldo ? ultimoSaldo : null, resultados: resultados.sort((a, b) => a.renglon - b.renglon) };
+  return { creados, conciliados, duplicados, ya_estaban_otro_formato: otroFormato, saldo_actualizado: actualizar && ultimoSaldo ? ultimoSaldo : null, resultados: resultados.sort((a, b) => a.renglon - b.renglon) };
 }
 api.post('/movimientos/importar', importUpload.single('archivo'), async (req, res) => {
   const c = await own('fz_cuentas', intId(req.body && req.body.cuenta_id) || 0, req.tenant);
@@ -1074,7 +1084,7 @@ async function importarDocs(key, req, rows, t) {
   const H = encabezados(rows, DOC_CAMPOS(key), DOC_REQ);
   if (!H) return { error: 'sin_encabezados', ayuda: `El archivo debe tener columnas ${d.nombre === 'cliente' ? 'Cliente' : 'Proveedor'} y Total (y de preferencia Folio, Fecha y Vencimiento).` };
   const { fila, map } = H, cell = (r, k) => (map[k] != null ? r[map[k]] : '');
-  const resultados = []; let creados = 0;
+  const resultados = []; let creados = 0, actualizados = 0, yaEstaban = 0, diferencias = 0;
   const hoy = hoyMx();
   for (let i = fila + 1; i < rows.length; i++) {
     const r = rows[i];
@@ -1087,6 +1097,25 @@ async function importarDocs(key, req, rows, t) {
     if (saldo != null && (saldo < 0 || saldo > total)) { resultados.push({ renglon: i + 1, ok: false, motivo: 'saldo' }); continue; }
     if (saldo === 0) { resultados.push({ renglon: i + 1, ok: false, motivo: 'ya_pagado' }); continue; }
     const fecha = excelDate(cell(r, 'fecha')) || hoy;
+    const folioArch = cell(r, 'folio') === '' ? null : str(String(cell(r, 'folio')), 60);
+    // Anti-duplicados: el mismo documento (folio y persona; sin folio, persona + fecha + total) ya está en la app.
+    // Se parte del archivo nuevo: si su saldo es MENOR que lo pendiente, la diferencia se registra como abono/pago;
+    // si es MAYOR, no se toca y se reporta; si es igual, «ya estaba».
+    const prev = await one(`SELECT x.id, x.estado FROM ${d.table} x JOIN ${d.partes} p ON p.id=x.${d.parte} AND p.tenant_id=x.tenant_id
+      WHERE x.tenant_id=:t AND x.estado<>'cancelada' AND LOWER(TRIM(p.nombre))=LOWER(TRIM(:n)) AND ${folioArch ? "LOWER(TRIM(COALESCE(x.folio,'')))=LOWER(TRIM(:fo))" : 'x.fecha=:f AND x.total=:to'} ORDER BY x.id LIMIT 1`,
+      { t: req.tenant, n: nombre, fo: folioArch, f: fecha, to: total }, t);
+    if (prev) {
+      const pe = await pendienteDe(d, prev.id, req.tenant, t);
+      const nuevoPend = E.toC(saldo != null ? saldo : total);
+      if (saldo != null && nuevoPend < pe.pendiente) {
+        await exec(`INSERT INTO ${d.pagos} (tenant_id,${d.fk},fecha,monto,nota,created_by) VALUES (:t,:id,:f,:m,'Actualizado al importar (el archivo trae menos saldo)',:u)`,
+          { t: req.tenant, id: prev.id, f: hoy, m: (pe.pendiente - nuevoPend) / 100, u: req.user.id }, t);
+        if (nuevoPend === 0) await exec(`UPDATE ${d.table} SET estado='pagada' WHERE id=:id AND tenant_id=:t`, { id: prev.id, t: req.tenant }, t);
+        actualizados++; resultados.push({ renglon: i + 1, ok: true, actualizado: true, [d.nombre]: nombre, folio: folioArch, pendiente: nuevoPend / 100 });
+      } else if (saldo != null && nuevoPend > pe.pendiente) { diferencias++; resultados.push({ renglon: i + 1, ok: false, motivo: 'diferencia', [d.nombre]: nombre, folio: folioArch }); }
+      else { yaEstaban++; resultados.push({ renglon: i + 1, ok: false, motivo: 'ya_estaba', [d.nombre]: nombre, folio: folioArch }); }
+      continue;
+    }
     const body = { [d.nombre]: nombre, folio: cell(r, 'folio') === '' ? null : String(cell(r, 'folio')), fecha, total,
       vencimiento: excelDate(cell(r, 'vencimiento')) || undefined, dias_credito: map.dias != null && cell(r, 'dias') !== '' ? cell(r, 'dias') : undefined };
     await exec('SAVEPOINT fila', {}, t);
@@ -1098,7 +1127,7 @@ async function importarDocs(key, req, rows, t) {
     }
     creados++; resultados.push({ renglon: i + 1, ok: true, [d.nombre]: nombre, folio: out.row.folio, pendiente: saldo != null ? saldo : total });
   }
-  return { creados, resultados };
+  return { creados, actualizados, ya_estaban: yaEstaban, diferencias, resultados };
 }
 for (const key of Object.keys(DOC)) {
   api.post('/' + key + '/importar', importUpload.single('archivo'), async (req, res) => {
@@ -1318,12 +1347,12 @@ api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, 
         const r = await enTransaccion(aplicar, (t) => importarBanco(req, cta, it._rows, { actualizar: true, soloSiMasNuevo: true }, t));
         if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda || MSG_ARCHIVO_RARO }); continue; }
         it.cuenta = cta.nombre;
-        it.resultado = { creados: r.creados, conciliados: r.conciliados, duplicados: r.duplicados, no_leidos: r.resultados.filter((x) => !x.ok && x.motivo !== 'ya_estaba').length, saldo_actualizado: r.saldo_actualizado };
+        it.resultado = { creados: r.creados, conciliados: r.conciliados, duplicados: r.duplicados, otro_formato: r.ya_estaban_otro_formato, no_leidos: r.resultados.filter((x) => !x.ok && x.motivo !== 'ya_estaba').length, saldo_actualizado: r.saldo_actualizado };
         if (aplicar) audit(req, 'movimientos_importados', `${cta.nombre}: ${r.creados} nuevos, ${r.conciliados} conciliados, ${r.duplicados} repetidos (carga)`);
       } else {
         const r = await enTransaccion(aplicar, (t) => importarDocs(it.tipo, req, it._rows, t));
         if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda || MSG_ARCHIVO_RARO }); continue; }
-        it.resultado = { creados: r.creados, no_leidos: r.resultados.filter((x) => !x.ok).length };
+        it.resultado = { creados: r.creados, actualizados: r.actualizados, ya_estaban: r.ya_estaban, diferencias: r.diferencias, no_leidos: r.resultados.filter((x) => !x.ok && !['ya_estaba', 'diferencia'].includes(x.motivo)).length };
         if (aplicar) audit(req, it.tipo + '_importadas', `${r.creados} de ${r.resultados.length} (carga)`);
       }
       it.estado = aplicar ? 'cargado' : 'listo';
@@ -1478,10 +1507,31 @@ api.post('/reportes/archivos', (req, res, next) => repUpload.array('archivos', 5
     let r; try { r = await leerTablaReporte(f.buffer); } catch (e) { console.error('[forzza] reporte archivo', e && e.message); r = { error: MSG_ARCHIVO_RARO }; }
     if (r.error) { out.push({ archivo: nombre, ok: false, motivo: r.error }); continue; }
     const t = r.tabla;
+    const sha = crypto.createHash('sha256').update(f.buffer).digest('hex'), firma = firmaCols(t.columnas);
+    // 1) El mismo archivo otra vez: se usa el que ya estaba (nada se duplica).
+    const igual = await one('SELECT id, nombre, renglones, columnas, notas FROM fz_rep_archivos WHERE tenant_id=:t AND sha256=:h AND deleted_at IS NULL ORDER BY id DESC LIMIT 1', { t: req.tenant, h: sha });
+    if (igual) { out.push({ archivo: nombre, ok: true, id: igual.id, renglones: igual.renglones, columnas: igual.columnas, ya_estaba: true, notas: [`Este archivo ya lo habías subido${igual.nombre !== nombre ? ' como «' + igual.nombre + '»' : ''}: se usa el mismo, no se duplica.`] }); continue; }
+    // 2) Mismo nombre y mismas columnas = una versión nueva del mismo reporte: se parte del archivo nuevo (se reemplaza).
+    const mismo = (await sel('SELECT id, nombre, renglones, columnas FROM fz_rep_archivos WHERE tenant_id=:t AND LOWER(nombre)=LOWER(:n) AND deleted_at IS NULL ORDER BY id DESC', { t: req.tenant, n: nombre })).find((x) => firmaCols(x.columnas) === firma);
+    if (mismo) {
+      await exec(`UPDATE fz_rep_archivos SET columnas=:c::jsonb, filas=:fi::jsonb, notas=:no::jsonb, renglones=:r, sha256=:h, formato=:f, created_at=NOW(), created_by=:u WHERE id=:id AND tenant_id=:t`,
+        { id: mismo.id, t: req.tenant, c: JSON.stringify(t.columnas), fi: JSON.stringify(t.filas), no: JSON.stringify(t.notas || []), r: t.filas.length, h: sha, f: r.formato, u: req.user.id });
+      audit(req, 'reporte_archivo_actualizado', `${nombre}: ${mismo.renglones} -> ${t.filas.length} renglones`);
+      out.push({ archivo: nombre, ok: true, id: mismo.id, renglones: t.filas.length, columnas: t.columnas, actualizado: true, notas: [`Se actualizó «${mismo.nombre}» con este archivo nuevo (antes ${mismo.renglones.toLocaleString('en-US')} renglones, ahora ${t.filas.length.toLocaleString('en-US')}). Los reportes nuevos usan los datos actualizados.`].concat(t.notas || []) });
+      continue;
+    }
+    // 3) Otro archivo con las mismas columnas y renglones en común: se avisa; en un reporte se cuentan una sola vez.
+    const pareja = (await sel('SELECT id, nombre, columnas, filas FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 30', { t: req.tenant })).filter((x) => firmaCols(x.columnas) === firma);
+    const avisos = [];
+    for (const x of pareja) {
+      const ks = new Set(x.filas.map((fi) => JSON.stringify(fi)));
+      const comun = t.filas.filter((fi) => ks.has(JSON.stringify(fi))).length;
+      if (comun) avisos.push(`${comun.toLocaleString('en-US')} de ${t.filas.length.toLocaleString('en-US')} renglones ya están en «${x.nombre}». Si usas los dos en un reporte, los repetidos se cuentan una sola vez.`);
+    }
     const [[row]] = await exec(`INSERT INTO fz_rep_archivos (tenant_id,nombre,formato,columnas,filas,notas,renglones,sha256,created_by) VALUES (:t,:n,:f,:c::jsonb,:fi::jsonb,:no::jsonb,:r,:h,:u) RETURNING id`,
-      { t: req.tenant, n: nombre, f: r.formato, c: JSON.stringify(t.columnas), fi: JSON.stringify(t.filas), no: JSON.stringify(t.notas || []), r: t.filas.length, h: crypto.createHash('sha256').update(f.buffer).digest('hex'), u: req.user.id });
+      { t: req.tenant, n: nombre, f: r.formato, c: JSON.stringify(t.columnas), fi: JSON.stringify(t.filas), no: JSON.stringify(t.notas || []), r: t.filas.length, h: sha, u: req.user.id });
     audit(req, 'reporte_archivo', `${nombre}: ${t.filas.length} renglones`);
-    out.push({ archivo: nombre, ok: true, id: row.id, renglones: t.filas.length, columnas: t.columnas, notas: t.notas || [] });
+    out.push({ archivo: nombre, ok: true, id: row.id, renglones: t.filas.length, columnas: t.columnas, notas: avisos.concat(t.notas || []) });
   }
   res.json({ archivos: out });
 });
@@ -1494,6 +1544,7 @@ api.delete('/reportes/archivos/:id', async (req, res) => {
   if (!r.length) return res.status(404).json({ error: 'not_found' });
   res.json({ ok: true });
 });
+const firmaCols = (cols) => (cols || []).map((c) => String(c.nombre).toLowerCase().trim()).join('|');
 /** La fuente «bancos»: los movimientos reales de todas las cuentas activas. */
 async function fuenteBancos(tenant) {
   const rows = await sel(`SELECT m.fecha::text AS fecha, c.nombre AS cuenta, COALESCE(c.banco,'') AS banco, m.concepto, m.contraparte, m.categoria, m.referencia, m.monto, c.incluir
@@ -1507,7 +1558,20 @@ async function fuentesReporte(tenant, archivoIds, bancos) {
   if (archivoIds.length) {
     const arch = await sel('SELECT id, nombre, columnas, filas, notas FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL AND id IN (:ids)', { t: tenant, ids: archivoIds });
     const usados = new Set();
-    for (const a of arch) { let n = a.nombre; while (usados.has(n.toLowerCase())) n = n + ' (' + a.id + ')'; usados.add(n.toLowerCase()); fuentes.push({ id: a.id, nombre: n, tabla: { columnas: a.columnas, filas: a.filas, notas: a.notas || [] } }); }
+    // Archivos con las mismas columnas se juntan en UNA fuente y un renglón repetido entre ellos cuenta una sola vez
+    // (se toma el máximo de veces que aparece en cualquiera de los archivos, no la suma): subir octubre y luego
+    // octubre-noviembre no duplica octubre.
+    const grupos = new Map();
+    for (const a of arch) { const k = firmaCols(a.columnas); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(a); }
+    for (const g of grupos.values()) {
+      let n = g.map((a) => a.nombre).join(' + '); while (usados.has(n.toLowerCase())) n = n + ' (' + g[0].id + ')'; usados.add(n.toLowerCase());
+      if (g.length === 1) { fuentes.push({ id: g[0].id, ids: [g[0].id], nombre: n, tabla: { columnas: g[0].columnas, filas: g[0].filas, notas: g[0].notas || [] } }); continue; }
+      const max = new Map(), orden = [];
+      for (const a of g) { const c = new Map(); for (const fi of a.filas) { const k = JSON.stringify(fi); c.set(k, (c.get(k) || 0) + 1); } for (const [k, v] of c) { if (!max.has(k)) orden.push(k); max.set(k, Math.max(max.get(k) || 0, v)); } }
+      const filas = []; for (const k of orden) for (let i = 0; i < max.get(k); i++) filas.push(JSON.parse(k));
+      const total = g.reduce((s2, a) => s2 + a.filas.length, 0);
+      fuentes.push({ id: g[0].id, ids: g.map((a) => a.id), nombre: n, tabla: { columnas: g[0].columnas, filas, notas: [`Se juntaron ${g.length} archivos con las mismas columnas; ${(total - filas.length).toLocaleString('en-US')} renglones repetidos se contaron una sola vez.`] } });
+    }
   }
   if (bancos) fuentes.push({ id: null, nombre: 'bancos', tabla: await fuenteBancos(tenant) });
   return fuentes;
@@ -1536,7 +1600,7 @@ api.post('/reportes', async (req, res) => {
   if (!ids.length && !bancos) return res.status(400).json({ error: 'sin_fuentes', ayuda: 'Sube un archivo o marca «Incluir mis bancos».' });
   if (!(await limiteReportes(req, res))) return;
   const fuentes = await fuentesReporte(req.tenant, ids, bancos);
-  if (fuentes.filter((f) => f.id).length !== ids.length) return res.status(404).json({ error: 'archivo_no_encontrado', ayuda: 'Uno de los archivos ya no está. Vuelve a subirlo.' });
+  if (fuentes.reduce((n, f) => n + (f.ids ? f.ids.length : 0), 0) !== ids.length) return res.status(404).json({ error: 'archivo_no_encontrado', ayuda: 'Uno de los archivos ya no está. Vuelve a subirlo.' });
   if (bancos && !fuentes.find((f) => f.nombre === 'bancos').tabla.filas.length && !ids.length) return res.status(400).json({ error: 'sin_bancos', ayuda: 'Aún no hay movimientos de banco cargados. Sube un archivo o importa tus estados de cuenta.' });
   const r = await apartarReporte(req, res, { peticion, ids, bancos, fuentes: fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length })) });
   if (!r) return;

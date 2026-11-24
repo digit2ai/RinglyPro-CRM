@@ -273,7 +273,7 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       `Pagado Prueba,A-3,05/11/2026,,"1,000.00",0`,
       'TOTAL,,,,"13,500.00",'].join('\n');
     const ic = await req('POST', '/cxc/importar', { cookie: capA.cookie, raw: multipart({}, { name: 'cxc.csv', data: csvC }) });
-    ok('importa 2, salta el folio repetido y el ya pagado', ic.status === 200 && ic.json.creados === 2 && ic.json.resultados.some((r) => r.motivo === 'folio_duplicado') && ic.json.resultados.some((r) => r.motivo === 'ya_pagado'));
+    ok('importa 2, salta el folio repetido y el ya pagado', ic.status === 200 && ic.json.creados === 2 && ic.json.resultados.some((r) => r.motivo === 'ya_estaba') && ic.json.resultados.some((r) => r.motivo === 'ya_pagado'));
     const imp1 = (await q("SELECT x.id, x.vencimiento::text AS v FROM fz_cxc x WHERE x.tenant_id=:t AND x.folio='A-1'", { t: A }))[0];
     const dimp = (await req('GET', '/cxc/' + imp1.id, { cookie: capA.cookie })).json;
     ok('saldo menor que total entra como abono "saldo inicial"', dimp.pendiente === C(4000) && dimp.pagos.length === 1);
@@ -704,6 +704,39 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
         if (mesBak) process.env.FORZZA_REPORTES_MES = mesBak; else delete process.env.FORZZA_REPORTES_MES;
         if (skBak) process.env.STRIPE_SECRET_KEY = skBak; else delete process.env.STRIPE_SECRET_KEY;
         await new Promise((r) => setTimeout(r, 1500)); }
+      console.log('\nAnti-duplicados inteligente al importar');
+      { const cargarA = (files) => req('POST', '/cargar', { cookie: capA.cookie, raw: multipartMulti({}, files) });
+        await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,terminacion,incluir) VALUES (:t,'Dup Banco','Dupbanco','5566',FALSE)", { replacements: { t: A } });
+        const m1 = 'Fecha,Concepto,Cargo,Abono\n01/09/2026,DEPOSITO CLIENTE UNO,,5000.00\n01/09/2026,DEPOSITO CLIENTE DOS,,5000.00\n02/09/2026,PAGO PROVEEDOR,1200.00,\n';
+        const m2 = 'Fecha,Descripcion,Retiro,Deposito\n01/09/2026,SPEI RECIBIDO CLIENTE UNO SA,,5000.00\n01/09/2026,SPEI RECIBIDO CLIENTE DOS SA,,5000.00\n02/09/2026,TRANSFERENCIA PROVEEDOR XYZ,1200.00,\n03/09/2026,COMISION,15.00,\n';
+        const u1 = (await cargarA([{ name: 'edo 5566 sep.csv', data: m1 }])).json.archivos[0];
+        const u2 = (await cargarA([{ name: 'edo 5566 sep (excel del banco).csv', data: m2 }])).json.archivos[0];
+        ok('banco: el mismo mes en otro formato (otro texto de concepto) no se duplica; solo entra lo nuevo', u1.resultado.creados === 3 && u2.resultado.creados === 1 && u2.resultado.otro_formato === 3, JSON.stringify([u1.resultado, u2.resultado]));
+        const m3 = 'Fecha,Concepto,Cargo,Abono\n01/09/2026,DEPOSITO TERCERO,,5000.00\n01/09/2026,DEPOSITO CLIENTE UNO,,5000.00\n01/09/2026,DEPOSITO CLIENTE DOS,,5000.00\n';
+        const u3 = (await cargarA([{ name: 'edo 5566 corte.csv', data: m3 }])).json.archivos[0];
+        ok('banco: un tercer depósito igual el mismo día SÍ entra (se cuenta cuántos hay, no se adivina)', u3.resultado.creados === 1, JSON.stringify(u3.resultado));
+        const l1 = 'Cliente,Folio,Fecha,Total,Saldo\nDup Cliente SA,F-900,01/10/2026,1000,1000\nDup Sin Folio,,02/10/2026,500,500\n';
+        const r1 = (await cargarA([{ name: 'por cobrar.csv', data: l1 }])).json.archivos[0].resultado;
+        const r2 = (await cargarA([{ name: 'por cobrar (otra vez).csv', data: l1 }])).json.archivos[0].resultado;
+        ok('por cobrar: la misma lista otra vez no duplica (con folio y sin folio)', r1.creados === 2 && r2.creados === 0 && r2.ya_estaban === 2, JSON.stringify([r1, r2]));
+        const r3 = (await cargarA([{ name: 'por cobrar actualizada.csv', data: 'Cliente,Folio,Fecha,Total,Saldo\nDup Cliente SA,F-900,01/10/2026,1000,400\n' }])).json.archivos[0].resultado;
+        const r4 = (await cargarA([{ name: 'por cobrar vieja.csv', data: 'Cliente,Folio,Fecha,Total,Saldo\nDup Cliente SA,F-900,01/10/2026,1000,700\n' }])).json.archivos[0].resultado;
+        r3.diferencias = r4.diferencias;
+        const pend = (await q("SELECT x.total - COALESCE((SELECT SUM(monto) FROM fz_cxc_abonos a WHERE a.cxc_id=x.id),0) AS p FROM fz_cxc x WHERE x.tenant_id=:t AND x.folio='F-900'", { t: A }))[0];
+        ok('por cobrar: si el archivo nuevo trae menos saldo, se registra el abono; si trae más, no se toca y se avisa', r3.actualizados === 1 && r3.diferencias === 1 && Number(pend.p) === 400 && (await q("SELECT COUNT(*)::int n FROM fz_cxc WHERE tenant_id=:t AND folio='F-900'", { t: A }))[0].n === 1, JSON.stringify(r3));
+        const ar1 = (await subirR(capA.cookie, 'ventas.csv', csv)).json.archivos[0];
+        ok('reportes: el mismo archivo otra vez se reutiliza (mismo id, no se duplica)', ar1.ya_estaba === true && ar1.id === arch.id);
+        const csv2 = csv + '20/11/2026,Casa Tres,450\n';
+        const ar2 = (await subirR(capA.cookie, 'Ventas.csv', csv2)).json.archivos[0];
+        ok('reportes: mismo nombre y mismas columnas = versión nueva; se reemplaza (mismo id, datos nuevos)', ar2.actualizado === true && ar2.id === arch.id && ar2.renglones === 4 && (await q('SELECT COUNT(*)::int n FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL AND id=:i', { t: A, i: arch.id }))[0].n === 1);
+        const ar3 = (await subirR(capA.cookie, 'ventas octubre.csv', 'Fecha,Cliente,Total\n05/10/2026,Constructora Uno,1200.50\n12/10/2026,Obras Dos,800\n')).json.archivos[0];
+        ok('reportes: otro archivo que repite renglones avisa que se contarán una vez', ar3.ok && !ar3.ya_estaba && ar3.notas.some((n) => /2 de 2 renglones ya están en «/.test(n)), JSON.stringify(ar3.notas));
+        DL2._setClient(fakeR([tu('consultar', { fuente: 'ventas', metricas: [{ op: 'suma', columna: 'Total', nombre: 'Total' }, { op: 'conteo', nombre: 'Ventas' }] }),
+          (p) => { const res = JSON.parse(p.messages[p.messages.length - 1].content[0].content); return { content: [{ type: 'tool_use', id: 'rx', name: 'entregar_reporte', input: { titulo: 'Total', resumen: 'ok', secciones: [{ tipo: 'tabla', consulta: res.id }] } }] }; }]));
+        const rj = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'total vendido', archivo_ids: [arch.id, ar3.id] } });
+        let rjr; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rjr = (await req('GET', '/reportes/' + rj.json.id, { cookie: capA.cookie })).json; if (rjr.estado !== 'generando') break; }
+        ok('reportes: dos archivos que se enciman se juntan y los repetidos cuentan una vez (no 6 ventas, 4)', rjr.estado === 'listo' && JSON.stringify(rjr.spec.datos.c1.filas) === JSON.stringify([[4450.5, 4]]), JSON.stringify(rjr.spec && rjr.spec.datos).slice(0, 200));
+        DL2._setClient(null); }
       const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
       ok('menú: sección Reportes con Mis reportes y Nuevo reporte', /\['grp', 'Reportes'\], \['reportes', 'Mis reportes'\], \['reporte_nuevo', 'Nuevo reporte'\]/.test(apR) && /R\.reporte = /.test(apR) && /window\.print\(\)/.test(apR)); }
     console.log('\nTendencia (flecha bajo la calificación)');
