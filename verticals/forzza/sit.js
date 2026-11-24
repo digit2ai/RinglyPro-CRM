@@ -685,6 +685,10 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
         sesiones[sm] = { id: sm, payment_status: 'paid', status: 'complete', metadata: { kind: 'forzza_reportes', tenant_id: String(B), cantidad: '25' }, amount_total: 100, currency: 'usd' };
         await db.query("INSERT INTO fz_rep_compras (tenant_id,cantidad,monto_cents,stripe_session_id) VALUES (:t,25,2500,:s)", { replacements: { t: B, s: sm } });
         ok('un pago de otra empresa o por otro monto NO da créditos', (await cupoB()).creditos === 9);
+        await db.query("UPDATE fz_rep_compras SET created_at=NOW() - INTERVAL '400 days', pagado_at=NOW() - INTERVAL '400 days' WHERE tenant_id=:t AND estado='pagado'", { replacements: { t: B } });
+        ok('los reportes extra comprados no vencen (una compra de hace más de un año sigue contando)', (await cupoB()).creditos === 9);
+        const apC = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+        ok('pantalla: el contador se actualiza solo al regresar de Stripe y al volver con «atrás»', /reportes\/cupo'\)\.catch/.test(apC) && /pageshow/.test(apC) && /No vencen/.test(apC));
         ok('el contador ve el cupo; otra empresa no ve los créditos de B', (await req('GET', '/reportes/cupo', { cookie: conA.cookie })).status === 200 && (await req('GET', '/reportes/cupo', { cookie: dirA.cookie })).json.creditos === 0);
         router._stripe = null; DL2._setClient(null);
         if (mesBak) process.env.FORZZA_REPORTES_MES = mesBak; else delete process.env.FORZZA_REPORTES_MES;

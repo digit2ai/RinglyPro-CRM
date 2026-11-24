@@ -285,6 +285,8 @@
     if (!window.matchMedia('(max-width:820px)').matches) b.setAttribute('aria-expanded', String(!off));
   }
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
+  // Al regresar de Stripe con «atrás», el navegador restaura la página congelada (botón deshabilitado, contador viejo): se vuelve a dibujar.
+  window.addEventListener('pageshow', (e) => { if (e.persisted && S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
   async function go(v) {
     v = String(v || ''); S.arg = null;
@@ -1104,11 +1106,12 @@
     const director = S.me && ['owner', 'director'].includes(S.me.user.role);
     return `<div class="card rep-cupo"><div class="row" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px">
         <b>Reportes de ${MESES_L[Number(c.mes.slice(5)) - 1]}: ${c.usados} de ${c.incluidos} incluidos</b>
-        <span class="muted" style="font-size:13px">${c.creditos ? `Reportes extra disponibles: <b>${c.creditos}</b> · ` : ''}Te quedan <b>${c.disponibles}</b></span></div>
+        <span class="muted" style="font-size:13px">Te quedan <b>${c.disponibles}</b>${c.creditos ? ` (${c.restantes_mes} del mes + <b>${c.creditos}</b> extra)` : ''}</span></div>
       <div class="hb-t" style="margin:8px 0"><i style="width:${pct}%;background:${col}"></i></div>
+      ${c.creditos ? `<div class="note ok-note" style="margin:6px 0">Tienes <b>${c.creditos}</b> reporte${c.creditos === 1 ? '' : 's'} extra comprado${c.creditos === 1 ? '' : 's'}. No vencen: se usan solo cuando se acaban los ${c.incluidos} del mes.</div>` : ''}
       ${c.disponibles === 0 ? `<div class="note" style="margin:6px 0">Ya usaste los ${c.incluidos} reportes incluidos de este mes. ${director ? 'Compra reportes extra para seguir creando.' : 'Pide al director que compre reportes extra.'} El cupo se renueva el día 1.</div>`
         : pct >= 80 && !c.creditos ? `<p class="muted" style="font-size:13px;margin:4px 0">Te quedan pocos reportes este mes. Después de ${c.incluidos}, cada reporte extra cuesta USD ${c.precio_extra_usd}.</p>`
-        : `<p class="muted" style="font-size:13px;margin:4px 0">Incluye ${c.incluidos} reportes al mes (crear uno nuevo o pedir un cambio cuenta como uno; si un reporte falla, no cuenta). Después, USD ${c.precio_extra_usd} por reporte extra.</p>`}
+        : `<p class="muted" style="font-size:13px;margin:4px 0">Incluye ${c.incluidos} reportes al mes (crear uno nuevo o pedir un cambio cuenta como uno; si un reporte falla, no cuenta). Después, USD ${c.precio_extra_usd} por reporte extra; los reportes extra comprados no vencen.</p>`}
       ${director && canEdit() ? `<div class="row noprint" style="gap:6px;flex-wrap:wrap;margin-top:6px"><span class="muted" style="font-size:13px">Comprar reportes extra:</span>${c.paquetes.map((n) => `<button class="btn small" data-comprar="${n}">${n} por USD ${n * c.precio_extra_usd}</button>`).join('')}</div>` : ''}
       <div class="err rep-cupo-err"></div></div>`;
   }
@@ -1124,8 +1127,18 @@
     const q = new URLSearchParams(location.search), pago = q.get('rep_pago');
     if (pago) { q.delete('rep_pago'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
     let aviso = '';
-    if (c && c.recien_pagados) aviso = `<div class="note ok-note">Pago recibido: ${c.recien_pagados} reportes extra ya están disponibles.</div>`;
-    else if (pago === 'ok') aviso = '<div class="note">Stripe está confirmando tu pago. Si los reportes extra no aparecen en un minuto, vuelve a abrir esta pantalla.</div>';
+    if (c && c.recien_pagados) aviso = `<div class="note ok-note">Pago recibido: ${c.recien_pagados} reportes extra ya están disponibles y no vencen.</div>`;
+    else if (pago === 'ok') {
+      aviso = '<div class="note">Stripe está confirmando tu pago; el contador se actualiza solo en unos segundos.</div>';
+      // Stripe a veces marca el pago unos segundos después de regresar: se vuelve a preguntar y se redibuja.
+      const vista = S.view; let n = 0;
+      const t = setInterval(async () => {
+        if (++n > 10 || S.view !== vista) { clearInterval(t); return; }
+        const c2 = await api('reportes/cupo').catch(() => null);
+        if (c2 && c2.recien_pagados) { clearInterval(t); S.avisoPago = c2.recien_pagados; go(location.hash.slice(1)); }
+      }, 3000);
+    }
+    if (!aviso && S.avisoPago) { aviso = `<div class="note ok-note">Pago recibido: ${S.avisoPago} reportes extra ya están disponibles y no vencen.</div>`; S.avisoPago = 0; }
     else if (pago === 'cancelado') aviso = '<div class="note">El pago no se completó. No se hizo ningún cargo.</div>';
     return { c, aviso };
   }
