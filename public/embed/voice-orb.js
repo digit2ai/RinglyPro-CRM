@@ -31,6 +31,10 @@
  *                 session cookie, so the host app answers from its own data behind its own login.
  *   data-voice-default "off" = a "reply" orb starts muted; the speaker button turns the voice on
  *   data-chat-header  one extra request header for that brain, "Name: value" (e.g. a CSRF header)
+ *   data-intro    id of a <script type="application/json"> holding {"es":[...],"en":[...]}:
+ *                 an opening pitch shown bubble by bubble (spoken when the voice is on)
+ *                 the first time the panel opens in a browser session, instead of the
+ *                 greeting. {saludo} works as in the greeting. Opt-in; unset = no change.
  *   data-label-en / data-label-es  launcher caption per language, so a bilingual page
  *                 keeps the right caption when it calls setLang()
  *
@@ -119,6 +123,7 @@
     '.d2orb-x:hover{color:#fff;background:rgba(255,255,255,.1)}',
     '.d2orb-status{padding:0 16px;font-size:12px;font-weight:600;color:var(--d2orb-accent,#22d3ee);text-transform:uppercase;letter-spacing:.6px}',
     '.d2orb-cap{margin:10px 16px 0;min-height:44px;max-height:170px;overflow-y:auto;font-size:14px;line-height:1.5;color:rgba(255,255,255,.9)}',
+    '.d2orb-cap .b{display:block;margin:0 0 8px}',
     '.d2orb-cap .u{color:var(--d2orb-accent,#22d3ee);font-style:italic}',
     '.d2orb-row{display:flex;gap:8px;padding:12px 16px 14px}',
     '.d2orb-row input{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:10px 14px;color:#fff;font-size:14px;font-family:inherit}',
@@ -274,6 +279,57 @@
       if (s === 'listening' || s === 'speaking' || s === 'thinking') ball.classList.add('is-' + s);
       // Text-only is never a live call, so the End button never shows.
       root.classList.toggle('is-live', !TEXT_ONLY && s !== 'idle' && s !== 'denied' && s !== 'error');
+    }
+    // ── Opening pitch (data-intro): bubbles one by one, once per session ──
+    var INTRO = null;
+    try { var ie = d.intro && document.getElementById(d.intro); if (ie) INTRO = JSON.parse(ie.textContent); } catch (e) { INTRO = null; }
+    var INTRO_KEY = 'd2orb_intro:' + AGENT;
+    var intro = null; // {lines, i, token, wake}
+    function introLines() {
+      var l = INTRO && INTRO[cfg.lang];
+      if (!Array.isArray(l) || !l.length) return null;
+      try { if (sessionStorage.getItem(INTRO_KEY)) return null; } catch (e) {}
+      return l.map(function (x) { return withSaludo(String(x)); });
+    }
+    function addBubble(text) {
+      var b = document.createElement('span');
+      b.className = 'b'; b.textContent = text;
+      capEl.appendChild(b);
+      capEl.scrollTop = capEl.scrollHeight;
+    }
+    function startIntro(lines) {
+      try { sessionStorage.setItem(INTRO_KEY, '1'); } catch (e) {}
+      history.push({ role: 'assistant', content: lines.join('\n\n') });
+      capEl.innerHTML = '';
+      var me = intro = { lines: lines, i: 0, timer: null, wake: null };
+      var voice = REPLY_VOICE && !muted;
+      if (voice) unlockAudio();
+      function next() {
+        if (intro !== me) return;
+        if (me.i >= lines.length) { intro = null; setState('idle'); return; }
+        setState('thinking');
+        me.wake = null;
+        me.timer = setTimeout(function () {
+          if (intro !== me) return;
+          var text = lines[me.i++];
+          addBubble(text);
+          if (REPLY_VOICE && !muted) {
+            setState('speaking');
+            me.wake = next;               // the mute button or a typed key calls this
+            speak(text, function () { if (intro === me && me.wake === next) { me.wake = null; next(); } });
+          } else next();
+        }, me.i === 0 ? 400 : 1000);
+      }
+      next();
+    }
+    // The visitor typed or sent something: stop the voice, show the rest at once.
+    function flushIntro() {
+      var me = intro; if (!me) return;
+      intro = null;
+      clearTimeout(me.timer);
+      stopAudio();
+      while (me.i < me.lines.length) addBubble(me.lines[me.i++]);
+      setState('idle');
     }
     function setCap(text, isUser) {
       capEl.innerHTML = '';
@@ -476,6 +532,7 @@
       }
     }
     function endCall() {
+      if (intro) { var me = intro; intro = null; clearTimeout(me.timer); }
       live = false;
       stopAudio();
       if (recognizing && recog) { try { recog.abort(); } catch (e) {} }
@@ -488,11 +545,21 @@
     function startCall() {
       if (live) return;
       if (TEXT_ONLY) {
+        var il = !history.length && introLines();
+        if (il) {
+          pageContext = extractPageText();
+          startIntro(il);
+          input.focus();
+          return;
+        }
         if (!history.length) {
           pageContext = extractPageText();
           var g = withSaludo(cfg.greeting);
           history.push({ role: 'assistant', content: g });
           setCap(g, false);
+        } else if (INTRO && !intro && !capEl.textContent) {
+          // Reopened after the pitch: the ordinary greeting, not the pitch again.
+          setCap(withSaludo(cfg.greeting), false);
         }
         setState('idle');
         input.focus();
@@ -547,6 +614,7 @@
     function sendTyped() {
       var t = (input.value || '').trim();
       if (!t) return;
+      flushIntro();
       input.value = '';
       if (!pageContext) pageContext = extractPageText();
       unlockAudio();
@@ -586,7 +654,11 @@
       muteBtn.addEventListener('click', function () {
         muted = !muted;
         try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
-        if (muted) { stopAudio(); setState('idle'); }
+        if (muted) {
+          stopAudio(); setState('idle');
+          // Mid-pitch: the bubble that was being read no longer waits for its audio.
+          if (intro && intro.wake) { var w = intro.wake; intro.wake = null; w(); }
+        }
         paintMute();
       });
     }
@@ -596,6 +668,7 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (TEXT_ONLY) { input.focus(); return; } if (live) endCall(); else startCall(); }
     });
     sendBtn.addEventListener('click', sendTyped);
+    input.addEventListener('input', flushIntro);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); sendTyped(); }
     });
