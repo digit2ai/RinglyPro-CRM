@@ -115,6 +115,18 @@ body.vista-llena main{max-width:none;display:flex;flex-direction:column}
 .tipbox .tip-do{color:#ffd77a}
 @media print{header.top,nav.side,.noprint,.tipbox,.d2orb-root{display:none!important}main{padding:0;max-width:none}.card{border:1px solid #ddd;break-inside:avoid}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .fz-out .d2orb-root{display:none!important}
+.rep-arch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;margin:4px 0}.rep-arch input[type=checkbox]{width:auto;margin:0;flex:none}
+.rep-doc .chart{max-width:860px;margin:0 auto}
+.rep-doc .rep-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.rep-logo{height:34px}
+.rep-h1{font-size:26px;margin:6px 0 4px}.rep-res{font-size:15px;line-height:1.5;margin:0 0 14px}
+.rep-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}.rep-kpis .kv{font-size:22px;font-weight:700;margin-top:4px}
+.rep-t td.num,.rep-t th.num{text-align:right;white-space:nowrap}.rep-tot td{border-top:2px solid var(--line)}
+.rep-pie{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.rep-ed{border:1px dashed #2f80ed;border-radius:8px;padding:6px 8px;margin:4px 0 8px;background:#f8fbff;min-height:1.6em;white-space:pre-wrap}.rep-ed.rep-h1{font-size:24px;font-weight:700}.rep-ed.rep-h2{font-weight:700}
+.rep-prog{height:6px;background:var(--line);border-radius:4px;overflow:hidden}.rep-prog i{display:block;height:100%;width:40%;background:#2f80ed;border-radius:4px;animation:repmov 1.4s ease-in-out infinite}
+@keyframes repmov{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@media (prefers-reduced-motion:reduce){.rep-prog i{animation:none;width:100%}}
+@media print{.rep-doc .card{box-shadow:none}.rep-h1{font-size:22px}}
 </style>
 <style>
 .chart{width:100%;height:auto;display:block}
@@ -151,6 +163,6 @@ body.vista-llena main{max-width:none;display:flex;flex-direction:column}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=32" defer></script>
+<script src="app.js?v=35" defer></script>
 </body>
 </html>

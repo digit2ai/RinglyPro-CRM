@@ -227,6 +227,7 @@
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'Datos'], ['cargar', 'Importar archivos'], ['url:guia-carga.html', 'Guía para importar archivos'],
     ['grp', 'Operación'], ['sicar_resumen', 'Compras y ventas'],
+    ['grp', 'Reportes'], ['reportes', 'Mis reportes'], ['reporte_nuevo', 'Nuevo reporte'],
     ['grp', 'Catálogos'], ['clientes', 'Clientes'], ['proveedores', 'Proveedores'],
     ['grp', 'Ajustes'], ['ajustes', 'Reserva y aprobación'], ['usuarios', 'Usuarios'], ['cuenta', 'Mi cuenta']
   ];
@@ -286,14 +287,16 @@
   window.addEventListener('hashchange', () => { if (S.me) go(location.hash.slice(1)); });
   const main = () => document.getElementById('main');
   async function go(v) {
+    v = String(v || ''); S.arg = null;
+    if (v.includes('/')) { const k = v.indexOf('/'); S.arg = decodeURIComponent(v.slice(k + 1)); v = v.slice(0, k); }
     v = ALIAS[v] || v;
     if (!R[v]) v = 'tablero';
     const antes = S.view; S.view = v;
     document.body.classList.toggle('vista-llena', v === 'sicar_web');
     if (v === 'sicar_web' && antes !== 'sicar_web') setSide(true); // SICAR usa toda la pantalla
     else if (antes === 'sicar_web' && v !== 'sicar_web') { let p = null; try { p = localStorage.getItem('fz_side'); } catch (e) {} setSide(p === 'off'); }
-    document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === v));
-    { const a = document.querySelector(`nav.side a[data-v="${v}"]`), box = a && a.closest('.gitems'); if (box && box.hidden) abrirGrupo(box.dataset.g, true, false); }
+    document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === (v === 'reporte' ? 'reportes' : v)));
+    { const a = document.querySelector(`nav.side a[data-v="${v === 'reporte' ? 'reportes' : v}"]`), box = a && a.closest('.gitems'); if (box && box.hidden) abrirGrupo(box.dataset.g, true, false); }
     main().innerHTML = '<p class="muted">Cargando…</p>';
     main().onclick = null; main().oninput = null; main().onchange = null;
     try { await R[v](); } catch (e) { if (e && e.error !== 'not_signed_in') main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }
@@ -1029,6 +1032,176 @@
       b.disabled = true;
       const r = await enviar([f], { 0: { tipo, cuenta_id } }); b.disabled = false; if (!r) return;
       const j = S.ultLote.findIndex((x) => x.i === i); S.ultLote[j] = { ...r.archivos[0], i }; pintar(S.ultLote); await loadCat();
+    };
+  };
+
+  /* ── REPORTES: el Departamento de Inteligencia de Datos ── */
+  const REP_EJEMPLOS = ['Ventas por cliente del último trimestre, los 10 más grandes, con gráfica de barras', 'Gastos por categoría de cada mes de los bancos, con gráfica de líneas', 'Compras por proveedor ordenadas de mayor a menor, con el total', 'Resumen de entradas y salidas de los bancos por mes y el saldo neto'];
+  const esDinero = (n) => /monto|total|importe|venta|compra|saldo|pago|costo|utilidad|precio|entrada|salida|cargo|abono|ingreso|gasto|adeudo|deuda|suma de|promedio de|valor|cobr/i.test(n || '');
+  const fmtNum = (v, col) => {
+    if (v == null || v === '') return '—';
+    if (typeof v !== 'number') return esc(String(v));
+    if (col && esDinero(col.nombre)) return fmt(v);
+    return Number.isInteger(v) ? v.toLocaleString('en-US') : v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  };
+  const PALETA = ['#012a72', '#2f80ed', '#12b8a6', '#b45309', '#b91c1c', '#7c3aed', '#64748b'];
+  const eje = (v, din) => { const a = Math.abs(v), sg = v < 0 ? '-' : '', p = din ? '$' : ''; return a >= 1e6 ? `${sg}${p}${(a / 1e6).toFixed(a >= 1e7 ? 0 : 1)}M` : a >= 1e4 ? `${sg}${p}${Math.round(a / 1e3)}k` : `${sg}${p}${Math.round(a).toLocaleString('en-US')}`; };
+  function repGrafica(s, d) {
+    if (!d) return '<p class="muted">Sin datos.</p>';
+    const ix = (n) => d.columnas.findIndex((c) => c.nombre.toLowerCase() === String(n || '').toLowerCase());
+    const je = ix(s.etiqueta), jv = (s.valores || []).map(ix).filter((j) => j >= 0);
+    if (je < 0 || !jv.length) return '<p class="muted">Sin datos.</p>';
+    const filas = d.filas.filter((r) => jv.some((j) => typeof r[j] === 'number'));
+    if (!filas.length) return '<p class="muted">Sin datos.</p>';
+    const lbl = (r) => String(r[je] == null ? '—' : r[je]);
+    const corto = (t) => (t.length > 16 ? t.slice(0, 15) + '…' : t);
+    const ley = jv.length > 1 ? `<div class="legend">${jv.map((j, k) => `<span><i style="background:${PALETA[k]}"></i>${esc(d.columnas[j].nombre)}</span>`).join('')}</div>` : '';
+    if (s.forma === 'pastel' && jv.length === 1) {
+      const vals = filas.map((r) => Math.max(0, r[jv[0]] || 0)), tot = vals.reduce((a, b) => a + b, 0) || 1;
+      let a0 = -Math.PI / 2; const R = 90, cx = 110, cy = 110;
+      const arcs = vals.map((v, i) => { const a1 = a0 + (v / tot) * Math.PI * 2, big = a1 - a0 > Math.PI ? 1 : 0; const p = `M${cx} ${cy} L${(cx + R * Math.cos(a0)).toFixed(1)} ${(cy + R * Math.sin(a0)).toFixed(1)} A${R} ${R} 0 ${big} 1 ${(cx + R * Math.cos(a1)).toFixed(1)} ${(cy + R * Math.sin(a1)).toFixed(1)} Z`; a0 = a1; return `<path d="${p}" fill="${PALETA[i % PALETA.length]}" stroke="#fff" stroke-width="1"/>`; }).join('');
+      return `<div class="rep-pie"><svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="${esc(s.titulo || 'Gráfica')}">${arcs}</svg><div class="legend" style="flex-direction:column;gap:6px">${filas.map((r, i) => `<span><i style="background:${PALETA[i % PALETA.length]};width:10px;height:10px"></i>${esc(lbl(r))}: ${fmtNum(r[jv[0]], d.columnas[jv[0]])} (${((vals[i] / tot) * 100).toFixed(1)}%)</span>`).join('')}</div></div>`;
+    }
+    const chico = window.innerWidth < 600, W = chico ? 400 : 760, H = chico ? 300 : 300, L = chico ? 52 : 70, B = 70, T = 14, Rm = 8, n = filas.length;
+    const all = filas.flatMap((r) => jv.map((j) => r[j] || 0)); let lo = Math.min(0, ...all), hi = Math.max(0, ...all); if (hi === lo) hi = lo + 1;
+    const y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo)), x0 = L, ancho = W - L - Rm, paso = ancho / n;
+    const grid = [0, 0.25, 0.5, 0.75, 1].map((f) => { const v = lo + (hi - lo) * f; return `<g class="grid"><line x1="${L}" x2="${W - Rm}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${esc(eje(v, esDinero(d.columnas[jv[0]].nombre)))}</text></g>`; }).join('');
+    const etq = filas.map((r, i) => (n <= (chico ? 12 : 24) || i % Math.ceil(n / (chico ? 12 : 24)) === 0) ? `<text transform="translate(${(x0 + paso * i + paso / 2).toFixed(1)},${H - B + 12}) rotate(${n > (chico ? 3 : 8) ? -40 : 0})" text-anchor="${n > (chico ? 3 : 8) ? 'end' : 'middle'}">${esc(corto(lbl(r)))}</text>` : '').join('');
+    let cuerpo = '';
+    if (s.forma === 'lineas') cuerpo = jv.map((j, k) => `<polyline fill="none" stroke="${PALETA[k]}" stroke-width="2.5" points="${filas.map((r, i) => `${(x0 + paso * i + paso / 2).toFixed(1)},${y(r[j] || 0).toFixed(1)}`).join(' ')}"/>` + filas.map((r, i) => `<circle cx="${(x0 + paso * i + paso / 2).toFixed(1)}" cy="${y(r[j] || 0).toFixed(1)}" r="3" fill="${PALETA[k]}"><title>${esc(lbl(r))}: ${fmtNum(r[j], d.columnas[j])}</title></circle>`).join('')).join('');
+    else { const bw = Math.max(2, (paso * 0.8) / jv.length); cuerpo = filas.map((r, i) => jv.map((j, k) => { const v = r[j] || 0, yy = y(Math.max(v, 0)), h = Math.abs(y(v) - y(0)); return `<rect x="${(x0 + paso * i + paso * 0.1 + bw * k).toFixed(1)}" y="${yy.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h, 0.5).toFixed(1)}" fill="${PALETA[k]}"><title>${esc(lbl(r))}: ${fmtNum(v, d.columnas[j])}</title></rect>`; }).join('')).join(''); }
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(s.titulo || 'Gráfica')}">${grid}<line x1="${L}" x2="${W - Rm}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="#94a3b8"/>${cuerpo}${etq}</svg>${ley}`;
+  }
+  function repTabla(s, d) {
+    if (!d) return '<p class="muted">Sin datos.</p>';
+    const cols = (s.columnas && s.columnas.length ? s.columnas.map((n) => d.columnas.findIndex((c) => c.nombre.toLowerCase() === n.toLowerCase())) : d.columnas.map((_, j) => j)).filter((j) => j >= 0);
+    const tot = cols.map((j) => (d.columnas[j].tipo === 'numero' && /suma|total|monto|importe|conteo|renglones|entrada|salida|venta|compra|gasto|ingreso/i.test(d.columnas[j].nombre) && !/promedio|m[ií]nimo|m[aá]ximo/i.test(d.columnas[j].nombre) ? d.filas.reduce((a, r) => a + (Number(r[j]) || 0), 0) : null));
+    const conTot = d.filas.length > 1 && tot.some((x) => x != null);
+    return `<div class="tbl"><table class="cards rep-t"><thead><tr>${cols.map((j) => `<th${d.columnas[j].tipo === 'numero' ? ' class="num"' : ''}>${esc(d.columnas[j].nombre)}</th>`).join('')}</tr></thead><tbody>
+      ${d.filas.map((r) => `<tr>${cols.map((j) => `<td data-l="${esc(d.columnas[j].nombre)}"${d.columnas[j].tipo === 'numero' ? ' class="num"' : ''}>${fmtNum(r[j], d.columnas[j])}</td>`).join('')}</tr>`).join('')}
+      ${conTot ? `<tr class="rep-tot">${cols.map((j, k) => `<td data-l="${esc(d.columnas[j].nombre)}"${d.columnas[j].tipo === 'numero' ? ' class="num"' : ''}>${k === 0 && tot[0] == null ? '<b>Total</b>' : tot[k] != null ? '<b>' + fmtNum(Math.round(tot[k] * 100) / 100, d.columnas[j]) + '</b>' : ''}</td>`).join('')}</tr>` : ''}</tbody></table></div>
+      ${d.total_filas > d.filas.length ? `<p class="muted" style="font-size:12px">Se muestran ${d.filas.length} de ${d.total_filas} renglones.</p>` : ''}`;
+  }
+  function repHtml(r, editando) {
+    const sp = r.spec, ed = (cls, txt, attrs) => (editando ? `<div class="rep-ed ${cls}" contenteditable="true" ${attrs || ''}>${esc(txt || '')}</div>` : '');
+    return `<div class="rep-doc"><div class="rep-cab"><img src="logo-azul.png" alt="Forzza" class="rep-logo"><div class="muted" style="font-size:12px">Forzza · Inteligencia Empresarial<br>${fmtF(String(r.updated_at).slice(0, 10))}</div></div>
+      ${editando ? ed('rep-h1', sp.titulo, 'data-k="titulo"') : `<h1 class="rep-h1">${esc(sp.titulo)}</h1>`}
+      ${editando ? ed('', sp.resumen, 'data-k="resumen"') : `<p class="rep-res">${esc(sp.resumen || '')}</p>`}
+      ${sp.secciones.map((s, i) => {
+        const tit = editando ? ed('rep-h2', s.titulo, `data-i="${i}" data-k="titulo"`) : (s.titulo ? `<h2>${esc(s.titulo)}</h2>` : '');
+        if (s.tipo === 'texto') return `<div class="card">${tit}${editando ? ed('', s.texto, `data-i="${i}" data-k="texto"`) : `<p style="white-space:pre-wrap;margin:0">${esc(s.texto || '')}</p>`}</div>`;
+        if (s.tipo === 'indicadores') return `${tit}<div class="grid rep-kpis">${(s.items || []).map((it) => { const d = sp.datos[it.consulta]; const j = d ? d.columnas.findIndex((c) => c.nombre.toLowerCase() === String(it.columna).toLowerCase()) : -1; const v = d && j >= 0 && d.filas[it.fila || 0] ? d.filas[it.fila || 0][j] : null; return `<div class="card kpi"><div class="muted" style="font-size:13px">${esc(it.etiqueta)}</div><div class="kv">${fmtNum(v, j >= 0 ? { nombre: it.etiqueta + ' ' + d.columnas[j].nombre } : null)}</div></div>`; }).join('')}</div>`;
+        if (s.tipo === 'tabla') return `<div class="card">${tit}${repTabla(s, sp.datos[s.consulta])}</div>`;
+        if (s.tipo === 'grafica') return `<div class="card">${tit}${repGrafica(s, sp.datos[s.consulta])}</div>`;
+        return '';
+      }).join('')}
+      <p class="muted" style="font-size:12px">Fuentes: ${(r.fuentes || []).map((f) => esc(f.nombre === 'bancos' ? 'movimientos de tus bancos' : f.nombre)).join(', ')}. Cada cifra la calculó el sistema a partir de esos datos.${r.editado_a_mano ? ' Los textos se editaron a mano.' : ''}</p></div>`;
+  }
+  R.reportes = async function () {
+    const rs = await api('reportes');
+    main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">Mis reportes</h1>${canEdit() ? '<a class="btn primary" href="#reporte_nuevo">Nuevo reporte</a>' : ''}</div>
+      <p class="sub">Reportes que armó el Departamento de Inteligencia de Datos a partir de tus archivos y tus bancos.</p>
+      <div class="card tbl">${rs.length ? `<table class="cards"><thead><tr><th>Reporte</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>
+        ${rs.map((r) => `<tr><td data-l="Reporte"><a href="#reporte/${r.id}"><b>${esc(r.titulo || r.peticion.slice(0, 80))}</b></a>${r.version > 1 ? ` <span class="muted">· versión ${r.version}</span>` : ''}<div class="muted" style="font-size:12px">${esc(r.peticion.slice(0, 140))}</div></td>
+          <td data-l="Estado">${r.estado === 'listo' ? '<span class="pill ok">Listo</span>' : r.estado === 'generando' ? '<span class="pill warn">Preparando…</span>' : '<span class="pill bad">No se pudo</span>'}</td>
+          <td data-l="Actualizado">${fmtF(String(r.updated_at).slice(0, 10))}</td><td><a class="btn small" href="#reporte/${r.id}">Abrir</a></td></tr>`).join('')}</tbody></table>` : `<p class="empty">Aún no hay reportes.${canEdit() ? ' Crea el primero en <a href="#reporte_nuevo">Nuevo reporte</a>.' : ''}</p>`}</div>`;
+  };
+  R.reporte_nuevo = async function () {
+    if (!canEdit()) { location.hash = '#reportes'; return; }
+    const arch = await api('reportes/archivos');
+    main().innerHTML = `<h1>Nuevo reporte</h1><p class="sub">Sube un Excel o PDF (o usa los movimientos de tus bancos) y escribe qué reporte quieres. El Departamento de Inteligencia de Datos lo arma y lo guarda en «Mis reportes».</p>
+      <div class="card"><h2 style="margin-top:0">1. Datos</h2>
+        <div class="drop" id="repdrop"><input type="file" multiple accept=".xlsx,.xls,.csv,.pdf"><span>Arrastra aquí tus archivos (Excel, CSV o PDF, hasta 5), o toca para elegirlos</span></div>
+        <div id="repup"></div>
+        <div id="replist">${arch.length ? `<p class="muted" style="font-size:13px;margin:10px 0 4px">Archivos que ya subiste (marca los que quieres usar):</p>${arch.slice(0, 30).map((a) => `<label class="rep-arch"><input type="checkbox" value="${a.id}"> ${esc(a.nombre)} <span class="muted">· ${a.renglones.toLocaleString('en-US')} renglones · ${a.columnas.length} columnas · ${fmtF(String(a.created_at).slice(0, 10))}</span> <button type="button" class="btn small" data-borrar-arch="${a.id}">Quitar</button></label>`).join('')}` : ''}</div>
+        <label class="rep-arch" style="margin-top:10px"><input type="checkbox" id="repbancos" checked> <b>Incluir mis bancos</b> <span class="muted">(movimientos de todas tus cuentas)</span></label></div>
+      <div class="card"><h2 style="margin-top:0">2. ¿Qué reporte quieres?</h2>
+        <textarea id="reppet" rows="4" maxlength="2000" placeholder="Por ejemplo: ventas por cliente del último trimestre, los 10 más grandes, con gráfica de barras" style="width:100%"></textarea>
+        <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">${REP_EJEMPLOS.map((e) => `<button type="button" class="btn small" data-ej="${esc(e)}">${esc(e)}</button>`).join('')}</div>
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="repgo">Crear reporte</button></div><div class="err"></div></div>`;
+    const err = main().querySelector('.err'), zone = document.getElementById('repdrop'), inp = zone.querySelector('input');
+    const subir = async (files) => {
+      err.textContent = ''; files = Array.from(files);
+      if (files.length > 5) { err.textContent = 'Sube máximo 5 archivos a la vez.'; return; }
+      const grandes = files.filter((f) => f.size > 15 * 1024 * 1024); files = files.filter((f) => f.size <= 15 * 1024 * 1024);
+      const box = document.getElementById('repup');
+      box.innerHTML = grandes.map((f) => `<div class="carga"><b>${esc(f.name)}</b> <span class="pill bad">No se cargó</span><div class="muted" style="font-size:13px">${esc(ERR.archivo_muy_grande)}</div></div>`).join('');
+      if (!files.length) return;
+      const fd = new FormData(); files.forEach((f) => fd.append('archivos', f));
+      zone.querySelector('span').textContent = `Leyendo ${files.length} archivo${files.length > 1 ? 's' : ''}…`;
+      try {
+        const r = await api('reportes/archivos', { method: 'POST', body: fd });
+        box.innerHTML += r.archivos.map((a) => `<div class="carga"><div class="row" style="justify-content:space-between"><b>${esc(a.archivo)}</b>${a.ok ? '<span class="pill ok">Leído</span>' : '<span class="pill bad">No se cargó</span>'}</div>
+          ${a.ok ? `<div class="muted" style="font-size:13px">${a.renglones.toLocaleString('en-US')} renglones · columnas: ${a.columnas.map((c) => esc(c.nombre)).join(', ')}</div>${(a.notas || []).map((n) => `<div class="note" style="font-size:13px">${esc(n)}</div>`).join('')}
+            <label class="rep-arch"><input type="checkbox" value="${a.id}" checked data-nuevo> Usar en este reporte</label>` : `<div class="muted" style="font-size:13px">${esc(a.motivo)}</div>`}</div>`).join('');
+      } catch (e) { err.textContent = errMsg(e); }
+      finally { zone.querySelector('span').textContent = 'Arrastra aquí tus archivos (Excel, CSV o PDF, hasta 5), o toca para elegirlos'; }
+    };
+    inp.addEventListener('change', () => { if (inp.files.length) subir(inp.files); inp.value = ''; });
+    zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) subir(e.dataTransfer.files); }, true);
+    main().onclick = async (e) => {
+      const ej = e.target.closest('[data-ej]'); if (ej) { document.getElementById('reppet').value = ej.dataset.ej; return; }
+      const qa = e.target.closest('[data-borrar-arch]');
+      if (qa) { e.preventDefault(); if (!confirm('¿Quitar este archivo de tu lista? Los reportes ya hechos no cambian.')) return; try { await api('reportes/archivos/' + qa.dataset.borrarArch, { method: 'DELETE' }); qa.closest('label').remove(); } catch (er) { err.textContent = errMsg(er); } return; }
+      if (e.target.id !== 'repgo') return;
+      const ids = Array.from(main().querySelectorAll('#replist input:checked, #repup input:checked')).map((x) => Number(x.value));
+      const peticion = document.getElementById('reppet').value.trim(), bancos = document.getElementById('repbancos').checked;
+      err.textContent = '';
+      if (peticion.length < 5) { err.textContent = 'Escribe qué reporte quieres.'; return; }
+      if (!ids.length && !bancos) { err.textContent = 'Sube o marca un archivo, o marca «Incluir mis bancos».'; return; }
+      e.target.disabled = true;
+      try { const r = await api('reportes', { method: 'POST', body: { peticion, archivo_ids: ids, incluir_bancos: bancos } }); location.hash = '#reporte/' + r.id; }
+      catch (er) { err.textContent = errMsg(er); e.target.disabled = false; }
+    };
+  };
+  R.reporte = async function () {
+    const id = Number(S.arg); if (!id) { location.hash = '#reportes'; return; }
+    const r = await api('reportes/' + id);
+    if (r.estado === 'generando') {
+      const t0 = Date.now();
+      main().innerHTML = `<h1>Preparando tu reporte</h1><div class="card"><p><b>${esc(r.peticion)}</b></p>
+        <p class="muted">El Departamento de Inteligencia de Datos está leyendo los datos, haciendo las cuentas y revisando cada cifra. Suele tardar entre 30 segundos y 2 minutos. Puedes salir de esta pantalla; el reporte aparecerá en «Mis reportes».</p>
+        <div class="rep-prog"><i></i></div><p class="muted" id="repseg" style="font-size:12px"></p></div>`;
+      const tick = setInterval(() => { const el = document.getElementById('repseg'); if (!el || S.view !== 'reporte') { clearInterval(tick); return; } el.textContent = Math.round((Date.now() - t0) / 1000) + ' segundos'; }, 1000);
+      setTimeout(() => { clearInterval(tick); if (S.view === 'reporte' && Number(S.arg) === id) R.reporte().catch((e) => { main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }); }, 3000);
+      return;
+    }
+    if (r.estado === 'error') {
+      main().innerHTML = `<h1>No se pudo hacer el reporte</h1><div class="card"><p><b>${esc(r.peticion)}</b></p><div class="note">${esc(r.mensaje || 'Intenta de nuevo.')}</div>
+        <div class="row" style="margin-top:10px"><a class="btn" href="#reportes">Volver a mis reportes</a>${canEdit() ? `<a class="btn primary" href="#reporte_nuevo">Intentar con otra petición</a><button class="btn" id="repdel">Borrar</button>` : ''}</div></div>`;
+      const del = document.getElementById('repdel'); if (del) del.onclick = async () => { await api('reportes/' + id, { method: 'DELETE' }).catch(() => {}); location.hash = '#reportes'; };
+      return;
+    }
+    let editando = false;
+    const pintar = () => {
+      main().innerHTML = `<div class="row noprint" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><a href="#reportes">← Mis reportes</a>
+        <div class="row" style="gap:6px;flex-wrap:wrap">${(r.versiones || []).length > 1 ? `<select id="repver">${r.versiones.map((v) => `<option value="${v.id}"${v.id === r.id ? ' selected' : ''}>Versión ${v.version}${v.estado !== 'listo' ? ' (' + (v.estado === 'generando' ? 'preparando' : 'no se pudo') + ')' : ''}</option>`).join('')}</select>` : ''}
+          <button class="btn" id="repprint">Imprimir o guardar PDF</button>
+          ${canEdit() ? (editando ? '<button class="btn primary" id="repsave">Guardar textos</button><button class="btn" id="repcancel">Cancelar</button>' : '<button class="btn" id="repedit">Editar textos</button><button class="btn" id="repdel">Borrar</button>') : ''}</div></div>
+        ${repHtml(r, editando)}
+        ${canEdit() && !editando ? `<div class="card noprint"><h2 style="margin-top:0">Pedir un cambio a la IA</h2><p class="muted" style="font-size:13px">Por ejemplo: «agrega una columna con el promedio», «solo octubre», «cambia la gráfica a líneas». Se crea una versión nueva y la anterior se conserva.</p>
+          <textarea id="repcambio" rows="2" maxlength="2000" style="width:100%"></textarea><div class="row" style="margin-top:8px"><button class="btn primary" id="repcambiar">Pedir cambio</button></div></div>` : ''}<div class="err noprint"></div>`;
+    };
+    pintar();
+    main().onchange = (e) => { if (e.target.id === 'repver') location.hash = '#reporte/' + e.target.value; };
+    main().onclick = async (e) => {
+      const err = main().querySelector('.err'); const b = e.target.closest('button'); if (!b) return;
+      if (b.id === 'repprint') { window.print(); return; }
+      if (b.id === 'repedit') { editando = true; pintar(); return; }
+      if (b.id === 'repcancel') { editando = false; pintar(); return; }
+      if (b.id === 'repsave') {
+        const body = { secciones: [] };
+        main().querySelectorAll('.rep-ed').forEach((el) => { const txt = el.innerText.trim(); if (el.dataset.i == null) body[el.dataset.k] = txt; else { const i = Number(el.dataset.i); let x = body.secciones.find((y) => y.i === i); if (!x) body.secciones.push(x = { i }); x[el.dataset.k] = txt; } });
+        b.disabled = true;
+        try { await api('reportes/' + id, { method: 'PATCH', body }); go('reporte/' + id); } catch (er) { err.textContent = errMsg(er); b.disabled = false; }
+        return;
+      }
+      if (b.id === 'repdel') { if (!confirm('¿Borrar este reporte con todas sus versiones?')) return; try { await api('reportes/' + id, { method: 'DELETE' }); location.hash = '#reportes'; } catch (er) { err.textContent = errMsg(er); } return; }
+      if (b.id === 'repcambiar') {
+        const p = document.getElementById('repcambio').value.trim(); if (p.length < 3) { err.textContent = 'Escribe qué quieres cambiar.'; return; }
+        b.disabled = true;
+        try { const n = await api('reportes/' + id + '/cambiar', { method: 'POST', body: { peticion: p } }); location.hash = '#reporte/' + n.id; } catch (er) { err.textContent = errMsg(er); b.disabled = false; }
+      }
     };
   };
 

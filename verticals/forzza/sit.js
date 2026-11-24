@@ -567,6 +567,82 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const apE = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
       ok('la pantalla nunca muestra "No se pudo completar (código)"', !/No se pudo completar \(' \+/.test(apE) && /ERR\.ocupado/.test(apE) && /sin_conexion/.test(apE));
       ok('si un grupo falla, sus archivos quedan con «Intentar de nuevo» y la carga sigue', /data-reintentar/.test(apE) && /r\.fallo/.test(apE)); }
+    console.log('\nReportes: Departamento de Inteligencia de Datos');
+    { const RP = require('./src/reportes'), DL2 = require('./src/dalia');
+      const rows = [['FORZZA MATERIALES'], ['Reporte de ventas', '', '', ''], [], ['Fecha', 'Cliente', 'Folio', 'Total'],
+        ['05/10/2026', 'Constructora Uno', '001', '$1,200.50'], ['12/10/2026', 'Obras Dos', '002', '800'], ['03/11/2026', 'Constructora Uno', '003', '$2,000.00'],
+        ['Fecha', 'Cliente', 'Folio', 'Total'], ['20/11/2026', 'Casa Tres', '004', '(150.00)'], ['', 'TOTAL', '', '$3,850.50']];
+      const tb = RP.tablaDesdeFilas(rows);
+      ok('lector: encuentra el encabezado debajo del título y salta el encabezado repetido', !tb.error && tb.columnas.map((c) => c.nombre).join('|') === 'Fecha|Cliente|Folio|Total' && tb.filas.length === 4, JSON.stringify(tb).slice(0, 300));
+      ok('lector: tipos (fecha día/mes, número con $ y paréntesis, el folio es texto)', tb.columnas[0].tipo === 'fecha' && tb.columnas[3].tipo === 'numero' && tb.columnas[2].tipo === 'texto' && tb.filas[0][0] === '2026-10-05' && tb.filas[3][3] === -150);
+      ok('lector: el renglón TOTAL del archivo no entra (los totales los calcula el sistema)', !tb.filas.some((f) => /total/i.test(String(f[1]))) && tb.notas.some((n) => /totales/.test(n)));
+      const pdfT = RP.tablaDesdePdf([[ [{ x: 10, t: 'Fecha' }, { x: 120, t: 'Proveedor' }, { x: 300, t: 'Importe' }], [{ x: 10, t: '01/10/2026' }, { x: 121, t: 'Cementos SA' }, { x: 305, t: '5,000.00' }], [{ x: 10, t: '02/10/2026' }, { x: 300, t: '1,000.00' }, { x: 119, t: 'Aceros' }] ]]);
+      ok('lector PDF: cada celda va a la columna de su encabezado por posición', !pdfT.error && pdfT.filas.length === 2 && pdfT.filas[1][1] === 'Aceros' && pdfT.filas[1][2] === 1000, JSON.stringify(pdfT).slice(0, 200));
+      const cq = RP.consultar(tb, { agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }, { op: 'conteo', nombre: 'Notas' }], orden: { columna: 'Ventas', dir: 'desc' } });
+      ok('consulta: agrupa y suma en código', cq.filas[0][0] === 'Constructora Uno' && cq.filas[0][1] === 3200.5 && cq.filas[0][2] === 2 && cq.totales.Ventas === 3850.5, JSON.stringify(cq));
+      const cm = RP.consultar(tb, { agrupar_por: [{ columna: 'Fecha', periodo: 'mes' }], metricas: [{ op: 'suma', columna: 'Total' }], filtros: [{ columna: 'Total', op: '>', valor: 0 }] });
+      ok('consulta: agrupa fechas por mes, en orden, con filtro', JSON.stringify(cm.filas) === JSON.stringify([['2026-10', 2000.5], ['2026-11', 2000]]), JSON.stringify(cm.filas));
+      ok('consulta: «Otros» junta lo que no cabe', RP.consultar(tb, { agrupar_por: ['Cliente'], metricas: [{ op: 'suma', columna: 'Total', nombre: 'V' }], orden: { columna: 'V' }, limite: 1, agrupar_resto: true }).filas[1][1] === 650);
+      ok('consulta: una columna que no existe se dice, no se inventa', /No existe la columna/.test(RP.consultar(tb, { agrupar_por: ['Vendedor'] }).error || ''));
+      const consultasV = { c1: cq };
+      ok('verificador: un reporte correcto pasa', RP.verificar({ titulo: 'Ventas', resumen: 'Constructora Uno compró $3,200.50.', secciones: [{ tipo: 'tabla', consulta: 'c1' }, { tipo: 'grafica', consulta: 'c1', etiqueta: 'Cliente', valores: ['Ventas'] }] }, consultasV, DL2._permitidos([cq])).length === 0);
+      ok('verificador: una cifra inventada en el resumen se rechaza', RP.verificar({ titulo: 'Ventas', resumen: 'Vendimos $9,999,999.00.', secciones: [{ tipo: 'tabla', consulta: 'c1' }] }, consultasV, DL2._permitidos([cq])).some((x) => /9,999,999/.test(x)));
+      ok('verificador: una consulta o columna que no existe se rechaza', RP.verificar({ titulo: 'X', resumen: 'ok', secciones: [{ tipo: 'tabla', consulta: 'c9' }, { tipo: 'grafica', consulta: 'c1', etiqueta: 'Cliente', valores: ['Utilidad'] }] }, consultasV, []).length === 2);
+      const srcR = strip(fs.readFileSync(path.join(__dirname, 'src', 'reportes.js'), 'utf8'));
+      ok('reportes.js no toca la base de datos, la red ni el SDK (el modelo pasa por dalia.crear)', !/sequelize|fetch\(|anthropic-ai|require\('\.\/db'\)/.test(srcR) && /D\.crear\(/.test(srcR));
+
+      // Flujo completo con un modelo simulado.
+      const csv = 'Fecha,Cliente,Total\n05/10/2026,Constructora Uno,1200.50\n12/10/2026,Obras Dos,800\n03/11/2026,Constructora Uno,2000\n';
+      const subirR = (cookie, name, data) => req('POST', '/reportes/archivos', { cookie, raw: multipartMulti({}, [{ name, data }]) });
+      const up = await subirR(capA.cookie, 'ventas.csv', csv);
+      const arch = up.json && up.json.archivos && up.json.archivos[0];
+      ok('subir un archivo para reportes: se lee la tabla', up.status === 200 && arch && arch.ok && arch.renglones === 3, JSON.stringify(up.json));
+      const malo = await subirR(capA.cookie, 'foto.png', Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47]), Buffer.alloc(100, 1)]));
+      ok('subir una foto: mensaje claro', malo.json.archivos[0].ok === false && /foto o imagen/.test(malo.json.archivos[0].motivo));
+      ok('el contador no sube archivos ni crea reportes', (await subirR(conA.cookie, 'v.csv', csv)).status === 403 && (await req('POST', '/reportes', { cookie: conA.cookie, body: { peticion: 'ventas por cliente', archivo_ids: [arch.id] } })).status === 403);
+      ok('otra empresa no puede usar ese archivo', (await req('POST', '/reportes', { cookie: dirB.cookie, body: { peticion: 'ventas por cliente', archivo_ids: [arch.id] } })).status === 404);
+      const secRep = 'SITREPB' + STAMP;
+      { const [[cbR]] = await db.query("INSERT INTO fz_cuentas (tenant_id,nombre,banco,incluir) VALUES (:t,'Rep B','BBVA',TRUE) RETURNING id", { replacements: { t: B } });
+        await db.query("INSERT INTO fz_movimientos (tenant_id,cuenta_id,fecha,concepto,monto,categoria) VALUES (:t,:c,:f,:k,4242.42,'cliente')", { replacements: { t: B, c: cbR.id, f: hoyMx(), k: secRep } }); }
+      const turnos = [];
+      const fakeR = (pasos) => ({ messages: { create: async (p) => { turnos.push(p); return pasos.shift()(p); } } });
+      const tu = (name, input) => () => ({ content: [{ type: 'tool_use', id: 'r' + Math.random(), name, input }] });
+      const entregar = { titulo: 'Ventas por cliente', resumen: 'Constructora Uno es el cliente que más compró: $3,200.50.', secciones: [
+        { tipo: 'indicadores', items: [{ etiqueta: 'Mayor cliente', consulta: 'c1', columna: 'Ventas', fila: 0 }] },
+        { tipo: 'grafica', titulo: 'Ventas', consulta: 'c1', forma: 'barras', etiqueta: 'Cliente', valores: ['Ventas'] }, { tipo: 'tabla', titulo: 'Detalle', consulta: 'c1' }] };
+      DL2._setClient(fakeR([tu('ver_fuentes', {}), tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }], orden: { columna: 'Ventas', dir: 'desc' }, tenant_id: B }),
+        tu('entregar_reporte', { ...entregar, resumen: 'Vendimos $7,777,777.00 en total.' }), tu('entregar_reporte', entregar)]));
+      const cr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente con gráfica', archivo_ids: [arch.id], incluir_bancos: true } });
+      ok('crear reporte: responde de inmediato (se arma en segundo plano)', cr.status === 202 && cr.json.estado === 'generando');
+      let rep; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rep = (await req('GET', '/reportes/' + cr.json.id, { cookie: conA.cookie })).json; if (rep.estado !== 'generando') break; }
+      ok('el reporte queda listo y el contador lo puede ver', rep.estado === 'listo' && rep.spec.titulo === 'Ventas por cliente', JSON.stringify(rep).slice(0, 300));
+      ok('las cifras de la tabla las puso el código', JSON.stringify(rep.spec.datos.c1.filas) === JSON.stringify([['Constructora Uno', 3200.5], ['Obras Dos', 800]]));
+      ok('el verificador rechazó la primera entrega con la cifra inventada', turnos.some((t) => JSON.stringify(t.messages).includes('7,777,777') && JSON.stringify(t.messages).includes('verificador')) && !JSON.stringify(rep.spec).includes('7,777,777'));
+      ok('el modelo vio la fuente bancos de SU empresa, nunca la de otra', JSON.stringify(turnos[1].messages).includes('bancos') && !JSON.stringify(turnos).includes(secRep));
+      ok('otra empresa no ve el reporte', (await req('GET', '/reportes/' + cr.json.id, { cookie: dirB.cookie })).status === 404 && !(await req('GET', '/reportes', { cookie: dirB.cookie })).json.some((x) => x.id === cr.json.id));
+      const pe = await req('PATCH', '/reportes/' + cr.json.id, { cookie: capA.cookie, body: { titulo: 'Ventas de octubre y noviembre', secciones: [{ i: 1, titulo: 'Gráfica' }] } });
+      const rep2 = (await req('GET', '/reportes/' + cr.json.id, { cookie: capA.cookie })).json;
+      ok('editar a mano: cambia los textos, no las cifras', pe.status === 200 && rep2.spec.titulo === 'Ventas de octubre y noviembre' && rep2.spec.secciones[1].titulo === 'Gráfica' && rep2.editado_a_mano && JSON.stringify(rep2.spec.datos) === JSON.stringify(rep.spec.datos));
+      DL2._setClient(fakeR([tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Fecha', periodo: 'mes' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }] }),
+        tu('entregar_reporte', { titulo: 'Ventas por mes', resumen: 'Ventas mensuales.', secciones: [{ tipo: 'grafica', consulta: 'c1', forma: 'lineas', etiqueta: 'mes de Fecha', valores: ['Ventas'] }] })]));
+      const cam = await req('POST', '/reportes/' + cr.json.id + '/cambiar', { cookie: capA.cookie, body: { peticion: 'mejor por mes, con líneas' } });
+      let v2; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); v2 = (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).json; if (v2.estado !== 'generando') break; }
+      ok('pedir un cambio crea la versión 2 y conserva la 1', cam.status === 202 && v2.estado === 'listo' && v2.version === 2 && v2.versiones.length === 2 && (await req('GET', '/reportes/' + cr.json.id, { cookie: capA.cookie })).json.estado === 'listo');
+      ok('la lista muestra una sola entrada por reporte (la última versión)', (await req('GET', '/reportes', { cookie: capA.cookie })).json.filter((x) => x.raiz_id === cr.json.id).length === 1);
+      DL2._setClient(fakeR(Array.from({ length: 6 }, () => tu('entregar_reporte', { titulo: 'X', resumen: 'Ganamos $5,555,555.00', secciones: [{ tipo: 'tabla', consulta: 'c1' }] }))));
+      const malR = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'algo imposible', archivo_ids: [arch.id] } });
+      let rm; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rm = (await req('GET', '/reportes/' + malR.json.id, { cookie: capA.cookie })).json; if (rm.estado !== 'generando') break; }
+      ok('si la IA insiste en una cifra sin fuente, el reporte NO se guarda y el mensaje es claro', rm.estado === 'error' && !rm.spec && /cifras verificadas/.test(rm.mensaje || ''), JSON.stringify(rm).slice(0, 200));
+      DL2._setClient(null);
+      const kb = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+      const sinM = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente', archivo_ids: [arch.id] } });
+      let rs; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rs = (await req('GET', '/reportes/' + sinM.json.id, { cookie: capA.cookie })).json; if (rs.estado !== 'generando') break; }
+      if (kb) process.env.ANTHROPIC_API_KEY = kb;
+      ok('sin modelo: mensaje claro, nada inventado', rs.estado === 'error' && /no está disponible/.test(rs.mensaje || ''));
+      ok('el contador no borra', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: conA.cookie })).status === 403);
+      ok('borrar quita el reporte con todas sus versiones', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: capA.cookie })).status === 200 && (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).status === 404);
+      const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+      ok('menú: sección Reportes con Mis reportes y Nuevo reporte', /\['grp', 'Reportes'\], \['reportes', 'Mis reportes'\], \['reporte_nuevo', 'Nuevo reporte'\]/.test(apR) && /R\.reporte = /.test(apR) && /window\.print\(\)/.test(apR)); }
     console.log('\nTendencia (flecha bajo la calificación)');
     { const hT = '2026-10-30', mkT = (f, a, c) => ({ fecha: f, monto: a, categoria: c || 'cliente' }), bT = [];
       for (let i = 0; i < 60; i++) { const f = E.addDays(hT, -i); bT.push(mkT(f, 1000), mkT(f, -1000, 'proveedor')); }
@@ -765,7 +841,7 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('sin excepciones', false, e && (e.stack || e.message));
   } finally {
     for (const t of tenants) {
-      for (const tb of ['fz_sicar_saldos', 'fz_sicar_docs', 'fz_sicar_imports', 'fz_api_keys', 'fz_cxc_abonos', 'fz_cxp_pagos', 'fz_movimientos', 'fz_cxc', 'fz_cxp', 'fz_fijos', 'fz_clientes', 'fz_proveedores', 'fz_cuentas', 'fz_config', 'fz_activity', 'fz_users']) {
+      for (const tb of ['fz_reportes', 'fz_rep_archivos', 'fz_sicar_saldos', 'fz_sicar_docs', 'fz_sicar_imports', 'fz_api_keys', 'fz_cxc_abonos', 'fz_cxp_pagos', 'fz_movimientos', 'fz_cxc', 'fz_cxp', 'fz_fijos', 'fz_clientes', 'fz_proveedores', 'fz_cuentas', 'fz_config', 'fz_activity', 'fz_users']) {
         await db.query(`DELETE FROM ${tb} WHERE tenant_id=:t`, { replacements: { t } }).catch((e) => console.log('limpieza', tb, e.message));
       }
       await db.query('DELETE FROM fz_tenants WHERE id=:t', { replacements: { t } }).catch(() => {});

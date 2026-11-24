@@ -1129,12 +1129,12 @@ function parsePdfRows(buf) {
     c.send({ buf: buf.toString('base64') });
   });
 }
+const esImagen = (buf) => (buf[0] === 0xff && buf[1] === 0xd8) || buf.slice(1, 4).toString() === 'PNG' || buf.slice(0, 4).toString() === 'GIF8' || buf.slice(8, 12).toString() === 'WEBP' || /^ftyp(heic|heix|mif1)/.test(buf.slice(4, 12).toString());
 /** Cualquier formato en que SICAR guarda un reporte -> páginas de celdas. Tipo por los primeros bytes. */
 async function leerArchivoSicar(buf) {
   if (!buf || buf.length < 8) return { error: 'archivo_vacio' };
   if (buf.slice(0, 5).toString() === '%PDF-') return parsePdfRows(buf);
-  const img = (buf[0] === 0xff && buf[1] === 0xd8) || buf.slice(1, 4).toString() === 'PNG' || buf.slice(0, 4).toString() === 'GIF8' || buf.slice(8, 12).toString() === 'WEBP' || /^ftyp(heic|heix|mif1)/.test(buf.slice(4, 12).toString());
-  if (img) return { error: 'es_imagen' };
+  if (esImagen(buf)) return { error: 'es_imagen' };
   const zip = buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
   const ole = buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0; // .xls de Excel 97-2003
   const texto = !zip && !ole && !buf.slice(0, 4096).includes(0);
@@ -1391,6 +1391,163 @@ api.patch('/usuarios/:id', adminOnly, async (req, res) => {
 });
 api.get('/actividad', adminOnly, async (req, res) => {
   res.json(await sel('SELECT action,detail,user_email,created_at FROM fz_activity WHERE tenant_id=:t ORDER BY id DESC LIMIT 200', { t: req.tenant }));
+});
+
+/* ── REPORTES: Departamento de Inteligencia de Datos (src/reportes.js) ──────────────────────── */
+const RP = require('./reportes');
+const repUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 5 } });
+const REP_DIA = () => Math.max(1, Number(process.env.FORZZA_REPORTES_DIA) || 40);
+const MSG_REP = {
+  sin_tabla: 'No encontré una tabla en este archivo. Funciona mejor con un Excel o CSV que tenga una fila de encabezados (por ejemplo Fecha, Cliente, Total) y los datos debajo.',
+  sin_texto: 'Este PDF no tiene texto (parece escaneado o una foto). Súbelo en Excel o como el PDF original.'
+};
+/** Lee un archivo cualquiera (Excel, CSV o PDF) y devuelve su tabla, o un mensaje claro. */
+async function leerTablaReporte(buf) {
+  if (!buf || buf.length < 8) return { error: ERR_CARGA.archivo_vacio };
+  if (buf.slice(0, 5).toString() === '%PDF-') {
+    const p = await parsePdfRows(buf);
+    if (p.error) return { error: ERR_CARGA[p.error] || ERR_CARGA.pdf_ilegible };
+    const t = RP.tablaDesdePdf(p.pages);
+    return t.error ? { error: MSG_REP[t.error] || MSG_ARCHIVO_RARO } : { tabla: t, formato: 'pdf' };
+  }
+  if (esImagen(buf)) return { error: ERR_CARGA.es_imagen };
+  const p = await parseSheet(buf, { todas: true, max: 20000 });
+  if (p.error) return { error: ERR_CARGA[p.error] || MSG_ARCHIVO_RARO };
+  const t = RP.tablaDesdeFilas(p.rows);
+  return t.error ? { error: MSG_REP[t.error] || MSG_ARCHIVO_RARO } : { tabla: t, formato: buf[0] === 0x50 || buf[0] === 0xd0 ? 'excel' : 'csv' };
+}
+api.post('/reportes/archivos', (req, res, next) => repUpload.array('archivos', 5)(req, res, (e) => (e ? res.status(413).json({ error: e.code === 'LIMIT_FILE_SIZE' ? 'archivo_muy_grande' : 'demasiados_archivos', ayuda: e.code === 'LIMIT_FILE_SIZE' ? undefined : 'Sube máximo 5 archivos a la vez.' }) : next())), async (req, res) => {
+  const files = req.files || [];
+  if (!files.length) return res.status(400).json({ error: 'falta_archivo', ayuda: 'Elige un archivo de Excel, CSV o PDF.' });
+  const out = [];
+  for (const f of files) {
+    const nombre = str(nombreArchivo(f.originalname), 200) || 'archivo';
+    let r; try { r = await leerTablaReporte(f.buffer); } catch (e) { console.error('[forzza] reporte archivo', e && e.message); r = { error: MSG_ARCHIVO_RARO }; }
+    if (r.error) { out.push({ archivo: nombre, ok: false, motivo: r.error }); continue; }
+    const t = r.tabla;
+    const [[row]] = await exec(`INSERT INTO fz_rep_archivos (tenant_id,nombre,formato,columnas,filas,notas,renglones,sha256,created_by) VALUES (:t,:n,:f,:c::jsonb,:fi::jsonb,:no::jsonb,:r,:h,:u) RETURNING id`,
+      { t: req.tenant, n: nombre, f: r.formato, c: JSON.stringify(t.columnas), fi: JSON.stringify(t.filas), no: JSON.stringify(t.notas || []), r: t.filas.length, h: crypto.createHash('sha256').update(f.buffer).digest('hex'), u: req.user.id });
+    audit(req, 'reporte_archivo', `${nombre}: ${t.filas.length} renglones`);
+    out.push({ archivo: nombre, ok: true, id: row.id, renglones: t.filas.length, columnas: t.columnas, notas: t.notas || [] });
+  }
+  res.json({ archivos: out });
+});
+api.get('/reportes/archivos', async (req, res) => {
+  res.json(await sel('SELECT id, nombre, formato, columnas, notas, renglones, created_at FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 100', { t: req.tenant }));
+});
+api.delete('/reportes/archivos/:id', async (req, res) => {
+  const id = intId(req.params.id);
+  const [r] = await exec('UPDATE fz_rep_archivos SET deleted_at=NOW() WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL RETURNING id', { id, t: req.tenant });
+  if (!r.length) return res.status(404).json({ error: 'not_found' });
+  res.json({ ok: true });
+});
+/** La fuente «bancos»: los movimientos reales de todas las cuentas activas. */
+async function fuenteBancos(tenant) {
+  const rows = await sel(`SELECT m.fecha::text AS fecha, c.nombre AS cuenta, COALESCE(c.banco,'') AS banco, m.concepto, m.contraparte, m.categoria, m.referencia, m.monto, c.incluir
+    FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id WHERE m.tenant_id=:t AND c.active ORDER BY m.fecha DESC, m.id DESC LIMIT 20000`, { t: tenant });
+  const columnas = [['Fecha', 'fecha'], ['Cuenta', 'texto'], ['Banco', 'texto'], ['Concepto', 'texto'], ['Contraparte', 'texto'], ['Categoría', 'texto'], ['Referencia', 'texto'], ['Monto', 'numero'], ['Entrada', 'numero'], ['Salida', 'numero'], ['Suma al efectivo', 'texto']].map(([nombre, tipo]) => ({ nombre, tipo }));
+  const filas = rows.map((r) => { const mo = Number(r.monto); return [r.fecha, r.cuenta, r.banco || null, r.concepto, r.contraparte || null, r.categoria, r.referencia || null, mo, mo > 0 ? mo : null, mo < 0 ? -mo : null, r.incluir ? 'sí' : 'no']; });
+  return { columnas, filas, notas: rows.length >= 20000 ? ['Se usan los 20,000 movimientos más recientes.'] : [] };
+}
+async function fuentesReporte(tenant, archivoIds, bancos) {
+  const fuentes = [];
+  if (archivoIds.length) {
+    const arch = await sel('SELECT id, nombre, columnas, filas, notas FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL AND id IN (:ids)', { t: tenant, ids: archivoIds });
+    const usados = new Set();
+    for (const a of arch) { let n = a.nombre; while (usados.has(n.toLowerCase())) n = n + ' (' + a.id + ')'; usados.add(n.toLowerCase()); fuentes.push({ id: a.id, nombre: n, tabla: { columnas: a.columnas, filas: a.filas, notas: a.notas || [] } }); }
+  }
+  if (bancos) fuentes.push({ id: null, nombre: 'bancos', tabla: await fuenteBancos(tenant) });
+  return fuentes;
+}
+async function correrReporte(id, tenant, empresa, peticion, fuentes, previo) {
+  let out;
+  try { out = await RP.generar(fuentes, { empresa, hoy: hoyMx(), peticion, previo }); }
+  catch (e) { console.error('[forzza] reporte', id, e && e.message); out = { error: 'interno', mensaje: 'No se pudo terminar el reporte. Intenta de nuevo en unos minutos.' }; }
+  if (out.ok) await exec(`UPDATE fz_reportes SET estado='listo', titulo=:ti, spec=:s::jsonb, herramientas=:h::jsonb, mensaje=NULL, updated_at=NOW() WHERE id=:id AND tenant_id=:t`, { ti: out.reporte.titulo, s: JSON.stringify(out.reporte), h: JSON.stringify(out.herramientas || []), id, t: tenant });
+  else await exec(`UPDATE fz_reportes SET estado='error', mensaje=:m, updated_at=NOW() WHERE id=:id AND tenant_id=:t`, { m: out.mensaje || 'No se pudo hacer el reporte. Intenta de nuevo.', id, t: tenant });
+}
+async function limiteReportes(req, res) {
+  const c = await one("SELECT COUNT(*)::int AS n FROM fz_reportes WHERE tenant_id=:t AND created_at > NOW() - INTERVAL '24 hours'", { t: req.tenant });
+  if (c.n >= REP_DIA()) { res.status(429).json({ error: 'limite_reportes', ayuda: `Llegaste al límite de ${REP_DIA()} reportes en 24 horas. Intenta de nuevo mañana.` }); return false; }
+  const g = await one("SELECT COUNT(*)::int AS n FROM fz_reportes WHERE tenant_id=:t AND estado='generando' AND updated_at > NOW() - INTERVAL '10 minutes'", { t: req.tenant });
+  if (g.n >= 3) { res.status(429).json({ error: 'reportes_en_curso', ayuda: 'Ya hay 3 reportes en preparación. Espera a que terminen.' }); return false; }
+  return true;
+}
+const repEmpresa = async (t) => ((await one('SELECT name FROM fz_tenants WHERE id=:t', { t })) || {}).name;
+api.post('/reportes', async (req, res) => {
+  const b = req.body || {};
+  const peticion = str(b.peticion, 2000);
+  if (peticion.length < 5) return res.status(400).json({ error: 'falta_peticion', ayuda: 'Escribe qué reporte quieres, por ejemplo: «ventas por cliente del último trimestre, los 10 más grandes, con gráfica».' });
+  const ids = [...new Set((Array.isArray(b.archivo_ids) ? b.archivo_ids : []).map(intId).filter(Boolean))].slice(0, 5);
+  const bancos = !!b.incluir_bancos;
+  if (!ids.length && !bancos) return res.status(400).json({ error: 'sin_fuentes', ayuda: 'Sube un archivo o marca «Incluir mis bancos».' });
+  if (!(await limiteReportes(req, res))) return;
+  const fuentes = await fuentesReporte(req.tenant, ids, bancos);
+  if (fuentes.filter((f) => f.id).length !== ids.length) return res.status(404).json({ error: 'archivo_no_encontrado', ayuda: 'Uno de los archivos ya no está. Vuelve a subirlo.' });
+  if (bancos && !fuentes.find((f) => f.nombre === 'bancos').tabla.filas.length && !ids.length) return res.status(400).json({ error: 'sin_bancos', ayuda: 'Aún no hay movimientos de banco cargados. Sube un archivo o importa tus estados de cuenta.' });
+  const [[r]] = await exec(`INSERT INTO fz_reportes (tenant_id,peticion,archivo_ids,incluir_bancos,fuentes,created_by) VALUES (:t,:p,:ids::int[],:b,:f::jsonb,:u) RETURNING id`,
+    { t: req.tenant, p: peticion, ids: '{' + ids.join(',') + '}', b: bancos, f: JSON.stringify(fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length }))), u: req.user.id });
+  await exec('UPDATE fz_reportes SET raiz_id=id WHERE id=:id', { id: r.id });
+  audit(req, 'reporte_pedido', peticion.slice(0, 200));
+  const empresa = await repEmpresa(req.tenant);
+  setImmediate(() => correrReporte(r.id, req.tenant, empresa, peticion, fuentes, null).catch((e) => console.error('[forzza] reporte', e && e.message)));
+  res.status(202).json({ id: r.id, estado: 'generando' });
+});
+const repEstado = (r) => (r.estado === 'generando' && new Date(r.updated_at) < Date.now() - 10 * 60000 ? { ...r, estado: 'error', mensaje: 'El reporte se interrumpió. Pídelo de nuevo.' } : r);
+api.get('/reportes', async (req, res) => {
+  const rows = await sel(`SELECT id, raiz_id, version, titulo, peticion, estado, mensaje, fuentes, incluir_bancos, editado_a_mano, created_at, updated_at FROM fz_reportes r
+    WHERE tenant_id=:t AND deleted_at IS NULL AND version = (SELECT MAX(version) FROM fz_reportes x WHERE x.tenant_id=r.tenant_id AND x.raiz_id=r.raiz_id AND x.deleted_at IS NULL) ORDER BY updated_at DESC LIMIT 200`, { t: req.tenant });
+  res.json(rows.map(repEstado));
+});
+api.get('/reportes/:id', async (req, res) => {
+  const id = intId(req.params.id);
+  const r = id && (await one('SELECT * FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id, t: req.tenant }));
+  if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o fue borrado.' });
+  const versiones = await sel('SELECT id, version, estado, created_at FROM fz_reportes WHERE tenant_id=:t AND raiz_id=:r AND deleted_at IS NULL ORDER BY version', { t: req.tenant, r: r.raiz_id });
+  res.json({ ...repEstado(r), versiones });
+});
+// Edición a mano: solo textos (título, resumen, títulos de sección y párrafos). Las cifras no se tocan.
+api.patch('/reportes/:id', async (req, res) => {
+  const id = intId(req.params.id), b = req.body || {};
+  const r = id && (await one("SELECT * FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL AND estado='listo'", { id, t: req.tenant }));
+  if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o aún no está listo.' });
+  const spec = r.spec;
+  if (b.titulo != null) { const t = str(b.titulo, 200); if (!t) return res.status(400).json({ error: 'falta_titulo', ayuda: 'El reporte necesita un título.' }); spec.titulo = t; }
+  if (b.resumen != null) spec.resumen = String(b.resumen).slice(0, 3000);
+  for (const x of Array.isArray(b.secciones) ? b.secciones : []) {
+    const s = spec.secciones[Number(x.i)]; if (!s) continue;
+    if (x.titulo != null) s.titulo = str(x.titulo, 200) || null;
+    if (x.texto != null && s.tipo === 'texto') s.texto = String(x.texto).slice(0, 4000);
+  }
+  await exec('UPDATE fz_reportes SET spec=:s::jsonb, titulo=:ti, editado_a_mano=TRUE, updated_at=NOW() WHERE id=:id AND tenant_id=:t', { s: JSON.stringify(spec), ti: spec.titulo, id, t: req.tenant });
+  audit(req, 'reporte_editado', spec.titulo);
+  res.json({ ok: true });
+});
+// Cambio con IA: una versión nueva (la anterior se conserva).
+api.post('/reportes/:id/cambiar', async (req, res) => {
+  const id = intId(req.params.id), peticion = str((req.body || {}).peticion, 2000);
+  if (peticion.length < 3) return res.status(400).json({ error: 'falta_peticion', ayuda: 'Escribe qué quieres cambiar del reporte.' });
+  const r = id && (await one("SELECT * FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL AND estado='listo'", { id, t: req.tenant }));
+  if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o aún no está listo.' });
+  if (!(await limiteReportes(req, res))) return;
+  const fuentes = await fuentesReporte(req.tenant, r.archivo_ids || [], r.incluir_bancos);
+  if (!fuentes.length) return res.status(400).json({ error: 'sin_fuentes', ayuda: 'Los archivos de este reporte ya no están. Vuelve a subirlos y crea el reporte de nuevo.' });
+  const v = await one('SELECT MAX(version)::int AS v FROM fz_reportes WHERE tenant_id=:t AND raiz_id=:r', { t: req.tenant, r: r.raiz_id });
+  const [[n]] = await exec(`INSERT INTO fz_reportes (tenant_id,raiz_id,padre_id,version,titulo,peticion,archivo_ids,incluir_bancos,fuentes,created_by) VALUES (:t,:raiz,:padre,:v,:ti,:p,:ids::int[],:b,:f::jsonb,:u) RETURNING id`,
+    { t: req.tenant, raiz: r.raiz_id, padre: r.id, v: v.v + 1, ti: r.titulo, p: peticion, ids: '{' + (r.archivo_ids || []).join(',') + '}', b: r.incluir_bancos, f: JSON.stringify(fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length }))), u: req.user.id });
+  const previo = { titulo: r.spec.titulo, resumen: r.spec.resumen, peticion_original: r.peticion, secciones: r.spec.secciones.map((s) => ({ tipo: s.tipo, titulo: s.titulo, texto: s.texto, forma: s.forma, consulta_usada: s.consulta && r.spec.datos[s.consulta] ? r.spec.datos[s.consulta].consulta : undefined })) };
+  audit(req, 'reporte_cambio', peticion.slice(0, 200));
+  const empresa = await repEmpresa(req.tenant);
+  setImmediate(() => correrReporte(n.id, req.tenant, empresa, peticion, fuentes, previo).catch((e) => console.error('[forzza] reporte', e && e.message)));
+  res.status(202).json({ id: n.id, estado: 'generando' });
+});
+api.delete('/reportes/:id', async (req, res) => {
+  const id = intId(req.params.id);
+  const r = id && (await one('SELECT raiz_id, titulo FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id, t: req.tenant }));
+  if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o ya fue borrado.' });
+  await exec('UPDATE fz_reportes SET deleted_at=NOW() WHERE tenant_id=:t AND raiz_id=:r AND deleted_at IS NULL', { t: req.tenant, r: r.raiz_id });
+  audit(req, 'reporte_borrado', r.titulo || '');
+  res.json({ ok: true });
 });
 
 router.use((err, req, res, next) => {

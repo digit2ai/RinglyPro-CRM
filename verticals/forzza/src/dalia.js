@@ -544,4 +544,4 @@ async function responder(raw, ctx) {
   }
 }
 
-module.exports = { responder, enabled, _setClient, _numeros: numeros, _sinFuente: sinFuente, _permitidos: permitidos, _ejecutar: ejecutar, TOOLS };
+module.exports = { responder, enabled, crear, _setClient, _numeros: numeros, _sinFuente: sinFuente, _permitidos: permitidos, _ejecutar: ejecutar, TOOLS };

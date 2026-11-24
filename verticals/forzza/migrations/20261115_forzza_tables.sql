@@ -314,3 +314,44 @@ CREATE TABLE IF NOT EXISTS fz_sicar_articulos (
   total NUMERIC(16,2)
 );
 CREATE INDEX IF NOT EXISTS ix_fz_sicar_articulos ON fz_sicar_articulos (tenant_id, import_id);
+
+-- ── Reportes (24-nov-2026): el Departamento de Inteligencia de Datos ─────
+-- Archivos que el cliente sube para hacer reportes: se guarda la TABLA leída (no el archivo).
+CREATE TABLE IF NOT EXISTS fz_rep_archivos (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES fz_tenants(id),
+  nombre TEXT NOT NULL,
+  formato TEXT NOT NULL,
+  columnas JSONB NOT NULL,
+  filas JSONB NOT NULL,
+  notas JSONB NOT NULL DEFAULT '[]',
+  renglones INTEGER NOT NULL DEFAULT 0,
+  sha256 TEXT,
+  created_by INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_fz_rep_archivos ON fz_rep_archivos (tenant_id, deleted_at);
+-- Un reporte guarda su resultado ya calculado (spec), las fuentes que usó y su versión.
+CREATE TABLE IF NOT EXISTS fz_reportes (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES fz_tenants(id),
+  raiz_id INTEGER,
+  padre_id INTEGER,
+  version INTEGER NOT NULL DEFAULT 1,
+  titulo TEXT,
+  peticion TEXT NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'generando' CHECK (estado IN ('generando','listo','error')),
+  mensaje TEXT,
+  spec JSONB,
+  archivo_ids INTEGER[] NOT NULL DEFAULT '{}',
+  incluir_bancos BOOLEAN NOT NULL DEFAULT FALSE,
+  fuentes JSONB NOT NULL DEFAULT '[]',
+  editado_a_mano BOOLEAN NOT NULL DEFAULT FALSE,
+  herramientas JSONB,
+  created_by INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_fz_reportes ON fz_reportes (tenant_id, deleted_at, created_at);
