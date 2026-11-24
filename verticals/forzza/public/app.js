@@ -1097,11 +1097,44 @@
       }).join('')}
       <p class="muted" style="font-size:12px">Fuentes: ${(r.fuentes || []).map((f) => esc(f.nombre === 'bancos' ? 'movimientos de tus bancos' : f.nombre)).join(', ')}. Cada cifra la calculó el sistema a partir de esos datos.${r.editado_a_mano ? ' Los textos se editaron a mano.' : ''}</p></div>`;
   }
+  const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function cupoHtml(c) {
+    if (!c) return '';
+    const pct = Math.min(100, Math.round((c.usados / c.incluidos) * 100)), col = c.disponibles === 0 ? ROJO : pct >= 80 && !c.creditos ? AMBAR : NAVY;
+    const director = S.me && ['owner', 'director'].includes(S.me.user.role);
+    return `<div class="card rep-cupo"><div class="row" style="justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px">
+        <b>Reportes de ${MESES_L[Number(c.mes.slice(5)) - 1]}: ${c.usados} de ${c.incluidos} incluidos</b>
+        <span class="muted" style="font-size:13px">${c.creditos ? `Reportes extra disponibles: <b>${c.creditos}</b> · ` : ''}Te quedan <b>${c.disponibles}</b></span></div>
+      <div class="hb-t" style="margin:8px 0"><i style="width:${pct}%;background:${col}"></i></div>
+      ${c.disponibles === 0 ? `<div class="note" style="margin:6px 0">Ya usaste los ${c.incluidos} reportes incluidos de este mes. ${director ? 'Compra reportes extra para seguir creando.' : 'Pide al director que compre reportes extra.'} El cupo se renueva el día 1.</div>`
+        : pct >= 80 && !c.creditos ? `<p class="muted" style="font-size:13px;margin:4px 0">Te quedan pocos reportes este mes. Después de ${c.incluidos}, cada reporte extra cuesta USD ${c.precio_extra_usd}.</p>`
+        : `<p class="muted" style="font-size:13px;margin:4px 0">Incluye ${c.incluidos} reportes al mes (crear uno nuevo o pedir un cambio cuenta como uno; si un reporte falla, no cuenta). Después, USD ${c.precio_extra_usd} por reporte extra.</p>`}
+      ${director && canEdit() ? `<div class="row noprint" style="gap:6px;flex-wrap:wrap;margin-top:6px"><span class="muted" style="font-size:13px">Comprar reportes extra:</span>${c.paquetes.map((n) => `<button class="btn small" data-comprar="${n}">${n} por USD ${n * c.precio_extra_usd}</button>`).join('')}</div>` : ''}
+      <div class="err rep-cupo-err"></div></div>`;
+  }
+  async function comprarReportes(n, btn) {
+    const err = document.querySelector('.rep-cupo-err');
+    if (!confirm(`¿Comprar ${n} reportes extra por USD ${n}? Se abrirá el pago seguro de Stripe.`)) return;
+    btn.disabled = true;
+    try { const r = await api('reportes/creditos/comprar', { method: 'POST', body: { cantidad: n } }); location.href = r.url; }
+    catch (e) { if (err) err.textContent = errMsg(e); btn.disabled = false; }
+  }
+  async function cupoConAviso() {
+    const c = await api('reportes/cupo').catch(() => null);
+    const q = new URLSearchParams(location.search), pago = q.get('rep_pago');
+    if (pago) { q.delete('rep_pago'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+    let aviso = '';
+    if (c && c.recien_pagados) aviso = `<div class="note ok-note">Pago recibido: ${c.recien_pagados} reportes extra ya están disponibles.</div>`;
+    else if (pago === 'ok') aviso = '<div class="note">Stripe está confirmando tu pago. Si los reportes extra no aparecen en un minuto, vuelve a abrir esta pantalla.</div>';
+    else if (pago === 'cancelado') aviso = '<div class="note">El pago no se completó. No se hizo ningún cargo.</div>';
+    return { c, aviso };
+  }
   R.reportes = async function () {
     const arch = S.repArch === true;
-    const rs = await api('reportes' + (arch ? '?archivados=1' : ''));
+    const [rs, { c, aviso }] = await Promise.all([api('reportes' + (arch ? '?archivados=1' : '')), cupoConAviso()]);
     main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">${arch ? 'Reportes archivados' : 'Mis reportes'}</h1>${canEdit() ? '<a class="btn primary" href="#reporte_nuevo">Nuevo reporte</a>' : ''}</div>
       <p class="sub">${arch ? 'Reportes que sacaste de la lista. Puedes regresarlos o borrarlos.' : 'Reportes que armó el Departamento de Inteligencia de Datos a partir de tus archivos y tus bancos.'} <a href="#" id="reptog">${arch ? '← Ver mis reportes' : 'Ver archivados'}</a></p>
+      ${aviso}${arch ? '' : cupoHtml(c)}
       <div class="card tbl">${rs.length ? `<table class="cards"><thead><tr><th>Reporte</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>
         ${rs.map((r) => `<tr><td data-l="Reporte"><a href="#reporte/${r.id}"><b>${esc(r.titulo || r.peticion.slice(0, 80))}</b></a>${r.version > 1 ? ` <span class="muted">· versión ${r.version}</span>` : ''}<div class="muted" style="font-size:12px">${esc(r.peticion.slice(0, 140))}</div></td>
           <td data-l="Estado">${r.estado === 'listo' ? '<span class="pill ok">Listo</span>' : r.estado === 'generando' ? '<span class="pill warn">Preparando…</span>' : '<span class="pill bad">No se pudo</span>'}</td>
@@ -1109,6 +1142,7 @@
           <td><div class="row" style="gap:6px;flex-wrap:nowrap"><a class="btn small" href="#reporte/${r.id}">Abrir</a>${canEdit() ? `<button class="btn small" data-arch="${r.id}">${arch ? 'Regresar' : 'Archivar'}</button><button class="btn small" data-del="${r.id}">Borrar</button>` : ''}</div></td></tr>`).join('')}</tbody></table>` : `<p class="empty">${arch ? 'No hay reportes archivados.' : `Aún no hay reportes.${canEdit() ? ' Crea el primero en <a href="#reporte_nuevo">Nuevo reporte</a>.' : ''}`}</p>`}</div><div class="err"></div>`;
     main().onclick = async (e) => {
       if (e.target.id === 'reptog') { e.preventDefault(); S.repArch = !arch; R.reportes(); return; }
+      const cb = e.target.closest('[data-comprar]'); if (cb) { comprarReportes(Number(cb.dataset.comprar), cb); return; }
       const b = e.target.closest('[data-arch],[data-del]'); if (!b) return;
       const err = main().querySelector('.err'); err.textContent = '';
       if (b.dataset.del && !confirm('¿Borrar este reporte con todas sus versiones? No se puede deshacer.')) return;
@@ -1122,8 +1156,9 @@
   };
   R.reporte_nuevo = async function () {
     if (!canEdit()) { location.hash = '#reportes'; return; }
-    const arch = await api('reportes/archivos');
+    const [arch, { c, aviso }] = await Promise.all([api('reportes/archivos'), cupoConAviso()]);
     main().innerHTML = `<h1>Nuevo reporte</h1><p class="sub">Sube un Excel o PDF (o usa los movimientos de tus bancos) y escribe qué reporte quieres. El Departamento de Inteligencia de Datos lo arma y lo guarda en «Mis reportes».</p>
+      ${aviso}${cupoHtml(c)}
       <div class="card"><h2 style="margin-top:0">1. Datos</h2>
         <div class="drop" id="repdrop"><input type="file" multiple accept=".xlsx,.xls,.csv,.pdf"><span>Arrastra aquí tus archivos (Excel, CSV o PDF, hasta 5), o toca para elegirlos</span></div>
         <div id="repup"></div>
@@ -1132,8 +1167,8 @@
       <div class="card"><h2 style="margin-top:0">2. ¿Qué reporte quieres?</h2>
         <textarea id="reppet" rows="4" maxlength="2000" placeholder="Por ejemplo: ventas por cliente del último trimestre, los 10 más grandes, con gráfica de barras" style="width:100%"></textarea>
         <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">${REP_EJEMPLOS.map((e) => `<button type="button" class="btn small" data-ej="${esc(e)}">${esc(e)}</button>`).join('')}</div>
-        <div class="row" style="margin-top:12px"><button class="btn primary" id="repgo">Crear reporte</button></div><div class="err"></div></div>`;
-    const err = main().querySelector('.err'), zone = document.getElementById('repdrop'), inp = zone.querySelector('input');
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="repgo"${c && c.disponibles === 0 ? ' disabled title="Sin reportes disponibles este mes"' : ''}>Crear reporte</button></div><div class="err rep-go-err"></div></div>`;
+    const err = main().querySelector('.rep-go-err'), zone = document.getElementById('repdrop'), inp = zone.querySelector('input');
     const subir = async (files) => {
       err.textContent = ''; files = Array.from(files);
       if (files.length > 5) { err.textContent = 'Sube máximo 5 archivos a la vez.'; return; }
@@ -1155,6 +1190,7 @@
     zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) subir(e.dataTransfer.files); }, true);
     main().onclick = async (e) => {
       const ej = e.target.closest('[data-ej]'); if (ej) { document.getElementById('reppet').value = ej.dataset.ej; return; }
+      const cb = e.target.closest('[data-comprar]'); if (cb) { comprarReportes(Number(cb.dataset.comprar), cb); return; }
       const qa = e.target.closest('[data-borrar-arch]');
       if (qa) { e.preventDefault(); if (!confirm('¿Quitar este archivo de tu lista? Los reportes ya hechos no cambian.')) return; try { await api('reportes/archivos/' + qa.dataset.borrarArch, { method: 'DELETE' }); qa.closest('label').remove(); } catch (er) { err.textContent = errMsg(er); } return; }
       if (e.target.id !== 'repgo') return;
@@ -1165,7 +1201,7 @@
       if (!ids.length && !bancos) { err.textContent = 'Sube o marca un archivo, o marca «Incluir mis bancos».'; return; }
       e.target.disabled = true;
       try { const r = await api('reportes', { method: 'POST', body: { peticion, archivo_ids: ids, incluir_bancos: bancos } }); location.hash = '#reporte/' + r.id; }
-      catch (er) { err.textContent = errMsg(er); e.target.disabled = false; }
+      catch (er) { err.textContent = errMsg(er); e.target.disabled = false; if (er && er.error === 'sin_cupo') R.reporte_nuevo(); }
     };
   };
   R.reporte = async function () {

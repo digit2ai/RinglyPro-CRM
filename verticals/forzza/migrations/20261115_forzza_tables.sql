@@ -357,3 +357,17 @@ CREATE TABLE IF NOT EXISTS fz_reportes (
 CREATE INDEX IF NOT EXISTS ix_fz_reportes ON fz_reportes (tenant_id, deleted_at, created_at);
 -- Archivar un reporte lo saca de la lista sin borrarlo (24-nov-2026).
 ALTER TABLE fz_reportes ADD COLUMN IF NOT EXISTS archivado_at TIMESTAMPTZ;
+-- Cupo de reportes (24-nov-2026): 100 incluidos al mes; arriba de eso, reportes extra comprados por Stripe a USD 1.
+ALTER TABLE fz_reportes ADD COLUMN IF NOT EXISTS usa_credito BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE TABLE IF NOT EXISTS fz_rep_compras (
+  id SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES fz_tenants(id),
+  cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+  monto_cents INTEGER NOT NULL CHECK (monto_cents > 0),
+  stripe_session_id TEXT UNIQUE,
+  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente','pagado','cancelado')),
+  created_by INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  pagado_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ix_fz_rep_compras ON fz_rep_compras (tenant_id, estado);

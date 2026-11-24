@@ -1397,6 +1397,59 @@ api.get('/actividad', adminOnly, async (req, res) => {
 const RP = require('./reportes');
 const repUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 5 } });
 const REP_DIA = () => Math.max(1, Number(process.env.FORZZA_REPORTES_DIA) || 40);
+/* Cupo: REP_MES reportes incluidos por empresa cada mes calendario (hora de Monterrey). Arriba de eso
+ * se usan reportes extra comprados por adelantado con Stripe (USD 1 c/u). Un reporte que falla no
+ * cuenta ni gasta crédito; uno borrado SÍ cuenta (si no, borrar y volver a pedir saltaría el cupo). */
+const REP_MES = () => Math.max(1, Number(process.env.FORZZA_REPORTES_MES) || 100);
+const REP_PRECIO_CENTS = () => Math.max(1, Math.round((Number(process.env.FORZZA_REPORTE_EXTRA_USD) || 1) * 100));
+const REP_PAQUETES = [10, 25, 50, 100];
+const INICIO_MES = "date_trunc('month', NOW() AT TIME ZONE 'America/Monterrey') AT TIME ZONE 'America/Monterrey'";
+async function cupoDe(tenant, t) {
+  const r = await one(`SELECT
+      (SELECT COUNT(*)::int FROM fz_reportes WHERE tenant_id=:t AND NOT usa_credito AND estado<>'error' AND created_at >= ${INICIO_MES}) AS usados,
+      (SELECT COALESCE(SUM(cantidad),0)::int FROM fz_rep_compras WHERE tenant_id=:t AND estado='pagado') AS comprados,
+      (SELECT COUNT(*)::int FROM fz_reportes WHERE tenant_id=:t AND usa_credito AND estado<>'error') AS creditos_usados,
+      to_char(NOW() AT TIME ZONE 'America/Monterrey', 'YYYY-MM') AS mes`, { t: tenant }, t);
+  const incluidos = REP_MES(), restantes = Math.max(0, incluidos - r.usados), creditos = Math.max(0, r.comprados - r.creditos_usados);
+  return { mes: r.mes, incluidos, usados: r.usados, restantes_mes: restantes, creditos, disponibles: restantes + creditos, precio_extra_usd: REP_PRECIO_CENTS() / 100, paquetes: REP_PAQUETES };
+}
+/** Aparta el cupo y crea el reporte en UNA transacción con candado por empresa: dos clics al mismo tiempo no pasan el límite. */
+async function apartarReporte(req, res, campos) {
+  return db.transaction(async (t) => {
+    await exec("SELECT pg_advisory_xact_lock(hashtext('fz_rep_cupo'), :t)", { t: req.tenant }, t);
+    const c = await cupoDe(req.tenant, t);
+    if (!c.disponibles) {
+      res.status(402).json({ error: 'sin_cupo', cupo: c, ayuda: `Ya usaste los ${c.incluidos} reportes incluidos de este mes. Compra reportes extra (USD ${c.precio_extra_usd} cada uno) o espera al próximo mes.` });
+      return null;
+    }
+    const usa = c.restantes_mes === 0;
+    const [[r]] = await exec(`INSERT INTO fz_reportes (tenant_id,raiz_id,padre_id,version,titulo,peticion,archivo_ids,incluir_bancos,fuentes,created_by,usa_credito)
+      VALUES (:t,:raiz,:padre,:v,:ti,:p,:ids::int[],:b,:f::jsonb,:u,:uc) RETURNING id`,
+      { t: req.tenant, raiz: campos.raiz || null, padre: campos.padre || null, v: campos.version || 1, ti: campos.titulo || null, p: campos.peticion, ids: '{' + (campos.ids || []).join(',') + '}', b: !!campos.bancos, f: JSON.stringify(campos.fuentes), u: req.user.id, uc: usa }, t);
+    if (!campos.raiz) await exec('UPDATE fz_reportes SET raiz_id=id WHERE id=:id', { id: r.id }, t);
+    return { id: r.id, usa_credito: usa };
+  });
+}
+/** Revisa con Stripe las compras pendientes de esta empresa (cubre a quien pagó y cerró la pestaña). */
+async function confirmarCompras(tenant) {
+  const key = process.env.STRIPE_SECRET_KEY;
+  const pend = await sel("SELECT id, cantidad, monto_cents, stripe_session_id FROM fz_rep_compras WHERE tenant_id=:t AND estado='pendiente' AND stripe_session_id IS NOT NULL AND created_at > NOW() - INTERVAL '7 days'", { t: tenant });
+  if (!pend.length || !key) return [];
+  const stripe = module.exports._stripe || require('stripe')(key);
+  const pagadas = [];
+  for (const c of pend) {
+    try {
+      const ss = await stripe.checkout.sessions.retrieve(c.stripe_session_id);
+      const m = ss.metadata || {};
+      const mio = m.kind === 'forzza_reportes' && String(m.tenant_id) === String(tenant) && Number(m.cantidad) === c.cantidad && Number(ss.amount_total) === c.monto_cents && String(ss.currency).toLowerCase() === 'usd';
+      if (ss.payment_status === 'paid' && mio) {
+        const [u] = await exec("UPDATE fz_rep_compras SET estado='pagado', pagado_at=NOW() WHERE id=:id AND tenant_id=:t AND estado='pendiente' RETURNING cantidad", { id: c.id, t: tenant });
+        if (u.length) pagadas.push(u[0].cantidad);
+      } else if (ss.status === 'expired') await exec("UPDATE fz_rep_compras SET estado='cancelado' WHERE id=:id AND tenant_id=:t AND estado='pendiente'", { id: c.id, t: tenant });
+    } catch (e) { console.error('[forzza] confirmar compra', c.id, e && e.message); }
+  }
+  return pagadas;
+}
 const MSG_REP = {
   sin_tabla: 'No encontré una tabla en este archivo. Funciona mejor con un Excel o CSV que tenga una fila de encabezados (por ejemplo Fecha, Cliente, Total) y los datos debajo.',
   sin_texto: 'Este PDF no tiene texto (parece escaneado o una foto). Súbelo en Excel o como el PDF original.'
@@ -1485,13 +1538,45 @@ api.post('/reportes', async (req, res) => {
   const fuentes = await fuentesReporte(req.tenant, ids, bancos);
   if (fuentes.filter((f) => f.id).length !== ids.length) return res.status(404).json({ error: 'archivo_no_encontrado', ayuda: 'Uno de los archivos ya no está. Vuelve a subirlo.' });
   if (bancos && !fuentes.find((f) => f.nombre === 'bancos').tabla.filas.length && !ids.length) return res.status(400).json({ error: 'sin_bancos', ayuda: 'Aún no hay movimientos de banco cargados. Sube un archivo o importa tus estados de cuenta.' });
-  const [[r]] = await exec(`INSERT INTO fz_reportes (tenant_id,peticion,archivo_ids,incluir_bancos,fuentes,created_by) VALUES (:t,:p,:ids::int[],:b,:f::jsonb,:u) RETURNING id`,
-    { t: req.tenant, p: peticion, ids: '{' + ids.join(',') + '}', b: bancos, f: JSON.stringify(fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length }))), u: req.user.id });
-  await exec('UPDATE fz_reportes SET raiz_id=id WHERE id=:id', { id: r.id });
+  const r = await apartarReporte(req, res, { peticion, ids, bancos, fuentes: fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length })) });
+  if (!r) return;
   audit(req, 'reporte_pedido', peticion.slice(0, 200));
   const empresa = await repEmpresa(req.tenant);
   setImmediate(() => correrReporte(r.id, req.tenant, empresa, peticion, fuentes, null).catch((e) => console.error('[forzza] reporte', e && e.message)));
-  res.status(202).json({ id: r.id, estado: 'generando' });
+  res.status(202).json({ id: r.id, estado: 'generando', usa_credito: r.usa_credito });
+});
+api.get('/reportes/cupo', async (req, res) => {
+  const pagadas = await confirmarCompras(req.tenant);
+  const compras = await sel("SELECT cantidad, monto_cents, estado, created_at, pagado_at FROM fz_rep_compras WHERE tenant_id=:t AND estado<>'cancelado' ORDER BY id DESC LIMIT 10", { t: req.tenant });
+  res.json({ ...(await cupoDe(req.tenant)), recien_pagados: pagadas.reduce((a, x) => a + x, 0), compras });
+});
+const compraHits = new Map();
+api.post('/reportes/creditos/comprar', async (req, res) => {
+  if (!['owner', 'director'].includes(req.user.role)) return res.status(403).json({ error: 'solo_director', ayuda: 'Solo el director puede comprar reportes extra.' });
+  const cantidad = Number((req.body || {}).cantidad);
+  if (!REP_PAQUETES.includes(cantidad)) return res.status(400).json({ error: 'paquete_invalido', ayuda: 'Elige un paquete de ' + REP_PAQUETES.join(', ') + ' reportes.' });
+  const now = Date.now(), l = (compraHits.get(req.tenant) || []).filter((x) => now - x < 600000); l.push(now); compraHits.set(req.tenant, l);
+  if (l.length > 10) return res.status(429).json({ error: 'demasiados', ayuda: 'Demasiados intentos de pago. Espera unos minutos.' });
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return res.status(503).json({ error: 'pagos_no_configurados', ayuda: 'Los pagos en línea no están disponibles en este momento. Escríbenos y te habilitamos los reportes extra.' });
+  const cents = REP_PRECIO_CENTS(), monto = cents * cantidad;
+  try {
+    const stripe = module.exports._stripe || require('stripe')(key);
+    const meta = { kind: 'forzza_reportes', tenant_id: String(req.tenant), cantidad: String(cantidad) };
+    const ss = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ quantity: cantidad, price_data: { currency: 'usd', unit_amount: cents, product_data: { name: 'Digit2AI · Forzza - Reporte extra de Inteligencia de Datos', images: ['https://aiagent.ringlypro.com/stripe/digit2ai-round.png'] } } }],
+      metadata: meta, payment_intent_data: { metadata: meta, statement_descriptor_suffix: 'DIGIT2AI' }, invoice_creation: { enabled: true },
+      branding_settings: STRIPE_BRAND, locale: 'es',
+      success_url: PUBLIC_URL + '/?rep_pago=ok#reportes', cancel_url: PUBLIC_URL + '/?rep_pago=cancelado#reportes'
+    }, { apiVersion: '2025-09-30.clover' });
+    await exec('INSERT INTO fz_rep_compras (tenant_id,cantidad,monto_cents,stripe_session_id,created_by) VALUES (:t,:c,:m,:s,:u)', { t: req.tenant, c: cantidad, m: monto, s: ss.id, u: req.user.id });
+    audit(req, 'reportes_compra_abierta', `${cantidad} reportes · USD ${monto / 100}`);
+    res.json({ url: ss.url });
+  } catch (e) {
+    console.error('[forzza] comprar reportes:', e && e.message);
+    res.status(502).json({ error: 'pago_no_abrio', ayuda: 'No se pudo abrir el pago. Intenta de nuevo en un momento.' });
+  }
 });
 const repEstado = (r) => (r.estado === 'generando' && new Date(r.updated_at) < Date.now() - 10 * 60000 ? { ...r, estado: 'error', mensaje: 'El reporte se interrumpió. Pídelo de nuevo.' } : r);
 api.get('/reportes', async (req, res) => {
@@ -1534,13 +1619,13 @@ api.post('/reportes/:id/cambiar', async (req, res) => {
   const fuentes = await fuentesReporte(req.tenant, r.archivo_ids || [], r.incluir_bancos);
   if (!fuentes.length) return res.status(400).json({ error: 'sin_fuentes', ayuda: 'Los archivos de este reporte ya no están. Vuelve a subirlos y crea el reporte de nuevo.' });
   const v = await one('SELECT MAX(version)::int AS v FROM fz_reportes WHERE tenant_id=:t AND raiz_id=:r', { t: req.tenant, r: r.raiz_id });
-  const [[n]] = await exec(`INSERT INTO fz_reportes (tenant_id,raiz_id,padre_id,version,titulo,peticion,archivo_ids,incluir_bancos,fuentes,created_by) VALUES (:t,:raiz,:padre,:v,:ti,:p,:ids::int[],:b,:f::jsonb,:u) RETURNING id`,
-    { t: req.tenant, raiz: r.raiz_id, padre: r.id, v: v.v + 1, ti: r.titulo, p: peticion, ids: '{' + (r.archivo_ids || []).join(',') + '}', b: r.incluir_bancos, f: JSON.stringify(fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length }))), u: req.user.id });
+  const n = await apartarReporte(req, res, { raiz: r.raiz_id, padre: r.id, version: v.v + 1, titulo: r.titulo, peticion, ids: r.archivo_ids || [], bancos: r.incluir_bancos, fuentes: fuentes.map((f) => ({ id: f.id, nombre: f.nombre, renglones: f.tabla.filas.length })) });
+  if (!n) return;
   const previo = { titulo: r.spec.titulo, resumen: r.spec.resumen, peticion_original: r.peticion, secciones: r.spec.secciones.map((s) => ({ tipo: s.tipo, titulo: s.titulo, texto: s.texto, forma: s.forma, consulta_usada: s.consulta && r.spec.datos[s.consulta] ? r.spec.datos[s.consulta].consulta : undefined })) };
   audit(req, 'reporte_cambio', peticion.slice(0, 200));
   const empresa = await repEmpresa(req.tenant);
   setImmediate(() => correrReporte(n.id, req.tenant, empresa, peticion, fuentes, previo).catch((e) => console.error('[forzza] reporte', e && e.message)));
-  res.status(202).json({ id: n.id, estado: 'generando' });
+  res.status(202).json({ id: n.id, estado: 'generando', usa_credito: n.usa_credito });
 });
 // Archivar: sale de la lista (con todas sus versiones) sin borrarse; se puede regresar.
 api.post('/reportes/:id/archivar', async (req, res) => {

@@ -645,6 +645,51 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       ok('archivar: el contador no puede y otra empresa recibe 404', (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: conA.cookie, body: {} })).status === 403 && (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: dirB.cookie, body: {} })).status === 404);
       ok('el contador no borra', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: conA.cookie })).status === 403);
       ok('borrar quita el reporte con todas sus versiones', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: capA.cookie })).status === 200 && (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).status === 404);
+      console.log('\nCupo de reportes: 100 al mes, luego USD 1 por reporte extra');
+      { const mesBak = process.env.FORZZA_REPORTES_MES, skBak = process.env.STRIPE_SECRET_KEY;
+        process.env.FORZZA_REPORTES_MES = '1'; process.env.STRIPE_SECRET_KEY = 'sk_test_sit';
+        const upB = await subirR(dirB.cookie, 'b.csv', csv); const aB = upB.json.archivos[0].id;
+        const buenos = () => Array.from({ length: 30 }, (_, k) => k % 2 === 0 ? tu('consultar', { fuente: 'b.csv', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }] }) : tu('entregar_reporte', { titulo: 'B', resumen: 'Ventas por cliente.', secciones: [{ tipo: 'tabla', consulta: 'c1' }] }));
+        DL2._setClient(fakeR(buenos()));
+        const pedirB = () => req('POST', '/reportes', { cookie: dirB.cookie, body: { peticion: 'ventas por cliente', archivo_ids: [aB] } });
+        const cupoB = async () => (await req('GET', '/reportes/cupo', { cookie: dirB.cookie })).json;
+        const r1 = await pedirB();
+        ok('cupo: el primer reporte del mes entra sin crédito', r1.status === 202 && r1.json.usa_credito === false);
+        const r2 = await pedirB();
+        ok('cupo: al llegar al límite responde 402 con un mensaje claro', r2.status === 402 && r2.json.error === 'sin_cupo' && /incluidos de este mes/.test(r2.json.ayuda) && r2.json.cupo.disponibles === 0);
+        await db.query("UPDATE fz_reportes SET estado='error' WHERE id=:i", { replacements: { i: r1.json.id } });
+        ok('cupo: un reporte que falló no cuenta', (await cupoB()).usados === 0);
+        await new Promise((r) => setTimeout(r, 300));
+        const par = await Promise.all([pedirB(), pedirB(), pedirB()]);
+        ok('cupo: tres clics al mismo tiempo con 1 disponible = solo 1 entra (candado)', par.filter((x) => x.status === 202).length === 1 && par.filter((x) => x.status === 402).length === 2, par.map((x) => x.status).join(','));
+        const sesiones = {}; let nS = 0;
+        router._stripe = { checkout: { sessions: {
+          create: async (p) => { const id = 'cs_sit_' + (++nS); sesiones[id] = { id, payment_status: 'unpaid', status: 'open', metadata: p.metadata, amount_total: p.line_items[0].price_data.unit_amount * p.line_items[0].quantity, currency: 'usd' }; return { id, url: 'https://checkout.stripe.test/' + id }; },
+          retrieve: async (id) => sesiones[id] } } };
+        ok('comprar: el capturista no puede (solo el director)', (await req('POST', '/reportes/creditos/comprar', { cookie: capA.cookie, body: { cantidad: 10 } })).status === 403);
+        ok('comprar: un paquete que no existe se rechaza (el monto no viene de la petición)', (await req('POST', '/reportes/creditos/comprar', { cookie: dirB.cookie, body: { cantidad: 7 } })).status === 400);
+        const co = await req('POST', '/reportes/creditos/comprar', { cookie: dirB.cookie, body: { cantidad: 10 } });
+        const sid = Object.keys(sesiones)[0];
+        ok('comprar: abre Stripe por USD 10 con la empresa en los metadatos', co.status === 200 && /checkout\.stripe\.test/.test(co.json.url) && sesiones[sid].amount_total === 1000 && sesiones[sid].metadata.tenant_id === String(B));
+        ok('sin pagar: no hay créditos', (await cupoB()).creditos === 0);
+        sesiones[sid].payment_status = 'paid'; sesiones[sid].status = 'complete';
+        const cp = await cupoB();
+        ok('pagado: al abrir Reportes se confirman 10 reportes extra', cp.creditos === 10 && cp.recien_pagados === 10 && cp.disponibles === 10);
+        ok('confirmar dos veces no duplica', (await cupoB()).creditos === 10);
+        const r4 = await pedirB();
+        ok('después del cupo, el siguiente reporte usa un crédito', r4.status === 202 && r4.json.usa_credito === true && (await cupoB()).creditos === 9);
+        const sd = 'cs_sit_falso';
+        sesiones[sd] = { id: sd, payment_status: 'paid', status: 'complete', metadata: { kind: 'forzza_reportes', tenant_id: String(A), cantidad: '50' }, amount_total: 5000, currency: 'usd' };
+        await db.query("INSERT INTO fz_rep_compras (tenant_id,cantidad,monto_cents,stripe_session_id) VALUES (:t,50,5000,:s)", { replacements: { t: B, s: sd } });
+        const sm = 'cs_sit_monto';
+        sesiones[sm] = { id: sm, payment_status: 'paid', status: 'complete', metadata: { kind: 'forzza_reportes', tenant_id: String(B), cantidad: '25' }, amount_total: 100, currency: 'usd' };
+        await db.query("INSERT INTO fz_rep_compras (tenant_id,cantidad,monto_cents,stripe_session_id) VALUES (:t,25,2500,:s)", { replacements: { t: B, s: sm } });
+        ok('un pago de otra empresa o por otro monto NO da créditos', (await cupoB()).creditos === 9);
+        ok('el contador ve el cupo; otra empresa no ve los créditos de B', (await req('GET', '/reportes/cupo', { cookie: conA.cookie })).status === 200 && (await req('GET', '/reportes/cupo', { cookie: dirA.cookie })).json.creditos === 0);
+        router._stripe = null; DL2._setClient(null);
+        if (mesBak) process.env.FORZZA_REPORTES_MES = mesBak; else delete process.env.FORZZA_REPORTES_MES;
+        if (skBak) process.env.STRIPE_SECRET_KEY = skBak; else delete process.env.STRIPE_SECRET_KEY;
+        await new Promise((r) => setTimeout(r, 1500)); }
       const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
       ok('menú: sección Reportes con Mis reportes y Nuevo reporte', /\['grp', 'Reportes'\], \['reportes', 'Mis reportes'\], \['reporte_nuevo', 'Nuevo reporte'\]/.test(apR) && /R\.reporte = /.test(apR) && /window\.print\(\)/.test(apR)); }
     console.log('\nTendencia (flecha bajo la calificación)');
@@ -845,7 +890,7 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
     ok('sin excepciones', false, e && (e.stack || e.message));
   } finally {
     for (const t of tenants) {
-      for (const tb of ['fz_reportes', 'fz_rep_archivos', 'fz_sicar_saldos', 'fz_sicar_docs', 'fz_sicar_imports', 'fz_api_keys', 'fz_cxc_abonos', 'fz_cxp_pagos', 'fz_movimientos', 'fz_cxc', 'fz_cxp', 'fz_fijos', 'fz_clientes', 'fz_proveedores', 'fz_cuentas', 'fz_config', 'fz_activity', 'fz_users']) {
+      for (const tb of ['fz_rep_compras', 'fz_reportes', 'fz_rep_archivos', 'fz_sicar_saldos', 'fz_sicar_docs', 'fz_sicar_imports', 'fz_api_keys', 'fz_cxc_abonos', 'fz_cxp_pagos', 'fz_movimientos', 'fz_cxc', 'fz_cxp', 'fz_fijos', 'fz_clientes', 'fz_proveedores', 'fz_cuentas', 'fz_config', 'fz_activity', 'fz_users']) {
         await db.query(`DELETE FROM ${tb} WHERE tenant_id=:t`, { replacements: { t } }).catch((e) => console.log('limpieza', tb, e.message));
       }
       await db.query('DELETE FROM fz_tenants WHERE id=:t', { replacements: { t } }).catch(() => {});
