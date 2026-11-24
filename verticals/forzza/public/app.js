@@ -1098,13 +1098,27 @@
       <p class="muted" style="font-size:12px">Fuentes: ${(r.fuentes || []).map((f) => esc(f.nombre === 'bancos' ? 'movimientos de tus bancos' : f.nombre)).join(', ')}. Cada cifra la calculó el sistema a partir de esos datos.${r.editado_a_mano ? ' Los textos se editaron a mano.' : ''}</p></div>`;
   }
   R.reportes = async function () {
-    const rs = await api('reportes');
-    main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">Mis reportes</h1>${canEdit() ? '<a class="btn primary" href="#reporte_nuevo">Nuevo reporte</a>' : ''}</div>
-      <p class="sub">Reportes que armó el Departamento de Inteligencia de Datos a partir de tus archivos y tus bancos.</p>
+    const arch = S.repArch === true;
+    const rs = await api('reportes' + (arch ? '?archivados=1' : ''));
+    main().innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><h1 style="margin:0">${arch ? 'Reportes archivados' : 'Mis reportes'}</h1>${canEdit() ? '<a class="btn primary" href="#reporte_nuevo">Nuevo reporte</a>' : ''}</div>
+      <p class="sub">${arch ? 'Reportes que sacaste de la lista. Puedes regresarlos o borrarlos.' : 'Reportes que armó el Departamento de Inteligencia de Datos a partir de tus archivos y tus bancos.'} <a href="#" id="reptog">${arch ? '← Ver mis reportes' : 'Ver archivados'}</a></p>
       <div class="card tbl">${rs.length ? `<table class="cards"><thead><tr><th>Reporte</th><th>Estado</th><th>Actualizado</th><th></th></tr></thead><tbody>
         ${rs.map((r) => `<tr><td data-l="Reporte"><a href="#reporte/${r.id}"><b>${esc(r.titulo || r.peticion.slice(0, 80))}</b></a>${r.version > 1 ? ` <span class="muted">· versión ${r.version}</span>` : ''}<div class="muted" style="font-size:12px">${esc(r.peticion.slice(0, 140))}</div></td>
           <td data-l="Estado">${r.estado === 'listo' ? '<span class="pill ok">Listo</span>' : r.estado === 'generando' ? '<span class="pill warn">Preparando…</span>' : '<span class="pill bad">No se pudo</span>'}</td>
-          <td data-l="Actualizado">${fmtF(String(r.updated_at).slice(0, 10))}</td><td><a class="btn small" href="#reporte/${r.id}">Abrir</a></td></tr>`).join('')}</tbody></table>` : `<p class="empty">Aún no hay reportes.${canEdit() ? ' Crea el primero en <a href="#reporte_nuevo">Nuevo reporte</a>.' : ''}</p>`}</div>`;
+          <td data-l="Actualizado">${fmtF(String(r.updated_at).slice(0, 10))}</td>
+          <td><div class="row" style="gap:6px;flex-wrap:nowrap"><a class="btn small" href="#reporte/${r.id}">Abrir</a>${canEdit() ? `<button class="btn small" data-arch="${r.id}">${arch ? 'Regresar' : 'Archivar'}</button><button class="btn small" data-del="${r.id}">Borrar</button>` : ''}</div></td></tr>`).join('')}</tbody></table>` : `<p class="empty">${arch ? 'No hay reportes archivados.' : `Aún no hay reportes.${canEdit() ? ' Crea el primero en <a href="#reporte_nuevo">Nuevo reporte</a>.' : ''}`}</p>`}</div><div class="err"></div>`;
+    main().onclick = async (e) => {
+      if (e.target.id === 'reptog') { e.preventDefault(); S.repArch = !arch; R.reportes(); return; }
+      const b = e.target.closest('[data-arch],[data-del]'); if (!b) return;
+      const err = main().querySelector('.err'); err.textContent = '';
+      if (b.dataset.del && !confirm('¿Borrar este reporte con todas sus versiones? No se puede deshacer.')) return;
+      b.disabled = true;
+      try {
+        if (b.dataset.del) await api('reportes/' + b.dataset.del, { method: 'DELETE' });
+        else await api('reportes/' + b.dataset.arch + '/archivar', { method: 'POST', body: { archivar: !arch } });
+        R.reportes();
+      } catch (er) { err.textContent = errMsg(er); b.disabled = false; }
+    };
   };
   R.reporte_nuevo = async function () {
     if (!canEdit()) { location.hash = '#reportes'; return; }
@@ -1177,7 +1191,7 @@
       main().innerHTML = `<div class="row noprint" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><a href="#reportes">← Mis reportes</a>
         <div class="row" style="gap:6px;flex-wrap:wrap">${(r.versiones || []).length > 1 ? `<select id="repver">${r.versiones.map((v) => `<option value="${v.id}"${v.id === r.id ? ' selected' : ''}>Versión ${v.version}${v.estado !== 'listo' ? ' (' + (v.estado === 'generando' ? 'preparando' : 'no se pudo') + ')' : ''}</option>`).join('')}</select>` : ''}
           <button class="btn" id="repprint">Imprimir o guardar PDF</button>
-          ${canEdit() ? (editando ? '<button class="btn primary" id="repsave">Guardar textos</button><button class="btn" id="repcancel">Cancelar</button>' : '<button class="btn" id="repedit">Editar textos</button><button class="btn" id="repdel">Borrar</button>') : ''}</div></div>
+          ${canEdit() ? (editando ? '<button class="btn primary" id="repsave">Guardar textos</button><button class="btn" id="repcancel">Cancelar</button>' : `<button class="btn" id="repedit">Editar textos</button><button class="btn" id="reparch">${r.archivado_at ? 'Regresar a mis reportes' : 'Archivar'}</button><button class="btn" id="repdel">Borrar</button>`) : ''}</div></div>
         ${repHtml(r, editando)}
         ${canEdit() && !editando ? `<div class="card noprint"><h2 style="margin-top:0">Pedir un cambio a la IA</h2><p class="muted" style="font-size:13px">Por ejemplo: «agrega una columna con el promedio», «solo octubre», «cambia la gráfica a líneas». Se crea una versión nueva y la anterior se conserva.</p>
           <textarea id="repcambio" rows="2" maxlength="2000" style="width:100%"></textarea><div class="row" style="margin-top:8px"><button class="btn primary" id="repcambiar">Pedir cambio</button></div></div>` : ''}<div class="err noprint"></div>`;
@@ -1196,6 +1210,7 @@
         try { await api('reportes/' + id, { method: 'PATCH', body }); go('reporte/' + id); } catch (er) { err.textContent = errMsg(er); b.disabled = false; }
         return;
       }
+      if (b.id === 'reparch') { try { await api('reportes/' + id + '/archivar', { method: 'POST', body: { archivar: !r.archivado_at } }); S.repArch = false; location.hash = '#reportes'; } catch (er) { err.textContent = errMsg(er); } return; }
       if (b.id === 'repdel') { if (!confirm('¿Borrar este reporte con todas sus versiones?')) return; try { await api('reportes/' + id, { method: 'DELETE' }); location.hash = '#reportes'; } catch (er) { err.textContent = errMsg(er); } return; }
       if (b.id === 'repcambiar') {
         const p = document.getElementById('repcambio').value.trim(); if (p.length < 3) { err.textContent = 'Escribe qué quieres cambiar.'; return; }

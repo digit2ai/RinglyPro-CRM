@@ -355,3 +355,5 @@ CREATE TABLE IF NOT EXISTS fz_reportes (
   deleted_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS ix_fz_reportes ON fz_reportes (tenant_id, deleted_at, created_at);
+-- Archivar un reporte lo saca de la lista sin borrarlo (24-nov-2026).
+ALTER TABLE fz_reportes ADD COLUMN IF NOT EXISTS archivado_at TIMESTAMPTZ;

@@ -1495,8 +1495,9 @@ api.post('/reportes', async (req, res) => {
 });
 const repEstado = (r) => (r.estado === 'generando' && new Date(r.updated_at) < Date.now() - 10 * 60000 ? { ...r, estado: 'error', mensaje: 'El reporte se interrumpió. Pídelo de nuevo.' } : r);
 api.get('/reportes', async (req, res) => {
-  const rows = await sel(`SELECT id, raiz_id, version, titulo, peticion, estado, mensaje, fuentes, incluir_bancos, editado_a_mano, created_at, updated_at FROM fz_reportes r
-    WHERE tenant_id=:t AND deleted_at IS NULL AND version = (SELECT MAX(version) FROM fz_reportes x WHERE x.tenant_id=r.tenant_id AND x.raiz_id=r.raiz_id AND x.deleted_at IS NULL) ORDER BY updated_at DESC LIMIT 200`, { t: req.tenant });
+  const arch = req.query.archivados === '1';
+  const rows = await sel(`SELECT id, raiz_id, version, titulo, peticion, estado, mensaje, fuentes, incluir_bancos, editado_a_mano, archivado_at, created_at, updated_at FROM fz_reportes r
+    WHERE tenant_id=:t AND deleted_at IS NULL AND archivado_at IS ${arch ? 'NOT ' : ''}NULL AND version = (SELECT MAX(version) FROM fz_reportes x WHERE x.tenant_id=r.tenant_id AND x.raiz_id=r.raiz_id AND x.deleted_at IS NULL) ORDER BY updated_at DESC LIMIT 200`, { t: req.tenant });
   res.json(rows.map(repEstado));
 });
 api.get('/reportes/:id', async (req, res) => {
@@ -1540,6 +1541,15 @@ api.post('/reportes/:id/cambiar', async (req, res) => {
   const empresa = await repEmpresa(req.tenant);
   setImmediate(() => correrReporte(n.id, req.tenant, empresa, peticion, fuentes, previo).catch((e) => console.error('[forzza] reporte', e && e.message)));
   res.status(202).json({ id: n.id, estado: 'generando' });
+});
+// Archivar: sale de la lista (con todas sus versiones) sin borrarse; se puede regresar.
+api.post('/reportes/:id/archivar', async (req, res) => {
+  const id = intId(req.params.id), archivar = (req.body || {}).archivar !== false;
+  const r = id && (await one('SELECT raiz_id, titulo FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id, t: req.tenant }));
+  if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o fue borrado.' });
+  await exec(`UPDATE fz_reportes SET archivado_at=${archivar ? 'NOW()' : 'NULL'} WHERE tenant_id=:t AND raiz_id=:r AND deleted_at IS NULL`, { t: req.tenant, r: r.raiz_id });
+  audit(req, archivar ? 'reporte_archivado' : 'reporte_desarchivado', r.titulo || '');
+  res.json({ ok: true });
 });
 api.delete('/reportes/:id', async (req, res) => {
   const id = intId(req.params.id);

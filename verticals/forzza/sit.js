@@ -639,6 +639,10 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       let rs; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rs = (await req('GET', '/reportes/' + sinM.json.id, { cookie: capA.cookie })).json; if (rs.estado !== 'generando') break; }
       if (kb) process.env.ANTHROPIC_API_KEY = kb;
       ok('sin modelo: mensaje claro, nada inventado', rs.estado === 'error' && /no está disponible/.test(rs.mensaje || ''));
+      const enLista = async (q) => (await req('GET', '/reportes' + (q || ''), { cookie: capA.cookie })).json.some((x) => x.raiz_id === cr.json.id);
+      ok('archivar: sale de la lista y aparece en archivados', (await req('POST', '/reportes/' + cam.json.id + '/archivar', { cookie: capA.cookie, body: { archivar: true } })).status === 200 && !(await enLista()) && await enLista('?archivados=1'));
+      ok('regresar un archivado: vuelve a la lista', (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: capA.cookie, body: { archivar: false } })).status === 200 && await enLista() && !(await enLista('?archivados=1')));
+      ok('archivar: el contador no puede y otra empresa recibe 404', (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: conA.cookie, body: {} })).status === 403 && (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: dirB.cookie, body: {} })).status === 404);
       ok('el contador no borra', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: conA.cookie })).status === 403);
       ok('borrar quita el reporte con todas sus versiones', (await req('DELETE', '/reportes/' + cr.json.id, { cookie: capA.cookie })).status === 200 && (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).status === 404);
       const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
