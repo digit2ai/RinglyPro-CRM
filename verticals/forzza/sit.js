@@ -639,6 +639,22 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
         ok('Dalia ve los reportes guardados y sus cifras', rg.reportes.some((x) => x.id === cam.json.id) && rd.titulo === 'Ventas por mes' && rd.secciones[0].filas.length === 2 && !(await DL2._ejecutar('reportes_guardados', { id: cam.json.id }, ctxB)).titulo, JSON.stringify(rd).slice(0, 200));
         ok('Dalia: sus herramientas de Reportes están declaradas y explicadas en su guía', ['reportes_guardados', 'archivos_subidos', 'consultar_archivo'].every((n) => DL2.TOOLS.some((t) => t.name === n)) && /consultar_archivo/.test(fs.readFileSync(path.join(__dirname, 'src', 'dalia.js'), 'utf8'))); }
       ok('la lista muestra una sola entrada por reporte (la última versión)', (await req('GET', '/reportes', { cookie: capA.cookie })).json.filter((x) => x.raiz_id === cr.json.id).length === 1);
+      { // 10 consultas en UNA vuelta y luego un error 529 (API saturada): cada tool_use debe recibir su tool_result
+        // (si no, la API rechaza la conversación con 400) y el error pasajero se reintenta en vez de tirar el reporte.
+        const q = { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }], orden: { columna: 'Ventas', dir: 'desc' } };
+        const vistos = []; let n = 0;
+        DL2._setClient({ messages: { create: async (p) => {
+          vistos.push(JSON.parse(JSON.stringify(p.messages))); n++;
+          if (n === 1) return { content: Array.from({ length: 10 }, (_, i) => ({ type: 'tool_use', id: 'm' + i, name: 'consultar', input: q })) };
+          if (n === 2) { const e = new Error('Overloaded'); e.status = 529; throw e; }
+          return { content: [{ type: 'tool_use', id: 'fin', name: 'entregar_reporte', input: entregar }] };
+        } } });
+        const mr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas de los primeros clientes', archivo_ids: [arch.id] } });
+        let mx; for (let i = 0; i < 120; i++) { await new Promise((r) => setTimeout(r, 100)); mx = (await req('GET', '/reportes/' + mr.json.id, { cookie: capA.cookie })).json; if (mx.estado !== 'generando') break; }
+        const res2 = vistos[1] && vistos[1][vistos[1].length - 1].content;
+        ok('10 consultas a la vez: las 10 reciben respuesta (ninguna queda colgada) y un 529 se reintenta', mx.estado === 'listo' && Array.isArray(res2) && res2.length === 10 && Array.from({ length: 10 }, (_, i) => 'm' + i).every((id) => res2.some((b) => b.tool_use_id === id)), JSON.stringify(mx).slice(0, 200));
+        ok('la página nunca recibe el detalle técnico de un reporte', !('herramientas' in mx));
+      }
       DL2._setClient(fakeR(Array.from({ length: 6 }, () => tu('entregar_reporte', { titulo: 'X', resumen: 'Ganamos $5,555,555.00', secciones: [{ tipo: 'tabla', consulta: 'c1' }] }))));
       const malR = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'algo imposible', archivo_ids: [arch.id] } });
       let rm; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rm = (await req('GET', '/reportes/' + malR.json.id, { cookie: capA.cookie })).json; if (rm.estado !== 'generando') break; }

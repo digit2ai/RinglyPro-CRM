@@ -275,7 +275,8 @@ CÓMO TRABAJAS:
 1. Llama ver_fuentes para entender columnas y tipos.
 2. Como Analista, haz las consultas necesarias con consultar. TODAS las cifras salen de ahí: nunca sumes, promedies ni compares de cabeza; para una diferencia o un porcentaje usa calcular con cifras de una consulta.
 3. Como Redactor, entrega con entregar_reporte: un título claro, un resumen de 2 a 5 frases con lo más importante, y secciones (indicadores arriba si ayudan, luego tablas y gráficas, y texto solo si aporta una conclusión). Cada tabla, gráfica e indicador apunta a una consulta por su id; el sistema pone los números.
-4. Si la petición no se puede cumplir con los datos (falta una columna, un periodo o una fuente), haz el reporte más cercano posible y dilo en el resumen. Nunca inventes datos ni columnas.
+4. Si la petición no se puede cumplir con los datos (falta una columna, un periodo o una fuente), haz el reporte más cercano posible y dilo en el resumen (por ejemplo, si piden «clientes» y el archivo de costos solo tiene «Proveedor», usa Proveedor y explícalo). «Los primeros N» quiere decir los N más grandes, salvo que digan otra cosa. Nunca inventes datos ni columnas.
+5. Haz pocas consultas por vuelta (máximo 6 a la vez).
 
 REGLAS:
 - Gráficas: barras para comparar categorías (máximo unas 15 barras; usa limite y agrupar_resto), líneas para tiempo (agrupa la fecha por mes o semana), pastel solo con 6 partes o menos.
@@ -342,6 +343,7 @@ function materializar(rep, consultas) {
  * Genera (o cambia) un reporte. fuentes: [{ nombre, tabla }]. ctx: { empresa, hoy, peticion, previo }.
  * Devuelve { ok, reporte, herramientas, consultas_n } o { error, mensaje }.
  */
+const pasajero = (e) => { const st = e && e.status; return !st || st === 408 || st === 409 || st === 429 || st >= 500 || /overload|timeout|ECONNRESET|socket/i.test(String((e && e.message) || '')); };
 async function generar(fuentes, ctx) {
   if (!D.enabled()) return { error: 'sin_modelo', mensaje: 'El asistente de reportes no está disponible en este momento. Intenta de nuevo en unos minutos.' };
   const porNombre = new Map(fuentes.map((f) => [norm(f.nombre), f]));
@@ -371,11 +373,19 @@ async function generar(fuentes, ctx) {
   };
   try {
     for (let vuelta = 0; vuelta < 14; vuelta++) {
-      const r = await D.crear({ max_tokens: 4000, system, messages: conv, tools: TOOLS });
+      let r;
+      // Un error pasajero de la API (saturación, límite por minuto, 5xx, red) se reintenta dos veces antes de rendirse.
+      for (let intento = 0; ; intento++) {
+        try { r = await D.crear({ max_tokens: 8000, system, messages: conv, tools: TOOLS }); break; }
+        catch (e) { if (intento >= 2 || !pasajero(e)) throw e; await new Promise((ok) => setTimeout(ok, 4000 * (intento + 1))); }
+      }
       const uses = (r.content || []).filter((b) => b.type === 'tool_use');
       if (!uses.length) { conv.push({ role: 'assistant', content: r.content && r.content.length ? r.content : [{ type: 'text', text: '...' }] }); conv.push({ role: 'user', content: 'Entrega el reporte con la herramienta entregar_reporte.' }); continue; }
       conv.push({ role: 'assistant', content: r.content });
       const out = [];
+      // CADA tool_use debe recibir su tool_result o la API rechaza la conversación entera (400). Más de 8 a la vez
+      // se contestan con un error para que el modelo las pida en otra vuelta, nunca se dejan sin respuesta.
+      for (const u of uses.slice(8)) out.push({ type: 'tool_result', tool_use_id: u.id, is_error: true, content: 'Demasiadas consultas a la vez: pídela de nuevo en la siguiente vuelta.' });
       for (const u of uses.slice(0, 8)) {
         usadas.push(u.name);
         if (u.name === 'entregar_reporte') {
@@ -393,8 +403,9 @@ async function generar(fuentes, ctx) {
     }
     return { error: 'muy_largo', mensaje: 'El reporte pedido es muy amplio. Divídelo en partes más pequeñas e intenta de nuevo.' };
   } catch (e) {
-    console.error('[forzza] reportes:', e && e.message);
-    return { error: 'error_modelo', mensaje: 'El asistente de reportes no respondió. Intenta de nuevo en unos minutos.' };
+    const detalle = `${(e && e.status) || ''} ${String((e && e.message) || e).slice(0, 300)}`.trim();
+    console.error('[forzza] reportes:', detalle);
+    return { error: 'error_modelo', mensaje: 'El asistente de reportes no respondió. Intenta de nuevo en unos minutos.', detalle, herramientas: usadas };
   }
 }
 

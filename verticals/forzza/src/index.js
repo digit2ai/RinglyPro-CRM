@@ -1581,7 +1581,8 @@ async function correrReporte(id, tenant, empresa, peticion, fuentes, previo) {
   try { out = await RP.generar(fuentes, { empresa, hoy: hoyMx(), peticion, previo }); }
   catch (e) { console.error('[forzza] reporte', id, e && e.message); out = { error: 'interno', mensaje: 'No se pudo terminar el reporte. Intenta de nuevo en unos minutos.' }; }
   if (out.ok) await exec(`UPDATE fz_reportes SET estado='listo', titulo=:ti, spec=:s::jsonb, herramientas=:h::jsonb, mensaje=NULL, updated_at=NOW() WHERE id=:id AND tenant_id=:t`, { ti: out.reporte.titulo, s: JSON.stringify(out.reporte), h: JSON.stringify(out.herramientas || []), id, t: tenant });
-  else await exec(`UPDATE fz_reportes SET estado='error', mensaje=:m, updated_at=NOW() WHERE id=:id AND tenant_id=:t`, { m: out.mensaje || 'No se pudo hacer el reporte. Intenta de nuevo.', id, t: tenant });
+  // El motivo técnico se guarda en herramientas (nunca se muestra al cliente) para poder diagnosticar el fallo.
+  else await exec(`UPDATE fz_reportes SET estado='error', mensaje=:m, herramientas=:h::jsonb, updated_at=NOW() WHERE id=:id AND tenant_id=:t`, { m: out.mensaje || 'No se pudo hacer el reporte. Intenta de nuevo.', h: JSON.stringify((out.herramientas || []).concat(out.detalle ? ['error: ' + out.detalle] : out.problemas ? ['verificador: ' + out.problemas.join(' | ').slice(0, 600)] : [])), id, t: tenant });
 }
 async function limiteReportes(req, res) {
   const c = await one("SELECT COUNT(*)::int AS n FROM fz_reportes WHERE tenant_id=:t AND created_at > NOW() - INTERVAL '24 hours'", { t: req.tenant });
@@ -1654,7 +1655,8 @@ api.get('/reportes/:id', async (req, res) => {
   const r = id && (await one('SELECT * FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id, t: req.tenant }));
   if (!r) return res.status(404).json({ error: 'not_found', ayuda: 'Ese reporte no existe o fue borrado.' });
   const versiones = await sel('SELECT id, version, estado, created_at FROM fz_reportes WHERE tenant_id=:t AND raiz_id=:r AND deleted_at IS NULL ORDER BY version', { t: req.tenant, r: r.raiz_id });
-  res.json({ ...repEstado(r), versiones });
+  const { herramientas, ...publico } = r; // el motivo técnico de un fallo se queda en el servidor
+  res.json({ ...repEstado(publico), versiones });
 });
 // Edición a mano: solo textos (título, resumen, títulos de sección y párrafos). Las cifras no se tocan.
 api.patch('/reportes/:id', async (req, res) => {
