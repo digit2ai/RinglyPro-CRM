@@ -47,8 +47,17 @@ const CATEGORIAS = ['sin_categoria', 'cliente', 'proveedor', 'nomina', 'imss', '
 const CATEG_FIJO = ['nomina', 'imss', 'renta', 'financiamiento', 'vehiculo', 'servicios', 'impuestos', 'otro'];
 
 let TENANT_SEED = null;
-const ready = schema.init(db).then((id) => { TENANT_SEED = id; }).catch((e) => { console.error('[forzza] schema init failed:', e.message); throw e; });
-ready.catch(() => {});
+// Si el arranque no alcanza la base (p. ej. durante un despliegue), NO se queda atorado: la siguiente
+// petición vuelve a intentar (como mucho cada 5 s). Antes, un solo fallo dejaba la app en 503 hasta el siguiente reinicio.
+let readyP = null, readyFalloEn = 0;
+function iniciar() {
+  readyP = schema.init(db).then((id) => { TENANT_SEED = id; }).catch((e) => { console.error('[forzza] schema init failed:', e.message); readyFalloEn = Date.now(); throw e; });
+  readyP.catch(() => {});
+  return readyP;
+}
+iniciar();
+function asegurar() { return readyFalloEn && Date.now() - readyFalloEn > 5000 ? (readyFalloEn = 0, iniciar()) : readyP; }
+const ready = { then: (a, b) => asegurar().then(a, b), catch: (b) => asegurar().catch(b) };
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
 const sel = (sql, replacements = {}, t) => db.query(sql, { replacements, type: QueryTypes.SELECT, transaction: t });

@@ -160,7 +160,7 @@
 
   /* ── sesión ── */
   function renderLogin(msg) {
-    $app.innerHTML = `<div class="login"><img class="logo" src="logo-azul.png" alt="Forzza · Materiales para la construcción"><div class="card"><h1>Inteligencia Empresarial</h1><p class="sub" style="margin-top:-4px">Analítica estratégica y gestión predictiva del negocio</p><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
+    $app.innerHTML = `<div class="login"><img class="logo" src="logo-azul.png" alt="Forzza · Materiales para la construcción"><div class="card"><h1>Capital</h1><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Correo</label><input name="email" type="email" autocomplete="username" required></div>
       <div><label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required></div>
       <button class="btn primary">Entrar</button><div class="err">${esc(msg || '')}</div></form></div></div>`;
