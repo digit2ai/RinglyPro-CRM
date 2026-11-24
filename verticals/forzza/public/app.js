@@ -234,7 +234,10 @@
   ];
   // Menú por categorías: TODAS plegadas por omisión (dueño 2026-11-23); se recuerda en este equipo cuáles abrió la persona.
   // La categoría de la pantalla abierta siempre se ve.
-  function grpAbiertos() { try { return JSON.parse(localStorage.getItem('fz_grp_abiertos') || '[]'); } catch (e) { return []; } }
+  // Menú plegado por omisión (dueño 2026-11-24): NO se recuerda qué se abrió; al entrar todo está cerrado salvo la
+  // categoría de la pantalla abierta, y abrir una categoría cierra las demás (acordeón).
+  try { localStorage.removeItem('fz_grp_abiertos'); } catch (e) {}
+  function grpAbiertos() { return []; }
   function menuHtml() {
     const abiertos = grpAbiertos(); let out = '', abierto = false;
     for (const [k, l] of VIEWS) {
@@ -249,11 +252,11 @@
     }
     return out + (abierto ? '</div>' : '');
   }
-  function abrirGrupo(g, abrir, recordar) {
+  function abrirGrupo(g, abrir) {
+    if (abrir) document.querySelectorAll('nav.side button.grp[aria-expanded="true"]').forEach((b) => { if (b.dataset.g !== g) { b.setAttribute('aria-expanded', 'false'); const bx = document.querySelector(`nav.side .gitems[data-g="${CSS.escape(b.dataset.g)}"]`); if (bx) bx.hidden = true; } });
     const btn = document.querySelector(`nav.side button.grp[data-g="${CSS.escape(g)}"]`), box = document.querySelector(`nav.side .gitems[data-g="${CSS.escape(g)}"]`);
     if (!btn || !box) return;
     btn.setAttribute('aria-expanded', String(!!abrir)); box.hidden = !abrir;
-    if (recordar) { const c = grpAbiertos().filter((x) => x !== g); if (abrir) c.push(g); try { localStorage.setItem('fz_grp_abiertos', JSON.stringify(c)); } catch (e) {} }
   }
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
@@ -272,7 +275,7 @@
     setSide(pref === 'off');
     side.onclick = (e) => {
       const g = e.target.closest('button.grp');
-      if (g) { abrirGrupo(g.dataset.g, g.getAttribute('aria-expanded') !== 'true', true); return; }
+      if (g) { abrirGrupo(g.dataset.g, g.getAttribute('aria-expanded') !== 'true'); return; }
       if (e.target.closest('a')) { side.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }
     };
     document.getElementById('salir').onclick = async (e) => { e.preventDefault(); await api('auth/logout', { method: 'POST' }).catch(() => {}); S.me = null; document.body.classList.add('fz-out'); renderLogin(); };
@@ -299,7 +302,7 @@
     if (v === 'sicar_web' && antes !== 'sicar_web') setSide(true); // SICAR usa toda la pantalla
     else if (antes === 'sicar_web' && v !== 'sicar_web') { let p = null; try { p = localStorage.getItem('fz_side'); } catch (e) {} setSide(p === 'off'); }
     document.querySelectorAll('nav.side a[data-v]').forEach((a) => a.classList.toggle('on', a.dataset.v === (v === 'reporte' ? 'reportes' : v)));
-    { const a = document.querySelector(`nav.side a[data-v="${v === 'reporte' ? 'reportes' : v}"]`), box = a && a.closest('.gitems'); if (box && box.hidden) abrirGrupo(box.dataset.g, true, false); }
+    { const a = document.querySelector(`nav.side a[data-v="${v === 'reporte' ? 'reportes' : v}"]`), box = a && a.closest('.gitems'); if (box && box.hidden) abrirGrupo(box.dataset.g, true); }
     main().innerHTML = '<p class="muted">Cargando…</p>';
     main().onclick = null; main().oninput = null; main().onchange = null;
     try { await R[v](); } catch (e) { if (e && e.error !== 'not_signed_in') main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }
