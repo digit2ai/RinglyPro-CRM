@@ -223,6 +223,7 @@
   }
 
   const VIEWS = [
+    ['url:guia-usuario.html', 'Guía de usuario'],
     ['grp', 'Capital'], ['tablero', 'Tablero (Actual)'], ['proyeccion', 'Proyección (Futuro)'], ['simular', '¿Tomo este pedido?'],
     ['grp', 'Cuentas'], ['cxc', 'Por cobrar'], ['cxp', 'Por pagar'], ['bancos', 'Bancos'], ['fijos', 'Gastos fijos'],
     ['grp', 'Datos'], ['cargar', 'Importar archivos'], ['url:guia-carga.html', 'Guía para importar archivos'],
@@ -1039,7 +1040,7 @@
 
   /* ── REPORTES: el Departamento de Inteligencia de Datos ── */
   const REP_EJEMPLOS = ['Ventas por cliente del último trimestre, los 10 más grandes, con gráfica de barras', 'Gastos por categoría de cada mes de los bancos, con gráfica de líneas', 'Compras por proveedor ordenadas de mayor a menor, con el total', 'Resumen de entradas y salidas de los bancos por mes y el saldo neto'];
-  const esDinero = (n) => /monto|total|importe|venta|compra|saldo|pago|costo|utilidad|precio|entrada|salida|cargo|abono|ingreso|gasto|adeudo|deuda|suma de|promedio de|valor|cobr/i.test(n || '');
+  const esDinero = (n) => !/n[uú]mero|cantidad|conteo|notas\b|renglones|piezas|unidades|d[ií]as|%|porcentaje/i.test(n || '') && /monto|total|importe|venta|compra|saldo|pago|costo|utilidad|precio|entrada|salida|cargo|abono|ingreso|gasto|adeudo|deuda|suma de|promedio de|valor|cobr/i.test(n || '');
   const fmtNum = (v, col) => {
     if (v == null || v === '') return '—';
     if (typeof v !== 'number') return esc(String(v));

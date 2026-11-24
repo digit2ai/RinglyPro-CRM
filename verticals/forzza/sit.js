@@ -739,6 +739,14 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
         DL2._setClient(null); }
       const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
       ok('menú: sección Reportes con Mis reportes y Nuevo reporte', /\['grp', 'Reportes'\], \['reportes', 'Mis reportes'\], \['reporte_nuevo', 'Nuevo reporte'\]/.test(apR) && /R\.reporte = /.test(apR) && /window\.print\(\)/.test(apR)); }
+    console.log('\nGuía de usuario con la voz de Dalia');
+    { const gu = fs.readFileSync(path.join(__dirname, 'public', 'guia-usuario.html'), 'utf8'), apG = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+      const imgs = [...gu.matchAll(/img: '([^']+)'/g)].map((m) => m[1]);
+      ok('guía: el panel izquierdo tiene «Guía de usuario» y abre la guía', /\['url:guia-usuario\.html', 'Guía de usuario'\]/.test(apG));
+      ok('guía: cada tema tiene su captura y existe el archivo', imgs.length >= 20 && imgs.every((f) => fs.existsSync(path.join(__dirname, 'public', 'guia-usuario', f + '.jpg'))), imgs.filter((f) => !fs.existsSync(path.join(__dirname, 'public', 'guia-usuario', f + '.jpg'))).join(','));
+      ok('guía: narración con la voz de Dalia por /api/tts/edge y cada tema la trae (máximo 2,000 caracteres)', /\/api\/tts\/edge/.test(gu) && /voice: 'dalia'/.test(gu) && [...gu.matchAll(/\bn: '((?:[^'\\]|\\.)*)'/g)].length === imgs.length && [...gu.matchAll(/\bn: '((?:[^'\\]|\\.)*)'/g)].every((m) => m[1].length < 2000));
+      ok('guía: sin emojis', !/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(gu.replace(/[✓▶❚‹›☰]/g, '')));
+      ok('guía: las capturas son de una empresa ficticia (dice «demo»), no de datos reales', /datos de ejemplo de una empresa ficticia/.test(gu)); }
     console.log('\nTendencia (flecha bajo la calificación)');
     { const hT = '2026-10-30', mkT = (f, a, c) => ({ fecha: f, monto: a, categoria: c || 'cliente' }), bT = [];
       for (let i = 0; i < 60; i++) { const f = E.addDays(hT, -i); bT.push(mkT(f, 1000), mkT(f, -1000, 'proveedor')); }

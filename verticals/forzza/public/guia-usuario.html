@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Guía de usuario · Forzza Inteligencia Empresarial</title>
+<link rel="icon" href="favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#012A72;--navy2:#0b3a8f;--ink:#0f172a;--mut:#475569;--line:#e2e8f0;--soft:#f1f5fb;--ok:#047857;--warn:#b45309;--bad:#b91c1c}
+*{box-sizing:border-box}html,body{margin:0;background:#f4f6fa;color:var(--ink);font-family:Montserrat,system-ui,-apple-system,sans-serif}
+header{background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:12px 20px;position:sticky;top:0;z-index:20}
+header img{height:30px}header .t{font-weight:700;font-size:15px;line-height:1.2}header .t small{display:block;font-weight:400;opacity:.8;font-size:12px}
+header .sp{flex:1}header a{color:#fff;font-size:13px;font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:8px 12px;white-space:nowrap}
+.wrap{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 56px)}
+nav{background:#fff;border-right:1px solid var(--line);padding:14px 10px;overflow:auto;max-height:calc(100vh - 56px);position:sticky;top:56px}
+nav .cap{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--navy);text-transform:uppercase;margin:14px 8px 4px}
+nav button{display:flex;gap:8px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:8px 10px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;min-height:40px;align-items:center}
+nav button .n{color:var(--mut);font-size:12px;min-width:20px}nav button:hover{background:var(--soft)}nav button.on{background:#e8eefb;color:var(--navy);font-weight:700}
+nav button.visto .n{color:var(--ok);font-weight:800}
+main{padding:22px 28px 120px;max-width:1180px}
+.tag{display:inline-block;font-size:12px;font-weight:700;color:var(--navy);background:#e8eefb;border-radius:99px;padding:4px 12px;margin-bottom:8px}
+h1{font-size:28px;margin:4px 0 6px;line-height:1.2}.lead{font-size:16px;color:var(--mut);margin:0 0 16px;line-height:1.5}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px;align-items:start}
+.shot{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 6px 24px rgba(1,42,114,.08)}
+.shot img{width:100%;height:auto;display:block;border-radius:6px;cursor:zoom-in}
+.shot .cap2{font-size:12px;color:var(--mut);margin:6px 4px 2px}
+.pasos{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.pasos h2{font-size:15px;margin:0 0 8px;color:var(--navy)}
+.pasos ol{margin:0;padding-left:20px}.pasos li{margin:7px 0;line-height:1.45;font-size:14.5px}
+.tip{margin-top:12px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ojo{margin-top:12px;background:#fffbeb;border:1px solid #fcd34d;color:#78350f;border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.45}
+.ej{margin-top:10px;background:var(--soft);border-left:3px solid var(--navy);border-radius:6px;padding:8px 10px;font-size:13.5px;font-style:italic}
+.dock{position:fixed;left:290px;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:10px;z-index:15;box-shadow:0 -6px 20px rgba(0,0,0,.05)}
+.dock button{font:inherit;font-weight:700;font-size:14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 14px;cursor:pointer;min-height:44px}
+.dock button.pri{background:var(--navy);color:#fff;border-color:var(--navy);min-width:130px}
+.dock button:disabled{opacity:.4;cursor:default}
+.cc{flex:1;font-size:14px;color:var(--mut);line-height:1.4;max-height:3.9em;overflow:hidden}
+.prog{position:fixed;left:290px;right:0;bottom:0;height:3px;background:transparent;z-index:16}.prog i{display:block;height:100%;width:0;background:#2f80ed;transition:width .3s}
+.cnt{font-size:13px;color:var(--mut);white-space:nowrap}
+.zoom{position:fixed;inset:0;background:rgba(2,6,23,.88);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;cursor:zoom-out}
+.zoom img{max-width:100%;max-height:100%;border-radius:8px}.zoom.on{display:flex}
+.bienv{position:fixed;inset:0;background:rgba(1,20,60,.92);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.bienv .c{background:#fff;border-radius:16px;max-width:520px;padding:26px;text-align:center}
+.bienv h2{margin:6px 0 8px;font-size:22px}.bienv p{color:var(--mut);line-height:1.5;margin:6px 0}
+.bienv .vol{font-size:44px;line-height:1}.bienv .row{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.bienv button{font:inherit;font-weight:700;border-radius:10px;padding:12px 18px;border:1px solid var(--line);background:#fff;cursor:pointer;min-height:44px}.bienv button.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+.menu-btn{display:none}
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}nav{display:none;position:fixed;top:56px;left:0;right:0;bottom:0;max-height:none;z-index:30}nav.open{display:block}
+  .menu-btn{display:inline-block;background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;padding:8px 10px;font:inherit;font-weight:700;min-height:40px}
+  header a.salir{display:none}
+  main{padding:16px 16px 150px}.grid{grid-template-columns:1fr}h1{font-size:23px}
+  .dock{left:0;flex-wrap:wrap;padding:8px 12px;gap:8px}.prog{left:0}.cc{order:-1;flex-basis:100%;font-size:12.5px;max-height:4.3em;overflow:auto}.dock button{flex:1;padding:8px 6px;font-size:13.5px;white-space:nowrap}
+  header{gap:10px;padding:10px 12px}header img{height:22px}header .t{font-size:13px}header .t small{display:none}
+}
+@media print{header,nav,.dock,.prog,.bienv{display:none!important}.wrap{display:block}main{padding:0;max-width:none}section{page-break-after:always}}
+</style>
+</head>
+<body>
+<header>
+  <button class="menu-btn" id="menuBtn" aria-label="Ver los temas">☰ Temas</button>
+  <img src="logo-blanco.png" alt="Forzza">
+  <div class="t">Guía de usuario<small>Forzza · Inteligencia Empresarial</small></div>
+  <div class="sp"></div>
+  <a class="salir" href="./">Abrir la plataforma</a>
+</header>
+<div class="wrap">
+  <nav id="nav" aria-label="Temas de la guía"></nav>
+  <main id="main" aria-live="polite"></main>
+</div>
+<div class="prog"><i id="prog"></i></div>
+<div class="dock">
+  <button id="prev" aria-label="Anterior">‹ Anterior</button>
+  <button id="play" class="pri">▶ Escuchar</button>
+  <button id="next" aria-label="Siguiente">Siguiente ›</button>
+  <span class="cnt" id="cnt"></span>
+  <div class="cc" id="cc"></div>
+</div>
+<div class="zoom" id="zoom"><img alt=""></div>
+<div class="bienv" id="bienv"><div class="c">
+  <div class="vol"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#012A72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></div>
+  <h2>Bienvenido a la guía de Forzza</h2>
+  <p>Dalia te va a explicar, paso a paso, cómo usar toda la plataforma: el tablero, cargar archivos, crear reportes y más.</p>
+  <p><b>Sube el volumen</b> (y revisa que el teléfono no esté en silencio).</p>
+  <p style="font-size:13px">Las pantallas de esta guía tienen datos de ejemplo de una empresa ficticia.</p>
+  <div class="row"><button class="pri" id="conVoz">Empezar con voz</button><button id="sinVoz">Leer sin voz</button></div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  var I = 'guia-usuario/';
+  // Cada tema: sección, título, frase de entrada, captura, pasos, consejo, narración de Dalia.
+  var S = [
+    { s: 'Inicio', t: 'Qué es Forzza Inteligencia Empresarial', l: 'Una sola plataforma para saber cuánto dinero hay hoy, cuánto te deben, cuánto debes y qué día podría faltar.', img: '02-tablero', cap: 'El tablero: lo primero que ves al entrar.',
+      p: ['Todo sale de tus estados de cuenta y de los reportes de SICAR que subes.', 'El sistema hace las cuentas solo: no hay que capturar a mano lo que ya está en el banco o en SICAR.', 'Esta guía tiene {N} temas. Puedes escucharlos en orden o saltar al tema que necesites en el menú de la izquierda.'],
+      tip: 'Con 10 minutos a la semana para subir archivos, el tablero se mantiene al día.',
+      n: 'Hola, soy Dalia, tu asistente financiera. En esta guía te voy a enseñar a usar Forzza Inteligencia Empresarial. Es una sola plataforma para saber cuánto dinero hay hoy, cuánto te deben tus clientes, cuánto debes a tus proveedores y qué día podría faltar dinero. Todo sale de tus estados de cuenta y de los reportes de SICAR que subes; el sistema hace las cuentas solo. Puedes escuchar los temas en orden o saltar al que necesites en el menú de la izquierda. Empecemos.' },
+    { s: 'Inicio', t: 'Entrar a la plataforma', l: 'Cada persona tiene su propio usuario.', img: '01-login', cap: 'Pantalla de entrada.',
+      p: ['Abre aiagent.ringlypro.com/forzza/app en tu computadora o tu teléfono.', 'Escribe tu correo y tu contraseña y toca Entrar.', 'La primera vez el sistema te pide cambiar la contraseña temporal.', 'Hay tres tipos de usuario: director (todo), capturista (captura e importa archivos) y contador (solo consulta, no cambia nada).'],
+      ojo: 'No compartas tu usuario: el sistema guarda quién hizo cada cambio.',
+      n: 'Para entrar, abre la dirección de la plataforma en tu computadora o tu teléfono, escribe tu correo y tu contraseña y toca Entrar. La primera vez te va a pedir cambiar la contraseña temporal. Hay tres tipos de usuario: el director puede hacer todo; el capturista captura e importa archivos; y el contador solo consulta, no puede cambiar nada. Cada persona debe tener su propio usuario, porque el sistema guarda quién hizo cada cambio.' },
+    { s: 'Inicio', t: 'El menú de la izquierda', l: 'Las pantallas están agrupadas por tema.', img: '03-menu', cap: 'Menú con todas las categorías abiertas.',
+      p: ['Capital: Tablero, Proyección y ¿Tomo este pedido?', 'Cuentas: Por cobrar, Por pagar, Bancos y Gastos fijos.', 'Datos: Importar archivos y su guía.', 'Operación: Compras y ventas de SICAR.', 'Reportes: Mis reportes y Nuevo reporte.', 'Catálogos y Ajustes: clientes, proveedores, reserva, usuarios y tu cuenta.', 'Toca el nombre de una categoría para abrirla o cerrarla. El botón con flechas de arriba esconde el menú.'],
+      n: 'El menú de la izquierda agrupa las pantallas por tema. En Capital está el tablero, la proyección y el simulador de pedidos. En Cuentas, lo que te deben, lo que debes, los bancos y los gastos fijos. En Datos, el lugar para importar archivos. En Operación, las compras y ventas de SICAR. En Reportes, tus reportes hechos con inteligencia artificial. Y en Catálogos y Ajustes, los clientes, proveedores, la reserva y los usuarios. Toca el nombre de una categoría para abrirla o cerrarla.' },
+    { s: 'Tablero', t: 'La calificación de salud financiera', l: 'Un número de 0 a 100 que resume cómo está el dinero de la empresa.', img: '02-tablero', cap: 'Calificación, flecha de tendencia y de dónde sale cada punto.',
+      p: ['Verde, 75 o más: sana. Amarillo, 50 a 74: pide atención. Rojo, menos de 50: en riesgo.', 'La flecha de abajo dice hacia dónde vas: arriba creciendo, a la derecha estable, a la izquierda menos estable, abajo bajando.', 'A la derecha ves de dónde sale la calificación: días de efectivo, probabilidad de quedar en negativo, flujo del mes, cartera vencida y dependencia de pocos clientes.', 'Las barras rojas son lo primero que hay que mejorar.'],
+      tip: 'La calificación dice qué tan sano estás; la flecha dice hacia dónde vas. Pueden no coincidir: puedes estar en riesgo pero mejorando.',
+      n: 'Arriba del tablero está la calificación de salud financiera, un número de cero a cien. Setenta y cinco o más es sana, de cincuenta a setenta y cuatro pide atención, y menos de cincuenta está en riesgo. Debajo, la flecha te dice hacia dónde vas: hacia arriba estás creciendo, a la derecha estable, a la izquierda menos estable y hacia abajo bajando. A la derecha ves de dónde sale la calificación: los días que aguanta la caja, la probabilidad de quedar en negativo, si entra más de lo que sale, cuánto está vencido y si dependes de pocos clientes. Las barras rojas son lo primero que hay que atender.' },
+    { s: 'Tablero', t: 'Alertas y las cuatro tarjetas', l: 'Lo urgente aparece arriba, en rojo o amarillo.', img: '02-tablero', cap: 'Alertas arriba; tarjetas de efectivo abajo.',
+      p: ['Las alertas rojas dicen qué día el saldo quedaría en negativo y cuánto falta.', 'Las amarillas avisan si bajas de la reserva o si hay clientes vencidos.', 'Efectivo hoy: lo que hay en las cuentas que suman al efectivo.', 'Días de efectivo: cuántos días aguantas sin cobrar nada.', 'Saldo más probable en 90 días y punto más bajo probable: una estimación con lo que de verdad ha pasado en tus bancos.'],
+      ojo: 'Si dice «bancos cargados hasta…» con una fecha vieja, sube los estados de cuenta más recientes.',
+      n: 'Las alertas aparecen arriba. Las rojas te dicen qué día el saldo quedaría en negativo y cuánto dinero falta; las amarillas avisan si bajas de la reserva mínima o si hay clientes con pagos vencidos. Debajo de la calificación hay cuatro tarjetas: el efectivo de hoy, los días que aguanta la caja sin cobrar nada, el saldo más probable en noventa días y el punto más bajo probable. Ojo: si la fecha de bancos cargados es vieja, sube tus estados de cuenta más recientes para que todo esté al día.' },
+    { s: 'Tablero', t: '¿Qué tan probable es quedarse sin dinero?', l: '2,000 futuros posibles armados con lo que de verdad pasó en tus bancos.', img: '06-tablero-montecarlo', cap: 'Probabilidad de quedar en negativo a 30, 60 y 90 días y el rango de saldo.',
+      p: ['Los tres círculos son la probabilidad de quedar en negativo en 30, 60 y 90 días.', 'La línea oscura es lo más probable; las franjas son el rango de lo posible.', 'Más abajo ves cómo se movió el dinero mes por mes y en qué se va.'],
+      tip: 'Es una estimación, no una promesa: con más meses de bancos cargados, es más exacta.',
+      n: 'Esta parte del tablero responde una pregunta muy importante: qué tan probable es quedarse sin dinero. El sistema arma dos mil futuros posibles con lo que de verdad ha pasado en tus bancos. Los tres círculos son la probabilidad de quedar en negativo en treinta, sesenta y noventa días. La línea oscura es lo más probable y las franjas muestran el rango de lo posible. Es una estimación, no una promesa; entre más meses de bancos tengas cargados, más exacta será.' },
+    { s: 'Tablero', t: 'Lo que te deben y lo que debes', l: 'Cartera por cobrar y cuentas por pagar, por antigüedad.', img: '04-tablero-cartera', cap: 'Te deben, debes, días para cobrar y para pagar.',
+      p: ['Te deben: todo lo que tus clientes tienen pendiente, y cuánto ya está vencido.', 'Debes: lo pendiente con proveedores.', 'La barra de colores muestra la antigüedad: verde por vencer, y de amarillo a rojo entre más días de atraso.', 'Días para cobrar y días para pagar: si cobras más lento de lo que pagas, la caja sufre.'],
+      n: 'Aquí ves lo que te deben tus clientes y lo que debes a tus proveedores. La barra de colores muestra la antigüedad de lo que te deben: verde es lo que todavía no vence y, de amarillo a rojo, lo que tiene más días de atraso. También ves cuántos días tardas en cobrar y cuántos en pagar. Si cobras más lento de lo que pagas, la caja sufre.' },
+    { s: 'Tablero', t: 'Neural Findings: diagnóstico y prescripción', l: 'El sistema revisa tus números y te dice qué hacer.', img: '05-tablero-hallazgos', cap: 'Hallazgos críticos, de atención y oportunidades.',
+      p: ['Cada hallazgo tiene un diagnóstico (qué pasa) y una prescripción (qué hacer).', 'Rojo es crítico, amarillo pide atención, azul es una oportunidad.', 'Cuando aplica, te dice a quién cobrar primero y cuánto.', 'El enlace al final de cada hallazgo te lleva a la pantalla donde se resuelve.', 'Debajo, «Próximos 14 días» lista lo que entra y sale en las dos semanas que vienen.'],
+      tip: 'Los hallazgos salen de reglas fijas sobre tus datos, no los inventa una inteligencia artificial.',
+      n: 'En Neural Findings el sistema revisa tus números y te dice qué hacer. Cada hallazgo tiene un diagnóstico, que es lo que pasa, y una prescripción, que es lo que conviene hacer. Rojo es crítico, amarillo pide atención y azul es una oportunidad. Por ejemplo, te dice a qué clientes cobrar primero y cuánto deben. El enlace de cada hallazgo te lleva a la pantalla donde se resuelve. Y abajo verás los próximos catorce días: lo que entra y lo que sale.' },
+    { s: 'Tablero', t: 'Las notas «i» e imprimir', l: 'Cada indicador trae su explicación.', img: '02-tablero', cap: 'Pasa el mouse o toca la «i» junto a cada indicador.',
+      p: ['Junto a cada indicador hay una «i». Pasa el mouse encima (o tócala en el teléfono) y aparece qué significa y qué hacer.', 'El botón «Imprimir resultados» arriba a la derecha imprime el tablero o lo guarda en PDF para juntas.'],
+      n: 'Si no sabes qué significa un indicador, busca la letra i junto a él. Pasa el mouse encima, o tócala en el teléfono, y aparece qué significa y qué hacer. Y si necesitas llevar el tablero a una junta, usa el botón Imprimir resultados, arriba a la derecha; puedes imprimirlo o guardarlo en PDF.' },
+    { s: 'Capital', t: 'Proyección (Futuro)', l: 'El saldo día por día hacia adelante, y qué pasa si cambias algo.', img: '07-proyeccion', cap: 'Proyección con tus datos reales.',
+      p: ['Elige el horizonte: 30, 60 o 90 días.', 'Elige la base histórica: mes promedio, peor o mejor mes de tus bancos, o solo los documentos.', 'Prueba supuestos: clientes que pagan tarde, más o menos ventas, mover un pago a proveedor.', 'Las tarjetas muestran el punto más bajo y cuánto falta para no quedar en cero o bajo la reserva.'],
+      tip: 'En la proyección puedes jugar con los números sin miedo: nada se guarda.',
+      n: 'En Proyección ves el saldo día por día hacia adelante. Elige el horizonte de treinta, sesenta o noventa días y la base: el mes promedio de tus bancos, el peor o el mejor. Después prueba supuestos, por ejemplo que los clientes paguen diez días tarde, o mover un pago grande a proveedor. Las tarjetas te dicen el punto más bajo y cuánto falta para no quedar en cero. Puedes jugar con los números sin miedo: nada se guarda.' },
+    { s: 'Capital', t: '¿Tomo este pedido?', l: 'Antes de aceptar un pedido grande a crédito, mira qué le pasa a tu caja.', img: '08-simular', cap: 'Simulación de un pedido con su margen y el efecto en el punto más bajo.',
+      p: ['Escribe el precio de venta, el costo del material, los gastos de entrega y el anticipo del cliente.', 'Indica en cuántos días entregas, en cuántos pagas al proveedor y cuántos días de crédito le das al cliente.', 'Toca Simular: ves el margen, cuánto sale antes de cobrar y cómo cambia tu punto más bajo.', 'La gráfica compara tu saldo sin el pedido (línea continua) y con el pedido (punteada).'],
+      ojo: 'No aprueba crédito ni guarda nada: es para decidir con números.',
+      n: 'Antes de aceptar un pedido grande a crédito, usa ¿Tomo este pedido? Escribe el precio de venta, el costo del material, los gastos de entrega y el anticipo, y los días de entrega, de pago al proveedor y de crédito al cliente. Toca Simular y verás el margen, cuánto dinero sale antes de cobrar y cómo cambia tu punto más bajo. La gráfica compara tu saldo sin el pedido y con el pedido. No aprueba crédito ni guarda nada; sirve para decidir con números.' },
+    { s: 'Cuentas', t: 'Por cobrar', l: 'Quién te debe, cuánto y desde cuándo.', img: '09-cxc', cap: 'Documentos pendientes con días de atraso.',
+      p: ['Cada renglón es una factura o remisión con su total, lo pendiente y los días vencidos en rojo.', 'Cobro: registra un abono (nunca puede pasar del saldo).', 'Compromiso: anota la fecha en que el cliente prometió pagar; así entra a la proyección.', 'Ver: el detalle y el historial de abonos. Desde ahí puedes mandar recordatorio por WhatsApp.', 'Arriba cambias entre Pendientes, Pagadas y canceladas, o Todas.'],
+      tip: 'Un cobro vencido sin fecha prometida no se cuenta en la proyección: pide una fecha de pago y anótala.',
+      n: 'En Por cobrar ves quién te debe, cuánto y desde cuándo. Los días vencidos aparecen en rojo. Con el botón Cobro registras un abono, y nunca puede pasar del saldo. Con Compromiso anotas la fecha en que el cliente prometió pagar; así ese dinero entra a la proyección. En Ver tienes el detalle, el historial y un recordatorio por WhatsApp. Un consejo: un cobro vencido sin fecha prometida no se cuenta en la proyección, así que pide una fecha y anótala.' },
+    { s: 'Cuentas', t: 'Por pagar', l: 'Facturas de proveedores: se programan, se aprueban y se pagan.', img: '10-cxp', cap: 'Estados: abierta, programada, aprobada.',
+      p: ['Programar: elige la fecha en que vas a pagar.', 'Aprobar: solo el aprobador (Ajustes) o un director aprueba el pago.', 'Pagar: registra el pago ya aprobado.', 'Si cambias la fecha o el monto de un pago aprobado, regresa a «programada» y hay que aprobarlo otra vez.'],
+      ojo: 'El capturista no puede pagar algo que no está aprobado. Es un candado a propósito.',
+      n: 'Por pagar funciona en tres pasos. Primero se programa la fecha de pago. Después el aprobador, o un director, aprueba el pago. Y al final se registra como pagado. Si alguien cambia la fecha o el monto de un pago ya aprobado, regresa a programada y hay que aprobarlo de nuevo. Es un candado a propósito, para que ningún pago salga sin autorización.' },
+    { s: 'Cuentas', t: 'Bancos', l: 'El saldo de cada cuenta y todos sus movimientos.', img: '11-bancos', cap: 'Tarjetas por cuenta y lista de movimientos.',
+      p: ['Arriba, una tarjeta por cuenta con su saldo. Las marcadas «fuera» no suman al efectivo (por ejemplo una tarjeta de crédito).', 'Abajo, los movimientos: filtra por fecha, cuenta o categoría.', 'Cambia la categoría de un movimiento con la lista de la derecha (cobro de cliente, pago a proveedor, nómina…). Puedes aplicarla a todos los de la misma contraparte.', '«Traspaso» es solo dinero entre tus propias cuentas.'],
+      tip: 'Entre mejor categorizados estén los movimientos, más precisos son el tablero y los reportes.',
+      n: 'En Bancos ves el saldo de cada cuenta y todos sus movimientos. Las cuentas marcadas fuera no suman al efectivo, por ejemplo una tarjeta de crédito. Abajo puedes filtrar por fecha, cuenta o categoría, y cambiar la categoría de un movimiento: cobro de cliente, pago a proveedor, nómina y otras. Traspaso es solo dinero entre tus propias cuentas. Entre mejor categorizados estén, más precisos son el tablero y los reportes.' },
+    { s: 'Cuentas', t: 'Gastos fijos', l: 'Nómina, IMSS, renta, créditos: lo que sale siempre.', img: '12-fijos', cap: 'Gastos fijos con su próxima fecha.',
+      p: ['Agrega cada gasto con su monto y cada cuánto se paga: semanal, quincenal o mensual.', 'Marca pagado cuando ya salió; así no se cuenta dos veces en la proyección.', 'Los créditos (por ejemplo el del camión) llevan fecha de fin.'],
+      n: 'En Gastos fijos registras lo que sale siempre: nómina, IMSS, renta, créditos. Para cada uno pones el monto y cada cuánto se paga. Cuando ya salió, márcalo como pagado; así no se cuenta dos veces en la proyección.' },
+    { s: 'Datos', t: 'Importar archivos: el único lugar para cargar información', l: 'Sueltas todos tus archivos juntos y cada uno se reconoce solo.', img: '13-importar', cap: 'Zona para arrastrar archivos y la lista de qué descargar de SICAR.',
+      p: ['Entra a Datos, Importar archivos (o el botón blanco de arriba).', 'Arrastra hasta 12 archivos a la vez: reportes de SICAR en PDF o Excel, estados de cuenta en PDF de BBVA o HSBC, o Excel/CSV de otro banco, y listas de clientes o proveedores.', 'Abajo está la lista «Qué descargar de SICAR»: dónde está cada reporte, cada cuánto bajarlo y cuándo lo subiste por última vez.', 'Para saber exactamente cómo descargar cada reporte, abre «Guía para importar archivos» en el menú Datos.'],
+      tip: 'Sube los archivos tal como los descargas, sin abrirlos ni editarlos.',
+      n: 'Importar archivos es el único lugar para cargar información. Entra a Datos, Importar archivos, y arrastra hasta doce archivos a la vez: reportes de SICAR en PDF o Excel, estados de cuenta en PDF de BBVA o HSBC, o en Excel de otros bancos, y listas de clientes o proveedores. Cada archivo se reconoce solo. Abajo tienes la lista de qué descargar de SICAR, cada cuánto y cuándo lo subiste por última vez. Súbelos tal como los descargas, sin abrirlos ni editarlos.' },
+    { s: 'Datos', t: 'El resultado de la carga', l: 'Cada archivo dice qué pasó con él.', img: '14-importar-resultado', cap: 'Resultado: cargados, por revisar o sin cargar.',
+      p: ['Cargado (verde): entró bien. Dice cuántos movimientos o documentos nuevos y cuántos ya estaban.', 'Revisar (amarillo): el sistema no adivina; por ejemplo te pregunta a qué cuenta va un estado de cuenta. Elige y toca Cargar.', 'No se cargó (rojo): dice el motivo en palabras simples (una foto, un PDF dañado, un archivo vacío).', 'Intenta de nuevo: si se cortó el internet o el servidor estaba ocupado, toca el botón para reintentar.'],
+      tip: 'Nada se duplica: si subes el mismo archivo otra vez, o el mismo mes en otro formato, solo entra lo nuevo. Si una lista trae menos saldo, se registra el abono.',
+      n: 'Después de subir, cada archivo dice qué pasó con él. Cargado, en verde, significa que entró bien, y te dice cuántos datos nuevos y cuántos ya estaban. Revisar, en amarillo, es cuando el sistema no quiere adivinar, por ejemplo a qué cuenta pertenece un estado de cuenta; eliges y tocas Cargar. No se cargó, en rojo, te explica el motivo en palabras simples. Y lo más importante: nada se duplica. Si subes el mismo archivo otra vez, o el mismo mes en otro formato, solo entra lo nuevo.' },
+    { s: 'Operación', t: 'Compras y ventas (SICAR)', l: 'Lo que compras, gastas y vendes mes por mes.', img: '15-compras-ventas', cap: 'Ventas, compras, gastos y cobrado por mes.',
+      p: ['Tarjetas con el total de ventas, compras de material, gastos (lo que en SICAR es GAS) y lo cobrado.', 'La gráfica y la tabla muestran cada mes.', 'Más abajo: principales proveedores, clientes, márgenes e inventario (si subiste esos reportes).'],
+      n: 'En Compras y ventas ves lo que viene de SICAR: ventas, compras de material, gastos y lo cobrado, mes por mes. Más abajo están los principales proveedores y clientes y, si subiste esos reportes, los márgenes y el inventario.' },
+    { s: 'Reportes', t: 'Mis reportes y el cupo del mes', l: 'Reportes hechos por el Departamento de Inteligencia de Datos.', img: '16-reportes', cap: 'Contador de reportes del mes y la lista de reportes.',
+      p: ['Incluye 100 reportes al mes. Crear uno o pedir un cambio cuenta como uno; si falla, no cuenta.', 'Al llegar al límite, el director puede comprar reportes extra (USD 1 cada uno). Los extra no vencen.', 'En la lista: Abrir, Archivar (lo guarda sin borrarlo) o Borrar.', '«Ver archivados» muestra los que archivaste; desde ahí los regresas.'],
+      n: 'En Reportes la inteligencia artificial arma reportes a partir de tus archivos y tus bancos. Incluye cien reportes al mes; crear uno o pedir un cambio cuenta como uno, y si un reporte falla no cuenta. Si llegas al límite, el director puede comprar reportes extra a un dólar cada uno, y esos no vencen. En la lista puedes abrir, archivar o borrar cada reporte.' },
+    { s: 'Reportes', t: 'Nuevo reporte, paso 1: los datos', l: 'Sube cualquier Excel, CSV o PDF.', img: '17-reporte-nuevo', cap: 'Subir archivos, elegir los que ya subiste e incluir los bancos.',
+      p: ['Arrastra tus archivos (hasta 5): ventas, cobranza, inventario, lo que quieras.', 'Los archivos que ya subiste aparecen abajo: marca los que quieres usar.', 'Deja marcada «Incluir mis bancos» si quieres que el reporte use también los movimientos bancarios.'],
+      tip: 'Un Excel con una fila de encabezados (Fecha, Cliente, Total…) funciona mejor que un PDF.',
+      n: 'Para crear un reporte, entra a Nuevo reporte. Primero los datos: arrastra tus archivos de Excel, CSV o PDF, hasta cinco. Los que ya subiste antes aparecen abajo y solo los marcas. Si quieres que el reporte también use tus bancos, deja marcada la opción Incluir mis bancos. Un consejo: un Excel con una fila de encabezados funciona mejor que un PDF.' },
+    { s: 'Reportes', t: 'Nuevo reporte, paso 2: pídelo con tus palabras', l: 'Escribe qué reporte quieres, como se lo pedirías a una persona.', img: '18-reporte-peticion', cap: 'Cuadro para escribir la petición y ejemplos.',
+      p: ['Escribe qué quieres ver: el periodo, cómo agruparlo, qué gráficas y qué tabla.', 'Puedes tocar uno de los ejemplos para empezar.', 'Toca Crear reporte. En 30 segundos a 2 minutos aparece listo en Mis reportes (puedes salir de la pantalla mientras).'],
+      ej: 'Ejemplo: «Quiero un reporte ejecutivo de ventas de julio a noviembre. Arriba el total vendido, el número de ventas y lo pendiente de cobro. Luego ventas por mes en líneas, los 5 clientes que más compraron en barras y una tabla de ventas por vendedor».',
+      n: 'Después escribe qué reporte quieres, con tus palabras, como se lo pedirías a una persona: el periodo, cómo agruparlo, qué gráficas y qué tabla. Por ejemplo: quiero un reporte ejecutivo de ventas de julio a noviembre, con el total vendido, las ventas por mes, los cinco clientes que más compraron y una tabla por vendedor. Toca Crear reporte y en uno o dos minutos estará listo.' },
+    { s: 'Reportes', t: 'El reporte listo', l: 'Indicadores, gráficas, tablas y conclusión.', img: '19-reporte', cap: 'Reporte terminado con sus botones.',
+      p: ['Arriba: Imprimir o guardar PDF, Editar textos, Archivar y Borrar.', 'Las cifras las calcula el sistema con tus datos; la inteligencia artificial no escribe números. Si inventara uno, el reporte se rechaza.', 'Editar textos cambia el título, el resumen y la conclusión; las cifras no se pueden tocar.', 'Abajo dice de qué archivos salió.'],
+      tip: 'Para compartir el reporte, usa «Imprimir o guardar PDF» y manda el PDF.',
+      n: 'Así se ve un reporte terminado: indicadores arriba, gráficas, tablas y una conclusión. Todas las cifras las calcula el sistema con tus datos; la inteligencia artificial decide qué mostrar, pero no escribe números, y si intentara inventar uno, el reporte se rechaza. Arriba tienes los botones para imprimir o guardar en PDF, editar los textos, archivar o borrar.' },
+    { s: 'Reportes', t: 'Pedir un cambio', l: 'Ajusta el reporte con otra frase; la versión anterior se conserva.', img: '21-reporte-cambio', cap: 'Al final del reporte: «Pedir un cambio a la IA».',
+      p: ['Escribe qué quieres cambiar: «agrega el promedio por venta», «solo octubre y noviembre», «cambia la gráfica a líneas».', 'Se crea la versión 2 y la 1 se conserva; cambias de versión con la lista de arriba.'],
+      n: 'Si quieres ajustar un reporte, baja hasta Pedir un cambio a la IA y escribe qué quieres cambiar, por ejemplo: agrega el promedio por venta, o solo octubre y noviembre. Se crea una versión nueva y la anterior se conserva.' },
+    { s: 'Ayuda', t: 'Pregúntale a Dalia', l: 'Tu asistente financiera: pregúntale lo que quieras del dinero de la empresa.', img: '25-dalia', cap: 'El botón «Pregúntale a Dalia», abajo a la derecha.',
+      p: ['Toca «Pregúntale a Dalia» abajo a la derecha, escribe tu pregunta y toca Enviar.', 'Conoce todo: bancos, cobros, pagos, gastos fijos, SICAR, proyección, salud financiera y tus reportes.', 'La voz viene apagada; actívala con el botón de la bocina si quieres escucharla.', 'Dalia solo consulta: no puede registrar ni borrar nada; si le pides hacerlo, te dice en qué pantalla se hace.'],
+      ej: 'Ejemplos: «¿Cuánto efectivo tengo hoy?» · «¿Quién me debe más y desde cuándo?» · «¿Qué día me falta dinero?» · «Dame las ventas pendientes de cobro por cliente de octubre y noviembre».',
+      n: 'Para preguntas rápidas, toca Pregúntale a Dalia, abajo a la derecha. Escribe tu pregunta y toca Enviar. Conozco todo: tus bancos, cobros, pagos, gastos fijos, SICAR, la proyección, la salud financiera y tus reportes. Por ejemplo, pregúntame cuánto efectivo tienes hoy, quién te debe más o qué día te falta dinero. Solo consulto, no puedo registrar ni borrar nada; si me pides hacerlo, te digo en qué pantalla se hace.' },
+    { s: 'Catálogos y ajustes', t: 'Clientes, proveedores, reserva y usuarios', l: 'Las decisiones de la empresa y quién usa la plataforma.', img: '23-ajustes', cap: 'Reserva y aprobación.',
+      p: ['Clientes y Proveedores: días de crédito, límite, teléfono y cuánto deben hoy.', 'Reserva y aprobación: la reserva mínima que siempre debe quedar en el banco y quién aprueba los pagos a proveedores.', 'Usuarios (solo director): da de alta personas con su rol; la contraseña temporal se muestra una sola vez.', 'Mi cuenta: cambia tu contraseña.'],
+      ojo: 'Define la reserva mínima: con ella el tablero te avisa antes de quedarte corto.',
+      n: 'En Catálogos están tus clientes y proveedores, con sus días de crédito y cuánto deben. En Ajustes defines la reserva mínima, que es lo que siempre debe quedar en el banco, y quién aprueba los pagos a proveedores. El director da de alta a los usuarios con su rol, y cada persona cambia su contraseña en Mi cuenta. Te recomiendo definir la reserva mínima: con ella el tablero te avisa antes de quedarte corto.' },
+    { s: 'Ayuda', t: 'También en tu teléfono', l: 'La misma plataforma, en el celular.', img: '26-telefono', cap: 'Tablero en un teléfono.',
+      p: ['Abre la misma dirección en el navegador del teléfono.', 'El menú se abre con el botón de tres rayas, arriba a la izquierda.', 'Puedes revisar el tablero, cobrar, aprobar pagos y preguntarle a Dalia desde donde estés.'],
+      n: 'Todo esto también funciona en tu teléfono. Abre la misma dirección en el navegador; el menú se abre con el botón de tres rayas, arriba a la izquierda. Así puedes revisar el tablero, cobrar, aprobar pagos o preguntarme algo desde donde estés.' },
+    { s: 'Ayuda', t: 'Tu rutina semanal', l: 'Diez minutos a la semana mantienen todo al día.', img: '13-importar', cap: 'Empieza siempre por Importar archivos.',
+      p: ['Lunes: descarga de SICAR los reportes de la lista y tus estados de cuenta, y súbelos juntos en Importar archivos.', 'Revisa el tablero: alertas, calificación, flecha y Neural Findings.', 'Por cobrar: llama o manda WhatsApp a los vencidos más grandes y anota las fechas prometidas.', 'Por pagar: programa y aprueba los pagos de la semana.', 'Cuando necesites un análisis, pídelo en Nuevo reporte o pregúntale a Dalia.'],
+      tip: '¿Dudas? Abre esta guía desde el menú, en Ayuda, Guía de usuario.',
+      n: 'Para terminar, tu rutina semanal. Cada lunes descarga de SICAR los reportes de la lista y tus estados de cuenta, y súbelos juntos en Importar archivos. Después revisa el tablero: las alertas, la calificación, la flecha y los hallazgos. En Por cobrar, contacta a los clientes vencidos más grandes y anota sus fechas prometidas. En Por pagar, programa y aprueba los pagos de la semana. Y cuando necesites un análisis, pídelo en Reportes o pregúntame. Con diez minutos a la semana, todo se mantiene al día. Gracias por escucharme.' }
+  ];
+  S[0].p = S[0].p.map(function (x) { return x.replace('{N}', S.length); });
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var cur = 0, voz = true, playing = false, token = 0, cache = {}, timer = null, vistos = {};
+  try { vistos = JSON.parse(localStorage.getItem('fz_guia_vistos') || '{}'); } catch (e) {}
+  // Menú de temas
+  var html = '', sec = '';
+  S.forEach(function (x, i) { if (x.s !== sec) { sec = x.s; html += '<div class="cap">' + esc(sec) + '</div>'; } html += '<button data-i="' + i + '"><span class="n">' + (i + 1) + '</span><span>' + esc(x.t) + '</span></button>'; });
+  $('nav').innerHTML = html;
+  function pintar() {
+    var x = S[cur];
+    $('main').innerHTML = '<section><span class="tag">' + esc(x.s) + ' · ' + (cur + 1) + ' de ' + S.length + '</span><h1>' + esc(x.t) + '</h1><p class="lead">' + esc(x.l) + '</p>' +
+      '<div class="grid"><div class="shot"><img src="' + I + x.img + '.jpg" alt="' + esc(x.cap) + '" loading="lazy"><div class="cap2">' + esc(x.cap) + ' Toca la imagen para verla grande.</div></div>' +
+      '<div class="pasos"><h2>Paso a paso</h2><ol>' + x.p.map(function (y) { return '<li>' + esc(y) + '</li>'; }).join('') + '</ol>' +
+      (x.ej ? '<div class="ej">' + esc(x.ej) + '</div>' : '') + (x.tip ? '<div class="tip"><b>Consejo:</b> ' + esc(x.tip) + '</div>' : '') + (x.ojo ? '<div class="ojo"><b>Ojo:</b> ' + esc(x.ojo) + '</div>' : '') + '</div></div></section>';
+    document.querySelectorAll('nav button').forEach(function (b) { var i = Number(b.dataset.i); b.classList.toggle('on', i === cur); b.classList.toggle('visto', !!vistos[i]); });
+    var on = document.querySelector('nav button.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+    $('cnt').textContent = (cur + 1) + ' / ' + S.length;
+    $('prog').style.width = ((cur + 1) / S.length * 100) + '%';
+    $('prev').disabled = cur === 0; $('next').disabled = cur === S.length - 1;
+    $('cc').textContent = x.n;
+    window.scrollTo(0, 0);
+    vistos[cur] = 1; try { localStorage.setItem('fz_guia_vistos', JSON.stringify(vistos)); } catch (e) {}
+    try { history.replaceState(null, '', '#' + (cur + 1)); } catch (e) {}
+  }
+  // Voz: Dalia (Edge) por /api/tts/edge; si falla, la voz del navegador; si tampoco, pausa de lectura.
+  var player = new Audio(); player.preload = 'auto'; player.setAttribute('playsinline', '');
+  var SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+  function stopAudio() { token++; clearTimeout(timer); try { player.pause(); } catch (e) {} try { speechSynthesis.cancel(); } catch (e) {} }
+  function setPlaying(v) { playing = v; $('play').textContent = v ? '❚❚ Pausa' : '▶ Escuchar'; if (!v) stopAudio(); }
+  function audioDe(i) {
+    if (cache[i]) return Promise.resolve(cache[i]);
+    return fetch('/api/tts/edge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: S[i].n, voice: 'dalia' }) })
+      .then(function (r) { if (!r.ok) throw new Error('tts'); return r.blob(); })
+      .then(function (b) { if (!b || b.size < 500) throw new Error('vacío'); cache[i] = URL.createObjectURL(b); return cache[i]; });
+  }
+  function siguiente(t) { if (t !== token || !playing) return; if (cur < S.length - 1) { cur++; pintar(); hablar(); } else setPlaying(false); }
+  function hablar() {
+    stopAudio(); var t = token, i = cur;
+    if (!voz) { timer = setTimeout(function () { siguiente(t); }, Math.max(9000, S[i].n.length * 55)); return; }
+    audioDe(i).then(function (url) {
+      if (t !== token) return;
+      player.src = url; player.onended = function () { siguiente(t); };
+      return player.play().then(function () { if (i + 1 < S.length) audioDe(i + 1).catch(function () {}); });
+    }).catch(function () {
+      if (t !== token) return;
+      try {
+        var u = new SpeechSynthesisUtterance(S[i].n); u.lang = 'es-MX'; u.onend = function () { siguiente(t); };
+        speechSynthesis.speak(u);
+      } catch (e) { timer = setTimeout(function () { siguiente(t); }, Math.max(9000, S[i].n.length * 55)); }
+    });
+  }
+  function ir(i) { if (i < 0 || i >= S.length) return; cur = i; pintar(); if (playing) hablar(); }
+  $('play').onclick = function () { if (playing) setPlaying(false); else { voz = true; try { player.src = SILENT; player.play().catch(function () {}); } catch (e) {} setPlaying(true); hablar(); } };
+  $('prev').onclick = function () { ir(cur - 1); };
+  $('next').onclick = function () { ir(cur + 1); };
+  $('nav').onclick = function (e) { var b = e.target.closest('button[data-i]'); if (!b) return; ir(Number(b.dataset.i)); $('nav').classList.remove('open'); };
+  $('menuBtn').onclick = function () { $('nav').classList.toggle('open'); };
+  $('main').onclick = function (e) { var im = e.target.closest('.shot img'); if (!im) return; $('zoom').querySelector('img').src = im.src; $('zoom').classList.add('on'); };
+  $('zoom').onclick = function () { $('zoom').classList.remove('on'); };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') $('zoom').classList.remove('on');
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight') ir(cur + 1); else if (e.key === 'ArrowLeft') ir(cur - 1); else if (e.key === ' ') { e.preventDefault(); $('play').click(); }
+  });
+  // La primera interacción desbloquea el audio en iPhone (un play() después de esperar la red se bloquea).
+  $('conVoz').onclick = function () { try { player.src = SILENT; player.play().catch(function () {}); } catch (e) {} $('bienv').style.display = 'none'; voz = true; setPlaying(true); hablar(); };
+  $('sinVoz').onclick = function () { $('bienv').style.display = 'none'; voz = false; };
+  var h = Number((location.hash || '').slice(1)); if (h >= 1 && h <= S.length) cur = h - 1;
+  pintar();
+})();
+</script>
+</body>
+</html>
