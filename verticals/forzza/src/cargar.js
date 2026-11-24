@@ -103,7 +103,7 @@ function clasificarTabla(rows, nombreArchivo, cuentas) {
     por_que.push('tiene ' + (doc.map.saldo != null ? 'Saldo' : 'Total'));
     return { tipo, estado: 'auto', por_que, motivo: null };
   }
-  return { tipo: null, estado: 'rechazado', motivo: 'No reconocí el archivo. Sube un reporte de SICAR tal como lo guarda SICAR, un estado de cuenta (Fecha, Concepto, Cargo/Abono) o una lista de clientes/proveedores con Total.' };
+  return { tipo: null, estado: 'rechazado', motivo: 'No reconocí este archivo: no parece un reporte de SICAR, un estado de cuenta ni una lista de clientes o proveedores. Revisa que sea el archivo correcto y súbelo tal como lo descargaste, sin abrirlo ni editarlo.' };
 }
 
 /** Orden de carga: primero los saldos de SICAR, luego su historial, luego listas, al final bancos. */

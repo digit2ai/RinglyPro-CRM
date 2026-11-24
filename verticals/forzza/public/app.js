@@ -31,10 +31,23 @@
     ya_existe: 'Ya existe con ese nombre.', usa_excel_o_csv: 'Usa un archivo de Excel (.xlsx) o CSV.', sin_encabezados: 'No encontré las columnas que necesito.',
     no_se_borra: 'Solo se borran movimientos capturados a mano que aún no se concilian con el banco.', ya_pagado: 'Esa fecha ya está marcada como pagada.',
     no_toca_ese_dia: 'Ese gasto no cae en esa fecha.', reserva_invalida: 'Escribe la reserva como un monto, o déjala vacía.', aprobador_invalido: 'Esa persona no puede aprobar.',
-    terminacion_invalida: 'La terminación son los últimos 4 dígitos.', saldo_invalido: 'Escribe el saldo como un número.', archivo_muy_grande: 'El archivo es muy grande.',
-    precio_invalido: 'Escribe el precio de venta.', falta_archivo: 'Elige el reporte de SICAR.', pdf_ilegible: 'No pude leer ese PDF.', archivo_ilegible: 'No pude leer ese archivo.', solo_director: 'Solo el director cambia esto.', cuenta_not_found: 'Elige una cuenta.', faltan_datos: 'Faltan datos.'
+    terminacion_invalida: 'La terminación son los últimos 4 dígitos.', saldo_invalido: 'Escribe el saldo como un número.', archivo_muy_grande: 'El archivo pesa más de 15 MB. Genéralo por un periodo más corto y vuelve a subirlo.',
+    precio_invalido: 'Escribe el precio de venta.', falta_archivo: 'Elige el reporte de SICAR.', pdf_ilegible: 'No pude leer ese PDF.', archivo_ilegible: 'No pude leer ese archivo.', solo_director: 'Solo el director cambia esto.', cuenta_not_found: 'Elige una cuenta.', faltan_datos: 'Faltan datos.',
+    demasiados_archivos: 'Sube máximo 12 archivos a la vez.', sin_conexion: 'Se perdió la conexión a internet. Revisa tu conexión e intenta de nuevo.',
+    lento: 'El servidor tardó en responder. Espera un minuto e intenta de nuevo; lo que ya se cargó no se duplica.',
+    ocupado: 'El sistema está ocupado en este momento. Espera un minuto e intenta de nuevo; lo que ya se cargó no se duplica.'
   };
-  const errMsg = (e) => ERR[e && e.error] || (e && e.ayuda) || 'No se pudo completar (' + esc((e && e.error) || 'error') + ').';
+  // Nunca se muestra un código técnico: lo que no tiene texto propio cae en un mensaje claro (el código va a la consola).
+  const errMsg = (e) => {
+    const c = (e && e.error) || '';
+    if (ERR[c]) return ERR[c];
+    if (e && e.ayuda) return e.ayuda;
+    if (c) console.warn('[forzza] error', c);
+    if (/^http_(408|504|524)$/.test(c)) return ERR.lento;
+    if (/^http_(413)$/.test(c)) return ERR.archivo_muy_grande;
+    if (c === 'internal' || c === 'database_unavailable' || /^http_5\d\d$/.test(c)) return ERR.ocupado;
+    return 'No se pudo completar. Intenta de nuevo en un momento; si se repite, avísanos.';
+  };
   function waNumero(tel) { // MISMA regla que el servidor
     const raw = String(tel || '').trim(); let d = raw.replace(/\D/g, '');
     if (!d) return null;
@@ -51,7 +64,8 @@
     const o = { method: opts.method || 'GET', headers: { 'X-Forzza': '1' }, credentials: 'same-origin' };
     if (opts.body instanceof FormData) o.body = opts.body;
     else if (opts.body !== undefined) { o.body = JSON.stringify(opts.body); o.headers['Content-Type'] = 'application/json'; }
-    const r = await fetch('api/v1/' + path, o);
+    let r;
+    try { r = await fetch('api/v1/' + path, o); } catch (_) { throw { error: 'sin_conexion' }; }
     let j = null; try { j = await r.json(); } catch (_) {}
     if (r.status === 401 && path !== 'auth/login') { S.me = null; renderLogin(); throw { error: 'not_signed_in' }; }
     if (!r.ok) throw j || { error: 'http_' + r.status };
@@ -925,7 +939,7 @@
     ['inventario', 'Inventario', 'Reportes → Artículos → Inventario. Precios de Compra Promedio.', 'Cada mes', 'Cuánto dinero hay en bodega y en qué artículos.']
   ];
   const PRONTO = ['Corte de Caja Extendido', 'Reporte de Movimientos de caja'];
-  const ESTADO_LBL = { cargado: ['ok', 'Cargado'], listo: ['ok', 'Listo'], revisar: ['warn', 'Revisar'], rechazado: ['bad', 'No se cargó'], repetido: ['', 'Repetido'], omitido: ['', 'Omitido'], error: ['bad', 'Error'] };
+  const ESTADO_LBL = { cargado: ['ok', 'Cargado'], listo: ['ok', 'Listo'], revisar: ['warn', 'Revisar'], rechazado: ['bad', 'No se cargó'], repetido: ['', 'Repetido'], omitido: ['', 'Omitido'], error: ['warn', 'Intenta de nuevo'] };
   function resumenCarga(it) {
     const r = it.resultado || {};
     if (it.tipo === 'sicar') {
@@ -957,12 +971,12 @@
     if (!canEdit()) return;
     const zone = document.getElementById('multi'), inp = zone.querySelector('input');
     let lote = [];
-    const enviar = async (files, decisiones) => {
+    const enviar = async (files, decisiones, quiet) => {
       const err = main().querySelector('.err'); err.textContent = '';
       if (files.length > 12) { err.textContent = 'Máximo 12 archivos por vez.'; return null; }
       const fd = new FormData(); files.forEach((f) => fd.append('archivos', f)); fd.append('aplicar', '1'); fd.append('decisiones', JSON.stringify(decisiones || {}));
       zone.querySelector('span').textContent = `Leyendo ${files.length} archivo${files.length > 1 ? 's' : ''}…`;
-      try { return await api('cargar', { method: 'POST', body: fd }); } catch (er) { err.textContent = errMsg(er); return null; }
+      try { return await api('cargar', { method: 'POST', body: fd }); } catch (er) { if (quiet) return { fallo: errMsg(er) }; err.textContent = errMsg(er); return null; }
       finally { zone.querySelector('span').textContent = 'Arrastra aquí todos tus archivos (hasta 12), o toca para elegirlos'; }
     };
     const pintar = (archivos) => {
@@ -973,6 +987,7 @@
           <div class="muted" style="font-size:13px">${a.nombre ? esc(a.nombre) : ''}${(a.por_que || []).length ? ' · ' + a.por_que.map(esc).join(', ') : ''}</div>
           ${a.resultado ? `<div style="font-size:13px;margin-top:4px">${resumenCarga(a)}</div>` : ''}
           ${a.motivo ? `<div class="${a.estado === 'revisar' ? 'note' : 'muted'}" style="font-size:13px">${esc(a.motivo)}</div>` : ''}
+          ${a.estado === 'error' ? `<div class="row" style="margin-top:6px"><button class="btn small primary" data-reintentar>Intentar de nuevo</button></div>` : ''}
           ${a.estado === 'revisar' ? `<div class="row" style="margin-top:6px"><select data-tipo><option value="banco"${a.tipo === 'banco' ? ' selected' : ''}>Estado de cuenta</option><option value="cxc"${a.tipo === 'cxc' ? ' selected' : ''}>Cuentas por cobrar</option><option value="cxp"${a.tipo === 'cxp' ? ' selected' : ''}>Cuentas por pagar</option></select>
             <select data-cuenta${a.tipo === 'banco' ? '' : ' hidden'}>${opts(activos('cuentas'), (c) => c.nombre + (c.terminacion ? ' ··' + c.terminacion : ''), a.cuenta_id || '')}</select>
             <button class="btn small primary" data-cargar>Cargar</button><button class="btn small" data-omitir>Omitir</button></div>` : ''}</div>`; }).join('')}</div>`;
@@ -981,20 +996,33 @@
     const correr = async (files) => {
       if (files.length > 12) { main().querySelector('.err').textContent = 'Máximo 12 archivos por vez.'; return; }
       lote = files.slice(); const todos = [];
+      const MAX = 15 * 1024 * 1024;
       for (let k = 0; k < lote.length; k += 4) {
-        const r = await enviar(lote.slice(k, k + 4), {});
-        if (!r) break;
-        r.archivos.forEach((a) => todos.push({ ...a, i: a.i + k }));
-        pintar(todos);
+        const grupo = lote.slice(k, k + 4).map((f, j) => ({ f, i: k + j }));
+        grupo.filter((g) => g.f.size > MAX).forEach((g) => todos.push({ i: g.i, archivo: g.f.name, estado: 'rechazado', motivo: ERR.archivo_muy_grande }));
+        const ok = grupo.filter((g) => g.f.size <= MAX);
+        if (ok.length) {
+          const r = await enviar(ok.map((g) => g.f), {}, true);
+          // Si un grupo falla (conexión, servidor ocupado), sus archivos quedan para reintentar y la carga sigue con los demás.
+          if (!r || r.fallo) ok.forEach((g) => todos.push({ i: g.i, archivo: g.f.name, estado: 'error', motivo: (r && r.fallo) || ERR.ocupado }));
+          else r.archivos.forEach((a) => todos.push({ ...a, i: ok[a.i].i }));
+        }
+        todos.sort((a, b) => a.i - b.i); pintar(todos);
       }
-      S.ultLote = todos; await loadCat();
+      S.ultLote = todos; await loadCat().catch(() => {});
     };
     inp.addEventListener('change', () => { if (inp.files.length) correr(Array.from(inp.files)); inp.value = ''; });
     zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) correr(Array.from(e.dataTransfer.files)); }, true);
     document.getElementById('cres').onchange = (e) => { const s = e.target.closest('[data-tipo]'); if (s) s.parentNode.querySelector('[data-cuenta]').hidden = s.value !== 'banco'; };
     document.getElementById('cres').onclick = async (e) => {
-      const b = e.target.closest('[data-cargar],[data-omitir]'); if (!b) return;
+      const b = e.target.closest('[data-cargar],[data-omitir],[data-reintentar]'); if (!b) return;
       const box = b.closest('.carga'), i = Number(box.dataset.i), f = lote[i]; if (!f) return;
+      if (b.dataset.reintentar != null) {
+        b.disabled = true; const r = await enviar([f], {}, true); b.disabled = false;
+        const j = S.ultLote.findIndex((x) => x.i === i);
+        S.ultLote[j] = r && !r.fallo ? { ...r.archivos[0], i } : { ...S.ultLote[j], motivo: (r && r.fallo) || ERR.ocupado };
+        pintar(S.ultLote); await loadCat().catch(() => {}); return;
+      }
       if (b.dataset.omitir != null) { const j = S.ultLote.findIndex((x) => x.i === i); S.ultLote[j] = { ...S.ultLote[j], estado: 'omitido', motivo: null }; pintar(S.ultLote); return; }
       const tipo = box.querySelector('[data-tipo]').value, cuenta_id = box.querySelector('[data-cuenta]').value;
       if (tipo === 'banco' && !cuenta_id) { alert('Elige la cuenta.'); return; }

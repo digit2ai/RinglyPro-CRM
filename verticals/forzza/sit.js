@@ -553,6 +553,20 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       router._pdfRows = saved;
     } else console.log('  (sin FORZZA_MUESTRAS_DIR: no se probaron los PDF reales de los bancos)');
     }
+    console.log('\nMensajes de error claros al importar');
+    { const mpB = (files) => { const b = '----e' + Date.now(); const p = []; for (const f of files) p.push(Buffer.from(`--${b}\r\nContent-Disposition: form-data; name="archivos"; filename="${f.name}"\r\nContent-Type: application/octet-stream\r\n\r\n`), f.data, Buffer.from('\r\n')); p.push(Buffer.from(`--${b}--\r\n`)); return { body: Buffer.concat(p), type: 'multipart/form-data; boundary=' + b }; };
+      const rE = await req('POST', '/cargar', { cookie: capA.cookie, raw: mpB([
+        { name: 'foto.jpg', data: Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(300, 3)]) },
+        { name: 'dañado.pdf', data: Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(2000, 65)]) },
+        { name: 'Créditos.txt', data: Buffer.from('hola, esto no es un reporte\nnada\n') }]) });
+      const aE = (rE.json && rE.json.archivos) || [];
+      ok('una foto se rechaza diciendo que es una foto', /foto o imagen/.test((aE[0] || {}).motivo || ''));
+      ok('un PDF dañado: mensaje claro, sin código técnico', /dañado/.test((aE[1] || {}).motivo || ''));
+      ok('el nombre con acento llega bien (no «CrÃ©ditos»)', (aE[2] || {}).archivo === 'Créditos.txt', (aE[2] || {}).archivo);
+      ok('ningún motivo trae un código técnico (palabra_con_guion_bajo)', aE.every((a) => a.motivo && !/[a-z]+_[a-z]+/.test(a.motivo)));
+      const apE = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+      ok('la pantalla nunca muestra "No se pudo completar (código)"', !/No se pudo completar \(' \+/.test(apE) && /ERR\.ocupado/.test(apE) && /sin_conexion/.test(apE));
+      ok('si un grupo falla, sus archivos quedan con «Intentar de nuevo» y la carga sigue', /data-reintentar/.test(apE) && /r\.fallo/.test(apE)); }
     console.log('\nTendencia (flecha bajo la calificación)');
     { const hT = '2026-10-30', mkT = (f, a, c) => ({ fecha: f, monto: a, categoria: c || 'cliente' }), bT = [];
       for (let i = 0; i < 60; i++) { const f = E.addDays(hT, -i); bT.push(mkT(f, 1000), mkT(f, -1000, 'proveedor')); }

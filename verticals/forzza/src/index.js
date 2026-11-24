@@ -1133,6 +1133,8 @@ function parsePdfRows(buf) {
 async function leerArchivoSicar(buf) {
   if (!buf || buf.length < 8) return { error: 'archivo_vacio' };
   if (buf.slice(0, 5).toString() === '%PDF-') return parsePdfRows(buf);
+  const img = (buf[0] === 0xff && buf[1] === 0xd8) || buf.slice(1, 4).toString() === 'PNG' || buf.slice(0, 4).toString() === 'GIF8' || buf.slice(8, 12).toString() === 'WEBP' || /^ftyp(heic|heix|mif1)/.test(buf.slice(4, 12).toString());
+  if (img) return { error: 'es_imagen' };
   const zip = buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
   const ole = buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0; // .xls de Excel 97-2003
   const texto = !zip && !ole && !buf.slice(0, 4096).includes(0);
@@ -1174,7 +1176,7 @@ async function importarSicar(req, res, { aplicar, origen }) {
   if (leido.error) return res.status(415).json({ error: leido.error, ayuda: SICAR_AYUDA[leido.error] });
   const rep = S.leer(leido.pages);
   if (rep.error) return res.status(400).json({ error: rep.error, tipo: rep.tipo || null, ayuda: SICAR_AYUDA[rep.error] || rep.ayuda });
-  res.json(await correrSicar(req, rep, req.file.buffer, req.file.originalname, { aplicar, origen }));
+  res.json(await correrSicar(req, rep, req.file.buffer, nombreArchivo(req.file.originalname), { aplicar, origen }));
 }
 api.post('/sicar/importar', (req, res, next) => sicarUpload.single('archivo')(req, res, next), async (req, res) => {
   const aplicar = req.body && (req.body.aplicar === '1' || req.body.aplicar === 'true');
@@ -1254,11 +1256,11 @@ async function enTransaccion(aplicar, fn) {
 /** Qué es este archivo (sin tocar la base). PDF/Excel de SICAR primero; luego estado de cuenta o lista. */
 async function clasificarArchivo(buf, nombre, cuentas) {
   const leido = await leerArchivoSicar(buf);
-  if (leido.error) return { estado: 'rechazado', motivo: SICAR_AYUDA[leido.error] || ERR_CARGA[leido.error] || 'No se pudo leer el archivo.' };
+  if (leido.error) return { estado: 'rechazado', motivo: ERR_CARGA[leido.error] || SICAR_AYUDA[leido.error] || MSG_ARCHIVO_RARO };
   if (!(leido.pages || []).some((p) => (p || []).length)) return { estado: 'rechazado', motivo: 'El PDF no tiene texto (parece escaneado o una foto). Descarga el reporte original desde SICAR o desde la banca en línea.' };
   const rep = S.leer(leido.pages);
   if (!rep.error) return { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: rep.nombre, estado: 'auto', por_que: ['título y columnas de SICAR: ' + rep.nombre], _rep: rep, _buf: buf };
-  if (rep.error !== 'no_es_reporte_sicar') return { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: S.NOMBRES[rep.tipo] || 'Reporte de SICAR', estado: 'rechazado', motivo: SICAR_AYUDA[rep.error] || rep.ayuda || 'No se pudo leer.' };
+  if (rep.error !== 'no_es_reporte_sicar') return { tipo: 'sicar', sicar_tipo: rep.tipo, nombre: S.NOMBRES[rep.tipo] || 'Reporte de SICAR', estado: 'rechazado', motivo: SICAR_AYUDA[rep.error] || rep.ayuda || MSG_ARCHIVO_RARO };
   if (buf.slice(0, 5).toString() === '%PDF-') {
     // Estado de cuenta en PDF (BBVA, HSBC), tal como lo entrega el banco.
     const ec = BP.leer(leido.pages);
@@ -1276,7 +1278,7 @@ async function clasificarArchivo(buf, nombre, cuentas) {
       estado_cuenta: { banco: ec.banco, cuenta: ec.cuenta ? '··' + ec.terminacion : null, desde: ec.desde, hasta: ec.hasta, saldo_inicial: ec.saldo_inicial, saldo_final: ec.saldo_final, cuadra: ec.cuadra, problemas: ec.problemas } };
   }
   const p = await parseSheet(buf);
-  if (p.error) return { estado: 'rechazado', motivo: ERR_CARGA[p.error] || 'No se pudo leer el archivo.' };
+  if (p.error) return { estado: 'rechazado', motivo: ERR_CARGA[p.error] || MSG_ARCHIVO_RARO };
   const c = CG.clasificarTabla(p.rows, nombre, cuentas);
   return { tipo: c.tipo, nombre: TIPO_LBL[c.tipo] || null, estado: c.estado, motivo: c.motivo, por_que: c.por_que || [], cuenta_id: c.cuenta_id || null, candidatas: c.candidatas || [], _rows: p.rows };
 }
@@ -1289,7 +1291,7 @@ api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, 
   const cuentas = await sel('SELECT id, nombre, banco, terminacion, active FROM fz_cuentas WHERE tenant_id=:t ORDER BY incluir DESC, nombre', { t: req.tenant });
   const items = [], vistos = new Set();
   for (let i = 0; i < files.length; i++) {
-    const f = files[i], nombre = str(f.originalname, 200) || 'archivo';
+    const f = files[i], nombre = str(nombreArchivo(f.originalname), 200) || 'archivo';
     const it = { i, archivo: nombre };
     items.push(it);
     const h = crypto.createHash('sha256').update(f.buffer).digest('hex');
@@ -1297,7 +1299,8 @@ api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, 
     vistos.add(h);
     const dec = decisiones[String(i)] && typeof decisiones[String(i)] === 'object' ? decisiones[String(i)] : null;
     if (dec && dec.omitir) { Object.assign(it, { estado: 'omitido' }); continue; }
-    Object.assign(it, await clasificarArchivo(f.buffer, nombre, cuentas));
+    try { Object.assign(it, await clasificarArchivo(f.buffer, nombre, cuentas)); }
+    catch (e) { console.error('[forzza] clasificar', nombre, e && e.message); Object.assign(it, { estado: 'rechazado', motivo: MSG_ARCHIVO_RARO }); continue; }
     if (it.estado === 'rechazado') continue;
     if (dec && ['banco', 'cxc', 'cxp'].includes(dec.tipo)) {
       if (dec.tipo === 'banco' && !(cuentas.some((x) => x.id === intId(dec.cuenta_id)))) { Object.assign(it, { estado: 'revisar', motivo: 'Elige la cuenta.' }); continue; }
@@ -1313,26 +1316,34 @@ api.post('/cargar', (req, res, next) => cargarUpload.array('archivos', 12)(req, 
       } else if (it.tipo === 'banco') {
         const cta = cuentas.find((x) => x.id === it.cuenta_id);
         const r = await enTransaccion(aplicar, (t) => importarBanco(req, cta, it._rows, { actualizar: true, soloSiMasNuevo: true }, t));
-        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda }); continue; }
+        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda || MSG_ARCHIVO_RARO }); continue; }
         it.cuenta = cta.nombre;
         it.resultado = { creados: r.creados, conciliados: r.conciliados, duplicados: r.duplicados, no_leidos: r.resultados.filter((x) => !x.ok && x.motivo !== 'ya_estaba').length, saldo_actualizado: r.saldo_actualizado };
         if (aplicar) audit(req, 'movimientos_importados', `${cta.nombre}: ${r.creados} nuevos, ${r.conciliados} conciliados, ${r.duplicados} repetidos (carga)`);
       } else {
         const r = await enTransaccion(aplicar, (t) => importarDocs(it.tipo, req, it._rows, t));
-        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda }); continue; }
+        if (r.error) { Object.assign(it, { estado: 'rechazado', motivo: r.ayuda || MSG_ARCHIVO_RARO }); continue; }
         it.resultado = { creados: r.creados, no_leidos: r.resultados.filter((x) => !x.ok).length };
         if (aplicar) audit(req, it.tipo + '_importadas', `${r.creados} de ${r.resultados.length} (carga)`);
       }
       it.estado = aplicar ? 'cargado' : 'listo';
     } catch (e) {
       console.error('[forzza] cargar', it.archivo, e && e.message);
-      Object.assign(it, { estado: 'error', motivo: 'No se pudo guardar este archivo. Los demás no se afectan.' });
+      Object.assign(it, { estado: 'error', motivo: 'Este archivo no se pudo guardar en este momento. Vuelve a subirlo en unos minutos; los demás archivos no se afectan y nada se duplica.' });
     }
   }
   res.json({ aplicado: aplicar, archivos: items.map(({ _rep, _buf, _rows, ...x }) => x) });
 });
-const ERR_CARGA = { archivo_ilegible: 'No se pudo leer el archivo. Sube Excel (.xlsx/.xls), CSV o el PDF de SICAR.', archivo_muy_lento: 'El archivo tardó demasiado en leerse. Divídelo por periodos.',
-  formato_no_soportado: 'Formato no soportado. Sube Excel (.xlsx/.xls), CSV o el PDF de SICAR.', archivo_vacio: 'El archivo está vacío.', pdf_ilegible: 'No se pudo leer el PDF.', demasiados_renglones: 'El archivo es muy grande. Genéralo por periodos más cortos.' };
+/** multer entrega el nombre como latin1: «Créditos.pdf» llegaba como «CrÃ©ditos.pdf». Se recupera el UTF-8. */
+function nombreArchivo(n) {
+  const s = String(n || '');
+  try { const u = Buffer.from(s, 'latin1').toString('utf8'); return /\uFFFD/.test(u) ? s : u; } catch (_) { return s; }
+}
+const MSG_ARCHIVO_RARO = 'No pudimos leer este archivo. Puede estar dañado, protegido con contraseña o editado. Descárgalo de nuevo desde SICAR o desde la banca en línea y súbelo tal cual, sin abrirlo ni modificarlo.';
+const ERR_CARGA = { archivo_ilegible: MSG_ARCHIVO_RARO, archivo_muy_lento: 'Este archivo tardó demasiado en leerse. Vuelve a subirlo solo; si se repite, genéralo por un periodo más corto (por ejemplo, un mes).',
+  formato_no_soportado: 'Este tipo de archivo no se puede leer. Sube el reporte de SICAR en PDF o Excel, o el estado de cuenta en PDF (BBVA, HSBC), Excel o CSV.', archivo_vacio: 'El archivo está vacío. Descárgalo de nuevo y vuelve a subirlo.',
+  es_imagen: 'Este archivo es una foto o imagen. Sube el reporte original en PDF o Excel tal como lo descargas de SICAR o de la banca en línea (una foto o captura de pantalla no se puede leer).',
+  pdf_ilegible: 'No pudimos leer este PDF. Puede estar dañado o protegido con contraseña. Descárgalo de nuevo desde SICAR o la banca en línea y súbelo tal cual.', demasiados_renglones: 'El archivo es muy grande. Genéralo por periodos más cortos (por ejemplo, un trimestre).' };
 /** Qué se ha cargado y cuándo, para la lista "Qué descargar". */
 api.get('/cargar/estado', async (req, res) => {
   const sicar = await sel('SELECT tipo, MAX(created_at) AS ultima, MAX(hasta)::text AS hasta FROM fz_sicar_imports WHERE tenant_id=:t GROUP BY tipo', { t: req.tenant });
