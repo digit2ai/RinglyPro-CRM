@@ -628,6 +628,16 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const cam = await req('POST', '/reportes/' + cr.json.id + '/cambiar', { cookie: capA.cookie, body: { peticion: 'mejor por mes, con líneas' } });
       let v2; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); v2 = (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).json; if (v2.estado !== 'generando') break; }
       ok('pedir un cambio crea la versión 2 y conserva la 1', cam.status === 202 && v2.estado === 'listo' && v2.version === 2 && v2.versiones.length === 2 && (await req('GET', '/reportes/' + cr.json.id, { cookie: capA.cookie })).json.estado === 'listo');
+      { const Dd = router._daliaDeps(), ctxA = { tenant: A, D: Dd }, ctxB = { tenant: B, D: Dd };
+        const la = await DL2._ejecutar('archivos_subidos', {}, ctxA);
+        ok('Dalia ve los archivos subidos en Reportes de su empresa (y no los de otra)', la.archivos.some((x) => x.nombre === 'ventas.csv') && !(await DL2._ejecutar('archivos_subidos', {}, ctxB)).archivos.some((x) => x.id === arch.id));
+        const qa = await DL2._ejecutar('consultar_archivo', { archivo: 'ventas', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Total' }], orden: { columna: 'Total', dir: 'desc' } }, ctxA);
+        ok('Dalia calcula sobre un archivo subido (las cuentas las hace el sistema)', qa.archivo === 'ventas.csv' && qa.filas[0][0] === 'Constructora Uno' && qa.filas[0][1] === 3200.5, JSON.stringify(qa).slice(0, 200));
+        ok('Dalia no puede consultar el archivo de otra empresa ni por id', /No encontré/.test((await DL2._ejecutar('consultar_archivo', { archivo: String(arch.id) }, ctxB)).error || ''));
+        const rg = await DL2._ejecutar('reportes_guardados', { buscar: 'mes' }, ctxA);
+        const rd = await DL2._ejecutar('reportes_guardados', { id: cam.json.id }, ctxA);
+        ok('Dalia ve los reportes guardados y sus cifras', rg.reportes.some((x) => x.id === cam.json.id) && rd.titulo === 'Ventas por mes' && rd.secciones[0].filas.length === 2 && !(await DL2._ejecutar('reportes_guardados', { id: cam.json.id }, ctxB)).titulo, JSON.stringify(rd).slice(0, 200));
+        ok('Dalia: sus herramientas de Reportes están declaradas y explicadas en su guía', ['reportes_guardados', 'archivos_subidos', 'consultar_archivo'].every((n) => DL2.TOOLS.some((t) => t.name === n)) && /consultar_archivo/.test(fs.readFileSync(path.join(__dirname, 'src', 'dalia.js'), 'utf8'))); }
       ok('la lista muestra una sola entrada por reporte (la última versión)', (await req('GET', '/reportes', { cookie: capA.cookie })).json.filter((x) => x.raiz_id === cr.json.id).length === 1);
       DL2._setClient(fakeR(Array.from({ length: 6 }, () => tu('entregar_reporte', { titulo: 'X', resumen: 'Ganamos $5,555,555.00', secciones: [{ tipo: 'tabla', consulta: 'c1' }] }))));
       const malR = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'algo imposible', archivo_ids: [arch.id] } });

@@ -73,6 +73,14 @@ const TOOLS = [
     incluir_cancelados: { type: 'boolean' }, orden: { type: 'string', enum: ['fecha', 'monto'] }, limite: { type: 'integer' } } } },
   { name: 'saldos_sicar', description: 'Saldos por cliente (por cobrar) o por proveedor (por pagar) según el último reporte de créditos de SICAR, con antigüedad de 0, 31, 61, 91 y 121+ días.', input_schema: { type: 'object', properties: { lado: { type: 'string', enum: ['cobrar', 'pagar'] }, nombre: { type: 'string' } }, required: ['lado'] } },
   { name: 'actividad', description: 'Bitácora de la app: quién hizo qué y cuándo (importaciones, pagos, aprobaciones, cambios). Solo para director o dueño.', input_schema: { type: 'object', properties: { desde: { type: 'string' }, texto: { type: 'string' } } } },
+  { name: 'reportes_guardados', description: 'Reportes del módulo Reportes (los arma el Departamento de Inteligencia de Datos con archivos que sube el cliente y sus bancos). Sin id: la lista (título, petición, versión, fecha, fuentes). Con id: el reporte completo con su resumen y las cifras de cada tabla, gráfica e indicador. «buscar» filtra por título o petición.', input_schema: { type: 'object', properties: { id: { type: 'integer' }, buscar: { type: 'string' } } } },
+  { name: 'archivos_subidos', description: 'Archivos de Excel, CSV o PDF que el cliente subió en Reportes (por ejemplo ventas, cobranza o inventario de su sistema): nombre, renglones, columnas y tipos. Con id: además totales por columna, rango de fechas, valores más comunes y una muestra.', input_schema: { type: 'object', properties: { id: { type: 'integer' } } } },
+  { name: 'consultar_archivo', description: 'Calcula sobre un archivo subido en Reportes: filtra, agrupa (fechas por dia, semana, mes, trimestre o año), suma, promedia, cuenta, mínimo y máximo, ordena y limita. Las cuentas las hace el sistema. Úsala para preguntas sobre ventas, cobranza, clientes o productos que vienen de esos archivos.', input_schema: { type: 'object', properties: {
+    archivo: { type: 'string', description: 'Nombre o id del archivo (de archivos_subidos).' },
+    filtros: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, op: { type: 'string', enum: ['=', '!=', '>', '>=', '<', '<=', 'entre', 'contiene', 'no_contiene', 'en', 'vacio', 'no_vacio'] }, valor: {}, valor2: {} }, required: ['columna', 'op'] } },
+    agrupar_por: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, periodo: { type: 'string', enum: ['dia', 'semana', 'mes', 'trimestre', 'año'] } }, required: ['columna'] } },
+    metricas: { type: 'array', items: { type: 'object', properties: { op: { type: 'string', enum: ['suma', 'promedio', 'conteo', 'minimo', 'maximo', 'conteo_distinto'] }, columna: { type: 'string' }, nombre: { type: 'string' } }, required: ['op'] } },
+    columnas: { type: 'array', items: { type: 'string' } }, orden: { type: 'object', properties: { columna: { type: 'string' }, dir: { type: 'string', enum: ['asc', 'desc'] } } }, limite: { type: 'integer' } }, required: ['archivo'] } },
   { name: 'calcular', description: 'Calculadora para sumar, restar, multiplicar, dividir o sacar porcentajes con cifras que YA salieron de otras herramientas. Úsala siempre que necesites una cifra que no viene hecha. Escribe la expresión con números simples, por ejemplo (1250000.5 - 980000) / 980000 * 100.', input_schema: { type: 'object', properties: { expresion: { type: 'string' }, que_es: { type: 'string', description: 'Qué representa el resultado.' } }, required: ['expresion'] } }
 ];
 
@@ -389,6 +397,45 @@ async function ejecutar(nombre, input, ctx) {
       if (!Number.isFinite(v)) return { error: 'El resultado no es un número (¿división entre cero?).' };
       return { que_es: a.que_es || null, expresion: ex, resultado: Math.round(v * 100) / 100, en_pesos: mp(v) };
     }
+    case 'reportes_guardados': {
+      if (a.id) {
+        const r = await D.one('SELECT id, titulo, peticion, version, estado, mensaje, spec, fuentes, updated_at::text AS fecha FROM fz_reportes WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id: Number(a.id) || 0, t: tenant });
+        if (!r) return { error: 'No existe un reporte con ese id.' };
+        if (r.estado !== 'listo') return { id: r.id, peticion: r.peticion, estado: r.estado, mensaje: r.mensaje };
+        const sp = r.spec || {}, datos = sp.datos || {};
+        return { id: r.id, titulo: sp.titulo, version: r.version, fecha: r.fecha, resumen: sp.resumen, fuentes: (r.fuentes || []).map((f) => f.nombre),
+          secciones: (sp.secciones || []).map((x) => {
+            if (x.tipo === 'texto') return { tipo: 'texto', titulo: x.titulo, texto: x.texto };
+            if (x.tipo === 'indicadores') return { tipo: 'indicadores', items: (x.items || []).map((it) => { const d = datos[it.consulta]; const j = d ? d.columnas.findIndex((c) => c.nombre.toLowerCase() === String(it.columna).toLowerCase()) : -1; return { etiqueta: it.etiqueta, valor: d && j >= 0 && d.filas[it.fila || 0] ? d.filas[it.fila || 0][j] : null }; }) };
+            const d = datos[x.consulta] || { columnas: [], filas: [] };
+            return { tipo: x.tipo, titulo: x.titulo, columnas: d.columnas.map((c) => c.nombre), filas: d.filas.slice(0, 60), total_renglones: d.total_filas };
+          }) };
+      }
+      const r = { t: tenant }; let w = '';
+      if (a.buscar) { w = ` AND (${SA("COALESCE(titulo,'')")} LIKE ${SA(':b')} OR ${SA('peticion')} LIKE ${SA(':b')})`; r.b = like(a.buscar); }
+      const rows = await D.sel(`SELECT id, raiz_id, titulo, peticion, version, estado, fuentes, updated_at::text AS fecha FROM fz_reportes x WHERE tenant_id=:t AND deleted_at IS NULL AND archivado_at IS NULL${w}
+        AND version = (SELECT MAX(version) FROM fz_reportes y WHERE y.tenant_id=x.tenant_id AND y.raiz_id=x.raiz_id AND y.deleted_at IS NULL) ORDER BY updated_at DESC LIMIT 40`, r);
+      return { reportes: rows.map((x) => ({ id: x.id, titulo: x.titulo, peticion: x.peticion, version: x.version, estado: x.estado, fecha: x.fecha, fuentes: (x.fuentes || []).map((f) => f.nombre) })), nota: rows.length ? null : 'No hay reportes guardados.' };
+    }
+    case 'archivos_subidos': {
+      if (a.id) {
+        const f = await D.one('SELECT id, nombre, columnas, filas, notas FROM fz_rep_archivos WHERE id=:id AND tenant_id=:t AND deleted_at IS NULL', { id: Number(a.id) || 0, t: tenant });
+        if (!f) return { error: 'No existe un archivo con ese id.' };
+        return { id: f.id, ...require('./reportes').perfil({ columnas: f.columnas, filas: f.filas, notas: f.notas || [] }, f.nombre) };
+      }
+      const rows = await D.sel('SELECT id, nombre, renglones, columnas, created_at::text AS subido FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 40', { t: tenant });
+      return { archivos: rows.map((x) => ({ id: x.id, nombre: x.nombre, renglones: x.renglones, subido: x.subido, columnas: (x.columnas || []).map((c) => `${c.nombre} (${c.tipo})`) })), nota: rows.length ? null : 'No hay archivos subidos en Reportes.' };
+    }
+    case 'consultar_archivo': {
+      const q = String(a.archivo || '').trim();
+      const lista = await D.sel('SELECT id, nombre FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 100', { t: tenant });
+      const norm = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const elegido = /^\d+$/.test(q) ? lista.find((x) => x.id === Number(q)) : (lista.find((x) => norm(x.nombre) === norm(q)) || lista.find((x) => norm(x.nombre).includes(norm(q))));
+      if (!elegido) return { error: `No encontré el archivo «${q}». Archivos: ${lista.map((x) => x.nombre).join(', ') || 'ninguno'}.` };
+      const f = await D.one('SELECT columnas, filas FROM fz_rep_archivos WHERE id=:id AND tenant_id=:t', { id: elegido.id, t: tenant });
+      const r = require('./reportes').consultar({ columnas: f.columnas, filas: f.filas }, JSON.parse(JSON.stringify({ ...a, limite: Math.min(Number(a.limite) || 40, 60) })));
+      return r.error ? r : { archivo: elegido.nombre, columnas: r.columnas.map((c) => c.nombre), filas: r.filas, total_renglones: r.total_filas, totales: r.totales, renglones_filtrados: r.renglones_filtrados };
+    }
     default: return { error: 'herramienta desconocida' };
   }
 }
@@ -458,6 +505,7 @@ QUÉ HAY EN LA PLATAFORMA (para explicar cómo funciona):
 - SICAR (el sistema de punto de venta de Forzza) no tiene API: se importan sus reportes de compras, ventas, créditos y abonos. En SICAR los gastos (sueldos, combustible, mecánico) se registran como "GAS"; si algo no aparece en el banco, búscalo también en SICAR.
 - Muchos movimientos bancarios están "sin_categoria": para buscar a una persona, empresa o concepto usa el filtro de texto, no la categoría.
 - El simulador prueba escenarios y ventas a crédito sin guardar nada.
+- REPORTES (menú Reportes): el cliente sube archivos de Excel, CSV o PDF (por ejemplo ventas, cobranza o inventario de su sistema) y pide reportes en lenguaje natural; el Departamento de Inteligencia de Datos los arma y los guarda. Tú puedes ver esos reportes (reportes_guardados), los archivos subidos (archivos_subidos) y calcular sobre ellos (consultar_archivo). Incluye 100 reportes al mes; después cada reporte extra cuesta USD 1 y se compra ahí mismo; los extra no vencen.
 
 PANTALLAS DE LA APP (para explicar cómo se hace algo):
 - Tablero: calificación de salud, Monte Carlo, días de efectivo, meses, mapa de calor por día del mes, a dónde se va el dinero, concentración de clientes, antigüedad, alertas y próximos 14 días.
@@ -466,6 +514,7 @@ PANTALLAS DE LA APP (para explicar cómo se hace algo):
 - Por cobrar / Por pagar: documentos con abonos y pagos; los pagos a proveedores se PROGRAMAN (fecha), los APRUEBA el aprobador (Ajustes; si no hay, un director) y luego se pagan; cambiar fecha o monto de uno aprobado lo regresa a "programada". Un abono nunca puede pasar del saldo. Cancelar no borra.
 - Bancos: saldo de corte de cada cuenta y movimientos; se puede cambiar la categoría de un movimiento o de todos los de una misma contraparte.
 - Gastos fijos: nómina, IMSS, renta, financiamientos; se marcan pagados por fecha.
+- Mis reportes / Nuevo reporte (menú Reportes): para crear un reporte se sube el archivo, se marca si se incluyen los bancos y se escribe qué reporte se quiere; se puede imprimir, editar, pedir un cambio (nueva versión), archivar o borrar.
 - Importar archivos (menú Datos): el ÚNICO lugar para cargar información. Se sueltan juntos (hasta 12) los reportes de SICAR (PDF o Excel), los estados de cuenta (PDF de BBVA o HSBC, Excel/CSV de otros bancos) y listas de cuentas por cobrar o por pagar; cada archivo se reconoce solo, nada se duplica, y lo que no queda claro (por ejemplo a qué cuenta va un estado de cuenta) se pregunta. Los reportes de créditos de SICAR son la fuente de los saldos. Guía: «Guía para importar archivos».
 - Compras y ventas (SICAR), Clientes, Proveedores, Reserva y aprobación, Usuarios, Mi cuenta.
 - Roles: director (todo), capturista (captura e importa), contador (solo lectura; puede simular y preguntarte).
@@ -474,7 +523,7 @@ PANTALLAS DE LA APP (para explicar cómo se hace algo):
 CÓMO RESPONDES:
 - Para cualquier dato usa las herramientas antes de responder. Nunca adivines una cifra.
 - Solo menciona cifras que aparezcan en los resultados de las herramientas de esta conversación. Nunca hagas cuentas de cabeza: para sumar, restar, comparar o sacar un porcentaje usa la herramienta calcular con cifras que ya te dio otra herramienta.
-- Puedes llamar varias herramientas antes de responder. Para preguntas amplias ("¿cómo vamos?", "¿qué me preocupa?") combina estado_hoy y salud_financiera; para "¿cuánto entró/salió?" usa resumen_por_periodo o buscar_movimientos; para compras, ventas, gastos y sueldos revisa también SICAR; si no sabes qué datos hay, usa cobertura_de_datos.
+- Puedes llamar varias herramientas antes de responder. Para preguntas amplias ("¿cómo vamos?", "¿qué me preocupa?") combina estado_hoy y salud_financiera; para "¿cuánto entró/salió?" usa resumen_por_periodo o buscar_movimientos; para compras, ventas, gastos y sueldos revisa también SICAR y los archivos subidos en Reportes (archivos_subidos y consultar_archivo; por ejemplo ventas pendientes de cobro por cliente en un periodo = filtra Estado pendiente y la fecha, agrupa por Cliente y suma el Total); si ya existe un reporte guardado sobre el tema, úsalo (reportes_guardados); si no sabes qué datos hay, usa cobertura_de_datos y archivos_subidos.
 - Recuerda lo que ya se habló en la conversación: entiende "¿y en septiembre?" o "¿y de ese cliente?" por el contexto.
 - Si la pregunta es ambigua, responde con lo más probable y di qué supusiste; solo pregunta si de verdad no se puede responder.
 - Si el dato no existe o no está cargado, dilo con claridad y di qué habría que cargar.
