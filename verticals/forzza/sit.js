@@ -610,9 +610,34 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const entregar = { titulo: 'Ventas por cliente', resumen: 'Constructora Uno es el cliente que más compró: $3,200.50.', secciones: [
         { tipo: 'indicadores', items: [{ etiqueta: 'Mayor cliente', consulta: 'c1', columna: 'Ventas', fila: 0 }] },
         { tipo: 'grafica', titulo: 'Ventas', consulta: 'c1', forma: 'barras', etiqueta: 'Cliente', valores: ['Ventas'] }, { tipo: 'tabla', titulo: 'Detalle', consulta: 'c1' }] };
-      DL2._setClient(fakeR([tu('ver_fuentes', {}), tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }], orden: { columna: 'Ventas', dir: 'desc' }, tenant_id: B }),
+      const sinPlan = () => ({ content: [{ type: 'text', text: 'sin plan' }] }); // la IA no devuelve plan: se pasa al agente completo
+      { // MOTOR PROPIO: una petición clara se arma sin llamar a la IA.
+        let llamadas = 0;
+        DL2._setClient({ messages: { create: async () => { llamadas++; throw new Error('no debía llamar a la IA'); } } });
+        const ie = await req('POST', '/reportes/interpretar', { cookie: capA.cookie, body: { peticion: 'ventas por cliente, los 2 más grandes', archivo_ids: [arch.id], incluir_bancos: true } });
+        ok('«Entendí:» en vivo: el intérprete dice qué va a calcular, sin IA y sin gastar cupo', ie.status === 200 && ie.json.sin_ia && /Cliente/.test(ie.json.entendido.texto) && /2 más grandes/.test(ie.json.entendido.texto) && llamadas === 0, JSON.stringify(ie.json).slice(0, 200));
+        const cm = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente con gráfica', archivo_ids: [arch.id], incluir_bancos: true } });
+        let rmo; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rmo = (await req('GET', '/reportes/' + cm.json.id, { cookie: capA.cookie })).json; if (rmo.estado !== 'generando') break; }
+        const tablaM = rmo.spec && Object.values(rmo.spec.datos).find((d) => d.columnas[0].nombre === 'Cliente');
+        ok('petición clara: el motor arma el reporte SIN llamar a la IA', rmo.estado === 'listo' && rmo.spec.armado_por === 'motor' && llamadas === 0, JSON.stringify(rmo).slice(0, 300));
+        ok('…con las cifras calculadas por el código y el % del total', tablaM && JSON.stringify(tablaM.filas) === JSON.stringify([['Constructora Uno', 3200.5, 80], ['Obras Dos', 800, 20]]), JSON.stringify(tablaM));
+        ok('…y guarda cómo entendió la petición', rmo.spec.entendido && /Cliente/.test(rmo.spec.entendido.texto) && rmo.spec.plan && rmo.spec.plan.dimension === 'Cliente');
+        await req('DELETE', '/reportes/' + cm.json.id, { cookie: capA.cookie });
+        // La IA solo devuelve un PLAN; el código lo valida y lo arma.
+        let n2 = 0;
+        DL2._setClient({ messages: { create: async (p) => { n2++; return { content: [{ type: 'tool_use', id: 'p1', name: 'plan_reporte', input: { fuente: 'ventas.csv', medida: { op: 'suma', columna: 'Total' }, dimension: 'Cliente', top: 1 } }] }; } } });
+        const cp = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'quién es mi cliente estrella según la temporada', archivo_ids: [arch.id] } });
+        let rp; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rp = (await req('GET', '/reportes/' + cp.json.id, { cookie: capA.cookie })).json; if (rp.estado !== 'generando') break; }
+        ok('petición rara: UNA llamada a la IA devuelve un plan y el código hace las cuentas', rp.estado === 'listo' && rp.spec.armado_por === 'ia_plan' && n2 === 1 && /Constructora Uno/.test(JSON.stringify(rp.spec.datos)), JSON.stringify(rp).slice(0, 300));
+        await req('DELETE', '/reportes/' + cp.json.id, { cookie: capA.cookie });
+        DL2._setClient({ messages: { create: async () => ({ content: [{ type: 'tool_use', id: 'p2', name: 'plan_reporte', input: { fuente: 'ventas.csv', medida: { op: 'suma', columna: 'Utilidad' }, dimension: 'Región' } }] }) } });
+        const ci = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'quién es mi cliente estrella según la temporada', archivo_ids: [arch.id] } });
+        let rci; for (let i = 0; i < 80; i++) { await new Promise((r) => setTimeout(r, 100)); rci = (await req('GET', '/reportes/' + ci.json.id, { cookie: capA.cookie })).json; if (rci.estado !== 'generando') break; }
+        ok('un plan de la IA con columnas inventadas nunca llega a un reporte', rci.estado !== 'listo' || rci.spec.armado_por !== 'ia_plan');
+        await req('DELETE', '/reportes/' + ci.json.id, { cookie: capA.cookie }); }
+      DL2._setClient(fakeR([sinPlan, tu('ver_fuentes', {}), tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Cliente' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }], orden: { columna: 'Ventas', dir: 'desc' }, tenant_id: B }),
         tu('entregar_reporte', { ...entregar, resumen: 'Vendimos $7,777,777.00 en total.' }), tu('entregar_reporte', entregar)]));
-      const cr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente con gráfica', archivo_ids: [arch.id], incluir_bancos: true } });
+      const cr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente con gráfica, explicando la estacionalidad', archivo_ids: [arch.id], incluir_bancos: true } });
       ok('crear reporte: responde de inmediato (se arma en segundo plano)', cr.status === 202 && cr.json.estado === 'generando');
       let rep; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rep = (await req('GET', '/reportes/' + cr.json.id, { cookie: conA.cookie })).json; if (rep.estado !== 'generando') break; }
       ok('el reporte queda listo y el contador lo puede ver', rep.estado === 'listo' && rep.spec.titulo === 'Ventas por cliente', JSON.stringify(rep).slice(0, 300));
@@ -623,9 +648,9 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const pe = await req('PATCH', '/reportes/' + cr.json.id, { cookie: capA.cookie, body: { titulo: 'Ventas de octubre y noviembre', secciones: [{ i: 1, titulo: 'Gráfica' }] } });
       const rep2 = (await req('GET', '/reportes/' + cr.json.id, { cookie: capA.cookie })).json;
       ok('editar a mano: cambia los textos, no las cifras', pe.status === 200 && rep2.spec.titulo === 'Ventas de octubre y noviembre' && rep2.spec.secciones[1].titulo === 'Gráfica' && rep2.editado_a_mano && JSON.stringify(rep2.spec.datos) === JSON.stringify(rep.spec.datos));
-      DL2._setClient(fakeR([tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Fecha', periodo: 'mes' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }] }),
+      DL2._setClient(fakeR([sinPlan, tu('consultar', { fuente: 'ventas.csv', agrupar_por: [{ columna: 'Fecha', periodo: 'mes' }], metricas: [{ op: 'suma', columna: 'Total', nombre: 'Ventas' }] }),
         tu('entregar_reporte', { titulo: 'Ventas por mes', resumen: 'Ventas mensuales.', secciones: [{ tipo: 'grafica', consulta: 'c1', forma: 'lineas', etiqueta: 'mes de Fecha', valores: ['Ventas'] }] })]));
-      const cam = await req('POST', '/reportes/' + cr.json.id + '/cambiar', { cookie: capA.cookie, body: { peticion: 'mejor por mes, con líneas' } });
+      const cam = await req('POST', '/reportes/' + cr.json.id + '/cambiar', { cookie: capA.cookie, body: { peticion: 'mejor por mes, con líneas y estacionalidad' } });
       let v2; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); v2 = (await req('GET', '/reportes/' + cam.json.id, { cookie: capA.cookie })).json; if (v2.estado !== 'generando') break; }
       ok('pedir un cambio crea la versión 2 y conserva la 1', cam.status === 202 && v2.estado === 'listo' && v2.version === 2 && v2.versiones.length === 2 && (await req('GET', '/reportes/' + cr.json.id, { cookie: capA.cookie })).json.estado === 'listo');
       { const Dd = router._daliaDeps(), ctxA = { tenant: A, D: Dd }, ctxB = { tenant: B, D: Dd };
@@ -645,13 +670,14 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
         const vistos = []; let n = 0;
         DL2._setClient({ messages: { create: async (p) => {
           vistos.push(JSON.parse(JSON.stringify(p.messages))); n++;
-          if (n === 1) return { content: Array.from({ length: 10 }, (_, i) => ({ type: 'tool_use', id: 'm' + i, name: 'consultar', input: q })) };
-          if (n === 2) { const e = new Error('Overloaded'); e.status = 529; throw e; }
+          if (n === 1) return sinPlan();
+          if (n === 2) return { content: Array.from({ length: 10 }, (_, i) => ({ type: 'tool_use', id: 'm' + i, name: 'consultar', input: q })) };
+          if (n === 3) { const e = new Error('Overloaded'); e.status = 529; throw e; }
           return { content: [{ type: 'tool_use', id: 'fin', name: 'entregar_reporte', input: entregar }] };
         } } });
-        const mr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas de los primeros clientes', archivo_ids: [arch.id] } });
+        const mr = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas de los primeros clientes según la estacionalidad', archivo_ids: [arch.id] } });
         let mx; for (let i = 0; i < 120; i++) { await new Promise((r) => setTimeout(r, 100)); mx = (await req('GET', '/reportes/' + mr.json.id, { cookie: capA.cookie })).json; if (mx.estado !== 'generando') break; }
-        const res2 = vistos[1] && vistos[1][vistos[1].length - 1].content;
+        const res2 = vistos[2] && vistos[2][vistos[2].length - 1].content;
         ok('10 consultas a la vez: las 10 reciben respuesta (ninguna queda colgada) y un 529 se reintenta', mx.estado === 'listo' && Array.isArray(res2) && res2.length === 10 && Array.from({ length: 10 }, (_, i) => 'm' + i).every((id) => res2.some((b) => b.tool_use_id === id)), JSON.stringify(mx).slice(0, 200));
         ok('la página nunca recibe el detalle técnico de un reporte', !('herramientas' in mx));
       }
@@ -664,7 +690,15 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       const sinM = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'ventas por cliente', archivo_ids: [arch.id] } });
       let rs; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rs = (await req('GET', '/reportes/' + sinM.json.id, { cookie: capA.cookie })).json; if (rs.estado !== 'generando') break; }
       if (kb) process.env.ANTHROPIC_API_KEY = kb;
-      ok('sin modelo: mensaje claro, nada inventado', rs.estado === 'error' && /no está disponible/.test(rs.mensaje || ''));
+      ok('sin modelo: el motor propio arma igual el reporte', rs.estado === 'listo' && rs.spec.armado_por === 'motor', JSON.stringify(rs).slice(0, 200));
+      { delete process.env.ANTHROPIC_API_KEY;
+        const sq = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'xyzzy plugh frobnicar', archivo_ids: [arch.id] } });
+        let rq; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rq = (await req('GET', '/reportes/' + sq.json.id, { cookie: capA.cookie })).json; if (rq.estado !== 'generando') break; }
+        if (kb) process.env.ANTHROPIC_API_KEY = kb;
+        ok('sin modelo y sin entender: pide la petición de otra forma, con un ejemplo, y nada inventado', rq.estado === 'error' && /No entendí/.test(rq.mensaje || '') && !rq.spec, JSON.stringify(rq).slice(0, 200));
+        await req('DELETE', '/reportes/' + sq.json.id, { cookie: capA.cookie });
+        await req('DELETE', '/reportes/' + sinM.json.id, { cookie: capA.cookie }); }
+      { const TM = require('./test-motor'); ok(`banco de 100 preguntas del motor de reportes: ${TM.pass}/${TM.pass + TM.fail}`, TM.fail === 0); }
       const enLista = async (q) => (await req('GET', '/reportes' + (q || ''), { cookie: capA.cookie })).json.some((x) => x.raiz_id === cr.json.id);
       ok('archivar: sale de la lista y aparece en archivados', (await req('POST', '/reportes/' + cam.json.id + '/archivar', { cookie: capA.cookie, body: { archivar: true } })).status === 200 && !(await enLista()) && await enLista('?archivados=1'));
       ok('regresar un archivado: vuelve a la lista', (await req('POST', '/reportes/' + cr.json.id + '/archivar', { cookie: capA.cookie, body: { archivar: false } })).status === 200 && await enLista() && !(await enLista('?archivados=1')));
@@ -751,7 +785,7 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
           (p) => { const res = JSON.parse(p.messages[p.messages.length - 1].content[0].content); return { content: [{ type: 'tool_use', id: 'rx', name: 'entregar_reporte', input: { titulo: 'Total', resumen: 'ok', secciones: [{ tipo: 'tabla', consulta: res.id }] } }] }; }]));
         const rj = await req('POST', '/reportes', { cookie: capA.cookie, body: { peticion: 'total vendido', archivo_ids: [arch.id, ar3.id] } });
         let rjr; for (let i = 0; i < 40; i++) { await new Promise((r) => setTimeout(r, 100)); rjr = (await req('GET', '/reportes/' + rj.json.id, { cookie: capA.cookie })).json; if (rjr.estado !== 'generando') break; }
-        ok('reportes: dos archivos que se enciman se juntan y los repetidos cuentan una vez (no 6 ventas, 4)', rjr.estado === 'listo' && JSON.stringify(rjr.spec.datos.c1.filas) === JSON.stringify([[4450.5, 4]]), JSON.stringify(rjr.spec && rjr.spec.datos).slice(0, 200));
+        ok('reportes: dos archivos que se enciman se juntan y los repetidos cuentan una vez (no 6 ventas, 4)', rjr.estado === 'listo' && JSON.stringify(rjr.spec.datos.c1.filas[0].slice(0, 2)) === JSON.stringify([4450.5, 4]), JSON.stringify(rjr.spec && rjr.spec.datos).slice(0, 200));
         DL2._setClient(null); }
       const apR = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
       ok('menú: sección Reportes con Mis reportes y Nuevo reporte', /\['grp', 'Reportes'\], \['reportes', 'Mis reportes'\], \['reporte_nuevo', 'Nuevo reporte'\]/.test(apR) && /R\.reporte = /.test(apR) && /window\.print\(\)/.test(apR)); }

@@ -75,6 +75,8 @@ const TOOLS = [
   { name: 'actividad', description: 'Bitácora de la app: quién hizo qué y cuándo (importaciones, pagos, aprobaciones, cambios). Solo para director o dueño.', input_schema: { type: 'object', properties: { desde: { type: 'string' }, texto: { type: 'string' } } } },
   { name: 'reportes_guardados', description: 'Reportes del módulo Reportes (los arma el Departamento de Inteligencia de Datos con archivos que sube el cliente y sus bancos). Sin id: la lista (título, petición, versión, fecha, fuentes). Con id: el reporte completo con su resumen y las cifras de cada tabla, gráfica e indicador. «buscar» filtra por título o petición.', input_schema: { type: 'object', properties: { id: { type: 'integer' }, buscar: { type: 'string' } } } },
   { name: 'archivos_subidos', description: 'Archivos de Excel, CSV o PDF que el cliente subió en Reportes (por ejemplo ventas, cobranza o inventario de su sistema): nombre, renglones, columnas y tipos. Con id: además totales por columna, rango de fechas, valores más comunes y una muestra.', input_schema: { type: 'object', properties: { id: { type: 'integer' } } } },
+  { name: 'responder_con_motor', description: 'La forma más rápida y exacta de contestar preguntas sobre los archivos subidos en Reportes y/o los bancos: pasa la pregunta tal cual (por ejemplo «ventas pendientes por cliente de octubre y noviembre» o «costos de los 4 proveedores más grandes») y el motor de Forzza la interpreta y hace todas las cuentas. Devuelve lo que entendió, un resumen y las tablas. Úsala ANTES de consultar_archivo; si dice que no entendió algo, entonces usa consultar_archivo.', input_schema: { type: 'object', properties: {
+    pregunta: { type: 'string' }, archivos: { type: 'array', items: { type: 'string' }, description: 'Nombres o ids de archivos (por omisión los 5 más recientes).' }, incluir_bancos: { type: 'boolean', description: 'true para usar también los movimientos de los bancos.' } }, required: ['pregunta'] } },
   { name: 'consultar_archivo', description: 'Calcula sobre un archivo subido en Reportes: filtra, agrupa (fechas por dia, semana, mes, trimestre o año), suma, promedia, cuenta, mínimo y máximo, ordena y limita. Las cuentas las hace el sistema. Úsala para preguntas sobre ventas, cobranza, clientes o productos que vienen de esos archivos.', input_schema: { type: 'object', properties: {
     archivo: { type: 'string', description: 'Nombre o id del archivo (de archivos_subidos).' },
     filtros: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, op: { type: 'string', enum: ['=', '!=', '>', '>=', '<', '<=', 'entre', 'contiene', 'no_contiene', 'en', 'vacio', 'no_vacio'] }, valor: {}, valor2: {} }, required: ['columna', 'op'] } },
@@ -426,6 +428,21 @@ async function ejecutar(nombre, input, ctx) {
       const rows = await D.sel('SELECT id, nombre, renglones, columnas, created_at::text AS subido FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 40', { t: tenant });
       return { archivos: rows.map((x) => ({ id: x.id, nombre: x.nombre, renglones: x.renglones, subido: x.subido, columnas: (x.columnas || []).map((c) => `${c.nombre} (${c.tipo})`) })), nota: rows.length ? null : 'No hay archivos subidos en Reportes.' };
     }
+    case 'responder_con_motor': {
+      const RP = require('./reportes');
+      const lista = await D.sel('SELECT id, nombre FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 100', { t: tenant });
+      const nrm = (x) => String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      let ids = (Array.isArray(a.archivos) ? a.archivos : []).map((q) => (/^\d+$/.test(String(q)) ? lista.find((x) => x.id === Number(q)) : lista.find((x) => nrm(x.nombre).includes(nrm(q))))).filter(Boolean).map((x) => x.id);
+      if (!ids.length) ids = lista.slice(0, 5).map((x) => x.id);
+      const bancos = a.incluir_bancos === true || !ids.length;
+      const fuentes = await D.fuentesReporte(tenant, [...new Set(ids)].slice(0, 5), bancos);
+      const it = RP.interpretar(String(a.pregunta || ''), fuentes, { hoy: D.hoyMx() });
+      if (!it.plan.fuente) return { error: 'El motor no supo de qué datos es la pregunta.', entendido: it.entendido.texto, archivos: lista.slice(0, 10).map((x) => x.nombre) };
+      const out = RP.armarDesdePlan(it.plan, fuentes, it.notas, 'motor', it.entendido);
+      if (!out.ok) return { error: out.mensaje, entendido: it.entendido.texto };
+      return { entendido: it.entendido.texto, confianza: it.confianza, no_usado: it.ignorado, resumen: out.reporte.resumen,
+        tablas: Object.values(out.reporte.datos).slice(0, 4).map((d) => ({ columnas: d.columnas.map((c) => c.nombre), filas: d.filas.slice(0, 25), renglones: d.total_filas })) };
+    }
     case 'consultar_archivo': {
       const q = String(a.archivo || '').trim();
       const lista = await D.sel('SELECT id, nombre FROM fz_rep_archivos WHERE tenant_id=:t AND deleted_at IS NULL ORDER BY id DESC LIMIT 100', { t: tenant });
@@ -505,7 +522,7 @@ QUÉ HAY EN LA PLATAFORMA (para explicar cómo funciona):
 - SICAR (el sistema de punto de venta de Forzza) no tiene API: se importan sus reportes de compras, ventas, créditos y abonos. En SICAR los gastos (sueldos, combustible, mecánico) se registran como "GAS"; si algo no aparece en el banco, búscalo también en SICAR.
 - Muchos movimientos bancarios están "sin_categoria": para buscar a una persona, empresa o concepto usa el filtro de texto, no la categoría.
 - El simulador prueba escenarios y ventas a crédito sin guardar nada.
-- REPORTES (menú Reportes): el cliente sube archivos de Excel, CSV o PDF (por ejemplo ventas, cobranza o inventario de su sistema) y pide reportes en lenguaje natural; el Departamento de Inteligencia de Datos los arma y los guarda. Tú puedes ver esos reportes (reportes_guardados), los archivos subidos (archivos_subidos) y calcular sobre ellos (consultar_archivo). Incluye 100 reportes al mes; después cada reporte extra cuesta USD 1 y se compra ahí mismo; los extra no vencen.
+- REPORTES (menú Reportes): el cliente sube archivos de Excel, CSV o PDF (por ejemplo ventas, cobranza o inventario de su sistema) y pide reportes en lenguaje natural; el Departamento de Inteligencia de Datos los arma y los guarda. Tú puedes ver esos reportes (reportes_guardados), los archivos subidos (archivos_subidos) y contestar preguntas sobre ellos con el motor de Forzza (responder_con_motor: pásale la pregunta tal cual; es lo primero que debes intentar) o con consultas a mano (consultar_archivo). Incluye 100 reportes al mes; después cada reporte extra cuesta USD 1 y se compra ahí mismo; los extra no vencen.
 
 PANTALLAS DE LA APP (para explicar cómo se hace algo):
 - Tablero: calificación de salud, Monte Carlo, días de efectivo, meses, mapa de calor por día del mes, a dónde se va el dinero, concentración de clientes, antigüedad, alertas y próximos 14 días.

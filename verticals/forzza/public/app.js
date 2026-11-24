@@ -1101,7 +1101,8 @@
         if (s.tipo === 'grafica') return `<div class="card">${tit}${repGrafica(s, sp.datos[s.consulta])}</div>`;
         return '';
       }).join('')}
-      <p class="muted" style="font-size:12px">Fuentes: ${(r.fuentes || []).map((f) => esc(f.nombre === 'bancos' ? 'movimientos de tus bancos' : f.nombre)).join(', ')}. Cada cifra la calculó el sistema a partir de esos datos.${r.editado_a_mano ? ' Los textos se editaron a mano.' : ''}</p></div>`;
+      ${sp.entendido && sp.entendido.partes && sp.entendido.partes.length ? `<p class="muted rep-como" style="font-size:12px"><b>Cómo se entendió la petición:</b> ${esc(sp.entendido.partes.join(' · '))}</p>` : ''}
+      <p class="muted" style="font-size:12px">Fuentes: ${(r.fuentes || []).map((f) => esc(f.nombre === 'bancos' ? 'movimientos de tus bancos' : f.nombre)).join(', ')}. Cada cifra la calculó el sistema a partir de esos datos${sp.armado_por === 'motor' ? ', con el motor de Forzza (sin IA)' : sp.armado_por === 'ia_plan' ? '; la IA solo ayudó a entender la petición' : ''}.${r.editado_a_mano ? ' Los textos se editaron a mano.' : ''}</p></div>`;
   }
   const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   function cupoHtml(c) {
@@ -1183,6 +1184,7 @@
         <label class="rep-arch" style="margin-top:10px"><input type="checkbox" id="repbancos" checked> <b>Incluir mis bancos</b> <span class="muted">(movimientos de todas tus cuentas)</span></label></div>
       <div class="card"><h2 style="margin-top:0">2. ¿Qué reporte quieres?</h2>
         <textarea id="reppet" rows="4" maxlength="2000" placeholder="Por ejemplo: ventas por cliente del último trimestre, los 10 más grandes, con gráfica de barras" style="width:100%"></textarea>
+        <div id="repent" class="rep-ent" aria-live="polite"></div>
         <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">${REP_EJEMPLOS.map((e) => `<button type="button" class="btn small" data-ej="${esc(e)}">${esc(e)}</button>`).join('')}</div>
         <div class="row" style="margin-top:12px"><button class="btn primary" id="repgo"${c && c.disponibles === 0 ? ' disabled title="Sin reportes disponibles este mes"' : ''}>Crear reporte</button></div><div class="err rep-go-err"></div></div>`;
     const err = main().querySelector('.rep-go-err'), zone = document.getElementById('repdrop'), inp = zone.querySelector('input');
@@ -1201,12 +1203,34 @@
           ${a.ok ? `<div class="muted" style="font-size:13px">${a.renglones.toLocaleString('en-US')} renglones · columnas: ${a.columnas.map((c) => esc(c.nombre)).join(', ')}</div>${(a.notas || []).map((n) => `<div class="note" style="font-size:13px">${esc(n)}</div>`).join('')}
             <label class="rep-arch"><input type="checkbox" value="${a.id}" checked data-nuevo> Usar en este reporte</label>` : `<div class="muted" style="font-size:13px">${esc(a.motivo)}</div>`}</div>`).join('');
       } catch (e) { err.textContent = errMsg(e); }
-      finally { zone.querySelector('span').textContent = 'Arrastra aquí tus archivos (Excel, CSV o PDF, hasta 5), o toca para elegirlos'; }
+      finally { zone.querySelector('span').textContent = 'Arrastra aquí tus archivos (Excel, CSV o PDF, hasta 5), o toca para elegirlos'; entender(); }
     };
+    // «Entendí:» en vivo: el motor propio lee la petición (sin IA, sin costo) y dice qué va a calcular.
+    let tEnt = 0, nEnt = 0;
+    const entender = () => {
+      clearTimeout(tEnt);
+      tEnt = setTimeout(async () => {
+        const box = document.getElementById('repent'); if (!box) return;
+        const peticion = document.getElementById('reppet').value.trim();
+        const ids = Array.from(main().querySelectorAll('#replist input:checked, #repup input:checked')).map((x) => Number(x.value));
+        const bancos = document.getElementById('repbancos').checked;
+        if (peticion.length < 5) { box.innerHTML = ''; return; }
+        const yo = ++nEnt;
+        try {
+          const r = await api('reportes/interpretar', { method: 'POST', body: { peticion, archivo_ids: ids, incluir_bancos: bancos } });
+          if (yo !== nEnt || !r.entendido) { if (yo === nEnt) box.innerHTML = ''; return; }
+          box.innerHTML = `<b>Entendí:</b> ${(r.entendido.partes.length ? r.entendido.partes : [r.entendido.texto]).map((p) => `<span class="rep-chip">${esc(p)}</span>`).join('')}
+            ${(r.entendido.notas || []).map((n) => `<div class="muted" style="font-size:12px;margin-top:4px">${esc(n)}</div>`).join('')}
+            <div class="muted" style="font-size:12px;margin-top:4px">${r.sin_ia ? 'Se arma al instante con el motor de Forzza (sin IA).' : 'No entendí todo: la IA ayudará a completar la petición antes de calcular.'}</div>`;
+        } catch (e) { if (yo === nEnt) box.innerHTML = ''; }
+      }, 500);
+    };
+    document.getElementById('reppet').addEventListener('input', entender);
+    main().onchange = (e) => { if (e.target.matches('input[type=checkbox]')) entender(); };
     inp.addEventListener('change', () => { if (inp.files.length) subir(inp.files); inp.value = ''; });
     zone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); if (e.dataTransfer.files.length) subir(e.dataTransfer.files); }, true);
     main().onclick = async (e) => {
-      const ej = e.target.closest('[data-ej]'); if (ej) { document.getElementById('reppet').value = ej.dataset.ej; return; }
+      const ej = e.target.closest('[data-ej]'); if (ej) { document.getElementById('reppet').value = ej.dataset.ej; entender(); return; }
       const cb = e.target.closest('[data-comprar]'); if (cb) { comprarReportes(Number(cb.dataset.comprar), cb); return; }
       const qa = e.target.closest('[data-borrar-arch]');
       if (qa) { e.preventDefault(); if (!confirm('¿Quitar este archivo de tu lista? Los reportes ya hechos no cambian.')) return; try { await api('reportes/archivos/' + qa.dataset.borrarArch, { method: 'DELETE' }); qa.closest('label').remove(); } catch (er) { err.textContent = errMsg(er); } return; }
@@ -1227,10 +1251,10 @@
     if (r.estado === 'generando') {
       const t0 = Date.now();
       main().innerHTML = `<h1>Preparando tu reporte</h1><div class="card"><p><b>${esc(r.peticion)}</b></p>
-        <p class="muted">El Departamento de Inteligencia de Datos está leyendo los datos, haciendo las cuentas y revisando cada cifra. Suele tardar entre 30 segundos y 2 minutos. Puedes salir de esta pantalla; el reporte aparecerá en «Mis reportes».</p>
+        <p class="muted">El Departamento de Inteligencia de Datos está leyendo los datos, haciendo las cuentas y revisando cada cifra. Casi siempre tarda unos segundos; si hace falta la IA, hasta 2 minutos. Puedes salir de esta pantalla; el reporte aparecerá en «Mis reportes».</p>
         <div class="rep-prog"><i></i></div><p class="muted" id="repseg" style="font-size:12px"></p></div>`;
       const tick = setInterval(() => { const el = document.getElementById('repseg'); if (!el || S.view !== 'reporte') { clearInterval(tick); return; } el.textContent = Math.round((Date.now() - t0) / 1000) + ' segundos'; }, 1000);
-      setTimeout(() => { clearInterval(tick); if (S.view === 'reporte' && Number(S.arg) === id) R.reporte().catch((e) => { main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }); }, 3000);
+      setTimeout(() => { clearInterval(tick); if (S.view === 'reporte' && Number(S.arg) === id) R.reporte().catch((e) => { main().innerHTML = `<div class="err">${errMsg(e)}</div>`; }); }, Date.now() - new Date(r.created_at).getTime() < 4000 ? 700 : 2500);
       return;
     }
     if (r.estado === 'error') {

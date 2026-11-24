@@ -168,9 +168,9 @@ function periodo(v, por) {
 function cumple(v, f, tipo) {
   const op = f.op || '=';
   if (op === 'vacio') return v == null; if (op === 'no_vacio') return v != null;
-  if (v == null) return op === '!=' || op === 'no_contiene';
+  if (v == null) return op === '!=' || op === 'no_contiene' || op === 'no_en';
   if (op === 'contiene' || op === 'no_contiene') { const h = norm(v).includes(norm(f.valor)); return op === 'contiene' ? h : !h; }
-  if (op === 'en') return (Array.isArray(f.valor) ? f.valor : [f.valor]).some((x) => norm(x) === norm(v));
+  if (op === 'en' || op === 'no_en') { const h = (Array.isArray(f.valor) ? f.valor : [f.valor]).some((x) => norm(x) === norm(v)); return op === 'en' ? h : !h; }
   const cmp = (a, b) => (tipo === 'numero' ? Number(a) - Number(b) : String(a).localeCompare(String(b)));
   const a = tipo === 'texto' ? norm(v) : v, b = tipo === 'texto' ? norm(f.valor) : (tipo === 'numero' ? Number(f.valor) : String(f.valor));
   switch (op) {
@@ -250,7 +250,7 @@ const TOOLS = [
   { name: 'ver_fuentes', description: 'Describe cada fuente de datos disponible: columnas, tipo (texto, número, fecha), suma/mínimo/máximo de las numéricas, rango de fechas, valores más comunes y una muestra de 5 renglones. Úsala primero.', input_schema: { type: 'object', properties: {} } },
   { name: 'consultar', description: 'Calcula sobre una fuente: filtra, agrupa (las fechas se pueden agrupar por dia, semana, mes, trimestre o año), suma, promedia, cuenta, mínimo y máximo, ordena y limita. Devuelve un id (c1, c2...) que se usa en el reporte. Sin agrupar ni métricas devuelve renglones.', input_schema: { type: 'object', properties: {
     fuente: { type: 'string', description: 'Nombre exacto de la fuente (como lo da ver_fuentes).' },
-    filtros: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, op: { type: 'string', enum: ['=', '!=', '>', '>=', '<', '<=', 'entre', 'contiene', 'no_contiene', 'en', 'vacio', 'no_vacio'] }, valor: {}, valor2: {} }, required: ['columna', 'op'] } },
+    filtros: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, op: { type: 'string', enum: ['=', '!=', '>', '>=', '<', '<=', 'entre', 'contiene', 'no_contiene', 'en', 'no_en', 'vacio', 'no_vacio'] }, valor: {}, valor2: {} }, required: ['columna', 'op'] } },
     agrupar_por: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, periodo: { type: 'string', enum: ['dia', 'semana', 'mes', 'trimestre', 'año'] }, nombre: { type: 'string' } }, required: ['columna'] } },
     metricas: { type: 'array', items: { type: 'object', properties: { op: { type: 'string', enum: OPS }, columna: { type: 'string' }, nombre: { type: 'string', description: 'Encabezado de la columna en el reporte.' } }, required: ['op'] } },
     columnas: { type: 'array', items: { type: 'string' }, description: 'Solo sin agrupar: qué columnas mostrar.' },
@@ -344,7 +344,7 @@ function materializar(rep, consultas) {
  * Devuelve { ok, reporte, herramientas, consultas_n } o { error, mensaje }.
  */
 const pasajero = (e) => { const st = e && e.status; return !st || st === 408 || st === 409 || st === 429 || st >= 500 || /overload|timeout|ECONNRESET|socket/i.test(String((e && e.message) || '')); };
-async function generar(fuentes, ctx) {
+async function generarAgente(fuentes, ctx) {
   if (!D.enabled()) return { error: 'sin_modelo', mensaje: 'El asistente de reportes no está disponible en este momento. Intenta de nuevo en unos minutos.' };
   const porNombre = new Map(fuentes.map((f) => [norm(f.nombre), f]));
   const consultas = {}, resultados = [], usadas = [];
@@ -409,4 +409,88 @@ async function generar(fuentes, ctx) {
   }
 }
 
-module.exports = { tablaDesdeFilas, tablaDesdePdf, perfil, consultar, verificar, materializar, generar, aNumero, aFecha, TOOLS };
+/* ── 5. MOTOR PROPIO PRIMERO: la IA solo cuando el intérprete no entiende ─────────────────── */
+const I = require('./intencion');
+const RC = require('./recetas');
+/** Plan -> reporte verificado, sin IA. */
+function armarDesdePlan(plan, fuentes, notas, por, entendido) {
+  let b;
+  try { b = RC.construir(plan, fuentes, consultar, { notas }); }
+  catch (e) { return { error: 'interno', mensaje: 'No pude armar ese reporte con el motor.', detalle: String(e.message || e).slice(0, 200) }; }
+  if (b.error) return b;
+  const probs = verificar(b.reporte, b.consultas, D._permitidos(b.permitidos));
+  if (probs.length) return { error: 'interno', mensaje: 'No pude armar ese reporte con el motor.', detalle: 'verificador: ' + probs.join(' | ').slice(0, 400) };
+  const rep = materializar(b.reporte, b.consultas);
+  rep.plan = plan; rep.entendido = entendido; rep.armado_por = por;
+  return { ok: true, reporte: rep, herramientas: [por === 'motor' ? 'motor' : 'ia_plan', 'recetas'], consultas_n: Object.keys(b.consultas).length };
+}
+const PLAN_TOOL = { name: 'plan_reporte', description: 'Devuelve el plan del reporte. Solo nombres de fuentes y columnas que existen en el catálogo. No escribas cifras.', input_schema: { type: 'object', properties: {
+  fuente: { type: 'string' }, fuente2: { type: 'string', description: 'Solo para comparar dos fuentes (ventas contra costos).' }, signo: { type: 'string', enum: ['entrada', 'salida'], description: 'Solo bancos.' },
+  medida: { type: 'object', properties: { op: { type: 'string', enum: ['suma', 'promedio', 'conteo', 'maximo', 'minimo'] }, columna: { type: 'string' } }, required: ['op'] },
+  dimension: { type: 'string', description: 'Columna de texto por la que se agrupa.' }, tiempo: { type: 'string', enum: ['dia', 'semana', 'mes', 'trimestre', 'año', 'auto'] },
+  top: { type: 'integer' }, dir: { type: 'string', enum: ['desc', 'asc'] }, listado: { type: 'boolean' }, participacion: { type: 'boolean' }, forma: { type: 'string', enum: ['barras', 'lineas', 'pastel'] },
+  periodos: { type: 'array', items: { type: 'object', properties: { desde: { type: 'string' }, hasta: { type: 'string' }, etiqueta: { type: 'string' } }, required: ['desde', 'hasta'] } },
+  comparar: { type: 'boolean', description: 'true para comparar los periodos entre sí.' },
+  filtros: { type: 'array', items: { type: 'object', properties: { columna: { type: 'string' }, op: { type: 'string', enum: ['en', 'no_en'] }, valor: { type: 'array', items: { type: 'string' } } }, required: ['columna', 'valor'] } },
+  umbral: { type: 'object', properties: { op: { type: 'string', enum: ['>', '<'] }, valor: { type: 'number' } } },
+  no_se_puede: { type: 'string', description: 'Si la petición no se puede hacer con estos datos, explica por qué (y deja lo demás vacío).' } }, required: ['fuente', 'medida'] } };
+const pasajeroPlan = (e) => { const st = e && e.status; return !st || st === 408 || st === 409 || st === 429 || st >= 500; };
+/** UNA llamada a la IA que devuelve un plan (no cifras); el código lo valida y lo arma. */
+async function planConIA(fuentes, ctx, parcial) {
+  const cats = I.catalogo(fuentes).map((c) => ({ fuente: c.nombre, tipo: c.clase, renglones: c.renglones, columna_fecha: c.fecha, fechas: c.desde ? `${c.desde} a ${c.hasta}` : null, columna_importe: c.medida, numericas: c.numericas,
+    texto: c.textos.map((t) => ({ columna: t.nombre, papel: t.rol, distintos: t.distintos, ejemplos: t.valores.slice(0, 8) })) }));
+  const system = `Conviertes la petición de un reporte en un PLAN para el motor de reportes de ${ctx.empresa || 'la empresa'}. Hoy es ${ctx.hoy}. Español de México.
+Solo usas nombres de fuentes y columnas del catálogo, exactos. No calculas nada ni escribes cifras: el motor hace las cuentas.
+Reglas: «los primeros N» = los N más grandes (top N, dir desc). Si piden «clientes» y la fuente solo tiene «Proveedor», usa Proveedor. En «bancos» las entradas son la columna Entrada (signo entrada) y las salidas la columna Salida (signo salida). «Utilidad» o «ventas contra costos» = fuente ventas y fuente2 costos. Para comparar periodos usa comparar=true con dos periodos. Fechas en formato AAAA-MM-DD.
+Si de verdad no se puede con estos datos, llena no_se_puede con la razón en una frase.
+Catálogo: ${JSON.stringify(cats).slice(0, 12000)}
+Lo que el intérprete propio ya entendió (corrígelo o complétalo): ${JSON.stringify(parcial).slice(0, 3000)}${ctx.previo && ctx.previo.plan ? `\nEstás cambiando un reporte; su plan actual es: ${JSON.stringify(ctx.previo.plan).slice(0, 3000)}` : ''}`;
+  const conv = [{ role: 'user', content: `Petición: ${String(ctx.peticion).slice(0, 2000)}` }];
+  for (let vuelta = 0; vuelta < 2; vuelta++) {
+    let r;
+    for (let i = 0; ; i++) {
+      try { r = await D.crear({ max_tokens: 1500, system, messages: conv, tools: [PLAN_TOOL], tool_choice: { type: 'tool', name: 'plan_reporte' } }); break; }
+      catch (e) { if (i >= 2 || !pasajeroPlan(e)) throw e; await new Promise((ok) => setTimeout(ok, 3000 * (i + 1))); }
+    }
+    const u = (r.content || []).find((b) => b.type === 'tool_use' && b.name === 'plan_reporte'); if (!u) return null;
+    if (u.input && u.input.no_se_puede) return { no_se_puede: String(u.input.no_se_puede).slice(0, 400) };
+    const v = I.validarPlan(u.input, fuentes);
+    if (!v.errs.length) return v;
+    conv.push({ role: 'assistant', content: r.content }, { role: 'user', content: [{ type: 'tool_result', tool_use_id: u.id, is_error: true, content: 'El plan no es válido: ' + v.errs.join(' ') + ' Corrígelo.' }] });
+  }
+  return null;
+}
+/**
+ * Genera (o cambia) un reporte. Orden: 1) el intérprete propio + recetas (sin IA, segundos);
+ * 2) si no entendió, UNA llamada a la IA que devuelve un plan que el código valida y arma;
+ * 3) solo si eso falla, el agente completo (varias vueltas, verificado igual).
+ */
+async function generar(fuentes, ctx) {
+  const base = ctx.previo && ctx.previo.plan ? ctx.previo.plan : null;
+  const it = I.interpretar(ctx.peticion, fuentes, { hoy: ctx.hoy, base });
+  let motorErr = null;
+  if (it.plan.fuente && (it.confianza === 'alta' || (!D.enabled() && it.confianza === 'media'))) {
+    const out = armarDesdePlan(it.plan, fuentes, it.notas, 'motor', it.entendido);
+    if (out.ok || (out.error !== 'interno' && out.error !== 'aclarar')) return out;
+    motorErr = out;
+  }
+  if (!D.enabled()) {
+    if (motorErr && motorErr.error === 'aclarar') return motorErr;
+    return { error: 'aclarar', mensaje: `No entendí del todo la petición. ${it.entendido.texto} Prueba así: «ventas por cliente de octubre, los 10 más grandes» o «costos por categoría por mes».`, detalle: motorErr && motorErr.detalle };
+  }
+  try {
+    const p = await planConIA(fuentes, ctx, it.plan);
+    if (p && p.no_se_puede) return { error: 'aclarar', mensaje: p.no_se_puede };
+    if (p) {
+      const out = armarDesdePlan(p.plan, fuentes, [], 'ia_plan', p.entendido);
+      if (out.ok || (out.error !== 'interno' && out.error !== 'aclarar')) return out;
+    }
+  } catch (e) {
+    if (!pasajeroPlan(e)) console.error('[forzza] plan IA:', e && e.message);
+  }
+  const out = await generarAgente(fuentes, ctx);
+  if (out.ok) { out.reporte.armado_por = 'ia'; out.reporte.entendido = it.entendido; }
+  return out;
+}
+
+module.exports = { interpretar: (...a) => I.interpretar(...a), generarAgente, armarDesdePlan, tablaDesdeFilas, tablaDesdePdf, perfil, consultar, verificar, materializar, generar, aNumero, aFecha, TOOLS };

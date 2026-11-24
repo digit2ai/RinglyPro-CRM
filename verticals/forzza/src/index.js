@@ -585,7 +585,7 @@ async function saludDe(tenant) {
 api.get('/salud', async (req, res) => res.json(await saludDe(req.tenant)));
 /* ── Dalia: asistente financiera (orbe de Digit2AI). Solo lee; la empresa sale de la sesión. ── */
 const dalia = require('./dalia');
-const daliaDeps = () => ({ E, hoyMx, sel, one, tableroDe, saludDe, sicarResumenDe, cargarEstado, entradaMotor, baseSimulador, config, CATEGORIAS });
+const daliaDeps = () => ({ E, hoyMx, sel, one, fuentesReporte, tableroDe, saludDe, sicarResumenDe, cargarEstado, entradaMotor, baseSimulador, config, CATEGORIAS });
 api.post('/dalia/chat', async (req, res) => {
   const k = 'dalia|' + req.user.id;
   if (tooMany(k, 40)) return res.status(429).json({ reply: 'Me hiciste muchas preguntas seguidas. Espera unos minutos y seguimos.', error: 'too_many' });
@@ -1609,6 +1609,23 @@ api.post('/reportes', async (req, res) => {
   const empresa = await repEmpresa(req.tenant);
   setImmediate(() => correrReporte(r.id, req.tenant, empresa, peticion, fuentes, null).catch((e) => console.error('[forzza] reporte', e && e.message)));
   res.status(202).json({ id: r.id, estado: 'generando', usa_credito: r.usa_credito });
+});
+// «Entendí:» en vivo mientras el cliente escribe. Solo el intérprete propio: sin IA, sin costo y sin cupo.
+const interpHits = new Map(), interpCache = new Map();
+api.post('/reportes/interpretar', async (req, res) => {
+  const b = req.body || {};
+  const peticion = str(b.peticion, 2000);
+  const now = Date.now(), l = (interpHits.get(req.tenant) || []).filter((x) => now - x < 60000); l.push(now); interpHits.set(req.tenant, l);
+  if (l.length > 90) return res.status(429).json({ error: 'demasiados', ayuda: 'Espera unos segundos.' });
+  const ids = [...new Set((Array.isArray(b.archivo_ids) ? b.archivo_ids : []).map(intId).filter(Boolean))].slice(0, 5);
+  const bancos = !!b.incluir_bancos;
+  if (peticion.length < 3 || (!ids.length && !bancos)) return res.json({ entendido: null });
+  // Se llama mientras el cliente escribe: las fuentes leídas se guardan 60 s por empresa y selección.
+  const ck = `${req.tenant}|${ids.join(',')}|${bancos}`, c0 = interpCache.get(ck);
+  let fuentes = c0 && Date.now() - c0.t < 60000 ? c0.f : null;
+  if (!fuentes) { fuentes = await fuentesReporte(req.tenant, ids, bancos); if (interpCache.size > 50) interpCache.clear(); interpCache.set(ck, { t: Date.now(), f: fuentes }); }
+  const it = RP.interpretar(peticion, fuentes, { hoy: hoyMx() });
+  res.json({ entendido: it.entendido, confianza: it.confianza, ignorado: it.ignorado, sin_ia: !!it.plan.fuente && (it.confianza === 'alta') });
 });
 api.get('/reportes/cupo', async (req, res) => {
   const pagadas = await confirmarCompras(req.tenant);
