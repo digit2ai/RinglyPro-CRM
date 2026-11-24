@@ -480,14 +480,15 @@ async function baseSimulador(tenant, hoy) {
     datosHasta = conDatos.map((c) => c.ultimo).sort().pop();
     if (ini <= fin) cobertura = { desde: ini, hasta: fin };
   }
-  let patron = null, historia = null;
+  let patron = null, historia = null, tend = null;
   if (cobertura) {
     const movs = await sel(`SELECT m.fecha::text AS fecha, m.monto, m.categoria FROM fz_movimientos m JOIN fz_cuentas c ON c.id=m.cuenta_id AND c.tenant_id=m.tenant_id
       WHERE m.tenant_id=:t AND c.incluir AND c.active AND m.categoria <> 'traspaso' AND m.fecha BETWEEN :d AND :h`, { t: tenant, d: cobertura.desde, h: cobertura.hasta });
     patron = E.patronHistorico(movs, cobertura);
     if (patron) historia = E.historiaDiaria(movs, patron.meses.map((m) => m.mes));
+    tend = E.tendencia(movs, cobertura.hasta, OPERATIVA_FUERA);
   }
-  return { st, patron, historia, cobertura, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length, cuentasSinDatos: cob.filter((c) => !c.n).map((c) => c.nombre) };
+  return { st, patron, historia, tend, cobertura, datosHasta, sinCuentasConDatos: cob.filter((c) => !c.n).length, cuentasSinDatos: cob.filter((c) => !c.n).map((c) => c.nombre) };
 }
 /**
  * Salud financiera para el tablero: calificación 0–100, Monte Carlo a 90 días, días de efectivo,
@@ -511,7 +512,7 @@ const OPERATIVA_FUERA = ['traspaso', 'prestamo', 'aportacion_socios'];
 async function saludDe(tenant) {
   const req = { tenant };
   const hoy = hoyMx();
-  const { st, patron, historia, cobertura, datosHasta, cuentasSinDatos } = await baseSimulador(req.tenant, hoy);
+  const { st, patron, historia, tend, cobertura, datosHasta, cuentasSinDatos } = await baseSimulador(req.tenant, hoy);
   const base = entradaMotor(st, hoy, { horizonte: 90, opciones: { vencido: 'excluir', retraso: 0 } });
   const p = E.proyectar(base);
   const cartera = E.antiguedad(st.cxc, hoy);
@@ -558,7 +559,7 @@ async function saludDe(tenant) {
     meses: patron ? patron.meses : [], datos_hasta: datosHasta, cuentas_sin_datos: cuentasSinDatos || [], por_pagar: cxpTotal, hay_cxp_sicar: !!(fotoCxp && fotoCxp.saldo_sicar) });
   return ({
     hoy, efectivo: st.efectivo, reserva, datos_hasta: datosHasta, cobertura, hallazgos,
-    calificacion: cal, monte_carlo: mc,
+    calificacion: cal, tendencia: tend, monte_carlo: mc,
     dias_efectivo: diasEf, salida_diaria: pm ? Math.round(pm.salidas / 30.4) : null,
     promedio_mes: pm, entradas_operativas_mes: entOp, salidas_operativas_mes: salOp,
     meses: patron ? patron.meses : [], meses_n: patron ? patron.n : 0, peor_mes: patron ? patron.peor_mes : null, mejor_mes: patron ? patron.mejor_mes : null,

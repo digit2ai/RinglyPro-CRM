@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<title>Forzza · Capital</title>
+<title>Forzza · Inteligencia Empresarial</title>
 <style>
 :root{--bg:#f3f5f9;--card:#fff;--ink:#0b1630;--txt:#1f2937;--mut:#4b5563;--line:#e2e6ee;--acc:#012a72;--acc-d:#011d52;--navy:#012a72;--lime:#012a72;--lime-d:#012a72;--lime-t:#012a72;--rep:#012a72;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--soft:#e8eef9;--soft-lime:#e8eef9}
 *{box-sizing:border-box}
@@ -29,7 +29,10 @@ header.top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;bo
 header.top .brand{font-weight:600;letter-spacing:.2px;display:flex;align-items:center;gap:10px;color:#fff}
 header.top .brand img{height:30px;width:auto;display:block}
 
-header.top .brand small{font-weight:500;opacity:.85;padding-left:10px;border-left:1px solid rgba(255,255,255,.4)}
+header.top .brand small{font-weight:600;opacity:.95;padding-left:10px;border-left:1px solid rgba(255,255,255,.4);line-height:1.15;display:flex;flex-direction:column}
+header.top .brand-sub{font-weight:400;font-size:11px;opacity:.8}
+@media (max-width:620px){header.top .brand-sub{display:none}header.top .brand small{font-size:12px}}
+.tend{display:flex;align-items:center;gap:10px;margin-top:12px;justify-content:center;text-align:left}
 header.top .sp{flex:1}
 .burger{display:none;background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:20px}
 .layout{display:flex;min-height:calc(100vh - 60px)}
@@ -148,6 +151,6 @@ body.vista-llena main{max-width:none;display:flex;flex-direction:column}
 </head>
 <body>
 <div id="app"></div>
-<script src="app.js?v=29" defer></script>
+<script src="app.js?v=30" defer></script>
 </body>
 </html>

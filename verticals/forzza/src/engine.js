@@ -430,4 +430,40 @@ function calificacion(d) {
   return { puntos, nivel: puntos >= 75 ? 'sana' : puntos >= 50 ? 'atencion' : 'riesgo', partes, peso_calificado: pesoTotal };
 }
 
-module.exports = { monteCarlo, historiaDiaria, concentracion, calificacion, rng, patronHistorico, eventosEstimados, escenario, indicadores, ventaEventos, fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };
+/**
+ * Tendencia del negocio (la flecha bajo la calificación). Reglas fijas, sin modelo.
+ * Compara el flujo neto operativo (entradas menos salidas, sin traspasos, préstamos ni
+ * aportaciones de socios; sin retiros de socios) de los últimos 30 días con datos contra los
+ * 30 anteriores, medido contra la salida operativa promedio del mes:
+ *   sube    = neto de 30 días >= +5% y no peor que el periodo anterior  (Creciendo)
+ *   estable = neto entre -5% y +5%, o positivo pero menor que antes      (Estable)
+ *   menos   = neto entre -15% y -5%                                      (Menos estable)
+ *   baja    = neto peor que -15%                                          (Bajando)
+ * movs: [{fecha, monto (pesos), categoria}]; hasta = último día con datos de todas las cuentas.
+ */
+function tendencia(movs, hasta, fuera) {
+  if (!hasta || !Array.isArray(movs)) return null;
+  fuera = fuera || [];
+  const d1 = addDays(hasta, -29), d0 = addDays(hasta, -59);
+  let n1 = 0, n0 = 0, sal1 = 0, sal0 = 0, c1 = 0, c0 = 0, primero = null;
+  for (const m of movs) {
+    if (fuera.includes(m.categoria)) continue;
+    const c = toC(m.monto); if (c < 0 && m.categoria === 'retiro_socios') continue;
+    if (!primero || m.fecha < primero) primero = m.fecha;
+    if (m.fecha > hasta || m.fecha < d0) continue;
+    if (m.fecha >= d1) { n1 += c; c1++; if (c < 0) sal1 -= c; } else { n0 += c; c0++; if (c < 0) sal0 -= c; }
+  }
+  if (!c1 || !primero || primero > d1) return null;
+  const hayAntes = c0 > 0 && primero <= d0;
+  const escala = hayAntes ? (sal1 + sal0) / 2 : sal1;
+  if (!escala) return null;
+  const pct = n1 / escala;
+  let dir;
+  if (pct >= 0.05 && (!hayAntes || n1 >= n0)) dir = 'sube';
+  else if (pct >= -0.05) dir = 'estable';
+  else if (pct >= -0.15) dir = 'menos';
+  else dir = 'baja';
+  return { dir, neto_30: n1, neto_30_anterior: hayAntes ? n0 : null, pct, desde: d1, hasta, compara_desde: hayAntes ? d0 : null };
+}
+
+module.exports = { tendencia, monteCarlo, historiaDiaria, concentracion, calificacion, rng, patronHistorico, eventosEstimados, escenario, indicadores, ventaEventos, fechaLarga, toC, fromC, valid, addDays, diffDays, vencimiento, saldoCuenta, pendiente, ocurrencias, proyectar, antiguedad, simularVenta, alertas };

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Dalia, la asistente financiera de Forzza Capital. ES EL ÚNICO ARCHIVO DE FORZZA QUE LLEGA A UN MODELO
+ * Dalia, la asistente financiera de Forzza Inteligencia Empresarial. ES EL ÚNICO ARCHIVO DE FORZZA QUE LLEGA A UN MODELO
  * (la SIT lo revisa). Responde preguntas sobre el dinero de la empresa con herramientas de SOLO LECTURA
  * sobre los mismos cálculos que el tablero, la salud, la proyección y SICAR.
  *
@@ -446,7 +446,7 @@ function mensajes(raw) {
 }
 function sistema(ctx) {
   const E = ctx.D.E, hoy = ctx.D.hoyMx();
-  return `Eres Dalia, la asistente financiera de ${ctx.empresa || 'la empresa'} dentro de Forzza Capital, la app de Digit2AI para controlar el capital de una distribuidora de materiales de construcción en Monterrey que vende a crédito. Hablas con ${ctx.usuario || 'una persona del equipo'} (rol: ${ctx.rol}). Hoy es ${E.fechaLarga(hoy)} (${hoy}).
+  return `Eres Dalia, la asistente financiera de ${ctx.empresa || 'la empresa'} dentro de Forzza Inteligencia Empresarial, la app de Digit2AI para controlar el capital de una distribuidora de materiales de construcción en Monterrey que vende a crédito. Hablas con ${ctx.usuario || 'una persona del equipo'} (rol: ${ctx.rol}). Hoy es ${E.fechaLarga(hoy)} (${hoy}).
 
 QUÉ HAY EN LA PLATAFORMA (para explicar cómo funciona):
 - Cuentas bancarias (HSBC, BBVA y otras) con sus estados de cuenta importados. "Suma al efectivo" indica si la cuenta cuenta para el efectivo de hoy. El efectivo de hoy = saldo de corte de cada cuenta incluida + movimientos posteriores.

@@ -553,6 +553,19 @@ const hoyMx = () => new Date(Date.now() - 6 * 3600 * 1000).toISOString().slice(0
       router._pdfRows = saved;
     } else console.log('  (sin FORZZA_MUESTRAS_DIR: no se probaron los PDF reales de los bancos)');
     }
+    console.log('\nTendencia (flecha bajo la calificación)');
+    { const hT = '2026-10-30', mkT = (f, a, c) => ({ fecha: f, monto: a, categoria: c || 'cliente' }), bT = [];
+      for (let i = 0; i < 60; i++) { const f = E.addDays(hT, -i); bT.push(mkT(f, 1000), mkT(f, -1000, 'proveedor')); }
+      const tT = (x) => E.tendencia(bT.concat(x), hT, ['traspaso', 'prestamo', 'aportacion_socios']);
+      ok('tendencia: lo mismo entra y sale = estable (derecha)', tT([]).dir === 'estable');
+      ok('tendencia: entra más y mejor que antes = sube', tT([mkT(hT, 10000)]).dir === 'sube');
+      ok('tendencia: sale un poco más = menos estable (izquierda)', tT([mkT(hT, -3000, 'proveedor')]).dir === 'menos');
+      ok('tendencia: sale mucho más = baja', tT([mkT(hT, -9000, 'proveedor')]).dir === 'baja');
+      ok('tendencia: un traspaso o un préstamo no mueve la flecha', tT([mkT(hT, -90000, 'traspaso'), mkT(hT, 90000, 'prestamo')]).dir === 'estable');
+      ok('tendencia: sin 30 días de datos no se inventa', E.tendencia([mkT(hT, 5)], hT, []) === null);
+      ok('tablero: la salud trae la tendencia', 'tendencia' in ((await req('GET', '/salud', { cookie: dirA.cookie })).json || {}));
+      const apT = fs.readFileSync(path.join(__dirname, 'public', 'app.js'), 'utf8');
+      ok('marca: Inteligencia Empresarial en el encabezado, sin "Capital" como nombre', /Inteligencia Empresarial<span class="brand-sub">Analítica estratégica y gestión predictiva del negocio/.test(apT) && !/<small>Capital<\/small>/.test(apT)); }
     console.log('\nSimulador (patrón histórico y escenarios)');
     const hm = [];
     for (const mes of ['2026-07', '2026-08']) { hm.push({ fecha: mes + '-05', monto: '10000', categoria: 'cliente' }, { fecha: mes + '-15', monto: '-4000', categoria: 'nomina' }, { fecha: mes + '-31', monto: '-1000', categoria: 'renta' }); }

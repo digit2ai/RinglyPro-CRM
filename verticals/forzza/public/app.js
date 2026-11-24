@@ -1,4 +1,4 @@
-/* Forzza · Capital — una sola página, sin build. Toda cifra viene del servidor (engine.js). */
+/* Forzza · Inteligencia Empresarial — una sola página, sin build. Toda cifra viene del servidor (engine.js). */
 (function () {
   'use strict';
   const $app = document.getElementById('app');
@@ -85,6 +85,7 @@
   const kpi = (l, v, n, cls) => `<div class="card kpi ${cls || ''}"><div class="l">${l}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ''}</div>`;
   // Notas del Tablero: al pasar el mouse (o tocar en el teléfono) sobre la "i" se abre la explicación.
   const TIPS = {
+    tend: ['Tendencia del negocio', 'Compara lo que entró menos lo que salió en los últimos 30 días con datos de banco contra los 30 días anteriores (sin traspasos entre tus cuentas, préstamos ni aportaciones o retiros de socios). Flecha arriba: creciendo, entra más de lo que sale y va mejor que antes. Derecha: estable, casi lo mismo entra y sale. Izquierda: menos estable, sale un poco más de lo que entra. Abajo: bajando, sale mucho más de lo que entra. Se calcula con reglas fijas.', 'Carga los estados de cuenta más recientes para que la flecha refleje los últimos días.'],
     calif: ['Calificación de salud financiera', 'Un número de 0 a 100 que resume cinco cosas: cuántos días aguanta la caja, qué tan probable es quedar en negativo, si entra más de lo que sale, cuánto está vencido y si dependes de pocos clientes. 75 o más es sana, de 50 a 74 pide atención y menos de 50 está en riesgo. Se calcula con reglas fijas, no con un modelo.', 'Sube la calificación cobrando lo vencido y juntando más días de efectivo.'],
     liquidez: ['Días de efectivo (hasta 25 puntos)', 'Cuántos días podrías pagar todo con el dinero que hay hoy en los bancos, si no entrara nada. Mientras más días, más puntos; con 30 días o más se obtienen los 25.', ''],
     riesgo: ['Probabilidad de quedar en negativo (hasta 25 puntos)', 'De 2,000 futuros simulados con lo que de verdad pasó en tus bancos, en cuántos el saldo baja de cero antes de 60 días. Mientras más baja, más puntos.', ''],
@@ -159,7 +160,7 @@
 
   /* ── sesión ── */
   function renderLogin(msg) {
-    $app.innerHTML = `<div class="login"><img class="logo" src="logo-azul.png" alt="Forzza · Materiales para la construcción"><div class="card"><h1>Capital</h1><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
+    $app.innerHTML = `<div class="login"><img class="logo" src="logo-azul.png" alt="Forzza · Materiales para la construcción"><div class="card"><h1>Inteligencia Empresarial</h1><p class="sub" style="margin-top:-4px">Analítica estratégica y gestión predictiva del negocio</p><p class="sub">Efectivo, cuentas por cobrar y pagos · plataforma de Digit2AI</p>
       <form id="f" class="form" style="grid-template-columns:1fr"><div><label>Correo</label><input name="email" type="email" autocomplete="username" required></div>
       <div><label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required></div>
       <button class="btn primary">Entrar</button><div class="err">${esc(msg || '')}</div></form></div></div>`;
@@ -240,7 +241,7 @@
   }
   function shell() {
     $app.innerHTML = `<header class="top"><button class="burger" id="burger" aria-label="Ocultar el menú" aria-expanded="true" title="Ocultar o mostrar el menú"><span class="bi">☰</span><span class="bd">«</span></button>
-      <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Capital</small></div><div class="sp"></div>
+      <div class="brand"><img src="logo-blanco.png" alt="Forzza"><small>Inteligencia Empresarial<span class="brand-sub">Analítica estratégica y gestión predictiva del negocio</span></small></div><div class="sp"></div>
       ${canEdit() ? '<a class="btn small hdr-up" href="#cargar">Importar archivos</a>' : ''}<span class="muted" style="font-size:13px">${esc(S.me.user.name || S.me.user.email)}</span></header>
       <div class="layout"><nav class="side" id="side">${menuHtml()}
         <a href="#" id="salir">Salir</a></nav><main id="main"></main></div>`;
@@ -291,6 +292,15 @@
   const k$ = (c) => { const v = Number(c) / 100, a = Math.abs(v), s = v < 0 ? '-' : ''; return a >= 1e6 ? `${s}$${(a / 1e6).toFixed(a >= 1e7 ? 1 : 2)}M` : a >= 1e3 ? `${s}$${Math.round(a / 1e3)}k` : `${s}$${Math.round(a)}`; };
   const pc = (x, d) => (x == null ? '—' : (x * 100).toFixed(d == null ? 0 : d) + '%');
   const NIVEL = { sana: ['Sana', VERDE], atencion: ['Atención', AMBAR], riesgo: ['En riesgo', ROJO], sin_datos: ['Sin datos', '#64748b'] };
+  // Flecha de tendencia: arriba creciendo, derecha estable, izquierda menos estable, abajo bajando (reglas en engine.tendencia).
+  const TEND = { sube: [-90, VERDE, 'Creciendo'], estable: [0, NAVY, 'Estable'], menos: [180, AMBAR, 'Menos estable'], baja: [90, ROJO, 'Bajando'] };
+  function flecha(t) {
+    if (!t || !TEND[t.dir]) return `<div class="tend"><div class="muted" style="font-size:13px">Tendencia: sin datos suficientes ${tip('tend')}</div></div>`;
+    const [rot, col, lbl] = TEND[t.dir];
+    return `<div class="tend"><svg viewBox="0 0 48 48" width="44" height="44" role="img" aria-label="Tendencia: ${lbl}"><circle cx="24" cy="24" r="22" fill="${col}"/>
+      <g transform="rotate(${rot} 24 24)"><path d="M12 24h20M25 16l8 8-8 8" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+      <div><div style="font-weight:700;color:${col}">${lbl} ${tip('tend')}</div><div class="muted" style="font-size:12px">Flujo neto ${fmtF(t.desde)} al ${fmtF(t.hasta)}: ${c$(t.neto_30)}${t.neto_30_anterior != null ? ` · 30 días antes: ${c$(t.neto_30_anterior)}` : ''}</div></div></div>`;
+  }
   function gauge(puntos, nivel) {
     const W = 260, H = 160, cx = 130, cy = 130, r = 104, w = 22;
     const pt = (v, rr) => { const a = Math.PI * (1 - v / 100); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)]; };
@@ -402,7 +412,7 @@
       ${alertasHtml(t.alertas)}
       <div class="card hero">
         <div class="hero-g">${gauge(cal && cal.puntos, cal ? cal.nivel : 'sin_datos')}<div class="nivel" style="background:${niv[1]}">${niv[0]}</div>
-          <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Calificación de salud financiera, de 0 a 100</div></div>
+          <div class="muted" style="font-size:12px;text-align:center;margin-top:6px">Calificación de salud financiera, de 0 a 100</div>${flecha(s && s.tendencia)}</div>
         <div class="hero-p"><h2 style="margin-top:0">¿De dónde sale la calificación? ${tip('calif')}</h2>
           ${cal ? cal.partes.map((p) => `<div class="part"><div class="part-h"><span>${esc(p.nombre)} ${tip(p.clave)}</span><b>${p.calificada ? p.puntos + ' / ' + p.peso : 'sin dato'}</b></div>
             <div class="hb-t"><i style="width:${p.calificada ? (p.puntos / p.peso * 100).toFixed(0) : 0}%;background:${!p.calificada ? '#94a3b8' : p.puntos / p.peso >= 0.75 ? VERDE : p.puntos / p.peso >= 0.5 ? AMBAR : ROJO}"></i></div>
